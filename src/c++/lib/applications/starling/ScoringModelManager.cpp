@@ -128,20 +128,20 @@ void
 ScoringModelManager::
 set_indel_modifiers(
     const GermlineDiploidIndelLocusInfo& ii,
-    GermlineDiploidIndelAlleleInfo& call) const
+    GermlineDiploidIndelAlleleInfo& allele) const
 {
+    /// TODO STREL-125 generalize to multi-sample
     const auto& dindel(ii.getFirstAltAllele()._dindel);
     /// max_gt != max_gt_poly indicates we're in a boundary zone between variant and hom-ref call
     if (dindel.max_gt != dindel.max_gt_poly)
     {
-        call.gqx=0;
+        allele.gqx=0;
     }
     else
     {
-        call.gqx=std::min(dindel.max_gt_poly_qphred,dindel.max_gt_qphred);
+        allele.gqx=std::min(dindel.max_gt_poly_qphred,dindel.max_gt_qphred);
     }
-    call.max_gt=dindel.max_gt_poly;
-    call.gq=dindel.max_gt_poly_qphred;
+    allele.max_gt=dindel.max_gt_poly;
 }
 
 
@@ -153,6 +153,15 @@ classify_indel_impl(
     GermlineDiploidIndelLocusInfo& ii,
     GermlineDiploidIndelAlleleInfo& call) const
 {
+    const unsigned sampleCount(ii.getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    {
+        auto& sampleInfo(ii.getSample(sampleIndex));
+
+        // TODO STREL-125 generalize to multi-allele
+        const auto& dindel(ii.getFirstAltAllele()._dindel);
+        sampleInfo.gq = dindel.max_gt_poly_qphred;
+    }
     set_indel_modifiers(ii, call);
 
     if (isVariantUsableInEVSModel && _isReportEVSFeatures)

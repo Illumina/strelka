@@ -110,13 +110,13 @@ struct AlleleGroupGenotype
     bool
     isNonReferenceGenotype() const
     {
-        return (variantAlleleQuality != 0);
+        return (anyVariantAlleleQuality != 0);
     }
 
     unsigned maxGenotypeIndex;
     unsigned maxGenotypeIndexPolymorphic;
 
-    double variantAlleleQuality;
+    double anyVariantAlleleQuality;
     double genotypeQuality;
     double genotypeQualityPolymorphic;
     double posteriorProb[MAX_GENOTYPE_COUNT];

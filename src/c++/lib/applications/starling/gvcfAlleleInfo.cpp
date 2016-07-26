@@ -70,20 +70,22 @@ set_hap_cigar(
 
 
 std::ostream&
-operator<<(std::ostream& os,
-           const GermlineVariantAlleleInfo& shmod)
+operator<<(
+    std::ostream& os,
+    const GermlineVariantAlleleInfo& allele)
 {
-    os << "gqx: " << shmod.gqx
-       << " gq: " << shmod.gq;
-    if (typeid(shmod) == typeid(GermlineDiploidIndelAlleleInfo))
+    os << "gqx: " << allele.gqx;
+    if (typeid(allele) == typeid(GermlineDiploidIndelAlleleInfo))
     {
-        auto imod = dynamic_cast<const GermlineDiploidIndelAlleleInfo&>(shmod);
+        auto dallele = dynamic_cast<const GermlineDiploidIndelAlleleInfo&>(allele);
 
-        os << " max_gt: " << DIGT::label(imod.max_gt);
+        os << " max_gt: " << DIGT::label(dallele.max_gt);
     }
 
     return os;
 }
+
+
 
 std::ostream&
 operator<<(std::ostream& os,

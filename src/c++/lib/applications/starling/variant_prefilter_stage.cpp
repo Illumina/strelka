@@ -35,51 +35,56 @@ variant_prefilter_stage::variant_prefilter_stage(const ScoringModelManager& mode
 static
 void
 set_site_gt(const diploid_genotype::result_set& rs,
-            GermlineDiploidSiteAlleleInfo& smod)
+            GermlineDiploidSiteAlleleInfo& allele)
 {
-    smod.max_gt=rs.max_gt;
-    smod.gqx=rs.max_gt_qphred;
-    smod.gq  = 2;
+    allele.max_gt=rs.max_gt;
+    allele.gqx=rs.max_gt_qphred;
 }
 
 
-void variant_prefilter_stage::add_site_modifiers(
+void
+variant_prefilter_stage::
+add_site_modifiers(
     GermlineDiploidSiteLocusInfo& si,
-    GermlineDiploidSiteAlleleInfo& smod,
+    GermlineDiploidSiteAlleleInfo& allele,
     const ScoringModelManager& model)
 {
-    smod.clear();
-    smod.is_unknown=(si.ref=='N');
-    smod.is_used_covered=(si.n_used_calls!=0);
-    smod.is_covered=(si.allele.is_used_covered || si.n_unused_calls!=0);
-    smod.strand_bias=si.dgt.strand_bias;
+    allele.clear();
+    allele.is_unknown=(si.ref=='N');
 
-    if     (smod.is_unknown)
+    /// TODO STREL-125 generalize to multi-sample
+    auto& sampleInfo(si.getSample(0));
+
+    allele.is_used_covered=(si.n_used_calls!=0);
+    allele.is_covered=(si.allele.is_used_covered || si.n_unused_calls!=0);
+    allele.strand_bias=si.dgt.strand_bias;
+
+    if     (allele.is_unknown)
     {
-        smod.gqx=0;
-        smod.gq=0;
-        smod.max_gt=0;
+        allele.gqx=0;
+        sampleInfo.gq=0;
+        allele.max_gt=0;
     }
     else if (si.dgt.genome.max_gt != si.dgt.poly.max_gt)
     {
-        smod.gqx=0;
-        smod.gq=si.dgt.poly.max_gt_qphred;
-        smod.max_gt=si.dgt.poly.max_gt;
+        allele.gqx=0;
+        sampleInfo.gq=si.dgt.poly.max_gt_qphred;
+        allele.max_gt=si.dgt.poly.max_gt;
     }
     else
     {
         if (si.dgt.genome.max_gt_qphred<si.dgt.poly.max_gt_qphred)
         {
-            set_site_gt(si.dgt.genome,smod);
+            set_site_gt(si.dgt.genome,allele);
         }
         else
         {
-            set_site_gt(si.dgt.poly,smod);
+            set_site_gt(si.dgt.poly,allele);
         }
-        smod.gq=si.dgt.poly.max_gt_qphred;
+        sampleInfo.gq=si.dgt.poly.max_gt_qphred;
     }
 
-    model.classify_site(si, smod);
+    model.classify_site(si, allele);
 }
 
 void variant_prefilter_stage::process(std::unique_ptr<GermlineSiteLocusInfo> info)

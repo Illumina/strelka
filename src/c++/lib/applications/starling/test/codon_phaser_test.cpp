@@ -216,14 +216,17 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
     Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
     dummy_variant_sink& sink(*next);
 
+    /// TODO STREL-125 generalize to mulit-sample or replace codon phaser
     const unsigned sampleCount(1);
+    const unsigned sampleIndex(0);
 
     for (int i = 0; r1[i]; i++)
     {
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
         std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        auto& sampleInfo(si->getSample(sampleIndex));
         si->allele.is_covered = si->allele.is_used_covered = true;
-        si->allele.gq = si->dgt.genome.snp_qphred = si->empiricalVariantScore = 40;
+        sampleInfo.gq = si->dgt.genome.snp_qphred = si->empiricalVariantScore = 40;
         si->dgt.ref_gt = base_to_id(si->ref);
 
         si->allele.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));

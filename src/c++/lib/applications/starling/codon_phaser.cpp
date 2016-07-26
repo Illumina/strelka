@@ -188,6 +188,7 @@ void
 Codon_phaser::
 create_phased_record()
 {
+
     // sanity check do we have all record we expect or are there un-accounted no-calls
     if (this->get_block_length()>this->_buffer.size())
         return;
@@ -206,6 +207,10 @@ create_phased_record()
 
     assert(_buffer.size()>0);
 
+
+    /// not generalized to multi-sample, try to replace this rather than fix
+    assert(_buffer[0]->getSampleCount() == 1);
+    static const unsigned sampleIndex(0);
 
 
     //Decide if we accept the novel alleles, very hacky criteria for now
@@ -328,9 +333,10 @@ create_phased_record()
     unsigned min_gq_idx1(0);
     if (!phasing_inconsistent)
     {
-        for (unsigned i(0); i<this->get_block_length(); i++)
+        for (unsigned blockPosOffset(0); blockPosOffset<this->get_block_length(); blockPosOffset++)
         {
-            const auto& si(_buffer.at(i));
+            const auto& si(_buffer.at(blockPosOffset));
+            const auto& sampleInfo(si->getSample(sampleIndex));
             if (! is_phasable_site(si)) continue;
             // It is possible for a weak hetalt call and a strong het call to be phased into a het
             // call, particularly at a site that is triallelic with one ref allele. In that case, it is
@@ -348,16 +354,16 @@ create_phased_record()
                 continue;
             }
 
-            if ((! is_min_gq_idx0) || (si->allele.gq < _buffer.at(min_gq_idx0)->allele.gq))
+            if ((! is_min_gq_idx0) || (sampleInfo.gq < _buffer.at(min_gq_idx0)->getSample(sampleIndex).gq))
             {
                 min_gq_idx1 = min_gq_idx0;
                 if (is_min_gq_idx0) is_min_gq_idx1 = true;
-                min_gq_idx0 = i;
+                min_gq_idx0 = blockPosOffset;
                 is_min_gq_idx0 = true;
             }
-            if ((i != min_gq_idx0) && ( (! is_min_gq_idx1) || (si->allele.gq < _buffer.at(min_gq_idx1)->allele.gq)))
+            if ((blockPosOffset != min_gq_idx0) && ( (! is_min_gq_idx1) || (sampleInfo.gq < _buffer.at(min_gq_idx1)->getSample(sampleIndex).gq)))
             {
-                min_gq_idx1 = i;
+                min_gq_idx1 = blockPosOffset;
                 is_min_gq_idx1 = true;
             }
             min_qual = std::min(si->dgt.genome.snp_qphred,min_qual);
@@ -388,7 +394,7 @@ create_phased_record()
     int min_gq(maxInt);
     {
         const auto& minsi0(*(_buffer.at(min_gq_idx0)));
-        min_gq = minsi0.allele.gq;
+        min_gq = minsi0.getSample(sampleIndex).gq;
         max_gt = minsi0.allele.max_gt;
         pls = minsi0.dgt.phredLoghood;
         ref_gt = minsi0.dgt.ref_gt;
@@ -456,7 +462,7 @@ create_phased_record()
     base->dgt.ref_gt = ref_gt;
 
     // set various quality fields conservatively
-    base->allele.gq                = min_gq;
+    base->getSample(sampleIndex).gq                = min_gq;
     base->dgt.genome.snp_qphred  = min_qual;
     base->dgt.phredLoghood       = pls;
     base->allele.gqx               = std::min(min_gq,min_qual);

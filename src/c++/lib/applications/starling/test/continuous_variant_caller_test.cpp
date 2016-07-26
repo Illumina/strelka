@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE( call_from_counts )
     });
     BOOST_CHECK(C != info.altAlleles.end());
     BOOST_CHECK_EQUAL(10, C->_alleleDepth);
-    BOOST_CHECK_EQUAL(40, C->gq);
+    BOOST_CHECK_EQUAL(40, C->gqx);
     BOOST_CHECK_EQUAL(70, C->_totalDepth);
 
     auto G = std::find_if(info.altAlleles.begin(), info.altAlleles.end(), [&](const GermlineContinuousSiteAlleleInfo& call)
@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE( call_from_counts )
     });
     BOOST_CHECK(G != info.altAlleles.end());
     BOOST_CHECK_EQUAL(20, G->_alleleDepth);
-    BOOST_CHECK_EQUAL(40, G->gq);
+    BOOST_CHECK_EQUAL(40, G->gqx);
     BOOST_CHECK_EQUAL(70, G->_totalDepth);
 
     auto T = std::find_if(info.altAlleles.begin(), info.altAlleles.end(), [&](const GermlineContinuousSiteAlleleInfo& call)
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE( call_from_counts )
     });
     BOOST_CHECK(A != info.altAlleles.end());
     BOOST_CHECK_EQUAL(40, A->_alleleDepth);
-    BOOST_CHECK_EQUAL(40, A->gq);
+    BOOST_CHECK_EQUAL(40, A->gqx);
     BOOST_CHECK_EQUAL(70, A->_totalDepth);
 }
 
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE( do_not_call_low_vf )
     });
     BOOST_CHECK(A != info.altAlleles.end());
     BOOST_CHECK_EQUAL(93, A->_alleleDepth);
-    BOOST_CHECK_EQUAL(40, A->gq);
+    BOOST_CHECK_EQUAL(40, A->gqx);
     BOOST_CHECK_EQUAL(100, A->_totalDepth);
 
     auto T = std::find_if(info.altAlleles.begin(), info.altAlleles.end(), [&](const GermlineContinuousSiteAlleleInfo& call)
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE( do_not_call_low_vf )
     });
     BOOST_CHECK(T != info.altAlleles.end());
     BOOST_CHECK_EQUAL(5, T->_alleleDepth);
-    BOOST_CHECK_EQUAL(13, T->gq);
+    BOOST_CHECK_EQUAL(13, T->gqx);
     BOOST_CHECK_EQUAL(100, T->_totalDepth);
 
     BOOST_CHECK_EQUAL(2, info.altAlleles.size());
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE( gt_forced_output_calculated_correctly )
     });
     BOOST_CHECK(A != info.altAlleles.end());
     BOOST_CHECK_EQUAL(93, A->_alleleDepth);
-    BOOST_CHECK_EQUAL(40, A->gq);
+    BOOST_CHECK_EQUAL(40, A->gqx);
     BOOST_CHECK_EQUAL(100, A->_totalDepth);
     BOOST_CHECK(0 == strcmp(info.get_gt(*A), "0/0"));
 
@@ -188,7 +188,7 @@ BOOST_AUTO_TEST_CASE( gt_forced_output_calculated_correctly )
     });
     BOOST_CHECK(T != info.altAlleles.end());
     BOOST_CHECK_EQUAL(5, T->_alleleDepth);
-    BOOST_CHECK_EQUAL(13, T->gq);
+    BOOST_CHECK_EQUAL(13, T->gqx);
     BOOST_CHECK_EQUAL(100, T->_totalDepth);
     BOOST_CHECK(0 == strcmp(info.get_gt(*T), "0/1"));
 

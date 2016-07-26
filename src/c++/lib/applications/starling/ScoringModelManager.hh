@@ -87,7 +87,7 @@ private:
 
     void set_indel_modifiers(
         const GermlineDiploidIndelLocusInfo& ii,
-        GermlineDiploidIndelAlleleInfo& call) const;
+        GermlineDiploidIndelAlleleInfo& allele) const;
 
     void
     classify_indel_impl(

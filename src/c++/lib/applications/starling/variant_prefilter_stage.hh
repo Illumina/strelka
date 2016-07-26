@@ -35,7 +35,7 @@ struct variant_prefilter_stage : public variant_pipe_stage_base
 
     static void  add_site_modifiers(
         GermlineDiploidSiteLocusInfo& si,
-        GermlineDiploidSiteAlleleInfo& smod,
+        GermlineDiploidSiteAlleleInfo& allele,
         const ScoringModelManager& model);
 
 private:

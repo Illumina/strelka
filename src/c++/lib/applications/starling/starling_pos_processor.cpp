@@ -576,7 +576,7 @@ locusGenotypeToDindel(
         dindel.pprob[STAR_DIINDEL::HET] = locusGenotype.posteriorProb[AG_GENOTYPE::HET01];
     }
 
-    dindel.indel_qphred = (int) locusGenotype.variantAlleleQuality;
+    dindel.indel_qphred = (int) locusGenotype.anyVariantAlleleQuality;
     dindel.max_gt = AG_GENOTYPE::mapAlleleToDindel(locusGenotype.maxGenotypeIndex, alleleId);
     dindel.max_gt_qphred = (int) locusGenotype.genotypeQuality;
     dindel.max_gt_poly = AG_GENOTYPE::mapAlleleToDindel(locusGenotype.maxGenotypeIndexPolymorphic, alleleId);

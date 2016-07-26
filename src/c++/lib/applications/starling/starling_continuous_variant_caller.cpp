@@ -72,67 +72,86 @@ double starling_continuous_variant_caller::strand_bias(
     return std::max(fwd, rev) - both;
 }
 
-void starling_continuous_variant_caller::position_snp_call_continuous(
+void
+starling_continuous_variant_caller::
+position_snp_call_continuous(
     const starling_base_options& opt,
     const snp_pos_info& good_pi,
-    GermlineContinuousSiteLocusInfo& info)
+    GermlineContinuousSiteLocusInfo& locusInfo)
 {
-    unsigned totalDepth = info.spanning_deletions;
-    for (unsigned base_id(0); base_id<N_BASE; ++base_id)
+    unsigned totalDepth = locusInfo.spanning_deletions;
+    for (unsigned base_id(0); base_id < N_BASE; ++base_id)
     {
-        totalDepth += info.alleleObservationCounts(base_id);
+        totalDepth += locusInfo.alleleObservationCounts(base_id);
     }
-    uint8_t ref_base_id = base_to_id(info.ref);
+    uint8_t ref_base_id = base_to_id(locusInfo.ref);
 
-    auto generateCallInfo = [&](uint8_t base_id, bool force)
-    {
-        auto vf = info.alleleObservationCounts(base_id) / (double)totalDepth;
-        if (vf > opt.min_het_vf || force)
+    auto generateAlleleInfo = [&](uint8_t base_id, bool isForcedOutput) {
+        bool isOutputAllele(false);
+        GermlineContinuousSiteAlleleInfo allele(totalDepth, locusInfo.alleleObservationCounts(base_id),
+                                                (BASE_ID::index_t) base_id);
+
+        const unsigned sampleCount(locusInfo.getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
-            GermlineContinuousSiteAlleleInfo call(totalDepth, info.alleleObservationCounts(base_id), (BASE_ID::index_t)base_id);
-            call.gqx = call.gq = poisson_qscore(info.alleleObservationCounts(base_id), totalDepth, (unsigned)opt.min_qscore, 40);
-
-            if (ref_base_id != base_id)
+            auto& sampleInfo(locusInfo.getSample(sampleIndex));
+            const double vf = safeFrac(locusInfo.alleleObservationCounts(base_id), totalDepth);
+            if (vf > opt.min_het_vf || isForcedOutput)
             {
-                // flag the whole site as a SNP if any call above the VF threshold is non-ref
-                info._is_snp = info._is_snp  || vf > opt.min_het_vf;
-                unsigned int fwdAlt = 0;
-                unsigned  revAlt = 0;
-                unsigned  fwdOther = 0;
-                unsigned  revOther = 0;
-                for (const base_call& bc : good_pi.calls)
-                {
-                    if (bc.is_fwd_strand)
-                    {
-                        if (bc.base_id == base_id)
-                            fwdAlt++;
-                        else
-                            fwdOther++;
-                    }
-                    else if (bc.base_id == base_id)
-                        revAlt++;
-                    else
-                        revOther++;
-                }
+                allele.gqx = sampleInfo.gq = poisson_qscore(locusInfo.alleleObservationCounts(base_id), totalDepth,
+                                                            (unsigned) opt.min_qscore, 40);
 
-                call.strand_bias = strand_bias(fwdAlt, revAlt, fwdOther, revOther, opt.noise_floor);
+                if (ref_base_id != base_id)
+                {
+                    // flag the whole site as a SNP if any call above the VF threshold is non-ref
+                    locusInfo._is_snp = locusInfo._is_snp || vf > opt.min_het_vf;
+                    unsigned int fwdAlt = 0;
+                    unsigned revAlt = 0;
+                    unsigned fwdOther = 0;
+                    unsigned revOther = 0;
+                    for (const base_call& bc : good_pi.calls)
+                    {
+                        if (bc.is_fwd_strand)
+                        {
+                            if (bc.base_id == base_id)
+                                fwdAlt++;
+                            else
+                                fwdOther++;
+                        }
+                        else if (bc.base_id == base_id)
+                            revAlt++;
+                        else
+                            revOther++;
+                    }
+
+                    allele.strand_bias = strand_bias(fwdAlt, revAlt, fwdOther, revOther, opt.noise_floor);
+                }
+                isOutputAllele = true;
             }
-            info.altAlleles.push_back(call);
+            if (isOutputAllele) locusInfo.altAlleles.push_back(allele);
         }
     };
 
 
-    for (unsigned base_id(0); base_id<N_BASE; ++base_id)
+    for (unsigned base_id(0); base_id < N_BASE; ++base_id)
     {
-        generateCallInfo(base_id, info.isForcedOutput);
+        generateAlleleInfo(base_id, locusInfo.isForcedOutput);
     }
-    if (info.altAlleles.empty())
+    if (locusInfo.altAlleles.empty())
     {
         // force at least a call for the reference so that we can assign filters to the locus (filters are in the calls)
-        generateCallInfo(ref_base_id, true);
+        generateAlleleInfo(ref_base_id, true);
+    }
+
+    // get the qual score:
+    locusInfo.anyVariantAlleleQuality = 0;
+    const unsigned sampleCount(locusInfo.getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+    {
+        auto& sampleInfo(locusInfo.getSample(sampleIndex));
+        locusInfo.anyVariantAlleleQuality = std::max(locusInfo.anyVariantAlleleQuality, sampleInfo.gq);
     }
 }
-
 
 
 void starling_continuous_variant_caller::add_indel_call(
@@ -141,21 +160,38 @@ void starling_continuous_variant_caller::add_indel_call(
     const IndelData& indelData,
     const starling_indel_report_info& indelReportInfo,
     const starling_indel_sample_report_info& indelSampleReportInfo,
-    GermlineContinuousIndelLocusInfo& info)
+    GermlineContinuousIndelLocusInfo& locusInfo)
 {
     // determine VF
     double vf = indelSampleReportInfo.n_confident_indel_reads / ((double)indelSampleReportInfo.total_confident_reads());
     if (vf > opt.min_het_vf || indelData.isForcedOutput)
     {
-        info.altAlleles.emplace_back(
+        locusInfo.altAlleles.emplace_back(
             indelSampleReportInfo.total_confident_reads(), indelSampleReportInfo.n_confident_indel_reads,
             indelKey, indelData, indelReportInfo, indelSampleReportInfo);
-        GermlineContinuousIndelAlleleInfo& call = info.altAlleles.back();
-        call.gqx = call.gq = poisson_qscore(indelSampleReportInfo.n_confident_indel_reads, indelSampleReportInfo.total_confident_reads(), (unsigned)opt.min_qscore, 40);
+        GermlineContinuousIndelAlleleInfo& allele = locusInfo.altAlleles.back();
+        const unsigned sampleCount(locusInfo.getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        {
+            auto& sampleInfo(locusInfo.getSample(sampleIndex));
+
+            allele.gqx = sampleInfo.gq = poisson_qscore(indelSampleReportInfo.n_confident_indel_reads,
+                                                    indelSampleReportInfo.total_confident_reads(),
+                                                    (unsigned) opt.min_qscore, 40);
+        }
     }
-    if (!info.altAlleles.empty())
+    if (!locusInfo.altAlleles.empty())
     {
-        info.is_het = info.altAlleles.size() > 1 || info.altAlleles.front().variant_frequency() < (1-opt.min_het_vf);
+        locusInfo.is_het = locusInfo.altAlleles.size() > 1 || locusInfo.altAlleles.front().variant_frequency() < (1-opt.min_het_vf);
+    }
+
+    // get the qual score:
+    locusInfo.anyVariantAlleleQuality = 0;
+    const unsigned sampleCount(locusInfo.getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    {
+        auto& sampleInfo(locusInfo.getSample(sampleIndex));
+        locusInfo.anyVariantAlleleQuality = std::max(locusInfo.anyVariantAlleleQuality,sampleInfo.gq);
     }
 }
 

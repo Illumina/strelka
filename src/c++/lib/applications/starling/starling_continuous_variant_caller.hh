@@ -35,7 +35,7 @@ struct starling_continuous_variant_caller
     static void position_snp_call_continuous(
         const starling_base_options& opt,
         const snp_pos_info& good_pi,
-        GermlineContinuousSiteLocusInfo& info);
+        GermlineContinuousSiteLocusInfo& locusInfo);
 
     static void add_indel_call(
         const starling_base_options& opt,
@@ -43,7 +43,7 @@ struct starling_continuous_variant_caller
         const IndelData& indelData,
         const starling_indel_report_info& indelReportInfo,
         const starling_indel_sample_report_info& indelSampleReportInfo,
-        GermlineContinuousIndelLocusInfo& info);
+        GermlineContinuousIndelLocusInfo& locusInfo);
 
     static double strand_bias(unsigned fwdAlt, unsigned revAlt, unsigned fwdOther, unsigned revOther, double noise);
 };

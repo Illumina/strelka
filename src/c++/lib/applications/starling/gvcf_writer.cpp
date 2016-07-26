@@ -426,92 +426,104 @@ write_site_record(
     {
         os << ":AD:ADF:ADR";
     }
+    os << ":FT";
     if (is_print_pl)
     {
         os << ":PL";
     }
-    os << '\t';
 
     //SAMPLE
-    os << si.get_gt() << ':';
-    if (si.dgt.is_snp)
+    const unsigned sampleCount(si.getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        os << si.allele.gq << ':';
-    }
-    if (si.allele.is_gqx())
-    {
-        if (si.empiricalVariantScore>=0)
-        {
-            os << si.empiricalVariantScore;
-        }
-        else
-        {
-            os << si.allele.gqx;
-        }
-    }
-    else
-    {
-        os << '.';
-    }
-    os << ':';
-    //print DP:DPF
-    os << si.n_used_calls << ':'
-       << si.n_unused_calls;
+        const auto& sampleInfo(si.getSample(sampleIndex));
 
-    if (isNoAlt)
-    {
-        // pass
-    }
-    else if (si.allele.is_phased_region)
-    {
-        os << ':' << si.phased_AD
-           << ':' << si.phased_ADF
-           << ':' << si.phased_ADR;
-    }
-    else
-    {
-        os << ':';
-        print_site_ad(si, altOrder, os);
-        os << ':';
-        print_site_ad_strand(si, altOrder, true, os);
-        os << ':';
-        print_site_ad_strand(si, altOrder, false, os);
-    }
+        os << '\t';
 
-    if (is_print_pl)
-    {
-        // print PL values
-        os << ':';
-        if (si.is_hetalt())
+        os << si.get_gt() << ':';
+        if (si.dgt.is_snp)
         {
-            const unsigned print_gt(si.allele.max_gt);
-            const uint8_t a0(DIGT::get_allele(print_gt,0));
-            const uint8_t a1(DIGT::get_allele(print_gt,1));
-            os << si.dgt.phredLoghood[si.dgt.ref_gt] << ','
-               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(si.dgt.ref_gt,a0)] << ','
-               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0,a0)] << ','
-               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(si.dgt.ref_gt,a1)] << ','
-               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0,a1)] << ','
-               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a1,a1)];
+            os << sampleInfo.gq << ':';
         }
-        else if (si.dgt.is_haploid() || (si.allele.modified_gt == MODIFIED_SITE_GT::ONE))
+        if (si.allele.is_gqx())
         {
-            os << si.dgt.phredLoghood[si.dgt.ref_gt] << ','
-               << si.dgt.phredLoghood[si.allele.max_gt];
-        }
-        else
-        {
-            const unsigned print_gt(si.allele.max_gt);
-            const uint8_t a0(DIGT::get_allele(print_gt,0));
-            const uint8_t a1(DIGT::get_allele(print_gt,1));
-            uint8_t alt(a0);
-            if (si.dgt.ref_gt == a0)
+            if (si.empiricalVariantScore >= 0)
             {
-                alt = a1;
+                os << si.empiricalVariantScore;
             }
-            os << si.dgt.phredLoghood[si.dgt.ref_gt] << ','
-               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(si.dgt.ref_gt,alt)] << ','
-               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(alt,alt)];
+            else
+            {
+                os << si.allele.gqx;
+            }
+        }
+        else
+        {
+            os << '.';
+        }
+        os << ':';
+        //print DP:DPF
+        os << si.n_used_calls << ':'
+           << si.n_unused_calls;
+
+        if (isNoAlt)
+        {
+            // pass
+        }
+        else if (si.allele.is_phased_region)
+        {
+            os << ':' << si.phased_AD
+               << ':' << si.phased_ADF
+               << ':' << si.phased_ADR;
+        }
+        else
+        {
+            os << ':';
+            print_site_ad(si, altOrder, os);
+            os << ':';
+            print_site_ad_strand(si, altOrder, true, os);
+            os << ':';
+            print_site_ad_strand(si, altOrder, false, os);
+        }
+
+        // FT
+        os << ':';
+        sampleInfo.filters.write(os);
+
+        if (is_print_pl)
+        {
+            // print PL values
+            os << ':';
+            if (si.is_hetalt())
+            {
+                const unsigned print_gt(si.allele.max_gt);
+                const uint8_t a0(DIGT::get_allele(print_gt, 0));
+                const uint8_t a1(DIGT::get_allele(print_gt, 1));
+                os << si.dgt.phredLoghood[si.dgt.ref_gt] << ','
+                   << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(si.dgt.ref_gt, a0)] << ','
+                   << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0, a0)] << ','
+                   << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(si.dgt.ref_gt, a1)] << ','
+                   << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0, a1)] << ','
+                   << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a1, a1)];
+            }
+            else if (si.dgt.is_haploid() || (si.allele.modified_gt == MODIFIED_SITE_GT::ONE))
+            {
+                os << si.dgt.phredLoghood[si.dgt.ref_gt] << ','
+                   << si.dgt.phredLoghood[si.allele.max_gt];
+            }
+            else
+            {
+                const unsigned print_gt(si.allele.max_gt);
+                const uint8_t a0(DIGT::get_allele(print_gt, 0));
+                const uint8_t a1(DIGT::get_allele(print_gt, 1));
+                uint8_t alt(a0);
+                if (si.dgt.ref_gt == a0)
+                {
+                    alt = a1;
+                }
+                os << si.dgt.phredLoghood[si.dgt.ref_gt] << ','
+                   << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(si.dgt.ref_gt, alt)] << ','
+                   << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(alt, alt)];
+            }
         }
     }
 
@@ -528,13 +540,13 @@ write_site_record(
     bool site_is_nonref = si.is_nonref();
     auto ref_base_id = base_to_id(si.ref);
 
-    for (auto& call : si.altAlleles)
+    for (auto& allele : si.altAlleles)
     {
         std::vector<uint8_t> altOrder;
-        const bool is_no_alt(call._base == ref_base_id);
+        const bool is_no_alt(allele._base == ref_base_id);
         if (! is_no_alt)
         {
-            altOrder.push_back(call._base);
+            altOrder.push_back(allele._base);
         }
 
         // do not output the call for reference if the site has variants unless it is forced output
@@ -549,17 +561,17 @@ write_site_record(
 
         os  << si.ref << '\t'; // REF
 
-        std::string gt(si.get_gt(call));
+        std::string gt(si.get_gt(allele));
 
         // ALT
         if (is_no_alt)
             os << ".";
         else
-            os << id_to_base(call._base);
+            os << id_to_base(allele._base);
         os << '\t';
 
-        // QUAL: TODO - need separate calc?
-        os << call.gq << '\t';
+        // QUAL:
+        os << si.anyVariantAlleleQuality << '\t';
 
         // FILTER:
         si.filters.write(os);
@@ -573,7 +585,7 @@ write_site_record(
             info << "SNVSB=";
             {
                 const StreamScoper ss(info);
-                info << std::fixed << std::setprecision(1) << call.strand_bias;
+                info << std::fixed << std::setprecision(1) << allele.strand_bias;
             }
             info << ';';
             info << "SNVHPOL=" << si.hpol;
@@ -600,31 +612,43 @@ write_site_record(
         {
             os << ":AD:ADF:ADR";
         }
-        os << ":VF";
-
-        os << '\t';
+        os << "FT:VF";
 
         //SAMPLE
-        os << gt
-           << ':' << call.gq
-           << ':' << call.gqx;
-
-        // DP:DPF
-        os << ':' << si.n_used_calls << ':' << si.n_unused_calls;
-
-        if (!is_no_alt)
+        const unsigned sampleCount(si.getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
-            os << ':';
-            print_site_ad(si, altOrder, os);
-            os << ':';
-            print_site_ad_strand(si, altOrder, true, os);
-            os << ':';
-            print_site_ad_strand(si, altOrder, false, os);
-        }
+            const auto& sampleInfo(si.getSample(sampleIndex));
 
-        {
-            const StreamScoper ss(os);
-            os << ':' << std::fixed << std::setprecision(3) << call.variant_frequency();
+            os << '\t';
+
+            //SAMPLE
+            os << gt
+               << ':' << sampleInfo.gq
+               << ':' << allele.gqx;
+
+            // DP:DPF
+            os << ':' << si.n_used_calls << ':' << si.n_unused_calls;
+
+            if (!is_no_alt)
+            {
+                os << ':';
+                print_site_ad(si, altOrder, os);
+                os << ':';
+                print_site_ad_strand(si, altOrder, true, os);
+                os << ':';
+                print_site_ad_strand(si, altOrder, false, os);
+            }
+
+            // FT
+            os << ':';
+            sampleInfo.filters.write(os);
+
+            // VF
+            {
+                const StreamScoper ss(os);
+                os << ':' << std::fixed << std::setprecision(3) << allele.variant_frequency();
+            }
         }
         os << '\n';
     }
@@ -699,12 +723,12 @@ write_indel_record(
     const GermlineDiploidIndelLocusInfo& ii) const
 {
     std::ostream& os(*_osptr);
-    auto& call(ii.getFirstAltAllele());
+    const auto& firstAllele(ii.getFirstAltAllele());
 
     os << _chrom << '\t'   // CHROM
        << ii.pos << '\t'   // POS
        << ".\t"            // ID
-       << call._indelReportInfo.vcf_ref_seq << '\t'; // REF
+       << firstAllele._indelReportInfo.vcf_ref_seq << '\t'; // REF
 
     // ALT
 
@@ -715,7 +739,7 @@ write_indel_record(
     }
     os << '\t';
 
-    os << call._dindel.indel_qphred << '\t'; //QUAL
+    os << firstAllele._dindel.indel_qphred << '\t'; //QUAL
 
     // FILTER:
     ii.filters.write(os);
@@ -805,11 +829,11 @@ write_indel_record(
         os << '\t';
 
         os << ii.get_gt() << ':'
-           << call.gq;
+           << sampleInfo.gq;
 
-        os << ':' << ((ii.empiricalVariantScore >= 0) ? ii.empiricalVariantScore : call.gqx);
+        os << ':' << ((ii.empiricalVariantScore >= 0) ? ii.empiricalVariantScore : firstAllele.gqx);
 
-        os << ':' << call._indelSampleReportInfo.tier1Depth;
+        os << ':' << firstAllele._indelSampleReportInfo.tier1Depth;
 
         // SAMPLE AD/ADF/ADR:
         {
@@ -909,18 +933,18 @@ write_indel_record(
 {
     std::ostream& os(*_osptr);
 
-    for (auto& call : ii.altAlleles)
+    for (auto& allele : ii.altAlleles)
     {
         os << _chrom << '\t'   // CHROM
            << ii.pos << '\t'   // POS
            << ".\t"            // ID
-           << call._indelReportInfo.vcf_ref_seq << '\t'; // REF
+           << allele._indelReportInfo.vcf_ref_seq << '\t'; // REF
 
         // ALT
-        os << call._indelReportInfo.vcf_indel_seq;
+        os << allele._indelReportInfo.vcf_indel_seq;
         os << '\t';
 
-        os << call.gq << '\t'; //QUAL
+        os << ii.anyVariantAlleleQuality << '\t'; //QUAL
 
         // FILTER:
         ii.filters.write(os);
@@ -928,12 +952,12 @@ write_indel_record(
 
         // INFO
         os << "CIGAR=";
-        os << call.cigar;
+        os << allele.cigar;
         os << ';';
         os << "RU=";
-        if (call._indelReportInfo.is_repeat_unit() && call._indelReportInfo.repeat_unit.size() <= 20)
+        if (allele._indelReportInfo.is_repeat_unit() && allele._indelReportInfo.repeat_unit.size() <= 20)
         {
-            os << call._indelReportInfo.repeat_unit;
+            os << allele._indelReportInfo.repeat_unit;
         }
         else
         {
@@ -941,48 +965,57 @@ write_indel_record(
         }
         os << ';';
         os << "REFREP=";
-        if (call._indelReportInfo.is_repeat_unit())
+        if (allele._indelReportInfo.is_repeat_unit())
         {
-            os << call._indelReportInfo.ref_repeat_count;
+            os << allele._indelReportInfo.ref_repeat_count;
         }
 
         os << ';';
         os << "IDREP=";
-        if (call._indelReportInfo.is_repeat_unit())
+        if (allele._indelReportInfo.is_repeat_unit())
         {
-            os << call._indelReportInfo.indel_repeat_count;
+            os << allele._indelReportInfo.indel_repeat_count;
         }
 
 
         os << '\t';
 
         //FORMAT
-        os << "GT:GQ:GQX:DPI:AD:ADF:ADR:VF" << '\t';
+        os << "GT:GQ:GQX:DPI:AD:ADF:ADR:VF";
 
         //SAMPLE
-        os << ii.get_gt() << ':'
-           << call.gq;
-
-        os << ':' << call.gqx;
-
-        os << ':' << call._indelSampleReportInfo.tier1Depth;
-
-        // AD:
-        os << ':' << call._indelSampleReportInfo.n_confident_ref_reads
-           << ',' << call._indelSampleReportInfo.n_confident_indel_reads;
-
-        // ADF
-        os << ':' << call._indelSampleReportInfo.n_confident_ref_reads_fwd
-           << ',' << call._indelSampleReportInfo.n_confident_indel_reads_fwd;
-
-        // ADR
-        os << ':' << call._indelSampleReportInfo.n_confident_ref_reads_rev
-           << ',' << call._indelSampleReportInfo.n_confident_indel_reads_rev;
-
-        // VF
+        const unsigned sampleCount(ii.getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
-            const StreamScoper ss(os);
-            os << ':' << std::setprecision(3) << call.variant_frequency();
+            const auto& sampleInfo(ii.getSample(sampleIndex));
+
+            os << '\t';
+
+            //SAMPLE
+            os << ii.get_gt() << ':'
+               << sampleInfo.gq;
+
+            os << ':' << allele.gqx;
+
+            os << ':' << allele._indelSampleReportInfo.tier1Depth;
+
+            // AD:
+            os << ':' << allele._indelSampleReportInfo.n_confident_ref_reads
+               << ',' << allele._indelSampleReportInfo.n_confident_indel_reads;
+
+            // ADF
+            os << ':' << allele._indelSampleReportInfo.n_confident_ref_reads_fwd
+               << ',' << allele._indelSampleReportInfo.n_confident_indel_reads_fwd;
+
+            // ADR
+            os << ':' << allele._indelSampleReportInfo.n_confident_ref_reads_rev
+               << ',' << allele._indelSampleReportInfo.n_confident_indel_reads_rev;
+
+            // VF
+            {
+                const StreamScoper ss(os);
+                os << ':' << std::setprecision(3) << allele.variant_frequency();
+            }
         }
         os << '\n';
     }

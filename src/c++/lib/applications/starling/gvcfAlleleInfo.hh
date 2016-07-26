@@ -57,13 +57,11 @@ struct GermlineVariantAlleleInfo : public PolymorphicObject
     clear()
     {
         gqx = 0;
-        gq = 0;
         strand_bias = 0;
         isForcedOutput = false;
     }
 
     int gqx=0;
-    int gq=0;
     double strand_bias = 0;
 
     bool isForcedOutput = false;

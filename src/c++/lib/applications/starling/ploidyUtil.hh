@@ -81,21 +81,3 @@ private:
 
 std::ostream&
 operator<<(std::ostream& os, const SamplePloidyState& sps);
-
-
-
-inline
-std::ostream&
-operator<<(std::ostream& os, const SamplePloidyState& sps)
-{
-    if (sps.isContinuous())
-    {
-        os << "continuous";
-    }
-    else
-    {
-        os << sps.getPloidy();
-    }
-    return os;
-}
-

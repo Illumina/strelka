@@ -161,10 +161,12 @@ struct LocusSampleInfo
     clear()
     {
         ploidy.reset();
+        gq = 0;
         filters.clear();
     }
 
     SamplePloidyState ploidy;
+    int gq=0;
     GermlineFilterKeeper filters; ///< only for sample-specific filters
 };
 
@@ -185,6 +187,7 @@ struct LocusInfo : public PolymorphicObject
     clear()
     {
         pos = 0;
+        anyVariantAlleleQuality = 0;
         empiricalVariantScore = -1;
         filters.clear();
         for (auto& sample : _sampleInfo)
@@ -213,6 +216,9 @@ struct LocusInfo : public PolymorphicObject
 
     /// zero-index position of the locus, alleles may not all start here:
     pos_t pos = 0;
+
+    /// prob that there is a variant segregating at this sample (VCF calls this QUAL)
+    int anyVariantAlleleQuality = 0;
 
     /// The empirically calibrated quality-score of the locus, if -1 no locus EVS is available
     int empiricalVariantScore = -1;
