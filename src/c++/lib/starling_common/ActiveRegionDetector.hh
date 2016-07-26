@@ -49,7 +49,7 @@ public:
     static const int ScoreOpen = -5;
     static const int ScoreExtend = -1;
     static const int ScoreOffEdge = -100;
-
+    const float MinDepthCandidateVariantPos = 0.2;
 
     ActiveRegionDetector(
         const reference_contig_segment& ref,
@@ -162,6 +162,12 @@ private:
         int index = pos % MaxBufferSize;
         if (_positionToAlignIds[index].empty() || _positionToAlignIds[index].back() != alignId)
             _positionToAlignIds[index].push_back(alignId);
+    }
+
+    inline int getDepth(const pos_t pos) const
+    {
+        int index = pos % MaxBufferSize;
+        return (int)_positionToAlignIds[index].size();
     }
 
     inline const std::vector<align_id_t>& getPositionToAlignIds(const pos_t pos) const

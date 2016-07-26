@@ -93,7 +93,8 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
 {
     bool isCurrentPosCandidateVariant = isCandidateVariant(pos);
 
-    if ((pos - _activeRegionStartPos  >= (int)_maxDetectionWindowSize && pos - _prevVariantPos > 1) || (pos - _prevVariantPos > MaxDistanceBetweenTwoVariants) || isLastPos)
+    if ((pos - _activeRegionStartPos  >= (int)_maxDetectionWindowSize && pos - _prevVariantPos > 1)
+        || (pos - _prevVariantPos > MaxDistanceBetweenTwoVariants) || isLastPos)
     {
         // this position doesn't extend the existing active region
         if (_numVariants >= _minNumVariantsPerRegion)
@@ -107,7 +108,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
             std::string refStr = "";
             _ref.get_substring(_activeRegionStartPos, _prevVariantPos - _activeRegionStartPos + 1, refStr);
             _activeRegions.emplace_back(_activeRegionStartPos, _prevVariantPos, refStr, _aligner, _alignIdToAlignInfo);
-//            std::cout << _activeRegionStartPos+1 << '\t' << _prevVariantPos+1 << '\t' << refStr << std::endl;
+//            std::cout << '>' << _activeRegionStartPos+1 << '\t' << _prevVariantPos+1 << '\t' << refStr << std::endl;
             ActiveRegion& activeRegion(_activeRegions.back());
             // add haplotype bases
             for (pos_t activeRegionPos(_activeRegionStartPos); activeRegionPos<=_prevVariantPos; ++activeRegionPos)
@@ -198,31 +199,11 @@ void ActiveRegionDetector::setHaplotypeBase(const align_id_t id, const pos_t pos
     }
 }
 
-//void ActiveRegionDetector::setHaplotypeBaseSnv(const align_id_t id, const pos_t pos, char baseChar)
-//{
-//    std::string baseStr;
-//    switch (baseChar)
-//    {
-//    case 'A':
-//        baseStr = strA;
-//        break;
-//    case 'C':
-//        baseStr = strC;
-//        break;
-//    case 'G':
-//        baseStr = strG;
-//        break;
-//    case 'T':
-//        baseStr = strT;
-//        break;
-//    }
-//    _haplotypeBase[id % MaxDepth][pos % MaxBufferSize] = baseStr;
-//}
-
 bool
 ActiveRegionDetector::isCandidateVariant(const pos_t pos) const
 {
-    return getCount(pos) >= _minNumMismatchesPerPosition;
+    auto count = getCount(pos);
+    return count >= _minNumMismatchesPerPosition && count >= (MinDepthCandidateVariantPos*getDepth(pos));
 }
 
 bool ActiveRegionDetector::isPolymorphicSite(const pos_t pos) const

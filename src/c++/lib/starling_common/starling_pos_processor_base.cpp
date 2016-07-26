@@ -701,7 +701,7 @@ init_read_segment(
     {
         const unsigned total_indel_ref_span_per_read =
             add_alignment_indels_to_sppr(_opt.max_indel_size,_ref,
-                                         al,bseq,*this,iat,rseg.id(),sampleIndex,rseg.get_segment_edge_pin(), rseg.map_qual() < _opt.min_mapping_quality);
+                                         al,bseq,*this,iat,rseg.id(),sampleIndex,rseg.get_segment_edge_pin(), rseg.map_qual() == 0);
 
         update_largest_total_indel_ref_span_per_read(total_indel_ref_span_per_read);
     }

@@ -97,6 +97,7 @@ void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySit
         auto numReads = alignIdList.size();
         if (numReads >= thirdLargestCount && haplotype != _refSeq)
         {
+//            std::cout << haplotype << '\t' << numReads << std::endl;
             convertToPrimitiveAlleles(haplotype, alignIdList, numReads >= totalCount*HaplotypeFrequencyThreshold,
                                       indelBuffer, polySites);
         }
