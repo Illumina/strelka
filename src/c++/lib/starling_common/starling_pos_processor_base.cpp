@@ -701,7 +701,7 @@ init_read_segment(
     {
         const unsigned total_indel_ref_span_per_read =
             add_alignment_indels_to_sppr(_opt.max_indel_size,_ref,
-                                         al,bseq,*this,iat,rseg.id(),sampleIndex,rseg.get_segment_edge_pin(), rseg.map_qual() == 0);
+                                         al,bseq,*this,iat,rseg.id(),sampleIndex,rseg.get_segment_edge_pin(), rseg.map_qual() < _opt.min_mapping_quality);
 
         update_largest_total_indel_ref_span_per_read(total_indel_ref_span_per_read);
     }
@@ -859,8 +859,7 @@ process_pos(const int stage_no,
         init_read_segment_pos(pos);
         if (is_active_region_detector_enabled())
         {
-            _active_region_detector.updateEndPosition(pos);
-
+            _active_region_detector.updateEndPosition(pos, pos == (_dopt.report_range.end_pos-1));
         }
 
         if (_opt.is_write_candidate_indels())
@@ -882,6 +881,7 @@ process_pos(const int stage_no,
         }
 #endif
         //        consolidate_candidate_indel_pos(pos);
+
         if (! _opt.is_write_candidate_indels_only)
         {
             //        clean_pos(pos);

@@ -40,6 +40,8 @@ class ActiveRegionDetector
 public:
     static const unsigned MaxBufferSize = 1000;
     static const unsigned MaxDepth = ActiveRegion::MaxDepth;
+    static const int IndelWeight = 4;
+    static const int MaxDistanceBetweenTwoVariants = 14;
 
     // alignment scores, same as bwa default values
     static const int ScoreMatch = 1;
@@ -79,9 +81,8 @@ public:
     void insertMatch(const align_id_t alignId, const pos_t pos);
     void insertMismatch(const align_id_t alignId, const pos_t pos, const char baseChar);
     void insertIndel(const unsigned sampleId, const IndelObservation& indelObservation);
-//    void insertSoftClipStart(const pos_t pos);
     void updateStartPosition(const pos_t pos);
-    void updateEndPosition(const pos_t pos);
+    void updateEndPosition(const pos_t pos, const bool isLastPos);
 
     inline void setAlignInfo(const align_id_t alignId, unsigned sampleId, INDEL_ALIGN_TYPE::index_t indelAlignType)
     {
@@ -177,6 +178,7 @@ private:
     inline void clearPos(pos_t pos)
     {
         _positionToAlignIds[pos % MaxBufferSize].clear();
+        resetCounter(pos);
     }
 };
 

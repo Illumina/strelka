@@ -38,17 +38,10 @@ ActiveRegionDetector::insertMismatch(const align_id_t alignId, const pos_t pos, 
     addAlignIdToPos(alignId, pos);
 }
 
-//void
-//ActiveRegionDetector::insertSoftClipStart(const pos_t pos)
-//{
-//    addCount(pos, 1);
-//}
-
 void
 ActiveRegionDetector::insertIndel(const unsigned sampleId, const IndelObservation& indelObservation)
 {
     auto pos = indelObservation.key.pos;
-    const int indelCount = 4;
 
     auto alignId = indelObservation.data.id;
     auto indelKey = indelObservation.key;
@@ -56,8 +49,8 @@ ActiveRegionDetector::insertIndel(const unsigned sampleId, const IndelObservatio
     {
         if (indelKey.isPrimitiveInsertionAllele())
         {
-            addCount(pos - 1, indelCount);
-            addCount(pos, indelCount);
+            addCount(pos - 1, IndelWeight);
+            addCount(pos, IndelWeight);
             setInsert(alignId, pos - 1, indelObservation.key.insert_seq());
             addAlignIdToPos(alignId, pos - 1);
         }
@@ -66,11 +59,11 @@ ActiveRegionDetector::insertIndel(const unsigned sampleId, const IndelObservatio
             unsigned length = indelObservation.key.deletionLength;
             for (unsigned i(0); i<length; ++i)
             {
-                addCount(pos + i, indelCount);
+                addCount(pos + i, IndelWeight);
                 setDelete(alignId, pos + i);
                 addAlignIdToPos(alignId, pos + i);
             }
-            addCount(pos - 1, indelCount);
+            addCount(pos - 1, IndelWeight);
         }
         else
         {
@@ -83,8 +76,6 @@ ActiveRegionDetector::insertIndel(const unsigned sampleId, const IndelObservatio
 void
 ActiveRegionDetector::updateStartPosition(const pos_t pos)
 {
-    for (int i(_bufferStartPos); i<pos; ++i) resetCounter(i);
-
     _bufferStartPos = pos;
 
     if (_activeRegions.empty()) return;
@@ -98,14 +89,20 @@ ActiveRegionDetector::updateStartPosition(const pos_t pos)
 }
 
 void
-ActiveRegionDetector::updateEndPosition(const pos_t pos)
+ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
 {
     bool isCurrentPosCandidateVariant = isCandidateVariant(pos);
-    if ((pos - _activeRegionStartPos  >= (int)_maxDetectionWindowSize && pos - _prevVariantPos > 1) || (pos - _prevVariantPos >= 15))
+
+    if ((pos - _activeRegionStartPos  >= (int)_maxDetectionWindowSize && pos - _prevVariantPos > 1) || (pos - _prevVariantPos > MaxDistanceBetweenTwoVariants) || isLastPos)
     {
         // this position doesn't extend the existing active region
         if (_numVariants >= _minNumVariantsPerRegion)
         {
+            if (isLastPos && isCurrentPosCandidateVariant)
+            {
+                _prevVariantPos = pos;
+            }
+
             // close existing active region
             std::string refStr = "";
             _ref.get_substring(_activeRegionStartPos, _prevVariantPos - _activeRegionStartPos + 1, refStr);
