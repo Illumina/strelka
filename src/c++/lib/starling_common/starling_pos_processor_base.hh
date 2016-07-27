@@ -559,8 +559,11 @@ protected:
     }
 
     unsigned
-    get_ploidy(const pos_t pos) const
+    get_ploidy(
+        const pos_t pos,
+        const unsigned /*sampleIndex*/) const
     {
+        ///TODO STREL-125 complete sample dependent ploidy logic
         const auto val(_ploidy_regions.isIntersectRegion(pos));
         return (val ? *val : 2u);
     }

@@ -181,6 +181,10 @@ getVariantAlleleGroupGenotypeLhoods(
     std::fill(logLhood,logLhood+gtCount,0.);
     const bool is3AlleleModel(fullAlleleCount == 3);
 
+    // get patternRepeatCount, punt on figuring out how to do this for more than one alt allele
+    //
+    /// TODO set PatternRepeatCount for multiple alts
+    //
     unsigned patternRepeatCount(1);
     if (nonRefAlleleCount==1)
     {
@@ -192,6 +196,7 @@ getVariantAlleleGroupGenotypeLhoods(
         get_starling_indel_report_info(allele0Key, allele0Data, ref, indelReportInfo);
         patternRepeatCount=std::max(1u,indelReportInfo.ref_repeat_count);
     }
+
     const ContextGenotypePriors& genotypePriors(dopt.getIndelGenotypePriors().getContextSpecificPriorSet(patternRepeatCount));
 
     if (nonRefAlleleCount>0)

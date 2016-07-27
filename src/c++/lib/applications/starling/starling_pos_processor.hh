@@ -67,7 +67,7 @@ private:
     void
     process_pos_variants_impl(const pos_t pos) override
     {
-        process_pos_indel_single_sample(pos,0);
+        process_pos_indel(pos);
         process_pos_snp_single_sample(pos,0);
     }
 
@@ -79,7 +79,7 @@ private:
     void
     process_pos_snp_single_sample_impl(
         const pos_t pos,
-        const unsigned sample_no);
+        const unsigned sampleIndex);
 
     void
     process_pos_snp_single_sample_continuous(
@@ -87,14 +87,10 @@ private:
         const unsigned sample_no);
 
     void
-    process_pos_indel_single_sample(
-        const pos_t pos,
-        const unsigned sample_no);
+    process_pos_indel(const pos_t pos);
 
-    void process_pos_indel_single_sample_digt(
-        const pos_t pos,
-        const unsigned sampleId);
-    void process_pos_indel_single_sample_continuous(const pos_t pos);
+    void process_pos_indel_digt(const pos_t pos);
+    void process_pos_indel_continuous(const pos_t pos);
 
     void
     write_counts(const pos_range& output_report_range) const override;

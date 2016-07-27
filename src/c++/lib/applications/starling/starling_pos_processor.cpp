@@ -265,7 +265,7 @@ void
 starling_pos_processor::
 process_pos_snp_single_sample_impl(
     const pos_t pos,
-    const unsigned sample_no)
+    const unsigned sampleIndex)
 {
     // TODO:
     //
@@ -284,7 +284,7 @@ process_pos_snp_single_sample_impl(
     // }
     //
 
-    sample_info& sif(sample(sample_no));
+    sample_info& sif(sample(sampleIndex));
 
     const CleanedPileup& cpi(sif.cpi);
     const snp_pos_info& pi(cpi.rawPileup());
@@ -292,7 +292,7 @@ process_pos_snp_single_sample_impl(
     // note multi-sample status -- can still be called only for one sample
     // and only for sample 0. working on generalization:
     //
-    if (sample_no!=0) return;
+    if (sampleIndex!=0) return;
 
     const unsigned sampleCount(1);
 
@@ -324,7 +324,7 @@ process_pos_snp_single_sample_impl(
     //std::unique_ptr<nploid_genotype> ngt_ptr;
 
     // check whether we're in a haploid region:
-    si->dgt.ploidy=(get_ploidy(pos));
+    si->dgt.ploidy=(get_ploidy(pos, sampleIndex));
 
     const pos_t output_pos(pos+1);
 
@@ -370,7 +370,6 @@ process_pos_snp_single_sample_impl(
     }
 #endif
 
-    //    const bool is_snp(nrc.is_snp || lsc.is_snp || _site_info.dgt.is_snp || mgt.is_snp || (ngt_ptr.get() && ngt_ptr->is_snp));
     const bool is_snp(nrc.is_snp || si->dgt.is_snp);
 
     //    const bool is_nf_snp(is_snp && (! is_filter_snp));
@@ -467,17 +466,15 @@ process_pos_snp_single_sample_impl(
 
 void
 starling_pos_processor::
-process_pos_indel_single_sample(
-    const pos_t pos,
-    const unsigned sample_no)
+process_pos_indel(const pos_t pos)
 {
     if (_opt.is_bsnp_diploid())
     {
-        process_pos_indel_single_sample_digt(pos,sample_no);
+        process_pos_indel_digt(pos);
     }
     else
     {
-        process_pos_indel_single_sample_continuous(pos);
+        process_pos_indel_continuous(pos);
     }
 }
 
@@ -687,19 +684,13 @@ hackDiplotypeCallToCopyNumberCalls(
 
 void
 starling_pos_processor::
-process_pos_indel_single_sample_digt(
-    const pos_t pos,
-    const unsigned sampleId)
+process_pos_indel_digt(const pos_t pos)
 {
-    // note multi-sample status -- can still be called only for one sample
-    // and only for sample 0. working on generalization:
-    //
-    if (sampleId!=0) return;
-
     /// TODO remove this legacy option, germline calling is *always and only* gvcf output now:
     assert(_opt.gvcf.is_gvcf_output());
 
-    sample_info& sif(sample(sampleId));
+    const unsigned sampleCount(getSampleCount());
+
     auto it(getIndelBuffer().positionIterator(pos));
     const auto it_end(getIndelBuffer().positionIterator(pos + 1));
 
@@ -729,8 +720,16 @@ process_pos_indel_single_sample_digt(
         const bool isForcedOutput(indelData.isForcedOutput);
         if (not isForcedOutput)
         {
-            const IndelSampleData& indelSampleData(indelData.getSampleData(sampleId));
-            const bool isZeroCoverage(indelSampleData.read_path_lnp.empty());
+            bool isZeroCoverage(true);
+            for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+            {
+                const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
+                if (not indelSampleData.read_path_lnp.empty())
+                {
+                    isZeroCoverage = false;
+                    break;
+                }
+            }
 
             if (isZeroCoverage) continue;
             if (not getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
@@ -742,26 +741,36 @@ process_pos_indel_single_sample_digt(
 
     if (orthogonalVariantAlleles.empty()) return;
 
-    // determine ploidy for this locus
+    // determine ploidy for this locus in each sample
     //
-    // Assume entire allele group is covered by one ploidy type in nearly all cases,
-    // in case of a conflict use the highest ploidy overlapped by the group.
-    //
-    unsigned groupLocusPloidy(0);
+    std::vector<unsigned> groupLocusPloidy(sampleCount);
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
+        // Assume entire allele group is covered by one ploidy type per sample in nearly all cases,
+        // in case of a conflict use the highest ploidy overlapped by the group.
+        //
         const known_pos_range alleleGroupRange(orthogonalVariantAlleles.getReferenceRange());
-        const unsigned groupLeftPloidy(get_ploidy(alleleGroupRange.begin_pos));
-        const unsigned groupRightPloidy(get_ploidy(alleleGroupRange.end_pos));
+        const unsigned groupLeftPloidy(get_ploidy(alleleGroupRange.begin_pos, sampleIndex));
+        const unsigned groupRightPloidy(get_ploidy(alleleGroupRange.end_pos, sampleIndex));
 
-        groupLocusPloidy=std::max(groupLeftPloidy,groupRightPloidy);
+        groupLocusPloidy[sampleIndex]=std::max(groupLeftPloidy,groupRightPloidy);
     }
 
     // groupLocusPloidy of 0 is treated as a special case, if this happens the
-    // entire calling method reverts to a ploidy of 2, but the locus ploidy is
-    // passed into the gVCF writer as 0. The gVCF writer can decide what to do
-    // with this information from there.
+    // entire calling method reverts to a ploidy of 2 for the sample, but the
+    // locus ploidy is passed into the gVCF writer as 0. The gVCF writer can
+    // decide what to do with this information from there.
     //
-    const unsigned callerPloidy((groupLocusPloidy==0) ? 2 : groupLocusPloidy);
+    std::vector<unsigned> callerPloidy(sampleCount);
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+    {
+        callerPloidy[sampleIndex] = ((groupLocusPloidy[sampleIndex] == 0) ? 2 : groupLocusPloidy[sampleIndex]);
+    }
+
+    //   ************* end of sample generalization progress
+    assert(sampleCount==1);
+    const unsigned sampleIndex(0);
+    sample_info& sif(sample(sampleIndex));
 
     // add candidate alleles to topVariant group, then order (including reference) according to
     // read evidence and take the top N allele candidates, N = callerPloidy
@@ -783,16 +792,16 @@ process_pos_indel_single_sample_digt(
         }
 
         // rank and select top N alleles, N=callerPloidy
-        assert(callerPloidy>0);
-        selectTopOrthogonalAllelesInSample(sampleId, orthogonalVariantAlleles, callerPloidy, topVariantAlleleGroup);
+        assert(callerPloidy[sampleIndex]>0);
+        selectTopOrthogonalAllelesInSample(sampleIndex, orthogonalVariantAlleles, callerPloidy[sampleIndex], topVariantAlleleGroup);
     }
 
     // at this point topVariantAlleleGroup represents the best alleles at the current position, now we
     // add conflicting alleles at other positions and re-rank, re-select the top alleles again:
     if (not topVariantAlleleGroup.empty())
     {
-        addAllelesAtOtherPositions(pos, get_largest_total_indel_ref_span_per_read(), sampleId,
-                                   callerPloidy, getIndelBuffer(), topVariantAlleleGroup);
+        addAllelesAtOtherPositions(pos, get_largest_total_indel_ref_span_per_read(), sampleIndex,
+                                   callerPloidy[sampleIndex], getIndelBuffer(), topVariantAlleleGroup);
     }
 
     // genotype and report topVariantAlleleGroup
@@ -800,14 +809,14 @@ process_pos_indel_single_sample_digt(
     AlleleGroupGenotype locusGenotype;
     {
         // genotype the top N alleles
-        getVariantAlleleGroupGenotypeLhoods(_dopt, sif.sample_opt, _ref, callerPloidy,
-                                            sampleId, topVariantAlleleGroup, locusGenotype);
+        getVariantAlleleGroupGenotypeLhoods(_dopt, sif.sample_opt, _ref, callerPloidy[sampleIndex],
+                                            sampleIndex, topVariantAlleleGroup, locusGenotype);
 
         // coerce output into older data-structures for gVCF output
         static const bool isForcedOutput(false);
         hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, _ref, sif.bc_buff, pos,
                                            topVariantAlleleGroup, locusGenotype,
-                                           groupLocusPloidy, isForcedOutput, *_gvcfer);
+                                           groupLocusPloidy[sampleIndex], isForcedOutput, *_gvcfer);
     }
 
     // score and report any remaining forced output alleles
@@ -849,7 +858,7 @@ process_pos_indel_single_sample_digt(
         {
             AlleleGroupGenotype forcedAlleleLocusGenotype;
             getGenotypeLhoodsForForcedOutputAllele(_dopt, sif.sample_opt, _ref,
-                                                   callerPloidy, sampleId, topVariantAlleleGroup,
+                                                   callerPloidy[sampleIndex], sampleIndex, topVariantAlleleGroup,
                                                    forcedOutputAlleleGroup,
                                                    forcedOutputAlleleIndex, forcedAlleleLocusGenotype);
 
@@ -867,7 +876,7 @@ process_pos_indel_single_sample_digt(
             static const bool isForcedOutput(true);
             hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, _ref, sif.bc_buff,
                                                pos, fakeForcedOutputAlleleGroup,
-                                               forcedAlleleLocusGenotype, groupLocusPloidy, isForcedOutput,
+                                               forcedAlleleLocusGenotype, groupLocusPloidy[sampleIndex], isForcedOutput,
                                                *_gvcfer);
         }
     }
@@ -877,7 +886,7 @@ process_pos_indel_single_sample_digt(
 
 void
 starling_pos_processor::
-process_pos_indel_single_sample_continuous(const pos_t pos)
+process_pos_indel_continuous(const pos_t pos)
 {
     const unsigned sampleCount(getSampleCount());
 
@@ -887,6 +896,9 @@ process_pos_indel_single_sample_continuous(const pos_t pos)
     {
         const IndelKey& indelKey(it->first);
         const IndelData& indelData(getIndelData(it));
+
+        if (indelKey.is_breakpoint()) continue;
+
         const bool isForcedOutput(indelData.isForcedOutput);
 
         if (! isForcedOutput)
