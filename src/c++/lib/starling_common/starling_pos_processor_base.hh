@@ -104,8 +104,6 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
 
     // note that indel position should be normalized before calling:
     //
-    // returns true if this indel is novel to the buffer
-    //
     void
     insert_indel(const IndelObservation& obs,
                  const unsigned sampleId);

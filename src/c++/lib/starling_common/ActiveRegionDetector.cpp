@@ -93,17 +93,34 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
 {
     bool isCurrentPosCandidateVariant = isCandidateVariant(pos);
 
-    if ((pos - _activeRegionStartPos  >= (int)_maxDetectionWindowSize && pos - _prevVariantPos > 1)
-        || (pos - _prevVariantPos > MaxDistanceBetweenTwoVariants) || isLastPos)
+    // check if we can include this position in the existing acitive region
+    bool isSizeFit = (pos - _activeRegionStartPos) < (int)_maxDetectionWindowSize;
+    auto distanceFromPrevVariant = pos - _prevVariantPos;
+    bool isConsecutiveVariant = (distanceFromPrevVariant == 1); // size may exceed _maxDetectionWindowSize for consecutive variants
+    bool isNotFarFromPrevVariant = distanceFromPrevVariant <= MaxDistanceBetweenTwoVariants;
+
+    bool isExtensible = (isSizeFit || isConsecutiveVariant) && isNotFarFromPrevVariant;
+
+    if (isExtensible && !isLastPos)  // if pos is the last position, we cannot extend
     {
+        // this position extends the existing active region
+        if (isCurrentPosCandidateVariant)
+        {
+            ++_numVariants;
+            _prevVariantPos = pos;
+        }
+    }
+    else
+    {
+        if (isLastPos && isExtensible && isCurrentPosCandidateVariant)
+        {
+            ++_numVariants;
+            _prevVariantPos = pos;
+        }
+
         // this position doesn't extend the existing active region
         if (_numVariants >= _minNumVariantsPerRegion)
         {
-            if (isLastPos && isCurrentPosCandidateVariant)
-            {
-                _prevVariantPos = pos;
-            }
-
             // close existing active region
             std::string refStr = "";
             _ref.get_substring(_activeRegionStartPos, _prevVariantPos - _activeRegionStartPos + 1, refStr);
@@ -122,29 +139,19 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
             }
             activeRegion.processHaplotypes(_indelBuffer, _polySites);
         }
-        if (!isCurrentPosCandidateVariant)
-        {
-            _activeRegionStartPos = -1;
-            _numVariants = 0;
-        }
-        else
+        if (isCurrentPosCandidateVariant)
         {
             // start new active region
             _activeRegionStartPos = pos;
             _numVariants = 1;
+            _prevVariantPos = pos;
         }
-    }
-    else
-    {
-        // this position extends the existing active region
-        if (isCurrentPosCandidateVariant)
+        else
         {
-            ++_numVariants;
+            _activeRegionStartPos = -1;
+            _numVariants = 0;
         }
     }
-
-    if (isCurrentPosCandidateVariant)
-        _prevVariantPos = pos;
 
     clearPos(pos - _maxDetectionWindowSize - _maxDeletionSize);
 }
@@ -203,7 +210,7 @@ bool
 ActiveRegionDetector::isCandidateVariant(const pos_t pos) const
 {
     auto count = getCount(pos);
-    return count >= _minNumMismatchesPerPosition && count >= (MinDepthCandidateVariantPos*getDepth(pos));
+    return count >= _minNumMismatchesPerPosition && count >= (MinMismatchFraction*getDepth(pos));
 }
 
 bool ActiveRegionDetector::isPolymorphicSite(const pos_t pos) const

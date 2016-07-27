@@ -49,7 +49,7 @@ public:
     static const int ScoreOpen = -5;
     static const int ScoreExtend = -1;
     static const int ScoreOffEdge = -100;
-    const float MinDepthCandidateVariantPos = 0.2;
+    const float MinMismatchFraction = 0.2;
 
     ActiveRegionDetector(
         const reference_contig_segment& ref,

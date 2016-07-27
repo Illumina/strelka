@@ -61,18 +61,13 @@ public:
         _alignIdReachingEnd()
     {}
 
+    /// \return start position of the active region
     pos_t getStart() const
     {
         return _start;
     }
-    pos_t getEnd() const
-    {
-        return _end;
-    }
-    unsigned getLength() const
-    {
-        return _end - _start + 1;
-    }
+
+    /// checks if
     bool contains(pos_t pos) const
     {
         return pos >= _start && pos <= _end;
