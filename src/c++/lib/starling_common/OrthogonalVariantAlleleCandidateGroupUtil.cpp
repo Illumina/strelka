@@ -24,10 +24,12 @@
 
 #include <vector>
 
+// turn this on to use reads which support some, but not all, of an
+// overlapping allele group;
+// #define USE_GERMLINE_SUPPORTING_READ_UNION
 
 
-/// report all readIds which support at least one allele in this group
-///
+
 void
 getAlleleGroupUnionReadIds(
     const unsigned sampleId,
@@ -50,8 +52,6 @@ getAlleleGroupUnionReadIds(
 
 
 
-/// report all readIds which support all alleles in this group
-///
 void
 getAlleleGroupIntersectionReadIds(
     const unsigned sampleId,
@@ -93,6 +93,7 @@ getAlleleGroupIntersectionReadIds(
 
 
 /// find set of read ids which support the entire set of alleles in alleleGroup
+///
 static
 void
 getAlleleGroupSupportingReadIds(
@@ -101,9 +102,8 @@ getAlleleGroupSupportingReadIds(
     std::set<unsigned>& readIds)
 {
     static const bool isTier1Only(false);
-    // compile option below to use reads which only support a subset of alleles vs all alleles, no measurable difference
-    // now, but could be important with longer alleles?
-#if 0
+
+#ifdef USE_GERMLINE_SUPPORTING_READ_UNION
     getAlleleGroupUnionReadIds(sampleId, alleleGroup, readIds, isTier1Only);
 #else
     getAlleleGroupIntersectionReadIds(sampleId, alleleGroup, readIds, isTier1Only);
@@ -112,7 +112,6 @@ getAlleleGroupSupportingReadIds(
 
 
 
-/// enumerate allele support from read 'readId'
 void
 getAlleleLikelihoodsFromRead(
     const unsigned sampleId,
