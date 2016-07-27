@@ -146,13 +146,7 @@ struct IndelBuffer
     {
         if (! indelData.status.is_candidate_indel_cached)
         {
-            bool setIsCandidateIndel = !_opt.is_short_haplotyping_enabled || indelData.is_external_candidate;
-            // if short haplotyping is enabled, do not set isCandidateIndel for internal candidates
-            // because indel candidacy is determined exclusively in active regions
-            bool isCandidate = isCandidateIndelImpl(indelKey, indelData);
-            if (setIsCandidateIndel)
-                indelData.status.is_candidate_indel = isCandidate;
-
+            isCandidateIndelImpl(indelKey, indelData);
         }
         return indelData.status.is_candidate_indel;
     }
@@ -187,10 +181,6 @@ struct IndelBuffer
     void
     dump(std::ostream& os) const;
 
-    bool
-    isCandidateIndelImpl(
-            const IndelKey& indelKey,
-            const IndelData& indelData) const;
 
 private:
 
@@ -228,6 +218,12 @@ private:
     isCandidateIndelImplTest(
         const IndelKey& indelKey,
         const IndelData& indelData) const;
+
+
+    void
+    isCandidateIndelImpl(
+            const IndelKey& indelKey,
+            const IndelData& indelData) const;
 
     /// return object which provides estimated depth of tier1 reads
     const depth_buffer&

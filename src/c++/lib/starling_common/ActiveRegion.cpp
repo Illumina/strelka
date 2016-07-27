@@ -180,7 +180,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
             assert(indelDataPtr != nullptr && "Missing indelData");
 
             // determine whether this indel is candidate or private
-            indelDataPtr->status.is_candidate_indel = indelBuffer.isCandidateIndelImpl(*indelKeyPtr, *indelDataPtr);
+            indelDataPtr->isConfirmedInActiveRegion = true;
         }
     }
 }

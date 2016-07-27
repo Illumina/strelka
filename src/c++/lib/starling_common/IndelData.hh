@@ -297,6 +297,8 @@ public:
     // if true candidates should be output even if very unlikely:
     bool is_forced_output = false;
 
+    bool isConfirmedInActiveRegion = false;
+
     struct ErrorRates
     {
         bool isInit = false;
