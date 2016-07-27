@@ -521,29 +521,21 @@ get_denovo_indel_call(
 
         calculate_result_set(sinfo, sampleLhood, tier_rs[tierIndex],dinc);
 
-        using namespace PEDICURE_SAMPLETYPE;
-
-        const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
-        const std::vector<unsigned>& parentIndex(sinfo.getTypeIndexList(PARENT));
-
-        const unsigned sampleOrder[3] = {probandIndex,parentIndex[0],parentIndex[1]};
-
         for (unsigned sampleIndex(0); sampleIndex<sampleSize; ++sampleIndex)
         {
             unsigned max_index=0;
-            unsigned index =  sampleOrder[sampleIndex];
-            double max = sampleLhood[index][0];
+            double max = sampleLhood[sampleIndex][0];
             std::vector<float> tt;
             tt.push_back(max);
             for (unsigned pro(1); pro<STAR_DIINDEL::SIZE; ++pro)
             {
-                if (max<sampleLhood[index][pro])
+                if (max<sampleLhood[sampleIndex][pro])
                 {
-                    max = sampleLhood[index][pro];
+                    max = sampleLhood[sampleIndex][pro];
                     max_index=pro;
 
                 }
-                tt.push_back(sampleLhood[index][pro]);
+                tt.push_back(sampleLhood[sampleIndex][pro]);
             }
 
             std::sort(tt.begin(), tt.end());
@@ -552,7 +544,6 @@ get_denovo_indel_call(
 
             dinc.gtstring.push_back(STAR_DIINDEL::get_gt_label(max_index));
             dinc.gt_sum += max_index;
-
         }
     }
 

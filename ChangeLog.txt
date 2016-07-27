@@ -1,3 +1,5 @@
+v2.5.1
+- STREL-75 fix sample limit in pedicure
 v2.5.0
 - STREL-138 adjust indel theta based on hpol context in germline model
 - STREL-124 integrate new RF scoring model for germline variants
