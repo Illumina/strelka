@@ -36,6 +36,7 @@
 
 typedef RangeMap<pos_t,unsigned char> RangeSet;
 
+/// AlignInfo object to store sample id and indel align type
 struct AlignInfo
 {
     AlignInfo() {}
@@ -48,11 +49,24 @@ struct AlignInfo
 class ActiveRegion
 {
 public:
+    // maximum read depth
     static const unsigned MaxDepth = 1000;
+
+    // minimum haplotype count to consider
     static const unsigned MinHaplotypeCount = 3;
-    const float HaplotypeFrequencyThreshold = 0.4; // minimum haplotype frequency to be considered in MMDF relaxation
+
+    // minimum haplotype frequency to relax MMDF
+    const float HaplotypeFrequencyThreshold = 0.4;
+
     const char missingPrefix = '.';
 
+    /// Creates an active region object
+    /// \param start start position
+    /// \param end end position
+    /// \param refSeq reference sequence corresponding to this active region
+    /// \param aligner aligner for aligning haplotypes to the reference
+    /// \param alignIdToAlignInfo map from align id to (sampleId, indelAlignType)
+    /// \return active region object
     ActiveRegion(pos_t start, pos_t end, const std::string& refSeq, const GlobalAligner<int>& aligner, const std::vector<AlignInfo>& alignIdToAlignInfo):
         _start(start), _end(end), _refSeq(refSeq),
         _aligner(aligner),
@@ -67,12 +81,23 @@ public:
         return _start;
     }
 
-    /// checks if
+    /// \param pos reference position
+    /// \return true if pos belongs to this active region; false otherwise
     bool contains(pos_t pos) const
     {
         return pos >= _start && pos <= _end;
     }
+
+    /// Insert haplotype base of the alignment into the position
+    /// \param alignId align id
+    /// \param pos reference position
+    /// \param base base at position pos. base.length() is 1 for match/mismatch, >1 for insertion, and 0 for deletion.
     void insertHaplotypeBase(align_id_t alignId, pos_t pos, const std::string& base);
+
+    /// Decompose haplotypes into primitive alleles.
+    /// Determine indel candidacy and regiser polymorphic sites to relax MMDF.
+    /// \param indelBuffer
+    /// \param polySites
     void processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites) const;
 
 private:

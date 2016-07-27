@@ -210,7 +210,7 @@ bool
 ActiveRegionDetector::isCandidateVariant(const pos_t pos) const
 {
     auto count = getCount(pos);
-    return count >= _minNumMismatchesPerPosition && count >= (MinMismatchFraction*getDepth(pos));
+    return count >= _minNumVariantsPerPosition && count >= (MinAlternativeAlleleFraction*getDepth(pos));
 }
 
 bool ActiveRegionDetector::isPolymorphicSite(const pos_t pos) const
