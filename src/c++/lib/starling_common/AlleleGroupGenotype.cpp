@@ -56,8 +56,10 @@ accumulateLogLhoodFromReadObservation(
     const IndelKey& variantAllele1Key,
     double* logLhood)
 {
-    logLhood[AG_GENOTYPE::HOMREF] += integrate_out_sites(dopt,nsite,refAllele_lnp,false);
-    logLhood[AG_GENOTYPE::HOM0] += integrate_out_sites(dopt,nsite,variantAllele0_lnp,false);
+    static const bool isTier2Pass(false);
+
+    logLhood[AG_GENOTYPE::HOMREF] += integrate_out_sites(dopt,nsite,refAllele_lnp, isTier2Pass);
+    logLhood[AG_GENOTYPE::HOM0] += integrate_out_sites(dopt,nsite,variantAllele0_lnp, isTier2Pass);
 
     static const double loghalf(std::log(0.5));
     double logHet0RefPrior(loghalf);
@@ -69,11 +71,11 @@ accumulateLogLhoodFromReadObservation(
     }
 
     const double het0_lnp(log_sum(refAllele_lnp+logHet0RefPrior,variantAllele0_lnp+logHet0Allele0Prior));
-    logLhood[AG_GENOTYPE::HET0] += integrate_out_sites(dopt,nsite,het0_lnp,false);
+    logLhood[AG_GENOTYPE::HET0] += integrate_out_sites(dopt,nsite,het0_lnp, isTier2Pass);
 
     if (is3AlleleModel)
     {
-        logLhood[AG_GENOTYPE::HOM1] += integrate_out_sites(dopt,nsite,variantAllele1_lnp,false);
+        logLhood[AG_GENOTYPE::HOM1] += integrate_out_sites(dopt,nsite,variantAllele1_lnp, isTier2Pass);
 
         double logHet1RefPrior(loghalf);
         double logHet1Allele1Prior(loghalf);
@@ -84,12 +86,12 @@ accumulateLogLhoodFromReadObservation(
         }
 
         const double het1_lnp(log_sum(refAllele_lnp+logHet1RefPrior,variantAllele1_lnp+logHet1Allele1Prior));
-        logLhood[AG_GENOTYPE::HET1] += integrate_out_sites(dopt,nsite,het1_lnp,false);
+        logLhood[AG_GENOTYPE::HET1] += integrate_out_sites(dopt,nsite,het1_lnp, isTier2Pass);
 
         /// approximate the expected allele ratio in this case
         const double normalizeHetRatio(log_sum(logHet0Allele0Prior, logHet1Allele1Prior));
         const double het01_lnp(log_sum(variantAllele0_lnp+(logHet0Allele0Prior-normalizeHetRatio),variantAllele1_lnp+(logHet1Allele1Prior-normalizeHetRatio)));
-        logLhood[AG_GENOTYPE::HET01] += integrate_out_sites(dopt,nsite,het01_lnp,false);
+        logLhood[AG_GENOTYPE::HET01] += integrate_out_sites(dopt,nsite,het01_lnp, isTier2Pass);
     }
 }
 
@@ -163,7 +165,7 @@ getVariantAlleleGroupGenotypeLhoods(
     const starling_sample_options& sampleOptions,
     const reference_contig_segment& ref,
     const unsigned groupLocusPloidy,
-    const unsigned sampleId,
+    const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     AlleleGroupGenotype& locusGenotype)
 {
@@ -204,12 +206,12 @@ getVariantAlleleGroupGenotypeLhoods(
         const unsigned nonRefAllele0Index(0);
         const IndelKey& allele0Key(alleleGroup.key(nonRefAllele0Index));
         const IndelData& allele0Data(alleleGroup.data(nonRefAllele0Index));
-        const IndelSampleData& allele0SampleData(allele0Data.getSampleData(sampleId));
+        const IndelSampleData& allele0SampleData(allele0Data.getSampleData(sampleIndex));
 
         const unsigned nonRefAllele1Index(is3AlleleModel ? 1 : 0);
         const IndelKey& allele1Key(alleleGroup.key(nonRefAllele1Index));
         const IndelData& allele1Data(alleleGroup.data(nonRefAllele1Index));
-        const IndelSampleData& allele1SampleData(allele1Data.getSampleData(sampleId));
+        const IndelSampleData& allele1SampleData(allele1Data.getSampleData(sampleIndex));
 
         for (const auto& score : allele0SampleData.read_path_lnp)
         {
@@ -238,11 +240,12 @@ getVariantAlleleGroupGenotypeLhoods(
                 variantAllele1_lnp = allele1ReadScores.indel;
             }
 
-            accumulateLogLhoodFromReadObservation(dopt, sampleOptions,
-                                                  allele0ReadScores.nsite, allele0ReadScores.read_length,
-                                                  is3AlleleModel,
-                                                  refAllele_lnp, variantAllele0_lnp, variantAllele1_lnp,
-                                                  allele0Key, allele1Key, logLhood);
+            accumulateLogLhoodFromReadObservation(
+                dopt, sampleOptions,
+                allele0ReadScores.nsite, allele0ReadScores.read_length,
+                is3AlleleModel,
+                refAllele_lnp, variantAllele0_lnp, variantAllele1_lnp,
+                allele0Key, allele1Key, logLhood);
         }
     }
 
@@ -257,6 +260,7 @@ getVariantAlleleGroupGenotypeLhoods(
 /// this type of likelihood can be useful for something like a VCF <*> abstract allele type
 ///
 /// \return the variantAlleleIndex of the most likely allele for this read
+///
 static
 unsigned
 updateFromAlleleGroup(

@@ -705,7 +705,7 @@ process_pos_indel_digt(const pos_t pos)
     // overlapping alleles with different start positions if they preserve the orthogonal clique relationship
     // of the set.
     //
-    // Once we have the largest possible allele set, the reference is implicitey added and all alleles are
+    // Once we have the largest possible allele set, the reference is implicitly added and all alleles are
     // ranked. The top N are kept, N= ploidy. The reference is restored for the genotyping process if it is not
     // in the top N.
     //

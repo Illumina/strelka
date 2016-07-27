@@ -382,7 +382,7 @@ getVariantAlleleGroupGenotypeLhoods(
     const starling_sample_options& sampleOptions,
     const reference_contig_segment& ref,
     const unsigned groupLocusPloidy,
-    const unsigned sampleId,
+    const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     AlleleGroupGenotype& locusGenotype);
 
