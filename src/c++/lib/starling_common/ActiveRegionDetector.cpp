@@ -76,8 +76,6 @@ ActiveRegionDetector::insertIndel(const unsigned sampleId, const IndelObservatio
 void
 ActiveRegionDetector::updateStartPosition(const pos_t pos)
 {
-    _bufferStartPos = pos;
-
     if (_activeRegions.empty()) return;
 
     if (_activeRegions.front().getStart() == pos)
@@ -97,7 +95,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
     bool isSizeFit = (pos - _activeRegionStartPos) < (int)_maxDetectionWindowSize;
     auto distanceFromPrevVariant = pos - _prevVariantPos;
     bool isConsecutiveVariant = (distanceFromPrevVariant == 1); // size may exceed _maxDetectionWindowSize for consecutive variants
-    bool isNotFarFromPrevVariant = distanceFromPrevVariant <= MaxDistanceBetweenTwoVariants;
+    bool isNotFarFromPrevVariant = (pos > 0) && (distanceFromPrevVariant <= MaxDistanceBetweenTwoVariants);
 
     bool isExtensible = (isSizeFit || isConsecutiveVariant) && isNotFarFromPrevVariant;
 
@@ -149,7 +147,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
         }
         else
         {
-            _activeRegionStartPos = -1;
+            _activeRegionStartPos = 0;
             _numVariants = 0;
         }
     }
