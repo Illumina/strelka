@@ -163,4 +163,12 @@ get_state(
     return PRESTRAND_SIZE+normal_freq-DIGT_GRID::PRESTRAND_SIZE;
 }
 
+struct is_nonsom_maker_t
+{
+    is_nonsom_maker_t();
+
+    std::vector<bool> val;
+};
+
+extern const is_nonsom_maker_t is_nonsom;
 }

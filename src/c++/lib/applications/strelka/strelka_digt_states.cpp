@@ -146,3 +146,18 @@ write_alt_alleles(char normal_alt_base,
 }
 
 }
+
+namespace DDIGT_GRID
+{
+is_nonsom_maker_t::
+is_nonsom_maker_t()
+        : val(SIZE,false)
+{
+    for (unsigned gt(0); gt<DIGT_GRID::SIZE; ++gt)
+    {
+        val[get_state(gt,gt)] = true;
+    }
+}
+
+const is_nonsom_maker_t is_nonsom;
+}

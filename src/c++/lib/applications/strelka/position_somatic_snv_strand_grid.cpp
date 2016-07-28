@@ -80,29 +80,79 @@ get_diploid_strand_grid_lhood_spi(
     }
 }
 
-/// expanded definition of 'nonsomatic' for the purpose of providing somatic gVCF output:
+
+
+/// The non-somatic callability track is defined based on a minimum somatic variant
+/// freqeuncy of 10% (hard-coded), this function tests for grid values less than the threshold
+///
+/// \param f sample DIGT_GRID index
+/// \return false for indices corresponding to allele frequences too close to zero/one
+///
+static
+bool
+isValidNonsomaticIndex(
+    const unsigned f)
+{
+    static const blt_float_t nonSomaticMinFrac(0.1);
+    static const blt_float_t nonSomaticMinFracComp(1.-nonSomaticMinFrac);
+
+    // epsilon-pad the threshold values so that we robustly accept fractions
+    // falling at exactly the threshold value:
+    static const blt_float_t epsilon(0.0001);
+    static const blt_float_t nonSomaticMinFracEps(nonSomaticMinFrac-epsilon);
+    static const blt_float_t nonSomaticMinFracCompEps(nonSomaticMinFracComp+epsilon);
+
+    if ((f==SOMATIC_DIGT::REF) or (f==SOMATIC_DIGT::HOM)) return true;
+
+    const blt_float_t frac(DIGT_GRID::get_fraction_from_index(f));
+    if (frac<nonSomaticMinFracEps) return false;
+    if (frac>nonSomaticMinFracCompEps) return false;
+    return true;
+}
+
+
+
+/// provide priors used for "nonsomatic quality" score computation
+///
+/// note that a restricted definition of 'nonsomatic' is used here, based on allele frequency range
+/// 10%-90%
+///
+/// also use of uniform distro over {somatic,non-somatic} states is totally arbitrary, this function
+/// is perhaps more about matching human intuition of 'nonsomatic'
+///
+/// \param fn normal sample DIGT_GRID index
+/// \param ft tumor samle DIGT_GRID index
+/// \return log(P(fn,ft))
+///
 static
 float
 gvcf_nonsomatic_gvcf_prior(
     const unsigned fn,
     const unsigned ft)
 {
-    if (fn == ft)
+    static const float lzero(-std::numeric_limits<float>::infinity());
+
+    if (not isValidNonsomaticIndex(ft))
+    {
+        return lzero;
+    }
+    else if (fn == ft)
     {
         static const float lone(std::log(1.f));
         return lone;
     }
-    else if (fn == SOMATIC_DIGT::REF || fn == SOMATIC_DIGT::HET)
+    else if (fn == SOMATIC_DIGT::REF || fn == SOMATIC_DIGT::HOM)
     {
         static const float lhalf(std::log(0.5f));
         return lhalf;
     }
     else
     {
-        static const float lzero(-std::numeric_limits<float>::infinity());
         return lzero;
     }
 }
+
+
 
 static
 void
@@ -143,23 +193,24 @@ calculate_result_set_grid(
         // (3) ignore normal genotype
         //
         std::vector<double> pprob(DDIGT_GRID::SIZE);
-        double sum_prob = 0.0;
         for (unsigned fn(0); fn<DIGT_GRID::PRESTRAND_SIZE; ++fn)
         {
             for (unsigned ft(0); ft<DIGT_GRID::PRESTRAND_SIZE; ++ft)
             {
                 const unsigned dgt(DDIGT_GRID::get_state(fn,ft));
-                double prob = normal_lhood[fn]+tumor_lhood[ft]+gvcf_nonsomatic_gvcf_prior(fn,ft);
-                pprob[dgt] = prob;
-                sum_prob += prob;
+                pprob[dgt] = normal_lhood[fn]+tumor_lhood[ft]+gvcf_nonsomatic_gvcf_prior(fn,ft);
             }
         }
+
+        unsigned max_gt(0);
+        opt_normalize_ln_distro(pprob.begin(),pprob.begin()+DDIGT_GRID::PRESTRAND_SIZE,
+                                DDIGT_GRID::is_nonsom.val.begin(),max_gt);
 
         double sgvcf_nonsomatic_sum(0);
         for (unsigned f(0); f<DIGT_GRID::PRESTRAND_SIZE; ++f)
         {
             const unsigned dgt(DDIGT_GRID::get_state(f,f));
-            sgvcf_nonsomatic_sum += pprob[dgt] / sum_prob;
+            sgvcf_nonsomatic_sum += pprob[dgt];
         }
 
         rs.nonsomatic_qphred=error_prob_to_qphred(1.-sgvcf_nonsomatic_sum);
