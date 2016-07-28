@@ -139,6 +139,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
             }
             activeRegion.processHaplotypes(_indelBuffer, _polySites);
         }
+
         if (isCurrentPosCandidateVariant)
         {
             // start new active region

@@ -39,6 +39,7 @@
 #include "starling_common/starling_indel_report_info.hh"
 
 #include <iomanip>
+#include <applications/starling/starling_shared.hh>
 
 
 //#define DEBUG_PPOS
@@ -331,7 +332,6 @@ starling_pos_processor_base(
         rir.end_pos += bshift;
     }
 }
-
 
 
 void

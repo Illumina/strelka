@@ -222,8 +222,8 @@ private:
 
     void
     isCandidateIndelImpl(
-            const IndelKey& indelKey,
-            const IndelData& indelData) const;
+        const IndelKey& indelKey,
+        const IndelData& indelData) const;
 
     /// return object which provides estimated depth of tier1 reads
     const depth_buffer&

@@ -89,11 +89,11 @@ public:
         _insertSeqBuffer(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string())),
         _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
     {
-        _bufferStartPos = 0;
+        _bufferStartPos = -MaxBufferSize;;
 
         _numVariants = 0;
-        _activeRegionStartPos = 0;
-        _prevVariantPos = 0;
+        _activeRegionStartPos = -MaxBufferSize;
+        _prevVariantPos = -MaxBufferSize;
     }
 
     /// insert match at position pos
