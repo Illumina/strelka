@@ -65,9 +65,6 @@ struct strelka_options : public starling_base_options
     {
         // turn on empirical scoring for strelka only:
         is_compute_somatic_scoring_metrics = true;
-
-        // turn off short haplotying
-        is_short_haplotyping_enabled = false;
     }
 
     bool is_tumor_realigned_read() const

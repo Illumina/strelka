@@ -39,6 +39,7 @@
 #include "starling_common/starling_indel_report_info.hh"
 
 #include <iomanip>
+#include <applications/starling/starling_shared.hh>
 
 
 //#define DEBUG_PPOS
@@ -333,7 +334,6 @@ starling_pos_processor_base(
 }
 
 
-
 void
 starling_pos_processor_base::
 update_stageman()
@@ -416,7 +416,7 @@ reset()
 
 
 
-bool
+void
 starling_pos_processor_base::
 insert_indel(
     const IndelObservation& obs,
@@ -467,10 +467,15 @@ insert_indel(
         const unsigned len(std::min(static_cast<unsigned>((obs.key.delete_length())),_opt.max_indel_size));
         update_largest_indel_ref_span(len);
 
-        bool is_novel(getIndelBuffer().addIndelObservation(sampleId, obs));
+        if (is_active_region_detector_enabled())
+        {
+            _active_region_detector.insertIndel(sampleId, obs);
+        }
+        else
+        {
+            getIndelBuffer().addIndelObservation(sampleId, obs);
+        }
         if (obs.data.is_forced_output) _is_skip_process_pos=false;
-
-        return is_novel;
     }
     catch (...)
     {
@@ -478,6 +483,8 @@ insert_indel(
         throw;
     }
 }
+
+
 
 void
 starling_pos_processor_base::
@@ -852,8 +859,7 @@ process_pos(const int stage_no,
         init_read_segment_pos(pos);
         if (is_active_region_detector_enabled())
         {
-            _active_region_detector.updateEndPosition(pos);
-
+            _active_region_detector.updateEndPosition(pos, pos == (_dopt.report_range.end_pos-1));
         }
 
         if (_opt.is_write_candidate_indels())
@@ -875,6 +881,7 @@ process_pos(const int stage_no,
         }
 #endif
         //        consolidate_candidate_indel_pos(pos);
+
         if (! _opt.is_write_candidate_indels_only)
         {
             //        clean_pos(pos);

@@ -38,8 +38,18 @@
 class ActiveRegionDetector
 {
 public:
+
+    // maximum buffer size in bases (must be larger than the maximum read size + max indel size
     static const unsigned MaxBufferSize = 1000;
-    static const unsigned MaxDepth = 1000;
+
+    // maximum read depth
+    static const unsigned MaxDepth = ActiveRegion::MaxDepth;
+
+    // variant count to add for a single indel
+    static const int IndelWeight = 4;
+
+    // maximum distance between two variants belonging to the same active region
+    static const int MaxDistanceBetweenTwoVariants = 14;
 
     // alignment scores, same as bwa default values
     static const int ScoreMatch = 1;
@@ -48,43 +58,86 @@ public:
     static const int ScoreExtend = -1;
     static const int ScoreOffEdge = -100;
 
+    // minimum alternative allele fraction to call a position as a candidate variant
+    const float MinAlternativeAlleleFraction = 0.2;
+
+    /// Creates an object that reads variant information and creates active regions
+    /// \param ref reference segment
+    /// \param indelBuffer indel buffer
+    /// \param maxDeletionSize maximum deletion size
+    /// \param maxDetectionWindowSize maximum active region size
+    /// \param minNumVariantsPerPosition minimum number of variants per position to make the position as a candidate variant pos
+    /// \param minNumVariantsPerRegion minimum number of variants per region to create an active region
+    /// \return active region detector object
     ActiveRegionDetector(
         const reference_contig_segment& ref,
         IndelBuffer& indelBuffer,
         unsigned maxDeletionSize,
         unsigned maxDetectionWindowSize = 30,
-        unsigned minNumMismatchesPerPosition = 9,
+        unsigned minNumVariantsPerPosition = 9,
         unsigned minNumVariantsPerRegion = 2) :
         _ref(ref),
         _indelBuffer(indelBuffer),
         _maxDeletionSize(maxDeletionSize),
         _maxDetectionWindowSize(maxDetectionWindowSize),
-        _minNumMismatchesPerPosition(minNumMismatchesPerPosition),
+        _minNumVariantsPerPosition(minNumVariantsPerPosition),
         _minNumVariantsPerRegion(minNumVariantsPerRegion),
         _variantCounter(MaxBufferSize),
         _positionToAlignIds(MaxBufferSize),
+        _alignIdToAlignInfo(MaxDepth),
         _variantInfo(MaxDepth, std::vector<VariantType>(MaxBufferSize, VariantType())),
         _insertSeqBuffer(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string())),
         _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
     {
-        _bufferStartPos = 0;
+        _bufferStartPos = -MaxBufferSize;;
 
         _numVariants = 0;
-        _activeRegionStartPos = 0;
-        _prevVariantPos = 0;
+        _activeRegionStartPos = -MaxBufferSize;
+        _prevVariantPos = -MaxBufferSize;
     }
 
+    /// insert match at position pos
+    /// \param alignId align id
+    /// \param pos reference position
     void insertMatch(const align_id_t alignId, const pos_t pos);
+
+    /// insert mismatch at position pos
+    /// \param alignId align id
+    /// \param pos reference position
+    /// \param baseChar
     void insertMismatch(const align_id_t alignId, const pos_t pos, const char baseChar);
-    void insertIndel(const IndelObservation& indelObservation);
+
+    /// insert indel
+    /// \param sampleId sample id
+    /// \param indelObservation indel observation object
+    void insertIndel(const unsigned sampleId, const IndelObservation& indelObservation);
+
+    /// update the active region buffer start position
+    /// \param pos reference position
     void updateStartPosition(const pos_t pos);
-    void updateEndPosition(const pos_t pos);
-    bool isEmpty() const
+
+    /// update the active region end position. Creates an active region if needed.
+    /// \param pos reference position
+    /// \param isLastPos
+    void updateEndPosition(const pos_t pos, const bool isLastPos);
+
+    /// cache sampleId and indelAlignType corresponding to alignId
+    /// \param alignId align id
+    /// \param sampleId sample id
+    /// \param indelAlignType indel align type
+    inline void setAlignInfo(const align_id_t alignId, unsigned sampleId, INDEL_ALIGN_TYPE::index_t indelAlignType)
     {
-        return _activeRegions.empty();
+        AlignInfo& alignInfo = _alignIdToAlignInfo[alignId % MaxDepth];
+        alignInfo.sampleId = sampleId;
+        alignInfo.indelAlignType = indelAlignType;
     }
+
+    /// Checks if mismatches occur consistently at position pos
+    /// \param pos reference position
+    /// \return true if pos is a polymorphic site; false otherwise.
     bool isPolymorphicSite(const pos_t pos) const;
 
+private:
     enum VariantType
     {
         MATCH,
@@ -94,13 +147,12 @@ public:
         MISMATCH_INSERT
     };
 
-private:
     const reference_contig_segment& _ref;
     IndelBuffer& _indelBuffer;
 
     unsigned _maxDeletionSize;
     unsigned _maxDetectionWindowSize;
-    unsigned _minNumMismatchesPerPosition;
+    unsigned _minNumVariantsPerPosition;
     unsigned _minNumVariantsPerRegion;
 
     pos_t _bufferStartPos;
@@ -114,6 +166,10 @@ private:
 
     // for haplotypes
     std::vector<std::vector<align_id_t>> _positionToAlignIds;
+
+    // to store align information
+    std::vector<AlignInfo> _alignIdToAlignInfo;
+
     std::vector<std::vector<VariantType>> _variantInfo;
     std::vector<std::vector<std::string>> _insertSeqBuffer;
     char _snvBuffer[MaxDepth][MaxBufferSize];
@@ -148,6 +204,12 @@ private:
             _positionToAlignIds[index].push_back(alignId);
     }
 
+    inline int getDepth(const pos_t pos) const
+    {
+        int index = pos % MaxBufferSize;
+        return (int)_positionToAlignIds[index].size();
+    }
+
     inline const std::vector<align_id_t>& getPositionToAlignIds(const pos_t pos) const
     {
         return _positionToAlignIds[pos % MaxBufferSize];
@@ -162,6 +224,7 @@ private:
     inline void clearPos(pos_t pos)
     {
         _positionToAlignIds[pos % MaxBufferSize].clear();
+        resetCounter(pos);
     }
 };
 

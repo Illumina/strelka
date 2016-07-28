@@ -47,5 +47,5 @@ add_alignment_indels_to_sppr(
     align_id_t id,
     const unsigned sample_no,
     const std::pair<bool,bool>& edge_pin,
-    const bool is_mapq_zero);
+    const bool isLowMapQuality);
 
