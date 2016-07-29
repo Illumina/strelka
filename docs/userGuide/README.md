@@ -77,9 +77,8 @@ created for any run. These files are:
 * __somatic.indels.vcf.gz__
     * indels
 
-Strelka can also optionally produce a somatic callability track in:
-
-'${RUNFOLDER}/results/regions/somatic.callable.region.bed.gz'
+The somatic variant caller can also optionally produce a callability tract,
+see the [somatic callability](#somatic-callability) section below for details.
 
 ## Run configuration and Execution
 
@@ -155,6 +154,33 @@ These options are useful for workflow development and debugging:
 * Stderr logging can be disabled with `--quiet` argument. Note this log is
   replicated to `${STRELKA_ANALYSIS_PATH}/workspace/pyflow.data/logs/pyflow_log.txt`
   so there is no loss of log information.
+
+### Extended use cases
+
+#### Exome/Targeted
+
+Supplying the '--exome' flag at configuration time will provide
+appropriate settings for WES and other regional enrichment
+analyses. At present this flag disables all high depth filters, which
+are designed to exclude pericentromeric reference compressions in the
+WGS case but cannot be applied correctly to a targeted analysis.
+
+#### Somatic callability
+
+The somatic variant caller can be configured with the option `--writeCallableRegion`, which
+will extend the somatic SNV quality model calculation to be applied as a test of
+somatic SNV callability at all positions in the genome.
+
+The outcome of this callibility calculation will be summarized in a BED-formatted callability track
+found in:`${STRELKA_ANALYSIS_PATH}/results/regions/somatic.callable.region.bed.gz`. This BED track
+contains regions which are determined to be callable, indicating that there is sufficient evidence to
+either call a somatic SNV or assert the absence of a somatic SNV with a variant frequency of 10% or greater.
+Both somatic and non-somatic sites are determined to be 'callable' if the somatic or non-somatic quality
+threshold is at least 15. See methods for details of the underlying quality scores.
+
+This is still an experimental feature, which will considerably increase runtime cost of the analysis
+(by approximately 2x).
+
 
 ## Special Topics
 

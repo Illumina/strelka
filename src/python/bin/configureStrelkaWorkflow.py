@@ -56,7 +56,7 @@ You must specify BAM/CRAM file(s) for a pair of samples.
                          help="Normal sample BAM or CRAM file. (no default)")
         group.add_option("--tumorBam","--tumourBam", type="string",dest="tumorBamList",metavar="FILE", action="append",
                          help="Tumor sample BAM or CRAM file. [required] (no default)")
-        group.add_option("--isWriteCallableRegion", action="store_true",
+        group.add_option("--writeCallableRegion", dest="isWriteCallableRegion", action="store_true",
                          help="Write out a bed file describing somatic callable regions of thedupliates genome")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
