@@ -77,7 +77,7 @@ created for any run. These files are:
 * __somatic.indels.vcf.gz__
     * indels
 
-The somatic variant caller can also optionally produce a callability tract,
+The somatic variant caller can also optionally produce a callability track,
 see the [somatic callability](#somatic-callability) section below for details.
 
 ## Run configuration and Execution
@@ -159,7 +159,7 @@ These options are useful for workflow development and debugging:
 
 #### Exome/Targeted
 
-Supplying the '--exome' flag at configuration time will provide
+Supplying the `--exome` flag at configuration time will provide
 appropriate settings for WES and other regional enrichment
 analyses. At present this flag disables all high depth filters, which
 are designed to exclude pericentromeric reference compressions in the

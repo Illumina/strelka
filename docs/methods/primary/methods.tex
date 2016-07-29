@@ -136,9 +136,10 @@ Here $D$ refers to the sequencing data from both samples. The likelihood term ab
 
 The posterior probability over tumor and normal genotypes $P(G_t,G_n \mid D)$ is used to compute the {\em somatic variant probability} (QSS for SNVs and QSI for indels).
 
-\begin{equation*}
+\begin{equation}
+\label{eqn:somVarProb}
 	P(G_t = \texttt{som} \mid D) = \sum_{G_n \in \{ \texttt{ref}, \texttt{het}, \texttt{hom} \}}{P(G_t=\texttt{som},G_n \mid D)}.
-\end{equation*}
+\end{equation}
 
 As previously discussed, this somatic variant probability is not ideal for detecting variants of interest because it does not distinguish somatic variant types. We therefore associate somatic calls with the probability of somatic variation {\em and} the normal sample genotype being $\texttt{ref}$ (QSS\_NT for SNVs and QSI\_NT for indels), i.e., $P(G_t = \texttt{som}, G_n = \texttt{ref} \mid D)$. All Strelka quality scores discussed below express these values.
 
@@ -207,6 +208,56 @@ P(F_t, F_n \mid G_t = \texttt{som}, G_n \neq \texttt{ref})=
 \paragraph{Practical computation}
 
 The continuous allele frequencies modeled above are efficiently computed by dividing each allele-pair axis into a set of equidistant points and performing the somatic probability computation over the resulting discrete point set. Several point resolutions were attempted to confirm the expected stability and convergence of results as resolution increased. A resolution of 21 points per axis is used for all computations by default. We expect that this resolution should be increased for improved detection of somatic allele frequencies lower than 5\%.
+
+\paragraph{Somatic callability track}
+
+The somatic variant calling workflow optionally provides a somatic callability track expressing, for each reference position, whether there is sufficient sequencing evidence to confidently assert either (1) the presence of a somatic SNV or (2) the absence of a somatic SNV with somatic variant frequency of 10\% or higher. Evidence for the presence of a somatic SNV is quantified by the QSS score described above in equation \ref{eqn:somVarProb}. Evidence for the absence of a somatic SNV is quantified by the \emph{non-somatic SNV probability} (or the equivalent phred-scaled score, NQSS) described below. A reference position is marked as "callable" in the somatic callability track if QSS $\ge$ 15 or NQSS $\ge$ 15.
+
+The NQSS score is computed from the same sample-specific allele frequency likelihoods, $P(D_t \mid F_t)$ and $P(D_n \mid F_n)$, used to compute QSS, however the genotype prior probability $P(G_t, G_n)$ and the joint allele-frequency distributions $P(F_t,F_n \mid G_t,G_n)$ are adjusted as described below.
+
+The diploid genotype prior used for the NQSS score is
+
+\begin{equation*}
+P(G_n\mid \text{NQSS})=
+\begin{cases}
+0 & \text{if } G_n = \texttt{het} \\
+1/2 & \text{if } G_n = \texttt{hom} \\
+1/2 & \text{if } G_n = \texttt{ref} \\
+\end{cases}
+\end{equation*}
+
+The prior distribution over somatic genotypes is uniform, thus the full genotype prior used for the NQSS score is
+
+\begin{equation*}
+P(G_t, G_n \mid \text{NQSS}) =
+\begin{cases}
+P(G_n \mid \text{NQSS})/2 & \text{if } G_t = \texttt{nonsom} \\
+P(G_n \mid \text{NQSS})/2 & \text{if } G_t = \texttt{som}. \\
+\end{cases}
+\end{equation*}
+
+
+The joint allele-frequency distribution used for the NQSS score is
+
+\begin{equation*}
+P(F_t, F_n \mid G_t = \texttt{nonsom}, G_n, \text{NQSS})=
+\begin{cases}
+U(F_t) & \text{ if } F_t = F_n \\
+0 & \text{ otherwise } \\
+\end{cases}
+\end{equation*}
+
+\begin{equation*}
+P(F_t, F_n \mid G_t = \texttt{som}, G_n, \text{NQSS})=
+\begin{cases}
+U(F_t)/2 & \text{ if } F_t \neq F_n, G_n \in \{\texttt{ref},\texttt{hom}\}  \\
+0 & \text{ otherwise } \\
+\end{cases}
+\end{equation*}
+
+Note that the somatic callability track is based on the core somatic variant quality model and does not reflect additional information about each candidate variant integrated into the empirical variant scoring step described below. For this reason the somatic calling track will diverge from Strelka's final somatic SNV output in some cases.
+
+
 
 \subsubsection{Somatic Filtration and Scoring}
 
