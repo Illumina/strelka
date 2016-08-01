@@ -167,10 +167,8 @@ calculate_result_set_grid(
     const blt_float_t lnmatch,
     const blt_float_t lnmismatch,
     const bool is_forced_output,
-    snv_result_set& rs
-)
+    snv_result_set& rs)
 {
-
     calculate_result_set_grid(
         ssnv_contam_tolerance,
         ln_sse_rate,   // ln (shared_error_rate)
@@ -189,7 +187,7 @@ calculate_result_set_grid(
     {
         // process regular tumor/normal lhood, but:
         // (1) use uniform probability for {somatic,non-somatic} states
-        // (2) simply computation to remove strand-specific logic
+        // (2) simplify computation to remove strand-specific logic
         // (3) ignore normal genotype
         //
         std::vector<double> pprob(DDIGT_GRID::SIZE);

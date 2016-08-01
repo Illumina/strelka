@@ -33,7 +33,7 @@ Please see the [Strelka installation instructions](installation.md)
 The strelka somatic variant calling algorithm fully is described in
 [Strelka: Accurate somatic small-variant calling from sequenced tumor-normal sample pairs.][3]
 
-In summary strelka scans throught the tumor and normal sample alignments, discovering SNV
+In summary strelka scans through the tumor and normal sample alignments, discovering SNV
 and indel candidates. Each candidate variant is evaluated as potentially germline, somatic or
 sequencer artifact, with a quality score reflecting the final probability of being somatic.
 
@@ -56,8 +56,7 @@ paired-end sequencing assay.
 Strelka requires input sequencing reads to be mapped by an external tool and
 provided as input in BAM or CRAM format.
 
-The following limitations exist on the input BAM/CRAM alignment records provided
-to Starka:
+The following limitations apply to the BAM/CRAM alignment records which can be used as input:
 
 * Alignments cannot contain the "=" character in the SEQ field.
 * RG (read group) tags are ignored -- each alignment file must represent one
@@ -70,7 +69,7 @@ to Starka:
 ### Somatic variant predictions
 
 The primary strelka outputs are a set of [VCF 4.1][1] files, found in
-`${RUNFOLDER}/results/variants`. Currently there are at least two vcf files
+`${STRELKA_ANALYSIS_PATH}/results/variants`. Currently there are at least two vcf files
 created for any run. These files are:
 
 * __somatic.snvs.vcf.gz__
@@ -115,7 +114,7 @@ instructions in the [Execution] section below.
 
 #### Advanced configuration options
 
-* Advanced options listed in: `${STRELKA_INSTALL_PATH}/bin/configureStrelkaWorkflow.py -- allHelp`
+* Advanced options are listed in: `${STRELKA_INSTALL_PATH}/bin/configureStrelkaWorkflow.py -- allHelp`
     * These options are indented primarily for workflow development and
       debugging, but could be useful for runtime optimization in some specialized
       cases.
