@@ -44,7 +44,10 @@ struct VariantScoringModelMetadata
     std::string date;
     std::string ModelType;
 
-    /// as part of an optional calibration component to all models, scale the raw prob using this factor before reporting:
+    /// as part of an optional calibration component to all models, raise the raw prob by this power before reporting:
+    double probPow = 1.;
+
+    /// as part of an optional calibration component to all models, scale the prob using this factor (after power transform) before reporting:
     double probScale = 1.;
 
     /// \TODO Doc this. what is the orientation of this number? <,>,<=,>=? Does it mean filter stuff to remove or to keep?

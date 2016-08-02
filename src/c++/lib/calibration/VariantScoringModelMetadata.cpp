@@ -130,6 +130,7 @@ Deserialize(
     const Json::Value caliRoot = root[get_label(CALIBRATION)];
     if (not caliRoot.isNull())
     {
+        probPow = caliRoot.get("Power", probPow).asDouble();
         probScale = caliRoot.get("Scale", probScale).asDouble();
     }
 

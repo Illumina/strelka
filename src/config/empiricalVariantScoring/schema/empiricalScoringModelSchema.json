@@ -41,7 +41,12 @@
                     "description": "Transformations of the raw model error prob to improve calibration of result",
                     "type": "object",
                     "properties": {
+                        "Power": {
+                            "description": "Raise raw model error prob to the given power",
+                            "type": "number"
+                        },
                         "Scale": {
+                            "description": "Scale error prob after optionally applying power transformation",
                             "type": "number",
                             "minimum": 0
                         }
