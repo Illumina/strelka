@@ -167,12 +167,12 @@ WGS case but cannot be applied correctly to a targeted analysis.
 
 #### Somatic callability
 
-The somatic variant caller can be configured with the option `--writeCallableRegion`, which
+The somatic variant caller can be configured with the option `--outputCallableRegions`, which
 will extend the somatic SNV quality model calculation to be applied as a test of
 somatic SNV callability at all positions in the genome.
 
 The outcome of this callibility calculation will be summarized in a BED-formatted callability track
-found in:`${STRELKA_ANALYSIS_PATH}/results/regions/somatic.callable.region.bed.gz`. This BED track
+found in:`${STRELKA_ANALYSIS_PATH}/results/regions/somatic.callable.regions.bed.gz`. This BED track
 contains regions which are determined to be callable, indicating that there is sufficient evidence to
 either call a somatic SNV or assert the absence of a somatic SNV with a variant frequency of 10% or greater.
 Both somatic and non-somatic sites are determined to be 'callable' if the somatic or non-somatic quality

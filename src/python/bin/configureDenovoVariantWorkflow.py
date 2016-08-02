@@ -57,8 +57,8 @@ You must specify BAM or CRAM file(s) for the proband and additional related samp
                          help="BAM or CRAM file for a parent sample. (no default, submit argument one time for each parent)")
         group.add_option("--siblingAlignment", type="string",dest="siblingBamList",metavar="FILE", action="append",
                          help="BAM or CRAM file for a sibling sample. (no default, submit argument one time for each sibling)")
-        group.add_option("--isWriteCallableRegion", action="store_true",
-                         help="Write out a bed file describing de-novo callable regions of the genome")
+        group.add_option("--outputCallableRegions", dest="isOutputCallableRegions", action="store_true",
+                         help="Output a bed file describing de-novo callable regions of the genome")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
@@ -73,7 +73,7 @@ You must specify BAM or CRAM file(s) for the proband and additional related samp
 
         defaults.update({
             'runDir' : 'PedicureWorkflow',
-            'isWriteCallableRegion' : False
+            'isOutputCallableRegions' : False
             })
         return defaults
 

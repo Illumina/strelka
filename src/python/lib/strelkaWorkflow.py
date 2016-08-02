@@ -138,10 +138,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segFiles.indel.append(tmpIndelPath+".gz")
     segCmd.extend(["--somatic-indel-file", tmpIndelPath ] )
 
-    if self.params.isWriteCallableRegion :
+    if self.params.isOutputCallableRegions :
         tmpCallablePath = self.paths.getTmpSegmentRegionPath(segStr)
         segFiles.callable.append(tmpCallablePath+".gz")
-        segCmd.extend(["--somatic-callable-region-file", tmpCallablePath ])
+        segCmd.extend(["--somatic-callable-regions-file", tmpCallablePath ])
 
     if self.params.isWriteRealignedBam :
         segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(segStr, "normal")])
@@ -199,7 +199,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     compressTask=preJoin(taskPrefix,"compressSegmentOutput_"+gseg.id)
     compressCmd="\"%s\" \"%s\" && \"%s\" \"%s\"" % (self.params.bgzipBin, tmpSnvPath, self.params.bgzipBin, tmpIndelPath)
-    if self.params.isWriteCallableRegion :
+    if self.params.isOutputCallableRegions :
         compressCmd += " && \"%s\" \"%s\"" % (self.params.bgzipBin, self.paths.getTmpSegmentRegionPath(segStr))
 
     self.addTask(compressTask, compressCmd, dependencies=compressWaitFor, isForceLocal=True)
@@ -257,7 +257,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
     # merge segment stats:
     finishTasks.add(self.mergeRunStats(taskPrefix,completeSegmentsTask, segFiles.stats))
 
-    if self.params.isWriteCallableRegion :
+    if self.params.isOutputCallableRegions :
         finishTasks.add(self.concatIndexBed(taskPrefix, completeSegmentsTask, segFiles.callable,
                                             self.paths.getRegionOutputPath(), "callableRegions"))
 
@@ -320,7 +320,7 @@ class PathInfo(SharedPathInfo):
         return os.path.join( self.getTmpSegmentDir(), "somatic.indels.unfiltered.%s.vcf" % (segStr))
 
     def getTmpSegmentRegionPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "somatic.callable.region.%s.bed" % (segStr))
+        return os.path.join( self.getTmpSegmentDir(), "somatic.callable.regions.%s.bed" % (segStr))
 
     def getTmpUnsortRealignBamPath(self, segStr, label) :
         return os.path.join( self.getTmpSegmentDir(), "%s.%s.unsorted.realigned.bam" % (label, segStr))
@@ -335,7 +335,7 @@ class PathInfo(SharedPathInfo):
         return os.path.join( self.params.variantsDir, "somatic.indels.vcf.gz")
 
     def getRegionOutputPath(self) :
-        return os.path.join( self.params.regionsDir, 'somatic.callable.region.bed.gz');
+        return os.path.join( self.params.regionsDir, 'somatic.callable.regions.bed.gz');
 
     def getRealignedBamPath(self, label) :
         return os.path.join( self.params.realignedDir, '%s.realigned.bam' % (label));
@@ -358,7 +358,7 @@ class StrelkaWorkflow(StarkaWorkflow) :
         # bools coming from the ini file need to be cleaned up:
         safeSetBool(self.params,"isWriteRealignedBam")
 
-        if self.params.isWriteCallableRegion :
+        if self.params.isOutputCallableRegions :
             self.params.regionsDir=os.path.join(self.params.resultsDir,"regions")
             ensureDir(self.params.regionsDir)
 
