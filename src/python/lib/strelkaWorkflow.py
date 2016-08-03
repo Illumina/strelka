@@ -119,8 +119,8 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     if self.params.isEVS :
         segCmd.extend(['--somatic-snv-scoring-model-file', self.params.somaticSnvScoringModelFile])
-        if self.params.isSomaticIndelEmpiricalScoring:
-            segCmd.extend(['--somatic-indel-scoring-model-file', self.params.somaticIndelScoringModelFile])
+    if self.params.isSomaticIndelEmpiricalScoring:
+        segCmd.extend(['--somatic-indel-scoring-model-file', self.params.somaticIndelScoringModelFile])
 
     if self.params.isReportEVSFeatures :
         segCmd.append("--report-evs-features")
