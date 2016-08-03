@@ -84,7 +84,7 @@ struct SOMATIC_SNV_SCORING_FEATURES : public FeatureSet
         case N_DP_RATE:
             return "N_DP_RATE";
         case LOR:
-            return "LogOddsRatio";
+            return "LOR";
         default:
             assert(false && "Unknown feature");
             return nullptr;
