@@ -56,7 +56,7 @@ struct SOMATIC_SNV_SCORING_FEATURES : public FeatureSet
         N_DP_RATE,
         TIER1_ALT_RATE,
         MQ,
-		MQ0_FRAC,
+        MQ0_FRAC,
         strandBias,
         ReadPosRankSum,
         LOR,
@@ -139,10 +139,10 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     {
         altmap,
         altpos,
-		N_FDP_RATE,
-		T_FDP_RATE,
-		N_SDP_RATE,
-		T_SDP_RATE,
+        N_FDP_RATE,
+        T_FDP_RATE,
+        N_SDP_RATE,
+        T_SDP_RATE,
         SIZE
     };
 

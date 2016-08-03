@@ -96,29 +96,30 @@ get_single_sample_scoring_features(
     strelka_shared_modifiers_snv& smod)
 {
 
-	if (opt.isReportEVSFeatures){
+    if (opt.isReportEVSFeatures)
+    {
 
-		// {2,N_FDP_RATE},{3,T_FDP_RATE},{4,N_SDP_RATE},
-		// {5,T_SDP_RATE},{6,N_DP_RATE},{7,TIER1_ALLELE_RATE}
-		const double FDP_ratio(safeFrac(tier1_cpi.n_unused_calls(), tier1_cpi.n_calls()));
-		const double SDP_ratio(safeFrac(tier1_cpi.rawPileup().n_spandel, tier1_cpi.n_calls()+tier1_cpi.rawPileup().n_spandel));
+        // {2,N_FDP_RATE},{3,T_FDP_RATE},{4,N_SDP_RATE},
+        // {5,T_SDP_RATE},{6,N_DP_RATE},{7,TIER1_ALLELE_RATE}
+        const double FDP_ratio(safeFrac(tier1_cpi.n_unused_calls(), tier1_cpi.n_calls()));
+        const double SDP_ratio(safeFrac(tier1_cpi.rawPileup().n_spandel, tier1_cpi.n_calls()+tier1_cpi.rawPileup().n_spandel));
 
-		smod.dfeatures.set((isNormalSample ? SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::N_FDP_RATE : SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::T_FDP_RATE), FDP_ratio);
-		smod.dfeatures.set((isNormalSample ? SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::N_SDP_RATE : SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::T_SDP_RATE), SDP_ratio);
+        smod.dfeatures.set((isNormalSample ? SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::N_FDP_RATE : SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::T_FDP_RATE), FDP_ratio);
+        smod.dfeatures.set((isNormalSample ? SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::N_SDP_RATE : SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::T_SDP_RATE), SDP_ratio);
     }
 
-	// compute N_DP_RATE
-	const bool isUniformDepthExpected(dopt.sfilter.is_max_depth());
-	if (isNormalSample)      // offset of 1 is tumor case, we only calculate the depth rate for the normal
-	{
-		double normalDepthRate(1.);
-		if (isUniformDepthExpected)
-		{
-			normalDepthRate = safeFrac(tier1_cpi.n_calls(),dopt.sfilter.expected_chrom_depth);
-		}
+    // compute N_DP_RATE
+    const bool isUniformDepthExpected(dopt.sfilter.is_max_depth());
+    if (isNormalSample)      // offset of 1 is tumor case, we only calculate the depth rate for the normal
+    {
+        double normalDepthRate(1.);
+        if (isUniformDepthExpected)
+        {
+            normalDepthRate = safeFrac(tier1_cpi.n_calls(),dopt.sfilter.expected_chrom_depth);
+        }
 
-		smod.features.set(SOMATIC_SNV_SCORING_FEATURES::N_DP_RATE,normalDepthRate);
-	}
+        smod.features.set(SOMATIC_SNV_SCORING_FEATURES::N_DP_RATE,normalDepthRate);
+    }
 
 
     if (!isNormalSample)      //report tier1_allele count for tumor case

@@ -16,6 +16,9 @@ Strelka User Guide
     * [Advanced configuration options](#advanced-configuration-options)
   * [Execution](#execution)
     * [Advanced execution options](#advanced-execution-options)
+  * [Extended use cases](#extended-use-cases)
+    * [Exome/Targeted](#exometargeted)
+    * [Somatic callability](#somatic-callability)
 * [Special Topics](#special-topics)
 [] (END automated TOC section, any edits will be overwritten on next source refresh)
 
