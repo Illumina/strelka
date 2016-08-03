@@ -263,15 +263,12 @@ write_nonref_2allele_test(const blt_options& opt,
                           const nonref_test_call& nrc,
                           std::ostream& os)
 {
-
     os << nrc.snp_qphred
        << '\t' << NR2TEST::label(static_cast<NR2TEST::index_t>(nrc.max_gt)) << "_" << id_to_base(nrc.nonref_id)
        << '\t' << nrc.max_gt_qphred;
 
-    //if(opt.is_print_used_allele_counts) {
     pi.print_known_counts(os,opt.used_allele_count_min_qscore);
     pi.print_known_qscore(os,opt.used_allele_count_min_qscore);
-    //}
 
 #if 0
     if (opt.is_print_all_poly_gt)

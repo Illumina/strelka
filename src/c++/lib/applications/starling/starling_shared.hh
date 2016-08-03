@@ -31,8 +31,6 @@
 
 struct starling_options : public starling_base_options
 {
-    typedef starling_options base_t;
-
     starling_options()
     {
         // set command-line defaults for starling only:
@@ -49,8 +47,8 @@ struct starling_options : public starling_base_options
         isIndelErrorRateFactor = true;
         indelErrorRateFactor = 100.;
 
-        // TODO double-check with MK:
-        ///upstream_oligo_size = 10;
+        // turn on short haplotying
+        is_short_haplotyping_enabled = true;
     }
 
     bool

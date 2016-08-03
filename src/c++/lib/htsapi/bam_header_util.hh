@@ -79,4 +79,3 @@ std::string
 get_bam_header_sample_name(
     const bam_hdr_t& header,
     const char* default_sample_name = "SAMPLE");
-

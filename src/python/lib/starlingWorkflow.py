@@ -106,7 +106,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segCmd = [ quote(self.params.starlingBin) ]
 
-    segCmd.append("-clobber")
     segCmd.extend(["-min-mapping-quality",self.params.minMapq])
     segCmd.extend(["-bam-seq-name", gseg.chromLabel] )
     segCmd.extend(["-report-range-begin", str(gseg.beginPos) ])

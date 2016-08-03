@@ -181,6 +181,7 @@ struct IndelBuffer
     void
     dump(std::ostream& os) const;
 
+
 private:
 
     /// helper struct for indel_syncronizer
@@ -217,6 +218,7 @@ private:
     isCandidateIndelImplTest(
         const IndelKey& indelKey,
         const IndelData& indelData) const;
+
 
     void
     isCandidateIndelImpl(

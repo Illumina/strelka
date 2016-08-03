@@ -72,7 +72,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segStr = str(gseg.id)
 
     segCmd = [ self.params.pedicureBin ]
-    segCmd.append("-clobber")
     segCmd.extend(["-min-mapping-quality",str(self.params.minTier1Mapq)])
 
 #    segCmd.extend(["-min-qscore","0"])  # consider this once we go back to a quality based scoring model
@@ -110,10 +109,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     for bamPath in self.params.siblingBamList :
         segCmd.extend(["--sibling-align-file", bamPath])
 
-    if self.params.isWriteCallableRegion :
+    if self.params.isOutputCallableRegions :
         tmpCallablePath = self.paths.getTmpSegmentRegionPath(segStr)
         segFiles.callable.append(tmpCallablePath+".gz")
-        segCmd.extend(["--denovo-callable-region-file", tmpCallablePath ])
+        segCmd.extend(["--denovo-callable-regions-file", tmpCallablePath ])
 
     def addListCmdOption(optList,arg) :
         if optList is None : return
@@ -163,7 +162,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     compressTask=preJoin(taskPrefix,"compressSegmentOutput_"+gseg.id)
     compressCmd="\"%s\" \"%s\"" % (self.params.bgzipBin, tmpDenovoPath)
-    if self.params.isWriteCallableRegion :
+    if self.params.isOutputCallableRegions :
         compressCmd += " && \"%s\" \"%s\"" % (self.params.bgzipBin, self.paths.getTmpSegmentRegionPath(segStr))
 
     self.addTask(compressTask, compressCmd, dependencies=compressWaitFor, isForceLocal=True)
@@ -202,7 +201,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
     # merge segment stats:
     finishTasks.add(self.mergeRunStats(taskPrefix,completeSegmentsTask, segFiles.stats))
 
-    if self.params.isWriteCallableRegion :
+    if self.params.isOutputCallableRegions :
         finishTasks.add(self.concatIndexBed(taskPrefix, completeSegmentsTask, segFiles.callable,
                                             self.paths.getRegionOutputPath(), "callableRegions"))
 
@@ -254,7 +253,7 @@ class PathInfo(SharedPathInfo):
         return os.path.join( self.getTmpSegmentDir(), "denovo.unfiltered.%s.vcf" % (segStr))
 
     def getTmpSegmentRegionPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "denovo.callable.region.%s.bed" % (segStr))
+        return os.path.join( self.getTmpSegmentDir(), "denovo.callable.regions.%s.bed" % (segStr))
 
     def getTmpUnsortRealignBamPath(self, segStr, label) :
         return os.path.join( self.getTmpSegmentDir(), "%s.%s.unsorted.realigned.bam" % (label, segStr))
@@ -269,7 +268,7 @@ class PathInfo(SharedPathInfo):
         return os.path.join( self.params.variantsDir, "denovo.vcf.gz")
 
     def getRegionOutputPath(self) :
-        return os.path.join( self.params.regionsDir, 'denovo.callable.region.bed.gz');
+        return os.path.join( self.params.regionsDir, 'denovo.callable.regions.bed.gz');
 
     def getRealignedBamPath(self, label) :
         return os.path.join( self.params.realignedDir, '%s.realigned.bam' % (label));
@@ -293,7 +292,7 @@ class PedicureWorkflow(StarkaWorkflow) :
         # bools coming from the ini file need to be cleaned up:
         safeSetBool(self.params,"isWriteRealignedBam")
 
-        if self.params.isWriteCallableRegion :
+        if self.params.isOutputCallableRegions :
             self.params.regionsDir=os.path.join(self.params.resultsDir,"regions")
             ensureDir(self.params.regionsDir)
 

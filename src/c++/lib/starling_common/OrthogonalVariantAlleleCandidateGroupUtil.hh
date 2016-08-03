@@ -43,7 +43,10 @@ getAlleleGroupIntersectionReadIds(
     const bool isTier1Only);
 
 
-/// get allele likelihoods from read 'readId'
+/// enumerate read likelihood P(read | allele) for read 'readId' over all alleles in 'alleleGroup'
+///
+/// \param lhood[out] (normalized) likelihood for each allele, set to dimension "alleleGroup.alleles.size() + 1",
+///                   with an extra reference allele state represented at the end of the array
 ///
 void
 getAlleleLikelihoodsFromRead(

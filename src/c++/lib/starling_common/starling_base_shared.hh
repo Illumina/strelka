@@ -36,10 +36,8 @@
 #include <cmath>
 
 
-// starling max read size increases to the highest observed read size,
-// up to the following practical limit:
-//
-enum { STARLING_MAX_READ_SIZE = 25000 };
+/// this limit is set as an arbitrary sanity-check
+enum { STRELKA_MAX_READ_SIZE = 25000 };
 
 
 
@@ -48,7 +46,6 @@ struct starling_base_options : public blt_options
     typedef blt_options base_t;
 
     starling_base_options()
-//      : readConfidentSupportThreshold(readConfidentSupportThresholdDefault)
     {}
 
     virtual
@@ -64,7 +61,12 @@ struct starling_base_options : public blt_options
         return (! candidate_indel_filename.empty());
     }
 
-    // parameters inherited from varling caller:
+    bool
+    is_realigned_read_file() const
+    {
+        return (not realigned_read_filename.empty());
+    }
+
     //
     double bindel_diploid_theta = 0.0001;
 
@@ -77,8 +79,7 @@ struct starling_base_options : public blt_options
     bool is_user_genome_size = false;
 
     // parameter to enable/disable short haplotype calling
-    // it's always false for now
-    bool is_short_haplotype_calling_enabled = false;
+    bool is_short_haplotyping_enabled = false;
 
     // to contribute to a breakpoint likelihood, a read must have at least
     // this many bases on each side of the breakpoint:
@@ -131,8 +132,6 @@ struct starling_base_options : public blt_options
     // clip the section of a read which aligns equally well to two or
     // more paths before pileup or realigned read output
     bool is_clip_ambiguous_path = true;
-
-    bool is_realigned_read_file = false;
 
     // this option imposes a consistency criteria on alignments with
     // nearly equal score to favor certain alignments even if they do
@@ -237,8 +236,8 @@ struct indel_digt_caller;
 struct GenotypePriorSet;
 
 
-// data deterministically derived from the input options:
-//
+/// data deterministically derived from the input options:
+///
 struct starling_base_deriv_options : public blt_deriv_options
 {
     typedef blt_deriv_options base_t;

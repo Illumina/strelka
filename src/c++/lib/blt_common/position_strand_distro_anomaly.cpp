@@ -18,8 +18,7 @@
 //
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 #include "blt_common/position_strand_distro_anomaly.hh"

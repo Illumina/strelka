@@ -26,50 +26,94 @@
 
 #include "blt_util/blt_types.hh"
 #include "starling_common/starling_types.hh"
+#include "alignment/GlobalAligner.hh"
+#include "blt_util/align_path.hh"
+#include "IndelBuffer.hh"
 
 #include <string>
 #include <map>
 #include <set>
 
+typedef RangeMap<pos_t,unsigned char> RangeSet;
+
+/// AlignInfo object to store sample id and indel align type
+struct AlignInfo
+{
+    AlignInfo() {}
+
+    unsigned sampleId;
+    INDEL_ALIGN_TYPE::index_t indelAlignType;
+};
+
 /// Represent all haplotypes found in the current active region
 class ActiveRegion
 {
 public:
-    ActiveRegion(pos_t start, pos_t end, unsigned numVariants):
-        _start(start), _end(end), _numVariants(numVariants),
+    // maximum read depth
+    static const unsigned MaxDepth = 1000;
+
+    // minimum haplotype count to consider
+    static const unsigned MinHaplotypeCount = 3;
+
+    // minimum haplotype frequency to relax MMDF
+    const float HaplotypeFrequencyThreshold = 0.4;
+
+    const char missingPrefix = '.';
+
+    /// Creates an active region object
+    /// \param start start position
+    /// \param end end position
+    /// \param refSeq reference sequence corresponding to this active region
+    /// \param aligner aligner for aligning haplotypes to the reference
+    /// \param alignIdToAlignInfo map from align id to (sampleId, indelAlignType)
+    /// \return active region object
+    ActiveRegion(pos_t start, pos_t end, const std::string& refSeq, const GlobalAligner<int>& aligner, const std::vector<AlignInfo>& alignIdToAlignInfo):
+        _start(start), _end(end), _refSeq(refSeq),
+        _aligner(aligner),
+        _alignIdToAlignInfo(alignIdToAlignInfo),
         _alignIdToHaplotype(),
         _alignIdReachingEnd()
     {}
 
+    /// \return start position of the active region
     pos_t getStart() const
     {
         return _start;
     }
-    pos_t getEnd() const
-    {
-        return _end;
-    }
-    unsigned getLength() const
-    {
-        return _end - _start + 1;
-    }
-    unsigned getNumVariants() const
-    {
-        return _numVariants;
-    }
+
+    /// \param pos reference position
+    /// \return true if pos belongs to this active region; false otherwise
     bool contains(pos_t pos) const
     {
         return pos >= _start && pos <= _end;
     }
-    void insertHaplotypeBase(align_id_t align_id, pos_t pos, const std::string& base);
-    void printHaplotypeSequences() const;
+
+    /// Insert haplotype base of the alignment into the position
+    /// \param alignId align id
+    /// \param pos reference position
+    /// \param base base at position pos. base.length() is 1 for match/mismatch, >1 for insertion, and 0 for deletion.
+    void insertHaplotypeBase(align_id_t alignId, pos_t pos, const std::string& base);
+
+    /// Decompose haplotypes into primitive alleles.
+    /// Determine indel candidacy and regiser polymorphic sites to relax MMDF.
+    /// \param indelBuffer
+    /// \param polySites
+    void processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites) const;
 
 private:
     pos_t _start;
     pos_t _end;
-    unsigned _numVariants;
+    const std::string& _refSeq;
+    const GlobalAligner<int> _aligner;
+    const std::vector<AlignInfo>&  _alignIdToAlignInfo;
 
     std::map<align_id_t, std::string> _alignIdToHaplotype;
-
     std::set<align_id_t> _alignIdReachingEnd;
+
+    void convertToPrimitiveAlleles(
+        const std::string& haploptypeSeq,
+        const std::vector<align_id_t>& alignIdList,
+        const bool relaxMMDF,
+        IndelBuffer& indelBuffer,
+        RangeSet& polySites) const;
 };

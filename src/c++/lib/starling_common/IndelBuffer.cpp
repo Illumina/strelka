@@ -231,6 +231,9 @@ isCandidateIndelImplTest(
     // check whether the candidate has been externally specified:
     if (indelData.is_external_candidate) return true;
 
+    // if short haplotyping is enabled, any indels not confirmed in active region are not candidate
+    if (_opt.is_short_haplotyping_enabled && !indelData.isConfirmedInActiveRegion) return false;
+
     if (_opt.is_candidate_indel_signal_test)
     {
         if (!isCandidateIndelImplTestSignalNoise(indelKey, indelData)) return false;

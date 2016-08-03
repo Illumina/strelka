@@ -312,7 +312,7 @@ add_alignment_indels_to_sppr(
     const align_id_t id,
     const unsigned sample_no,
     const std::pair<bool,bool>& edge_pin,
-    const bool is_mapq_zero)
+    const bool isLowMapQuality)
 {
     using namespace ALIGNPATH;
 
@@ -346,6 +346,10 @@ add_alignment_indels_to_sppr(
     const unsigned aps(al.path.size());
 
     auto& active_region_detector(sppr.get_active_region_detector());
+    if (sppr.is_active_region_detector_enabled())
+    {
+        active_region_detector.setAlignInfo(id, sample_no, iat);
+    }
 
     while (path_index<aps)
     {
@@ -364,6 +368,7 @@ add_alignment_indels_to_sppr(
         IndelObservation obs;
         obs.data.iat = iat;
         obs.data.id = id;
+        obs.data.is_low_map_quality = isLowMapQuality;
 
         if (! is_segment_align_match(ps.type))
         {
@@ -443,9 +448,9 @@ add_alignment_indels_to_sppr(
                                  sppr,obs,sample_no,
                                  path_index,read_offset,ref_head_pos);
         }
-        else if (!is_mapq_zero && sppr.is_active_region_detector_enabled() && is_segment_align_match(ps.type))
+        else if (sppr.is_active_region_detector_enabled() && !isLowMapQuality && is_segment_align_match(ps.type))
         {
-            // to detect active regions
+            // detect active regions (match/mismatch)
             for (unsigned j(0); j < ps.length; ++j)
             {
                 const pos_t ref_pos(ref_head_pos + static_cast<pos_t>(j));
@@ -459,14 +464,9 @@ add_alignment_indels_to_sppr(
                 }
                 else
                 {
-                    active_region_detector.insertMatch(id, ref_pos, base_char);
+                    active_region_detector.insertMatch(id, ref_pos);
                 }
             }
-        }
-
-        if (sppr.is_active_region_detector_enabled() && !is_mapq_zero && obs.key.type != INDEL::NONE)
-        {
-            active_region_detector.insertIndel(obs);
         }
 
         for (unsigned i(0); i<n_seg; ++i)

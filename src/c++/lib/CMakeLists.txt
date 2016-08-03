@@ -30,7 +30,7 @@
 ##
 ## note that order approximates dependency chain, where libraries are listed
 ## after libraries upon which they depend:
-set (THIS_ALL_LIBRARIES blt_util common htsapi appstats options errorAnalysis calibration blt_common starling_common strelka_common)
+set (THIS_ALL_LIBRARIES blt_util common htsapi appstats options errorAnalysis calibration blt_common starling_common strelka_common alignment)
 
 ##
 ## Build all the libraries for the project

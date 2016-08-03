@@ -61,7 +61,16 @@ validate() const
 #endif
 }
 
-
+//bool
+//IndelKey::
+//isOrthogonal(IndelKey other) const
+//{
+//    // indels belonging to different active regions are not orthogonal
+//    if (activeRegionId == 0 || activeRegionId != other.activeRegionId) return false;
+//
+//
+//    return false;
+//}
 
 std::ostream&
 operator<<(

@@ -95,14 +95,14 @@ strelka_streams(
 {
     {
         using namespace STRELKA_SAMPLE_TYPE;
-        if (opt.is_realigned_read_file)
+        if (opt.is_realigned_read_file())
         {
-            _realign_bam_ptr[NORMAL].reset(initialize_realign_bam(opt.is_clobber,pinfo,opt.realigned_read_filename,"normal sample realigned-read BAM",header));
+            _realign_bam_ptr[NORMAL].reset(initialize_realign_bam(opt.realigned_read_filename,header));
         }
 
         if (opt.is_tumor_realigned_read())
         {
-            _realign_bam_ptr[TUMOR].reset(initialize_realign_bam(opt.is_clobber,pinfo,opt.tumor_realigned_read_filename,"tumor sample realigned-read BAM",header));
+            _realign_bam_ptr[TUMOR].reset(initialize_realign_bam(opt.tumor_realigned_read_filename,header));
         }
     }
 
@@ -113,7 +113,7 @@ strelka_streams(
         std::ofstream* fosptr(new std::ofstream);
         _somatic_snv_osptr.reset(fosptr);
         std::ofstream& fos(*fosptr);
-        open_ofstream(pinfo,opt.somatic_snv_filename,"somatic-snv",opt.is_clobber,fos);
+        open_ofstream(pinfo,opt.somatic_snv_filename,"somatic-snv",fos);
 
         if (! opt.sfilter.is_skip_header)
         {
@@ -218,7 +218,7 @@ strelka_streams(
         _somatic_indel_osptr.reset(fosptr);
         std::ofstream& fos(*fosptr);
 
-        open_ofstream(pinfo,opt.somatic_indel_filename,"somatic-indel",opt.is_clobber,fos);
+        open_ofstream(pinfo,opt.somatic_indel_filename,"somatic-indel",fos);
 
         if (! opt.sfilter.is_skip_header)
         {
@@ -335,7 +335,7 @@ strelka_streams(
         _somatic_callable_osptr.reset(fosptr);
         std::ofstream& fos(*fosptr);
 
-        open_ofstream(pinfo,opt.somatic_callable_filename,"somatic-callable-regions",opt.is_clobber,fos);
+        open_ofstream(pinfo,opt.somatic_callable_filename,"somatic-callable-regions",fos);
 
         // post samtools 1.0 tabix doesn't handle header information anymore, so take this out entirely:
 #if 0

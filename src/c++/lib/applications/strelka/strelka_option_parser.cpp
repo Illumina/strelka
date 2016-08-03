@@ -91,8 +91,7 @@ get_strelka_option_parser(
     ("indel-contam-tolerance",
      po::value(&opt.indel_contam_tolerance)->default_value(opt.indel_contam_tolerance),
      "Tolerance of tumor contamination in the normal sample for indels (allowed range: [0-1], default: 0.15).")
-    ("somatic-callable-region-file",
-     po::value(&opt.somatic_callable_filename),
+    ("somatic-callable-regions-file", po::value(&opt.somatic_callable_filename),
      "Output a bed file of regions which are confidently somatic or non-somatic for SNVs at allele frequencies of 10% or greater.")
     ("noise-vcf", po::value(&opt.noise_vcf)->multitoken(),
      "Noise panel VCF for low-frequency noise")

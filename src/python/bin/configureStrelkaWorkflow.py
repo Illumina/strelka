@@ -58,6 +58,7 @@ You must specify BAM/CRAM file(s) for a pair of samples.
                          help="Tumor sample BAM or CRAM file. [required] (no default)")
         group.add_option("--isWriteCallableRegion", action="store_true",
                          help="Write out a bed file describing somatic callable regions of thedupliates genome")
+
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
     def addExtendedGroupOptions(self,group) :
@@ -85,7 +86,7 @@ You must specify BAM/CRAM file(s) for a pair of samples.
             "isSomaticIndelEmpiricalScoring" : False,
             'somaticSnvScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
             'somaticIndelScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
-            'isWriteCallableRegion' : False,
+            'isOutputCallableRegions' : False,
             'noiseVcfList' : None
             })
         return defaults

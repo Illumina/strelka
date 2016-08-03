@@ -93,7 +93,7 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
         const starling_base_deriv_options& dopt,
         const reference_contig_segment& ref,
         const starling_streams_base& streams,
-        const unsigned n_samples);
+        const unsigned sampleCount);
 
     virtual
     ~starling_pos_processor_base();
@@ -104,15 +104,13 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
 
     // note that indel position should be normalized before calling:
     //
-    // returns true if this indel is novel to the buffer
-    //
-    bool
+    void
     insert_indel(const IndelObservation& obs,
                  const unsigned sampleId);
 
     bool is_active_region_detector_enabled()
     {
-        return _opt.is_short_haplotype_calling_enabled;
+        return _opt.is_short_haplotyping_enabled;
     }
     ActiveRegionDetector&
     get_active_region_detector()
@@ -129,21 +127,19 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
         const unsigned depth,
         const unsigned sample_no) const;
 
-    // return value is true if the alignment is accepted into
-    // the buffer (alignments can fail a number of quality checks --
-    // such as being located too far away from other alignments of the
-    // same read or having an indel that is too large
-    //
-    // if true, the return value provides the read's ide in this structures
-    // read buffer
-    //
+    /// insert read into read buffer
+    ///
+    /// \return true if the alignment is accepted into the buffer (alignments can fail a number of quality checks --
+    /// such as being located too far away from other alignments of the same read or having an indel that is too large.
+    /// If true, the return value provides the read's id in this structure's ead buffer
+    ///
     boost::optional<align_id_t>
     insert_read(
         const bam_record& br,
         const alignment& al,
         const char* chrom_name,
         const MAPLEVEL::index_t maplev,
-        const unsigned sample_no);
+        const unsigned sampleIndex);
 
     /// snv gt and stats must be reported for this pos (note only honored in strelka and starling right now)
     void
@@ -413,13 +409,23 @@ private:
     load_read_in_depth_buffer(const read_segment& rseg,
                               const unsigned sample_no);
 
+    /// process read segment alignment for indels
     void
-    init_read_segment(const read_segment& rseg,
-                      const unsigned sample_no);
+    init_read_segment(
+        const read_segment& rseg,
+        const unsigned sampleIndex);
 
+    /// Run init_read_segment for all spliced read segments buffered at the current position
+    ///
     void
     init_read_segment_pos(const pos_t pos);
 
+    /// For all reads buffered at the current position:
+    /// 1) determine the set of candidate indels that the read overlaps
+    /// 2) determine the set of private indels within the read's discovery alignments
+    /// 3) Find the most likely alignment given both sets of indels
+    /// 4) evaluate the probability that the read supports each candidate indel vs. the reference
+    ///
     void
     align_pos(const pos_t pos);
 
@@ -431,7 +437,7 @@ private:
 
     void
     pileup_read_segment(const read_segment& rseg,
-                        const unsigned sample_no);
+                        const unsigned sampleIndex);
 
     void
     write_reads(const pos_t pos);
@@ -444,9 +450,6 @@ private:
     process_pos_site_stats(
         const pos_t pos,
         const unsigned sample_no);
-
-    const diploid_genotype&
-    get_empty_dgt(const char ref) const;
 
     void
     process_pos_variants(const pos_t pos);
@@ -583,7 +586,6 @@ protected:
 
     std::unique_ptr<diploid_genotype> _empty_dgt[N_BASE];
     std::unique_ptr<nploid_info> _ninfo;
-    std::unique_ptr<double> _ws;
 
     std::set<pos_t> _forced_output_pos;
 

@@ -213,4 +213,3 @@ get_bam_header_sample_name(
     }
     return default_sample_name;
 }
-

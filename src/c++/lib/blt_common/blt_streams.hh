@@ -62,12 +62,11 @@ protected:
     open_ofstream(const prog_info& pinfo,
                   const std::string& filename,
                   const char* label,
-                  const bool is_clobber,
                   std::ofstream& fos);
 
-    // write first few meta-data lines for a legacy blt/starling
-    // variant output file:
-    //
+    /// write first few meta-data lines for a legacy blt/starling
+    /// variant output file:
+    ///
     static
     void
     write_file_audit(const blt_options& opt,
@@ -75,8 +74,8 @@ protected:
                      const char* const cmdline,
                      std::ostream& os);
 
-    // write the first few meta-data lines for a vcf file:
-    //
+    /// write the first few meta-data lines for a vcf file:
+    ///
     static
     void
     write_vcf_audit(const blt_options& opt,

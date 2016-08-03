@@ -292,7 +292,6 @@ process_pos_snp_single_sample_impl(
     //
     nonref_test_call nrc;
     //lrt_snp_call lsc;
-    //monoploid_genotype mgt;
     //std::unique_ptr<nploid_genotype> ngt_ptr;
 
     // check whether we're in a haploid region:
@@ -335,10 +334,6 @@ process_pos_snp_single_sample_impl(
             _opt,good_epi,si->dgt, _opt.is_all_sites());
     }
 #if 0
-    if (_opt.is_bsnp_monoploid)
-    {
-        position_snp_call_pprob_monogt(_opt.bsnp_monoploid_theta,good_pi,mgt);
-    }
     if (_opt.is_bsnp_nploid)
     {
         ngt_ptr.reset(new nploid_genotype(*_ninfo));
@@ -348,29 +343,6 @@ process_pos_snp_single_sample_impl(
 
     //    const bool is_snp(nrc.is_snp || lsc.is_snp || _site_info.dgt.is_snp || mgt.is_snp || (ngt_ptr.get() && ngt_ptr->is_snp));
     const bool is_snp(nrc.is_snp || si->dgt.is_snp);
-
-    // find anomalies:
-    //
-#if 0
-    bool is_pos_adis(false);
-    bool is_pos_acov(false);
-
-    if ((_opt.is_adis_table || _opt.is_adis_lrt) && is_snp)
-    {
-        if (_opt.is_adis_table)
-        {
-            is_pos_adis = (is_pos_adis || position_strand_distro_anomaly(_opt.adis_table_alpha,good_pi,_ws));
-        }
-        if (_opt.is_adis_lrt)
-        {
-            is_pos_adis = (is_pos_adis || position_strand_distro_anomaly_lrt(_opt.adis_lrt_alpha,good_pi));
-        }
-    }
-    if (_opt.is_acov)
-    {
-        is_pos_acov = position_strand_coverage_anomaly(_opt.acov_alpha,pi);
-    }
-#endif
 
     //    const bool is_nf_snp(is_snp && (! is_filter_snp));
     if (is_snp || is_forced)

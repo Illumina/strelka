@@ -36,7 +36,6 @@ BOOST_AUTO_TEST_CASE( test_cmodel_gqx )
     // disable for now. These don't fail in unit test form, only integrated
     starling_options opts;
     opts.calibration_models_filename = TEST_CONFIG_PATH;
-    opts.is_clobber = true;
     opts.min_paired_align_score=20;
     opts.min_single_align_score=20;
     opts.min_qscore=17 ;

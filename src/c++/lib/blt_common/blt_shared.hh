@@ -96,39 +96,25 @@ struct blt_options
     bool
     is_dependent_eprob() const
     {
-        return ((is_bsnp_diploid() || is_bsnp_monoploid) &&
+        return (is_bsnp_diploid() &&
                 (bsnp_ssd_no_mismatch>0. || bsnp_ssd_one_mismatch>0));
     }
 
     double lsnp_alpha = 0;
     double bsnp_diploid_theta = 0.001;
-    double bsnp_monoploid_theta = 0;
     int bsnp_nploid_ploidy = 0;
     double bsnp_nploid_snp_prob = 0;
     double bsnp_ssd_no_mismatch = 0;
     double bsnp_ssd_one_mismatch = 0;
     double bsnp_diploid_het_bias = 0;
 
-    double adis_lrt_alpha = 0;
-    double adis_table_alpha = 0;
-    double adis_win_lrt_alpha = 0;
-    unsigned adis_win_lrt_flank_size = 0;
-    double acov_alpha = 0;
     bool is_lsnp = false;
-    bool is_bsnp_monoploid = false;
     bool is_bsnp_nploid = false;
     bool is_bsnp_diploid_het_bias = false;
-    bool is_adis_lrt = false;
-    bool is_adis_table = false;
-    bool is_adis_win_lrt = false;
-    bool is_acov = false;
 
     int min_qscore = 17;
     int min_mapping_quality = 20;
 
-    bool is_min_win_qscore = false;
-    int min_win_qscore = 0;
-    unsigned min_win_qscore_flank_size = 0;
     bool is_max_win_mismatch = false;
     unsigned max_win_mismatch = 0;
     unsigned max_win_mismatch_flank_size = 0;
@@ -136,8 +122,6 @@ struct blt_options
     bool is_print_evidence = false;
     bool is_print_all_site_evidence = false;
     pos_range user_report_range;   // requested report range
-    bool is_read_sample = false;
-    double read_sample_rate = 0;
 
     bool is_samtools_ref_set = false;
     std::string samtools_ref_seq_file;
@@ -147,12 +131,8 @@ struct blt_options
 
     std::string counts_filename;
 
-    bool is_clobber = true;
     bool is_report_range_ref = false;
-    bool is_print_all_poly_gt = false; // print the posterior probabilities for all genotypes
-    bool is_print_used_allele_counts = false; // print allele counts as in CASAVA 1.7 output
     int used_allele_count_min_qscore = 0; // print the above with a qscore cutoff...
-    double max_basecall_filter_fraction = 1.; // if more than this fraction of basecalls are filtered out, than filter the snp
 
     int max_vexp_iterations = 0;
     bool is_min_vexp = false;

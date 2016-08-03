@@ -48,7 +48,6 @@ write_vcf_sample_info(
     pedicure_shared_modifiers& smod,
     std::ostream& os)
 {
-
     std::array<unsigned,N_BASE> tier1_base_counts;
     tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
 
@@ -73,12 +72,11 @@ write_vcf_sample_info(
         os << "," << tier1_base_counts[dsc.alts[i]];
 
     // PL field
-//    os << ':' << dsc.Sampleplhoods[sampleIndex][0] << "," << dsc.Sampleplhoods[sampleIndex][1] << "," << dsc.Sampleplhoods[sampleIndex][2];
-//    for (unsigned i=3; i<dsc.Sampleplhoods[sampleIndex].size(); ++i)
-//    {
-//        os << "," << dsc.Sampleplhoods[sampleIndex][i];
-//    }
-
+    os << ':' << dsc.Sampleplhoods[sampleIndex][0] << "," << dsc.Sampleplhoods[sampleIndex][1] << "," << dsc.Sampleplhoods[sampleIndex][2];
+    for (unsigned i=3; i<dsc.Sampleplhoods[sampleIndex].size(); ++i)
+    {
+        os << "," << dsc.Sampleplhoods[sampleIndex][i];
+    }
 }
 
 void

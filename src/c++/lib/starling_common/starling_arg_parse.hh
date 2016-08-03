@@ -18,13 +18,8 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
-///
-/// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the beginning of the range
-/// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
 #pragma once
@@ -35,7 +30,7 @@
 
 /// starling argument parsing and validation:
 ///
-/// this is confined to the older "pre-boost" arguments
+/// this is confined to arg parsing which predates boost::program_options
 void
 legacy_starling_arg_parse(
     arg_data& ad,

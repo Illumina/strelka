@@ -28,70 +28,153 @@
 #include "blt_util/blt_types.hh"
 #include "starling_read_segment.hh"
 #include "indel.hh"
+#include "IndelBuffer.hh"
+
 #include <vector>
 #include <list>
 #include <set>
 
+/// An agent that detects active regions
 class ActiveRegionDetector
 {
 public:
-    static const unsigned MaxBufferSize = 1000;
-    static const unsigned MaxDepth = 1000;
 
+    // maximum buffer size in bases (must be larger than the maximum read size + max indel size
+    static const unsigned MaxBufferSize = 1000;
+
+    // maximum read depth
+    static const unsigned MaxDepth = ActiveRegion::MaxDepth;
+
+    // variant count to add for a single indel
+    static const int IndelWeight = 4;
+
+    // maximum distance between two variants belonging to the same active region
+    static const int MaxDistanceBetweenTwoVariants = 14;
+
+    // alignment scores, same as bwa default values
+    static const int ScoreMatch = 1;
+    static const int ScoreMismatch = -4;
+    static const int ScoreOpen = -5;
+    static const int ScoreExtend = -1;
+    static const int ScoreOffEdge = -100;
+
+    // minimum alternative allele fraction to call a position as a candidate variant
+    const float MinAlternativeAlleleFraction = 0.2;
+
+    /// Creates an object that reads variant information and creates active regions
+    /// \param ref reference segment
+    /// \param indelBuffer indel buffer
+    /// \param maxDeletionSize maximum deletion size
+    /// \param maxDetectionWindowSize maximum active region size
+    /// \param minNumVariantsPerPosition minimum number of variants per position to make the position as a candidate variant pos
+    /// \param minNumVariantsPerRegion minimum number of variants per region to create an active region
+    /// \return active region detector object
     ActiveRegionDetector(
+        const reference_contig_segment& ref,
+        IndelBuffer& indelBuffer,
+        unsigned maxDeletionSize,
         unsigned maxDetectionWindowSize = 30,
-        unsigned minNumMismatchesPerPosition = 9,
+        unsigned minNumVariantsPerPosition = 9,
         unsigned minNumVariantsPerRegion = 2) :
+        _ref(ref),
+        _indelBuffer(indelBuffer),
+        _maxDeletionSize(maxDeletionSize),
         _maxDetectionWindowSize(maxDetectionWindowSize),
-        _minNumMismatchesPerPosition(minNumMismatchesPerPosition),
+        _minNumVariantsPerPosition(minNumVariantsPerPosition),
         _minNumVariantsPerRegion(minNumVariantsPerRegion),
         _variantCounter(MaxBufferSize),
-        _alignIdsCurrentActiveRegion(),
-        _positionToAlignIds(MaxBufferSize, std::list<align_id_t>()),
-        _haplotypeBase(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string()))
-
+        _positionToAlignIds(MaxBufferSize),
+        _alignIdToAlignInfo(MaxDepth),
+        _variantInfo(MaxDepth, std::vector<VariantType>(MaxBufferSize, VariantType())),
+        _insertSeqBuffer(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string())),
+        _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
     {
-        _bufferStartPos = 0;
-
         _numVariants = 0;
         _activeRegionStartPos = 0;
         _prevVariantPos = 0;
     }
 
-    void insertMatch(const align_id_t alignId, const pos_t pos, const char baseChar);
+    /// insert match at position pos
+    /// \param alignId align id
+    /// \param pos reference position
+    void insertMatch(const align_id_t alignId, const pos_t pos);
+
+    /// insert mismatch at position pos
+    /// \param alignId align id
+    /// \param pos reference position
+    /// \param baseChar
     void insertMismatch(const align_id_t alignId, const pos_t pos, const char baseChar);
-    void insertIndel(const IndelObservation& indelObservation);
+
+    /// insert indel
+    /// \param sampleId sample id
+    /// \param indelObservation indel observation object
+    void insertIndel(const unsigned sampleId, const IndelObservation& indelObservation);
+
+    /// update the active region buffer start position
+    /// \param pos reference position
     void updateStartPosition(const pos_t pos);
-    void updateEndPosition(const pos_t pos);
-    bool isEmpty() const
+
+    /// update the active region end position. Creates an active region if needed.
+    /// \param pos reference position
+    /// \param isLastPos
+    void updateEndPosition(const pos_t pos, const bool isLastPos);
+
+    /// cache sampleId and indelAlignType corresponding to alignId
+    /// \param alignId align id
+    /// \param sampleId sample id
+    /// \param indelAlignType indel align type
+    inline void setAlignInfo(const align_id_t alignId, unsigned sampleId, INDEL_ALIGN_TYPE::index_t indelAlignType)
     {
-        return _activeRegions.empty();
+        AlignInfo& alignInfo = _alignIdToAlignInfo[alignId % MaxDepth];
+        alignInfo.sampleId = sampleId;
+        alignInfo.indelAlignType = indelAlignType;
     }
-    std::list<ActiveRegion>& getActiveRegions();
+
+    /// Checks if mismatches occur consistently at position pos
+    /// \param pos reference position
+    /// \return true if pos is a polymorphic site; false otherwise.
+    bool isPolymorphicSite(const pos_t pos) const;
 
 private:
+    enum VariantType
+    {
+        MATCH,
+        MISMATCH,
+        DELETE,
+        INSERT,
+        MISMATCH_INSERT
+    };
+
+    const reference_contig_segment& _ref;
+    IndelBuffer& _indelBuffer;
+
+    unsigned _maxDeletionSize;
     unsigned _maxDetectionWindowSize;
-    unsigned _minNumMismatchesPerPosition;
+    unsigned _minNumVariantsPerPosition;
     unsigned _minNumVariantsPerRegion;
 
-    const std::string strA = "A";
-    const std::string strC = "C";
-    const std::string strG = "G";
-    const std::string strT = "T";
-
-    pos_t _bufferStartPos;
-
-    pos_t _prevVariantPos;
     pos_t _activeRegionStartPos;
+    pos_t _prevVariantPos;
     unsigned _numVariants;
 
     std::list<ActiveRegion> _activeRegions;
     std::vector<unsigned> _variantCounter;
 
     // for haplotypes
-    std::vector<align_id_t> _alignIdsCurrentActiveRegion;
-    std::vector<std::list<align_id_t>> _positionToAlignIds;
-    std::vector<std::vector<std::string>> _haplotypeBase;
+    std::vector<std::vector<align_id_t>> _positionToAlignIds;
+
+    // to store align information
+    std::vector<AlignInfo> _alignIdToAlignInfo;
+
+    std::vector<std::vector<VariantType>> _variantInfo;
+    std::vector<std::vector<std::string>> _insertSeqBuffer;
+    char _snvBuffer[MaxDepth][MaxBufferSize];
+
+    // record polymorphic sites
+    RangeSet _polySites;
+
+    // aligner to be used in active regions
+    GlobalAligner<int> _aligner;
 
     bool isCandidateVariant(const pos_t pos) const;
 
@@ -113,35 +196,31 @@ private:
     inline void addAlignIdToPos(const align_id_t alignId, const pos_t pos)
     {
         int index = pos % MaxBufferSize;
-        if (_positionToAlignIds[index].back() != alignId)
+        if (_positionToAlignIds[index].empty() || _positionToAlignIds[index].back() != alignId)
             _positionToAlignIds[index].push_back(alignId);
     }
 
-    inline std::list<align_id_t> getPositionToAlignIds(const pos_t pos) const
+    inline int getDepth(const pos_t pos) const
+    {
+        int index = pos % MaxBufferSize;
+        return (int)_positionToAlignIds[index].size();
+    }
+
+    inline const std::vector<align_id_t>& getPositionToAlignIds(const pos_t pos) const
     {
         return _positionToAlignIds[pos % MaxBufferSize];
     }
 
-    void setHaplotypeBaseSnv(const align_id_t id, const pos_t pos, char baseChar);
-
-    inline void setHaplotypeBase(const align_id_t id, const pos_t pos, const std::string& base)
-    {
-        _haplotypeBase[id % MaxDepth][pos % MaxBufferSize] = base;
-    }
-
-    inline void concatenateHaplotypeBase(const align_id_t id, const pos_t pos, const std::string& base)
-    {
-        _haplotypeBase[id % MaxDepth][pos % MaxBufferSize] += base;
-    }
-
-    inline const std::string& getHaplotypeBase(const align_id_t id, const pos_t pos) const
-    {
-        return _haplotypeBase[id % MaxDepth][pos % MaxBufferSize];
-    }
+    void setMatch(const align_id_t id, const pos_t pos);
+    void setMismatch(const align_id_t id, const pos_t pos, char baseChar);
+    void setDelete(const align_id_t id, const pos_t pos);
+    void setInsert(const align_id_t id, const pos_t pos, const std::string& insertSeq);
+    void setHaplotypeBase(const align_id_t id, const pos_t pos, std::string& base) const;
 
     inline void clearPos(pos_t pos)
     {
         _positionToAlignIds[pos % MaxBufferSize].clear();
+        resetCounter(pos);
     }
 };
 

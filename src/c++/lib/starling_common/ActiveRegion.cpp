@@ -23,52 +23,167 @@
 ///
 
 #include "ActiveRegion.hh"
-#include <string>
-#include <iostream>
 
-void ActiveRegion::insertHaplotypeBase(align_id_t align_id, pos_t pos, const std::string& base)
+void ActiveRegion::insertHaplotypeBase(align_id_t alignId, pos_t pos, const std::string& base)
 {
-    if (!_alignIdToHaplotype.count(align_id))
+    if (!_alignIdToHaplotype.count(alignId))
     {
-        _alignIdToHaplotype[align_id] = std::string();
+        // first occurrence of this alignment
+        _alignIdToHaplotype[alignId] = std::string();
         for (int i=_start; i<pos; ++i)
-            _alignIdToHaplotype[align_id] += '.';
+            _alignIdToHaplotype[alignId] += missingPrefix;
     }
-    _alignIdToHaplotype[align_id] += base;
+    _alignIdToHaplotype[alignId] += base;
     if (pos == _end)
-        _alignIdReachingEnd.insert(align_id);
+        _alignIdReachingEnd.insert(alignId);
 }
 
-void ActiveRegion::printHaplotypeSequences() const
+// decompose haplotypes into primitive alleles
+void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites) const
 {
-    std::map<std::string, unsigned> haplotypeCounter;
-    unsigned maxCount = 0;
+    std::map<std::string, std::vector<align_id_t>> haplotypeToAlignIdSet;
     for (const auto& entry : _alignIdToHaplotype)
     {
         align_id_t alignId = entry.first;
-        std::string haplotype = entry.second;
-        if (_alignIdReachingEnd.find(alignId) == _alignIdReachingEnd.end())
-            haplotype += "*";
+        const std::string& haplotype(entry.second);
 
-        if (!haplotypeCounter.count(haplotype))
-            haplotypeCounter[haplotype] = 1;
-        else
+        // ignore if the read does not reach the end of the active region
+        if (_alignIdReachingEnd.find(alignId) == _alignIdReachingEnd.end()) continue;
+
+        if (!haplotypeToAlignIdSet.count(haplotype))
+            haplotypeToAlignIdSet[haplotype] = std::vector<align_id_t>();
+        haplotypeToAlignIdSet[haplotype].push_back(alignId);
+    }
+
+    // determine threshold to select 2 haplotypes with the largest counts
+    unsigned largestCount = MinHaplotypeCount;
+    unsigned secondLargestCount = MinHaplotypeCount;
+    unsigned thirdLargestCount = MinHaplotypeCount;
+    unsigned totalCount = 0;
+    for (const auto& entry : haplotypeToAlignIdSet)
+    {
+        const std::string& haplotype(entry.first);
+        if (haplotype.empty() || haplotype[0] == missingPrefix) continue;
+
+        auto count = entry.second.size();
+        totalCount += count;
+        if (count > thirdLargestCount)
         {
-            unsigned count = haplotypeCounter[haplotype] + 1;
-            if (count > maxCount)
-                maxCount = count;
-            haplotypeCounter[haplotype] = count;
+            if (count > secondLargestCount)
+            {
+                if (count > largestCount)
+                {
+                    thirdLargestCount = secondLargestCount;
+                    secondLargestCount = largestCount;
+                    largestCount = (unsigned)count;
+                }
+                else
+                {
+                    thirdLargestCount = secondLargestCount;
+                    secondLargestCount = (unsigned)count;
+                }
+            }
+            else
+                thirdLargestCount = (unsigned)count;
         }
     }
 
-    for (const auto& entry : haplotypeCounter)
+    for (const auto& entry : haplotypeToAlignIdSet)
     {
-        std::string haplotype = entry.first;
-        unsigned count = entry.second;
-        if ((count >= 3) && (count >= maxCount/4))
+        const std::string& haplotype(entry.first);
+        if (haplotype.empty() || haplotype[0] == missingPrefix) continue;
+
+        const auto& alignIdList(entry.second);
+        auto numReads = alignIdList.size();
+        if (numReads >= thirdLargestCount && haplotype != _refSeq)
         {
-            std::cout << haplotype.c_str() << '\t' << count << std::endl;
+//            std::cout << haplotype << '\t' << numReads << std::endl;
+            convertToPrimitiveAlleles(haplotype, alignIdList, numReads >= totalCount*HaplotypeFrequencyThreshold,
+                                      indelBuffer, polySites);
         }
     }
 }
+
+void ActiveRegion::convertToPrimitiveAlleles(
+    const std::string& haploptypeSeq,
+    const std::vector<align_id_t>& alignIdList,
+    const bool relaxMMDF,
+    IndelBuffer& indelBuffer,
+    RangeSet& polySites) const
+{
+    AlignmentResult<int> result;
+    _aligner.align(haploptypeSeq.begin(),haploptypeSeq.end(),_refSeq.begin(),_refSeq.end(),result);
+    const ALIGNPATH::path_t& alignPath = result.align.apath;
+
+    pos_t referencePos = _start;
+    pos_t haplotypePosOffset = 0;
+    if (result.align.beginPos > 0)
+    {
+        assert(false && "Unexpected alignment segment");
+    }
+
+    for (unsigned pathIndex(0); pathIndex<alignPath.size(); ++pathIndex)
+    {
+        const ALIGNPATH::path_segment& pathSegment(alignPath[pathIndex]);
+        unsigned segmentLength = pathSegment.length;
+
+        std::unique_ptr<IndelKey> indelKeyPtr = nullptr;
+        switch (pathSegment.type)
+        {
+        case ALIGNPATH::SEQ_MATCH:
+            referencePos += segmentLength;
+            haplotypePosOffset += segmentLength;
+            break;
+        case ALIGNPATH::SEQ_MISMATCH:
+            for (unsigned i(0); i<segmentLength; ++i)
+            {
+                if (relaxMMDF)
+                    polySites.getRef(referencePos) = 1;
+                ++referencePos;
+                ++haplotypePosOffset;
+            }
+            break;
+        case ALIGNPATH::INSERT:
+        {
+            auto insertSeq(haploptypeSeq.substr(haplotypePosOffset, segmentLength));
+            indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(referencePos, INDEL::INDEL, 0, insertSeq.c_str()));
+
+            haplotypePosOffset += segmentLength;
+            break;
+        }
+        case ALIGNPATH::DELETE:
+        {
+            indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(referencePos, INDEL::INDEL, segmentLength));
+            referencePos += segmentLength;
+            break;
+        }
+        default:
+            assert(false && "Unexpected alignment segment");
+        }
+
+        if (indelKeyPtr != nullptr)
+        {
+            auto* indelDataPtr = indelBuffer.getIndelDataPtr(*indelKeyPtr);
+            if (indelDataPtr == nullptr)
+            {
+                // novel indel
+                for (auto alignId : alignIdList)
+                {
+                    IndelObservationData indelObservationData;
+                    auto& alignInfo(_alignIdToAlignInfo[alignId % MaxDepth]);
+                    indelObservationData.iat = alignInfo.indelAlignType;
+                    indelObservationData.id = alignId;
+                    indelBuffer.addIndelObservation(alignInfo.sampleId, {*indelKeyPtr, indelObservationData});
+                }
+                indelDataPtr = indelBuffer.getIndelDataPtr(*indelKeyPtr);
+            }
+            assert(indelDataPtr != nullptr && "Missing indelData");
+
+            // determine whether this indel is candidate or private
+            indelDataPtr->isConfirmedInActiveRegion = true;
+        }
+    }
+}
+
+
 

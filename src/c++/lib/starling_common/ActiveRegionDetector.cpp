@@ -23,11 +23,10 @@
 ///
 
 #include "ActiveRegionDetector.hh"
-#include <iostream>
 
-void ActiveRegionDetector::insertMatch(const align_id_t alignId, const pos_t pos, const char baseCode)
+void ActiveRegionDetector::insertMatch(const align_id_t alignId, const pos_t pos)
 {
-    setHaplotypeBaseSnv(alignId, pos, baseCode);
+    setMatch(alignId, pos);
     addAlignIdToPos(alignId, pos);
 }
 
@@ -35,143 +34,185 @@ void
 ActiveRegionDetector::insertMismatch(const align_id_t alignId, const pos_t pos, const char baseChar)
 {
     addCount(pos, 1);
-    setHaplotypeBaseSnv(alignId, pos, baseChar);
+    setMismatch(alignId, pos, baseChar);
     addAlignIdToPos(alignId, pos);
 }
 
 void
-ActiveRegionDetector::insertIndel(const IndelObservation& indelObservation)
+ActiveRegionDetector::insertIndel(const unsigned sampleId, const IndelObservation& indelObservation)
 {
     auto pos = indelObservation.key.pos;
-    const int indelCount = 4;
 
     auto alignId = indelObservation.data.id;
     auto indelKey = indelObservation.key;
-    if (indelKey.isPrimitiveInsertionAllele())
+    if (!indelObservation.data.is_low_map_quality)
     {
-        addCount(pos - 1, indelCount);
-        addCount(pos, indelCount);
-        concatenateHaplotypeBase(alignId, pos - 1, indelObservation.key.insert_seq());
-        addAlignIdToPos(alignId, pos - 1);
-    }
-    else if (indelKey.isPrimitiveDeletionAllele())
-    {
-        unsigned length = indelObservation.key.deletionLength;
-        for (unsigned i(0); i<length; ++i)
+        if (indelKey.isPrimitiveInsertionAllele())
         {
-            addCount(pos + i, indelCount);
-            setHaplotypeBase(alignId, pos + i, "");
-            addAlignIdToPos(alignId, pos + i);
+            addCount(pos - 1, IndelWeight);
+            addCount(pos, IndelWeight);
+            setInsert(alignId, pos - 1, indelObservation.key.insert_seq());
+            addAlignIdToPos(alignId, pos - 1);
         }
-        addCount(pos - 1, indelCount);
+        else if (indelKey.isPrimitiveDeletionAllele())
+        {
+            unsigned length = indelObservation.key.deletionLength;
+            for (unsigned i(0); i<length; ++i)
+            {
+                addCount(pos + i, IndelWeight);
+                setDelete(alignId, pos + i);
+                addAlignIdToPos(alignId, pos + i);
+            }
+            addCount(pos - 1, IndelWeight);
+        }
+        else
+        {
+            // ignore BP_LEFT, BP_RIGHT, SWAP
+        }
     }
-    else
-    {
-        // ignore BP_LEFT, BP_RIGHT, SWAP
-    }
+    _indelBuffer.addIndelObservation(sampleId, indelObservation);
 }
-
-//static int activeRegionIndex = 0;
 
 void
 ActiveRegionDetector::updateStartPosition(const pos_t pos)
 {
-    for (int i(_bufferStartPos); i<pos; ++i) resetCounter(i);
-
-    _bufferStartPos = pos;
-
     if (_activeRegions.empty()) return;
 
-    ActiveRegion front =  _activeRegions.front();
-    if (front.getStart() == pos)
+    if (_activeRegions.front().getStart() == pos)
     {
         _activeRegions.pop_front();
     }
+
+    _polySites.eraseTo(pos);
 }
 
 void
-ActiveRegionDetector::updateEndPosition(const pos_t pos)
+ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
 {
     bool isCurrentPosCandidateVariant = isCandidateVariant(pos);
-    if (pos - _activeRegionStartPos  >= (int)_maxDetectionWindowSize && pos - _prevVariantPos > 1)
+
+    // check if we can include this position in the existing acitive region
+    bool isSizeFit = (pos - _activeRegionStartPos) < (int)_maxDetectionWindowSize;
+    auto distanceFromPrevVariant = pos - _prevVariantPos;
+    bool isConsecutiveVariant = (distanceFromPrevVariant == 1); // size may exceed _maxDetectionWindowSize for consecutive variants
+    bool isNotFarFromPrevVariant = (pos > 0) && (distanceFromPrevVariant <= MaxDistanceBetweenTwoVariants);
+
+    bool isExtensible = (isSizeFit || isConsecutiveVariant) && isNotFarFromPrevVariant;
+
+    if (isExtensible && !isLastPos)  // if pos is the last position, we cannot extend
     {
-        // this position doesn't extend the existing active region
-        if (_numVariants >= _minNumVariantsPerRegion)
+        // this position extends the existing active region
+        if (isCurrentPosCandidateVariant)
         {
-            // close existing active region
-            ActiveRegion activeRegion = ActiveRegion(_activeRegionStartPos, _prevVariantPos, _numVariants);
-            _activeRegions.push_back(activeRegion);
-            // add haplotype bases
-            std::cout << '>' << (_activeRegionStartPos+1) << '\t' << (_prevVariantPos+1) << '\t' << _numVariants << std::endl;
-            for (pos_t activeRegionPos(_activeRegionStartPos); activeRegionPos<=_prevVariantPos; ++activeRegionPos)
-            {
-                for (align_id_t alignId : getPositionToAlignIds(activeRegionPos))
-                {
-                    activeRegion.insertHaplotypeBase(alignId, activeRegionPos,
-                                                     getHaplotypeBase(alignId, activeRegionPos));
-                }
-            }
-            activeRegion.printHaplotypeSequences();
-        }
-        if (!isCurrentPosCandidateVariant)
-        {
-            _activeRegionStartPos = -1;
-            _numVariants = 0;
-        }
-        else
-        {
-            // start new active region
-            _activeRegionStartPos = pos;
-            _numVariants = 1;
+            ++_numVariants;
+            _prevVariantPos = pos;
         }
     }
     else
     {
-        // this position doesn't extend the existing active region
-        if (isCurrentPosCandidateVariant)
+        if (isLastPos && isExtensible && isCurrentPosCandidateVariant)
         {
             ++_numVariants;
+            _prevVariantPos = pos;
+        }
+
+        // this position doesn't extend the existing active region
+        if (_numVariants >= _minNumVariantsPerRegion)
+        {
+            // close existing active region
+            std::string refStr = "";
+            _ref.get_substring(_activeRegionStartPos, _prevVariantPos - _activeRegionStartPos + 1, refStr);
+            _activeRegions.emplace_back(_activeRegionStartPos, _prevVariantPos, refStr, _aligner, _alignIdToAlignInfo);
+//            std::cout << '>' << _activeRegionStartPos+1 << '\t' << _prevVariantPos+1 << '\t' << refStr << std::endl;
+            ActiveRegion& activeRegion(_activeRegions.back());
+            // add haplotype bases
+            for (pos_t activeRegionPos(_activeRegionStartPos); activeRegionPos<=_prevVariantPos; ++activeRegionPos)
+            {
+                for (const align_id_t alignId : getPositionToAlignIds(activeRegionPos))
+                {
+                    std::string haplotypeBase;
+                    setHaplotypeBase(alignId, activeRegionPos, haplotypeBase);
+                    activeRegion.insertHaplotypeBase(alignId, activeRegionPos, haplotypeBase);
+                }
+            }
+            activeRegion.processHaplotypes(_indelBuffer, _polySites);
+        }
+
+        if (isCurrentPosCandidateVariant)
+        {
+            // start new active region
+            _activeRegionStartPos = pos;
+            _numVariants = 1;
+            _prevVariantPos = pos;
+        }
+        else
+        {
+            _activeRegionStartPos = 0;
+            _numVariants = 0;
         }
     }
 
-    if (isCurrentPosCandidateVariant)
-        _prevVariantPos = pos;
-
-    clearPos(pos - _maxDetectionWindowSize - 50);
-
-    // max_deletion_size = 50
-    // TODO: remaining
+    clearPos(pos - _maxDetectionWindowSize - _maxDeletionSize);
 }
 
-void ActiveRegionDetector::setHaplotypeBaseSnv(const align_id_t id, const pos_t pos, char baseChar)
+void ActiveRegionDetector::setMatch(const align_id_t id, const pos_t pos)
 {
-    std::string baseStr;
-    switch (baseChar)
+    _variantInfo[id % MaxDepth][pos % MaxBufferSize] = MATCH;
+}
+
+void ActiveRegionDetector::setMismatch(const align_id_t id, const pos_t pos, char baseChar)
+{
+    unsigned idIndex = id % MaxDepth;
+    unsigned posIndex = pos % MaxBufferSize;
+    _variantInfo[idIndex][posIndex] = MISMATCH;
+    _snvBuffer[idIndex][posIndex] = baseChar;
+}
+
+void ActiveRegionDetector::setDelete(const align_id_t id, const pos_t pos)
+{
+    _variantInfo[id % MaxDepth][pos % MaxBufferSize] = DELETE;
+}
+
+void ActiveRegionDetector::setInsert(const align_id_t id, const pos_t pos, const std::string& insertSeq)
+{
+    unsigned idIndex = id % MaxDepth;
+    unsigned posIndex = pos % MaxBufferSize;
+    _variantInfo[idIndex][posIndex] = (_variantInfo[idIndex][posIndex] == MISMATCH ? MISMATCH_INSERT : INSERT);
+    _insertSeqBuffer[idIndex][posIndex] = insertSeq;
+}
+
+void ActiveRegionDetector::setHaplotypeBase(const align_id_t id, const pos_t pos, std::string& base) const
+{
+    unsigned idIndex = id % MaxDepth;
+    unsigned posIndex = pos % MaxBufferSize;
+    const auto variant = _variantInfo[idIndex][posIndex];
+    switch (variant)
     {
-    case 'A':
-        baseStr = strA;
+    case MATCH:
+        base = _ref.get_base(pos);
         break;
-    case 'C':
-        baseStr = strC;
+    case MISMATCH:
+        base = std::string(1, _snvBuffer[idIndex][posIndex]);
         break;
-    case 'G':
-        baseStr = strG;
+    case DELETE:
+        base = "";
         break;
-    case 'T':
-        baseStr = strT;
+    case INSERT:
+        base = _ref.get_base(pos) + _insertSeqBuffer[idIndex][posIndex];
         break;
+    case MISMATCH_INSERT:
+        base = _snvBuffer[idIndex][posIndex] + _insertSeqBuffer[idIndex][posIndex];
     }
-    _haplotypeBase[id % MaxDepth][pos % MaxBufferSize] = baseStr;
 }
 
 bool
 ActiveRegionDetector::isCandidateVariant(const pos_t pos) const
 {
-    return getCount(pos) >= _minNumMismatchesPerPosition;
+    auto count = getCount(pos);
+    return count >= _minNumVariantsPerPosition && count >= (MinAlternativeAlleleFraction*getDepth(pos));
 }
 
-std::list<ActiveRegion>&
-ActiveRegionDetector::getActiveRegions()
+bool ActiveRegionDetector::isPolymorphicSite(const pos_t pos) const
 {
-    return _activeRegions;
+    return _polySites.isKeyPresent(pos);
 }

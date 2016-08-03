@@ -341,6 +341,8 @@ def cleanPyEnv() :
         if key in os.environ :
             del os.environ[key]
 
+    os.environ["LC_ALL"] = "C"
+
 
 
 def isLocalSmtp() :

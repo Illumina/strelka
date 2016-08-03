@@ -81,7 +81,7 @@ struct SampleInfo
 {
     // relationship of sample to proband there's no use for an unknown value here:
     PEDICURE_SAMPLETYPE::index_t stype = PEDICURE_SAMPLETYPE::PROBAND;
-    std::string sname				   = "SAMPLE";
+    std::string sname = "SAMPLE";
 };
 
 
