@@ -33,6 +33,7 @@
 #include "blt_util/PolymorphicObject.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 #include "gvcf_options.hh"
+#include "starling_common/LocusSupportingReadStats.hh"
 
 #include <bitset>
 #include <iosfwd>
@@ -273,6 +274,7 @@ private:
 };
 
 
+
 /// property shared by all variants at a locus within one sample
 struct LocusSampleInfo
 {
@@ -303,6 +305,8 @@ struct LocusSampleInfo
     int gq=0;
     unsigned max_gt=0;
     GermlineFilterKeeper filters; ///< only for sample-specific filters
+
+    LocusSupportingReadStats supportCounts;
 
     /// likelihoods for all possible genotypes, defined as a function of ploidy and altAllele count
     GenotypeLikelihoods genotypePhredLoghood;

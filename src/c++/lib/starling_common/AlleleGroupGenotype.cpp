@@ -159,15 +159,57 @@ logLhoodToLocusGenotype(
 
 
 
+///
+/// \param alleleLhood[inout] allele likelihoods, note that these are altered to include nsite and
+///                           be normalized in this func, 0 index is reference
+/// \param locusReadStats
+///
+void
+updateSupportingReadStats(
+    const starling_base_deriv_options& dopt,
+    const double readSupportTheshold,
+    const uint16_t nsite,
+    const bool isFwdStrand,
+    std::vector<double>& alleleLoglhoods,
+    LocusSupportingReadStats& locusReadStats)
+{
+    static const bool isTier2Pass(false);
+    for (auto& alleleHood : alleleLoglhoods)
+    {
+        alleleHood = integrate_out_sites(dopt, nsite, alleleHood, isTier2Pass);
+    }
+    unsigned maxIndex(0);
+    normalize_ln_distro(alleleLoglhoods.begin(),alleleLoglhoods.end(),maxIndex);
+
+    bool isConfidentAlleleFound(false);
+    const unsigned fullAlleleCount(alleleLoglhoods.size());
+    for (unsigned alleleIndex(0); alleleIndex<fullAlleleCount; ++alleleIndex)
+    {
+        if (alleleLoglhoods[alleleIndex] < readSupportTheshold) continue;
+        locusReadStats.getCounts(isFwdStrand).incrementAlleleCount(alleleIndex);
+        isConfidentAlleleFound=true;
+        break;
+    }
+
+    if (not isConfidentAlleleFound)
+    {
+        locusReadStats.getCounts(isFwdStrand).nonConfidentCount++;
+    }
+}
+
+
+
 void
 getVariantAlleleGroupGenotypeLhoods(
+    const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sampleOptions,
     const reference_contig_segment& ref,
     const unsigned groupLocusPloidy,
     const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
-    AlleleGroupGenotype& locusGenotype)
+    AlleleGroupGenotype& locusGenotype,
+    LocusSupportingReadStats& locusReadStats)
 {
     assert(groupLocusPloidy>0u);
     assert(alleleGroup.size()<=groupLocusPloidy);
@@ -183,6 +225,7 @@ getVariantAlleleGroupGenotypeLhoods(
     std::fill(logLhood,logLhood+gtCount,0.);
     const bool is3AlleleModel(fullAlleleCount == 3);
 
+    //---------------------------------------------------
     // get patternRepeatCount, punt on figuring out how to do this for more than one alt allele
     //
     /// TODO set PatternRepeatCount for multiple alts
@@ -201,6 +244,9 @@ getVariantAlleleGroupGenotypeLhoods(
 
     const ContextGenotypePriors& genotypePriors(dopt.getIndelGenotypePriors().getContextSpecificPriorSet(patternRepeatCount));
 
+    //---------------------------------------------------
+    // get genotype lhoods
+    //
     if (nonRefAlleleCount>0)
     {
         const unsigned nonRefAllele0Index(0);
@@ -212,6 +258,13 @@ getVariantAlleleGroupGenotypeLhoods(
         const IndelKey& allele1Key(alleleGroup.key(nonRefAllele1Index));
         const IndelData& allele1Data(alleleGroup.data(nonRefAllele1Index));
         const IndelSampleData& allele1SampleData(allele1Data.getSampleData(sampleIndex));
+
+        // threshold used to generate supporting count summary (not used for GT likelihoods):
+        const double readSupportTheshold(opt.readConfidentSupportThreshold.numval());
+        // used for support counts only:
+        std::vector<double> alleleLhood(fullAlleleCount);
+
+        locusReadStats.setAltCount(nonRefAlleleCount);
 
         for (const auto& score : allele0SampleData.read_path_lnp)
         {
@@ -246,6 +299,18 @@ getVariantAlleleGroupGenotypeLhoods(
                 is3AlleleModel,
                 refAllele_lnp, variantAllele0_lnp, variantAllele1_lnp,
                 allele0Key, allele1Key, logLhood);
+
+            //---------------------------------------------------
+            // get support counts for each allele
+            //
+
+            alleleLhood[0] = refAllele_lnp;
+            alleleLhood[1] = variantAllele0_lnp;
+            if (is3AlleleModel)
+            {
+                alleleLhood[2] = variantAllele1_lnp;
+            }
+            updateSupportingReadStats(dopt, readSupportTheshold, allele0ReadScores.nsite, allele0ReadScores.is_fwd_strand, alleleLhood, locusReadStats);
         }
     }
 
@@ -312,6 +377,7 @@ updateFromAlleleGroup(
 
 void
 getGenotypeLhoodsForForcedOutputAllele(
+    const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sampleOptions,
     const reference_contig_segment& ref,
@@ -320,7 +386,8 @@ getGenotypeLhoodsForForcedOutputAllele(
     const OrthogonalVariantAlleleCandidateGroup& variantAlleleGroup,
     const OrthogonalVariantAlleleCandidateGroup& forcedOutputAlleleGroup,
     const unsigned forcedOutputAlleleIndex,
-    AlleleGroupGenotype& locusGenotype)
+    AlleleGroupGenotype& locusGenotype,
+    LocusSupportingReadStats& locusReadStats)
 {
     static const double log0(-std::numeric_limits<double>::infinity());
 
@@ -330,6 +397,16 @@ getGenotypeLhoodsForForcedOutputAllele(
     // this is a fixed allele set: {ref, forced output allele, everything else}
     const uint8_t fullAlleleCount(3);
     const bool is3AlleleModel(fullAlleleCount==3);
+
+    // TEMPORARY -- we compress out the <*> allele in final output:
+    const uint8_t tmpFullAlleleCount(2);
+    const uint8_t tmpNonRefAlleleCount(1);
+
+    // threshold used to generate supporting count summary (not used for GT likelihoods):
+    const double readSupportTheshold(opt.readConfidentSupportThreshold.numval());
+    // used for support counts only:
+    std::vector<double> alleleLhood(tmpFullAlleleCount);
+    locusReadStats.setAltCount(tmpNonRefAlleleCount);
 
     GenotypeInfo ginfo(groupLocusPloidy,fullAlleleCount);
     const unsigned gtCount(ginfo.genotypeCount());
@@ -386,6 +463,21 @@ getGenotypeLhoodsForForcedOutputAllele(
                                               refAllele_lnp, forcedOutputAllele_lnp, maxVariantAllele_lnp,
                                               forcedOutputIndelKey, *maxVariantAlleleKeyPtr,
                                               logLhood);
+
+        //---------------------------------------------------
+        // get support counts for each allele
+        //
+
+        alleleLhood[0] = refAllele_lnp;
+        alleleLhood[1] = forcedOutputAllele_lnp;
+#if 0
+        if (is3AlleleModel)
+        {
+            alleleLhood[2] = maxVariantAllele_lnp;
+        }
+#endif
+        updateSupportingReadStats(dopt, readSupportTheshold, forcedOutputAlleleReadScores.nsite, forcedOutputAlleleReadScores.is_fwd_strand, alleleLhood, locusReadStats);
+
     }
 
     const bool isHaploid(groupLocusPloidy==1);

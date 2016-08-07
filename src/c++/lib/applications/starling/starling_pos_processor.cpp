@@ -494,6 +494,7 @@ insertIndelInGvcf(
     const IndelKey& indelKey,
     const IndelData& indelData,
     const starling_diploid_indel& dindel,
+    const std::vector<LocusSupportingReadStats>& locusReadStats,
     gvcf_aggregator& gvcfer)
 {
     static const bool is_tier2_pass(false);
@@ -513,13 +514,14 @@ insertIndelInGvcf(
 
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
-        ii->getSample(sampleIndex).setPloidy(groupLocusPloidy);
+        auto& sampleInfo(ii->getSample(sampleIndex));
+        sampleInfo.setPloidy(groupLocusPloidy);
+        sampleInfo.supportCounts = locusReadStats[sampleIndex];
 
         const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
         starling_indel_sample_report_info& indelSampleReportInfo(ii->getIndelSample(sampleIndex).reportInfo);
         get_starling_indel_sample_report_info(opt, dopt, indelKey, indelSampleData, basecallBuffer,
                                               is_tier2_pass, is_use_alt_indel, indelSampleReportInfo);
-
     }
 
     gvcfer.add_indel(std::move(ii));
@@ -648,6 +650,7 @@ hackDiplotypeCallToCopyNumberCalls(
     const pos_t targetPos,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     const AlleleGroupGenotype& locusGenotype,
+    const std::vector<LocusSupportingReadStats>& locusReadStats,
     const unsigned groupLocusPloidy,
     const bool isForcedOutput,
     gvcf_aggregator& gvcfer)
@@ -675,7 +678,7 @@ hackDiplotypeCallToCopyNumberCalls(
 
         starling_diploid_indel dindel(locusGenotypeToDindel(locusGenotype, genotypeAlleleIndex));
         insertIndelInGvcf(opt, dopt, groupLocusPloidy, ref, basecallBuffer, indelKey,
-                          indelData, dindel, gvcfer);
+                          indelData, dindel, locusReadStats, gvcfer);
     }
     return isOutputAnyAlleles;
 }
@@ -806,16 +809,18 @@ process_pos_indel_digt(const pos_t pos)
 
     // genotype and report topVariantAlleleGroup
     //
+
     AlleleGroupGenotype locusGenotype;
+    std::vector<LocusSupportingReadStats> locusReadStats(sampleCount);
     {
         // genotype the top N alleles
-        getVariantAlleleGroupGenotypeLhoods(_dopt, sif.sample_opt, _ref, callerPloidy[sampleIndex],
-                                            sampleIndex, topVariantAlleleGroup, locusGenotype);
+        getVariantAlleleGroupGenotypeLhoods(_opt, _dopt, sif.sample_opt, _ref, callerPloidy[sampleIndex],
+                                            sampleIndex, topVariantAlleleGroup, locusGenotype, locusReadStats[sampleIndex]);
 
         // coerce output into older data-structures for gVCF output
         static const bool isForcedOutput(false);
         hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, _ref, sif.bc_buff, pos,
-                                           topVariantAlleleGroup, locusGenotype,
+                                           topVariantAlleleGroup, locusGenotype, locusReadStats,
                                            groupLocusPloidy[sampleIndex], isForcedOutput, *_gvcfer);
     }
 
@@ -857,10 +862,10 @@ process_pos_indel_digt(const pos_t pos)
              forcedOutputAlleleIndex < forcedOutputAlleleCount; ++forcedOutputAlleleIndex)
         {
             AlleleGroupGenotype forcedAlleleLocusGenotype;
-            getGenotypeLhoodsForForcedOutputAllele(_dopt, sif.sample_opt, _ref,
+            getGenotypeLhoodsForForcedOutputAllele(_opt, _dopt, sif.sample_opt, _ref,
                                                    callerPloidy[sampleIndex], sampleIndex, topVariantAlleleGroup,
                                                    forcedOutputAlleleGroup,
-                                                   forcedOutputAlleleIndex, forcedAlleleLocusGenotype);
+                                                   forcedOutputAlleleIndex, forcedAlleleLocusGenotype, locusReadStats[sampleIndex]);
 
             // The above function should be set to force <*> and REF alleles into just REF for now,
             // so the most likely genotype should not contain the second allele
@@ -876,7 +881,8 @@ process_pos_indel_digt(const pos_t pos)
             static const bool isForcedOutput(true);
             hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, _ref, sif.bc_buff,
                                                pos, fakeForcedOutputAlleleGroup,
-                                               forcedAlleleLocusGenotype, groupLocusPloidy[sampleIndex], isForcedOutput,
+                                               forcedAlleleLocusGenotype, locusReadStats,
+                                               groupLocusPloidy[sampleIndex], isForcedOutput,
                                                *_gvcfer);
         }
     }

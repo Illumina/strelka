@@ -22,6 +22,7 @@
 
 #include "starling_base_shared.hh"
 #include "starling_common/OrthogonalVariantAlleleCandidateGroup.hh"
+#include "LocusSupportingReadStats.hh"
 
 
 /// produce various genotype information based on
@@ -378,16 +379,19 @@ private:
 
 void
 getVariantAlleleGroupGenotypeLhoods(
+    const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sampleOptions,
     const reference_contig_segment& ref,
     const unsigned groupLocusPloidy,
     const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
-    AlleleGroupGenotype& locusGenotype);
+    AlleleGroupGenotype& locusGenotype,
+    LocusSupportingReadStats& locusReadStats);
 
 void
 getGenotypeLhoodsForForcedOutputAllele(
+    const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sampleOptions,
     const reference_contig_segment& ref,
@@ -396,4 +400,5 @@ getGenotypeLhoodsForForcedOutputAllele(
     const OrthogonalVariantAlleleCandidateGroup& variantAlleleGroup,
     const OrthogonalVariantAlleleCandidateGroup& forcedOutputAlleleGroup,
     const unsigned forcedOutputAlleleIndex,
-    AlleleGroupGenotype& locusGenotype);
+    AlleleGroupGenotype& locusGenotype,
+    LocusSupportingReadStats& locusReadStats);
