@@ -726,11 +726,13 @@ write_indel_record(
        << firstAllele._indelReportInfo.vcf_ref_seq << '\t'; // REF
 
     // ALT
+    const unsigned altAlleleCount(ii.altAlleles.size());
+    const unsigned fullAlleleCount(altAlleleCount+1);
 
-    for (unsigned i = 0; i <ii.altAlleles.size(); ++i)
+    for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
     {
-        if (i > 0) os << ',';
-        os << ii.altAlleles[i]._indelReportInfo.vcf_indel_seq;
+        if (altAlleleIndex > 0) os << ',';
+        os << ii.altAlleles[altAlleleIndex]._indelReportInfo.vcf_indel_seq;
     }
     os << '\t';
 
@@ -834,45 +836,45 @@ write_indel_record(
 
         // SAMPLE AD/ADF/ADR:
         {
-#if 0
-            auto orderRefReads = [](const GermlineDiploidIndelAlleleInfo& a, const GermlineDiploidIndelAlleleInfo& b) {
-                return (a._indelSampleReportInfo.n_confident_ref_reads <
-                        b._indelSampleReportInfo.n_confident_ref_reads);
-            };
+            const auto& counts(sampleInfo.supportCounts);
 
-            const auto maxRefCountIter(
-                std::max_element(ii.altAlleles.begin(), ii.altAlleles.end(), orderRefReads));
-
-            const auto& maxRefIsri(maxRefCountIter->_indelSampleReportInfo);
+            // verify new and old count systems are in sync:
+            assert(counts.getAltCount() == altAlleleCount);
 
             // AD
-            os << ':' << maxRefIsri.n_confident_ref_reads;
-            for (const auto& icall : ii.altAlleles)
-            {
-                os << ',' << icall._indelSampleReportInfo.n_confident_indel_reads;
-            }
-
-            // ADF
-            os << ':' << maxRefIsri.n_confident_ref_reads_fwd;
-            for (const auto& icall : ii.altAlleles)
-            {
-                os << ',' << icall._indelSampleReportInfo.n_confident_indel_reads_fwd;
-            }
-
-            // ADR
-            os << ':' << maxRefIsri.n_confident_ref_reads_rev;
-            for (const auto& icall : ii.altAlleles)
-            {
-                os << ',' << icall._indelSampleReportInfo.n_confident_indel_reads_rev;
-            }
-#endif
-
-            // FT
             os << ':';
-            sampleInfo.filters.write(os);
+            for (unsigned alleleIndex(0); alleleIndex < fullAlleleCount; ++alleleIndex)
+            {
+                if (alleleIndex>0)
+                {
+                    os << ',';
+                }
+                os << (counts.getCounts(true).confidentAlleleCount(alleleIndex) + counts.getCounts(false).confidentAlleleCount(alleleIndex));
+            }
+
+            // ADF/ADR
+            for (unsigned strandIndex(0); strandIndex<2; ++strandIndex)
+            {
+                const bool isFwdStrand(strandIndex==0);
+                const auto& strandCounts(counts.getCounts(isFwdStrand));
+
+                os << ':';
+                for (unsigned alleleIndex(0); alleleIndex < fullAlleleCount; ++alleleIndex)
+                {
+                    if (alleleIndex > 0)
+                    {
+                        os << ',';
+                    }
+                    os << strandCounts.confidentAlleleCount(alleleIndex);
+                }
+            }
         }
 
-        // PL field
+        // FT
+        os << ':';
+        sampleInfo.filters.write(os);
+
+        // PL
         os << ":";
 #if 0
         {

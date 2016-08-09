@@ -49,6 +49,14 @@ struct SupportingReadCountGroup
     }
 
     unsigned
+    getAltCount() const
+    {
+        const unsigned s(_confidentAlleleCount.size());
+        assert(s>0);
+        return (s-1);
+    }
+
+    unsigned
     confidentRefAlleleCount() const
     {
         return _confidentAlleleCount[0];
@@ -57,8 +65,14 @@ struct SupportingReadCountGroup
     unsigned
     confidentAltAlleleCount(const unsigned altAlleleIndex) const
     {
-        assert((1+altAlleleIndex) < _confidentAlleleCount.size());
-        return _confidentAlleleCount[1+altAlleleIndex];
+        return confidentAlleleCount(1+altAlleleIndex);
+    }
+
+    unsigned
+    confidentAlleleCount(const unsigned alleleIndex) const
+    {
+        assert((alleleIndex) < _confidentAlleleCount.size());
+        return _confidentAlleleCount[alleleIndex];
     }
 
     unsigned
@@ -120,6 +134,12 @@ struct LocusSupportingReadStats
         fwdCounts.setAltCount(altAlleleCount);
         revCounts.setAltCount(altAlleleCount);
         tier1Depth = 0;
+    }
+
+    unsigned
+    getAltCount() const
+    {
+        return fwdCounts.getAltCount();
     }
 
     SupportingReadCountGroup&
