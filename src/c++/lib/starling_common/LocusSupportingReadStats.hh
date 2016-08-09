@@ -24,7 +24,10 @@
 
 #pragma once
 
+#include <cassert>
+
 #include <algorithm>
+#include <numeric>
 #include <vector>
 
 

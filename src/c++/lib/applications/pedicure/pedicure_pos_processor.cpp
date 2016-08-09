@@ -73,6 +73,9 @@ pedicure_pos_processor(
         }
     }
 
+    getIndelBuffer().setMaxCandidateDepth(max_candidate_proband_sample_depth);
+
+
     using namespace PEDICURE_SAMPLETYPE;
 
     // setup indel buffer:
@@ -81,9 +84,8 @@ pedicure_pos_processor(
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
             const bool isProband(_opt.alignFileOpt.alignmentSampleInfo.getSampleInfo(sampleIndex).stype == PROBAND);
-            double max_candidate_sample_depth(isProband ? max_candidate_proband_sample_depth : -1);
             sample_info& sif(sample(sampleIndex));
-            getIndelBuffer().registerSample(sif.estdepth_buff, sif.estdepth_buff_tier2, max_candidate_sample_depth);
+            getIndelBuffer().registerSample(sif.estdepth_buff, sif.estdepth_buff_tier2, isProband);
         }
 
         getIndelBuffer().finalizeSamples();

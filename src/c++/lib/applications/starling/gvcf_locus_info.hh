@@ -264,7 +264,7 @@ private:
         const uint8_t allele1Index) const
     {
         assert(_ploidy==2);
-        VCFUTIL::getDiploidGenotypeIndex(allele0Index,allele1Index);
+        return VCFUTIL::getDiploidGenotypeIndex(allele0Index,allele1Index);
     }
 
     int _ploidy = 0;
