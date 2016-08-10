@@ -23,7 +23,6 @@
 ///
 
 #include "LocusReportInfoUtil.hh"
-#include "blt_util/pos_range.hh"
 
 
 
@@ -125,8 +124,15 @@ getLocusReportInfoFromAlleles(
             std::string& vcfAltSeq(locusReportInfo.altAlleles[altAlleleIndex].vcfAltSeq);
 
             copy_ref_subseq(ref, alleleSetRange.begin_pos()-1, indelKey.pos, vcfAltSeq);
+            const unsigned leadingPad(indelKey.pos - (alleleSetRange.begin_pos()-1));
+
             vcfAltSeq += indelKey.insert_seq();
+
             append_ref_subseq(ref, indelKey.right_pos(), alleleSetRange.end_pos(), vcfAltSeq);
+            const unsigned trailingPad(alleleSetRange.end_pos() - indelKey.right_pos());
+
+            auto& vcfCigar(locusReportInfo.altAlleles[altAlleleIndex].vcfCigar);
+            setIndelAlleleCigar(leadingPad, trailingPad, indelKey, vcfCigar);
         }
     }
 }

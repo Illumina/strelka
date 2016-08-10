@@ -41,6 +41,7 @@
 struct OrthogonalAlleleSetLocusReportInfoAlleleDetails
 {
     std::string vcfAltSeq;
+    ALIGNPATH::path_t vcfCigar;
 };
 
 
@@ -63,6 +64,16 @@ struct OrthogonalAlleleSetLocusReportInfo
     std::vector<OrthogonalAlleleSetLocusReportInfoAlleleDetails> altAlleles;
 };
 
+
+
+/// utility to transform indel key plus any leading or trailing match sequence
+/// into an cigar alignment
+void
+setIndelAlleleCigar(
+    const unsigned lead,
+    const unsigned trail,
+    const IndelKey& indelKey,
+    ALIGNPATH::path_t& cigar);
 
 
 
@@ -139,7 +150,10 @@ struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
 
     void set_hap_cigar(
         const unsigned lead=1,
-        const unsigned trail=0);
+        const unsigned trail=0)
+    {
+        setIndelAlleleCigar(lead, trail, _indelKey, cigar);
+    }
 
     const IndelKey _indelKey;
     std::string breakpointInsertSeq;

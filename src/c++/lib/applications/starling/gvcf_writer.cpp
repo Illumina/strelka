@@ -752,10 +752,10 @@ write_indel_record(
 
     // INFO
     os << "CIGAR=";
-    for (unsigned i=0; i < ii.altAlleles.size(); ++i)
+    for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
     {
-        if (i > 0) os << ',';
-        os << ii.altAlleles[i].cigar;
+        if (altAlleleIndex > 0) os << ',';
+        os << locusReportInfo.altAlleles[altAlleleIndex].vcfCigar;
     }
     os << ';';
     os << "RU=";

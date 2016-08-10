@@ -41,10 +41,11 @@
 
 
 void
-GermlineIndelAlleleInfo::
-set_hap_cigar(
+setIndelAlleleCigar(
     const unsigned lead,
-    const unsigned trail)
+    const unsigned trail,
+    const IndelKey& indelKey,
+    ALIGNPATH::path_t& cigar)
 {
     using namespace ALIGNPATH;
 
@@ -53,13 +54,13 @@ set_hap_cigar(
     {
         cigar.push_back(path_segment(MATCH,lead));
     }
-    if (_indelKey.delete_length())
+    if (indelKey.delete_length())
     {
-        cigar.push_back(path_segment(DELETE,_indelKey.delete_length()));
+        cigar.push_back(path_segment(DELETE, indelKey.delete_length()));
     }
-    if (_indelKey.insert_length())
+    if (indelKey.insert_length())
     {
-        cigar.push_back(path_segment(INSERT,_indelKey.insert_length()));
+        cigar.push_back(path_segment(INSERT, indelKey.insert_length()));
     }
     if (trail)
     {
