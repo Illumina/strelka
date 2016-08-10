@@ -27,6 +27,7 @@
 #include <cassert>
 
 #include <algorithm>
+#include <iosfwd>
 #include <numeric>
 #include <vector>
 
@@ -163,3 +164,7 @@ struct LocusSupportingReadStats
     /// the depth of the pileup preceding the alt alleles;
     unsigned tier1Depth = 0;
 };
+
+
+std::ostream&
+operator<<(std::ostream& os, const LocusSupportingReadStats& lsrs);
