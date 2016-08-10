@@ -645,7 +645,7 @@ hackDiplotypeCallToCopyNumberCalls(
         {
             const IndelKey& indelKey2(alleleGroup.key(genotypeAlleleIndex2));
             const IndelData& indelData2(alleleGroup.data(genotypeAlleleIndex2));
-            ii->addAltIndelAllele(indelKey2,indelData2.isForcedOutput);
+            ii->addAltIndelAllele(indelKey2, indelData2);
         }
 
         for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)

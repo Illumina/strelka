@@ -433,15 +433,20 @@ struct GermlineIndelLocusInfo : public LocusInfo
     void
     addAltIndelAllele(
         const IndelKey& indelKey,
-        const bool isForcedOutput)
+        const IndelData& indelData)
     {
-        indelAlleleInfo.emplace_back(indelKey,isForcedOutput);
+        _indelAlleleInfo.emplace_back(indelKey, indelData);
         incrementAltAlleleCount();
     }
 
-    /// TODO transition this to a private interface
-    std::vector<GermlineIndelAlleleInfo> indelAlleleInfo;
+    const std::vector<GermlineIndelAlleleInfo>&
+    getIndelAlleles() const
+    {
+        return _indelAlleleInfo;
+    }
+
 private:
+    std::vector<GermlineIndelAlleleInfo> _indelAlleleInfo;
     std::vector<GermlineIndelSampleInfo> _indelSampleInfo;
 };
 

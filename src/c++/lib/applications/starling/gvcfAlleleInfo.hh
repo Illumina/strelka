@@ -57,6 +57,8 @@ struct OrthogonalAlleleSetLocusReportInfo
         return altAlleles.size();
     }
 
+    /// 1-indexed position used to report the whole allele group
+    pos_t vcfPos = 0;
     std::string vcfRefSeq;
     std::vector<OrthogonalAlleleSetLocusReportInfoAlleleDetails> altAlleles;
 };
@@ -106,11 +108,15 @@ struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
 {
     /// new interface
     GermlineIndelAlleleInfo(
-        const IndelKey& indelKey,
-        const bool initIsForcedOutput)
-        : _indelKey(indelKey)
+        const IndelKey& initIndelKey,
+        const IndelData& indelData)
+        : _indelKey(initIndelKey)
     {
-        isForcedOutput = initIsForcedOutput;
+        isForcedOutput = indelData.isForcedOutput;
+        if (_indelKey.is_breakpoint())
+        {
+            breakpointInsertSeq = indelData.getBreakpointInsertSeq();
+        }
     }
 
     /// deprecated interface
@@ -136,6 +142,7 @@ struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
         const unsigned trail=0);
 
     const IndelKey _indelKey;
+    std::string breakpointInsertSeq;
     // TODO: make the indel overlapping code create a new call, then revert this to const
     starling_indel_report_info _indelReportInfo;
 

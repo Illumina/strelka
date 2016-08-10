@@ -26,6 +26,8 @@
 
 #include "gvcf_header.hh"
 #include "indel_overlapper.hh"
+#include "LocusReportInfoUtil.hh"
+#include "ScoringModelManager.hh"
 #include "variant_prefilter_stage.hh"
 
 #include "blt_util/io_util.hh"
@@ -34,7 +36,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "ScoringModelManager.hh"
+
 
 
 
@@ -718,23 +720,29 @@ write_indel_record(
     const GermlineDiploidIndelLocusInfo& ii) const
 {
     std::ostream& os(*_osptr);
-    const auto& firstAllele(ii.getFirstAltAllele());
+
+    // create VCF specific transformation of the alt allele list
+    OrthogonalAlleleSetLocusReportInfo locusReportInfo;
+    getLocusReportInfoFromAlleles(_ref, ii.getIndelAlleles(), locusReportInfo);
 
     os << _chrom << '\t'   // CHROM
-       << ii.pos << '\t'   // POS
+       << locusReportInfo.vcfPos << '\t'   // POS
        << ".\t"            // ID
-       << firstAllele._indelReportInfo.vcf_ref_seq << '\t'; // REF
+       << locusReportInfo.vcfRefSeq << '\t'; // REF
 
     // ALT
-    const unsigned tmpOldAltAlleleCount(ii.altAlleles.size());
-    //const unsigned tmpOldFullAlleleCount(tmpOldAltAlleleCount+1);
+    const unsigned altAlleleCount(ii.getAltAlleleCount());
+    const unsigned fullAlleleCount(altAlleleCount+1);
 
-    for (unsigned altAlleleIndex(0); altAlleleIndex < tmpOldAltAlleleCount; ++altAlleleIndex)
+    for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
     {
         if (altAlleleIndex > 0) os << ',';
-        os << ii.altAlleles[altAlleleIndex]._indelReportInfo.vcf_indel_seq;
+        os << locusReportInfo.altAlleles[altAlleleIndex].vcfAltSeq;
     }
     os << '\t';
+
+    const auto& firstAllele(ii.getFirstAltAllele());
+    const unsigned tmpOldAltAlleleCount(ii.altAlleles.size());
 
     os << firstAllele._dindel.indel_qphred << '\t'; //QUAL
 
@@ -838,19 +846,14 @@ write_indel_record(
         {
             const auto& counts(sampleInfo.supportCounts);
 
-            const unsigned altAlleleCount(counts.getAltCount());
-            const unsigned fullAlleleCount(altAlleleCount+1);
-            // verify new and old count systems are in sync:
-            //assert(counts.getAltCount() == altAlleleCount);
+            // verify locus and sample allele counts are in sync:
+            assert(counts.getAltCount() == altAlleleCount);
 
             // AD
             os << ':';
             for (unsigned alleleIndex(0); alleleIndex < fullAlleleCount; ++alleleIndex)
             {
-                if (alleleIndex>0)
-                {
-                    os << ',';
-                }
+                if (alleleIndex>0) os << ',';
                 os << (counts.getCounts(true).confidentAlleleCount(alleleIndex) + counts.getCounts(false).confidentAlleleCount(alleleIndex));
             }
 
@@ -863,10 +866,7 @@ write_indel_record(
                 os << ':';
                 for (unsigned alleleIndex(0); alleleIndex < fullAlleleCount; ++alleleIndex)
                 {
-                    if (alleleIndex > 0)
-                    {
-                        os << ',';
-                    }
+                    if (alleleIndex>0) os << ',';
                     os << strandCounts.confidentAlleleCount(alleleIndex);
                 }
             }
@@ -895,8 +895,7 @@ write_indel_record(
             }
         }
 #else
-        const unsigned altAleleCount(ii.altAlleles.size());
-        if (altAleleCount == 1)
+        if (tmpOldAltAlleleCount == 1)
         {
             using namespace STAR_DIINDEL;
             const auto& dindel(ii.altAlleles[0]._dindel);
@@ -913,7 +912,7 @@ write_indel_record(
                    << pls[HOM];
             }
         }
-        else if (altAleleCount == 2)
+        else if (tmpOldAltAlleleCount == 2)
         {
             // very roughly approximate the overlapping indel PL values
             //
