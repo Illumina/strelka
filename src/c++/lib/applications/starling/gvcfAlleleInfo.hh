@@ -36,6 +36,35 @@
 #include <map>
 
 
+/// allele details in the context of a specific overlapping allele set
+///
+struct OrthogonalAlleleSetLocusReportInfoAlleleDetails
+{
+    std::string vcfAltSeq;
+};
+
+
+/// locus summary information for an overlapping allele set which is shared between all samples
+///
+/// this contains information required to describe ALT and CIGAR, but not sample-specific
+/// information like GT
+///
+struct OrthogonalAlleleSetLocusReportInfo
+{
+    unsigned
+    getAltAlleleCount() const
+    {
+        return altAlleles.size();
+    }
+
+    std::string vcfRefSeq;
+    std::vector<OrthogonalAlleleSetLocusReportInfoAlleleDetails> altAlleles;
+};
+
+
+
+
+
 /// this object contains information shared by any germline variant allele
 ///
 /// variant here means SNV or indel
@@ -75,6 +104,16 @@ std::ostream& operator<<(std::ostream& os,const GermlineVariantAlleleInfo& shmod
 /// restrict to the case where variant is indel
 struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
 {
+    /// new interface
+    GermlineIndelAlleleInfo(
+        const IndelKey& indelKey,
+        const bool initIsForcedOutput)
+        : _indelKey(indelKey)
+    {
+        isForcedOutput = initIsForcedOutput;
+    }
+
+    /// deprecated interface
     GermlineIndelAlleleInfo(
         const IndelKey& indelKey,
         const IndelData& indelData,

@@ -480,55 +480,6 @@ process_pos_indel(const pos_t pos)
 
 
 
-/// facilitate final bookkeeping required to insert starling_diploid_indel in gVCF
-///
-/// TODO retire the starling_diploid_indel based indel stream to gVCF
-static
-void
-insertIndelInGvcf(
-    const starling_base_options& opt,
-    const starling_deriv_options& dopt,
-    const unsigned groupLocusPloidy,
-    const reference_contig_segment& ref,
-    const pos_basecall_buffer& basecallBuffer,
-    const IndelKey& indelKey,
-    const IndelData& indelData,
-    const starling_diploid_indel& dindel,
-    const std::vector<LocusSupportingReadStats>& locusReadStats,
-    gvcf_aggregator& gvcfer)
-{
-    static const bool is_tier2_pass(false);
-    static const bool is_use_alt_indel(false);
-
-    /// TODO STREL-125 generalize to multi-sample
-    const unsigned sampleCount(1);
-
-    // sample-independent info:
-    starling_indel_report_info indelReportInfo;
-    get_starling_indel_report_info(indelKey, indelData, ref, indelReportInfo);
-
-    // sample-specific info: (division doesn't really matter
-    // in single-sample case)
-
-    std::unique_ptr<GermlineIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, indelKey, indelData, dindel, indelReportInfo));
-
-    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
-    {
-        auto& sampleInfo(ii->getSample(sampleIndex));
-        sampleInfo.setPloidy(groupLocusPloidy);
-        sampleInfo.supportCounts = locusReadStats[sampleIndex];
-
-        const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
-        starling_indel_sample_report_info& indelSampleReportInfo(ii->getIndelSample(sampleIndex).reportInfo);
-        get_starling_indel_sample_report_info(opt, dopt, indelKey, indelSampleData, basecallBuffer,
-                                              is_tier2_pass, is_use_alt_indel, indelSampleReportInfo);
-    }
-
-    gvcfer.add_indel(std::move(ii));
-}
-
-
-
 /// translate AG_GENOTYPE to older genotype indices
 ///
 /// TODO retire the old STAR_DIINDEL scheme and remove these conversion routines
@@ -655,6 +606,12 @@ hackDiplotypeCallToCopyNumberCalls(
     const bool isForcedOutput,
     gvcf_aggregator& gvcfer)
 {
+    static const bool is_tier2_pass(false);
+    static const bool is_use_alt_indel(false);
+
+    /// TODO STREL-125 generalize to multi-sample
+    const unsigned sampleCount(1);
+
     bool isOutputAnyAlleles(false);
 
     // cycle through variant alleles in genotype:
@@ -677,9 +634,35 @@ hackDiplotypeCallToCopyNumberCalls(
         isOutputAnyAlleles=true;
 
         starling_diploid_indel dindel(locusGenotypeToDindel(locusGenotype, genotypeAlleleIndex));
-        insertIndelInGvcf(opt, dopt, groupLocusPloidy, ref, basecallBuffer, indelKey,
-                          indelData, dindel, locusReadStats, gvcfer);
+
+        // sample-independent info:
+        starling_indel_report_info indelReportInfo;
+        get_starling_indel_report_info(indelKey, indelData, ref, indelReportInfo);
+
+        std::unique_ptr<GermlineIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, indelKey, indelData, dindel, indelReportInfo));
+
+        for (unsigned genotypeAlleleIndex2(0); genotypeAlleleIndex2<alleleGroupSize; ++genotypeAlleleIndex2)
+        {
+            const IndelKey& indelKey2(alleleGroup.key(genotypeAlleleIndex2));
+            const IndelData& indelData2(alleleGroup.data(genotypeAlleleIndex2));
+            ii->addAltIndelAllele(indelKey2,indelData2.isForcedOutput);
+        }
+
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        {
+            auto& sampleInfo(ii->getSample(sampleIndex));
+            sampleInfo.setPloidy(groupLocusPloidy);
+            sampleInfo.supportCounts = locusReadStats[sampleIndex];
+
+            const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
+            starling_indel_sample_report_info& indelSampleReportInfo(ii->getIndelSample(sampleIndex).reportInfo);
+            get_starling_indel_sample_report_info(opt, dopt, indelKey, indelSampleData, basecallBuffer,
+                                                  is_tier2_pass, is_use_alt_indel, indelSampleReportInfo);
+        }
+
+        gvcfer.add_indel(std::move(ii));
     }
+
     return isOutputAnyAlleles;
 }
 

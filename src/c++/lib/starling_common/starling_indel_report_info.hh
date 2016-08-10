@@ -74,8 +74,7 @@ getRateType(
 }
 
 
-
-/// indel summary information which is shared between all samples:
+/// indel allele summary information which is shared between all samples:
 ///
 struct starling_indel_report_info
 {

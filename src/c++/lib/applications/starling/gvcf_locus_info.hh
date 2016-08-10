@@ -323,7 +323,6 @@ struct LocusInfo : public PolymorphicObject
         const unsigned sampleCount,
         const pos_t initPos = 0)
       : pos(initPos),
-       _sampleCount(sampleCount),
         _sampleInfo(sampleCount)
     {}
 
@@ -338,6 +337,19 @@ struct LocusInfo : public PolymorphicObject
         {
             sample.clear();
         }
+        _altAlleleCount=0;
+    }
+
+    unsigned
+    getAltAlleleCount() const
+    {
+        return _altAlleleCount;
+    }
+
+    void
+    incrementAltAlleleCount()
+    {
+        _altAlleleCount++;
     }
 
     unsigned
@@ -370,9 +382,11 @@ struct LocusInfo : public PolymorphicObject
     /// All locus-level filters
     GermlineFilterKeeper filters;
 
+    /// TODO - mvoe this to a private interface:
+    OrthogonalAlleleSetLocusReportInfo alleleInfo;
 private:
-    unsigned _sampleCount;
     std::vector<LocusSampleInfo> _sampleInfo;
+    unsigned _altAlleleCount = 0;
 };
 
 
@@ -416,6 +430,17 @@ struct GermlineIndelLocusInfo : public LocusInfo
         return _indelSampleInfo[sampleIndex];
     }
 
+    void
+    addAltIndelAllele(
+        const IndelKey& indelKey,
+        const bool isForcedOutput)
+    {
+        indelAlleleInfo.emplace_back(indelKey,isForcedOutput);
+        incrementAltAlleleCount();
+    }
+
+    /// TODO transition this to a private interface
+    std::vector<GermlineIndelAlleleInfo> indelAlleleInfo;
 private:
     std::vector<GermlineIndelSampleInfo> _indelSampleInfo;
 };
@@ -569,6 +594,7 @@ public:
     // used to flag hetalt
     bool _is_overlap=false;
 
+    /// TODO: deprecated -- remove this
     std::vector<GermlineDiploidIndelAlleleInfo> altAlleles;
 
     /// production and development features used in the empirical scoring model:
