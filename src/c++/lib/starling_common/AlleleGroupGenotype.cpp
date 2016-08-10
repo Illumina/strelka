@@ -165,6 +165,7 @@ logLhoodToLocusGenotype(
 ///                           be normalized in this func, 0 index is reference
 /// \param locusReadStats
 ///
+static
 void
 updateSupportingReadStats(
     const starling_base_deriv_options& dopt,

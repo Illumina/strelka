@@ -382,8 +382,6 @@ struct LocusInfo : public PolymorphicObject
     /// All locus-level filters
     GermlineFilterKeeper filters;
 
-    /// TODO - mvoe this to a private interface:
-    OrthogonalAlleleSetLocusReportInfo alleleInfo;
 private:
     std::vector<LocusSampleInfo> _sampleInfo;
     unsigned _altAlleleCount = 0;
