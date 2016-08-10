@@ -726,10 +726,10 @@ write_indel_record(
        << firstAllele._indelReportInfo.vcf_ref_seq << '\t'; // REF
 
     // ALT
-    const unsigned altAlleleCount(ii.altAlleles.size());
-    const unsigned fullAlleleCount(altAlleleCount+1);
+    const unsigned tmpOldAltAlleleCount(ii.altAlleles.size());
+    //const unsigned tmpOldFullAlleleCount(tmpOldAltAlleleCount+1);
 
-    for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
+    for (unsigned altAlleleIndex(0); altAlleleIndex < tmpOldAltAlleleCount; ++altAlleleIndex)
     {
         if (altAlleleIndex > 0) os << ',';
         os << ii.altAlleles[altAlleleIndex]._indelReportInfo.vcf_indel_seq;
@@ -838,8 +838,10 @@ write_indel_record(
         {
             const auto& counts(sampleInfo.supportCounts);
 
+            const unsigned altAlleleCount(counts.getAltCount());
+            const unsigned fullAlleleCount(altAlleleCount+1);
             // verify new and old count systems are in sync:
-            assert(counts.getAltCount() == altAlleleCount);
+            //assert(counts.getAltCount() == altAlleleCount);
 
             // AD
             os << ':';
