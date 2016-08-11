@@ -23,15 +23,18 @@
 ///
 
 
+#include "AlleleReportInfoUtil.hh"
 #include "blt_common/ref_context.hh"
 #include "blt_util/seq_util.hh"
 #include "starling_common/pos_basecall_buffer.hh"
-#include "starling_common/starling_indel_report_info.hh"
+#if 0
+#include "starling_common/AlleleReportInfo.hh"
 
 #include "boost/lexical_cast.hpp"
 
 #include <cassert>
 #include <cmath>
+#endif
 
 
 #ifdef DEBUG_REPORT
@@ -96,7 +99,7 @@ void
 set_repeat_info(
     const IndelKey& indelKey,
     const reference_contig_segment& ref,
-    starling_indel_report_info& indelReportInfo)
+    AlleleReportInfo& indelReportInfo)
 {
     if (! ((indelReportInfo.it == SimplifiedIndelReportType::INSERT) ||
            (indelReportInfo.it == SimplifiedIndelReportType::DELETE) ||
@@ -187,7 +190,7 @@ void
 get_starling_indel_report_info(
     const IndelKey& indelKey,
     const reference_contig_segment& ref,
-    starling_indel_report_info& indelReportInfo)
+    AlleleReportInfo& indelReportInfo)
 {
     indelReportInfo.it=SimplifiedIndelReportType::getRateType(indelKey);
 
@@ -293,7 +296,7 @@ get_starling_indel_sample_report_info(
     const pos_basecall_buffer& bc_buff,
     const bool is_tier2_pass,
     const bool is_use_alt_indel,
-    starling_indel_sample_report_info& isri)
+    AlleleSampleReportInfo& isri)
 {
     // get read info:
     {
@@ -399,37 +402,3 @@ get_starling_indel_sample_report_info(
         isri.mapqTracker=spi.mapqTracker;
     }
 }
-
-
-// debug printers
-
-void starling_indel_sample_report_info::dump(std::ostream& os) const
-{
-    os << "n_confident_ref_reads=" << n_confident_ref_reads
-       << ",n_confident_indel_reads=" << n_confident_indel_reads
-       << ",n_confident_alt_reads=" << n_confident_alt_reads
-       << ",n_other_reads=" << n_other_reads
-       << ",tier1Depth=" << tier1Depth;
-}
-
-std::ostream& operator<<(std::ostream& os, const starling_indel_sample_report_info& obj)
-{
-    obj.dump(os);
-    return os;
-}
-
-void starling_indel_report_info::dump(std::ostream& os) const
-{
-    os << "repeat_unit=" << repeat_unit
-       << ",ref_repeat_count=" << ref_repeat_count
-       << ",indel_repeat_count=" << indel_repeat_count
-       << ",ihpol=" << ihpol
-       << ",it=" << it;
-}
-
-std::ostream& operator<<(std::ostream& os, const starling_indel_report_info& obj)
-{
-    obj.dump(os);
-    return os;
-}
-

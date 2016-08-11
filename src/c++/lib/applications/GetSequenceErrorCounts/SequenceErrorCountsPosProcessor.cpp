@@ -21,6 +21,7 @@
 #include "SequenceErrorCountsPosProcessor.hh"
 #include "blt_common/ref_context.hh"
 #include "common/OutStream.hh"
+#include "starling_common/AlleleReportInfoUtil.hh"
 #include "starling_common/OrthogonalVariantAlleleCandidateGroupUtil.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 
@@ -187,7 +188,7 @@ getOrthogonalHaplotypeSupportCounts(
 static
 INDEL_SIGNAL_TYPE::index_t
 getIndelType(
-    const starling_indel_report_info& indelReportInfo)
+    const AlleleReportInfo& indelReportInfo)
 {
     int rudiff(static_cast<int>(indelReportInfo.ref_repeat_count)-static_cast<int>(indelReportInfo.indel_repeat_count));
     rudiff = std::min(3,std::max(-3,rudiff));
@@ -478,7 +479,7 @@ process_pos_error_counts(
 
             if (indelKey.pos != pos) continue;
 
-            starling_indel_report_info indelReportInfo;
+            AlleleReportInfo indelReportInfo;
             get_starling_indel_report_info(indelKey, _ref, indelReportInfo);
 
             IndelErrorContext context;

@@ -36,7 +36,7 @@
 #include "blt_util/io_util.hh"
 #include "blt_util/log.hh"
 #include "htsapi/bam_seq_read_util.hh"
-#include "starling_common/starling_indel_report_info.hh"
+#include "starling_common/AlleleReportInfo.hh"
 
 #include <iomanip>
 #include <applications/starling/starling_shared.hh>

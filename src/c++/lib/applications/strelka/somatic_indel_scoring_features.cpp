@@ -46,7 +46,7 @@ safeFrac(const int num, const int denom)
 
 double
 calculateIndelAF(
-    const starling_indel_sample_report_info& isri)
+    const AlleleSampleReportInfo& isri)
 {
     return safeFrac(isri.n_confident_indel_reads, isri.n_confident_ref_reads + isri.n_confident_alt_reads + isri.n_confident_indel_reads);
 }
@@ -55,7 +55,7 @@ calculateIndelAF(
 
 double
 calculateIndelOF(
-    const starling_indel_sample_report_info& isri)
+    const AlleleSampleReportInfo& isri)
 {
     return safeFrac(isri.n_other_reads, isri.n_other_reads + isri.n_confident_ref_reads + isri.n_confident_alt_reads + isri.n_confident_indel_reads);
 }
@@ -64,7 +64,7 @@ calculateIndelOF(
 
 double
 calculateSOR(
-    const starling_indel_sample_report_info& isri)
+    const AlleleSampleReportInfo& isri)
 {
     // from
     // http://www.people.fas.harvard.edu/~mparzen/published/parzen17.pdf
@@ -80,7 +80,7 @@ calculateSOR(
 
 
 double
-calculateFS(const starling_indel_sample_report_info& isri)
+calculateFS(const AlleleSampleReportInfo& isri)
 {
     return fisher_exact_test_pval_2x2(isri.n_confident_ref_reads_fwd, isri.n_confident_indel_reads_fwd,
                                       isri.n_confident_ref_reads_rev, isri.n_confident_indel_reads_rev);
@@ -89,7 +89,7 @@ calculateFS(const starling_indel_sample_report_info& isri)
 
 
 double
-calculateBSA(const starling_indel_sample_report_info& isri)
+calculateBSA(const AlleleSampleReportInfo& isri)
 {
     return get_binomial_twosided_exact_pval(0.5, isri.n_confident_indel_reads_fwd, isri.n_confident_indel_reads) ;
 }
@@ -109,8 +109,8 @@ calculateBCNoise(const win_avg_set& was)
 
 double
 calculateAlleleFrequencyRate(
-    const starling_indel_sample_report_info& normalIndelSampleReportInfo,
-    const starling_indel_sample_report_info& tumorIndelSampleReportInfo)
+    const AlleleSampleReportInfo& normalIndelSampleReportInfo,
+    const AlleleSampleReportInfo& tumorIndelSampleReportInfo)
 {
     const double T_AF = calculateIndelAF(tumorIndelSampleReportInfo);
     const double N_AF = calculateIndelAF(normalIndelSampleReportInfo);
@@ -121,7 +121,7 @@ calculateAlleleFrequencyRate(
 
 
 double
-calculateTumorNoiseRate(const starling_indel_sample_report_info& tumorIndelSampleReportInfo)
+calculateTumorNoiseRate(const AlleleSampleReportInfo& tumorIndelSampleReportInfo)
 {
     const double T_AF = calculateIndelAF(tumorIndelSampleReportInfo);
     const double T_OF = calculateIndelOF(tumorIndelSampleReportInfo);
@@ -133,8 +133,8 @@ calculateTumorNoiseRate(const starling_indel_sample_report_info& tumorIndelSampl
 
 double
 calculateLogAltRatio(
-    const starling_indel_sample_report_info& normalIndelSampleReportInfo,
-    const starling_indel_sample_report_info& tumorIndelSampleReportInfo)
+    const AlleleSampleReportInfo& normalIndelSampleReportInfo,
+    const AlleleSampleReportInfo& tumorIndelSampleReportInfo)
 {
     const unsigned n_ref_reads = normalIndelSampleReportInfo.n_confident_ref_reads;
     const unsigned t_alt_reads = tumorIndelSampleReportInfo.n_confident_indel_reads;
@@ -145,8 +145,8 @@ calculateLogAltRatio(
 
 double
 calculateLogOddsRatio(
-    const starling_indel_sample_report_info& normalIndelSampleReportInfo,
-    const starling_indel_sample_report_info& tumorIndelSampleReportInfo)
+    const AlleleSampleReportInfo& normalIndelSampleReportInfo,
+    const AlleleSampleReportInfo& tumorIndelSampleReportInfo)
 {
     const double n_ref_reads = normalIndelSampleReportInfo.n_confident_ref_reads + .5;
     const double n_alt_reads = normalIndelSampleReportInfo.n_confident_indel_reads + .5;
@@ -165,8 +165,7 @@ calculateScoringFeatures(
     const win_avg_set& t_was,
     const strelka_options& opt,
     const strelka_deriv_options& /* dopt */,
-    strelka_shared_modifiers_indel& smod
-)
+    strelka_shared_modifiers_indel& smod)
 {
     const indel_result_set& rs(siInfo.sindel.rs);
     smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::QSI_NT, rs.from_ntype_qphred);

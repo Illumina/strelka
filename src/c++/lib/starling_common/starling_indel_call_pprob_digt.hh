@@ -26,7 +26,7 @@
 
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_diploid_indel.hh"
-#include "starling_common/starling_indel_report_info.hh"
+#include "starling_common/AlleleReportInfo.hh"
 #include "starling_common/indel.hh"
 
 #include <iosfwd>

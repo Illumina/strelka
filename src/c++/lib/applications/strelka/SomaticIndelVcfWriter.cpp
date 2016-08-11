@@ -41,8 +41,8 @@
 static
 void
 write_vcf_isri_tiers(
-    const starling_indel_sample_report_info& isri1,
-    const starling_indel_sample_report_info& isri2,
+    const AlleleSampleReportInfo& isri1,
+    const AlleleSampleReportInfo& isri2,
     const win_avg_set& was,
     std::ostream& os)
 {

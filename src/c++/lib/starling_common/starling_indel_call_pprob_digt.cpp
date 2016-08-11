@@ -24,9 +24,9 @@
 
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
+#include "starling_common/AlleleReportInfoUtil.hh"
 #include "starling_common/indel_util.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
-#include "starling_common/starling_indel_report_info.hh"
 
 #include <cassert>
 #include <cmath>

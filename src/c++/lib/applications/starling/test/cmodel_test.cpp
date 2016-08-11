@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE( test_cmodel_gqx )
     iri.indel_repeat_count=12;
     iri.ihpol=5;
     iri.it=INDEL::INSERT;
-    starling_indel_sample_report_info isri;
+    AlleleSampleReportInfo isri;
     isri.n_confident_ref_reads=1;
     isri.n_confident_indel_reads=6;
     isri.n_confident_alt_reads=4;
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE( test_cmodel_gqx )
     iri2.ihpol=5;
     iri2.it=INDEL::INSERT;
 
-    starling_indel_sample_report_info isri2;
+    AlleleSampleReportInfo isri2;
     isri2.n_confident_ref_reads=1;
     isri2.n_confident_indel_reads=4;
     isri2.n_confident_alt_reads=6;

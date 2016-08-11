@@ -255,7 +255,7 @@ void
 IndelErrorModel::
 getIndelErrorRate(
     const IndelKey& indelKey,
-    const starling_indel_report_info& indelReportInfo,
+    const AlleleReportInfo& indelReportInfo,
     double& refToIndelErrorProb,
     double& indelToRefErrorProb) const
 {

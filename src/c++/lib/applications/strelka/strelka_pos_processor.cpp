@@ -27,7 +27,7 @@
 #include "somatic_indel_grid.hh"
 #include "strelka_pos_processor.hh"
 #include "blt_util/log.hh"
-#include "starling_common/starling_indel_report_info.hh"
+#include "starling_common/AlleleReportInfoUtil.hh"
 #include "starling_common/starling_pos_processor_base_stages.hh"
 
 #include <iomanip>

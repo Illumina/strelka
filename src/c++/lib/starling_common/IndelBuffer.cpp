@@ -25,8 +25,8 @@
 
 #include "IndelBuffer.hh"
 
-#include "blt_util/prob_util.hh"
 #include "calibration/IndelErrorModel.hh"
+#include "starling_common/AlleleReportInfoUtil.hh"
 
 #include <iostream>
 
@@ -93,23 +93,6 @@ rangeIterator(
 
 
 
-static
-void
-scaleIndelErrorRate(
-    const double logScaleFactor,
-    double& indelErrorRate)
-{
-    static const double minIndelErrorProb(0.0);
-    static const double maxIndelErrorProb(0.5);
-
-    indelErrorRate = std::min(indelErrorRate, maxIndelErrorProb);
-    indelErrorRate = softMaxInverseTransform(indelErrorRate, minIndelErrorProb, maxIndelErrorProb);
-    indelErrorRate += logScaleFactor;
-    indelErrorRate = softMaxTransform(indelErrorRate, minIndelErrorProb, maxIndelErrorProb);
-}
-
-
-
 bool
 IndelBuffer::
 addIndelObservation(
@@ -129,7 +112,12 @@ addIndelObservation(
     }
 
     IndelData& indelData(getIndelData(indelIter));
+    if (isNovel)
+    {
+        indelData.initializeAuxInfo(_opt,_dopt, _ref);
+    }
     indelData.addIndelObservation(sampleId, obs.data);
+
     return isNovel;
 }
 
@@ -167,7 +155,7 @@ isCandidateIndelImplTestSignalNoise(
         // test to see if the observed indel coverage has a binomial exact test
         // p-value above the rejection threshold. If this does not occur for the
         // counts observed in any sample, the indel cannot become a candidate
-        if (_countCache.isRejectNull(totalReadCount, indelData.errorRates.indelToRefErrorProb.getValue(), tier1ReadSupportCount))
+        if (_countCache.isRejectNull(totalReadCount, indelData.getErrorRates().indelToRefErrorProb.getValue(), tier1ReadSupportCount))
         {
             return true;
         }
@@ -202,39 +190,6 @@ isCandidateIndelImplTest(
     const IndelKey& indelKey,
     const IndelData& indelData) const
 {
-    // initialize indel error rates:
-    if (! indelData.errorRates.isInit)
-    {
-        // get standard rates:
-        starling_indel_report_info indelReportInfo;
-        get_starling_indel_report_info(indelKey, _ref, indelReportInfo);
-        double refToIndelErrorProb;
-        double indelToRefErrorProb;
-        _dopt.getIndelErrorModel().getIndelErrorRate(indelKey, indelReportInfo, refToIndelErrorProb, indelToRefErrorProb);
-        indelData.errorRates.refToIndelErrorProb.updateValue(refToIndelErrorProb);
-        indelData.errorRates.indelToRefErrorProb.updateValue(indelToRefErrorProb);
-
-        // compute scaled rates:
-        double scaledRefToIndelErrorProb = indelData.errorRates.refToIndelErrorProb.getValue();
-        double scaledIndelToRefErrorProb = indelData.errorRates.indelToRefErrorProb.getValue();
-        if (_opt.isIndelErrorRateFactor)
-        {
-
-            scaleIndelErrorRate(_dopt.logIndelErrorRateFactor, scaledRefToIndelErrorProb);
-            scaleIndelErrorRate(_dopt.logIndelErrorRateFactor, scaledIndelToRefErrorProb);
-        }
-
-        if (_opt.isIndelRefErrorFactor)
-        {
-            scaleIndelErrorRate(_dopt.logIndelRefErrorFactor, scaledIndelToRefErrorProb);
-        }
-
-        indelData.errorRates.scaledRefToIndelErrorProb.updateValue(scaledRefToIndelErrorProb);
-        indelData.errorRates.scaledIndelToRefErrorProb.updateValue(scaledIndelToRefErrorProb);
-
-        indelData.errorRates.isInit = true;
-    }
-
     // check whether the candidate has been externally specified:
     if (indelData.is_external_candidate) return true;
 

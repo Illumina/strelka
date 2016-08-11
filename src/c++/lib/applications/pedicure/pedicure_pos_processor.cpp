@@ -30,7 +30,7 @@
 #include "denovo_snv_call_vcf.hh"
 
 #include "blt_util/log.hh"
-#include "starling_common/starling_indel_report_info.hh"
+#include "starling_common/AlleleReportInfoUtil.hh"
 
 #include <iomanip>
 #include <sstream>
@@ -294,7 +294,7 @@ process_pos_indel_denovo(const pos_t pos)
             bos << sep << vcf_ref_seq
                 << sep << vcf_indel_seq;
 
-            starling_indel_report_info indelReportInfo;
+            AlleleReportInfo indelReportInfo;
             get_starling_indel_report_info(indelKey, _ref, indelReportInfo);
 
             denovo_indel_call_vcf(_opt, _dopt, sinfo, dindel, indelReportInfo, isri, bos);

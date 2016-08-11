@@ -25,9 +25,11 @@
 #pragma once
 
 #include "blt_util/LogValuePair.hh"
-#include "blt_util/ranksum.hh"
+#include "blt_util/reference_contig_segment.hh"
+#include "starling_common/AlleleReportInfo.hh"
 #include "starling_common/indel_align_type.hh"
 #include "starling_common/IndelKey.hh"
+#include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_types.hh"
 
 #include <cassert>
@@ -235,6 +237,18 @@ struct IndelSampleData
 };
 
 
+
+struct IndelErrorRates
+{
+    LogValuePair indelToRefErrorProb;
+    LogValuePair refToIndelErrorProb;
+
+    LogValuePair scaledIndelToRefErrorProb;
+    LogValuePair scaledRefToIndelErrorProb;
+};
+
+
+
 /// indel allele data which is shared across all samples
 struct IndelData
 {
@@ -244,8 +258,15 @@ struct IndelData
         : _sampleData(sampleCount),
           _indelKey(indelKey)
     {
-        assert(sampleCount>=1);
+        assert(sampleCount >= 1);
     }
+
+    /// initialize reporting and error structs
+    void
+    initializeAuxInfo(
+        const starling_base_options& opt,
+        const starling_base_deriv_options& dopt,
+        const reference_contig_segment& ref);
 
     unsigned
     getSampleCount() const
@@ -286,37 +307,39 @@ struct IndelData
         return _breakpointInsertSeq.getSize();
     }
 
+    const AlleleReportInfo&
+    getReportInfo() const
+    {
+        return _reportInfo;
+    }
+
+    const IndelErrorRates&
+    getErrorRates() const
+    {
+        return _errorRates;
+    }
+
 private:
     friend std::ostream& operator<<(std::ostream& os, const IndelData& indelData);
 public:
 // ------------- data ------------------
-
-    // candidates can be provided from external sources as well:
-    bool is_external_candidate = false;
-
-    // if true candidates should be output even if very unlikely:
-    bool isForcedOutput = false;
-
-    bool isConfirmedInActiveRegion = false;
-
-    struct ErrorRates
-    {
-        bool isInit = false;
-        LogValuePair indelToRefErrorProb;
-        LogValuePair refToIndelErrorProb;
-
-        LogValuePair scaledIndelToRefErrorProb;
-        LogValuePair scaledRefToIndelErrorProb;
-    };
-
     struct status_t
     {
         bool is_candidate_indel_cached = false;
         bool is_candidate_indel = false;
     };
 
+    /// if true, allele is suggested from a source other than the aligned sequencing data, and
+    /// automatically is promoted to candidate status
+    bool is_external_candidate = false;
+
+    /// if true, allele is automatically promoted to candidate status and must be scored in
+    /// the final call output, even if there is no support for the allele in any input sample
+    bool isForcedOutput = false;
+
+    bool isConfirmedInActiveRegion = false;
+
     mutable status_t status;
-    mutable ErrorRates errorRates;
 
 private:
     std::vector<IndelSampleData> _sampleData;
@@ -324,6 +347,11 @@ private:
 
     // indel key stored for debugging only
     IndelKey _indelKey;
+
+    /// cache sequencing properties and associated error rates derived from the allele
+    /// description, but which are not dependent on any sample data:
+    AlleleReportInfo _reportInfo;
+    IndelErrorRates _errorRates;
 };
 
 
@@ -333,3 +361,4 @@ std::ostream& operator<<(std::ostream& os, const IndelObservationData& id);
 std::ostream& operator<<(std::ostream& os, const ReadPathScores& rps);
 std::ostream& operator<<(std::ostream& os, const IndelSampleData& indelSampleData);
 std::ostream& operator<<(std::ostream& os, const IndelData& indelData);
+

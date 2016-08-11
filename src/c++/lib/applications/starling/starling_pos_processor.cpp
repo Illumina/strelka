@@ -19,17 +19,19 @@
 //
 
 #include "starling_pos_processor.hh"
-#include "starling_common/OrthogonalVariantAlleleCandidateGroup.hh"
-#include "starling_common/OrthogonalVariantAlleleCandidateGroupUtil.hh"
-#include "starling_common/AlleleGroupGenotype.hh"
+
+#include "starling_continuous_variant_caller.hh"
 #include "blt_common/position_nonref_test.hh"
 #include "blt_common/position_nonref_2allele_test.hh"
 #include "blt_common/ref_context.hh"
 #include "blt_util/log.hh"
-#include "starling_continuous_variant_caller.hh"
+#include "starling_common/AlleleGroupGenotype.hh"
+#include "starling_common/AlleleReportInfoUtil.hh"
+#include "starling_common/indel_util.hh"
+#include "starling_common/OrthogonalVariantAlleleCandidateGroup.hh"
+#include "starling_common/OrthogonalVariantAlleleCandidateGroupUtil.hh"
 
 #include <iomanip>
-#include <starling_common/indel_util.hh>
 
 
 
@@ -635,7 +637,7 @@ hackDiplotypeCallToCopyNumberCalls(
         starling_diploid_indel dindel(locusGenotypeToDindel(locusGenotype, genotypeAlleleIndex));
 
         // sample-independent info:
-        starling_indel_report_info indelReportInfo;
+        AlleleReportInfo indelReportInfo;
         get_starling_indel_report_info(indelKey, ref, indelReportInfo);
 
         std::unique_ptr<GermlineIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, indelKey, indelData, dindel, indelReportInfo));
@@ -654,7 +656,7 @@ hackDiplotypeCallToCopyNumberCalls(
             sampleInfo.supportCounts = locusReadStats[sampleIndex];
 
             const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
-            starling_indel_sample_report_info& indelSampleReportInfo(ii->getIndelSample(sampleIndex).reportInfo);
+            AlleleSampleReportInfo& indelSampleReportInfo(ii->getIndelSample(sampleIndex).reportInfo);
             get_starling_indel_sample_report_info(opt, dopt, indelKey, indelSampleData, basecallBuffer,
                                                   is_tier2_pass, is_use_alt_indel, indelSampleReportInfo);
         }
@@ -907,7 +909,7 @@ process_pos_indel_continuous(const pos_t pos)
         }
 
         // sample-independent info:
-        starling_indel_report_info indelReportInfo;
+        AlleleReportInfo indelReportInfo;
         get_starling_indel_report_info(indelKey, _ref, indelReportInfo);
 
         static const bool is_tier2_pass(false);
@@ -922,7 +924,7 @@ process_pos_indel_continuous(const pos_t pos)
             const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
             const sample_info& sif(sample(sampleIndex));
 
-            starling_indel_sample_report_info& indelSampleReportInfo(locusInfo->getIndelSample(sampleIndex).reportInfo);
+            AlleleSampleReportInfo& indelSampleReportInfo(locusInfo->getIndelSample(sampleIndex).reportInfo);
             get_starling_indel_sample_report_info(_opt, _dopt, indelKey, indelSampleData, sif.bc_buff, is_tier2_pass,
                                                   is_use_alt_indel, indelSampleReportInfo);
         }

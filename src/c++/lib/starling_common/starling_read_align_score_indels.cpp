@@ -716,7 +716,7 @@ score_indels(
             {
                 const IndelData* idPtr(indelBuffer.getIndelDataPtr(evaluationIndel));
                 assert(idPtr != nullptr);
-                const auto& ep(idPtr->errorRates);
+                const auto& ep(idPtr->getErrorRates());
                 const bool isIndelInCandAlignment(indelsInCandAlignment.count(evaluationIndel)!=0);
                 if (isIndelInCandAlignment)
                 {
@@ -813,7 +813,7 @@ score_indels(
             {
                 const IndelData* indelDataPtr(indelBuffer.getIndelDataPtr(nonCandidateIndel));
                 assert(indelDataPtr != nullptr);
-                const auto& ep(indelDataPtr->errorRates);
+                const auto& ep(indelDataPtr->getErrorRates());
 
                 // test whether indel is orthogonal to each evaluationIndel, if it is, then:
                 //

@@ -26,13 +26,13 @@
 #include "denovo_call.hh"
 #include "denovo_indel_call.hh"
 #include "pedicure_shared.hh"
-#include "starling_common/starling_indel_report_info.hh"
+#include "starling_common/AlleleReportInfo.hh"
 
 #include <array>
 #include <iosfwd>
 
 
-typedef std::array<starling_indel_sample_report_info,PEDICURE_TIERS::SIZE> isriTiers_t;
+typedef std::array<AlleleSampleReportInfo,PEDICURE_TIERS::SIZE> isriTiers_t;
 
 
 void
@@ -41,6 +41,6 @@ denovo_indel_call_vcf(
     const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
     const denovo_indel_call& dinc,
-    const starling_indel_report_info& indelReportInfo,
+    const AlleleReportInfo& indelReportInfo,
     const std::vector<isriTiers_t>& isri,
     std::ostream& os);

@@ -395,7 +395,7 @@ struct GermlineIndelSampleInfo
         return safeFrac(reportInfo.n_confident_indel_reads, reportInfo.total_confident_reads());
     }
 
-    starling_indel_sample_report_info reportInfo;
+    AlleleSampleReportInfo reportInfo;
 };
 
 /// represents an indel call at the level of a full VCF record, containing possibly multiple alleles/SimpleGenotypes
@@ -458,7 +458,7 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
         const IndelKey& initIndelKey,
         const IndelData& initIndelData,
         const GermlineDiploidIndelSimpleGenotypeInfoCore& init_dindel,
-        const starling_indel_report_info& initIndelReportInfo)
+        const AlleleReportInfo& initIndelReportInfo)
         : GermlineIndelLocusInfo(sampleCount, initIndelKey.pos)
         , features(gvcfDerivedOptions.indelFeatureSet)
         , developmentFeatures(gvcfDerivedOptions.indelDevelopmentFeatureSet)

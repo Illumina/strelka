@@ -154,7 +154,7 @@ add_indel_call(
     const starling_base_options& opt,
     const IndelKey& indelKey,
     const IndelData& indelData,
-    const starling_indel_report_info& indelReportInfo,
+    const AlleleReportInfo& indelReportInfo,
     GermlineContinuousIndelLocusInfo& locusInfo)
 {
     // continuous caller reports only one alt per vcf record (locus)

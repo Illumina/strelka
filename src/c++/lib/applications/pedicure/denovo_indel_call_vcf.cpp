@@ -34,8 +34,8 @@
 static
 void
 write_vcf_sample_info(
-    const starling_indel_sample_report_info& indelSampleReportInfo1,
-    const starling_indel_sample_report_info& /*indelSampleReportInfo2*/,
+    const AlleleSampleReportInfo& indelSampleReportInfo1,
+    const AlleleSampleReportInfo& /*indelSampleReportInfo2*/,
     const denovo_indel_call& dinc,
     const int& id,
     std::ostream& os)
@@ -73,7 +73,7 @@ denovo_indel_call_vcf(
     const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
     const denovo_indel_call& dinc,
-    const starling_indel_report_info& indelReportInfo,
+    const AlleleReportInfo& indelReportInfo,
     const std::vector<isriTiers_t>& isri,
     std::ostream& os)
 {

@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
                   indelKey,
                   IndelData(1,indelKey),
                   GermlineDiploidIndelSimpleGenotypeInfoCore(),
-                  starling_indel_report_info()));
+                  AlleleReportInfo()));
 
         return indel;
     };
@@ -118,6 +118,5 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
     bsp.process(getNewIndel(250));
     BOOST_REQUIRE(testOffTarget());
 }
-
 
 BOOST_AUTO_TEST_SUITE_END()

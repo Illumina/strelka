@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE( simple_indel_test )
     IndelKey indelKey;
     const IndelData indelData(1,indelKey);
     const GermlineDiploidIndelSimpleGenotypeInfoCore dindel;
-    const starling_indel_report_info indelReportInfo;
+    const AlleleReportInfo indelReportInfo;
 
     indelKey.pos=6;
     indelKey.type=INDEL::INDEL;
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test )
     IndelData indelData(1,ik);
     indelData.isForcedOutput = true;
     GermlineDiploidIndelSimpleGenotypeInfoCore dindel;
-    const starling_indel_report_info indelReportInfo;
+    const AlleleReportInfo indelReportInfo;
 
     const unsigned sampleCount(1);
     const unsigned keyCount(sizeof(iks)/sizeof(IndelKey));
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test2 )
     IndelData indelData(1,indelKey);
     indelData.isForcedOutput = true;
     GermlineDiploidIndelSimpleGenotypeInfoCore dindel;
-    const starling_indel_report_info indelReportInfo;
+    const AlleleReportInfo indelReportInfo;
 
     const unsigned sampleCount(1);
     const unsigned keyCount(sizeof(indelKeys)/sizeof(IndelKey));

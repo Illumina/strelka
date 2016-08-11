@@ -22,15 +22,20 @@
 /// \author Chris Saunders
 ///
 
-#include "blt_util/blt_exception.hh"
+#include "IndelData.hh"
+#include "AlleleReportInfoUtil.hh"
+
 #include "blt_util/log.hh"
+#include "blt_util/prob_util.hh"
+#include "calibration/IndelErrorModel.hh"
 #include "common/Exceptions.hh"
-#include "starling_common/IndelData.hh"
 
 #include <iostream>
 #include <sstream>
 
+
 //#define DEBUG_ID
+
 
 
 void
@@ -61,8 +66,8 @@ insertAlt(
             alt_indel[min_index] = std::make_pair(indelKey,a);
         }
     }
-//    log_os << ik << "\n";
 }
+
 
 
 void
@@ -107,6 +112,58 @@ addIndelObservation(
 
 
 
+static
+void
+scaleIndelErrorRate(
+    const double logScaleFactor,
+    double& indelErrorRate)
+{
+    static const double minIndelErrorProb(0.0);
+    static const double maxIndelErrorProb(0.5);
+
+    indelErrorRate = std::min(indelErrorRate, maxIndelErrorProb);
+    indelErrorRate = softMaxInverseTransform(indelErrorRate, minIndelErrorProb, maxIndelErrorProb);
+    indelErrorRate += logScaleFactor;
+    indelErrorRate = softMaxTransform(indelErrorRate, minIndelErrorProb, maxIndelErrorProb);
+}
+
+
+
+void
+IndelData::
+initializeAuxInfo(
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
+    const reference_contig_segment& ref)
+{
+    get_starling_indel_report_info(_indelKey, ref, _reportInfo);
+
+    double refToIndelErrorProb;
+    double indelToRefErrorProb;
+    dopt.getIndelErrorModel().getIndelErrorRate(_indelKey, _reportInfo, refToIndelErrorProb, indelToRefErrorProb);
+    _errorRates.refToIndelErrorProb.updateValue(refToIndelErrorProb);
+    _errorRates.indelToRefErrorProb.updateValue(indelToRefErrorProb);
+
+    // compute scaled rates:
+    double scaledRefToIndelErrorProb = _errorRates.refToIndelErrorProb.getValue();
+    double scaledIndelToRefErrorProb = _errorRates.indelToRefErrorProb.getValue();
+    if (opt.isIndelErrorRateFactor)
+    {
+        scaleIndelErrorRate(dopt.logIndelErrorRateFactor, scaledRefToIndelErrorProb);
+        scaleIndelErrorRate(dopt.logIndelErrorRateFactor, scaledIndelToRefErrorProb);
+    }
+
+    if (opt.isIndelRefErrorFactor)
+    {   
+        scaleIndelErrorRate(dopt.logIndelRefErrorFactor, scaledIndelToRefErrorProb);
+    }
+
+    _errorRates.scaledRefToIndelErrorProb.updateValue(scaledRefToIndelErrorProb);
+    _errorRates.scaledIndelToRefErrorProb.updateValue(scaledIndelToRefErrorProb);
+}
+
+
+
 void
 IndelData::
 addIndelObservation(
@@ -114,8 +171,7 @@ addIndelObservation(
     const IndelObservationData& obs_data)
 {
 #ifdef DEBUG_ID
-    log_os << "KATTER: adding obs for indel: " << _ik;
-    log_os << "KATTER: obs: " << obs_data;
+    log_os << "KATTER: input obs: " << obs_data;
 #endif
 
     // never reset the flags to false if they are true already
@@ -189,18 +245,11 @@ operator<<(
        << " indel: " << rps.indel
        << " nsite: " << rps.nsite;
 
-#if 0
-    if (rps.is_alt)
-    {
-        os << " alt: " << rps.alt;
-    }
-#else
     for (const auto& indel : rps.alt_indel)
     {
         const IndelKey& indelKey(indel.first);
         os << " alt-score: " << indel.second << " key: " << indelKey;
     }
-#endif
 
     os << " ist1?: " << rps.is_tier1_read;
 

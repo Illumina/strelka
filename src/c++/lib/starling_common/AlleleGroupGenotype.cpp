@@ -20,6 +20,7 @@
 
 #include "AlleleGroupGenotype.hh"
 
+#include "AlleleReportInfoUtil.hh"
 #include "starling_indel_call_pprob_digt.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
@@ -239,7 +240,7 @@ getVariantAlleleGroupGenotypeLhoods(
         const unsigned nonRefAllele0Index(0);
         const IndelKey& allele0Key(alleleGroup.key(nonRefAllele0Index));
 
-        starling_indel_report_info indelReportInfo;
+        AlleleReportInfo indelReportInfo;
         get_starling_indel_report_info(allele0Key, ref, indelReportInfo);
         patternRepeatCount=std::max(1u,indelReportInfo.ref_repeat_count);
     }
@@ -422,7 +423,7 @@ getGenotypeLhoodsForForcedOutputAllele(
 
     unsigned patternRepeatCount=1;
     {
-        starling_indel_report_info indelReportInfo;
+        AlleleReportInfo indelReportInfo;
         get_starling_indel_report_info(forcedOutputIndelKey, ref, indelReportInfo);
         patternRepeatCount=std::max(1u,indelReportInfo.ref_repeat_count);
     }

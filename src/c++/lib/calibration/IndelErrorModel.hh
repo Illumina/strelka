@@ -26,7 +26,7 @@
 #include "IndelErrorModelMetadata.hh"
 #include "IndelErrorRateSet.hh"
 
-#include "starling_common/starling_indel_report_info.hh"
+#include "starling_common/AlleleReportInfo.hh"
 
 
 /// organizes indel error rate information
@@ -44,7 +44,7 @@ struct IndelErrorModel
     void
     getIndelErrorRate(
         const IndelKey& indelKey,
-        const starling_indel_report_info& indelReportInfo,
+        const AlleleReportInfo& indelReportInfo,
         double& refToIndelErrorProb,
         double& indelToRefErrorProb) const;
 

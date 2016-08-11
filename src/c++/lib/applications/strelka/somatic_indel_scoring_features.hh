@@ -22,7 +22,7 @@
 
 #include "strelka_shared.hh"
 
-#include "starling_common/starling_indel_report_info.hh"
+#include "starling_common/AlleleReportInfo.hh"
 #include "starling_common/starling_pos_processor_win_avg_set.hh"
 #include "somatic_call_shared.hh"
 #include "somatic_indel_grid.hh"
@@ -34,13 +34,13 @@
 ///
 double
 calculateIndelAF(
-    const starling_indel_sample_report_info& isri);
+    const AlleleSampleReportInfo& isri);
 
 /// Approximate indel "other" frequency (OF) from reads
 ///
 double
 calculateIndelOF(
-    const starling_indel_sample_report_info& isri);
+    const AlleleSampleReportInfo& isri);
 
 /// Similar to
 /// https://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_gatk_tools_walkers_annotator_StrandOddsRatio.php
@@ -50,19 +50,19 @@ calculateIndelOF(
 ///
 double
 calculateSOR(
-    const starling_indel_sample_report_info& isri);
+    const AlleleSampleReportInfo& isri);
 
 /// Calculate phred-scaled Fisher strand bias (p-value for the null hypothesis that
 /// either REF or ALT counts are biased towards one particular strand)
 ///
 double
-calculateFS(const starling_indel_sample_report_info& isri);
+calculateFS(const AlleleSampleReportInfo& isri);
 
 /// Calculate the p-value using a binomial test for the null hypothesis that
 /// the ALT allele occurs on a particular strand only.
 ///
 double
-calculateBSA(const starling_indel_sample_report_info& isri);
+calculateBSA(const AlleleSampleReportInfo& isri);
 
 /// Calculate base-calling noise from window average set
 ///
@@ -73,26 +73,26 @@ calculateBCNoise(const win_avg_set& was);
 ///
 double
 calculateAlleleFrequencyRate(
-    const starling_indel_sample_report_info& normalIndelSampleReportInfo,
-    const starling_indel_sample_report_info& tumorIndelSampleReportInfo);
+    const AlleleSampleReportInfo& normalIndelSampleReportInfo,
+    const AlleleSampleReportInfo& tumorIndelSampleReportInfo);
 
 /// Calculate TNR feature (log ratio between T_AF and T_OF)
 ///
 double
-calculateTumorNoiseRate(const starling_indel_sample_report_info& tumorIndelSampleReportInfo);
+calculateTumorNoiseRate(const AlleleSampleReportInfo& tumorIndelSampleReportInfo);
 
 /// Calculate LAR feature (log ratio between #alt reads in tumor and #ref reads in normal)
 ///
 double
-calculateLogAltRatio(const starling_indel_sample_report_info& nisri,
-                     const starling_indel_sample_report_info& tisri);
+calculateLogAltRatio(const AlleleSampleReportInfo& nisri,
+                     const AlleleSampleReportInfo& tisri);
 
 /// Calculate LOR feature (log odds ratio for  T_REF T_ALT
 ///                                            N_REF N_ALT)
 ///
 double
-calculateLogOddsRatio(const starling_indel_sample_report_info& normalIndelSampleReportInfo,
-                      const starling_indel_sample_report_info& tumorIndelSampleReportInfo);
+calculateLogOddsRatio(const AlleleSampleReportInfo& normalIndelSampleReportInfo,
+                      const AlleleSampleReportInfo& tumorIndelSampleReportInfo);
 
 
 /// Calculate empirical scoring features and add to smod

@@ -27,7 +27,7 @@
 #include "somatic_result_set.hh"
 #include "strelka_shared.hh"
 
-#include "starling_common/starling_indel_report_info.hh"
+#include "starling_common/AlleleReportInfo.hh"
 #include "starling_common/starling_pos_processor_win_avg_set.hh"
 
 #include <array>
@@ -38,11 +38,11 @@
 struct SomaticIndelVcfInfo
 {
     somatic_indel_call sindel;
-    starling_indel_report_info indelReportInfo;
+    AlleleReportInfo indelReportInfo;
     std::string vcf_ref_seq; ///< vcf REF string
     std::string vcf_indel_seq; ///< vcf ALT string
-    std::array<starling_indel_sample_report_info,2> nisri;
-    std::array<starling_indel_sample_report_info,2> tisri;
+    std::array<AlleleSampleReportInfo,2> nisri;
+    std::array<AlleleSampleReportInfo,2> tisri;
 };
 
 

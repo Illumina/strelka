@@ -25,9 +25,10 @@
 #pragma once
 
 #include "blt_common/MapqTracker.hh"
-#include "starling_common/starling_base_shared.hh"
-#include "starling_common/indel.hh"
+#include "blt_util/fastRanksum.hh"
+#include "starling_common/IndelKey.hh"
 
+#include <iosfwd>
 #include <string>
 
 
@@ -74,11 +75,11 @@ getRateType(
 }
 
 
-/// indel allele summary information which is shared between all samples:
+/// allele summary information which is shared between all samples:
 ///
-struct starling_indel_report_info
+struct AlleleReportInfo
 {
-    starling_indel_report_info() {}
+    AlleleReportInfo() {}
 
     bool
     is_repeat_unit() const
@@ -98,16 +99,16 @@ struct starling_indel_report_info
     SimplifiedIndelReportType::index_t it = SimplifiedIndelReportType::OTHER;
 };
 
-std::ostream& operator<<(std::ostream& os, const starling_indel_report_info& obj);
+std::ostream& operator<<(std::ostream& os, const AlleleReportInfo& obj);
 
 
-/// indel summary information which is specific to each sample:
+/// allele summary information which is specific to each sample:
 ///
-struct starling_indel_sample_report_info
+struct AlleleSampleReportInfo
 {
     /// TODO STREL-125 sample_report_info is still designed for only one alt allele
 
-    starling_indel_sample_report_info() {}
+    AlleleSampleReportInfo() {}
 
     unsigned n_confident_ref_reads = 0;
     unsigned n_confident_indel_reads = 0;
@@ -131,7 +132,7 @@ struct starling_indel_sample_report_info
 
     MapqTracker mapqTracker;
 
-    ranksum readpos_ranksum;
+    fastRanksum readpos_ranksum;
 
     unsigned total_confident_reads() const
     {
@@ -140,48 +141,5 @@ struct starling_indel_sample_report_info
 
     void dump(std::ostream& os) const;
 };
-std::ostream& operator<<(std::ostream& os, const starling_indel_sample_report_info& obj);
 
-
-
-/// translate read path likelihoods to posterior probs
-///
-ReadPathScores
-indel_lnp_to_pprob(
-    const starling_base_deriv_options& client_dopt,
-    const ReadPathScores& read_path_lnp,
-    const bool is_tier2_pass,
-    const bool is_use_alt_indel);
-
-
-/// get VCF specific ref and alt strings
-void
-getSingleIndelAlleleVcfSummaryStrings(
-    const IndelKey& indelKey,
-    const IndelData& indelData,
-    const reference_contig_segment& ref,
-    std::string& vcf_indel_seq,
-    std::string& vcf_ref_seq);
-
-
-/// get information used to summarize indel output
-///
-void
-get_starling_indel_report_info(
-    const IndelKey& indelKey,
-    const reference_contig_segment& ref,
-    starling_indel_report_info& indelReportInfo);
-
-
-struct pos_basecall_buffer;
-
-void
-get_starling_indel_sample_report_info(
-    const starling_base_options& opt,
-    const starling_base_deriv_options& dopt,
-    const IndelKey& indelKey,
-    const IndelSampleData& indelSampleData,
-    const pos_basecall_buffer& bc_buff,
-    const bool is_include_tier2,
-    const bool is_use_alt_indel,
-    starling_indel_sample_report_info& isri);
+std::ostream& operator<<(std::ostream& os, const AlleleSampleReportInfo& obj);

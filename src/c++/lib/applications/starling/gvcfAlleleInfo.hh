@@ -134,7 +134,7 @@ struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
     GermlineIndelAlleleInfo(
         const IndelKey& indelKey,
         const IndelData& indelData,
-        const starling_indel_report_info indelReportInfo)
+        const AlleleReportInfo indelReportInfo)
         : _indelKey(indelKey)
         , _indelReportInfo(indelReportInfo)
     {
@@ -158,7 +158,7 @@ struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
     const IndelKey _indelKey;
     std::string breakpointInsertSeq;
     // TODO: make the indel overlapping code create a new call, then revert this to const
-    starling_indel_report_info _indelReportInfo;
+    AlleleReportInfo _indelReportInfo;
 
     ALIGNPATH::path_t cigar;
 };
@@ -172,7 +172,7 @@ struct GermlineDiploidIndelAlleleInfo : public GermlineIndelAlleleInfo
     GermlineDiploidIndelAlleleInfo(
         const IndelKey& indelKey,
         const IndelData& indelData,
-        const starling_indel_report_info& indelReportInfo,
+        const AlleleReportInfo& indelReportInfo,
         const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
         : GermlineIndelAlleleInfo(indelKey, indelData, indelReportInfo)
         , _dindel(dindel)
