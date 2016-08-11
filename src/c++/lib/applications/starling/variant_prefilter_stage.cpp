@@ -134,7 +134,7 @@ void variant_prefilter_stage::process(std::unique_ptr<GermlineIndelLocusInfo> in
         auto ii(downcast<GermlineDiploidIndelLocusInfo>(std::move(info)));
 
         // we can't handle breakends at all right now:
-        if (ii->getFirstAltAllele()._indelKey.is_breakpoint()) return;
+        if (ii->getFirstAltAllele().indelKey.is_breakpoint()) return;
 
         // add filter for all indels in no-ploid regions:
         const unsigned sampleCount(ii->getSampleCount());
@@ -156,7 +156,7 @@ void variant_prefilter_stage::process(std::unique_ptr<GermlineIndelLocusInfo> in
         // we can't handle breakends at all right now:
         for (const auto& altAllele : ii->altAlleles)
         {
-            if (altAllele._indelKey.is_breakpoint()) return;
+            if (altAllele.indelKey.is_breakpoint()) return;
         }
 
         for (const auto& altAllele : ii->altAlleles)

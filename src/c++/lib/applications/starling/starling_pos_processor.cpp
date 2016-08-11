@@ -636,8 +636,7 @@ hackDiplotypeCallToCopyNumberCalls(
         starling_diploid_indel dindel(locusGenotypeToDindel(locusGenotype, genotypeAlleleIndex));
 
         // sample-independent info:
-        const AlleleReportInfo& indelReportInfo(indelData.getReportInfo());
-        std::unique_ptr<GermlineIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, indelKey, indelData, dindel, indelReportInfo));
+        std::unique_ptr<GermlineIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, indelKey, indelData, dindel));
 
         for (unsigned genotypeAlleleIndex2(0); genotypeAlleleIndex2<alleleGroupSize; ++genotypeAlleleIndex2)
         {
@@ -905,8 +904,6 @@ process_pos_indel_continuous(const pos_t pos)
         }
 
         // sample-independent info:
-        const AlleleReportInfo& indelReportInfo(indelData.getReportInfo());
-
         static const bool is_tier2_pass(false);
         static const bool is_use_alt_indel(true);
 
@@ -923,7 +920,7 @@ process_pos_indel_continuous(const pos_t pos)
             getAlleleSampleReportInfo(_opt, _dopt, indelKey, indelSampleData, sif.bc_buff, is_tier2_pass,
                                       is_use_alt_indel, indelSampleReportInfo);
         }
-        starling_continuous_variant_caller::add_indel_call(_opt, indelKey, indelData, indelReportInfo, *locusInfo);
+        starling_continuous_variant_caller::add_indel_call(_opt, indelKey, indelData, *locusInfo);
 
         if (locusInfo->is_indel() || locusInfo->isForcedOutput())
         {

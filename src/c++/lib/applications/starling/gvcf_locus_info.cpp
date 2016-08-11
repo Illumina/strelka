@@ -73,7 +73,7 @@ end() const
 {
     pos_t result = 0;
     for (auto& x : altAlleles)
-        result = std::max(result, x._indelKey.right_pos());
+        result = std::max(result, x.indelKey.right_pos());
     return result;
 }
 
@@ -121,7 +121,7 @@ add_overlap(
     // there's going to be 1 (possibly empty) fill range in front of one haplotype
     // and one possibly empty fill range on the back of one haplotype
     std::string leading_seq,trailing_seq;
-    auto indel_end_pos=std::max(overlapAllele._indelKey.right_pos(),firstAllele._indelKey.right_pos());
+    auto indel_end_pos=std::max(overlapAllele.indelKey.right_pos(),firstAllele.indelKey.right_pos());
 
     const pos_t indel_begin_pos(pos-1);
 
@@ -132,7 +132,7 @@ add_overlap(
         auto& this_call(ii.getFirstAltAllele());
         // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq
         ref.get_substring(indel_begin_pos,(ii.pos-indel_begin_pos)-1,leading_seq);
-        const unsigned trail_len(indel_end_pos-this_call._indelKey.right_pos());
+        const unsigned trail_len(indel_end_pos-this_call.indelKey.right_pos());
         ref.get_substring(indel_end_pos-trail_len,trail_len,trailing_seq);
 
         this_call.set_hap_cigar(leading_seq.size()+1,
@@ -429,9 +429,9 @@ computeEmpiricalScoringFeatures(
     {
         features.set(RNA_INDEL_SCORING_FEATURES::QUAL, (firstAltAllele._dindel.indel_qphred * chromDepthFactor));
         features.set(RNA_INDEL_SCORING_FEATURES::F_GQX, (firstAltAllele.gqx * chromDepthFactor));
-        features.set(RNA_INDEL_SCORING_FEATURES::REFREP1, (firstAltAllele._indelReportInfo.ref_repeat_count));
-        features.set(RNA_INDEL_SCORING_FEATURES::IDREP1, (firstAltAllele._indelReportInfo.indel_repeat_count));
-        features.set(RNA_INDEL_SCORING_FEATURES::RULEN1, (firstAltAllele._indelReportInfo.repeat_unit.length()));
+        features.set(RNA_INDEL_SCORING_FEATURES::REFREP1, (firstAltAllele.indelReportInfo.ref_repeat_count));
+        features.set(RNA_INDEL_SCORING_FEATURES::IDREP1, (firstAltAllele.indelReportInfo.indel_repeat_count));
+        features.set(RNA_INDEL_SCORING_FEATURES::RULEN1, (firstAltAllele.indelReportInfo.repeat_unit.length()));
         features.set(RNA_INDEL_SCORING_FEATURES::AD0,
                      (sampleReportInfo.n_confident_ref_reads * chromDepthFactor));
         features.set(RNA_INDEL_SCORING_FEATURES::AD1,
@@ -497,8 +497,8 @@ computeEmpiricalScoringFeatures(
             features.set(GERMLINE_INDEL_SCORING_FEATURES::GENO, genotype);
         }
 
-        features.set(GERMLINE_INDEL_SCORING_FEATURES::IDREP1, (firstAltAllele._indelReportInfo.indel_repeat_count));
-        features.set(GERMLINE_INDEL_SCORING_FEATURES::RULEN1, (firstAltAllele._indelReportInfo.repeat_unit.length()));
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::IDREP1, (firstAltAllele.indelReportInfo.indel_repeat_count));
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::RULEN1, (firstAltAllele.indelReportInfo.repeat_unit.length()));
 
         // +1e-30 to avoid log(0) in extreme cases
         features.set(GERMLINE_INDEL_SCORING_FEATURES::ABlower, (-std::log(allelebiaslower + 1.e-30)));
@@ -517,7 +517,7 @@ computeEmpiricalScoringFeatures(
         // compute any experimental features not currently used in production
         if (isComputeDevelopmentFeatures)
         {
-            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::REFREP1, (firstAltAllele._indelReportInfo.ref_repeat_count));
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::REFREP1, (firstAltAllele.indelReportInfo.ref_repeat_count));
 
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction,
                                     (sampleReportInfo.mapqTracker.getZeroFrac()));

@@ -151,11 +151,10 @@ position_snp_call_continuous(
 void
 starling_continuous_variant_caller::
 add_indel_call(
-    const starling_base_options& opt,
-    const IndelKey& indelKey,
-    const IndelData& indelData,
-    const AlleleReportInfo& indelReportInfo,
-    GermlineContinuousIndelLocusInfo& locusInfo)
+   const starling_base_options& opt,
+   const IndelKey& indelKey,
+   const IndelData& indelData,
+   GermlineContinuousIndelLocusInfo& locusInfo)
 {
     // continuous caller reports only one alt per vcf record (locus)
     assert(locusInfo.altAlleles.empty());
@@ -188,8 +187,7 @@ add_indel_call(
     locusInfo.addAltIndelAllele(indelKey, indelData);
 
     // legacy allele insertion mechanism
-    locusInfo.altAlleles.emplace_back(
-        indelKey, indelData, indelReportInfo);
+    locusInfo.altAlleles.emplace_back(indelKey, indelData);
     auto& allele = locusInfo.altAlleles.back();
 
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)

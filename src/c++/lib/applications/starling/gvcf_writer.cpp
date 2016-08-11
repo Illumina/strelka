@@ -722,8 +722,9 @@ write_indel_record(
     std::ostream& os(*_osptr);
 
     // create VCF specific transformation of the alt allele list
+    const auto& indelAlleles(ii.getIndelAlleles());
     OrthogonalAlleleSetLocusReportInfo locusReportInfo;
-    getLocusReportInfoFromAlleles(_ref, ii.getIndelAlleles(), locusReportInfo);
+    getLocusReportInfoFromAlleles(_ref, indelAlleles, locusReportInfo);
 
     os << _chrom << '\t'   // CHROM
        << locusReportInfo.vcfPos << '\t'   // POS
@@ -759,10 +760,10 @@ write_indel_record(
     }
     os << ';';
     os << "RU=";
-    for (unsigned i = 0; i <ii.altAlleles.size(); ++i)
+    for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
     {
-        const auto& iri(ii.altAlleles[i]._indelReportInfo);
-        if (i > 0) os << ',';
+        if (altAlleleIndex > 0) os << ',';
+        const auto& iri(indelAlleles[altAlleleIndex].indelReportInfo);
         if (iri.is_repeat_unit() && iri.repeat_unit.size() <= 20)
         {
             os << iri.repeat_unit;
@@ -774,11 +775,10 @@ write_indel_record(
     }
     os << ';';
     os << "REFREP=";
-    for (unsigned i = 0; i <ii.altAlleles.size(); ++i)
+    for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
     {
-        const auto& iri(ii.altAlleles[i]._indelReportInfo);
-        if (i > 0) os << ',';
-
+        if (altAlleleIndex > 0) os << ',';
+        const auto& iri(indelAlleles[altAlleleIndex].indelReportInfo);
         if (iri.is_repeat_unit())
         {
             os << iri.ref_repeat_count;
@@ -790,12 +790,10 @@ write_indel_record(
     }
     os << ';';
     os << "IDREP=";
-    for (unsigned i = 0; i <ii.altAlleles.size(); ++i)
+    for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
     {
-        const auto& iri(ii.altAlleles[i]._indelReportInfo);
-
-        if (i > 0) os << ',';
-
+        if (altAlleleIndex > 0) os << ',';
+        const auto& iri(indelAlleles[altAlleleIndex].indelReportInfo);
         if (iri.is_repeat_unit())
         {
             os << iri.indel_repeat_count;
@@ -957,8 +955,9 @@ write_indel_record(
     std::ostream& os(*_osptr);
 
     // create VCF specific transformation of the alt allele list
+    const auto& indelAlleles(ii.getIndelAlleles());
     OrthogonalAlleleSetLocusReportInfo locusReportInfo;
-    getLocusReportInfoFromAlleles(_ref, ii.getIndelAlleles(), locusReportInfo);
+    getLocusReportInfoFromAlleles(_ref, indelAlleles, locusReportInfo);
 
     os << _chrom << '\t'   // CHROM
        << locusReportInfo.vcfPos << '\t'   // POS
@@ -995,26 +994,48 @@ write_indel_record(
     }
     os << ';';
     os << "RU=";
-    if (allele._indelReportInfo.is_repeat_unit() && allele._indelReportInfo.repeat_unit.size() <= 20)
+    for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
     {
-        os << allele._indelReportInfo.repeat_unit;
-    }
-    else
-    {
-        os << '.';
+        if (altAlleleIndex > 0) os << ',';
+        const auto& iri(indelAlleles[altAlleleIndex].indelReportInfo);
+        if (iri.is_repeat_unit() && iri.repeat_unit.size() <= 20)
+        {
+            os << iri.repeat_unit;
+        }
+        else
+        {
+            os << '.';
+        }
     }
     os << ';';
     os << "REFREP=";
-    if (allele._indelReportInfo.is_repeat_unit())
+    for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
     {
-        os << allele._indelReportInfo.ref_repeat_count;
+        if (altAlleleIndex > 0) os << ',';
+        const auto& iri(indelAlleles[altAlleleIndex].indelReportInfo);
+        if (iri.is_repeat_unit())
+        {
+            os << iri.ref_repeat_count;
+        }
+        else
+        {
+            os << '.';
+        }
     }
-
     os << ';';
     os << "IDREP=";
-    if (allele._indelReportInfo.is_repeat_unit())
+    for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
     {
-        os << allele._indelReportInfo.indel_repeat_count;
+        if (altAlleleIndex > 0) os << ',';
+        const auto& iri(indelAlleles[altAlleleIndex].indelReportInfo);
+        if (iri.is_repeat_unit())
+        {
+            os << iri.indel_repeat_count;
+        }
+        else
+        {
+            os << '.';
+        }
     }
 
 

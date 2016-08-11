@@ -116,9 +116,9 @@ ScoringModelManager::
 checkIsVariantUsableInEVSModel(const GermlineDiploidIndelLocusInfo& ii) const
 {
     const auto& call(ii.getFirstAltAllele());
-    return ((call._indelReportInfo.it == SimplifiedIndelReportType::INSERT ||
-             call._indelReportInfo.it == SimplifiedIndelReportType::DELETE ||
-             call._indelReportInfo.it == SimplifiedIndelReportType::SWAP) &&
+    return ((call.indelReportInfo.it == SimplifiedIndelReportType::INSERT ||
+             call.indelReportInfo.it == SimplifiedIndelReportType::DELETE ||
+             call.indelReportInfo.it == SimplifiedIndelReportType::SWAP) &&
             (call._dindel.max_gt != STAR_DIINDEL::NOINDEL) ); // empirical scoring does not handle homref sites
 }
 
@@ -293,7 +293,7 @@ default_classify_indel(
 
     if (_opt.is_max_ref_rep())
     {
-        const auto& iri(allele._indelReportInfo);
+        const auto& iri(allele.indelReportInfo);
         if (iri.is_repeat_unit())
         {
             if ((iri.repeat_unit.size() <= 2) &&

@@ -73,9 +73,9 @@ getLocusReportInfoFromAlleles(
     std::string& vcfRefSeq(locusReportInfo.vcfRefSeq);
 
     // overlapping breakpoints are not allowed, but we do handle singles:
-    if ((indelAlleles.size()==1) and (indelAlleles[0]._indelKey.is_breakpoint()))
+    if ((indelAlleles.size()==1) and (indelAlleles[0].indelKey.is_breakpoint()))
     {
-        const IndelKey& indelKey(indelAlleles[0]._indelKey);
+        const IndelKey& indelKey(indelAlleles[0].indelKey);
         std::string& vcfAltSeq(locusReportInfo.altAlleles[0].vcfAltSeq);
 
         if       (indelKey.type == INDEL::BP_LEFT)
@@ -101,7 +101,7 @@ getLocusReportInfoFromAlleles(
         known_pos_range2 alleleSetRange;
         for (const auto& indelAllele : indelAlleles)
         {
-            const IndelKey& indelKey(indelAllele._indelKey);
+            const IndelKey& indelKey(indelAllele.indelKey);
             assert(not indelKey.is_breakpoint());
 
             if (isFirst)
@@ -123,7 +123,7 @@ getLocusReportInfoFromAlleles(
         const unsigned altAlleleCount(indelAlleles.size());
         for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
         {
-            const IndelKey& indelKey(indelAlleles[altAlleleIndex]._indelKey);
+            const IndelKey& indelKey(indelAlleles[altAlleleIndex].indelKey);
             std::string& vcfAltSeq(locusReportInfo.altAlleles[altAlleleIndex].vcfAltSeq);
 
             copy_ref_subseq(ref, alleleSetRange.begin_pos() - 1, indelKey.pos, vcfAltSeq);

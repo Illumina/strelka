@@ -117,48 +117,39 @@ std::ostream& operator<<(std::ostream& os,const GermlineVariantAlleleInfo& shmod
 /// restrict to the case where variant is indel
 struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
 {
-    /// new interface
     GermlineIndelAlleleInfo(
         const IndelKey& initIndelKey,
         const IndelData& indelData)
-        : _indelKey(initIndelKey)
+        : indelKey(initIndelKey),
+          indelReportInfo(indelData.getReportInfo())
     {
         isForcedOutput = indelData.isForcedOutput;
-        if (_indelKey.is_breakpoint())
+        if (indelKey.is_breakpoint())
         {
             breakpointInsertSeq = indelData.getBreakpointInsertSeq();
         }
     }
 
-    /// deprecated interface
-    GermlineIndelAlleleInfo(
-        const IndelKey& indelKey,
-        const IndelData& indelData,
-        const AlleleReportInfo indelReportInfo)
-        : _indelKey(indelKey)
-        , _indelReportInfo(indelReportInfo)
-    {
-        isForcedOutput = indelData.isForcedOutput;
-    }
-
+#if 0
     void
     clear()
     {
         GermlineVariantAlleleInfo::clear();
         cigar.clear();
     }
+#endif
 
-    void set_hap_cigar(
+    void
+    set_hap_cigar(
         const unsigned lead=1,
         const unsigned trail=0)
     {
-        setIndelAlleleCigar(lead, trail, _indelKey, cigar);
+        setIndelAlleleCigar(lead, trail, indelKey, cigar);
     }
 
-    const IndelKey _indelKey;
+    const IndelKey indelKey;
     std::string breakpointInsertSeq;
-    // TODO: make the indel overlapping code create a new call, then revert this to const
-    AlleleReportInfo _indelReportInfo;
+    const AlleleReportInfo indelReportInfo;
 
     ALIGNPATH::path_t cigar;
 };
@@ -170,11 +161,10 @@ std::ostream& operator<<(std::ostream& os,const GermlineIndelAlleleInfo& shi);
 struct GermlineDiploidIndelAlleleInfo : public GermlineIndelAlleleInfo
 {
     GermlineDiploidIndelAlleleInfo(
-        const IndelKey& indelKey,
+        const IndelKey& initIndelKey,
         const IndelData& indelData,
-        const AlleleReportInfo& indelReportInfo,
         const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
-        : GermlineIndelAlleleInfo(indelKey, indelData, indelReportInfo)
+        : GermlineIndelAlleleInfo(initIndelKey, indelData)
         , _dindel(dindel)
     {}
 

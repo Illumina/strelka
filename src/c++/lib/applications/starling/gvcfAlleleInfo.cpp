@@ -116,9 +116,9 @@ operator<<(
 {
     os << static_cast<GermlineVariantAlleleInfo>(shi) << '\n';
 
-    os << "IndelKey: " << shi._indelKey << "\n";
+    os << "IndelKey: " << shi.indelKey << "\n";
     //os << "indel_data: " << shi._id << "\n";
-    os << "indel_report_info: " << shi._indelReportInfo << "\n";
+    os << "indel_report_info: " << shi.indelReportInfo << "\n";
     os << "cigar: " << shi.cigar << "\n";
 
     return os;

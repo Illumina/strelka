@@ -457,14 +457,13 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
         const unsigned sampleCount,
         const IndelKey& initIndelKey,
         const IndelData& initIndelData,
-        const GermlineDiploidIndelSimpleGenotypeInfoCore& init_dindel,
-        const AlleleReportInfo& initIndelReportInfo)
+        const GermlineDiploidIndelSimpleGenotypeInfoCore& init_dindel)
         : GermlineIndelLocusInfo(sampleCount, initIndelKey.pos)
         , features(gvcfDerivedOptions.indelFeatureSet)
         , developmentFeatures(gvcfDerivedOptions.indelDevelopmentFeatureSet)
 
     {
-        altAlleles.emplace_back(initIndelKey, initIndelData, initIndelReportInfo, init_dindel);
+        altAlleles.emplace_back(initIndelKey, initIndelData, init_dindel);
     }
 
     bool isForcedOutput() const override
@@ -870,8 +869,7 @@ struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
         const unsigned sampleCount,
         const pos_t init_pos)
         : GermlineIndelLocusInfo(sampleCount, init_pos)
-    {
-    }
+    {}
 
     bool is_indel() const override
     {
@@ -886,7 +884,7 @@ struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
 
     bool isForcedOutput() const override
     {
-        for (const auto& altAllele : altAlleles)
+        for (const auto& altAllele : getIndelAlleles())
         {
             if (altAllele.isForcedOutput) return true;
         }
@@ -896,8 +894,8 @@ struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
     pos_t end() const override
     {
         pos_t result = 0;
-        for (auto& x : altAlleles)
-            result = std::max(result, x._indelKey.right_pos());
+        for (auto& x : getIndelAlleles())
+            result = std::max(result, x.indelKey.right_pos());
         return result;
     }
 

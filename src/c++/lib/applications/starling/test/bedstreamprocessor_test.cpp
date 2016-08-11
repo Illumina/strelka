@@ -78,6 +78,7 @@ BOOST_AUTO_TEST_CASE( filters_snps_before_and_after_range )
     BOOST_REQUIRE(testOffTarget());
 }
 
+
 BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
 {
     std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
@@ -96,8 +97,7 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
                   sampleCount,
                   indelKey,
                   IndelData(1,indelKey),
-                  GermlineDiploidIndelSimpleGenotypeInfoCore(),
-                  AlleleReportInfo()));
+                  GermlineDiploidIndelSimpleGenotypeInfoCore()));
 
         return indel;
     };
