@@ -125,13 +125,6 @@ add_overlap(
 
     const pos_t indel_begin_pos(pos-1);
 
-    // add shared information (to the first indel only)
-    // TODO: Reevaluate this. Since we're merging, we can do this on output
-    // make extended vcf ref seq:
-    std::string tmp;
-    ref.get_substring(indel_begin_pos,(indel_end_pos-indel_begin_pos),tmp);
-    firstAllele._indelReportInfo.vcf_ref_seq = tmp;
-
     sitePloidy.resize(indel_end_pos-pos,0);
 
     auto munge_indel = [&] (GermlineDiploidIndelLocusInfo& ii)
@@ -141,8 +134,6 @@ add_overlap(
         ref.get_substring(indel_begin_pos,(ii.pos-indel_begin_pos)-1,leading_seq);
         const unsigned trail_len(indel_end_pos-this_call._indelKey.right_pos());
         ref.get_substring(indel_end_pos-trail_len,trail_len,trailing_seq);
-
-        this_call._indelReportInfo.vcf_indel_seq = leading_seq + this_call._indelReportInfo.vcf_indel_seq + trailing_seq;
 
         this_call.set_hap_cigar(leading_seq.size()+1,
                                 trailing_seq.size());

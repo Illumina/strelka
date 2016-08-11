@@ -184,9 +184,13 @@ add_indel_call(
     //
     // Insert indel and compute GQ for each sample
 
+    // new allele insertion mechanism
+    locusInfo.addAltIndelAllele(indelKey, indelData);
+
+    // legacy allele insertion mechanism
     locusInfo.altAlleles.emplace_back(
         indelKey, indelData, indelReportInfo);
-    GermlineContinuousIndelAlleleInfo& allele = locusInfo.altAlleles.back();
+    auto& allele = locusInfo.altAlleles.back();
 
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {

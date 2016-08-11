@@ -478,10 +478,8 @@ process_pos_error_counts(
 
             if (indelKey.pos != pos) continue;
 
-            const IndelData& indelData(orthogonalVariantAlleles.data(nonrefAlleleIndex));
-
             starling_indel_report_info indelReportInfo;
-            get_starling_indel_report_info(indelKey, indelData,_ref,indelReportInfo);
+            get_starling_indel_report_info(indelKey, _ref, indelReportInfo);
 
             IndelErrorContext context;
             if ((indelReportInfo.repeat_unit_length==1) && (indelReportInfo.ref_repeat_count>1))

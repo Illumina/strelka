@@ -126,10 +126,6 @@ denovo_indel_call_vcf(
 
     static const char sep('\t');
 
-    // REF/ALT
-    os << sep << indelReportInfo.vcf_ref_seq
-       << sep << indelReportInfo.vcf_indel_seq;
-
     //QUAL:
     os << sep << ".";
 

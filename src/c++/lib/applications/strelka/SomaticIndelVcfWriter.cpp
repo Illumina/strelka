@@ -156,8 +156,8 @@ writeSomaticIndelVcfGrid(
     os << sep << ".";
 
     // REF/ALT
-    os << sep << siInfo.indelReportInfo.vcf_ref_seq
-       << sep << siInfo.indelReportInfo.vcf_indel_seq;
+    os << sep << siInfo.vcf_ref_seq
+       << sep << siInfo.vcf_indel_seq;
 
     //QUAL:
     os << sep << ".";

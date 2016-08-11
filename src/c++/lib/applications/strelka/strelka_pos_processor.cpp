@@ -290,12 +290,13 @@ process_pos_indel_somatic(const pos_t pos)
             // indel_report_info needs to be run first now so that
             // local small repeat info is available to the indel
             // caller
+            // indel summary info
+            SomaticIndelVcfInfo siInfo;
 
-            starling_indel_report_info indelReportInfo;
-            get_starling_indel_report_info(indelKey,indelData,_ref,indelReportInfo);
+            getSingleIndelAlleleVcfSummaryStrings(indelKey, indelData, _ref, siInfo.vcf_indel_seq, siInfo.vcf_ref_seq);
 
             // STARKA-248 filter invalid indel. TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
-            if (indelReportInfo.vcf_indel_seq == indelReportInfo.vcf_ref_seq) continue;
+            if (siInfo.vcf_indel_seq == siInfo.vcf_ref_seq) continue;
 
             somatic_indel_call sindel;
             static const bool is_use_alt_indel(true);
@@ -304,15 +305,13 @@ process_pos_indel_somatic(const pos_t pos)
                                                     tumor_sif.sample_opt,
                                                     indelKey, indelData, NORMAL,TUMOR,
                                                     is_use_alt_indel,
-                                                    sindel);
+                                                    siInfo.sindel);
 
             if (sindel.is_output())
             {
-                // get sample specific info:
-                SomaticIndelVcfInfo siInfo;
-                siInfo.sindel = sindel;
-                siInfo.indelReportInfo = indelReportInfo;
+                get_starling_indel_report_info(indelKey, _ref, siInfo.indelReportInfo);
 
+                // get sample specific info:
                 for (unsigned t(0); t<2; ++t)
                 {
                     const bool is_include_tier2(t!=0);

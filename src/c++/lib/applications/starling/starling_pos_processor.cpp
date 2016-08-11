@@ -636,7 +636,7 @@ hackDiplotypeCallToCopyNumberCalls(
 
         // sample-independent info:
         starling_indel_report_info indelReportInfo;
-        get_starling_indel_report_info(indelKey, indelData, ref, indelReportInfo);
+        get_starling_indel_report_info(indelKey, ref, indelReportInfo);
 
         std::unique_ptr<GermlineIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, indelKey, indelData, dindel, indelReportInfo));
 
@@ -908,7 +908,7 @@ process_pos_indel_continuous(const pos_t pos)
 
         // sample-independent info:
         starling_indel_report_info indelReportInfo;
-        get_starling_indel_report_info(indelKey,indelData,_ref,indelReportInfo);
+        get_starling_indel_report_info(indelKey, _ref, indelReportInfo);
 
         static const bool is_tier2_pass(false);
         static const bool is_use_alt_indel(true);

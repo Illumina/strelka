@@ -233,16 +233,11 @@ process_pos_indel_denovo(const pos_t pos)
 
         if (isAllEmpty) continue;
 
-        // indel_report_info needs to be run first now so that
-        // local small repeat info is available to the indel
-        // caller
-
-        // get iri from either sample:
-        starling_indel_report_info indelReportInfo;
-        get_starling_indel_report_info(indelKey, indelData, _ref, indelReportInfo);
+        std::string vcf_ref_seq, vcf_indel_seq;
+        getSingleIndelAlleleVcfSummaryStrings(indelKey, indelData, _ref,  vcf_indel_seq, vcf_ref_seq);
 
         // STARKA-248 filter invalid indel. TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
-        if (indelReportInfo.vcf_indel_seq == indelReportInfo.vcf_ref_seq) continue;
+        if (vcf_indel_seq == vcf_ref_seq) continue;
 
         denovo_indel_call dindel;
 
@@ -287,11 +282,20 @@ process_pos_indel_denovo(const pos_t pos)
 
             const pos_t output_pos(indel_pos+1);
 
+            static const char sep('\t');
+
             std::stringstream bos;
 
-            bos << _chrom_name<< '\t'
-                << output_pos << '\t'
+            bos << _chrom_name << sep
+                << output_pos << sep
                 << ".";
+
+            // REF/ALT
+            bos << sep << vcf_ref_seq
+                << sep << vcf_indel_seq;
+
+            starling_indel_report_info indelReportInfo;
+            get_starling_indel_report_info(indelKey, _ref, indelReportInfo);
 
             denovo_indel_call_vcf(_opt, _dopt, sinfo, dindel, indelReportInfo, isri, bos);
             bos << "\n";

@@ -238,10 +238,9 @@ getVariantAlleleGroupGenotypeLhoods(
     {
         const unsigned nonRefAllele0Index(0);
         const IndelKey& allele0Key(alleleGroup.key(nonRefAllele0Index));
-        const IndelData& allele0Data(alleleGroup.data(nonRefAllele0Index));
 
         starling_indel_report_info indelReportInfo;
-        get_starling_indel_report_info(allele0Key, allele0Data, ref, indelReportInfo);
+        get_starling_indel_report_info(allele0Key, ref, indelReportInfo);
         patternRepeatCount=std::max(1u,indelReportInfo.ref_repeat_count);
     }
 
@@ -424,7 +423,7 @@ getGenotypeLhoodsForForcedOutputAllele(
     unsigned patternRepeatCount=1;
     {
         starling_indel_report_info indelReportInfo;
-        get_starling_indel_report_info(forcedOutputIndelKey, forcedOutputIndelData, ref, indelReportInfo);
+        get_starling_indel_report_info(forcedOutputIndelKey, ref, indelReportInfo);
         patternRepeatCount=std::max(1u,indelReportInfo.ref_repeat_count);
     }
     const ContextGenotypePriors& genotypePriors(dopt.getIndelGenotypePriors().getContextSpecificPriorSet(patternRepeatCount));

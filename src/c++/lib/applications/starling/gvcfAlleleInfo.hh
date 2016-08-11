@@ -282,17 +282,4 @@ struct GermlineContinuousSiteAlleleInfo : public GermlineVariantAlleleInfo
 };
 
 
-/// restrict to the case where variant is indel and calling model is continuous
-struct GermlineContinuousIndelAlleleInfo : public GermlineIndelAlleleInfo
-{
-    GermlineContinuousIndelAlleleInfo(
-        const IndelKey& indelKey,
-        const IndelData& indelData,
-        const starling_indel_report_info& indelReportInfo)
-        : GermlineIndelAlleleInfo(indelKey, indelData, indelReportInfo)
-    {
-        set_hap_cigar(0,0);
-    }
-};
-
 std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteAlleleInfo& smod);

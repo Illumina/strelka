@@ -951,20 +951,34 @@ gvcf_writer::
 write_indel_record(
     const GermlineContinuousIndelLocusInfo& ii) const
 {
+    // special constraint on continuous allele reporting right now:
+    assert(ii.getAltAlleleCount() == 1);
+
     std::ostream& os(*_osptr);
 
+    // create VCF specific transformation of the alt allele list
+    OrthogonalAlleleSetLocusReportInfo locusReportInfo;
+    getLocusReportInfoFromAlleles(_ref, ii.getIndelAlleles(), locusReportInfo);
+
     os << _chrom << '\t'   // CHROM
-       << ii.pos << '\t'   // POS
-       << ".\t";            // ID
+       << locusReportInfo.vcfPos << '\t'   // POS
+       << ".\t"            // ID
+       << locusReportInfo.vcfRefSeq << '\t'; // REF
+
+    // ALT
+    const unsigned altAlleleCount(ii.getAltAlleleCount());
+//    const unsigned fullAlleleCount(altAlleleCount+1);
+
+    for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
+    {
+        if (altAlleleIndex > 0) os << ',';
+        os << locusReportInfo.altAlleles[altAlleleIndex].vcfAltSeq;
+    }
+    os << '\t';
+
 
     assert(ii.altAlleles.size() == 1);
     const auto& allele(ii.altAlleles.front());
-
-    os << allele._indelReportInfo.vcf_ref_seq << '\t'; // REF
-
-    // ALT
-    os << allele._indelReportInfo.vcf_indel_seq;
-    os << '\t';
 
     os << ii.anyVariantAlleleQuality << '\t'; //QUAL
 
@@ -974,7 +988,11 @@ write_indel_record(
 
     // INFO
     os << "CIGAR=";
-    os << allele.cigar;
+    for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
+    {
+        if (altAlleleIndex > 0) os << ',';
+        os << locusReportInfo.altAlleles[altAlleleIndex].vcfCigar;
+    }
     os << ';';
     os << "RU=";
     if (allele._indelReportInfo.is_repeat_unit() && allele._indelReportInfo.repeat_unit.size() <= 20)

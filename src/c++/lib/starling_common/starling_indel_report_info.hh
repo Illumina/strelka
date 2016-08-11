@@ -88,8 +88,6 @@ struct starling_indel_report_info
 
     void dump(std::ostream& os) const;
 
-    std::string vcf_ref_seq; ///< vcf REF string
-    std::string vcf_indel_seq; ///< vcf ALT string
     std::string repeat_unit;
     unsigned repeat_unit_length = 0;
     unsigned ref_repeat_count = 0;
@@ -156,14 +154,21 @@ indel_lnp_to_pprob(
     const bool is_use_alt_indel);
 
 
-/// get strings for desc, indel and ref sequences that span only the
-/// indel (or indel combination) and other information used to
-/// summarize indel output
+/// get VCF specific ref and alt strings
+void
+getSingleIndelAlleleVcfSummaryStrings(
+    const IndelKey& indelKey,
+    const IndelData& indelData,
+    const reference_contig_segment& ref,
+    std::string& vcf_indel_seq,
+    std::string& vcf_ref_seq);
+
+
+/// get information used to summarize indel output
 ///
 void
 get_starling_indel_report_info(
     const IndelKey& indelKey,
-    const IndelData& indelData,
     const reference_contig_segment& ref,
     starling_indel_report_info& indelReportInfo);
 

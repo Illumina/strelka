@@ -39,6 +39,8 @@ struct SomaticIndelVcfInfo
 {
     somatic_indel_call sindel;
     starling_indel_report_info indelReportInfo;
+    std::string vcf_ref_seq; ///< vcf REF string
+    std::string vcf_indel_seq; ///< vcf ALT string
     std::array<starling_indel_sample_report_info,2> nisri;
     std::array<starling_indel_sample_report_info,2> tisri;
 };

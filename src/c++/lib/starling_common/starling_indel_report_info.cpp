@@ -56,12 +56,8 @@ copy_ref_subseq(const reference_contig_segment& ref,
 
 
 
-/// get the indel cigar and ref and indel strings used in the indel
-/// summary line output
-///
-static
 void
-get_vcf_summary_strings(
+getSingleIndelAlleleVcfSummaryStrings(
     const IndelKey& indelKey,
     const IndelData& indelData,
     const reference_contig_segment& ref,
@@ -109,20 +105,27 @@ set_repeat_info(
     unsigned insert_repeat_count(0);
     unsigned delete_repeat_count(0);
 
-    if       (indelReportInfo.it == SimplifiedIndelReportType::INSERT)
+    if      (indelReportInfo.it == SimplifiedIndelReportType::INSERT)
     {
-        get_vcf_seq_repeat_unit(indelReportInfo.vcf_indel_seq,indelReportInfo.repeat_unit,insert_repeat_count);
+        get_seq_repeat_unit(indelKey.insert_seq(), indelReportInfo.repeat_unit, insert_repeat_count);
     }
     else if (indelReportInfo.it == SimplifiedIndelReportType::DELETE)
     {
-        get_vcf_seq_repeat_unit(indelReportInfo.vcf_ref_seq,indelReportInfo.repeat_unit,delete_repeat_count);
+        std::string deletedSeq;
+        copy_ref_subseq(ref,indelKey.pos, indelKey.pos+indelKey.delete_length(), deletedSeq);
+
+        get_seq_repeat_unit(deletedSeq, indelReportInfo.repeat_unit, delete_repeat_count);
     }
     else if (indelReportInfo.it == SimplifiedIndelReportType::SWAP)
     {
         std::string insert_ru;
+        get_seq_repeat_unit(indelKey.insert_seq(), insert_ru, insert_repeat_count);
+
         std::string delete_ru;
-        get_vcf_seq_repeat_unit(indelReportInfo.vcf_indel_seq,insert_ru,insert_repeat_count);
-        get_vcf_seq_repeat_unit(indelReportInfo.vcf_ref_seq,delete_ru,delete_repeat_count);
+        std::string deletedSeq;
+        copy_ref_subseq(ref,indelKey.pos, indelKey.pos+indelKey.delete_length(), deletedSeq);
+        get_seq_repeat_unit(deletedSeq, delete_ru, delete_repeat_count);
+
         if ((insert_ru != delete_ru) || insert_ru.empty()) return;
 
         indelReportInfo.repeat_unit=insert_ru;
@@ -183,13 +186,9 @@ set_repeat_info(
 void
 get_starling_indel_report_info(
     const IndelKey& indelKey,
-    const IndelData& indelData,
     const reference_contig_segment& ref,
     starling_indel_report_info& indelReportInfo)
 {
-    // indel summary info
-    get_vcf_summary_strings(indelKey,indelData,ref,indelReportInfo.vcf_indel_seq,indelReportInfo.vcf_ref_seq);
-
     indelReportInfo.it=SimplifiedIndelReportType::getRateType(indelKey);
 
     const pos_t indel_begin_pos(indelKey.pos);
@@ -421,9 +420,7 @@ std::ostream& operator<<(std::ostream& os, const starling_indel_sample_report_in
 
 void starling_indel_report_info::dump(std::ostream& os) const
 {
-    os << "vcf_ref_seq=" << vcf_ref_seq
-       << ",vcf_indel_seq=" << vcf_indel_seq
-       << ",repeat_unit=" << repeat_unit
+    os << "repeat_unit=" << repeat_unit
        << ",ref_repeat_count=" << ref_repeat_count
        << ",indel_repeat_count=" << indel_repeat_count
        << ",ihpol=" << ihpol

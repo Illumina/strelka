@@ -909,6 +909,6 @@ struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
             return "1/1";
     }
 
-    std::vector<GermlineContinuousIndelAlleleInfo> altAlleles;
+    std::vector<GermlineIndelAlleleInfo> altAlleles;
     bool is_het=false;
 };

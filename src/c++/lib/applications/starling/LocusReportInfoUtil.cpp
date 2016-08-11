@@ -23,6 +23,9 @@
 ///
 
 #include "LocusReportInfoUtil.hh"
+#include "common/Exceptions.hh"
+
+#include <sstream>
 
 
 
@@ -115,24 +118,49 @@ getLocusReportInfoFromAlleles(
         // minus 1 for vcf preceding base, and plus 1 for 0-index to 1-index shift equals -- same value:
         locusReportInfo.vcfPos = alleleSetRange.begin_pos();
 
-        copy_ref_subseq(ref, alleleSetRange.begin_pos()-1, alleleSetRange.end_pos(), vcfRefSeq);
+        copy_ref_subseq(ref, alleleSetRange.begin_pos() - 1, alleleSetRange.end_pos(), vcfRefSeq);
 
         const unsigned altAlleleCount(indelAlleles.size());
-        for (unsigned altAlleleIndex(0); altAlleleIndex<altAlleleCount; ++altAlleleIndex)
+        for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
         {
             const IndelKey& indelKey(indelAlleles[altAlleleIndex]._indelKey);
             std::string& vcfAltSeq(locusReportInfo.altAlleles[altAlleleIndex].vcfAltSeq);
 
-            copy_ref_subseq(ref, alleleSetRange.begin_pos()-1, indelKey.pos, vcfAltSeq);
-            const unsigned leadingPad(indelKey.pos - (alleleSetRange.begin_pos()-1));
+            copy_ref_subseq(ref, alleleSetRange.begin_pos() - 1, indelKey.pos, vcfAltSeq);
+            const unsigned leadingPad(indelKey.pos - (alleleSetRange.begin_pos() - 1));
 
             vcfAltSeq += indelKey.insert_seq();
 
             append_ref_subseq(ref, indelKey.right_pos(), alleleSetRange.end_pos(), vcfAltSeq);
             const unsigned trailingPad(alleleSetRange.end_pos() - indelKey.right_pos());
 
+
+            // get corresponding CIGAR string:
             auto& vcfCigar(locusReportInfo.altAlleles[altAlleleIndex].vcfCigar);
             setIndelAlleleCigar(leadingPad, trailingPad, indelKey, vcfCigar);
+        }
+
+        // compare all ALT sequences to sanity check that they don't match
+        /// TODO how long do we need to keep this assertion here?
+        std::set<std::string> vcfAltSeqCheck;
+        for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
+        {
+            const std::string& vcfAltSeq(locusReportInfo.altAlleles[altAlleleIndex].vcfAltSeq);
+            const auto insertRetval = vcfAltSeqCheck.insert(vcfAltSeq);
+            if (not insertRetval.second)
+            {
+                using namespace illumina::common;
+
+                std::ostringstream oss;
+                oss << "ERROR: repeated VCF ALT value in indel record: '" << vcfAltSeq << "'\n";
+                oss << "\tIndel Alleles (" << indelAlleles.size() << "):\n";
+                for (const auto& indelAllele : indelAlleles)
+                {
+                    oss << indelAllele << "\n";
+                }
+                oss << "\n";
+                BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+            }
         }
     }
 }
