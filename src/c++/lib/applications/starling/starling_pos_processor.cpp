@@ -618,8 +618,7 @@ hackDiplotypeCallToCopyNumberCalls(
     const unsigned alleleGroupSize(alleleGroup.size());
     for (unsigned genotypeAlleleIndex(0); genotypeAlleleIndex<alleleGroupSize; ++genotypeAlleleIndex)
     {
-        if (not (isForcedOutput or
-                 AG_GENOTYPE::isAllelePresent(locusGenotype.maxGenotypeIndex, genotypeAlleleIndex)))
+        if (not (isForcedOutput or (locusGenotype.maxGenotypeIndex != AG_GENOTYPE::HOMREF)))
         {
             continue;
         }
