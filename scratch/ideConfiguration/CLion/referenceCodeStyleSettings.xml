@@ -3,6 +3,8 @@
     <option name="INDENT_NAMESPACE_MEMBERS" value="0" />
     <option name="NAMESPACE_BRACE_PLACEMENT" value="5" />
     <option name="FUNCTION_BRACE_PLACEMENT" value="5" />
+    <option name="FUNCTION_PARAMETERS_WRAP" value="2" />
+    <option name="FUNCTION_PARAMETERS_NEW_LINE_AFTER_LPAR" value="true" />
     <option name="CLASS_CONSTRUCTOR_INIT_LIST_WRAP" value="2" />
     <option name="SUPERCLASS_LIST_WRAP" value="1" />
     <option name="SPACE_BEFORE_POINTER_IN_DECLARATION" value="false" />
@@ -79,6 +81,7 @@
     <option name="BLANK_LINES_AFTER_IMPORTS" value="0" />
     <option name="BRACE_STYLE" value="5" />
     <option name="CLASS_BRACE_STYLE" value="5" />
+    <option name="ELSE_ON_NEW_LINE" value="true" />
     <option name="INDENT_CASE_FROM_SWITCH" value="false" />
     <indentOptions>
       <option name="CONTINUATION_INDENT_SIZE" value="4" />
