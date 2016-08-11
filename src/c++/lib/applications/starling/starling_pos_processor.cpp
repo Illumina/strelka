@@ -598,7 +598,6 @@ bool
 hackDiplotypeCallToCopyNumberCalls(
     const starling_base_options& opt,
     const starling_deriv_options& dopt,
-    const reference_contig_segment& ref,
     const pos_basecall_buffer& basecallBuffer,
     const pos_t targetPos,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
@@ -637,9 +636,7 @@ hackDiplotypeCallToCopyNumberCalls(
         starling_diploid_indel dindel(locusGenotypeToDindel(locusGenotype, genotypeAlleleIndex));
 
         // sample-independent info:
-        AlleleReportInfo indelReportInfo;
-        get_starling_indel_report_info(indelKey, ref, indelReportInfo);
-
+        const AlleleReportInfo& indelReportInfo(indelData.getReportInfo());
         std::unique_ptr<GermlineIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, indelKey, indelData, dindel, indelReportInfo));
 
         for (unsigned genotypeAlleleIndex2(0); genotypeAlleleIndex2<alleleGroupSize; ++genotypeAlleleIndex2)
@@ -657,8 +654,8 @@ hackDiplotypeCallToCopyNumberCalls(
 
             const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
             AlleleSampleReportInfo& indelSampleReportInfo(ii->getIndelSample(sampleIndex).reportInfo);
-            get_starling_indel_sample_report_info(opt, dopt, indelKey, indelSampleData, basecallBuffer,
-                                                  is_tier2_pass, is_use_alt_indel, indelSampleReportInfo);
+            getAlleleSampleReportInfo(opt, dopt, indelKey, indelSampleData, basecallBuffer,
+                                      is_tier2_pass, is_use_alt_indel, indelSampleReportInfo);
         }
 
         gvcfer.add_indel(std::move(ii));
@@ -798,14 +795,15 @@ process_pos_indel_digt(const pos_t pos)
     std::vector<LocusSupportingReadStats> locusReadStats(sampleCount);
     {
         // genotype the top N alleles
-        getVariantAlleleGroupGenotypeLhoods(_opt, _dopt, sif.sample_opt, _ref, callerPloidy[sampleIndex],
-                                            sampleIndex, topVariantAlleleGroup, locusGenotype, locusReadStats[sampleIndex]);
+        getVariantAlleleGroupGenotypeLhoods(_opt, _dopt, sif.sample_opt, callerPloidy[sampleIndex], sampleIndex,
+                                            topVariantAlleleGroup,
+                                            locusGenotype, locusReadStats[sampleIndex]);
 
         // coerce output into older data-structures for gVCF output
         static const bool isForcedOutput(false);
-        hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, _ref, sif.bc_buff, pos,
-                                           topVariantAlleleGroup, locusGenotype, locusReadStats,
-                                           groupLocusPloidy[sampleIndex], isForcedOutput, *_gvcfer);
+        hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, sif.bc_buff, pos, topVariantAlleleGroup,
+                                           locusGenotype, locusReadStats, groupLocusPloidy[sampleIndex], isForcedOutput,
+                                           *_gvcfer);
     }
 
     // score and report any remaining forced output alleles
@@ -846,10 +844,10 @@ process_pos_indel_digt(const pos_t pos)
              forcedOutputAlleleIndex < forcedOutputAlleleCount; ++forcedOutputAlleleIndex)
         {
             AlleleGroupGenotype forcedAlleleLocusGenotype;
-            getGenotypeLhoodsForForcedOutputAllele(_opt, _dopt, sif.sample_opt, _ref,
-                                                   callerPloidy[sampleIndex], sampleIndex, topVariantAlleleGroup,
-                                                   forcedOutputAlleleGroup,
-                                                   forcedOutputAlleleIndex, forcedAlleleLocusGenotype, locusReadStats[sampleIndex]);
+            getGenotypeLhoodsForForcedOutputAllele(_opt, _dopt, sif.sample_opt, callerPloidy[sampleIndex], sampleIndex,
+                                                   topVariantAlleleGroup,
+                                                   forcedOutputAlleleGroup, forcedOutputAlleleIndex,
+                                                   forcedAlleleLocusGenotype, locusReadStats[sampleIndex]);
 
             // The above function should be set to force <*> and REF alleles into just REF for now,
             // so the most likely genotype should not contain the second allele
@@ -863,11 +861,9 @@ process_pos_indel_digt(const pos_t pos)
             OrthogonalVariantAlleleCandidateGroup fakeForcedOutputAlleleGroup;
             fakeForcedOutputAlleleGroup.addVariantAllele(forcedOutputAlleleGroup.alleles[forcedOutputAlleleIndex]);
             static const bool isForcedOutput(true);
-            hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, _ref, sif.bc_buff,
-                                               pos, fakeForcedOutputAlleleGroup,
-                                               forcedAlleleLocusGenotype, locusReadStats,
-                                               groupLocusPloidy[sampleIndex], isForcedOutput,
-                                               *_gvcfer);
+            hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, sif.bc_buff, pos, fakeForcedOutputAlleleGroup,
+                                               forcedAlleleLocusGenotype, locusReadStats, groupLocusPloidy[sampleIndex],
+                                               isForcedOutput, *_gvcfer);
         }
     }
 }
@@ -909,8 +905,7 @@ process_pos_indel_continuous(const pos_t pos)
         }
 
         // sample-independent info:
-        AlleleReportInfo indelReportInfo;
-        get_starling_indel_report_info(indelKey, _ref, indelReportInfo);
+        const AlleleReportInfo& indelReportInfo(indelData.getReportInfo());
 
         static const bool is_tier2_pass(false);
         static const bool is_use_alt_indel(true);
@@ -925,8 +920,8 @@ process_pos_indel_continuous(const pos_t pos)
             const sample_info& sif(sample(sampleIndex));
 
             AlleleSampleReportInfo& indelSampleReportInfo(locusInfo->getIndelSample(sampleIndex).reportInfo);
-            get_starling_indel_sample_report_info(_opt, _dopt, indelKey, indelSampleData, sif.bc_buff, is_tier2_pass,
-                                                  is_use_alt_indel, indelSampleReportInfo);
+            getAlleleSampleReportInfo(_opt, _dopt, indelKey, indelSampleData, sif.bc_buff, is_tier2_pass,
+                                      is_use_alt_indel, indelSampleReportInfo);
         }
         starling_continuous_variant_caller::add_indel_call(_opt, indelKey, indelData, indelReportInfo, *locusInfo);
 
@@ -939,7 +934,6 @@ process_pos_indel_continuous(const pos_t pos)
         }
     }
 }
-
 
 
 

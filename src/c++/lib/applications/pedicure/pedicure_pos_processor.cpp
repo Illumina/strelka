@@ -267,9 +267,9 @@ process_pos_indel_denovo(const pos_t pos)
                 const bool is_include_tier2(tierIndex==1);
                 for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++ sampleIndex)
                 {
-                    get_starling_indel_sample_report_info(
-                        _opt, _dopt,indelKey,indelData.getSampleData(sampleIndex),sample(sampleIndex).bc_buff,
-                        is_include_tier2,is_use_alt_indel,
+                    getAlleleSampleReportInfo(
+                        _opt, _dopt, indelKey, indelData.getSampleData(sampleIndex), sample(sampleIndex).bc_buff,
+                        is_include_tier2, is_use_alt_indel,
                         isri[sampleIndex][tierIndex]);
                 }
             }
@@ -294,9 +294,7 @@ process_pos_indel_denovo(const pos_t pos)
             bos << sep << vcf_ref_seq
                 << sep << vcf_indel_seq;
 
-            AlleleReportInfo indelReportInfo;
-            get_starling_indel_report_info(indelKey, _ref, indelReportInfo);
-
+            const AlleleReportInfo& indelReportInfo(indelData.getReportInfo());
             denovo_indel_call_vcf(_opt, _dopt, sinfo, dindel, indelReportInfo, isri, bos);
             bos << "\n";
 

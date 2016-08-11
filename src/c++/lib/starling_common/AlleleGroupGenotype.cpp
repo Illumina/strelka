@@ -20,7 +20,6 @@
 
 #include "AlleleGroupGenotype.hh"
 
-#include "AlleleReportInfoUtil.hh"
 #include "starling_indel_call_pprob_digt.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
@@ -207,7 +206,6 @@ getVariantAlleleGroupGenotypeLhoods(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sampleOptions,
-    const reference_contig_segment& ref,
     const unsigned groupLocusPloidy,
     const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
@@ -238,10 +236,9 @@ getVariantAlleleGroupGenotypeLhoods(
     if (nonRefAlleleCount==1)
     {
         const unsigned nonRefAllele0Index(0);
-        const IndelKey& allele0Key(alleleGroup.key(nonRefAllele0Index));
+        const IndelData& allele0Data(alleleGroup.data(nonRefAllele0Index));
 
-        AlleleReportInfo indelReportInfo;
-        get_starling_indel_report_info(allele0Key, ref, indelReportInfo);
+        const AlleleReportInfo& indelReportInfo(allele0Data.getReportInfo());
         patternRepeatCount=std::max(1u,indelReportInfo.ref_repeat_count);
     }
 
@@ -383,7 +380,6 @@ getGenotypeLhoodsForForcedOutputAllele(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sampleOptions,
-    const reference_contig_segment& ref,
     const unsigned groupLocusPloidy,
     const unsigned sampleId,
     const OrthogonalVariantAlleleCandidateGroup& variantAlleleGroup,
@@ -423,8 +419,7 @@ getGenotypeLhoodsForForcedOutputAllele(
 
     unsigned patternRepeatCount=1;
     {
-        AlleleReportInfo indelReportInfo;
-        get_starling_indel_report_info(forcedOutputIndelKey, ref, indelReportInfo);
+        const AlleleReportInfo& indelReportInfo(forcedOutputIndelData.getReportInfo());
         patternRepeatCount=std::max(1u,indelReportInfo.ref_repeat_count);
     }
     const ContextGenotypePriors& genotypePriors(dopt.getIndelGenotypePriors().getContextSpecificPriorSet(patternRepeatCount));

@@ -187,7 +187,7 @@ set_repeat_info(
 
 
 void
-get_starling_indel_report_info(
+getAlleleReportInfo(
     const IndelKey& indelKey,
     const reference_contig_segment& ref,
     AlleleReportInfo& indelReportInfo)
@@ -288,7 +288,7 @@ indel_lnp_to_pprob(const starling_base_deriv_options& dopt,
 
 
 void
-get_starling_indel_sample_report_info(
+getAlleleSampleReportInfo(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const IndelKey& indelKey,

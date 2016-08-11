@@ -195,7 +195,6 @@ process_pos_snp_somatic(const pos_t pos)
             }
         }
         std::ostream& bos(*_streams.somatic_snv_osptr());
-//        std::ostream& bos(std::cout);
 
         // have to keep tier1 counts for filtration purposes:
 #ifdef SOMATIC_DEBUG
@@ -309,18 +308,18 @@ process_pos_indel_somatic(const pos_t pos)
 
             if (sindel.is_output())
             {
-                get_starling_indel_report_info(indelKey, _ref, siInfo.indelReportInfo);
+                siInfo.indelReportInfo = indelData.getReportInfo();
 
                 // get sample specific info:
                 for (unsigned t(0); t<2; ++t)
                 {
                     const bool is_include_tier2(t!=0);
-                    get_starling_indel_sample_report_info(_opt, _dopt,indelKey,normalIndelSampleData,normal_sif.bc_buff,
-                                                          is_include_tier2,is_use_alt_indel,
-                                                          siInfo.nisri[t]);
-                    get_starling_indel_sample_report_info(_opt, _dopt,indelKey,tumorIndelSampleData,tumor_sif.bc_buff,
-                                                          is_include_tier2,is_use_alt_indel,
-                                                          siInfo.tisri[t]);
+                    getAlleleSampleReportInfo(_opt, _dopt, indelKey, normalIndelSampleData, normal_sif.bc_buff,
+                                              is_include_tier2, is_use_alt_indel,
+                                              siInfo.nisri[t]);
+                    getAlleleSampleReportInfo(_opt, _dopt, indelKey, tumorIndelSampleData, tumor_sif.bc_buff,
+                                              is_include_tier2, is_use_alt_indel,
+                                              siInfo.tisri[t]);
                 }
 
                 pos_t indel_pos(indelKey.pos);

@@ -53,7 +53,7 @@ getSingleIndelAlleleVcfSummaryStrings(
 /// get information used to summarize indel output
 ///
 void
-get_starling_indel_report_info(
+getAlleleReportInfo(
     const IndelKey& indelKey,
     const reference_contig_segment& ref,
     AlleleReportInfo& indelReportInfo);
@@ -62,7 +62,7 @@ get_starling_indel_report_info(
 struct pos_basecall_buffer;
 
 void
-get_starling_indel_sample_report_info(
+getAlleleSampleReportInfo(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const IndelKey& indelKey,

@@ -136,7 +136,7 @@ initializeAuxInfo(
     const starling_base_deriv_options& dopt,
     const reference_contig_segment& ref)
 {
-    get_starling_indel_report_info(_indelKey, ref, _reportInfo);
+    getAlleleReportInfo(_indelKey, ref, _reportInfo);
 
     double refToIndelErrorProb;
     double indelToRefErrorProb;

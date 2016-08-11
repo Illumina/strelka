@@ -21,7 +21,6 @@
 #include "SequenceErrorCountsPosProcessor.hh"
 #include "blt_common/ref_context.hh"
 #include "common/OutStream.hh"
-#include "starling_common/AlleleReportInfoUtil.hh"
 #include "starling_common/OrthogonalVariantAlleleCandidateGroupUtil.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 
@@ -479,8 +478,8 @@ process_pos_error_counts(
 
             if (indelKey.pos != pos) continue;
 
-            AlleleReportInfo indelReportInfo;
-            get_starling_indel_report_info(indelKey, _ref, indelReportInfo);
+            const IndelData& indelData(orthogonalVariantAlleles.data(nonrefAlleleIndex));
+            const AlleleReportInfo& indelReportInfo(indelData.getReportInfo());
 
             IndelErrorContext context;
             if ((indelReportInfo.repeat_unit_length==1) && (indelReportInfo.ref_repeat_count>1))
