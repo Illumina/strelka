@@ -74,7 +74,7 @@ starling_streams(
     _gvcf_osptr = nullptr;
     for (const bam_hdr_t& bamHeader : bamHeaders)
     {
-        _sampleName.push_back(get_bam_header_sample_name(bamHeader));
+        _sampleNames.push_back(get_bam_header_sample_name(bamHeader));
     }
 
     assert(not bamHeaders.empty());

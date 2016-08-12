@@ -45,13 +45,26 @@ is_site_compressable(
     if (si.isForcedOutput) return false;
     if (! _opt.is_block_compression) return false;
 
-    if (si.is_snp()) return false;
-
-    if ((si.ref != 'N') && (si.n_used_calls > 0))
+    const unsigned sampleCount(si.getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        const double reffrac(static_cast<double>(si.alleleObservationCounts(base_to_id(si.ref))) /
-                             static_cast<double>(si.n_used_calls));
-        if ((reffrac+_opt.block_max_nonref) <= 1) return false;
+        /// TODO STREL-125 -- account for is_snp in each sample
+        if (si.is_snp()) return false;
+    }
+
+    if (si.ref != 'N')
+    {
+        const unsigned sampleCount(si.getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        {
+            /// TODO STREL-125 --   compute reffrac for each sample
+            if (si.n_used_calls > 0)
+            {
+                const double reffrac(static_cast<double>(si.alleleObservationCounts(base_to_id(si.ref))) /
+                                     static_cast<double>(si.n_used_calls));
+                if ((reffrac + _opt.block_max_nonref) <= 1) return false;
+            }
+        }
     }
 
     // check if site is in the pre-specified region that are not to be block-compressed

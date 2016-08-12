@@ -283,6 +283,7 @@ struct LocusSampleInfo
     {
         _ploidy.reset();
         gq = 0;
+        gqx = 0;
         max_gt = 0;
         genotypePhredLoghood.clear();
         filters.clear();
@@ -303,6 +304,7 @@ struct LocusSampleInfo
 
 
     int gq=0;
+    int gqx=0;
     unsigned max_gt=0;
     GermlineFilterKeeper filters; ///< only for sample-specific filters
 
@@ -501,7 +503,7 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
         {
             using namespace STAR_DIINDEL;
 
-            switch (getFirstAltAllele().max_gt)
+            switch (getFirstAltAllele().max_gt())
             {
             case NOINDEL:
                 return "0";
@@ -512,7 +514,7 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
                 return "X";
             }
         }
-        return STAR_DIINDEL::get_gt_label(getFirstAltAllele().max_gt);
+        return STAR_DIINDEL::get_gt_label(getFirstAltAllele().max_gt());
     }
 
     ///TODO STREL-125 move this method to sample-level
@@ -526,7 +528,7 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
     bool
     is_het() const
     {
-        return (static_cast<int>(altAlleles.front().max_gt)>1);
+        return (static_cast<int>(altAlleles.front().max_gt())>1);
     }
 
     // the site ploidy within the indel at offset x

@@ -75,14 +75,7 @@ operator<<(
     std::ostream& os,
     const GermlineVariantAlleleInfo& allele)
 {
-    os << "gqx: " << allele.gqx;
-    if (typeid(allele) == typeid(GermlineDiploidIndelAlleleInfo))
-    {
-        auto dallele = dynamic_cast<const GermlineDiploidIndelAlleleInfo&>(allele);
-
-        os << " max_gt: " << DIGT::label(dallele.max_gt);
-    }
-
+    os << "isForcedOutput: " << allele.isForcedOutput;
     return os;
 }
 
@@ -115,12 +108,8 @@ operator<<(
     const GermlineIndelAlleleInfo& shi)
 {
     os << static_cast<GermlineVariantAlleleInfo>(shi) << '\n';
-
     os << "IndelKey: " << shi.indelKey << "\n";
-    //os << "indel_data: " << shi._id << "\n";
-    os << "indel_report_info: " << shi.indelReportInfo << "\n";
-    os << "cigar: " << shi.cigar << "\n";
-
+    os << "AleleReportInfo: " << shi.indelReportInfo << "\n";
     return os;
 }
 
@@ -134,8 +123,6 @@ operator<<(
     os << static_cast<GermlineIndelAlleleInfo>(dic) << '\n';
 
     dic._dindel.dump(os);
-
-    os << " max_gt: " << dic.max_gt << "\n";
 
     return os;
 }

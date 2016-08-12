@@ -46,7 +46,7 @@ struct starling_streams : public starling_streams_base
     const std::vector<std::string>&
     getSampleNames() const
     {
-        return _sampleName;
+        return _sampleNames;
     }
 
 private:
@@ -61,5 +61,5 @@ private:
 
     std::ostream* _gvcf_osptr;
     std::unique_ptr<std::ostream> _gvcf_osptr_auto;
-    std::vector<std::string> _sampleName;
+    std::vector<std::string> _sampleNames;
 };

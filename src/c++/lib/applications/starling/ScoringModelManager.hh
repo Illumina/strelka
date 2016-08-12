@@ -63,7 +63,7 @@ struct ScoringModelManager
     /// default rules based site model
     void default_classify_site(
         GermlineSiteLocusInfo& si,
-        const GermlineVariantAlleleInfo& call) const;
+        const GermlineVariantAlleleInfo& allele) const;
 
     /// default rules based indel model
     void default_classify_indel(
@@ -85,9 +85,11 @@ struct ScoringModelManager
 private:
     bool checkIsVariantUsableInEVSModel(const GermlineDiploidIndelLocusInfo& ii) const;
 
-    void set_indel_modifiers(
+    /// cleanup some boundary case genotype quality assignments
+    void
+    refineIndelSampleValues(
         const GermlineDiploidIndelLocusInfo& ii,
-        GermlineDiploidIndelAlleleInfo& allele) const;
+        LocusSampleInfo& sample) const;
 
     void
     classify_indel_impl(

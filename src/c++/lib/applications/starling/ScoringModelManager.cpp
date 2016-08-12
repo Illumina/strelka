@@ -126,22 +126,21 @@ checkIsVariantUsableInEVSModel(const GermlineDiploidIndelLocusInfo& ii) const
 
 void
 ScoringModelManager::
-set_indel_modifiers(
+refineIndelSampleValues(
     const GermlineDiploidIndelLocusInfo& ii,
-    GermlineDiploidIndelAlleleInfo& allele) const
+    LocusSampleInfo& sample) const
 {
     /// TODO STREL-125 generalize to multi-sample
     const auto& dindel(ii.getFirstAltAllele()._dindel);
     /// max_gt != max_gt_poly indicates we're in a boundary zone between variant and hom-ref call
     if (dindel.max_gt != dindel.max_gt_poly)
     {
-        allele.gqx=0;
+        sample.gqx=0;
     }
     else
     {
-        allele.gqx=std::min(dindel.max_gt_poly_qphred,dindel.max_gt_qphred);
+        sample.gqx=std::min(dindel.max_gt_poly_qphred,dindel.max_gt_qphred);
     }
-    allele.max_gt=dindel.max_gt_poly;
 }
 
 
@@ -156,13 +155,13 @@ classify_indel_impl(
     const unsigned sampleCount(ii.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        auto& sampleInfo(ii.getSample(sampleIndex));
+        LocusSampleInfo& sampleInfo(ii.getSample(sampleIndex));
 
         // TODO STREL-125 generalize to multi-allele
         const auto& dindel(ii.getFirstAltAllele()._dindel);
         sampleInfo.gq = dindel.max_gt_poly_qphred;
+        refineIndelSampleValues(ii, sampleInfo);
     }
-    set_indel_modifiers(ii, call);
 
     if (isVariantUsableInEVSModel && _isReportEVSFeatures)
     {
@@ -234,11 +233,16 @@ void
 ScoringModelManager::
 default_classify_site(
     GermlineSiteLocusInfo& si,
-    const GermlineVariantAlleleInfo& call) const
+    const GermlineVariantAlleleInfo& allele) const
 {
     if (_opt.is_min_gqx)
     {
-        if (call.gqx<_opt.min_gqx) si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+        const unsigned sampleCount(si.getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        {
+            LocusSampleInfo& sampleInfo(si.getSample(sampleIndex));
+            if (sampleInfo.gqx < _opt.min_gqx) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+        }
     }
     if (_dopt.is_max_depth())
     {
@@ -259,7 +263,7 @@ default_classify_site(
     {
         if (_opt.is_max_snv_sb)
         {
-            if (call.strand_bias>_opt.max_snv_sb) si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
+            if (allele.strand_bias>_opt.max_snv_sb) si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
         }
         if (_opt.is_max_snv_hpol)
         {
@@ -276,9 +280,14 @@ default_classify_indel(
     GermlineIndelLocusInfo& ii,
     const GermlineIndelAlleleInfo& allele) const
 {
-    if (this->_opt.is_min_gqx)
+    if (_opt.is_min_gqx)
     {
-        if (allele.gqx<_opt.min_gqx) ii.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+        const unsigned sampleCount(ii.getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        {
+            LocusSampleInfo& sampleInfo(ii.getSample(sampleIndex));
+            if (sampleInfo.gqx < _opt.min_gqx) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+        }
     }
 
     if (this->_dopt.is_max_depth())

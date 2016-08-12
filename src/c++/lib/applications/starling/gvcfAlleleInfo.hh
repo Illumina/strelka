@@ -98,12 +98,10 @@ struct GermlineVariantAlleleInfo : public PolymorphicObject
     void
     clear()
     {
-        gqx = 0;
         strand_bias = 0;
         isForcedOutput = false;
     }
 
-    int gqx=0;
     double strand_bias = 0;
 
     ///< this allele must appear in the VCF output:
@@ -151,6 +149,7 @@ struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
     std::string breakpointInsertSeq;
     const AlleleReportInfo indelReportInfo;
 
+    /// TODO STREL-125 deprecated, remove this
     ALIGNPATH::path_t cigar;
 };
 
@@ -172,8 +171,11 @@ struct GermlineDiploidIndelAlleleInfo : public GermlineIndelAlleleInfo
     /// TODO: Make indel_overlapper create new call objects, then revert this to const
     GermlineDiploidIndelSimpleGenotypeInfoCore _dindel;
 
-    /// TODO: max_gt is here and in _dindel. Ugggghhh. Document the difference or get this down to one copy
-    unsigned max_gt=0;
+    /// TODO STREL-125 move this to sample
+    unsigned max_gt() const
+    {
+        return _dindel.max_gt_poly;
+    }
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineDiploidIndelAlleleInfo& dic);

@@ -455,6 +455,7 @@ create_phased_record()
 
     // we have a phased record, modify site buffer to reflect the changes
     auto& base = this->_buffer.at(0);
+    LocusSampleInfo& sampleInfo(base->getSample(sampleIndex));
 
     base->phased_ref = this->reference;
     base->allele.is_unknown = false;
@@ -462,10 +463,10 @@ create_phased_record()
     base->dgt.ref_gt = ref_gt;
 
     // set various quality fields conservatively
-    base->getSample(sampleIndex).gq                = min_gq;
+    sampleInfo.gq = min_gq;
     base->dgt.genome.snp_qphred  = min_qual;
     base->dgt.phredLoghood       = pls;
-    base->allele.gqx               = std::min(min_gq,min_qual);
+    sampleInfo.gqx               = std::min(min_gq,min_qual);
     base->empiricalVariantScore  = min_EVS;
 
     base->phased_alt = alt.str();

@@ -109,7 +109,7 @@ private:
     std::ostream* _osptr;
     const char* _chrom;
     const gvcf_deriv_options _dopt;
-    gvcf_block_site_record _block;
+    std::vector<gvcf_block_site_record> _blockPerSample;
     pos_t _head_pos;
     GermlineDiploidSiteLocusInfo _empty_site;
 
