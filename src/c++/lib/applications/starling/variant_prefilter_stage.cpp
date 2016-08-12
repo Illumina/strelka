@@ -139,37 +139,27 @@ void
 variant_prefilter_stage::
 process(std::unique_ptr<GermlineIndelLocusInfo> info)
 {
-    if (dynamic_cast<GermlineDiploidIndelLocusInfo*>(info.get()) != nullptr)
+    // we can't handle breakends at all right now:
+    for (const auto& altAllele : info->getIndelAlleles())
     {
-        auto ii(downcast<GermlineDiploidIndelLocusInfo>(std::move(info)));
-
-        // we can't handle breakends at all right now:
-        if (ii->getFirstAltAllele().indelKey.is_breakpoint()) return;
-
-        // add filter for all indels in no-ploid regions:
-        const unsigned sampleCount(ii->getSampleCount());
-        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
-        {
-            LocusSampleInfo& sampleInfo(ii->getSample(sampleIndex));
-            if (sampleInfo.getPloidy().isNoploid())
-            {
-                sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
-            }
-        }
-
-        _sink->process(std::move(ii));
+        if (altAllele.indelKey.is_breakpoint()) return;
     }
-    else
+
+    // add filter for all indels in no-ploid regions:
+    const unsigned sampleCount(info->getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
-        auto ii(downcast<GermlineContinuousIndelLocusInfo>(std::move(info)));
-
-        // we can't handle breakends at all right now:
-        for (const auto& altAllele : ii->getIndelAlleles())
+        LocusSampleInfo& sampleInfo(info->getSample(sampleIndex));
+        if (sampleInfo.getPloidy().isNoploid())
         {
-            if (altAllele.indelKey.is_breakpoint()) return;
+            sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
         }
-
-        _model.default_classify_indel(*ii);
-        _sink->process(std::move(ii));
     }
+
+    // for continuous frequency model only:
+    if (dynamic_cast<GermlineContinuousIndelLocusInfo*>(info.get()) != nullptr)
+    {
+        _model.default_classify_indel(*info);
+    }
+    _sink->process(std::move(info));
 }
