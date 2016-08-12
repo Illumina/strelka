@@ -86,7 +86,7 @@ add_site_modifiers(
         sampleInfo.gq=si.dgt.poly.max_gt_qphred;
     }
 
-    model.classify_site(si, allele);
+    model.classify_site(si);
 }
 
 

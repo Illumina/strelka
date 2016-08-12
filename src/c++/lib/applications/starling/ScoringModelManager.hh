@@ -48,8 +48,7 @@ struct ScoringModelManager
 
     void
     classify_site(
-        GermlineDiploidSiteLocusInfo& si,
-        GermlineDiploidSiteAlleleInfo& smod) const;
+        GermlineDiploidSiteLocusInfo& si) const;
 
     void
     classify_indel(

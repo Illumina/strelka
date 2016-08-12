@@ -72,8 +72,7 @@ ScoringModelManager(
 void
 ScoringModelManager::
 classify_site(
-    GermlineDiploidSiteLocusInfo& si,
-    GermlineDiploidSiteAlleleInfo& smod) const
+    GermlineDiploidSiteLocusInfo& si) const
 {
     if (si.dgt.is_snp && _isReportEVSFeatures)
     {
@@ -105,7 +104,7 @@ classify_site(
     else
     {
         // don't know what to do with this site, throw it to the old default filters
-        default_classify_site(si, smod);
+        default_classify_site(si, si.allele);
     }
 }
 
