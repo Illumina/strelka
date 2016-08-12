@@ -83,17 +83,72 @@ static const char* map_gt_to_homref(const char* gt)
 
 bool
 gvcf_block_site_record::
-test(const GermlineDiploidSiteLocusInfo& si) const
+testCanSiteJoinSampleBlockShared(
+    const GermlineSiteLocusInfo& si,
+    const unsigned sampleIndex) const
 {
-    if (count==0) return true;
-
     // pos must be +1 from end of record:
     if ((pos+count) != si.pos) return false;
 
+    const LocusSampleInfo& sampleInfo(getSample(sampleIndex));
+    const LocusSampleInfo& inputSampleInfo(si.getSample(sampleIndex));
+
     // filters must match:
     if (not (filters == si.filters)) return false;
+    if (not (sampleInfo.filters == inputSampleInfo.filters)) return false;
 
     if (is_nonref() || si.is_nonref()) return false;
+
+    if (! is_new_value_blockable(si.n_used_calls,
+                                 block_dpu,frac_tol,abs_tol))
+    {
+        return false;
+    }
+    if (! is_new_value_blockable(si.n_unused_calls,
+                                 block_dpf,frac_tol,abs_tol))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+
+
+void
+gvcf_block_site_record::
+joinSiteToSampleBlockShared(
+    const GermlineSiteLocusInfo& si,
+    const unsigned /*sampleIndex*/)
+{
+    //LocusSampleInfo& sampleInfo(getSample(sampleIndex));
+    //const LocusSampleInfo& inputSampleInfo(si.getSample(sampleIndex));
+
+    if (count == 0)
+    {
+        pos = si.pos;
+        ref = si.ref;
+    }
+
+    block_dpu.add(si.n_used_calls);
+    block_dpf.add(si.n_unused_calls);
+
+    count += 1;
+}
+
+
+
+bool
+gvcf_block_site_record::
+testCanSiteJoinSampleBlock(
+    const GermlineDiploidSiteLocusInfo& si,
+    const unsigned sampleIndex) const
+{
+    if (count==0) return true;
+
+    if(not testCanSiteJoinSampleBlockShared(si,sampleIndex)) return false;
+
+    const LocusSampleInfo& inputSampleInfo(si.getSample(sampleIndex));
 
     if (gt != map_gt_to_homref(si.get_gt())) return false;
 
@@ -105,21 +160,10 @@ test(const GermlineDiploidSiteLocusInfo& si) const
     if (ploidy != si.dgt.ploidy) return false;
 
     // test blocking values:
-    if (! is_new_value_blockable(si.allele.gqx,
+    if (! is_new_value_blockable(inputSampleInfo.gqx,
                                  block_gqx,frac_tol,abs_tol,
                                  si.allele.is_gqx(),
                                  has_call))
-    {
-        return false;
-    }
-
-    if (! is_new_value_blockable(si.n_used_calls,
-                                 block_dpu,frac_tol,abs_tol))
-    {
-        return false;
-    }
-    if (! is_new_value_blockable(si.n_unused_calls,
-                                 block_dpf,frac_tol,abs_tol))
     {
         return false;
     }
@@ -131,35 +175,40 @@ test(const GermlineDiploidSiteLocusInfo& si) const
 
 void
 gvcf_block_site_record::
-join(const GermlineDiploidSiteLocusInfo& si)
+joinSiteToSampleBlock(
+    const GermlineDiploidSiteLocusInfo& si,
+    const unsigned sampleIndex)
 {
+    LocusSampleInfo& sampleInfo(getSample(sampleIndex));
+    const LocusSampleInfo& inputSampleInfo(si.getSample(sampleIndex));
+
     if (count == 0)
     {
-        pos = si.pos;
         filters = si.filters;
+        sampleInfo.filters = inputSampleInfo.filters;
         setNonRef(si.is_nonref());
         gt = map_gt_to_homref(si.get_gt());
         is_used_covered = si.allele.is_used_covered;
         is_covered = si.allele.is_covered;
         ploidy = si.dgt.ploidy;
         has_call = si.allele.is_gqx();
-        ref = si.ref;
     }
 
     if (si.allele.is_gqx())
     {
-        block_gqx.add(si.allele.gqx);
+        block_gqx.add(inputSampleInfo.gqx);
     }
 
-    block_dpu.add(si.n_used_calls);
-    block_dpf.add(si.n_unused_calls);
-
-    count += 1;
+    joinSiteToSampleBlockShared(si, sampleIndex);
 }
+
+
 
 bool
 gvcf_block_site_record::
-test(const GermlineContinuousSiteLocusInfo& si) const
+testCanSiteJoinSampleBlock(
+    const GermlineContinuousSiteLocusInfo& si,
+    const unsigned sampleIndex) const
 {
     if (si.altAlleles.size() != 1)
         return false;
@@ -169,17 +218,12 @@ test(const GermlineContinuousSiteLocusInfo& si) const
     if (has_call && si.altAlleles.empty())
         return false;
 
-
     // ploidy must match. This catches mixing digt && continuous
     if (ploidy != -1) return false;
 
-    // pos must be +1 from end of record:
-    if ((pos+count) != si.pos) return false;
+    if(not testCanSiteJoinSampleBlockShared(si,sampleIndex)) return false;
 
-    // filters must match:
-    if (not (filters == si.filters)) return false;
-
-    if (is_nonref() || si.is_nonref()) return false;
+    const LocusSampleInfo& inputSampleInfo(si.getSample(sampleIndex));
 
     if (gt != map_gt_to_homref(si.get_gt(si.altAlleles.front()))) return false;
 
@@ -190,7 +234,7 @@ test(const GermlineContinuousSiteLocusInfo& si) const
     if (has_call)
     {
         // test blocking values:
-        if (! is_new_value_blockable(si.altAlleles.front().gqx,
+        if (! is_new_value_blockable(inputSampleInfo.gqx,
                                      block_gqx,frac_tol,abs_tol,
                                      true,
                                      true))
@@ -199,31 +243,26 @@ test(const GermlineContinuousSiteLocusInfo& si) const
         }
     }
 
-    if (! is_new_value_blockable(si.n_used_calls,
-                                 block_dpu,frac_tol,abs_tol))
-    {
-        return false;
-    }
-    if (! is_new_value_blockable(si.n_unused_calls,
-                                 block_dpf,frac_tol,abs_tol))
-    {
-        return false;
-    }
-
     return true;
 }
 
 
 
 void
-gvcf_block_site_record::join(const GermlineContinuousSiteLocusInfo& si)
+gvcf_block_site_record::
+joinSiteToSampleBlock(
+    const GermlineContinuousSiteLocusInfo& si,
+    const unsigned sampleIndex)
 {
+    LocusSampleInfo& sampleInfo(getSample(sampleIndex));
+    const LocusSampleInfo& inputSampleInfo(si.getSample(sampleIndex));
+
     if (count == 0)
     {
-        pos = si.pos;
         if (!si.altAlleles.empty())
         {
             filters = si.filters;
+            sampleInfo.filters = inputSampleInfo.filters;
             gt = map_gt_to_homref(si.get_gt(si.altAlleles.front()));
             setNonRef(si.is_nonref());
             // TODO: handle no coverage regions in continuous
@@ -236,20 +275,13 @@ gvcf_block_site_record::join(const GermlineContinuousSiteLocusInfo& si)
         is_used_covered = si.n_used_calls != 0;
         is_covered = si.n_used_calls != 0 || si.n_unused_calls != 0;
         ploidy = -1;
-        ref = si.ref;
     }
 
     // TODO: handle no coverage regions in continuous
     if (si.altAlleles.size() == 1)
     {
-        block_gqx.add(si.altAlleles.front().gqx);
+        block_gqx.add(inputSampleInfo.gqx);
     }
 
-    block_dpu.add(si.n_used_calls);
-    block_dpf.add(si.n_unused_calls);
-
-    count += 1;
+    joinSiteToSampleBlockShared(si, sampleIndex);
 }
-
-
-

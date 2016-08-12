@@ -62,16 +62,28 @@ struct gvcf_block_site_record : public GermlineSiteLocusInfo
     }
 
     /// determine if the given site could be joined to this block:
-    bool test(const GermlineDiploidSiteLocusInfo& si) const;
+    bool
+    testCanSiteJoinSampleBlock(
+        const GermlineDiploidSiteLocusInfo& si,
+        const unsigned sampleIndex) const;
 
     /// add site to the current block
-    void join(const GermlineDiploidSiteLocusInfo& si);
+    void
+    joinSiteToSampleBlock(
+        const GermlineDiploidSiteLocusInfo& si,
+        const unsigned sampleIndex);
 
     /// determine if the given site could be joined to this block:
-    bool test(const GermlineContinuousSiteLocusInfo& si) const;
+    bool
+    testCanSiteJoinSampleBlock(
+        const GermlineContinuousSiteLocusInfo& si,
+        const unsigned samleIndex) const;
 
     /// add site to the current block
-    void join(const GermlineContinuousSiteLocusInfo& si);
+    void
+    joinSiteToSampleBlock(
+        const GermlineContinuousSiteLocusInfo& si,
+        const unsigned sampleIndex);
 
     const char* get_gt() const
     {
@@ -89,6 +101,21 @@ struct gvcf_block_site_record : public GermlineSiteLocusInfo
     }
 
 private:
+
+    /// reduce diploid/continuous site logical duplication by putting common tests here
+    ///
+    /// \return false if block cannot be shared, true otherwise (not enough by itself to conclude sharable)
+    bool
+    testCanSiteJoinSampleBlockShared(
+        const GermlineSiteLocusInfo& si,
+        const unsigned sampleIndex) const;
+
+    /// reduce diploid/continuous site duplication by putting common join logic here
+    void
+    joinSiteToSampleBlockShared(
+        const GermlineSiteLocusInfo& si,
+        const unsigned sampleIndex);
+
     void
     setNonRef(const bool isNonRef)
     {

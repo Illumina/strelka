@@ -34,11 +34,13 @@ variant_prefilter_stage::variant_prefilter_stage(const ScoringModelManager& mode
 
 static
 void
-set_site_gt(const diploid_genotype::result_set& rs,
-            GermlineDiploidSiteAlleleInfo& allele)
+set_site_gt(
+    const diploid_genotype::result_set& rs,
+    GermlineDiploidSiteAlleleInfo& allele,
+    LocusSampleInfo& sampleInfo)
 {
     allele.max_gt=rs.max_gt;
-    allele.gqx=rs.max_gt_qphred;
+    sampleInfo.gqx=rs.max_gt_qphred;
 }
 
 
@@ -46,14 +48,14 @@ void
 variant_prefilter_stage::
 add_site_modifiers(
     GermlineDiploidSiteLocusInfo& si,
-    GermlineDiploidSiteAlleleInfo& allele,
     const ScoringModelManager& model)
 {
+    auto& allele(si.allele);
     allele.clear();
     allele.is_unknown=(si.ref=='N');
 
     /// TODO STREL-125 generalize to multi-sample
-    auto& sampleInfo(si.getSample(0));
+    LocusSampleInfo& sampleInfo(si.getSample(0));
 
     allele.is_used_covered=(si.n_used_calls!=0);
     allele.is_covered=(si.allele.is_used_covered || si.n_unused_calls!=0);
@@ -61,13 +63,13 @@ add_site_modifiers(
 
     if     (allele.is_unknown)
     {
-        allele.gqx=0;
+        sampleInfo.gqx=0;
         sampleInfo.gq=0;
         allele.max_gt=0;
     }
     else if (si.dgt.genome.max_gt != si.dgt.poly.max_gt)
     {
-        allele.gqx=0;
+        sampleInfo.gqx=0;
         sampleInfo.gq=si.dgt.poly.max_gt_qphred;
         allele.max_gt=si.dgt.poly.max_gt;
     }
@@ -75,11 +77,11 @@ add_site_modifiers(
     {
         if (si.dgt.genome.max_gt_qphred<si.dgt.poly.max_gt_qphred)
         {
-            set_site_gt(si.dgt.genome,allele);
+            set_site_gt(si.dgt.genome,allele, sampleInfo);
         }
         else
         {
-            set_site_gt(si.dgt.poly,allele);
+            set_site_gt(si.dgt.poly,allele, sampleInfo);
         }
         sampleInfo.gq=si.dgt.poly.max_gt_qphred;
     }
@@ -87,13 +89,17 @@ add_site_modifiers(
     model.classify_site(si, allele);
 }
 
-void variant_prefilter_stage::process(std::unique_ptr<GermlineSiteLocusInfo> info)
+
+
+void
+variant_prefilter_stage::
+process(std::unique_ptr<GermlineSiteLocusInfo> info)
 {
     if (dynamic_cast<GermlineDiploidSiteLocusInfo*>(info.get()) != nullptr)
     {
         auto si(downcast<GermlineDiploidSiteLocusInfo>(std::move(info)));
 
-        add_site_modifiers(*si, si->allele, _model);
+        add_site_modifiers(*si, _model);
         if (si->dgt.is_haploid())
         {
             if (si->allele.max_gt == si->dgt.ref_gt)
@@ -127,7 +133,11 @@ void variant_prefilter_stage::process(std::unique_ptr<GermlineSiteLocusInfo> inf
     }
 }
 
-void variant_prefilter_stage::process(std::unique_ptr<GermlineIndelLocusInfo> info)
+
+
+void
+variant_prefilter_stage::
+process(std::unique_ptr<GermlineIndelLocusInfo> info)
 {
     if (dynamic_cast<GermlineDiploidIndelLocusInfo*>(info.get()) != nullptr)
     {
@@ -166,4 +176,3 @@ void variant_prefilter_stage::process(std::unique_ptr<GermlineIndelLocusInfo> in
         _sink->process(std::move(ii));
     }
 }
-

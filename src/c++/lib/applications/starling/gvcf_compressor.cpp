@@ -54,7 +54,6 @@ is_site_compressable(
 
     if (si.ref != 'N')
     {
-        const unsigned sampleCount(si.getSampleCount());
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
             /// TODO STREL-125 --   compute reffrac for each sample

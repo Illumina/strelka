@@ -154,7 +154,6 @@ add_overlap(
     firstAllele._dindel.indel_qphred = std::min(firstAllele._dindel.indel_qphred, overlap.getFirstAltAllele()._dindel.indel_qphred);
     firstAllele._dindel.max_gt_qphred = std::min(firstAllele._dindel.max_gt_qphred, overlap.getFirstAltAllele()._dindel.max_gt_qphred);
 
-
     // combine filter flags from overlapping loci:
     filters.merge(overlap.filters);
 
@@ -163,13 +162,16 @@ add_overlap(
         empiricalVariantScore = overlap.empiricalVariantScore;
     else if (overlap.empiricalVariantScore >= 0)
         empiricalVariantScore = std::min(empiricalVariantScore, overlap.empiricalVariantScore);
-    firstAllele.gqx = std::min(firstAllele.gqx, overlap.getFirstAltAllele().gqx);
 
     const unsigned sampleCount(getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         auto& sampleInfo(getSample(sampleIndex));
-        sampleInfo.gq = std::min(sampleInfo.gq, overlap.getSample(sampleIndex).gq);
+        const auto& inputSampleInfo(overlap.getSample(sampleIndex));
+        sampleInfo.gq = std::min(sampleInfo.gq, inputSampleInfo.gq);
+        sampleInfo.gqx = std::min(sampleInfo.gqx, inputSampleInfo.gqx);
+
+        sampleInfo.filters.merge(inputSampleInfo.filters);
     }
     altAlleles.push_back(overlap.getFirstAltAllele());
 }
@@ -239,7 +241,7 @@ computeEmpiricalScoringFeatures(
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::F_DP, (n_used_calls * chromDepthFactor));
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::F_DPF, (n_unused_calls * chromDepthFactor));
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::F_GQ, (firstSampleInfo.gq * chromDepthFactor));
-        EVSFeatures.set(RNA_SNV_SCORING_FEATURES::F_GQX, (allele.gqx * chromDepthFactor));
+        EVSFeatures.set(RNA_SNV_SCORING_FEATURES::F_GQX, (firstSampleInfo.gqx * chromDepthFactor));
 
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::I_AvgBaseQ, (avgBaseQ));
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::I_AvgPos, (rawPos));
@@ -269,7 +271,7 @@ computeEmpiricalScoringFeatures(
             EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM,
                                           (dgt.genome.snp_qphred * filteredLocusDepthFactor));
             EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
-                                          (allele.gqx * filteredLocusDepthFactor));
+                                          (firstSampleInfo.gqx * filteredLocusDepthFactor));
             EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
                                           (firstSampleInfo.gq * filteredLocusDepthFactor));
 
@@ -280,7 +282,7 @@ computeEmpiricalScoringFeatures(
 
             EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT,
                                           (dgt.genome.snp_qphred));
-            EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (allele.gqx));
+            EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (firstSampleInfo.gqx));
             EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (firstSampleInfo.gq));
         }
     }
@@ -312,7 +314,7 @@ computeEmpiricalScoringFeatures(
         // how noisy is the locus?
         EVSFeatures.set(GERMLINE_SNV_SCORING_FEATURES::F_DP_NORM, locusUsedDepthFraction);
 
-        EVSFeatures.set(GERMLINE_SNV_SCORING_FEATURES::F_GQX_EXACT, (allele.gqx));
+        EVSFeatures.set(GERMLINE_SNV_SCORING_FEATURES::F_GQX_EXACT, (firstSampleInfo.gqx));
 
         // compute any experimental features not currently used in production
         //
@@ -347,7 +349,7 @@ computeEmpiricalScoringFeatures(
             EVSDevelopmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM,
                                           (dgt.genome.snp_qphred * filteredLocusDepthFactor));
             EVSDevelopmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
-                                          (allele.gqx * filteredLocusDepthFactor));
+                                          (firstSampleInfo.gqx * filteredLocusDepthFactor));
             EVSDevelopmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
                                           (firstSampleInfo.gq * filteredLocusDepthFactor));
 
@@ -428,7 +430,7 @@ computeEmpiricalScoringFeatures(
     if (isRNA)
     {
         features.set(RNA_INDEL_SCORING_FEATURES::QUAL, (firstAltAllele._dindel.indel_qphred * chromDepthFactor));
-        features.set(RNA_INDEL_SCORING_FEATURES::F_GQX, (firstAltAllele.gqx * chromDepthFactor));
+        features.set(RNA_INDEL_SCORING_FEATURES::F_GQX, (firstSampleInfo.gqx * chromDepthFactor));
         features.set(RNA_INDEL_SCORING_FEATURES::REFREP1, (firstAltAllele.indelReportInfo.ref_repeat_count));
         features.set(RNA_INDEL_SCORING_FEATURES::IDREP1, (firstAltAllele.indelReportInfo.indel_repeat_count));
         features.set(RNA_INDEL_SCORING_FEATURES::RULEN1, (firstAltAllele.indelReportInfo.repeat_unit.length()));
@@ -449,7 +451,7 @@ computeEmpiricalScoringFeatures(
         // compute any experimental features not currently used in production
         if (isComputeDevelopmentFeatures)
         {
-            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ, (firstAltAllele.gqx * chromDepthFactor));
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ, (firstSampleInfo.gq * chromDepthFactor));
 
             // how unreliable are the read mappings near this locus?
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_MQ,
@@ -466,7 +468,7 @@ computeEmpiricalScoringFeatures(
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM,
                                     (firstAltAllele._dindel.indel_qphred * filteredLocusDepthFactor));
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
-                                    (firstAltAllele.gqx * filteredLocusDepthFactor));
+                                    (firstSampleInfo.gqx * filteredLocusDepthFactor));
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
                                     (firstSampleInfo.gq * filteredLocusDepthFactor));
 
@@ -478,7 +480,7 @@ computeEmpiricalScoringFeatures(
                                     (sampleReportInfo.n_confident_alt_reads * confidentDepthFactor));
 
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (firstAltAllele._dindel.indel_qphred));
-            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (firstAltAllele.gqx));
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (firstSampleInfo.gqx));
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (firstSampleInfo.gq));
         }
     }
@@ -512,7 +514,7 @@ computeEmpiricalScoringFeatures(
         features.set(GERMLINE_INDEL_SCORING_FEATURES::AD1_NORM,
                      (sampleReportInfo.n_confident_indel_reads * confidentDepthFactor));
 
-        features.set(GERMLINE_INDEL_SCORING_FEATURES::F_GQX_EXACT, (firstAltAllele.gqx));
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::F_GQX_EXACT, (firstSampleInfo.gqx));
 
         // compute any experimental features not currently used in production
         if (isComputeDevelopmentFeatures)
@@ -540,7 +542,7 @@ computeEmpiricalScoringFeatures(
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM,
                                     (firstAltAllele._dindel.indel_qphred * filteredLocusDepthFactor));
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
-                                    (firstAltAllele.gqx * filteredLocusDepthFactor));
+                                    (firstSampleInfo.gqx * filteredLocusDepthFactor));
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
                                     (firstSampleInfo.gq * filteredLocusDepthFactor));
 

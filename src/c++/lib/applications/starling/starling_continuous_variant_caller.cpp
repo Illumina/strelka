@@ -102,7 +102,7 @@ position_snp_call_continuous(
         const double vf = safeFrac(locusInfo.alleleObservationCounts(baseId), totalDepth);
         if (((ref_base_id != baseId ) && (vf > opt.min_het_vf)) || isForcedOutput)
         {
-            allele.gqx = sampleInfo.gq = poisson_qscore(locusInfo.alleleObservationCounts(baseId), totalDepth,
+            sampleInfo.gqx = sampleInfo.gq = poisson_qscore(locusInfo.alleleObservationCounts(baseId), totalDepth,
                                                         (unsigned) opt.min_qscore, 40);
 
             if (ref_base_id != baseId)
@@ -188,7 +188,6 @@ add_indel_call(
 
     // legacy allele insertion mechanism
     locusInfo.altAlleles.emplace_back(indelKey, indelData);
-    auto& allele = locusInfo.altAlleles.back();
 
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
@@ -197,7 +196,7 @@ add_indel_call(
 
         LocusSampleInfo& sampleInfo(locusInfo.getSample(sampleIndex));
 
-        allele.gqx = sampleInfo.gq = poisson_qscore(sampleReportInfo.n_confident_indel_reads,
+        sampleInfo.gqx = sampleInfo.gq = poisson_qscore(sampleReportInfo.n_confident_indel_reads,
                                                     sampleReportInfo.total_confident_reads(),
                                                     (unsigned) opt.min_qscore, 40);
 

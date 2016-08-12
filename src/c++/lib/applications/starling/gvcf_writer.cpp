@@ -38,8 +38,6 @@
 
 
 
-
-
 //#define DEBUG_GVCF
 
 
@@ -64,7 +62,6 @@ gvcf_writer(
     , _osptr(osptr)
     , _chrom(opt.bam_seq_name.c_str())
     , _dopt(dopt.gvcf)
-    , _block(_opt.gvcf)
     , _head_pos(dopt.report_range.begin_pos)
     , _empty_site(_dopt, 1)
     , _gvcf_comp(opt.gvcf,nocompress_regions)
@@ -87,16 +84,26 @@ gvcf_writer(
         finish_gvcf_header(_opt, _dopt, _dopt.chrom_depth, sampleName, *_osptr);
     }
 
-    variant_prefilter_stage::add_site_modifiers(_empty_site, _empty_site.allele, cm);
+    const unsigned sampleCount(sampleNames.size());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    {
+        _blockPerSample.emplace_back(_opt.gvcf);
+    }
+
+    variant_prefilter_stage::add_site_modifiers(_empty_site, cm);
 }
 
 
 
-void gvcf_writer::write_block_site_record()
+void
+gvcf_writer::
+writeSampleNonVariantBlockRecord(
+    const unsigned sampleIndex)
 {
-    if (_block.count<=0) return;
-    write_site_record(_block);
-    _block.reset();
+    auto& block(_blockPerSample[sampleIndex]);
+    if (block.count<=0) return;
+    write_site_record(block);
+    block.reset();
 }
 
 
@@ -133,8 +140,12 @@ skip_to_pos(const pos_t target_pos)
 
         if (_gvcf_comp.is_range_compressable(known_pos_range2(si.pos,target_pos)))
         {
-            assert(_block.count!=0);
-            _block.count += (target_pos-_head_pos);
+            const int deltapos(target_pos - _head_pos);
+            for (auto& block : _blockPerSample)
+            {
+                assert(block.count != 0);
+                block.count += deltapos;
+            }
             _head_pos= target_pos;
         }
     }
@@ -161,7 +172,7 @@ void gvcf_writer::process(std::unique_ptr<GermlineIndelLocusInfo> ii)
     skip_to_pos(ii->pos);
 
     // flush any non-variant block before starting:
-    write_block_site_record();
+    writeAllNonVariantBlockRecords();
 
     if (dynamic_cast<GermlineDiploidIndelLocusInfo*>(ii.get()) != nullptr)
     {
@@ -179,7 +190,7 @@ void gvcf_writer::process(std::unique_ptr<GermlineIndelLocusInfo> ii)
 void gvcf_writer::flush_impl()
 {
     skip_to_pos(_report_range.end_pos);
-    write_block_site_record();
+    writeAllNonVariantBlockRecords();
 }
 
 
@@ -458,7 +469,7 @@ write_site_record(
             }
             else
             {
-                os << si.allele.gqx;
+                os << sampleInfo.gqx;
             }
         }
         else
@@ -626,7 +637,7 @@ write_site_record(
         //SAMPLE
         os << gt
            << ':' << sampleInfo.gq
-           << ':' << allele.gqx;
+           << ':' << sampleInfo.gqx;
 
         // DP:DPF
         os << ':' << si.n_used_calls << ':' << si.n_unused_calls;
@@ -702,7 +713,7 @@ write_site_record(
     os << si.get_gt() << ':';
     if (si.has_call)
     {
-        os << _block.block_gqx.min();
+        os << si.block_gqx.min();
     }
     else
     {
@@ -710,8 +721,8 @@ write_site_record(
     }
     os << ':';
     //print DP:DPF
-    os << _block.block_dpu.min() << ':'
-       << _block.block_dpf.min();
+    os << si.block_dpu.min() << ':'
+       << si.block_dpf.min();
     os << '\n';
 }
 
@@ -839,7 +850,7 @@ write_indel_record(
         os << ii.get_gt() << ':'
            << sampleInfo.gq;
 
-        os << ':' << ((ii.empiricalVariantScore >= 0) ? ii.empiricalVariantScore : firstAllele.gqx);
+        os << ':' << ((ii.empiricalVariantScore >= 0) ? ii.empiricalVariantScore : sampleInfo.gqx);
 
         os << ':' << sampleReportInfo.tier1Depth;
 
@@ -980,7 +991,6 @@ write_indel_record(
 
 
     assert(ii.altAlleles.size() == 1);
-    const auto& allele(ii.altAlleles.front());
 
     os << ii.anyVariantAlleleQuality << '\t'; //QUAL
 
@@ -1061,7 +1071,7 @@ write_indel_record(
         os << ii.get_gt() << ':'
            << sampleInfo.gq;
 
-        os << ':' << allele.gqx;
+        os << ':' << sampleInfo.gqx;
 
         os << ':' << sampleReportInfo.tier1Depth;
 

@@ -36,7 +36,6 @@
 struct ScoringModelManager;
 
 
-///
 /// Assembles all site and indel call information into a consistent set, blocks output
 /// and writes to a VCF stream
 ///
@@ -51,17 +50,43 @@ struct gvcf_writer : public variant_pipe_stage_base
         std::ostream* os,
         const ScoringModelManager& cm);
 
-
     void process(std::unique_ptr<GermlineSiteLocusInfo>) override;
     void process(std::unique_ptr<GermlineIndelLocusInfo>) override;
 
-
 private:
+    unsigned
+    getSampleCount() const
+    {
+        return _blockPerSample.size();
+    }
     void flush_impl() override;
 
     void add_site_internal(GermlineDiploidSiteLocusInfo& si);
     void add_site_internal(GermlineContinuousSiteLocusInfo& si);
-    void write_block_site_record();
+
+    /// write out compressed non-variant block for one sample
+    ///
+    /// this function is used because non-variant block boundaries
+    /// are independent for each sample and written to separate gVCF files
+    ///
+    void
+    writeSampleNonVariantBlockRecord(const unsigned sampleIndex);
+
+    /// write out compressed non-variant block for all samples
+    ///
+    /// frequenty the non-variant block ending criteria is shared by
+    /// all samples (eg. introduction of a variant at the next position)
+    /// so we frequently need to syncronize block end across all samples
+    ///
+    void
+    writeAllNonVariantBlockRecords()
+    {
+        const unsigned sampleCount(getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        {
+            writeSampleNonVariantBlockRecord(sampleIndex);
+        }
+    }
 
     // queue site record for writing, after
     // possibly joining it into a compressed non-variant block
@@ -72,16 +97,21 @@ private:
         //test for basic blocking criteria
         if (! _gvcf_comp.is_site_compressable(si))
         {
-            write_block_site_record();
+            writeAllNonVariantBlockRecords();
             write_site_record(si);
             return;
         }
 
-        if (! _block.test(si))
+        const unsigned sampleCount(getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
-            write_block_site_record();
+            gvcf_block_site_record& block(_blockPerSample[sampleIndex]);
+            if (! block.testCanSiteJoinSampleBlock(si, sampleIndex))
+            {
+                writeSampleNonVariantBlockRecord(sampleIndex);
+            }
+            block.joinSiteToSampleBlock(si, sampleIndex);
         }
-        _block.join(si);
     }
 
     void write_site_record(const GermlineDiploidSiteLocusInfo& si) const;
