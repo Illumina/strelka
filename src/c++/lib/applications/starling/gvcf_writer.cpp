@@ -167,27 +167,29 @@ void gvcf_writer::process(std::unique_ptr<GermlineSiteLocusInfo> si)
 
 }
 
-void gvcf_writer::process(std::unique_ptr<GermlineIndelLocusInfo> ii)
+
+
+void
+gvcf_writer::
+process(std::unique_ptr<GermlineIndelLocusInfo> ii)
 {
     skip_to_pos(ii->pos);
 
     // flush any non-variant block before starting:
     writeAllNonVariantBlockRecords();
 
+    write_indel_record(*ii);
     if (dynamic_cast<GermlineDiploidIndelLocusInfo*>(ii.get()) != nullptr)
     {
-        auto ii_digt(downcast<GermlineDiploidIndelLocusInfo>(std::move(ii)));
-
-        write_indel_record(*ii_digt);
-        _last_indel = std::move(ii_digt);
-    }
-    else
-    {
-        write_indel_record(*downcast<GermlineContinuousIndelLocusInfo>(std::move(ii)));
+        _last_indel = downcast<GermlineDiploidIndelLocusInfo>(std::move(ii));
     }
 }
 
-void gvcf_writer::flush_impl()
+
+
+void
+gvcf_writer::
+flush_impl()
 {
     skip_to_pos(_report_range.end_pos);
     writeAllNonVariantBlockRecords();
@@ -731,7 +733,7 @@ write_site_record(
 void
 gvcf_writer::
 write_indel_record(
-    const GermlineDiploidIndelLocusInfo& ii) const
+    const GermlineIndelLocusInfo& ii) const
 {
     std::ostream& os(*_osptr);
 
@@ -755,240 +757,6 @@ write_indel_record(
         os << locusReportInfo.altAlleles[altAlleleIndex].vcfAltSeq;
     }
     os << '\t';
-
-    const auto& firstAllele(ii.getFirstAltAllele());
-    const unsigned tmpOldAltAlleleCount(ii.altAlleles.size());
-
-    os << firstAllele._dindel.indel_qphred << '\t'; //QUAL
-
-    // FILTER:
-    ii.filters.write(os);
-    os << '\t';
-
-    // INFO
-    os << "CIGAR=";
-    for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
-    {
-        if (altAlleleIndex > 0) os << ',';
-        os << locusReportInfo.altAlleles[altAlleleIndex].vcfCigar;
-    }
-    os << ';';
-    os << "RU=";
-    for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
-    {
-        if (altAlleleIndex > 0) os << ',';
-        const auto& iri(indelAlleles[altAlleleIndex].indelReportInfo);
-        if (iri.is_repeat_unit() && iri.repeat_unit.size() <= 20)
-        {
-            os << iri.repeat_unit;
-        }
-        else
-        {
-            os << '.';
-        }
-    }
-    os << ';';
-    os << "REFREP=";
-    for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
-    {
-        if (altAlleleIndex > 0) os << ',';
-        const auto& iri(indelAlleles[altAlleleIndex].indelReportInfo);
-        if (iri.is_repeat_unit())
-        {
-            os << iri.ref_repeat_count;
-        }
-        else
-        {
-            os << '.';
-        }
-    }
-    os << ';';
-    os << "IDREP=";
-    for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
-    {
-        if (altAlleleIndex > 0) os << ',';
-        const auto& iri(indelAlleles[altAlleleIndex].indelReportInfo);
-        if (iri.is_repeat_unit())
-        {
-            os << iri.indel_repeat_count;
-        }
-        else
-        {
-            os << '.';
-        }
-    }
-
-    if (_opt.isReportEVSFeatures)
-    {
-        // EVS features may not be computed for certain records, so check first:
-        if (! ii.features.empty())
-        {
-            const StreamScoper ss(os);
-            os << std::setprecision(5);
-            os << ";EVSF=";
-            ii.features.writeValues(os);
-            os << ",";
-            ii.developmentFeatures.writeValues(os);
-        }
-    }
-
-    os << '\t';
-
-    //FORMAT
-    os << "GT:GQ:GQX:DPI:AD:ADF:ADR:FT:PL";
-
-    //SAMPLE
-    const unsigned sampleCount(ii.getSampleCount());
-    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-    {
-        const auto& sampleInfo(ii.getSample(sampleIndex));
-        const auto& indelSampleInfo(ii.getIndelSample(sampleIndex));
-        const auto& sampleReportInfo(indelSampleInfo.reportInfo);
-
-        os << '\t';
-
-        os << ii.get_gt() << ':'
-           << sampleInfo.gq;
-
-        os << ':' << ((ii.empiricalVariantScore >= 0) ? ii.empiricalVariantScore : sampleInfo.gqx);
-
-        os << ':' << sampleReportInfo.tier1Depth;
-
-        // SAMPLE AD/ADF/ADR:
-        {
-            const auto& counts(sampleInfo.supportCounts);
-
-            // verify locus and sample allele counts are in sync:
-            assert(counts.getAltCount() == altAlleleCount);
-
-            // AD
-            os << ':';
-            for (unsigned alleleIndex(0); alleleIndex < fullAlleleCount; ++alleleIndex)
-            {
-                if (alleleIndex>0) os << ',';
-                os << (counts.getCounts(true).confidentAlleleCount(alleleIndex) + counts.getCounts(false).confidentAlleleCount(alleleIndex));
-            }
-
-            // ADF/ADR
-            for (unsigned strandIndex(0); strandIndex<2; ++strandIndex)
-            {
-                const bool isFwdStrand(strandIndex==0);
-                const auto& strandCounts(counts.getCounts(isFwdStrand));
-
-                os << ':';
-                for (unsigned alleleIndex(0); alleleIndex < fullAlleleCount; ++alleleIndex)
-                {
-                    if (alleleIndex>0) os << ',';
-                    os << strandCounts.confidentAlleleCount(alleleIndex);
-                }
-            }
-        }
-
-        // FT
-        os << ':';
-        sampleInfo.filters.write(os);
-
-        // PL
-        os << ":";
-#if 0
-        {
-            bool isFirst(true);
-            for (const auto pls : sampleInfo.genotypePhredLoghood)
-            {
-                if (isFirst)
-                {
-                    isFirst = false;
-                }
-                else
-                {
-                    os << ',';
-                }
-                os << pls;
-            }
-        }
-#else
-        if (tmpOldAltAlleleCount == 1)
-        {
-            using namespace STAR_DIINDEL;
-            const auto& dindel(ii.altAlleles[0]._dindel);
-            const auto& pls(dindel.phredLoghood);
-            if (sampleInfo.getPloidy().isHaploid())
-            {
-                os << pls[NOINDEL] << ','
-                   << pls[HOM];
-            }
-            else
-            {
-                os << pls[NOINDEL] << ','
-                   << pls[HET] << ','
-                   << pls[HOM];
-            }
-        }
-        else if (tmpOldAltAlleleCount == 2)
-        {
-            // very roughly approximate the overlapping indel PL values
-            //
-            // 1. 0/0 - this is always maxQ
-            // 2. 0/1 - set ot 0/0 from indel1
-            // 3. 1/1 - set to 1/1 from indel0
-            // 4. 0/2 - set to 0/0 from indel0
-            // 5. 1/2 - this is always 0
-            // 6. 2/2 - set to 1/1 from indel1
-            //
-            using namespace STAR_DIINDEL;
-            const auto& pls0(ii.altAlleles[0]._dindel.phredLoghood);
-            const auto& pls1(ii.altAlleles[1]._dindel.phredLoghood);
-
-            os << GermlineDiploidIndelSimpleGenotypeInfoCore::maxQ << ','
-               << pls1[NOINDEL] << ','
-               << pls0[HOM] << ','
-               << pls0[NOINDEL] << ','
-               << 0 << ','
-               << pls1[HOM];
-        }
-        else
-        {
-            assert(false && "Unexpected indel count");
-        }
-#endif
-    }
-
-    os << '\n';
-}
-
-
-
-void
-gvcf_writer::
-write_indel_record(
-    const GermlineContinuousIndelLocusInfo& ii) const
-{
-    // special constraint on continuous allele reporting right now:
-    const unsigned altAlleleCount(ii.getAltAlleleCount());
-//    const unsigned fullAlleleCount(altAlleleCount+1);
-    assert(altAlleleCount == 1);
-
-    std::ostream& os(*_osptr);
-
-    // create VCF specific transformation of the alt allele list
-    const auto& indelAlleles(ii.getIndelAlleles());
-    OrthogonalAlleleSetLocusReportInfo locusReportInfo;
-    getLocusReportInfoFromAlleles(_ref, indelAlleles, locusReportInfo);
-
-    os << _chrom << '\t'   // CHROM
-       << locusReportInfo.vcfPos << '\t'   // POS
-       << ".\t"            // ID
-       << locusReportInfo.vcfRefSeq << '\t'; // REF
-
-    // ALT
-    for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
-    {
-        if (altAlleleIndex > 0) os << ',';
-        os << locusReportInfo.altAlleles[altAlleleIndex].vcfAltSeq;
-    }
-    os << '\t';
-
-
 
     os << ii.anyVariantAlleleQuality << '\t'; //QUAL
 
@@ -1049,47 +817,207 @@ write_indel_record(
         }
     }
 
-
-    os << '\t';
-
-    //FORMAT
-    os << "GT:GQ:GQX:DPI:AD:ADF:ADR:VF";
-
-    //SAMPLE
-    const unsigned sampleCount(ii.getSampleCount());
-    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    const GermlineDiploidIndelLocusInfo* iiDiploidPtr(dynamic_cast<const GermlineDiploidIndelLocusInfo*>(&ii));
+    if (iiDiploidPtr != nullptr)
     {
-        const auto& sampleInfo(ii.getSample(sampleIndex));
-        const auto& indelSampleInfo(ii.getIndelSample(sampleIndex));
-        const auto& sampleReportInfo(indelSampleInfo.reportInfo);
+        const GermlineDiploidIndelLocusInfo& iiDiploid(*iiDiploidPtr);
+
+        const unsigned tmpOldAltAlleleCount(iiDiploid.altAlleles.size());
+
+<<<<<<< HEAD
+    //FORMAT
+    os << "GT:GQ:GQX:DPI:AD:ADF:ADR:FT:PL";
+||||||| parent of 8c09dd9... STREL-125-spur3 simplify indel QUAL down to right location
+    //FORMAT
+    os << "GT:GQ:GQX:DPI:AD:ADF:ADR:PL"; //FT:PL";
+=======
+>>>>>>> 8c09dd9... STREL-125-spur3 simplify indel QUAL down to right location
+
+        if (_opt.isReportEVSFeatures)
+        {
+            // EVS features may not be computed for certain records, so check first:
+            if (! iiDiploid.features.empty())
+            {
+                const StreamScoper ss(os);
+                os << std::setprecision(5);
+                os << ";EVSF=";
+                iiDiploid.features.writeValues(os);
+                os << ",";
+                iiDiploid.developmentFeatures.writeValues(os);
+            }
+        }
 
         os << '\t';
 
+        //FORMAT
+        os << "GT:GQ:GQX:DPI:AD:ADF:ADR:PL"; //FT:PL";
+
         //SAMPLE
-        os << ii.get_gt() << ':'
-           << sampleInfo.gq;
-
-        os << ':' << sampleInfo.gqx;
-
-        os << ':' << sampleReportInfo.tier1Depth;
-
-        // AD:
-        os << ':' << sampleReportInfo.n_confident_ref_reads
-           << ',' << sampleReportInfo.n_confident_indel_reads;
-
-        // ADF
-        os << ':' << sampleReportInfo.n_confident_ref_reads_fwd
-           << ',' << sampleReportInfo.n_confident_indel_reads_fwd;
-
-        // ADR
-        os << ':' << sampleReportInfo.n_confident_ref_reads_rev
-           << ',' << sampleReportInfo.n_confident_indel_reads_rev;
-
-        // VF
+        const unsigned sampleCount(ii.getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
-            const StreamScoper ss(os);
-            os << ':' << std::setprecision(3) << indelSampleInfo.alleleFrequency();
+            const auto& sampleInfo(ii.getSample(sampleIndex));
+            const auto& indelSampleInfo(ii.getIndelSample(sampleIndex));
+            const auto& sampleReportInfo(indelSampleInfo.reportInfo);
+
+            os << '\t';
+
+            os << iiDiploid.get_gt() << ':'
+               << sampleInfo.gq;
+
+            os << ':' << ((ii.empiricalVariantScore >= 0) ? ii.empiricalVariantScore : sampleInfo.gqx);
+
+            os << ':' << sampleReportInfo.tier1Depth;
+
+            // SAMPLE AD/ADF/ADR:
+            {
+                const auto& counts(sampleInfo.supportCounts);
+
+                // verify locus and sample allele counts are in sync:
+                assert(counts.getAltCount() == altAlleleCount);
+
+                // AD
+                os << ':';
+                for (unsigned alleleIndex(0); alleleIndex < fullAlleleCount; ++alleleIndex)
+                {
+                    if (alleleIndex>0) os << ',';
+                    os << (counts.getCounts(true).confidentAlleleCount(alleleIndex) + counts.getCounts(false).confidentAlleleCount(alleleIndex));
+                }
+
+                // ADF/ADR
+                for (unsigned strandIndex(0); strandIndex<2; ++strandIndex)
+                {
+                    const bool isFwdStrand(strandIndex==0);
+                    const auto& strandCounts(counts.getCounts(isFwdStrand));
+
+                    os << ':';
+                    for (unsigned alleleIndex(0); alleleIndex < fullAlleleCount; ++alleleIndex)
+                    {
+                        if (alleleIndex>0) os << ',';
+                        os << strandCounts.confidentAlleleCount(alleleIndex);
+                    }
+                }
+            }
+
+            // FT
+            os << ':';
+            sampleInfo.filters.write(os);
+
+            // PL
+            os << ":";
+
+#if 0
+            {
+            bool isFirst(true);
+            for (const auto pls : sampleInfo.genotypePhredLoghood)
+            {
+                if (isFirst)
+                {
+                    isFirst = false;
+                }
+                else
+                {
+                    os << ',';
+                }
+                os << pls;
+            }
+        }
+#else
+            if (tmpOldAltAlleleCount == 1)
+            {
+                using namespace STAR_DIINDEL;
+                const auto& dindel(iiDiploid.altAlleles[0]._dindel);
+                const auto& pls(dindel.phredLoghood);
+                if (sampleInfo.getPloidy().isHaploid())
+                {
+                    os << pls[NOINDEL] << ','
+                       << pls[HOM];
+                }
+                else
+                {
+                    os << pls[NOINDEL] << ','
+                       << pls[HET] << ','
+                       << pls[HOM];
+                }
+            }
+            else if (tmpOldAltAlleleCount == 2)
+            {
+                // very roughly approximate the overlapping indel PL values
+                //
+                // 1. 0/0 - this is always maxQ
+                // 2. 0/1 - set ot 0/0 from indel1
+                // 3. 1/1 - set to 1/1 from indel0
+                // 4. 0/2 - set to 0/0 from indel0
+                // 5. 1/2 - this is always 0
+                // 6. 2/2 - set to 1/1 from indel1
+                //
+                using namespace STAR_DIINDEL;
+                const auto& pls0(iiDiploid.altAlleles[0]._dindel.phredLoghood);
+                const auto& pls1(iiDiploid.altAlleles[1]._dindel.phredLoghood);
+
+                os << GermlineDiploidIndelSimpleGenotypeInfoCore::maxQ << ','
+                   << pls1[NOINDEL] << ','
+                   << pls0[HOM] << ','
+                   << pls0[NOINDEL] << ','
+                   << 0 << ','
+                   << pls1[HOM];
+            }
+            else
+            {
+                assert(false && "Unexpected indel count");
+            }
+#endif
         }
     }
+    else
+    {
+        // special constraint on continuous allele reporting right now:
+        assert(altAlleleCount == 1);
+
+        const GermlineContinuousIndelLocusInfo& iiContinuous(dynamic_cast<const GermlineContinuousIndelLocusInfo&>(ii));
+
+        os << '\t';
+
+        //FORMAT
+        os << "GT:GQ:GQX:DPI:AD:ADF:ADR:VF";
+
+        //SAMPLE
+        const unsigned sampleCount(ii.getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        {
+            const auto& sampleInfo(ii.getSample(sampleIndex));
+            const auto& indelSampleInfo(ii.getIndelSample(sampleIndex));
+            const auto& sampleReportInfo(indelSampleInfo.reportInfo);
+
+            os << '\t';
+
+            //SAMPLE
+            os << iiContinuous.get_gt() << ':'
+               << sampleInfo.gq;
+
+            os << ':' << sampleInfo.gqx;
+
+            os << ':' << sampleReportInfo.tier1Depth;
+
+            // AD:
+            os << ':' << sampleReportInfo.n_confident_ref_reads
+               << ',' << sampleReportInfo.n_confident_indel_reads;
+
+            // ADF
+            os << ':' << sampleReportInfo.n_confident_ref_reads_fwd
+               << ',' << sampleReportInfo.n_confident_indel_reads_fwd;
+
+            // ADR
+            os << ':' << sampleReportInfo.n_confident_ref_reads_rev
+               << ',' << sampleReportInfo.n_confident_indel_reads_rev;
+
+            // VF
+            {
+                const StreamScoper ss(os);
+                os << ':' << std::setprecision(3) << indelSampleInfo.alleleFrequency();
+            }
+        }
+    }
+
     os << '\n';
 }

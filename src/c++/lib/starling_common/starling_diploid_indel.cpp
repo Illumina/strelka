@@ -33,7 +33,6 @@ GermlineDiploidIndelSimpleGenotypeInfoCore::
 dump(std::ostream& os) const
 {
     os << "max_gt=" << max_gt
-       << ",indel_qphred=" << indel_qphred
        << ",max_gt_qphred=" << max_gt_qphred
        << ",max_gt_poly=" << max_gt_poly
        << ",max_gt_poly_qphred=" << max_gt_poly_qphred;

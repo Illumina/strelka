@@ -425,7 +425,7 @@ void indel_overlapper::modify_indel_overlap_site(
 #endif
 
     // limit qual and gq values to those of the indel
-    si.dgt.genome.snp_qphred = std::min(si.dgt.genome.snp_qphred, ii.getFirstAltAllele()._dindel.indel_qphred);
+    si.dgt.genome.snp_qphred = std::min(si.dgt.genome.snp_qphred, ii.anyVariantAlleleQuality);
 
     const unsigned sampleCount(si.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)

@@ -118,8 +118,7 @@ private:
     void write_site_record(const GermlineContinuousSiteLocusInfo& si) const;
     void write_site_record(const gvcf_block_site_record& si) const;
 
-    void write_indel_record(const GermlineDiploidIndelLocusInfo& ii) const;
-    void write_indel_record(const GermlineContinuousIndelLocusInfo& ii) const;
+    void write_indel_record(const GermlineIndelLocusInfo& ii) const;
 
     /// fill in missing sites
     void skip_to_pos(const pos_t target_pos);

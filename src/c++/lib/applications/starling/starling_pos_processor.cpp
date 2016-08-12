@@ -554,7 +554,6 @@ locusGenotypeToDindel(
         dindel.pprob[STAR_DIINDEL::HET] = locusGenotype.posteriorProb[AG_GENOTYPE::HET01];
     }
 
-    dindel.indel_qphred = (int) locusGenotype.anyVariantAlleleQuality;
     dindel.max_gt = AG_GENOTYPE::mapAlleleToDindel(locusGenotype.maxGenotypeIndex, alleleId);
     dindel.max_gt_qphred = (int) locusGenotype.genotypeQuality;
     dindel.max_gt_poly = AG_GENOTYPE::mapAlleleToDindel(locusGenotype.maxGenotypeIndexPolymorphic, alleleId);
@@ -640,6 +639,7 @@ hackDiplotypeCallToCopyNumberCalls(
         // sample-independent info:
         std::unique_ptr<GermlineIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, indelKey, indelData, dindel));
 
+        ii->anyVariantAlleleQuality = locusGenotype.anyVariantAlleleQuality;
         for (unsigned genotypeAlleleIndex2(0); genotypeAlleleIndex2<alleleGroupSize; ++genotypeAlleleIndex2)
         {
             const IndelKey& indelKey2(alleleGroup.key(genotypeAlleleIndex2));

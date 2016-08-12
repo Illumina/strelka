@@ -151,7 +151,7 @@ add_overlap(
     }
 
     //reduce qual and gt to the lowest of the set:
-    firstAllele._dindel.indel_qphred = std::min(firstAllele._dindel.indel_qphred, overlap.getFirstAltAllele()._dindel.indel_qphred);
+    anyVariantAlleleQuality = std::min(anyVariantAlleleQuality, overlap.anyVariantAlleleQuality);
     firstAllele._dindel.max_gt_qphred = std::min(firstAllele._dindel.max_gt_qphred, overlap.getFirstAltAllele()._dindel.max_gt_qphred);
 
     // combine filter flags from overlapping loci:
@@ -429,7 +429,7 @@ computeEmpiricalScoringFeatures(
 
     if (isRNA)
     {
-        features.set(RNA_INDEL_SCORING_FEATURES::QUAL, (firstAltAllele._dindel.indel_qphred * chromDepthFactor));
+        features.set(RNA_INDEL_SCORING_FEATURES::QUAL, (anyVariantAlleleQuality * chromDepthFactor));
         features.set(RNA_INDEL_SCORING_FEATURES::F_GQX, (firstSampleInfo.gqx * chromDepthFactor));
         features.set(RNA_INDEL_SCORING_FEATURES::REFREP1, (firstAltAllele.indelReportInfo.ref_repeat_count));
         features.set(RNA_INDEL_SCORING_FEATURES::IDREP1, (firstAltAllele.indelReportInfo.indel_repeat_count));
@@ -466,7 +466,7 @@ computeEmpiricalScoringFeatures(
 
             // all of the features below are simply renormalized replacements of the current production feature set
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM,
-                                    (firstAltAllele._dindel.indel_qphred * filteredLocusDepthFactor));
+                                    (anyVariantAlleleQuality * filteredLocusDepthFactor));
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
                                     (firstSampleInfo.gqx * filteredLocusDepthFactor));
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
@@ -479,7 +479,7 @@ computeEmpiricalScoringFeatures(
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::AD2_NORM,
                                     (sampleReportInfo.n_confident_alt_reads * confidentDepthFactor));
 
-            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (firstAltAllele._dindel.indel_qphred));
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (anyVariantAlleleQuality));
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (firstSampleInfo.gqx));
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (firstSampleInfo.gq));
         }
@@ -540,7 +540,7 @@ computeEmpiricalScoringFeatures(
 
             // all of the features below are simply renormalized replacements of the current production feature set
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM,
-                                    (firstAltAllele._dindel.indel_qphred * filteredLocusDepthFactor));
+                                    (anyVariantAlleleQuality * filteredLocusDepthFactor));
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
                                     (firstSampleInfo.gqx * filteredLocusDepthFactor));
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
@@ -551,7 +551,7 @@ computeEmpiricalScoringFeatures(
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD2_NORM,
                                     (sampleReportInfo.n_confident_alt_reads * confidentDepthFactor));
 
-            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (firstAltAllele._dindel.indel_qphred));
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (anyVariantAlleleQuality));
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (firstSampleInfo.gq));
         }
     }

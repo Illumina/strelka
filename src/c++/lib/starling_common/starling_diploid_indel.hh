@@ -139,19 +139,12 @@ struct GermlineDiploidIndelSimpleGenotypeInfoCore
         : max_gt(0), max_gt_poly(0), phredLoghood(STAR_DIINDEL::SIZE, 0)
     {
         static const int qp(error_prob_to_qphred((1. - init_p())));
-        indel_qphred = qp;
         max_gt_qphred = qp;
         max_gt_poly_qphred = qp;
     }
 
     // debug
     void dump(std::ostream& os) const;
-
-    bool
-    isIndel() const
-    {
-        return (indel_qphred != 0);
-    }
 
     /// only applies to PLs so far:
     static const int maxQ;
@@ -169,7 +162,6 @@ protected:
 public:
 
     unsigned max_gt;
-    int indel_qphred;
     int max_gt_qphred;
 
     unsigned max_gt_poly;

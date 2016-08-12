@@ -375,7 +375,7 @@ struct LocusInfo : public PolymorphicObject
     /// zero-index position of the locus, alleles may not all start here:
     pos_t pos = 0;
 
-    /// prob that there is a variant segregating at this sample (VCF calls this QUAL)
+    /// prob that any of the ALTs exist in any of the samples (VCF calls this QUAL)
     int anyVariantAlleleQuality = 0;
 
     /// The empirically calibrated quality-score of the locus, if -1 no locus EVS is available
@@ -479,10 +479,7 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
 
     bool is_indel() const override
     {
-        return std::any_of(altAlleles.begin(), altAlleles.end(), [](const GermlineDiploidIndelAlleleInfo& x)
-        {
-            return x._dindel.isIndel();
-        });
+        return (anyVariantAlleleQuality > 0);
     }
 
     pos_t end() const override;
