@@ -964,7 +964,9 @@ write_indel_record(
     const GermlineContinuousIndelLocusInfo& ii) const
 {
     // special constraint on continuous allele reporting right now:
-    assert(ii.getAltAlleleCount() == 1);
+    const unsigned altAlleleCount(ii.getAltAlleleCount());
+//    const unsigned fullAlleleCount(altAlleleCount+1);
+    assert(altAlleleCount == 1);
 
     std::ostream& os(*_osptr);
 
@@ -979,9 +981,6 @@ write_indel_record(
        << locusReportInfo.vcfRefSeq << '\t'; // REF
 
     // ALT
-    const unsigned altAlleleCount(ii.getAltAlleleCount());
-//    const unsigned fullAlleleCount(altAlleleCount+1);
-
     for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
     {
         if (altAlleleIndex > 0) os << ',';
@@ -990,7 +989,6 @@ write_indel_record(
     os << '\t';
 
 
-    assert(ii.altAlleles.size() == 1);
 
     os << ii.anyVariantAlleleQuality << '\t'; //QUAL
 

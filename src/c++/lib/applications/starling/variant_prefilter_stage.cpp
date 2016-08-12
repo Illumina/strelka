@@ -93,11 +93,11 @@ add_site_modifiers(
 
 void
 variant_prefilter_stage::
-process(std::unique_ptr<GermlineSiteLocusInfo> info)
+process(std::unique_ptr<GermlineSiteLocusInfo> siteLocusPtr)
 {
-    if (dynamic_cast<GermlineDiploidSiteLocusInfo*>(info.get()) != nullptr)
+    if (dynamic_cast<GermlineDiploidSiteLocusInfo*>(siteLocusPtr.get()) != nullptr)
     {
-        auto si(downcast<GermlineDiploidSiteLocusInfo>(std::move(info)));
+        auto si(downcast<GermlineDiploidSiteLocusInfo>(std::move(siteLocusPtr)));
 
         add_site_modifiers(*si, _model);
         if (si->dgt.is_haploid())
@@ -123,7 +123,7 @@ process(std::unique_ptr<GermlineSiteLocusInfo> info)
     }
     else
     {
-        auto si(downcast<GermlineContinuousSiteLocusInfo>(std::move(info)));
+        auto si(downcast<GermlineContinuousSiteLocusInfo>(std::move(siteLocusPtr)));
         for (auto& altAllele : si->altAlleles)
         {
             _model.default_classify_site(*si, altAllele);
@@ -164,7 +164,7 @@ process(std::unique_ptr<GermlineIndelLocusInfo> info)
         auto ii(downcast<GermlineContinuousIndelLocusInfo>(std::move(info)));
 
         // we can't handle breakends at all right now:
-        for (const auto& altAllele : ii->altAlleles)
+        for (const auto& altAllele : ii->getIndelAlleles())
         {
             if (altAllele.indelKey.is_breakpoint()) return;
         }

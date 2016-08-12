@@ -157,7 +157,7 @@ add_indel_call(
    GermlineContinuousIndelLocusInfo& locusInfo)
 {
     // continuous caller reports only one alt per vcf record (locus)
-    assert(locusInfo.altAlleles.empty());
+    assert(locusInfo.getAltAlleleCount() == 0);
 
     // first test to see if this indel qualifies as a variant in any sample
     //
@@ -182,12 +182,7 @@ add_indel_call(
     // indel qualifies!
     //
     // Insert indel and compute GQ for each sample
-
-    // new allele insertion mechanism
     locusInfo.addAltIndelAllele(indelKey, indelData);
-
-    // legacy allele insertion mechanism
-    locusInfo.altAlleles.emplace_back(indelKey, indelData);
 
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
