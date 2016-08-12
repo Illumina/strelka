@@ -66,21 +66,28 @@ starling_streams::
 starling_streams(
     const starling_options& opt,
     const prog_info& pinfo,
-    const bam_hdr_t& header,
+    const std::vector<std::reference_wrapper<const bam_hdr_t>>& bamHeaders,
     const SampleSetSummary& ssi)
     : base_t(opt,pinfo,ssi)
 {
     assert(_n_samples == 1);
     _gvcf_osptr = nullptr;
-    _sampleName = get_bam_header_sample_name(header);
+    for (const bam_hdr_t& bamHeader : bamHeaders)
+    {
+        _sampleName.push_back(get_bam_header_sample_name(bamHeader));
+    }
+
+    assert(not bamHeaders.empty());
+    const bam_hdr_t& referenceHeader(bamHeaders.front());
 
     if (opt.gvcf.is_gvcf_output())
     {
-        _gvcf_osptr = initialize_gvcf_file(opt,pinfo,opt.gvcf.out_file,header,_gvcf_osptr_auto);
+        _gvcf_osptr = initialize_gvcf_file(opt,pinfo,opt.gvcf.out_file, referenceHeader,_gvcf_osptr_auto);
     }
 
     if (opt.is_realigned_read_file())
     {
-        _realign_bam_ptr[0].reset(initialize_realign_bam(opt.realigned_read_filename, header));
+        /// TODO STREL-125 extend realigned output to multi-bam files
+        _realign_bam_ptr[0].reset(initialize_realign_bam(opt.realigned_read_filename, referenceHeader));
     }
 }

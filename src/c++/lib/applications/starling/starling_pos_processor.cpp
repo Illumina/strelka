@@ -94,12 +94,14 @@ starling_pos_processor(
 {
     static const unsigned sampleId(0);
 
+    assert(_streams.getSampleNames().size() == getSampleCount());
+
     // setup gvcf aggregator
     if (_opt.gvcf.is_gvcf_output())
     {
         _gvcfer.reset(new gvcf_aggregator(
                           _opt,_dopt,ref,_nocompress_regions,
-                          _streams.getSampleName(), _streams.gvcf_osptr(),
+                          _streams.getSampleNames(), _streams.gvcf_osptr(),
                           sample(sampleId).bc_buff));
     }
 

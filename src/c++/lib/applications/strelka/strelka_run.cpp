@@ -74,7 +74,10 @@ strelka_run(
         registrationIndices.push_back(rindex);
     }
 
-    const bam_hdr_t& referenceHeader(registerAlignments(opt, opt.alignFileOpt, registrationIndices, streamData));
+    const auto allHeaders(registerAlignments(opt, opt.alignFileOpt, registrationIndices, streamData));
+
+    assert(not allHeaders.empty());
+    const bam_hdr_t& referenceHeader(allHeaders.front());
 
     const StrelkaSampleSetSummary ssi;
     strelka_streams client_io(opt, dopt, pinfo, referenceHeader,ssi);

@@ -55,7 +55,7 @@ gvcf_writer(
     const starling_deriv_options& dopt,
     const reference_contig_segment& ref,
     const RegionTracker& nocompress_regions,
-    const std::string& sampleName,
+    const std::vector<std::string>& sampleNames,
     std::ostream* osptr,
     const ScoringModelManager& cm)
     : _opt(opt)
@@ -78,9 +78,12 @@ gvcf_writer(
 
     assert(nullptr != _osptr);
     assert((nullptr !=_chrom) && (strlen(_chrom)>0));
+    assert(not sampleNames.empty());
 
     if (! _opt.gvcf.is_skip_header)
     {
+        /// TODO STREL-125 initialize output file array
+        const std::string& sampleName(sampleNames.front());
         finish_gvcf_header(_opt, _dopt, _dopt.chrom_depth, sampleName, *_osptr);
     }
 

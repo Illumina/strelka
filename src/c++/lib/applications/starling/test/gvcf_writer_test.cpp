@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
 
 
     RegionTracker regions;
-    const std::string sampleName = "SAMPLE";
+    const std::vector<std::string> sampleNames = { "SAMPLE" };
     std::stringstream os;
 
     gvcf_deriv_options gvcf_options(dopt.gvcf);
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
     ScoringModelManager cm(opt, gvcf_options);
 
 
-    gvcf_writer writer(opt, dopt, rcs, regions, sampleName, &os, cm);
+    gvcf_writer writer(opt, dopt, rcs, regions, sampleNames, &os, cm);
     writer.process(std::move(si));
 
     std::string x = os.str();

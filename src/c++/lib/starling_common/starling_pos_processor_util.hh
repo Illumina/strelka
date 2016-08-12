@@ -32,9 +32,11 @@
 #include "options/AlignmentFileOptions.hh"
 #include "starling_common/starling_pos_processor_base.hh"
 
+#include <functional>
+
 
 /// register a set of alignment files to the hts streamer and verify consistency conditions.
-const bam_hdr_t&
+std::vector<std::reference_wrapper<const bam_hdr_t>>
 registerAlignments(
     const starling_base_options& opt,
     const AlignmentFileOptions& alignFileOpt,

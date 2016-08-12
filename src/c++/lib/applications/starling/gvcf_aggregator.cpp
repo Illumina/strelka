@@ -33,7 +33,7 @@ gvcf_aggregator(
     const starling_deriv_options& dopt,
     const reference_contig_segment& ref,
     const RegionTracker& nocompress_regions,
-    const std::string& sampleName,
+    const std::vector<std::string>& sampleNames,
     std::ostream* osptr,
     const pos_basecall_buffer& bc_buff)
     : _scoringModels(opt, dopt.gvcf)
@@ -41,7 +41,7 @@ gvcf_aggregator(
     if (! opt.gvcf.is_gvcf_output())
         throw std::invalid_argument("gvcf_aggregator cannot be constructed with nothing to do.");
 
-    std::shared_ptr<variant_pipe_stage_base> nextPipeStage(new gvcf_writer(opt, dopt, ref, nocompress_regions, sampleName, osptr, _scoringModels));
+    std::shared_ptr<variant_pipe_stage_base> nextPipeStage(new gvcf_writer(opt, dopt, ref, nocompress_regions, sampleNames, osptr, _scoringModels));
     if (opt.is_ploidy_prior)
     {
         std::shared_ptr<variant_pipe_stage_base> overlapper(new indel_overlapper(_scoringModels, ref, nextPipeStage));

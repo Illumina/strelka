@@ -48,7 +48,7 @@
 
 
 
-const bam_hdr_t&
+std::vector<std::reference_wrapper<const bam_hdr_t>>
 registerAlignments(
     const starling_base_options& opt,
     const AlignmentFileOptions& alignFileOpt,
@@ -57,8 +57,7 @@ registerAlignments(
 {
     assert(registrationIndices.size() == alignFileOpt.alignmentFilename.size());
 
-    const bam_hdr_t* referenceHeaderPtr(nullptr);
-
+    std::vector<std::reference_wrapper<const bam_hdr_t>> allHeaders;
     const unsigned alignmentFileCount(alignFileOpt.alignmentFilename.size());
     for (unsigned alignmentFileIndex(0); alignmentFileIndex<alignmentFileCount; ++alignmentFileIndex)
     {
@@ -66,11 +65,9 @@ registerAlignments(
         const unsigned bamIndex(registrationIndices[alignmentFileIndex]);
         const bam_streamer& readStream(streamData.registerBam(alignFile.c_str(), bamIndex));
 
-        if (nullptr == referenceHeaderPtr)
+        // check that target chrom exists in sample, only need to check once:
+        if (alignmentFileIndex==0)
         {
-            referenceHeaderPtr = &readStream.get_header();
-
-            // check that target chrom exists in sample:
             const int32_t tid(readStream.target_name_to_id(opt.bam_seq_name.c_str()));
             if (tid < 0)
             {
@@ -80,10 +77,13 @@ registerAlignments(
                 BOOST_THROW_EXCEPTION(LogicException(oss.str()));
             }
         }
-        else
+
+        allHeaders.push_back(readStream.get_header());
+
+        if (alignmentFileIndex > 0)
         {
             // check that all header chrom details match the first header:
-            if (! check_header_compatibility(readStream.get_header(),*referenceHeaderPtr))
+            if (! check_header_compatibility(allHeaders.front(),allHeaders.back()))
             {
                 using namespace illumina::common;
                 std::ostringstream oss;
@@ -95,8 +95,7 @@ registerAlignments(
         }
     }
 
-    assert(nullptr != referenceHeaderPtr);
-    return (*referenceHeaderPtr);
+    return allHeaders;
 }
 
 

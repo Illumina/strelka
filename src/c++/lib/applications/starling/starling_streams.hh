@@ -31,10 +31,11 @@ struct starling_streams : public starling_streams_base
 {
     typedef starling_streams_base base_t;
 
-    starling_streams(const starling_options& client_opt,
-                     const prog_info& pinfo,
-                     const bam_hdr_t& bam_header,
-                     const SampleSetSummary& ssi);
+    starling_streams(
+        const starling_options& client_opt,
+        const prog_info& pinfo,
+        const std::vector<std::reference_wrapper<const bam_hdr_t>>& bamHeaders,
+        const SampleSetSummary& ssi);
 
     std::ostream*
     gvcf_osptr() const
@@ -42,8 +43,8 @@ struct starling_streams : public starling_streams_base
         return _gvcf_osptr;
     }
 
-    const std::string&
-    getSampleName() const
+    const std::vector<std::string>&
+    getSampleNames() const
     {
         return _sampleName;
     }
@@ -60,5 +61,5 @@ private:
 
     std::ostream* _gvcf_osptr;
     std::unique_ptr<std::ostream> _gvcf_osptr_auto;
-    std::string _sampleName;
+    std::vector<std::string> _sampleName;
 };
