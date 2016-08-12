@@ -909,6 +909,8 @@ process_pos_indel_continuous(const pos_t pos)
         static const bool is_tier2_pass(false);
         static const bool is_use_alt_indel(true);
 
+        bool isReportableAllele(isForcedOutput);
+
         std::unique_ptr<GermlineContinuousIndelLocusInfo> locusInfo(new GermlineContinuousIndelLocusInfo(sampleCount, pos));
 
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
@@ -921,15 +923,20 @@ process_pos_indel_continuous(const pos_t pos)
             AlleleSampleReportInfo& indelSampleReportInfo(locusInfo->getIndelSample(sampleIndex).reportInfo);
             getAlleleSampleReportInfo(_opt, _dopt, indelKey, indelSampleData, sif.bc_buff, is_tier2_pass,
                                       is_use_alt_indel, indelSampleReportInfo);
+
+            if (not isReportableAllele)
+            {
+                if (indelSampleReportInfo.n_confident_indel_reads > 0) isReportableAllele = true;
+            }
         }
+
+        if (not isReportableAllele) continue;
+
         starling_continuous_variant_caller::add_indel_call(_opt, indelKey, indelData, *locusInfo);
 
-        if (locusInfo->is_indel() || locusInfo->isForcedOutput())
+        if (_opt.gvcf.is_gvcf_output())
         {
-            if (_opt.gvcf.is_gvcf_output())
-            {
-                _gvcfer->add_indel(std::move(locusInfo));
-            }
+            _gvcfer->add_indel(std::move(locusInfo));
         }
     }
 }

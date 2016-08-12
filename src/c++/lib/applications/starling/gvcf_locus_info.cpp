@@ -67,18 +67,6 @@ write(std::ostream& os) const
 
 
 
-pos_t
-GermlineDiploidIndelLocusInfo::
-end() const
-{
-    pos_t result = 0;
-    for (auto& x : altAlleles)
-        result = std::max(result, x.indelKey.right_pos());
-    return result;
-}
-
-
-
 static
 void
 add_cigar_to_ploidy(

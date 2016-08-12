@@ -413,10 +413,15 @@ struct GermlineIndelLocusInfo : public LocusInfo
 
     virtual ~GermlineIndelLocusInfo() {}
 
-    virtual bool isForcedOutput() const = 0;
-    virtual bool is_indel() const = 0;
     // the EXCLUSIVE end of the variant (i.e. open)
-    virtual pos_t end() const = 0;
+    pos_t
+    end() const
+    {
+        pos_t result = 0;
+        for (auto& x : getIndelAlleles())
+            result = std::max(result, x.indelKey.right_pos());
+        return result;
+    }
 
     GermlineIndelSampleInfo&
     getIndelSample(const unsigned sampleIndex)
@@ -467,22 +472,6 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
     {
         altAlleles.emplace_back(initIndelKey, initIndelData, init_dindel);
     }
-
-    bool isForcedOutput() const override
-    {
-        for (const auto& altAllele : altAlleles)
-        {
-            if (altAllele.isForcedOutput) return true;
-        }
-        return false;
-    }
-
-    bool is_indel() const override
-    {
-        return (anyVariantAlleleQuality > 0);
-    }
-
-    pos_t end() const override;
 
     void add_overlap(const reference_contig_segment& ref, GermlineDiploidIndelLocusInfo& overlap);
 
@@ -869,34 +858,6 @@ struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
         const pos_t init_pos)
         : GermlineIndelLocusInfo(sampleCount, init_pos)
     {}
-
-    bool is_indel() const override
-    {
-        const unsigned sampleCount(getSampleCount());
-        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-        {
-            /// TODO STREL-125 -- account for more than one allele in each sample
-            if (getIndelSample(sampleIndex).reportInfo.n_confident_indel_reads > 0) return true;
-        }
-        return false;
-    }
-
-    bool isForcedOutput() const override
-    {
-        for (const auto& altAllele : getIndelAlleles())
-        {
-            if (altAllele.isForcedOutput) return true;
-        }
-        return false;
-    }
-
-    pos_t end() const override
-    {
-        pos_t result = 0;
-        for (auto& x : getIndelAlleles())
-            result = std::max(result, x.indelKey.right_pos());
-        return result;
-    }
 
     const char* get_gt() const
     {
