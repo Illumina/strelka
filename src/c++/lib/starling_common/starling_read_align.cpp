@@ -256,11 +256,11 @@ add_path_segment(
 
 
 
-// construct an alignment which includes all of the indels turned on
-// in the indel set, holding the start_position fixed to the target
-// value -- indel sets should be pre-filtered for cases where an indel
-// crosses the start pos, so this is treated as an error condition:
-//
+/// construct an alignment which includes all of the indels turned on
+/// in the indel set, holding the start_position fixed to the target
+/// value -- indel sets should be pre-filtered for cases where an indel
+/// crosses the start pos, so this is treated as an error condition:
+///
 /// see unit tests
 static
 candidate_alignment
@@ -435,10 +435,10 @@ make_start_pos_alignment(
 }
 
 
-// work backwards from end_pos to get start_pos and read_start_pos
-// when the current indel set included, and then use the
-// make_start_pos_alignment routine.
-//
+/// work backwards from end_pos to get start_pos and read_start_pos
+/// when the current indel set included, and then use the
+/// make_start_pos_alignment routine.
+///
 /// see unit tests
 static
 void
