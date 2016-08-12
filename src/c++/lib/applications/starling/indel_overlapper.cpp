@@ -397,7 +397,7 @@ indel_overlapper::
 modify_single_indel_record(GermlineDiploidIndelLocusInfo& ii)
 {
     ii.getFirstAltAllele().set_hap_cigar();
-    _CM.classify_indel(ii, ii.getFirstAltAllele());
+    _CM.classify_indel(ii);
 }
 
 
@@ -530,7 +530,7 @@ indel_overlapper::modify_conflict_indel_record()
 
         ii->filters.set(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
 
-        _CM.classify_indel(*ii, ii->getFirstAltAllele());
+        _CM.classify_indel(*ii);
     }
 }
 

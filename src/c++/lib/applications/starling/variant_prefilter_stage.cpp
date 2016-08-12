@@ -169,10 +169,7 @@ process(std::unique_ptr<GermlineIndelLocusInfo> info)
             if (altAllele.indelKey.is_breakpoint()) return;
         }
 
-        for (const auto& altAllele : ii->altAlleles)
-        {
-            _model.default_classify_indel(*ii, altAllele);
-        }
+        _model.default_classify_indel(*ii);
         _sink->process(std::move(ii));
     }
 }

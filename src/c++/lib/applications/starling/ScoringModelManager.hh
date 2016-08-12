@@ -52,8 +52,7 @@ struct ScoringModelManager
 
     void
     classify_indel(
-        GermlineDiploidIndelLocusInfo& ii,
-        GermlineDiploidIndelAlleleInfo& call) const;
+        GermlineDiploidIndelLocusInfo& ii) const;
 
     void
     classify_indels(
@@ -66,8 +65,7 @@ struct ScoringModelManager
 
     /// default rules based indel model
     void default_classify_indel(
-        GermlineIndelLocusInfo& ii,
-        const GermlineIndelAlleleInfo& allele) const;
+        GermlineIndelLocusInfo& ii) const;
 
     bool
     isEVSSiteModel() const
@@ -93,8 +91,7 @@ private:
     void
     classify_indel_impl(
         const bool is_model_usable,
-        GermlineDiploidIndelLocusInfo& ii,
-        GermlineDiploidIndelAlleleInfo& call) const;
+        GermlineDiploidIndelLocusInfo& ii) const;
 
     double
     snvEVSThreshold() const

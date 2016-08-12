@@ -148,8 +148,7 @@ void
 ScoringModelManager::
 classify_indel_impl(
     const bool isVariantUsableInEVSModel,
-    GermlineDiploidIndelLocusInfo& ii,
-    GermlineDiploidIndelAlleleInfo& call) const
+    GermlineDiploidIndelLocusInfo& ii) const
 {
     const unsigned sampleCount(ii.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
@@ -190,7 +189,7 @@ classify_indel_impl(
     }
     else
     {
-        default_classify_indel(ii, call);
+        default_classify_indel(ii);
     }
 }
 
@@ -199,10 +198,9 @@ classify_indel_impl(
 void
 ScoringModelManager::
 classify_indel(
-    GermlineDiploidIndelLocusInfo& ii,
-    GermlineDiploidIndelAlleleInfo& call) const
+    GermlineDiploidIndelLocusInfo& ii) const
 {
-    classify_indel_impl(checkIsVariantUsableInEVSModel(ii),ii,call);
+    classify_indel_impl(checkIsVariantUsableInEVSModel(ii), ii);
 }
 
 
@@ -222,7 +220,7 @@ classify_indels(
     for (auto& indel : indels)
     {
         GermlineDiploidIndelLocusInfo& ii(*indel);
-        classify_indel_impl(isVariantUsableInEVSModel,ii, ii.getFirstAltAllele());
+        classify_indel_impl(isVariantUsableInEVSModel, ii);
     }
 }
 
@@ -276,8 +274,7 @@ default_classify_site(
 void
 ScoringModelManager::
 default_classify_indel(
-    GermlineIndelLocusInfo& ii,
-    const GermlineIndelAlleleInfo& allele) const
+    GermlineIndelLocusInfo& ii) const
 {
     if (_opt.is_min_gqx)
     {
@@ -301,13 +298,20 @@ default_classify_indel(
 
     if (_opt.is_max_ref_rep())
     {
-        const auto& iri(allele.indelReportInfo);
-        if (iri.is_repeat_unit())
+        /// TODO - can this filter be eliminated? Right now it means that any allele in an overlapping allele set
+        /// could trigger a filtration of the whole locus b/c of single allele's properties.
+        ///
+        /// would need unary format to express filtration per allele in a sane way....
+        for (const auto& allele : ii.getIndelAlleles())
         {
-            if ((iri.repeat_unit.size() <= 2) &&
-                (static_cast<int>(iri.ref_repeat_count) > _opt.max_ref_rep))
+            const auto& iri(allele.indelReportInfo);
+            if (iri.is_repeat_unit())
             {
-                ii.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighRefRep);
+                if ((iri.repeat_unit.size() <= 2) &&
+                    (static_cast<int>(iri.ref_repeat_count) > _opt.max_ref_rep))
+                {
+                    ii.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighRefRep);
+                }
             }
         }
     }
