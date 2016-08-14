@@ -139,6 +139,77 @@ enum index_t
     SIZE
 };
 
+/// ploidy is infered from command-line arguments:
+inline
+index_t
+getGenotypeId(
+    const unsigned alleleId0)
+{
+    assert(alleleId0 <= 2);
+
+    if (alleleId0 == 0)
+    {
+        return HOMREF;
+    }
+    else if (alleleId0 == 1)
+    {
+        return HOM0;
+    }
+    else if (alleleId0 == 2)
+    {
+        return HOM1;
+    }
+    assert(false and "Shouldn't be here");
+    return HOMREF;
+}
+
+inline
+index_t
+getGenotypeId(
+    const unsigned alleleId0,
+    const unsigned alleleId1)
+{
+    assert(alleleId0 <= 2);
+    assert(alleleId1 <= 2);
+    assert(alleleId0 <= alleleId1);
+
+    if (alleleId0 == 0)
+    {
+        if (alleleId1 == 0)
+        {
+            return HOMREF;
+        }
+        else if (alleleId1 == 1)
+        {
+            return HET0;
+        }
+        else if (alleleId1 == 2)
+        {
+            return HET1;
+        }
+    }
+    else if (alleleId0 == 1)
+    {
+        if (alleleId1 == 1)
+        {
+            return HOM0;
+        }
+        else if (alleleId1 == 2)
+        {
+            return HET01;
+        }
+    }
+    else if (alleleId0 == 2)
+    {
+        if (alleleId1 == 2)
+        {
+            return HOM1;
+        }
+    }
+    assert(false and "Shouldn't be here");
+    return HOMREF;
+}
+
 inline
 bool
 isAllelePresent(

@@ -822,17 +822,7 @@ write_indel_record(
     {
         const GermlineDiploidIndelLocusInfo& iiDiploid(*iiDiploidPtr);
 
-        const unsigned tmpOldAltAlleleCount(iiDiploid.altAlleles.size());
-
-<<<<<<< HEAD
-    //FORMAT
-    os << "GT:GQ:GQX:DPI:AD:ADF:ADR:FT:PL";
-||||||| parent of 8c09dd9... STREL-125-spur3 simplify indel QUAL down to right location
-    //FORMAT
-    os << "GT:GQ:GQX:DPI:AD:ADF:ADR:PL"; //FT:PL";
-=======
->>>>>>> 8c09dd9... STREL-125-spur3 simplify indel QUAL down to right location
-
+        //FORMAT
         if (_opt.isReportEVSFeatures)
         {
             // EVS features may not be computed for certain records, so check first:
@@ -850,7 +840,7 @@ write_indel_record(
         os << '\t';
 
         //FORMAT
-        os << "GT:GQ:GQX:DPI:AD:ADF:ADR:PL"; //FT:PL";
+        os << "GT:GQ:GQX:DPI:AD:ADF:ADR:FT:PL";
 
         //SAMPLE
         const unsigned sampleCount(ii.getSampleCount());
@@ -905,8 +895,7 @@ write_indel_record(
 
             // PL
             os << ":";
-
-#if 0
+#if 1
             {
             bool isFirst(true);
             for (const auto pls : sampleInfo.genotypePhredLoghood)
@@ -923,6 +912,7 @@ write_indel_record(
             }
         }
 #else
+            locusGenotype.phredLoghood[AG_GENOTYPE::getGenotypeId(fullAlleleIndex)];
             if (tmpOldAltAlleleCount == 1)
             {
                 using namespace STAR_DIINDEL;

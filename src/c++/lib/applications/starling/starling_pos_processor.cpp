@@ -590,9 +590,6 @@ locusGenotypeToDindel(
 /// convert the new AlleleGroupGenotype format to 0..N similar starling_diploid_indel intermediates as a
 /// tempoary way for this method to communicate with the gVCF writer
 ///
-/// Note that ploidy provided here is the actual ploidy value for this locus rather than the one used by the
-/// caller, these two values should only be different when ploidy==0
-///
 /// TODO remove this function once we eliminate starling_diploid_indel as an intermediary format
 static
 bool
@@ -604,7 +601,8 @@ hackDiplotypeCallToCopyNumberCalls(
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     const AlleleGroupGenotype& locusGenotype,
     const std::vector<LocusSupportingReadStats>& locusReadStats,
-    const unsigned groupLocusPloidy,
+    const unsigned callerPloidy, ///< ploidy used by the genotyper
+    const unsigned groupLocusPloidy, ///< actual ploidy in sample
     const bool isForcedOutput,
     gvcf_aggregator& gvcfer)
 {
@@ -650,9 +648,39 @@ hackDiplotypeCallToCopyNumberCalls(
         for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
             auto& sampleInfo(ii->getSample(sampleIndex));
-            sampleInfo.setPloidy(groupLocusPloidy);
+            sampleInfo.setPloidy(callerPloidy);
+            if (callerPloidy != groupLocusPloidy)
+            {
+                sampleInfo.setPloidyConflict();
+            }
             sampleInfo.supportCounts = locusReadStats[sampleIndex];
 
+            // add info for PLs
+            const unsigned fullAlleleCount(alleleGroupSize+1);
+            auto& samplePLs(sampleInfo.genotypePhredLoghood);
+            if (sampleInfo.getPloidy().isHaploid())
+            {
+                for (unsigned fullAlleleIndex(0); fullAlleleIndex<fullAlleleCount; ++fullAlleleIndex)
+                {
+                    samplePLs.getGenotypeLikelihood(fullAlleleIndex) = locusGenotype.phredLoghood[AG_GENOTYPE::getGenotypeId(fullAlleleIndex)];
+                }
+            }
+            else if (sampleInfo.getPloidy().isDiploid())
+            {
+                for (unsigned fullAlleleIndex(0); fullAlleleIndex<fullAlleleCount; ++fullAlleleIndex)
+                {
+                    for (unsigned fullAlleleIndex2(fullAlleleIndex); fullAlleleIndex2<fullAlleleCount; ++fullAlleleIndex2)
+                    {
+                        samplePLs.getGenotypeLikelihood(fullAlleleIndex, fullAlleleIndex2) = locusGenotype.phredLoghood[AG_GENOTYPE::getGenotypeId(fullAlleleIndex, fullAlleleIndex2)];
+                    }
+                }
+            }
+            else
+            {
+                assert(false and "InvalidPloidy");
+            }
+
+            // add misc sample info from legacy sample indel report:
             const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
             AlleleSampleReportInfo& indelSampleReportInfo(ii->getIndelSample(sampleIndex).reportInfo);
             getAlleleSampleReportInfo(opt, dopt, indelKey, indelSampleData, basecallBuffer,
@@ -803,7 +831,8 @@ process_pos_indel_digt(const pos_t pos)
         // coerce output into older data-structures for gVCF output
         static const bool isForcedOutput(false);
         hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, sif.bc_buff, pos, topVariantAlleleGroup,
-                                           locusGenotype, locusReadStats, groupLocusPloidy[sampleIndex], isForcedOutput,
+                                           locusGenotype, locusReadStats, callerPloidy[sampleIndex],
+                                           groupLocusPloidy[sampleIndex], isForcedOutput,
                                            *_gvcfer);
     }
 
@@ -863,8 +892,8 @@ process_pos_indel_digt(const pos_t pos)
             fakeForcedOutputAlleleGroup.addVariantAllele(forcedOutputAlleleGroup.alleles[forcedOutputAlleleIndex]);
             static const bool isForcedOutput(true);
             hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, sif.bc_buff, pos, fakeForcedOutputAlleleGroup,
-                                               forcedAlleleLocusGenotype, locusReadStats, groupLocusPloidy[sampleIndex],
-                                               isForcedOutput, *_gvcfer);
+                                               forcedAlleleLocusGenotype, locusReadStats, callerPloidy[sampleIndex],
+                                               groupLocusPloidy[sampleIndex], isForcedOutput, *_gvcfer);
         }
     }
 }

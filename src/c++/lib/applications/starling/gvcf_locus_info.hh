@@ -281,12 +281,13 @@ struct LocusSampleInfo
     void
     clear()
     {
-        _ploidy.reset();
         gq = 0;
         gqx = 0;
         max_gt = 0;
         genotypePhredLoghood.clear();
         filters.clear();
+        _ploidy.reset();
+        _isPloidyConflict = false;
     }
 
     const SamplePloidyState&
@@ -302,10 +303,23 @@ struct LocusSampleInfo
         genotypePhredLoghood.setPloidy(ploidy);
     }
 
+    bool
+    isPloidyConflict() const
+    {
+        return _isPloidyConflict;
+    }
+
+    void
+    setPloidyConflict()
+    {
+        _isPloidyConflict=true;
+    }
+
 
     int gq=0;
     int gqx=0;
     unsigned max_gt=0;
+
     GermlineFilterKeeper filters; ///< only for sample-specific filters
 
     LocusSupportingReadStats supportCounts;
@@ -314,6 +328,7 @@ struct LocusSampleInfo
     GenotypeLikelihoods genotypePhredLoghood;
 private:
     SamplePloidyState _ploidy;
+    bool _isPloidyConflict = false;
 };
 
 

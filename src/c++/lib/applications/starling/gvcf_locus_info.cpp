@@ -499,6 +499,16 @@ computeEmpiricalScoringFeatures(
         features.set(GERMLINE_INDEL_SCORING_FEATURES::F_MQ,
                      (sampleReportInfo.mapqTracker.getRMS()));
 
+        // how surprising is the depth relative to expect? This is the only value will be modified for exome/targeted runs
+        //
+        /// TODO: convert this to pvalue based on Poisson distro?
+        double relativeLocusDepth(1.);
+        if (isUniformDepthExpected)
+        {
+            relativeLocusDepth = (locusDepth * chromDepthFactor);
+        }
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::TDP_NORM, relativeLocusDepth);
+
         features.set(GERMLINE_INDEL_SCORING_FEATURES::AD1_NORM,
                      (sampleReportInfo.n_confident_indel_reads * confidentDepthFactor));
 
@@ -515,16 +525,6 @@ computeEmpiricalScoringFeatures(
             // how noisy is the locus?
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_DPI_NORM,
                                     (filteredLocusDepth * locusDepthFactor));
-
-            // how surprising is the depth relative to expect? This is the only value will be modified for exome/targeted runs
-            //
-            /// TODO: convert this to pvalue based on Poisson distro?
-            double relativeLocusDepth(1.);
-            if (isUniformDepthExpected)
-            {
-                relativeLocusDepth = (locusDepth * chromDepthFactor);
-            }
-            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::TDP_NORM, relativeLocusDepth);
 
             // all of the features below are simply renormalized replacements of the current production feature set
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM,
