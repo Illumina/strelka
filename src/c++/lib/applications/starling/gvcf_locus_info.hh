@@ -922,20 +922,9 @@ private:
 /// specify that variant is indel and a continuous frequency calling model
 struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
 {
-    explicit
     GermlineContinuousIndelLocusInfo(
         const unsigned sampleCount,
         const pos_t init_pos)
         : GermlineIndelLocusInfo(sampleCount, init_pos)
     {}
-
-    const char* get_gt() const
-    {
-        if (is_het)
-            return "0/1";
-        else
-            return "1/1";
-    }
-
-    bool is_het=false;
 };
