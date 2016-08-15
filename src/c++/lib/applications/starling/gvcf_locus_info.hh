@@ -357,9 +357,9 @@ struct LocusSampleInfo
     void
     clear()
     {
-        gq = 0;
+        genotypeQualityPolymorphic = 0;
         gqx = 0;
-        max_gt_poly = 0;
+        maxGenotypeIndexPolymorphic = 0;
         genotypePhredLoghood.clear();
         filters.clear();
         _ploidy.reset();
@@ -393,13 +393,13 @@ struct LocusSampleInfo
 
     unsigned max_gt() const
     {
-        return max_gt_poly;
+        return maxGenotypeIndexPolymorphic;
     }
 
 
-    int gq=0;
+    int genotypeQualityPolymorphic=0;
     int gqx=0;
-    unsigned max_gt_poly=0;
+    unsigned maxGenotypeIndexPolymorphic=0;
 
     GermlineFilterKeeper filters; ///< only for sample-specific filters
 

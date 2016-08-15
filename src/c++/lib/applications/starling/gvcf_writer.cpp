@@ -461,7 +461,7 @@ write_site_record(
         os << si.get_gt() << ':';
         if (si.dgt.is_snp)
         {
-            os << sampleInfo.gq << ':';
+            os << sampleInfo.genotypeQualityPolymorphic << ':';
         }
         if (si.allele.is_gqx())
         {
@@ -638,7 +638,7 @@ write_site_record(
 
         //SAMPLE
         os << gt
-           << ':' << sampleInfo.gq
+           << ':' << sampleInfo.genotypeQualityPolymorphic
            << ':' << sampleInfo.gqx;
 
         // DP:DPF
@@ -853,7 +853,7 @@ write_indel_record(
             os << '\t';
 
             VCFUTIL::writeGenotype(sampleInfo.getPloidy().getPloidy(),sampleInfo.max_gt(),os);
-            os << ':' << sampleInfo.gq;
+            os << ':' << sampleInfo.genotypeQualityPolymorphic;
 
             os << ':' << ((ii.empiricalVariantScore >= 0) ? ii.empiricalVariantScore : sampleInfo.gqx);
 
@@ -934,7 +934,7 @@ write_indel_record(
             // print GTs using a fake ploidy of 2, real ploidy is continuous...
             static const int printGTPloidy(2);
             VCFUTIL::writeGenotype(printGTPloidy,sampleInfo.max_gt(),os);
-            os << ':' << sampleInfo.gq;
+            os << ':' << sampleInfo.genotypeQualityPolymorphic;
 
             os << ':' << sampleInfo.gqx;
 

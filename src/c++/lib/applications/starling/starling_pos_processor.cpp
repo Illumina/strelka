@@ -602,10 +602,10 @@ hackDiplotypeCallToCopyNumberCalls(
             sampleInfo.supportCounts = locusReadStats[sampleIndex];
 
             // transfer max_gt
-            sampleInfo.max_gt_poly = translateOldToNewGenotypeIndex(callerPloidy,locusGenotype.maxGenotypeIndexPolymorphic);
-            sampleInfo.gq = locusGenotype.genotypeQualityPolymorphic;
+            sampleInfo.maxGenotypeIndexPolymorphic = translateOldToNewGenotypeIndex(callerPloidy,locusGenotype.maxGenotypeIndexPolymorphic);
+            sampleInfo.genotypeQualityPolymorphic = locusGenotype.genotypeQualityPolymorphic;
 
-            // max_gt != max_gt_poly indicates we're in a boundary zone between variant and hom-ref call
+            // maxGenotypeIndex != maxGenotypeIndexPolymorphic indicates we're in a boundary zone between variant and hom-ref call
             if (locusGenotype.maxGenotypeIndex != locusGenotype.maxGenotypeIndexPolymorphic)
             {
                 sampleInfo.gqx = 0;
@@ -645,6 +645,16 @@ hackDiplotypeCallToCopyNumberCalls(
             GermlineIndelSampleInfo indelSampleInfo;
             getAlleleSampleReportInfo(opt, dopt, indelKey, indelSampleData, basecallBuffer,
                                       is_tier2_pass, is_use_alt_indel, indelSampleInfo.reportInfo);
+
+#if 0
+            // set sitePloidy:
+            if (callerPloidy==2)
+            {
+                uint8_t allele0Index,allele1Index;
+                VCFUTIL::                sampleInfo.maxGenotypeIndexPolymorphic
+            }
+            indelSampleInfo.sitePloidy.xxx;
+#endif
             ii->addIndelSample(indelSampleInfo);
         }
 

@@ -64,13 +64,13 @@ add_site_modifiers(
     if     (allele.is_unknown)
     {
         sampleInfo.gqx=0;
-        sampleInfo.gq=0;
+        sampleInfo.genotypeQualityPolymorphic=0;
         allele.max_gt=0;
     }
     else if (si.dgt.genome.max_gt != si.dgt.poly.max_gt)
     {
         sampleInfo.gqx=0;
-        sampleInfo.gq=si.dgt.poly.max_gt_qphred;
+        sampleInfo.genotypeQualityPolymorphic=si.dgt.poly.max_gt_qphred;
         allele.max_gt=si.dgt.poly.max_gt;
     }
     else
@@ -83,7 +83,7 @@ add_site_modifiers(
         {
             set_site_gt(si.dgt.poly,allele, sampleInfo);
         }
-        sampleInfo.gq=si.dgt.poly.max_gt_qphred;
+        sampleInfo.genotypeQualityPolymorphic=si.dgt.poly.max_gt_qphred;
     }
 
     model.classify_site(si);

@@ -354,14 +354,14 @@ create_phased_record()
                 continue;
             }
 
-            if ((! is_min_gq_idx0) || (sampleInfo.gq < _buffer.at(min_gq_idx0)->getSample(sampleIndex).gq))
+            if ((! is_min_gq_idx0) || (sampleInfo.genotypeQualityPolymorphic < _buffer.at(min_gq_idx0)->getSample(sampleIndex).genotypeQualityPolymorphic))
             {
                 min_gq_idx1 = min_gq_idx0;
                 if (is_min_gq_idx0) is_min_gq_idx1 = true;
                 min_gq_idx0 = blockPosOffset;
                 is_min_gq_idx0 = true;
             }
-            if ((blockPosOffset != min_gq_idx0) && ( (! is_min_gq_idx1) || (sampleInfo.gq < _buffer.at(min_gq_idx1)->getSample(sampleIndex).gq)))
+            if ((blockPosOffset != min_gq_idx0) && ( (! is_min_gq_idx1) || (sampleInfo.genotypeQualityPolymorphic < _buffer.at(min_gq_idx1)->getSample(sampleIndex).genotypeQualityPolymorphic)))
             {
                 min_gq_idx1 = blockPosOffset;
                 is_min_gq_idx1 = true;
@@ -394,7 +394,7 @@ create_phased_record()
     int min_gq(maxInt);
     {
         const auto& minsi0(*(_buffer.at(min_gq_idx0)));
-        min_gq = minsi0.getSample(sampleIndex).gq;
+        min_gq = minsi0.getSample(sampleIndex).genotypeQualityPolymorphic;
         max_gt = minsi0.allele.max_gt;
         pls = minsi0.dgt.phredLoghood;
         ref_gt = minsi0.dgt.ref_gt;
@@ -463,7 +463,7 @@ create_phased_record()
     base->dgt.ref_gt = ref_gt;
 
     // set various quality fields conservatively
-    sampleInfo.gq = min_gq;
+    sampleInfo.genotypeQualityPolymorphic = min_gq;
     base->dgt.genome.snp_qphred  = min_qual;
     base->dgt.phredLoghood       = pls;
     sampleInfo.gqx               = std::min(min_gq,min_qual);

@@ -152,7 +152,7 @@ computeEmpiricalScoringFeatures(
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::QUAL, (dgt.genome.snp_qphred * chromDepthFactor));
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::F_DP, (n_used_calls * chromDepthFactor));
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::F_DPF, (n_unused_calls * chromDepthFactor));
-        EVSFeatures.set(RNA_SNV_SCORING_FEATURES::F_GQ, (firstSampleInfo.gq * chromDepthFactor));
+        EVSFeatures.set(RNA_SNV_SCORING_FEATURES::F_GQ, (firstSampleInfo.genotypeQualityPolymorphic * chromDepthFactor));
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::F_GQX, (firstSampleInfo.gqx * chromDepthFactor));
 
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::I_AvgBaseQ, (avgBaseQ));
@@ -185,7 +185,7 @@ computeEmpiricalScoringFeatures(
             EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
                                           (firstSampleInfo.gqx * filteredLocusDepthFactor));
             EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
-                                          (firstSampleInfo.gq * filteredLocusDepthFactor));
+                                          (firstSampleInfo.genotypeQualityPolymorphic * filteredLocusDepthFactor));
 
             EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
                                           (r0 * filteredLocusDepthFactor));
@@ -195,7 +195,7 @@ computeEmpiricalScoringFeatures(
             EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT,
                                           (dgt.genome.snp_qphred));
             EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (firstSampleInfo.gqx));
-            EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (firstSampleInfo.gq));
+            EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (firstSampleInfo.genotypeQualityPolymorphic));
         }
     }
     else
@@ -263,7 +263,7 @@ computeEmpiricalScoringFeatures(
             EVSDevelopmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
                                           (firstSampleInfo.gqx * filteredLocusDepthFactor));
             EVSDevelopmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
-                                          (firstSampleInfo.gq * filteredLocusDepthFactor));
+                                          (firstSampleInfo.genotypeQualityPolymorphic * filteredLocusDepthFactor));
 
             EVSDevelopmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
                                           (r0 * filteredLocusDepthFactor));
@@ -271,7 +271,7 @@ computeEmpiricalScoringFeatures(
             EVSDevelopmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT,
                                           (dgt.genome.snp_qphred));
        
-            EVSDevelopmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (firstSampleInfo.gq));
+            EVSDevelopmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (firstSampleInfo.genotypeQualityPolymorphic));
 
             EVSDevelopmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD1_NORM,
                                           (r1 * filteredLocusDepthFactor));
@@ -368,7 +368,7 @@ computeEmpiricalScoringFeatures(
         // compute any experimental features not currently used in production
         if (isComputeDevelopmentFeatures)
         {
-            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ, (firstSampleInfo.gq * chromDepthFactor));
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ, (firstSampleInfo.genotypeQualityPolymorphic * chromDepthFactor));
 
             // how unreliable are the read mappings near this locus?
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_MQ,
@@ -387,7 +387,7 @@ computeEmpiricalScoringFeatures(
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
                                     (firstSampleInfo.gqx * filteredLocusDepthFactor));
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
-                                    (firstSampleInfo.gq * filteredLocusDepthFactor));
+                                    (firstSampleInfo.genotypeQualityPolymorphic * filteredLocusDepthFactor));
 
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
                                     (sampleReportInfo.n_confident_ref_reads * confidentDepthFactor));
@@ -398,7 +398,7 @@ computeEmpiricalScoringFeatures(
 
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (anyVariantAlleleQuality));
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (firstSampleInfo.gqx));
-            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (firstSampleInfo.gq));
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (firstSampleInfo.genotypeQualityPolymorphic));
         }
     }
     else
@@ -468,7 +468,7 @@ computeEmpiricalScoringFeatures(
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
                                     (firstSampleInfo.gqx * filteredLocusDepthFactor));
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
-                                    (firstSampleInfo.gq * filteredLocusDepthFactor));
+                                    (firstSampleInfo.genotypeQualityPolymorphic * filteredLocusDepthFactor));
 
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
                                     (sampleReportInfo.n_confident_ref_reads * confidentDepthFactor));
@@ -476,7 +476,7 @@ computeEmpiricalScoringFeatures(
                                     (sampleReportInfo.n_confident_alt_reads * confidentDepthFactor));
 
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (anyVariantAlleleQuality));
-            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (firstSampleInfo.gq));
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (firstSampleInfo.genotypeQualityPolymorphic));
         }
     }
 }

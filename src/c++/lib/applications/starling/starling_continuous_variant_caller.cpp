@@ -102,7 +102,7 @@ position_snp_call_continuous(
         const double vf = safeFrac(locusInfo.alleleObservationCounts(baseId), totalDepth);
         if (((ref_base_id != baseId ) && (vf > opt.min_het_vf)) || isForcedOutput)
         {
-            sampleInfo.gqx = sampleInfo.gq = poisson_qscore(locusInfo.alleleObservationCounts(baseId), totalDepth,
+            sampleInfo.gqx = sampleInfo.genotypeQualityPolymorphic = poisson_qscore(locusInfo.alleleObservationCounts(baseId), totalDepth,
                                                         (unsigned) opt.min_qscore, 40);
 
             if (ref_base_id != baseId)
@@ -142,7 +142,7 @@ position_snp_call_continuous(
         for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
             auto& sampleInfo(locusInfo.getSample(sampleIndex));
-            locusInfo.anyVariantAlleleQuality = std::max(locusInfo.anyVariantAlleleQuality, sampleInfo.gq);
+            locusInfo.anyVariantAlleleQuality = std::max(locusInfo.anyVariantAlleleQuality, sampleInfo.genotypeQualityPolymorphic);
         }
     }
 }
@@ -191,7 +191,7 @@ add_indel_call(
 
         LocusSampleInfo& sampleInfo(locusInfo.getSample(sampleIndex));
 
-        sampleInfo.gqx = sampleInfo.gq = poisson_qscore(sampleReportInfo.n_confident_indel_reads,
+        sampleInfo.gqx = sampleInfo.genotypeQualityPolymorphic = poisson_qscore(sampleReportInfo.n_confident_indel_reads,
                                                     sampleReportInfo.total_confident_reads(),
                                                     (unsigned) opt.min_qscore, 40);
 
@@ -201,7 +201,7 @@ add_indel_call(
 
         const bool isHetLike(sampleIndelInfo.alleleFrequency() < (1 - opt.min_het_vf));
 
-        sampleInfo.max_gt_poly = (isHetLike ? hetGtIndex : homGtIndex);
+        sampleInfo.maxGenotypeIndexPolymorphic = (isHetLike ? hetGtIndex : homGtIndex);
     }
 
     // get the qual score:
@@ -210,7 +210,7 @@ add_indel_call(
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
         auto& sampleInfo(locusInfo.getSample(sampleIndex));
-        locusInfo.anyVariantAlleleQuality = std::max(locusInfo.anyVariantAlleleQuality, sampleInfo.gq);
+        locusInfo.anyVariantAlleleQuality = std::max(locusInfo.anyVariantAlleleQuality, sampleInfo.genotypeQualityPolymorphic);
     }
 }
 
