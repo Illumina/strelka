@@ -148,4 +148,7 @@ private:
 
     gvcf_compressor _gvcf_comp;
     const ScoringModelManager& _CM;
+
+    /// print output limits:
+    const unsigned maxPL = 999;
 };

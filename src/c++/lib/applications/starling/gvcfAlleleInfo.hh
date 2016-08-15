@@ -170,12 +170,6 @@ struct GermlineDiploidIndelAlleleInfo : public GermlineIndelAlleleInfo
     /// TODO: this object is only here to trigger an auto copy ctor, seems like we can simplify now?
     /// TODO: Make indel_overlapper create new call objects, then revert this to const
     GermlineDiploidIndelSimpleGenotypeInfoCore _dindel;
-
-    /// TODO STREL-125 move this to sample
-    unsigned max_gt() const
-    {
-        return _dindel.max_gt_poly;
-    }
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineDiploidIndelAlleleInfo& dic);

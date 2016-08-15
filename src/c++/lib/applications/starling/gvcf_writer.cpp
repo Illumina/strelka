@@ -852,8 +852,8 @@ write_indel_record(
 
             os << '\t';
 
-            os << iiDiploid.get_gt() << ':'
-               << sampleInfo.gq;
+            VCFUTIL::writeGenotype(sampleInfo.getPloidy().getPloidy(),sampleInfo.max_gt(),os);
+            os << ':' << sampleInfo.gq;
 
             os << ':' << ((ii.empiricalVariantScore >= 0) ? ii.empiricalVariantScore : sampleInfo.gqx);
 
@@ -895,8 +895,6 @@ write_indel_record(
 
             // PL
             os << ":";
-#if 1
-            {
             bool isFirst(true);
             for (const auto pls : sampleInfo.genotypePhredLoghood)
             {
@@ -908,63 +906,14 @@ write_indel_record(
                 {
                     os << ',';
                 }
-                os << pls;
+                os << std::min(pls, maxPL);
             }
-        }
-#else
-            locusGenotype.phredLoghood[AG_GENOTYPE::getGenotypeId(fullAlleleIndex)];
-            if (tmpOldAltAlleleCount == 1)
-            {
-                using namespace STAR_DIINDEL;
-                const auto& dindel(iiDiploid.altAlleles[0]._dindel);
-                const auto& pls(dindel.phredLoghood);
-                if (sampleInfo.getPloidy().isHaploid())
-                {
-                    os << pls[NOINDEL] << ','
-                       << pls[HOM];
-                }
-                else
-                {
-                    os << pls[NOINDEL] << ','
-                       << pls[HET] << ','
-                       << pls[HOM];
-                }
-            }
-            else if (tmpOldAltAlleleCount == 2)
-            {
-                // very roughly approximate the overlapping indel PL values
-                //
-                // 1. 0/0 - this is always maxQ
-                // 2. 0/1 - set ot 0/0 from indel1
-                // 3. 1/1 - set to 1/1 from indel0
-                // 4. 0/2 - set to 0/0 from indel0
-                // 5. 1/2 - this is always 0
-                // 6. 2/2 - set to 1/1 from indel1
-                //
-                using namespace STAR_DIINDEL;
-                const auto& pls0(iiDiploid.altAlleles[0]._dindel.phredLoghood);
-                const auto& pls1(iiDiploid.altAlleles[1]._dindel.phredLoghood);
-
-                os << GermlineDiploidIndelSimpleGenotypeInfoCore::maxQ << ','
-                   << pls1[NOINDEL] << ','
-                   << pls0[HOM] << ','
-                   << pls0[NOINDEL] << ','
-                   << 0 << ','
-                   << pls1[HOM];
-            }
-            else
-            {
-                assert(false && "Unexpected indel count");
-            }
-#endif
         }
     }
     else
     {
         // special constraint on continuous allele reporting right now:
         assert(altAlleleCount == 1);
-
-        const GermlineContinuousIndelLocusInfo& iiContinuous(dynamic_cast<const GermlineContinuousIndelLocusInfo&>(ii));
 
         os << '\t';
 
@@ -982,8 +931,10 @@ write_indel_record(
             os << '\t';
 
             //SAMPLE
-            os << iiContinuous.get_gt() << ':'
-               << sampleInfo.gq;
+            // print GTs using a fake ploidy of 2, real ploidy is continuous...
+            static const int printGTPloidy(2);
+            VCFUTIL::writeGenotype(printGTPloidy,sampleInfo.max_gt(),os);
+            os << ':' << sampleInfo.gq;
 
             os << ':' << sampleInfo.gqx;
 

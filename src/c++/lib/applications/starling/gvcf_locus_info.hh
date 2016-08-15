@@ -157,15 +157,92 @@ private:
 
 struct VCFUTIL
 {
+    /// allele to genotype functions
+    ///
+    /// ploidy is implied by the number of arguments
     static
     unsigned
-    getDiploidGenotypeIndex(
+    getGenotypeIndex(
+        const uint8_t allele0Index)
+    {
+        return allele0Index;
+    }
+
+    static
+    unsigned
+    getGenotypeIndex(
         const uint8_t allele0Index,
         const uint8_t allele1Index)
     {
         assert(allele0Index<=allele1Index);
         return allele0Index+(allele1Index*(allele1Index+1)/2);
     }
+
+    /// genotype to allele functions
+    ///
+    /// ploidy is implied by the number of arguments
+    static
+    void
+    getAlleleIndices(
+        const unsigned genotypeIndex,
+        uint8_t& allele0Index)
+    {
+        allele0Index = genotypeIndex;
+    }
+
+    static
+    void
+    getAlleleIndices(
+        const unsigned genotypeIndex,
+        uint8_t& allele0Index,
+        uint8_t& allele1Index)
+    {
+        /// from quadratic inversion of genotype index function:
+        allele1Index = std::floor(std::sqrt(1.0+8.0*genotypeIndex) / 2.0);
+        allele0Index = genotypeIndex - (allele1Index*(allele1Index+1)/2);
+        assert(allele0Index<=allele1Index);
+    }
+
+    static
+    void
+    writeGenotype(
+        const unsigned ploidy,
+        const unsigned genotypeIndex,
+        std::ostream& os)
+    {
+        if (ploidy == 1)
+        {
+            uint8_t allele0Index;
+            getAlleleIndices(genotypeIndex, allele0Index);
+            writeGenotype(allele0Index, os);
+        }
+        else if (ploidy == 2)
+        {
+            uint8_t allele0Index;
+            uint8_t allele1Index;
+            getAlleleIndices(genotypeIndex, allele0Index, allele1Index);
+            writeGenotype(allele0Index, allele1Index, os);
+        }
+        else
+        {
+            assert(false and "Unexpected ploidy value");
+        }
+    }
+
+
+    static
+    void
+    writeGenotype(
+        const uint8_t allele0Index,
+        std::ostream& os);
+
+    static
+    void
+    writeGenotype(
+        const uint8_t allele0Index,
+        const uint8_t allele1Index,
+        std::ostream& os);
+
 };
 
 
@@ -248,14 +325,13 @@ struct GenotypeLikelihoods
         return _genotypePhredLoghood[index];
     }
 
-
 private:
     unsigned
     getGenotypeIndex(
         const uint8_t allele0Index) const
     {
         assert(_ploidy==1);
-        return allele0Index;
+        return VCFUTIL::getGenotypeIndex(allele0Index);
     }
 
     unsigned
@@ -264,7 +340,7 @@ private:
         const uint8_t allele1Index) const
     {
         assert(_ploidy==2);
-        return VCFUTIL::getDiploidGenotypeIndex(allele0Index,allele1Index);
+        return VCFUTIL::getGenotypeIndex(allele0Index,allele1Index);
     }
 
     int _ploidy = 0;
@@ -283,7 +359,7 @@ struct LocusSampleInfo
     {
         gq = 0;
         gqx = 0;
-        max_gt = 0;
+        max_gt_poly = 0;
         genotypePhredLoghood.clear();
         filters.clear();
         _ploidy.reset();
@@ -315,10 +391,15 @@ struct LocusSampleInfo
         _isPloidyConflict=true;
     }
 
+    unsigned max_gt() const
+    {
+        return max_gt_poly;
+    }
+
 
     int gq=0;
     int gqx=0;
-    unsigned max_gt=0;
+    unsigned max_gt_poly=0;
 
     GermlineFilterKeeper filters; ///< only for sample-specific filters
 
@@ -491,46 +572,20 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
     void add_overlap(const reference_contig_segment& ref, GermlineDiploidIndelLocusInfo& overlap);
 
     ///TODO STREL-125 move this method to sample-level
-    const char*
-    get_gt() const
-    {
-        const auto& ploidy(getSample(0).getPloidy());
-
-        if (this->is_hetalt())
-        {
-            return "1/2";
-        }
-        else if (ploidy.isHaploid())
-        {
-            using namespace STAR_DIINDEL;
-
-            switch (getFirstAltAllele().max_gt())
-            {
-            case NOINDEL:
-                return "0";
-            case HOM:
-                return "1";
-            default:
-                assert(false && "Invalid indel genotype index");
-                return "X";
-            }
-        }
-        return STAR_DIINDEL::get_gt_label(getFirstAltAllele().max_gt());
-    }
-
-    ///TODO STREL-125 move this method to sample-level
     bool
     is_hetalt() const
     {
         return (_is_overlap);
     }
 
+#if 0
     ///TODO STREL-125 move this method to sample-level
     bool
     is_het() const
     {
         return (static_cast<int>(altAlleles.front().max_gt())>1);
     }
+#endif
 
     // the site ploidy within the indel at offset x
     ///TODO STREL-125 move this method to sample-level

@@ -30,6 +30,7 @@
 #include "starling_common/indel_util.hh"
 #include "starling_common/OrthogonalVariantAlleleCandidateGroup.hh"
 #include "starling_common/OrthogonalVariantAlleleCandidateGroupUtil.hh"
+#include "gvcf_locus_info.hh"
 
 #include <iomanip>
 
@@ -587,6 +588,56 @@ locusGenotypeToDindel(
 
 
 
+static
+unsigned
+translateOldToNewGenotypeIndex(
+    const int ploidy,
+    const unsigned oldGenotype)
+{
+    using namespace AG_GENOTYPE;
+
+    if (ploidy==1)
+    {
+        switch (static_cast<AG_GENOTYPE::index_t>(oldGenotype))
+        {
+        case HOMREF:
+            return VCFUTIL::getGenotypeIndex(0);
+        case HOM0:
+            return VCFUTIL::getGenotypeIndex(1);
+        case HOM1:
+            return VCFUTIL::getGenotypeIndex(2);
+        default:
+            assert(false and "Unexpected genotype");
+        }
+    }
+    else if (ploidy==2)
+    {
+        switch (static_cast<AG_GENOTYPE::index_t>(oldGenotype))
+        {
+        case HOMREF:
+            return VCFUTIL::getGenotypeIndex(0,0);
+        case HOM0:
+            return VCFUTIL::getGenotypeIndex(1,1);
+        case HOM1:
+            return VCFUTIL::getGenotypeIndex(2,1);
+        case HET0:
+            return VCFUTIL::getGenotypeIndex(0,1);
+        case HET1:
+            return VCFUTIL::getGenotypeIndex(0,2);
+        case HET01:
+            return VCFUTIL::getGenotypeIndex(1,2);
+        default:
+            assert(false and "Unexpected genotype");
+        }
+    }
+    else
+    {
+        assert(0);
+    }
+}
+
+
+
 /// convert the new AlleleGroupGenotype format to 0..N similar starling_diploid_indel intermediates as a
 /// tempoary way for this method to communicate with the gVCF writer
 ///
@@ -654,6 +705,11 @@ hackDiplotypeCallToCopyNumberCalls(
                 sampleInfo.setPloidyConflict();
             }
             sampleInfo.supportCounts = locusReadStats[sampleIndex];
+
+            // transfer max_gt
+            sampleInfo.max_gt_poly = translateOldToNewGenotypeIndex(callerPloidy,locusGenotype.maxGenotypeIndexPolymorphic);
+            sampleInfo.gq = locusGenotype.genotypeQualityPolymorphic;
+            sampleInfo.gqx = std::min(locusGenotype.genotypeQuality,locusGenotype.genotypeQualityPolymorphic);
 
             // add info for PLs
             const unsigned fullAlleleCount(alleleGroupSize+1);

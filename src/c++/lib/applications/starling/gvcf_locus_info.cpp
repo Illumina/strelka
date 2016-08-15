@@ -67,6 +67,29 @@ write(std::ostream& os) const
 
 
 
+void
+VCFUTIL::
+writeGenotype(
+    const uint8_t allele0Index,
+    std::ostream& os)
+{
+    os << static_cast<int>(allele0Index);
+}
+
+
+
+void
+VCFUTIL::
+writeGenotype(
+    const uint8_t allele0Index,
+    const uint8_t allele1Index,
+    std::ostream& os)
+{
+    os << static_cast<int>(allele0Index) << '/' << static_cast<int>(allele1Index);
+}
+
+
+
 static
 void
 add_cigar_to_ploidy(
