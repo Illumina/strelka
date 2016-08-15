@@ -102,4 +102,7 @@ private:
     std::unique_ptr<gvcf_aggregator> _gvcfer;
 
     RegionTracker _nocompress_regions;
+
+    /// track forced output alleles which are reported as part of a variant so that they aren't reported twice:
+    std::set<IndelKey> _forcedAllelesAlreadyOutput;
 };

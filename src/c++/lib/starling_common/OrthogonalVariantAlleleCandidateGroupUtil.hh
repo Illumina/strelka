@@ -91,7 +91,7 @@ bool
 addAllelesAtOtherPositions(
     const pos_t pos,
     const pos_t largest_total_indel_ref_span_per_read,
-    const unsigned sampleId,
-    const int groupLocusPloidy,
+    const unsigned sampleIndex,
+    const int callerPloidy,
     const IndelBuffer& indelBuffer,
     OrthogonalVariantAlleleCandidateGroup& alleleGroup);

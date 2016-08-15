@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE( simple_indel_test )
     indelKey.deletionLength=2;
 
     const unsigned sampleCount(1);
-    std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, indelKey.pos));
+    std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount));
     ii->addAltIndelAllele(indelKey, indelData);
     overlap.process(std::move(ii));
 

@@ -94,8 +94,7 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
         std::unique_ptr<GermlineDiploidIndelLocusInfo>
         indel(new GermlineDiploidIndelLocusInfo(
                   gvcfDerivOptions,
-                  sampleCount,
-                  pos));
+                  sampleCount));
 
         indel->addAltIndelAllele(indelKey,IndelData(sampleCount,indelKey));
         return indel;

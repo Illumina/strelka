@@ -514,10 +514,10 @@ struct GermlineIndelSampleInfo
 /// represents an indel call at the level of a full VCF record, containing possibly multiple alleles/SimpleGenotypes
 struct GermlineIndelLocusInfo : public LocusInfo
 {
+    explicit
     GermlineIndelLocusInfo(
-        const unsigned sampleCount,
-        const pos_t initPos)
-        : LocusInfo(sampleCount, initPos),
+        const unsigned sampleCount)
+        : LocusInfo(sampleCount),
           _indelSampleInfo(sampleCount)
     {}
 
@@ -566,11 +566,15 @@ struct GermlineIndelLocusInfo : public LocusInfo
         if (_indelAlleleInfo.size() == 1)
         {
             _range.set_range(indelKey.pos, indelKey.right_pos());
+            pos=_range.begin_pos();
         }
         else
         {
             _range.merge_range(known_pos_range2(indelKey.pos, indelKey.right_pos()));
+            if (pos > _range.begin_pos()) pos = _range.begin_pos();
         }
+
+
     }
 
     const std::vector<GermlineIndelAlleleInfo>&
@@ -590,6 +594,7 @@ struct GermlineIndelLocusInfo : public LocusInfo
             getOffsetError(offset);
         }
         const GermlineIndelSampleInfo& indelSampleInfo(getIndelSample(sampleIndex));
+        assert(_range.size() == indelSampleInfo.sitePloidy.size());
         return indelSampleInfo.sitePloidy[offset];
     }
 
@@ -621,7 +626,10 @@ private:
     std::vector<GermlineIndelAlleleInfo> _indelAlleleInfo;
     std::vector<GermlineIndelSampleInfo> _indelSampleInfo;
 
+    /// the refernece range of all indel alleles at this locus:
     known_pos_range2 _range;
+
+    /// to sanity check input, locus must be specified by adding all alleles, and then adding all sample information, this bool enforces the allele->sample ordering
     bool _isLockAlleles = false;
 };
 
@@ -631,9 +639,8 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
 {
     GermlineDiploidIndelLocusInfo(
         const gvcf_deriv_options& gvcfDerivedOptions,
-        const unsigned sampleCount,
-        const pos_t initPos)
-        : GermlineIndelLocusInfo(sampleCount, initPos)
+        const unsigned sampleCount)
+        : GermlineIndelLocusInfo(sampleCount)
         , features(gvcfDerivedOptions.indelFeatureSet)
         , developmentFeatures(gvcfDerivedOptions.indelDevelopmentFeatureSet)
     {}
@@ -913,9 +920,9 @@ private:
 /// specify that variant is indel and a continuous frequency calling model
 struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
 {
+    explicit
     GermlineContinuousIndelLocusInfo(
-        const unsigned sampleCount,
-        const pos_t init_pos)
-        : GermlineIndelLocusInfo(sampleCount, init_pos)
+        const unsigned sampleCount)
+        : GermlineIndelLocusInfo(sampleCount)
     {}
 };

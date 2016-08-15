@@ -268,8 +268,8 @@ bool
 addAllelesAtOtherPositions(
     const pos_t pos,
     const pos_t largest_total_indel_ref_span_per_read,
-    const unsigned sampleId,
-    const int groupLocusPloidy,
+    const unsigned sampleIndex,
+    const int callerPloidy,
     const IndelBuffer& indelBuffer,
     OrthogonalVariantAlleleCandidateGroup& alleleGroup)
 {
@@ -343,7 +343,7 @@ addAllelesAtOtherPositions(
         // rank alt alleles and include from highest to lowest unless interference clique is broken:
         unsigned referenceRank(0);
         OrthogonalVariantAlleleCandidateGroup rankedAltAlleleGroup;
-        rankOrthogonalAllelesInSample(sampleId, altAlleleGroup, rankedAltAlleleGroup, referenceRank);
+        rankOrthogonalAllelesInSample(sampleIndex, altAlleleGroup, rankedAltAlleleGroup, referenceRank);
 
         altAlleleGroup.clear();
 
@@ -372,9 +372,9 @@ addAllelesAtOtherPositions(
         extendedVariantAlleleGroup.alleles.push_back(altAlleleIter);
     }
 
-    // rerank and reselect top N alleles, N=groupLocusPloidy
+    // rerank and reselect top N alleles, N=callerPloidy
     //
-    selectTopOrthogonalAllelesInSample(sampleId, extendedVariantAlleleGroup, groupLocusPloidy, alleleGroup);
+    selectTopOrthogonalAllelesInSample(sampleIndex, extendedVariantAlleleGroup, callerPloidy, alleleGroup);
 
     return isEveryAltOrthogonal;
 }
