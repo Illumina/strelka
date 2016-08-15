@@ -156,10 +156,15 @@ process(std::unique_ptr<GermlineIndelLocusInfo> info)
         }
     }
 
-    // for continuous frequency model only:
+    // apply filtration/EVS model:
     if (dynamic_cast<GermlineContinuousIndelLocusInfo*>(info.get()) != nullptr)
     {
         _model.default_classify_indel(*info);
     }
+    else
+    {
+        _model.classify_indel(dynamic_cast<GermlineDiploidIndelLocusInfo&>(*info));
+    }
+
     _sink->process(std::move(info));
 }

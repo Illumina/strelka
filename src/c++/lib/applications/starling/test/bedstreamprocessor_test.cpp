@@ -95,10 +95,9 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
         indel(new GermlineDiploidIndelLocusInfo(
                   gvcfDerivOptions,
                   sampleCount,
-                  indelKey,
-                  IndelData(1,indelKey),
-                  GermlineDiploidIndelSimpleGenotypeInfoCore()));
+                  pos));
 
+        indel->addAltIndelAllele(indelKey,IndelData(sampleCount,indelKey));
         return indel;
     };
 

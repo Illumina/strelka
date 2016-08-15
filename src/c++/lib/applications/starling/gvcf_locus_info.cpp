@@ -90,114 +90,15 @@ writeGenotype(
 
 
 
-static
 void
-add_cigar_to_ploidy(
-    const ALIGNPATH::path_t& apath,
-    std::vector<unsigned>& ploidy)
-{
-    using namespace ALIGNPATH;
-    int offset(-1);
-    for (const auto& ps : apath)
-    {
-        if (is_segment_align_match(ps.type))
-        {
-            for (unsigned j(0); j<ps.length; ++j)
-            {
-                if (offset>=0) ploidy[offset]++;
-                offset++;
-            }
-        }
-        else if (ps.type==DELETE)
-        {
-            offset+=ps.length;
-        }
-    }
-}
-
-
-
-void
-GermlineDiploidIndelLocusInfo::
-add_overlap(
-    const reference_contig_segment& ref,
-    GermlineDiploidIndelLocusInfo& overlap)
-{
-    assert(altAlleles.size() == 1);
-    assert(overlap.altAlleles.size() == 1);
-
-    auto& firstAllele(getFirstAltAllele());
-    auto& overlapAllele(overlap.getFirstAltAllele());
-
-    // there's going to be 1 (possibly empty) fill range in front of one haplotype
-    // and one possibly empty fill range on the back of one haplotype
-    std::string leading_seq,trailing_seq;
-    auto indel_end_pos=std::max(overlapAllele.indelKey.right_pos(),firstAllele.indelKey.right_pos());
-
-    const pos_t indel_begin_pos(pos-1);
-
-    sitePloidy.resize(indel_end_pos-pos,0);
-
-    auto munge_indel = [&] (GermlineDiploidIndelLocusInfo& ii)
-    {
-        auto& this_call(ii.getFirstAltAllele());
-        // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq
-        ref.get_substring(indel_begin_pos,(ii.pos-indel_begin_pos)-1,leading_seq);
-        const unsigned trail_len(indel_end_pos-this_call.indelKey.right_pos());
-        ref.get_substring(indel_end_pos-trail_len,trail_len,trailing_seq);
-
-        this_call.set_hap_cigar(leading_seq.size()+1,
-                                trailing_seq.size());
-
-        // add to the ploidy object:
-        add_cigar_to_ploidy(this_call.cigar,sitePloidy);
-    };
-    munge_indel(*this);
-    munge_indel(overlap);
-
-    // we only combine pairs of simple het indels on different haplotpyes, so this assertion must hold:
-    for (const unsigned pl : sitePloidy)
-    {
-        assert(pl<2);
-    }
-
-    //reduce qual and gt to the lowest of the set:
-    anyVariantAlleleQuality = std::min(anyVariantAlleleQuality, overlap.anyVariantAlleleQuality);
-    firstAllele._dindel.max_gt_qphred = std::min(firstAllele._dindel.max_gt_qphred, overlap.getFirstAltAllele()._dindel.max_gt_qphred);
-
-    // combine filter flags from overlapping loci:
-    filters.merge(overlap.filters);
-
-    // combine EVS values. Since the "unset" value is -1, this complex logic is necessary
-    if (empiricalVariantScore <0)
-        empiricalVariantScore = overlap.empiricalVariantScore;
-    else if (overlap.empiricalVariantScore >= 0)
-        empiricalVariantScore = std::min(empiricalVariantScore, overlap.empiricalVariantScore);
-
-    const unsigned sampleCount(getSampleCount());
-    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-    {
-        auto& sampleInfo(getSample(sampleIndex));
-        const auto& inputSampleInfo(overlap.getSample(sampleIndex));
-        sampleInfo.gq = std::min(sampleInfo.gq, inputSampleInfo.gq);
-        sampleInfo.gqx = std::min(sampleInfo.gqx, inputSampleInfo.gqx);
-
-        sampleInfo.filters.merge(inputSampleInfo.filters);
-    }
-    altAlleles.push_back(overlap.getFirstAltAllele());
-}
-
-
-
-void
-GermlineDiploidIndelLocusInfo::
-getPloidyError(
+GermlineIndelLocusInfo::
+getOffsetError(
     const unsigned offset) const
 {
     using namespace illumina::common;
 
     std::ostringstream oss;
-    oss << "ERROR: get_ploidy offset '" << offset << "' exceeds ploidy region size '" << sitePloidy.size() << "'\n";
+    oss << "ERROR: indel locus site offset '" << offset << "' exceeds exceeds locus size '" << _range.size() << "'\n";
     BOOST_THROW_EXCEPTION(LogicException(oss.str()));
 }
 
@@ -402,8 +303,8 @@ computeEmpiricalScoringFeatures(
     const auto& firstSampleInfo(getSample(0));
     const auto& firstIndelSampleInfo(getIndelSample(0));
 
-    /// TODO STREL-125 generalize to multiple alts:
-    const auto& firstAltAllele(getFirstAltAllele());
+    ///TODO STREL-125 generalize to multiple alts:
+    const auto& firstAltAllele(getIndelAlleles().front());
 
     const auto& sampleReportInfo(firstIndelSampleInfo.reportInfo);
 
@@ -416,23 +317,28 @@ computeEmpiricalScoringFeatures(
     const double locusDepthFactor(safeFrac(1,locusDepth));
     const double confidentDepthFactor(safeFrac(1,confidentDepth));
 
+    const bool isDiploid(firstSampleInfo.getPloidy().isDiploid());
+    uint8_t allele0Index(0);
+    uint8_t allele1Index(0);
+
+    if (isDiploid)
+    {
+        VCFUTIL::getAlleleIndices(firstSampleInfo.max_gt(), allele0Index, allele1Index);
+    }
+
     // cdf of binomial prob of seeing no more than the number of 'allele A' reads out of A reads + B reads, given p=0.5
     // cdf of binomial prob of seeing no more than the number of 'allele B' reads out of A reads + B reads, given p=0.5
-    double allelebiaslower;
-    double allelebiasupper;
+    double allelebiaslower = 0;
+    double allelebiasupper = 0;
+    if (isDiploid)
     {
-        // allele bias metrics
-        const double r0(sampleReportInfo.n_confident_ref_reads);
-        const double r1(sampleReportInfo.n_confident_indel_reads);
-        const double r2(sampleReportInfo.n_confident_alt_reads);
+        const auto& fwdCounts(firstSampleInfo.supportCounts.getCounts(true));
+        const auto& revCounts(firstSampleInfo.supportCounts.getCounts(false));
 
-        if (is_hetalt())
+        if (allele0Index != allele1Index)
         {
-            allelebiaslower = cdf(boost::math::binomial(r2 + r1, 0.5), r1);
-            allelebiasupper = cdf(boost::math::binomial(r2 + r1, 0.5), r2);
-        }
-        else
-        {
+            const double r0(fwdCounts.confidentAlleleCount(allele0Index) + revCounts.confidentAlleleCount(allele0Index));
+            const double r1(fwdCounts.confidentAlleleCount(allele1Index) + revCounts.confidentAlleleCount(allele1Index));
             allelebiaslower = cdf(boost::math::binomial(r0 + r1, 0.5), r0);
             allelebiasupper = cdf(boost::math::binomial(r0 + r1, 0.5), r1);
         }
@@ -497,15 +403,22 @@ computeEmpiricalScoringFeatures(
     }
     else
     {
+        // code genotype as expected in the RF model:
         {
+            // HET
             double genotype(0);
-            if (firstAltAllele._dindel.max_gt == STAR_DIINDEL::HOM)
+            if (isDiploid)
             {
-                genotype = 1;
-            }
-            else
-            {
-                if (firstAltAllele._dindel.is_diplotype_model_hetalt) genotype = 2;
+                // HOM
+                if (allele0Index == allele1Index)
+                {
+                    genotype = 1;
+                }
+                else
+                {
+                    // HETALT
+                    if ((allele0Index>0) and (allele1Index>0)) genotype = 2;
+                }
             }
             features.set(GERMLINE_INDEL_SCORING_FEATURES::GENO, genotype);
         }
@@ -574,17 +487,9 @@ void
 GermlineDiploidIndelLocusInfo::
 dump(std::ostream& os) const
 {
-    os << "digt_indel_info\n";
-    os << "nCalls: " << altAlleles.size() << " isOverlap: " << _is_overlap << "\n";
-    os << "ploidy: ";
-    for (const unsigned pl : sitePloidy)
+    os << "Alleles:\n";
+    for (const auto& allele : getIndelAlleles())
     {
-        os << " " << pl;
-    }
-    os << "\n";
-    os << "Calls:\n";
-    for (const auto& cl : altAlleles)
-    {
-        os << cl << "\n";
+        os << allele << "\n";
     }
 }

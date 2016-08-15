@@ -82,12 +82,6 @@ struct ScoringModelManager
 private:
     bool checkIsVariantUsableInEVSModel(const GermlineDiploidIndelLocusInfo& ii) const;
 
-    /// cleanup some boundary case genotype quality assignments
-    void
-    refineIndelSampleValues(
-        const GermlineDiploidIndelLocusInfo& ii,
-        LocusSampleInfo& sample) const;
-
     void
     classify_indel_impl(
         const bool is_model_usable,

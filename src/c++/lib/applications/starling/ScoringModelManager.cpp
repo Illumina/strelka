@@ -114,32 +114,11 @@ bool
 ScoringModelManager::
 checkIsVariantUsableInEVSModel(const GermlineDiploidIndelLocusInfo& ii) const
 {
-    const auto& call(ii.getFirstAltAllele());
-    return ((call.indelReportInfo.it == SimplifiedIndelReportType::INSERT ||
-             call.indelReportInfo.it == SimplifiedIndelReportType::DELETE ||
-             call.indelReportInfo.it == SimplifiedIndelReportType::SWAP) &&
-            (call._dindel.max_gt != STAR_DIINDEL::NOINDEL) ); // empirical scoring does not handle homref sites
-}
+    // empirical scoring does not handle homref sites
+    if (ii.isNonVariantLocus()) return false;
 
-
-
-void
-ScoringModelManager::
-refineIndelSampleValues(
-    const GermlineDiploidIndelLocusInfo& ii,
-    LocusSampleInfo& sample) const
-{
-    /// TODO STREL-125 generalize to multi-sample
-    const auto& dindel(ii.getFirstAltAllele()._dindel);
-    /// max_gt != max_gt_poly indicates we're in a boundary zone between variant and hom-ref call
-    if (dindel.max_gt != dindel.max_gt_poly)
-    {
-        sample.gqx=0;
-    }
-    else
-    {
-        sample.gqx=std::min(dindel.max_gt_poly_qphred,dindel.max_gt_qphred);
-    }
+    // and doesn't work on breakpoints...
+    return (not ii.isAnyBreakpointAlleles());
 }
 
 
@@ -150,17 +129,6 @@ classify_indel_impl(
     const bool isVariantUsableInEVSModel,
     GermlineDiploidIndelLocusInfo& ii) const
 {
-    const unsigned sampleCount(ii.getSampleCount());
-    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-    {
-        LocusSampleInfo& sampleInfo(ii.getSample(sampleIndex));
-
-        // TODO STREL-125 generalize to multi-allele
-        const auto& dindel(ii.getFirstAltAllele()._dindel);
-        sampleInfo.gq = dindel.max_gt_poly_qphred;
-        refineIndelSampleValues(ii, sampleInfo);
-    }
-
     if (isVariantUsableInEVSModel && _isReportEVSFeatures)
     {
         // when reporting is turned on, we need to compute EVS features

@@ -468,6 +468,18 @@ struct LocusInfo : public PolymorphicObject
         return _sampleInfo[sampleIndex];
     }
 
+    /// non-forced locus printing criteria
+    // (for diploid indels at least)
+    bool
+    isNonVariantLocus() const
+    {
+        for (const auto& sample : _sampleInfo)
+        {
+            if (sample.max_gt() != 0) return true;
+        }
+        return false;
+    }
+
     /// zero-index position of the locus, alleles may not all start here:
     pos_t pos = 0;
 
@@ -494,12 +506,14 @@ struct GermlineIndelSampleInfo
     }
 
     AlleleSampleReportInfo reportInfo;
+
+    /// the expected ploidy of sites spanning the indel locus assuming the ML GT is true
+    std::vector<uint8_t> sitePloidy;
 };
 
 /// represents an indel call at the level of a full VCF record, containing possibly multiple alleles/SimpleGenotypes
 struct GermlineIndelLocusInfo : public LocusInfo
 {
-    explicit
     GermlineIndelLocusInfo(
         const unsigned sampleCount,
         const pos_t initPos)
@@ -509,20 +523,22 @@ struct GermlineIndelLocusInfo : public LocusInfo
 
     virtual ~GermlineIndelLocusInfo() {}
 
-    // the EXCLUSIVE end of the variant (i.e. open)
     pos_t
     end() const
     {
-        pos_t result = 0;
-        for (auto& x : getIndelAlleles())
-            result = std::max(result, x.indelKey.right_pos());
-        return result;
+        assert(getAltAlleleCount() > 0);
+        return _range.end_pos();
     }
 
-    GermlineIndelSampleInfo&
-    getIndelSample(const unsigned sampleIndex)
+    void
+    addIndelSample(
+        const GermlineIndelSampleInfo& indelSampleInfo)
     {
-        return _indelSampleInfo[sampleIndex];
+        // ensure that no alleles are added once we start adding samples...
+        assert(getAltAlleleCount()>0);
+        _isLockAlleles = true;
+        assert(indelSampleInfo.sitePloidy.size() == _range.size());
+        _indelSampleInfo.push_back(indelSampleInfo);
     }
 
     const GermlineIndelSampleInfo&
@@ -536,8 +552,18 @@ struct GermlineIndelLocusInfo : public LocusInfo
         const IndelKey& indelKey,
         const IndelData& indelData)
     {
+        assert(not _isLockAlleles);
+
         _indelAlleleInfo.emplace_back(indelKey, indelData);
         incrementAltAlleleCount();
+        if (_indelAlleleInfo.size() == 1)
+        {
+            _range.set_range(indelKey.pos, indelKey.right_pos());
+        }
+        else
+        {
+            _range.merge_range(known_pos_range2(indelKey.pos, indelKey.right_pos()));
+        }
     }
 
     const std::vector<GermlineIndelAlleleInfo>&
@@ -546,9 +572,50 @@ struct GermlineIndelLocusInfo : public LocusInfo
         return _indelAlleleInfo;
     }
 
+    /// get the ploidy of a site spanned by the maxGT indels at this locus in specified sample:
+    unsigned
+    getSitePloidy(
+        const unsigned sampleIndex,
+        const unsigned offset) const
+    {
+        if (offset>=_range.size())
+        {
+            getOffsetError(offset);
+        }
+        const GermlineIndelSampleInfo& indelSampleInfo(getIndelSample(sampleIndex));
+        return indelSampleInfo.sitePloidy[offset];
+    }
+
+    bool
+    isAnyForcedOutputAtLocus() const
+    {
+        for (const auto& allele : _indelAlleleInfo)
+        {
+            if (allele.isForcedOutput) return true;
+        }
+        return false;
+    }
+
+    bool
+    isAnyBreakpointAlleles() const
+    {
+        for (const auto& allele : _indelAlleleInfo)
+        {
+            if (allele.indelKey.is_breakpoint()) return true;
+        }
+        return false;
+    }
+
 private:
+
+    void
+    getOffsetError(const unsigned offset) const;
+
     std::vector<GermlineIndelAlleleInfo> _indelAlleleInfo;
     std::vector<GermlineIndelSampleInfo> _indelSampleInfo;
+
+    known_pos_range2 _range;
+    bool _isLockAlleles = false;
 };
 
 
@@ -558,78 +625,11 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
     GermlineDiploidIndelLocusInfo(
         const gvcf_deriv_options& gvcfDerivedOptions,
         const unsigned sampleCount,
-        const IndelKey& initIndelKey,
-        const IndelData& initIndelData,
-        const GermlineDiploidIndelSimpleGenotypeInfoCore& init_dindel)
-        : GermlineIndelLocusInfo(sampleCount, initIndelKey.pos)
+        const pos_t initPos)
+        : GermlineIndelLocusInfo(sampleCount, initPos)
         , features(gvcfDerivedOptions.indelFeatureSet)
         , developmentFeatures(gvcfDerivedOptions.indelDevelopmentFeatureSet)
-
-    {
-        altAlleles.emplace_back(initIndelKey, initIndelData, init_dindel);
-    }
-
-    void add_overlap(const reference_contig_segment& ref, GermlineDiploidIndelLocusInfo& overlap);
-
-    ///TODO STREL-125 move this method to sample-level
-    bool
-    is_hetalt() const
-    {
-        return (_is_overlap);
-    }
-
-#if 0
-    ///TODO STREL-125 move this method to sample-level
-    bool
-    is_het() const
-    {
-        return (static_cast<int>(altAlleles.front().max_gt())>1);
-    }
-#endif
-
-    // the site ploidy within the indel at offset x
-    ///TODO STREL-125 move this method to sample-level
-    unsigned
-    getSitePloidy(const unsigned offset) const
-    {
-        const auto& ploidy(getSample(0).getPloidy());
-
-        auto& dindel(getFirstAltAllele()._dindel);
-        if (ploidy.isNoploid()) return 0;
-
-        if (!is_hetalt())
-        {
-            using namespace STAR_DIINDEL;
-            switch (dindel.max_gt)
-            {
-            case HOM:
-                return 0;
-            case HET:
-                return 1;
-            case NOINDEL:
-                return (ploidy.isHaploid() ? 1 : 2);
-            }
-            assert(0);
-        }
-        else
-        {
-            if (offset>=sitePloidy.size())
-            {
-                getPloidyError(offset);
-            }
-            return sitePloidy[offset];
-        }
-        return 2;
-    }
-
-    const GermlineDiploidIndelAlleleInfo& getFirstAltAllele() const
-    {
-        return altAlleles.front();
-    }
-    GermlineDiploidIndelAlleleInfo& getFirstAltAllele()
-    {
-        return altAlleles.front();
-    }
+    {}
 
     void
     computeEmpiricalScoringFeatures(
@@ -640,22 +640,6 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
 
     void
     dump(std::ostream& os) const;
-
-private:
-
-    void
-    getPloidyError(const unsigned offset) const;
-
-public:
-
-    /// represent site ploidy over the reference span of the overlapping indel set in the event of overlap:
-    std::vector<unsigned> sitePloidy;
-
-    // used to flag hetalt
-    bool _is_overlap=false;
-
-    /// TODO: deprecated -- remove this
-    std::vector<GermlineDiploidIndelAlleleInfo> altAlleles;
 
     /// production and development features used in the empirical scoring model:
     VariantScoringFeatureKeeper features;

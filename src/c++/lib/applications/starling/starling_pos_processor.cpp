@@ -485,109 +485,6 @@ process_pos_indel(const pos_t pos)
 
 
 
-/// translate AG_GENOTYPE to older genotype indices
-///
-/// TODO retire the old STAR_DIINDEL scheme and remove these conversion routines
-namespace AG_GENOTYPE
-{
-static
-STAR_DIINDEL::index_t
-mapAlleleToDindel(
-    const unsigned genotypeId,
-    const unsigned alleleId)
-{
-    if (alleleId == 0)
-    {
-        switch (static_cast<index_t>(genotypeId))
-        {
-        case HOM0:
-            return STAR_DIINDEL::HOM;
-        case HET0:
-        case HET01:
-            return STAR_DIINDEL::HET;
-        default:
-            return STAR_DIINDEL::NOINDEL;
-        }
-    }
-    else if (alleleId == 1)
-    {
-        switch (static_cast<index_t>(genotypeId))
-        {
-        case HOM1:
-            return STAR_DIINDEL::HOM;
-        case HET1:
-        case HET01:
-            return STAR_DIINDEL::HET;
-        default:
-            return STAR_DIINDEL::NOINDEL;
-        }
-    }
-    else
-    {
-        assert(false and "Unknown alleleId");
-        return STAR_DIINDEL::SIZE;
-    }
-}
-}
-
-
-
-/// TODO remove this function once we eliminate starling_diploid_indel as an intermediary format
-static
-starling_diploid_indel
-locusGenotypeToDindel(
-    const AlleleGroupGenotype& locusGenotype,
-    const unsigned alleleId)
-{
-    starling_diploid_indel dindel;
-
-    if (locusGenotype.maxGenotypeIndex == AG_GENOTYPE::HET01)
-    {
-        dindel.is_diplotype_model_hetalt = true;
-    }
-
-    dindel.pprob[STAR_DIINDEL::NOINDEL] = locusGenotype.posteriorProb[AG_GENOTYPE::HOMREF];
-    dindel.pprob[STAR_DIINDEL::HET] = locusGenotype.posteriorProb[AG_GENOTYPE::getAlleleHetId(alleleId)];
-    dindel.pprob[STAR_DIINDEL::HOM] = locusGenotype.posteriorProb[AG_GENOTYPE::getAlleleHomId(alleleId)];
-
-    if (locusGenotype.maxGenotypeIndex == AG_GENOTYPE::HET01)
-    {
-        dindel.pprob[STAR_DIINDEL::HET] = locusGenotype.posteriorProb[AG_GENOTYPE::HET01];
-    }
-
-    dindel.max_gt = AG_GENOTYPE::mapAlleleToDindel(locusGenotype.maxGenotypeIndex, alleleId);
-    dindel.max_gt_qphred = (int) locusGenotype.genotypeQuality;
-    dindel.max_gt_poly = AG_GENOTYPE::mapAlleleToDindel(locusGenotype.maxGenotypeIndexPolymorphic, alleleId);
-    dindel.max_gt_poly_qphred = (int) locusGenotype.genotypeQualityPolymorphic;
-
-    dindel.phredLoghood[STAR_DIINDEL::NOINDEL] = (unsigned) locusGenotype.phredLoghood[AG_GENOTYPE::HOMREF];
-    dindel.phredLoghood[STAR_DIINDEL::HET] = (unsigned) locusGenotype.phredLoghood[AG_GENOTYPE::getAlleleHetId(alleleId)];
-    dindel.phredLoghood[STAR_DIINDEL::HOM] = (unsigned) locusGenotype.phredLoghood[AG_GENOTYPE::getAlleleHomId(alleleId)];
-
-    if (locusGenotype.maxGenotypeIndex == AG_GENOTYPE::HET01)
-    {
-        dindel.phredLoghood[STAR_DIINDEL::HET] = (unsigned) locusGenotype.phredLoghood[AG_GENOTYPE::HET01];
-    }
-
-    {
-        unsigned minIndex(0);
-        for (unsigned gt(1); gt < STAR_DIINDEL::SIZE; ++gt)
-        {
-            if (dindel.phredLoghood[gt] < dindel.phredLoghood[minIndex]) minIndex = gt;
-        }
-        const int minPL(dindel.phredLoghood[minIndex]);
-        for (unsigned gt(0); gt < STAR_DIINDEL::SIZE; ++gt)
-        {
-            dindel.phredLoghood[gt] = (unsigned) std::min(GermlineDiploidIndelSimpleGenotypeInfoCore::maxQ,
-                                                          (int) (dindel.phredLoghood[gt] - minPL));
-        }
-    }
-
-    return dindel;
-}
-
-
-
 static
 unsigned
 translateOldToNewGenotypeIndex(
@@ -683,10 +580,8 @@ hackDiplotypeCallToCopyNumberCalls(
 
         isOutputAnyAlleles=true;
 
-        starling_diploid_indel dindel(locusGenotypeToDindel(locusGenotype, genotypeAlleleIndex));
-
         // sample-independent info:
-        std::unique_ptr<GermlineIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, indelKey, indelData, dindel));
+        std::unique_ptr<GermlineIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, indelKey.pos));
 
         ii->anyVariantAlleleQuality = locusGenotype.anyVariantAlleleQuality;
         for (unsigned genotypeAlleleIndex2(0); genotypeAlleleIndex2<alleleGroupSize; ++genotypeAlleleIndex2)
@@ -709,7 +604,16 @@ hackDiplotypeCallToCopyNumberCalls(
             // transfer max_gt
             sampleInfo.max_gt_poly = translateOldToNewGenotypeIndex(callerPloidy,locusGenotype.maxGenotypeIndexPolymorphic);
             sampleInfo.gq = locusGenotype.genotypeQualityPolymorphic;
-            sampleInfo.gqx = std::min(locusGenotype.genotypeQuality,locusGenotype.genotypeQualityPolymorphic);
+
+            // max_gt != max_gt_poly indicates we're in a boundary zone between variant and hom-ref call
+            if (locusGenotype.maxGenotypeIndex != locusGenotype.maxGenotypeIndexPolymorphic)
+            {
+                sampleInfo.gqx = 0;
+            }
+            else
+            {
+                sampleInfo.gqx = std::min(locusGenotype.genotypeQuality, locusGenotype.genotypeQualityPolymorphic);
+            }
 
             // add info for PLs
             const unsigned fullAlleleCount(alleleGroupSize+1);
@@ -738,9 +642,10 @@ hackDiplotypeCallToCopyNumberCalls(
 
             // add misc sample info from legacy sample indel report:
             const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
-            AlleleSampleReportInfo& indelSampleReportInfo(ii->getIndelSample(sampleIndex).reportInfo);
+            GermlineIndelSampleInfo indelSampleInfo;
             getAlleleSampleReportInfo(opt, dopt, indelKey, indelSampleData, basecallBuffer,
-                                      is_tier2_pass, is_use_alt_indel, indelSampleReportInfo);
+                                      is_tier2_pass, is_use_alt_indel, indelSampleInfo.reportInfo);
+            ii->addIndelSample(indelSampleInfo);
         }
 
         gvcfer.add_indel(std::move(ii));
@@ -1005,13 +910,14 @@ process_pos_indel_continuous(const pos_t pos)
             const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
             const sample_info& sif(sample(sampleIndex));
 
-            AlleleSampleReportInfo& indelSampleReportInfo(locusInfo->getIndelSample(sampleIndex).reportInfo);
+            GermlineIndelSampleInfo indelSampleInfo;
             getAlleleSampleReportInfo(_opt, _dopt, indelKey, indelSampleData, sif.bc_buff, is_tier2_pass,
-                                      is_use_alt_indel, indelSampleReportInfo);
+                                      is_use_alt_indel, indelSampleInfo.reportInfo);
+            locusInfo->addIndelSample(indelSampleInfo);
 
             if (not isReportableAllele)
             {
-                if (indelSampleReportInfo.n_confident_indel_reads > 0) isReportableAllele = true;
+                if (indelSampleInfo.reportInfo.n_confident_indel_reads > 0) isReportableAllele = true;
             }
         }
 

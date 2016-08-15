@@ -43,7 +43,9 @@ indel_overlapper::indel_overlapper(const ScoringModelManager& model, const refer
 
 
 
-void indel_overlapper::process(std::unique_ptr<GermlineSiteLocusInfo> site)
+void
+indel_overlapper::
+process(std::unique_ptr<GermlineSiteLocusInfo> site)
 {
     std::unique_ptr<GermlineDiploidSiteLocusInfo> si(downcast<GermlineDiploidSiteLocusInfo>(std::move(site)));
 
@@ -66,110 +68,31 @@ void indel_overlapper::process(std::unique_ptr<GermlineSiteLocusInfo> site)
 
 
 
-static
-bool
-is_het_indel(const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
+void
+indel_overlapper::
+process(std::unique_ptr<GermlineIndelLocusInfo> locus)
 {
-    return (dindel.max_gt==STAR_DIINDEL::HET);
-}
+    auto ii(downcast<GermlineDiploidIndelLocusInfo>(std::move(locus)));
 
-static
-bool
-check_is_nonvariant_indel(const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
-{
-    return (dindel.max_gt==STAR_DIINDEL::NOINDEL);
-}
-
-void indel_overlapper::process(std::unique_ptr<GermlineIndelLocusInfo> indel)
-{
-    auto ii(downcast<GermlineDiploidIndelLocusInfo>(std::move(indel)));
-
-    auto& altAllele(ii->getFirstAltAllele());
-
-    // we can't handle breakends at all right now:
-    if (altAllele.indelKey.is_breakpoint()) return;
-
-    const bool is_nonvariant_indel = check_is_nonvariant_indel(altAllele._dindel);
+    const bool isNonVariantLocus(ii->isNonVariantLocus());
 
     // don't handle homozygous reference calls unless genotyping is forced
-    if (is_nonvariant_indel && !altAllele.isForcedOutput) return;
+    if (isNonVariantLocus and (not ii->isAnyForcedOutputAtLocus())) return;
 
     if (ii->pos>_indel_end_pos)
     {
         process_overlaps();
     }
 
-    if (is_nonvariant_indel)
+    if (isNonVariantLocus)
     {
         _nonvariant_indel_buffer.push_back(std::move(ii));
     }
     else
     {
-        _indel_end_pos=std::max(_indel_end_pos,altAllele.indelKey.right_pos());
+        _indel_end_pos=std::max(_indel_end_pos, ii->end());
         _indel_buffer.push_back(std::move(ii));
     }
-}
-
-static
-bool
-is_simple_indel_overlap(
-    const reference_contig_segment& ref,
-    const std::vector<std::unique_ptr<GermlineDiploidIndelLocusInfo>>& indel_buffer)
-{
-#ifdef DEBUG_GVCF
-    log_os << "CHIRP: " << __FUNCTION__ << " START\n";
-#endif
-
-    // check for very very simple overlap condition -- these are the cases that are easy to
-    // glue together, although many more non-simple cases could be resolved if we wanted to
-    // put in the work
-    //
-    // check for 2 overlapping hets:
-
-    if (indel_buffer.size() != 2) return false;
-
-    const GermlineDiploidIndelLocusInfo& ii0(*indel_buffer[0]);
-    const GermlineDiploidIndelLocusInfo& ii1(*indel_buffer[1]);
-
-    const GermlineDiploidIndelAlleleInfo& ic0(ii0.getFirstAltAllele());
-    const GermlineDiploidIndelAlleleInfo& ic1(ii1.getFirstAltAllele());
-
-    const bool isTwoHets = (is_het_indel(ic0._dindel) && is_het_indel(ic1._dindel));
-
-#ifdef DEBUG_GVCF
-    log_os << "CHIRP: " << __FUNCTION__ << " isTwoHets: " << isTwoHets << "\n";
-#endif
-
-    if (! isTwoHets) return false;
-
-    // also make sure we don't create two matching alt sequences
-    // (two matching ALTs will fail vcf output
-
-    // there's going to be 1 (possibly empty) fill range in front of one haplotype
-    // and one possibly empty fill range on the back of one haplotype
-    const pos_t indel_end_pos=std::max(ic1.indelKey.right_pos(),ic0.indelKey.right_pos());
-    const pos_t indel_begin_pos(ii0.pos-1);
-
-    // get the VCF ALT string associated with overlapping indel:
-    auto get_overlap_alt = [&] (const GermlineDiploidIndelLocusInfo& ii)
-    {
-        std::string leading_seq,trailing_seq;
-        const auto& ic(ii.getFirstAltAllele());
-        // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq
-        ref.get_substring(indel_begin_pos,(ii.pos-indel_begin_pos)-1,leading_seq);
-        const unsigned trail_len(indel_end_pos-ic.indelKey.right_pos());
-        ref.get_substring(indel_end_pos-trail_len,trail_len,trailing_seq);
-
-        return leading_seq + ic.indelKey.insert_seq() + trailing_seq;
-    };
-    const std::string alt0 = get_overlap_alt(*indel_buffer[0]);
-    const std::string alt1 = get_overlap_alt(*indel_buffer[1]);
-
-#ifdef DEBUG_GVCF
-    log_os << "CHIRP: " << __FUNCTION__ << " alt0: " << alt0 << " alt1: " << alt1 << "\n";
-#endif
-
-    return (alt0 != alt1);
 }
 
 
@@ -288,31 +211,12 @@ void indel_overlapper::process_overlaps_impl()
 
     bool is_conflict(false);
 
-    // do standard or overlap indel processing:
-    if (_indel_buffer.size()==1)
+    // process conflicting loci (these should be rare)
+    if (_indel_buffer.size() > 1)
     {
-        // simple case of no overlap:
-        modify_single_indel_record(*_indel_buffer[0]);
-    }
-    else if (_indel_buffer.size() > 1)
-    {
-        if (is_simple_indel_overlap(_ref,_indel_buffer))
-        {
-            // handle the simplest possible overlap case (two hets):
-            modify_overlap_indel_record();
-        }
-        else
-        {
-            // mark the whole region as conflicting
-            modify_conflict_indel_record();
-            is_conflict=true;
-        }
-    }
-
-    // simple processing for all nonvariant_indels:
-    for (auto& nonvariant_indel : _nonvariant_indel_buffer)
-    {
-        modify_single_indel_record(*nonvariant_indel);
+        // mark the whole region as conflicting
+        modify_conflict_indel_record();
+        is_conflict=true;
     }
 
     // process sites to be consistent with overlapping indels:
@@ -374,37 +278,26 @@ void indel_overlapper::process_overlaps_impl()
 
 
 
-void indel_overlapper::modify_overlapping_site(const GermlineDiploidIndelLocusInfo& ii, GermlineDiploidSiteLocusInfo& si, const ScoringModelManager& model)
+void
+indel_overlapper::
+modify_overlapping_site(const GermlineDiploidIndelLocusInfo& ii, GermlineDiploidSiteLocusInfo& si, const ScoringModelManager& model)
 {
-    const pos_t offset(si.pos-ii.pos);
-    assert(offset>=0);
-
     if (ii.filters.test(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict))
     {
         modify_indel_conflict_site(si);
     }
     else
     {
-        modify_indel_overlap_site( ii,
-                                   ii.getSitePloidy(offset),
-                                   si, model);
+        modify_indel_overlap_site(ii, si, model);
     }
 }
 
-// set the CIGAR string:
+
+
 void
 indel_overlapper::
-modify_single_indel_record(GermlineDiploidIndelLocusInfo& ii)
-{
-    ii.getFirstAltAllele().set_hap_cigar();
-    _CM.classify_indel(ii);
-}
-
-
-
-void indel_overlapper::modify_indel_overlap_site(
+modify_indel_overlap_site(
     const GermlineDiploidIndelLocusInfo& ii,
-    const unsigned ploidy,
     GermlineDiploidSiteLocusInfo& si,
     const ScoringModelManager& model)
 {
@@ -415,64 +308,79 @@ void indel_overlapper::modify_indel_overlap_site(
     // if overlapping indel has any filters, mark as site conflict
     // (note that we formerly had the site inherit indel filters, but
     // this interacts poorly with empirical scoring)
+
+    // apply at both locus level and sample level:
     if (! ii.filters.none())
     {
         si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
     }
 
-#ifdef DEBUG_GVCF
-    log_os << "CHIRP: indel_overlap_site smod after: " << si.smod << "\n";
-#endif
-
-    // limit qual and gq values to those of the indel
-    si.dgt.genome.snp_qphred = std::min(si.dgt.genome.snp_qphred, ii.anyVariantAlleleQuality);
-
     const unsigned sampleCount(si.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        auto& sampleInfo(si.getSample(sampleIndex));
-        sampleInfo.gqx = std::min(sampleInfo.gqx, ii.getFirstAltAllele()._dindel.max_gt_qphred);
+        const auto& indelSampleInfo(ii.getSample(sampleIndex));
+        auto& siteSampleInfo(si.getSample(sampleIndex));
+
+        if (! indelSampleInfo.filters.none())
+        {
+            siteSampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
+        }
     }
 
-    // change ploidy:
-    if (ploidy==1)
+    const pos_t offset(si.pos-ii.pos);
+    assert(offset>=0);
+
+    // limit qual and gq values to those of the indel, and modify site ploidy:
+    si.dgt.genome.snp_qphred = std::min(si.dgt.genome.snp_qphred, ii.anyVariantAlleleQuality);
+
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        if (DIGT::is_het(si.allele.max_gt))
+        const auto& indelSampleInfo(ii.getSample(sampleIndex));
+        auto& sampleInfo(si.getSample(sampleIndex));
+        sampleInfo.gqx = std::min(sampleInfo.gqx, indelSampleInfo.gqx);
+
+        const unsigned ploidy(ii.getSitePloidy(sampleIndex, offset));
+
+        // change ploidy:
+        if (ploidy == 1)
         {
-            si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
-            //si.smod.modified_gt=MODIFIED_SITE_GT::UNKNOWN;
-        }
-        else
-        {
-            if (si.allele.max_gt == si.dgt.ref_gt)
+            /// TODO STREL-125 change site GT to per-sample:
+            if (DIGT::is_het(si.allele.max_gt))
             {
-                si.allele.modified_gt=MODIFIED_SITE_GT::ZERO;
+                sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
             }
             else
             {
-                si.allele.modified_gt=MODIFIED_SITE_GT::ONE;
+                if (si.allele.max_gt == si.dgt.ref_gt)
+                {
+                    si.allele.modified_gt = MODIFIED_SITE_GT::ZERO;
+                }
+                else
+                {
+                    si.allele.modified_gt = MODIFIED_SITE_GT::ONE;
+                }
             }
         }
-    }
-    else if (ploidy==0)
-    {
-        if (si.allele.max_gt == si.dgt.ref_gt)
+        else if (ploidy == 0)
         {
-            si.allele.modified_gt=MODIFIED_SITE_GT::UNKNOWN;
-            si.allele.is_zero_ploidy=true;
-            if (si.dgt.is_noploid())
+            if (si.allele.max_gt == si.dgt.ref_gt)
             {
-                si.filters.unset(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
+                si.allele.modified_gt = MODIFIED_SITE_GT::UNKNOWN;
+                si.allele.is_zero_ploidy = true;
+                if (si.dgt.is_noploid())
+                {
+                    sampleInfo.filters.unset(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
+                }
+            }
+            else
+            {
+                sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
             }
         }
-        else
+        else if (ploidy != 2)
         {
-            si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
+            assert(false && "Unexpected ploidy value");
         }
-    }
-    else if (ploidy!=2)
-    {
-        assert(false && "Unexpected ploidy value");
     }
 
     // after all those changes we need to rerun the site filters:
@@ -487,36 +395,11 @@ void indel_overlapper::modify_indel_conflict_site(GermlineDiploidSiteLocusInfo& 
     si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
 }
 
-// figure out the per-site ploidy inside of indel based on each haplotype's match descriptor:
-
-
-
 
 
 void
-indel_overlapper::modify_overlap_indel_record()
-{
-#ifdef DEBUG_GVCF
-    log_os << "CHIRP: " << __FUNCTION__ << " START\n";
-#endif
-
-    // can only handle simple 2-indel overlaps right now:
-    assert(_indel_buffer.size()==2);
-
-    // TODO: hackey
-    for (auto& ii : _indel_buffer)
-        ii->_is_overlap = true;
-
-    _CM.classify_indels(_indel_buffer);
-
-    _indel_buffer[0]->add_overlap(_ref, *_indel_buffer[1]);
-}
-
-
-
-// set the CIGAR string:
-void
-indel_overlapper::modify_conflict_indel_record()
+indel_overlapper::
+modify_conflict_indel_record()
 {
 #ifdef DEBUG_GVCF
     log_os << "CHIRP: " << __FUNCTION__ << " START\n";
@@ -526,11 +409,7 @@ indel_overlapper::modify_conflict_indel_record()
 
     for (auto& ii : _indel_buffer)
     {
-        ii->getFirstAltAllele().set_hap_cigar();
-
         ii->filters.set(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
-
-        _CM.classify_indel(*ii);
     }
 }
 

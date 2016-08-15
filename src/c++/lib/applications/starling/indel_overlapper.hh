@@ -53,15 +53,15 @@ private:
 
     static void modify_indel_conflict_site(GermlineDiploidSiteLocusInfo& si);
     static void modify_indel_overlap_site(const GermlineDiploidIndelLocusInfo& ii,
-                                          const unsigned ploidy,
                                           GermlineDiploidSiteLocusInfo& si,
                                           const ScoringModelManager& model);
 
     void process_overlaps();
     void process_overlaps_impl();
     void modify_single_indel_record(GermlineDiploidIndelLocusInfo& ii);
+
+
     void modify_conflict_indel_record();
-    void modify_overlap_indel_record();
 
     void dump(std::ostream& os) const;
 
