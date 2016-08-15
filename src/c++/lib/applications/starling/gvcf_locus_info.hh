@@ -523,6 +523,13 @@ struct GermlineIndelLocusInfo : public LocusInfo
 
     virtual ~GermlineIndelLocusInfo() {}
 
+    const known_pos_range2&
+    range() const
+    {
+        assert(getAltAlleleCount() > 0);
+        return _range;
+    }
+
     pos_t
     end() const
     {

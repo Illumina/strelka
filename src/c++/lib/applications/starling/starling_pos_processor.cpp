@@ -646,15 +646,45 @@ hackDiplotypeCallToCopyNumberCalls(
             getAlleleSampleReportInfo(opt, dopt, indelKey, indelSampleData, basecallBuffer,
                                       is_tier2_pass, is_use_alt_indel, indelSampleInfo.reportInfo);
 
-#if 0
             // set sitePloidy:
+            const auto& range(ii->range());
+
+            auto& sitePloidy(indelSampleInfo.sitePloidy);
+            sitePloidy.resize(range.size());
+
+            auto updateSitePloidyForAlleleIndex = [&](const uint8_t alleleIndex)
+            {
+                if (alleleIndex == 0) return;
+
+                const IndelKey& indelKey2(ii->getIndelAlleles()[alleleIndex - 1].indelKey);
+
+                pos_t leadingOffset(indelKey2.pos - range.begin_pos());
+                pos_t trailingOffset(indelKey2.right_pos() - range.begin_pos());
+                for (pos_t locusOffset(leadingOffset); locusOffset < trailingOffset; ++locusOffset)
+                {
+                    sitePloidy[locusOffset] -= 1;
+                }
+            };
+
+            std::fill(sitePloidy.begin(), sitePloidy.end(), callerPloidy);
             if (callerPloidy==2)
             {
-                uint8_t allele0Index,allele1Index;
-                VCFUTIL::                sampleInfo.maxGenotypeIndexPolymorphic
+                uint8_t allele0Index, allele1Index;
+                VCFUTIL::getAlleleIndices(sampleInfo.maxGenotypeIndexPolymorphic, allele0Index, allele1Index);
+                updateSitePloidyForAlleleIndex(allele0Index);
+                updateSitePloidyForAlleleIndex(allele1Index);
             }
-            indelSampleInfo.sitePloidy.xxx;
-#endif
+            else if(callerPloidy==1)
+            {
+                uint8_t allele0Index;
+                VCFUTIL::getAlleleIndices(sampleInfo.maxGenotypeIndexPolymorphic, allele0Index);
+                updateSitePloidyForAlleleIndex(allele0Index);
+            }
+            else
+            {
+                assert(false);
+            }
+
             ii->addIndelSample(indelSampleInfo);
         }
 
