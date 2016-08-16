@@ -115,7 +115,7 @@ ScoringModelManager::
 checkIsVariantUsableInEVSModel(const GermlineDiploidIndelLocusInfo& ii) const
 {
     // empirical scoring does not handle homref sites
-    if (ii.isNonVariantLocus()) return false;
+    if (not ii.isVariantLocus()) return false;
 
     // and doesn't work on breakpoints...
     return (not ii.isAnyBreakpointAlleles());

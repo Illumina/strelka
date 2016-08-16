@@ -74,7 +74,7 @@ process(std::unique_ptr<GermlineIndelLocusInfo> locus)
 {
     auto ii(downcast<GermlineDiploidIndelLocusInfo>(std::move(locus)));
 
-    const bool isNonVariantLocus(ii->isNonVariantLocus());
+    const bool isNonVariantLocus(not ii->isVariantLocus());
 
     // don't handle homozygous reference calls unless genotyping is forced
     if (isNonVariantLocus and (not ii->isAnyForcedOutputAtLocus())) return;

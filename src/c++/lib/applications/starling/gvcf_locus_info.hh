@@ -471,7 +471,7 @@ struct LocusInfo : public PolymorphicObject
     /// non-forced locus printing criteria
     // (for diploid indels at least)
     bool
-    isNonVariantLocus() const
+    isVariantLocus() const
     {
         for (const auto& sample : _sampleInfo)
         {

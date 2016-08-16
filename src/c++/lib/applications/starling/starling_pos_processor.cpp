@@ -559,7 +559,7 @@ hackDiplotypeCallToCopyNumberCalls(
     /// TODO STREL-125 generalize to multi-sample
     const unsigned sampleCount(1);
 
-    if (not(isForcedOutput or (locusGenotype.maxGenotypeIndex != AG_GENOTYPE::HOMREF)))
+    if (not (isForcedOutput or (locusGenotype.maxGenotypeIndex != AG_GENOTYPE::HOMREF)))
     {
         return false;
     }
