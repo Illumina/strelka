@@ -438,7 +438,15 @@ add_alignment_indels_to_sppr(
                         pos_t read_pos = read_offset + j;
 
                         char base_char = read_seq.get_char(read_pos);
-                        active_region_detector.insertSoftClip(id, ref_pos, base_char);
+
+                        if (ref.get_base(ref_pos) != base_char)
+                        {
+                            active_region_detector.insertSoftClipMismatch(id, ref_pos, base_char);
+                        }
+                        else
+                        {
+                            active_region_detector.insertSoftClipMatch(id, ref_pos);
+                        }
                     }
                 }
             }
