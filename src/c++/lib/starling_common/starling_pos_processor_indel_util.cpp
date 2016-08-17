@@ -428,6 +428,20 @@ add_alignment_indels_to_sppr(
                                         is_pinned_indel);
                 }
             }
+            else if (ps.type == SOFT_CLIP)
+            {
+                if (sppr.is_active_region_detector_enabled() && !isLowMapQuality)
+                {
+                    for (unsigned j(0); j < ps.length; ++j)
+                    {
+                        const pos_t ref_pos(ref_head_pos + static_cast<pos_t>(j));
+                        pos_t read_pos = read_offset + j;
+
+                        char base_char = read_seq.get_char(read_pos);
+                        active_region_detector.insertSoftClip(id, ref_pos, base_char);
+                    }
+                }
+            }
         }
         else if (is_swap_start)
         {

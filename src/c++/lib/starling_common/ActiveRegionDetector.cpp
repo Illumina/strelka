@@ -30,6 +30,12 @@ void ActiveRegionDetector::insertMatch(const align_id_t alignId, const pos_t pos
     addAlignIdToPos(alignId, pos);
 }
 
+void ActiveRegionDetector::insertSoftClip(const align_id_t alignId, const pos_t pos, const char baseChar)
+{
+    setMismatch(alignId, pos, baseChar);
+    addAlignIdToPos(alignId, pos);
+}
+
 void
 ActiveRegionDetector::insertMismatch(const align_id_t alignId, const pos_t pos, const char baseChar)
 {

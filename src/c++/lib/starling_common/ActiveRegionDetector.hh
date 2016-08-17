@@ -99,6 +99,8 @@ public:
     /// \param pos reference position
     void insertMatch(const align_id_t alignId, const pos_t pos);
 
+    void insertSoftClip(const align_id_t alignId, const pos_t pos, const char baseChar);
+
     /// insert mismatch at position pos
     /// \param alignId align id
     /// \param pos reference position
