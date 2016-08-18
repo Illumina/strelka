@@ -179,6 +179,9 @@ process_pos_snp_single_sample(
 {
     try
     {
+        /// TODO rm this legacy option:
+        assert(_opt.gvcf.is_gvcf_output());
+
         if (_opt.is_bsnp_diploid())
         {
             process_pos_snp_single_sample_impl(pos,sample_no);
@@ -204,8 +207,6 @@ process_pos_snp_single_sample_continuous(
     const pos_t pos,
     const unsigned sample_no)
 {
-    assert(_opt.gvcf.is_gvcf_output());
-
     if (sample_no!=0) return;
 
     /// TODO STREL-125 generalize to multisample
@@ -461,10 +462,7 @@ process_pos_snp_single_sample_impl(
     }
 
     //Add site to gvcf
-    if (_opt.gvcf.is_gvcf_output())
-    {
-        _gvcfer->add_site(std::move(si));
-    }
+    _gvcfer->add_site(std::move(si));
 }
 
 
