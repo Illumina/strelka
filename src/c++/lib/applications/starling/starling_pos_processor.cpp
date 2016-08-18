@@ -692,8 +692,9 @@ hackDiplotypeCallToCopyNumberCalls(
                                       is_tier2_pass, is_use_alt_indel, indelSampleInfo.reportInfo);
         }
 
-        ii->addIndelSample(indelSampleInfo);
+        ii->setIndelSampleInfo(sampleIndex, indelSampleInfo);
     }
+
 
     gvcfer.add_indel(std::move(ii));
 
@@ -984,7 +985,7 @@ process_pos_indel_continuous(const pos_t pos)
             GermlineIndelSampleInfo indelSampleInfo;
             getAlleleSampleReportInfo(_opt, _dopt, indelKey, indelSampleData, sif.bc_buff, is_tier2_pass,
                                       is_use_alt_indel, indelSampleInfo.reportInfo);
-            locusInfo->addIndelSample(indelSampleInfo);
+            locusInfo->setIndelSampleInfo(sampleIndex, indelSampleInfo);
 
             if (not isReportableAllele)
             {

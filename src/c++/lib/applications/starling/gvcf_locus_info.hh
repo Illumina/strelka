@@ -412,6 +412,8 @@ private:
     bool _isPloidyConflict = false;
 };
 
+std::ostream& operator<<(std::ostream& os,const LocusSampleInfo& lsi);
+
 
 /// represents a locus in the sense of multiple alleles which interact in some way such that they would be represented in a single VCF record
 struct LocusInfo : public PolymorphicObject
@@ -497,6 +499,8 @@ private:
     unsigned _altAlleleCount = 0;
 };
 
+std::ostream& operator<<(std::ostream& os,const LocusInfo& li);
+
 
 struct GermlineIndelSampleInfo
 {
@@ -510,6 +514,7 @@ struct GermlineIndelSampleInfo
     /// the expected ploidy of sites spanning the indel locus assuming the ML GT is true
     std::vector<uint8_t> sitePloidy;
 };
+
 
 /// represents an indel call at the level of a full VCF record, containing possibly multiple alleles/SimpleGenotypes
 struct GermlineIndelLocusInfo : public LocusInfo
@@ -538,14 +543,16 @@ struct GermlineIndelLocusInfo : public LocusInfo
     }
 
     void
-    addIndelSample(
+    setIndelSampleInfo(
+        const unsigned sampleIndex,
         const GermlineIndelSampleInfo& indelSampleInfo)
     {
         // ensure that no alleles are added once we start adding samples...
         assert(getAltAlleleCount()>0);
         _isLockAlleles = true;
         assert(indelSampleInfo.sitePloidy.size() == _range.size());
-        _indelSampleInfo.push_back(indelSampleInfo);
+        assert(sampleIndex < _indelSampleInfo.size());
+        _indelSampleInfo[sampleIndex] = indelSampleInfo;
     }
 
     const GermlineIndelSampleInfo&
@@ -618,6 +625,19 @@ struct GermlineIndelLocusInfo : public LocusInfo
         return false;
     }
 
+    /// run all internal consistency checks
+    void
+    assertValidity() const
+    {
+        const unsigned sampleCount(getSampleCount());
+        assert (sampleCount == _indelSampleInfo.size());
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        {
+            const GermlineIndelSampleInfo& indelSampleInfo(getIndelSample(sampleIndex));
+            assert(_range.size() == indelSampleInfo.sitePloidy.size());
+        }
+    }
+
 private:
 
     void
@@ -632,6 +652,9 @@ private:
     /// to sanity check input, locus must be specified by adding all alleles, and then adding all sample information, this bool enforces the allele->sample ordering
     bool _isLockAlleles = false;
 };
+
+
+std::ostream& operator<<(std::ostream& os,const GermlineIndelLocusInfo& ii);
 
 
 /// specify that calling model is diploid

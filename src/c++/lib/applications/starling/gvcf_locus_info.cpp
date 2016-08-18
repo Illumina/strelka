@@ -90,6 +90,44 @@ writeGenotype(
 
 
 
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const LocusSampleInfo& lsi)
+{
+    os << "LocusSampleInfo ploidy: " << lsi.getPloidy()
+       << " maxGt: " << lsi.maxGenotypeIndexPolymorphic
+       << " gq: " << lsi.genotypeQualityPolymorphic
+       << " gqs: " << lsi.gqx
+       << " filters: ";
+    lsi.filters.write(os);
+    os << "\n";
+    os << "supportCounts: " << lsi.supportCounts;
+    return os;
+}
+
+
+
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const LocusInfo& li)
+{
+    os << "LocusInfo pos: " << li.pos
+       << " qual: " << li.anyVariantAlleleQuality;
+
+    const unsigned sampleCount(li.getSampleCount());
+    os << " sampleCount: " << sampleCount << "\n";
+
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+    {
+        os << "SAMPLE" << sampleIndex << " " << li.getSample(sampleIndex);
+    }
+    return os;
+}
+
+
+
 void
 GermlineIndelLocusInfo::
 getOffsetError(
@@ -100,6 +138,37 @@ getOffsetError(
     std::ostringstream oss;
     oss << "ERROR: indel locus site offset '" << offset << "' exceeds exceeds locus size '" << _range.size() << "'\n";
     BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+}
+
+
+
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const GermlineIndelLocusInfo& ii)
+{
+    ii.assertValidity();
+
+    os << "GermlineIndelLocusInfo ";
+    os << static_cast<const LocusInfo&>(ii);
+
+    const auto& altAlleles(ii.getIndelAlleles());
+    os << "AltAlleleCount: " << altAlleles.size() << "\n";
+    for (unsigned altAlleleIndex(0); altAlleleIndex<altAlleles.size(); ++altAlleleIndex)
+    {
+        os << "AltAllele" << altAlleleIndex << " " << altAlleles[altAlleleIndex].indelKey;
+    }
+    os << "range: " << ii.range() << "\n";
+    const unsigned sampleCount(ii.getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+    {
+        const auto& indelSampleInfo(ii.getIndelSample(sampleIndex));
+        os << "IndelSample" << sampleIndex << "\n";
+        os << indelSampleInfo.reportInfo << "\n";
+        os << "sp size: " << indelSampleInfo.sitePloidy.size() << "\n";
+    }
+
+    return os;
 }
 
 
