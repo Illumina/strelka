@@ -25,14 +25,15 @@
 #pragma once
 
 #include "gvcfAlleleInfo.hh"
+#include "gvcf_options.hh"
 #include "germlineVariantEmpiricalScoringFeatures.hh"
 #include "ploidyUtil.hh"
 #include "blt_common/position_snp_call_pprob_digt.hh"
 #include "blt_util/align_path.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/PolymorphicObject.hh"
+#include "htsapi/vcf_util.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
-#include "gvcf_options.hh"
 #include "starling_common/LocusSupportingReadStats.hh"
 
 #include <bitset>
@@ -155,97 +156,6 @@ private:
 };
 
 
-struct VCFUTIL
-{
-    /// allele to genotype functions
-    ///
-    /// ploidy is implied by the number of arguments
-    static
-    unsigned
-    getGenotypeIndex(
-        const uint8_t allele0Index)
-    {
-        return allele0Index;
-    }
-
-    static
-    unsigned
-    getGenotypeIndex(
-        const uint8_t allele0Index,
-        const uint8_t allele1Index)
-    {
-        assert(allele0Index<=allele1Index);
-        return allele0Index+(allele1Index*(allele1Index+1)/2);
-    }
-
-    /// genotype to allele functions
-    ///
-    /// ploidy is implied by the number of arguments
-    static
-    void
-    getAlleleIndices(
-        const unsigned genotypeIndex,
-        uint8_t& allele0Index)
-    {
-        allele0Index = genotypeIndex;
-    }
-
-    static
-    void
-    getAlleleIndices(
-        const unsigned genotypeIndex,
-        uint8_t& allele0Index,
-        uint8_t& allele1Index)
-    {
-        /// from quadratic inversion of genotype index function:
-        allele1Index = std::floor(std::sqrt(1.0+8.0*genotypeIndex) / 2.0);
-        allele0Index = genotypeIndex - (allele1Index*(allele1Index+1)/2);
-        assert(allele0Index<=allele1Index);
-    }
-
-    static
-    void
-    writeGenotype(
-        const unsigned ploidy,
-        const unsigned genotypeIndex,
-        std::ostream& os)
-    {
-        if (ploidy == 1)
-        {
-            uint8_t allele0Index;
-            getAlleleIndices(genotypeIndex, allele0Index);
-            writeGenotype(allele0Index, os);
-        }
-        else if (ploidy == 2)
-        {
-            uint8_t allele0Index;
-            uint8_t allele1Index;
-            getAlleleIndices(genotypeIndex, allele0Index, allele1Index);
-            writeGenotype(allele0Index, allele1Index, os);
-        }
-        else
-        {
-            assert(false and "Unexpected ploidy value");
-        }
-    }
-
-
-    static
-    void
-    writeGenotype(
-        const uint8_t allele0Index,
-        std::ostream& os);
-
-    static
-    void
-    writeGenotype(
-        const uint8_t allele0Index,
-        const uint8_t allele1Index,
-        std::ostream& os);
-
-};
-
-
 ///
 ///
 /// store data indexed by genotype, as ordered by the VCF standard
@@ -331,7 +241,7 @@ private:
         const uint8_t allele0Index) const
     {
         assert(_ploidy==1);
-        return VCFUTIL::getGenotypeIndex(allele0Index);
+        return VcfGenotypeUtil::getGenotypeIndex(allele0Index);
     }
 
     unsigned
@@ -340,7 +250,7 @@ private:
         const uint8_t allele1Index) const
     {
         assert(_ploidy==2);
-        return VCFUTIL::getGenotypeIndex(allele0Index,allele1Index);
+        return VcfGenotypeUtil::getGenotypeIndex(allele0Index,allele1Index);
     }
 
     int _ploidy = 0;

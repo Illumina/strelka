@@ -25,7 +25,11 @@
 
 #pragma once
 
+#include <cassert>
+#include <cmath>
+#include <cstdint>
 #include <cstring>
+
 #include <iosfwd>
 #include <vector>
 
@@ -115,6 +119,103 @@ get_format_string_nocopy(const char* const* word,
 
 // returns -1 for '.' alleles
 void
-parse_gt(const char* gt,
-         std::vector<int>& gti,
-         const bool is_allow_bad_end_char=false);
+parse_gt(
+    const char* gt,
+     std::vector<int>& gti,
+     const bool is_allow_bad_end_char=false);
+
+
+struct VcfGenotypeUtil
+{
+    /// allele to genotype functions
+    ///
+    /// ploidy is implied by the number of arguments
+    static
+    unsigned
+    getGenotypeIndex(
+        const uint8_t allele0Index)
+    {
+        return allele0Index;
+    }
+
+    static
+    unsigned
+    getGenotypeIndex(
+        const uint8_t allele0Index,
+        const uint8_t allele1Index)
+    {
+        assert(allele0Index<=allele1Index);
+        return allele0Index+(allele1Index*(allele1Index+1)/2);
+    }
+
+    /// genotype to allele functions
+    ///
+    /// ploidy is implied by the number of arguments
+    static
+    void
+    getAlleleIndices(
+        const unsigned genotypeIndex,
+        uint8_t& allele0Index)
+    {
+        allele0Index = genotypeIndex;
+    }
+
+    static
+    void
+    getAlleleIndices(
+        const unsigned genotypeIndex,
+        uint8_t& allele0Index,
+        uint8_t& allele1Index)
+    {
+        // from quadratic inversion of genotype index function
+        // 1. Function to invert:
+        //     g = (a1^2)/2 + a1/2 + a0
+        // 2. Solve for a1 >= 0 when a0 == 0
+        //     g = (a1^2)/2 + a1/2 + 0
+        //     0 = a1^2 + a1 - 2g
+        //     a1 = (-1+sqrt(1+4*2G) )/ 2
+        //
+        allele1Index = std::floor((std::sqrt(1.0+8.0*genotypeIndex) - 1.0) / 2.0);
+        allele0Index = genotypeIndex - allele1Index*(allele1Index+1)/2;
+        assert(allele0Index<=allele1Index);
+    }
+
+    static
+    void
+    writeGenotype(
+        const unsigned ploidy,
+        const unsigned genotypeIndex,
+        std::ostream& os)
+    {
+        if (ploidy == 1)
+        {
+            uint8_t allele0Index;
+            getAlleleIndices(genotypeIndex, allele0Index);
+            writeGenotype(allele0Index, os);
+        }
+        else if (ploidy == 2)
+        {
+            uint8_t allele0Index;
+            uint8_t allele1Index;
+            getAlleleIndices(genotypeIndex, allele0Index, allele1Index);
+            writeGenotype(allele0Index, allele1Index, os);
+        }
+        else
+        {
+            assert(false and "Unexpected ploidy value");
+        }
+    }
+
+    static
+    void
+    writeGenotype(
+        const uint8_t allele0Index,
+        std::ostream& os);
+
+    static
+    void
+    writeGenotype(
+        const uint8_t allele0Index,
+        const uint8_t allele1Index,
+        std::ostream& os);
+};

@@ -196,8 +196,8 @@ add_indel_call(
                                                     (unsigned) opt.min_qscore, 40);
 
         // use diploid gt codes as a convenient way to summarize the continuous variant calls:
-        static const unsigned hetGtIndex(VCFUTIL::getGenotypeIndex(0,1));
-        static const unsigned homGtIndex(VCFUTIL::getGenotypeIndex(1,1));
+        static const unsigned hetGtIndex(VcfGenotypeUtil::getGenotypeIndex(0,1));
+        static const unsigned homGtIndex(VcfGenotypeUtil::getGenotypeIndex(1,1));
 
         const bool isHetLike(sampleIndelInfo.alleleFrequency() < (1 - opt.min_het_vf));
 

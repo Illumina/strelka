@@ -852,7 +852,7 @@ write_indel_record(
 
             os << '\t';
 
-            VCFUTIL::writeGenotype(sampleInfo.getPloidy().getPloidy(),sampleInfo.max_gt(),os);
+            VcfGenotypeUtil::writeGenotype(sampleInfo.getPloidy().getPloidy(),sampleInfo.max_gt(),os);
             os << ':' << sampleInfo.genotypeQualityPolymorphic;
 
             os << ':' << ((ii.empiricalVariantScore >= 0) ? ii.empiricalVariantScore : sampleInfo.gqx);
@@ -933,7 +933,7 @@ write_indel_record(
             //SAMPLE
             // print GTs using a fake ploidy of 2, real ploidy is continuous...
             static const int printGTPloidy(2);
-            VCFUTIL::writeGenotype(printGTPloidy,sampleInfo.max_gt(),os);
+            VcfGenotypeUtil::writeGenotype(printGTPloidy,sampleInfo.max_gt(),os);
             os << ':' << sampleInfo.genotypeQualityPolymorphic;
 
             os << ':' << sampleInfo.gqx;

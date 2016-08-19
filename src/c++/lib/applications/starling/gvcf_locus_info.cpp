@@ -67,29 +67,6 @@ write(std::ostream& os) const
 
 
 
-void
-VCFUTIL::
-writeGenotype(
-    const uint8_t allele0Index,
-    std::ostream& os)
-{
-    os << static_cast<int>(allele0Index);
-}
-
-
-
-void
-VCFUTIL::
-writeGenotype(
-    const uint8_t allele0Index,
-    const uint8_t allele1Index,
-    std::ostream& os)
-{
-    os << static_cast<int>(allele0Index) << '/' << static_cast<int>(allele1Index);
-}
-
-
-
 std::ostream&
 operator<<(
     std::ostream& os,
@@ -392,7 +369,7 @@ computeEmpiricalScoringFeatures(
 
     if (isDiploid)
     {
-        VCFUTIL::getAlleleIndices(firstSampleInfo.max_gt(), allele0Index, allele1Index);
+        VcfGenotypeUtil::getAlleleIndices(firstSampleInfo.max_gt(), allele0Index, allele1Index);
     }
 
     // cdf of binomial prob of seeing no more than the number of 'allele A' reads out of A reads + B reads, given p=0.5

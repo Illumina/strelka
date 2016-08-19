@@ -499,11 +499,11 @@ translateOldToNewGenotypeIndex(
         switch (static_cast<AG_GENOTYPE::index_t>(oldGenotype))
         {
         case HOMREF:
-            return VCFUTIL::getGenotypeIndex(0);
+            return VcfGenotypeUtil::getGenotypeIndex(0);
         case HOM0:
-            return VCFUTIL::getGenotypeIndex(1);
+            return VcfGenotypeUtil::getGenotypeIndex(1);
         case HOM1:
-            return VCFUTIL::getGenotypeIndex(2);
+            return VcfGenotypeUtil::getGenotypeIndex(2);
         default:
             assert(false and "Unexpected genotype");
         }
@@ -513,17 +513,17 @@ translateOldToNewGenotypeIndex(
         switch (static_cast<AG_GENOTYPE::index_t>(oldGenotype))
         {
         case HOMREF:
-            return VCFUTIL::getGenotypeIndex(0,0);
+            return VcfGenotypeUtil::getGenotypeIndex(0,0);
         case HOM0:
-            return VCFUTIL::getGenotypeIndex(1,1);
+            return VcfGenotypeUtil::getGenotypeIndex(1,1);
         case HOM1:
-            return VCFUTIL::getGenotypeIndex(2,1);
+            return VcfGenotypeUtil::getGenotypeIndex(2,2);
         case HET0:
-            return VCFUTIL::getGenotypeIndex(0,1);
+            return VcfGenotypeUtil::getGenotypeIndex(0,1);
         case HET1:
-            return VCFUTIL::getGenotypeIndex(0,2);
+            return VcfGenotypeUtil::getGenotypeIndex(0,2);
         case HET01:
-            return VCFUTIL::getGenotypeIndex(1,2);
+            return VcfGenotypeUtil::getGenotypeIndex(1,2);
         default:
             assert(false and "Unexpected genotype");
         }
@@ -664,14 +664,14 @@ hackDiplotypeCallToCopyNumberCalls(
         if (callerPloidy == 2)
         {
             uint8_t allele0Index, allele1Index;
-            VCFUTIL::getAlleleIndices(sampleInfo.maxGenotypeIndexPolymorphic, allele0Index, allele1Index);
+            VcfGenotypeUtil::getAlleleIndices(sampleInfo.maxGenotypeIndexPolymorphic, allele0Index, allele1Index);
             updateSitePloidyForAlleleIndex(allele0Index);
             updateSitePloidyForAlleleIndex(allele1Index);
         }
         else if (callerPloidy == 1)
         {
             uint8_t allele0Index;
-            VCFUTIL::getAlleleIndices(sampleInfo.maxGenotypeIndexPolymorphic, allele0Index);
+            VcfGenotypeUtil::getAlleleIndices(sampleInfo.maxGenotypeIndexPolymorphic, allele0Index);
             updateSitePloidyForAlleleIndex(allele0Index);
         }
         else
