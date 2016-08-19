@@ -408,14 +408,14 @@ write_site_record(
 #endif
 
             // EVS features may not be computed for certain records, so check first:
-            if (! si.EVSFeatures.empty())
+            if (! si.evsFeatures.empty())
             {
                 const StreamScoper ss(os);
                 os << std::setprecision(5);
                 os << ";EVSF=";
-                si.EVSFeatures.writeValues(os);
+                si.evsFeatures.writeValues(os);
                 os << ",";
-                si.EVSDevelopmentFeatures.writeValues(os);
+                si.evsDevelopmentFeatures.writeValues(os);
             }
         }
 
@@ -465,14 +465,7 @@ write_site_record(
         }
         if (si.allele.is_gqx())
         {
-            if (si.empiricalVariantScore >= 0)
-            {
-                os << si.empiricalVariantScore;
-            }
-            else
-            {
-                os << sampleInfo.gqx;
-            }
+            os << ((sampleInfo.empiricalVariantScore >= 0) ? sampleInfo.empiricalVariantScore : sampleInfo.gqx);
         }
         else
         {
@@ -826,14 +819,14 @@ write_indel_record(
         if (_opt.isReportEVSFeatures)
         {
             // EVS features may not be computed for certain records, so check first:
-            if (! iiDiploid.features.empty())
+            if (! iiDiploid.evsFeatures.empty())
             {
                 const StreamScoper ss(os);
                 os << std::setprecision(5);
                 os << ";EVSF=";
-                iiDiploid.features.writeValues(os);
+                iiDiploid.evsFeatures.writeValues(os);
                 os << ",";
-                iiDiploid.developmentFeatures.writeValues(os);
+                iiDiploid.evsDevelopmentFeatures.writeValues(os);
             }
         }
 
@@ -855,7 +848,7 @@ write_indel_record(
             VcfGenotypeUtil::writeGenotype(sampleInfo.getPloidy().getPloidy(),sampleInfo.max_gt(),os);
             os << ':' << sampleInfo.genotypeQualityPolymorphic;
 
-            os << ':' << ((ii.empiricalVariantScore >= 0) ? ii.empiricalVariantScore : sampleInfo.gqx);
+            os << ':' << ((sampleInfo.empiricalVariantScore >= 0) ? sampleInfo.empiricalVariantScore : sampleInfo.gqx);
 
             os << ':' << sampleReportInfo.tier1Depth;
 

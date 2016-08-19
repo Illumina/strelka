@@ -270,8 +270,10 @@ struct LocusSampleInfo
         genotypeQualityPolymorphic = 0;
         gqx = 0;
         maxGenotypeIndexPolymorphic = 0;
+        empiricalVariantScore = -1;
         genotypePhredLoghood.clear();
         filters.clear();
+        supportCounts.clear();
         _ploidy.reset();
         _isPloidyConflict = false;
     }
@@ -306,17 +308,39 @@ struct LocusSampleInfo
         return maxGenotypeIndexPolymorphic;
     }
 
+    /// non-forced sample printing criteria
+    /// (for indels at least)
+    bool
+    isVariant() const
+    {
+        return (max_gt() != 0);
+    }
 
+    //--------------------------------------------
+    // data
+
+    /// VCF GQ
     int genotypeQualityPolymorphic=0;
+
+    /// VCF GQX
     int gqx=0;
+
+    /// VCF GT
     unsigned maxGenotypeIndexPolymorphic=0;
 
-    GermlineFilterKeeper filters; ///< only for sample-specific filters
+    /// likelihoods for all possible genotypes, defined as a function of ploidy and altAllele count
+    /// used to write VCF PL vals
+    GenotypeLikelihoods genotypePhredLoghood;
 
+    /// The empirically calibrated quality-score of the sample genotype, if -1 no locus EVS is available
+    int empiricalVariantScore = -1;
+
+    /// only for sample-specific filters
+    GermlineFilterKeeper filters;
+
+    /// VCF AD/ADF/ADR counts
     LocusSupportingReadStats supportCounts;
 
-    /// likelihoods for all possible genotypes, defined as a function of ploidy and altAllele count
-    GenotypeLikelihoods genotypePhredLoghood;
 private:
     SamplePloidyState _ploidy;
     bool _isPloidyConflict = false;
@@ -341,7 +365,6 @@ struct LocusInfo : public PolymorphicObject
     {
         pos = 0;
         anyVariantAlleleQuality = 0;
-        empiricalVariantScore = -1;
         filters.clear();
         for (auto& sample : _sampleInfo)
         {
@@ -387,7 +410,7 @@ struct LocusInfo : public PolymorphicObject
     {
         for (const auto& sample : _sampleInfo)
         {
-            if (sample.max_gt() != 0) return true;
+            if (sample.isVariant()) return true;
         }
         return false;
     }
@@ -397,9 +420,6 @@ struct LocusInfo : public PolymorphicObject
 
     /// prob that any of the ALTs exist in any of the samples (VCF calls this QUAL)
     int anyVariantAlleleQuality = 0;
-
-    /// The empirically calibrated quality-score of the locus, if -1 no locus EVS is available
-    int empiricalVariantScore = -1;
 
     /// All locus-level filters
     GermlineFilterKeeper filters;
@@ -563,7 +583,6 @@ private:
     bool _isLockAlleles = false;
 };
 
-
 std::ostream& operator<<(std::ostream& os,const GermlineIndelLocusInfo& ii);
 
 
@@ -574,23 +593,29 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
         const gvcf_deriv_options& gvcfDerivedOptions,
         const unsigned sampleCount)
         : GermlineIndelLocusInfo(sampleCount)
-        , features(gvcfDerivedOptions.indelFeatureSet)
-        , developmentFeatures(gvcfDerivedOptions.indelDevelopmentFeatureSet)
+        , evsFeatures(gvcfDerivedOptions.indelFeatureSet)
+        , evsDevelopmentFeatures(gvcfDerivedOptions.indelDevelopmentFeatureSet)
     {}
 
+    /// \param allSampleChromDepth expected depth summed over all samples
+    static
     void
     computeEmpiricalScoringFeatures(
+        const GermlineDiploidIndelLocusInfo& locus,
+        const unsigned sampleIndex,
         const bool isRNA,
         const bool isUniformDepthExpected,
         const bool isComputeDevelopmentFeatures,
-        const double chromDepth);
+        const double allSampleChromDepth,
+        VariantScoringFeatureKeeper& features,
+        VariantScoringFeatureKeeper& developmentFeatures);
 
     void
     dump(std::ostream& os) const;
 
     /// production and development features used in the empirical scoring model:
-    VariantScoringFeatureKeeper features;
-    VariantScoringFeatureKeeper developmentFeatures;
+    VariantScoringFeatureKeeper evsFeatures;
+    VariantScoringFeatureKeeper evsDevelopmentFeatures;
 };
 
 
@@ -680,8 +705,8 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         const int used_allele_count_min_qscore,
         const bool is_forced_output = false)
         : GermlineSiteLocusInfo(sampleCount, init_pos, init_ref, good_pi, used_allele_count_min_qscore, is_forced_output),
-          EVSFeatures(gvcfDerivedOptions.snvFeatureSet),
-          EVSDevelopmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
+          evsFeatures(gvcfDerivedOptions.snvFeatureSet),
+          evsDevelopmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
     {}
 
     explicit
@@ -689,8 +714,8 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         const gvcf_deriv_options& gvcfDerivedOptions,
         const unsigned sampleCount)
         : GermlineSiteLocusInfo(sampleCount),
-          EVSFeatures(gvcfDerivedOptions.snvFeatureSet),
-          EVSDevelopmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
+          evsFeatures(gvcfDerivedOptions.snvFeatureSet),
+          evsDevelopmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
     {}
 
     bool is_snp() const override
@@ -716,12 +741,18 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         }
     }
 
+    /// \param allSampleChromDepth expected depth summed over all samples
+    static
     void
     computeEmpiricalScoringFeatures(
+        const GermlineDiploidSiteLocusInfo& locus,
+        const unsigned sampleIndex,
         const bool isRNA,
         const bool isUniformDepthExpected,
         const bool isComputeDevelopmentFeatures,
-        const double chromDepth);
+        const double allSampleChromDepth,
+        VariantScoringFeatureKeeper& features,
+        VariantScoringFeatureKeeper& developmentFeatures);
 
     bool
     is_het() const
@@ -766,8 +797,8 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     void
     clearEVSFeatures()
     {
-        EVSFeatures.clear();
-        EVSDevelopmentFeatures.clear();
+        evsFeatures.clear();
+        evsDevelopmentFeatures.clear();
     }
 
     std::string phased_ref, phased_alt, phased_AD, phased_ADF, phased_ADR;
@@ -785,8 +816,8 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     double rawPos = 0;
 
     /// production and development features used in the empirical scoring model:
-    VariantScoringFeatureKeeper EVSFeatures;
-    VariantScoringFeatureKeeper EVSDevelopmentFeatures;
+    VariantScoringFeatureKeeper evsFeatures;
+    VariantScoringFeatureKeeper evsDevelopmentFeatures;
 
     GermlineDiploidSiteAlleleInfo allele;
 };

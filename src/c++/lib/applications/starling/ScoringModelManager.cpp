@@ -42,6 +42,13 @@ ScoringModelManager(
       _isReportEVSFeatures(opt.isReportEVSFeatures),
       _isRNA(opt.isRNA)
 {
+    if (opt.isReportEVSFeatures)
+    {
+        /// EVS feature output is contrained to the single-sample input case right now:
+        const unsigned sampleCount(opt.alignFileOpt.alignmentFilename.size());
+        assert(1 == sampleCount);
+    }
+
     const SCORING_CALL_TYPE::index_t callType(opt.isRNA ? SCORING_CALL_TYPE::RNA : SCORING_CALL_TYPE::GERMLINE);
 
     if (not opt.snv_scoring_model_filename.empty())
@@ -72,53 +79,59 @@ ScoringModelManager(
 void
 ScoringModelManager::
 classify_site(
-    GermlineDiploidSiteLocusInfo& si) const
+    GermlineDiploidSiteLocusInfo& locus) const
 {
-    if (si.dgt.is_snp && _isReportEVSFeatures)
+    /// locus must have at least one variant
+    /// TODO STREL-125 fix for multi-sample
+    const bool isVariantUsableInEVSModel(locus.dgt.is_snp);
+
+    const unsigned sampleCount(locus.getSampleCount());
+    if (isVariantUsableInEVSModel && _isReportEVSFeatures)
     {
+        assert(sampleCount == 1);
+        const unsigned sampleIndex(0);
+
         // when reporting is turned on, we need to compute EVS features
         // for any usable variant regardless of EVS model type:
         const bool isUniformDepthExpected(_dopt.is_max_depth());
-        si.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, _isReportEVSFeatures, _dopt.norm_depth);
+        GermlineDiploidSiteLocusInfo::computeEmpiricalScoringFeatures(
+            locus, sampleIndex, _isRNA, isUniformDepthExpected, _isReportEVSFeatures,
+            _dopt.norm_depth, locus.evsFeatures, locus.evsDevelopmentFeatures);
     }
 
-    //si.smod.filters.reset(); // make sure no filters have been applied prior
-    if (si.dgt.is_snp && isEVSSiteModel())
+    if (isVariantUsableInEVSModel && isEVSSiteModel())
     {
-        if (si.EVSFeatures.empty())
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
+            /// TODO STREL-125 fix for multi-sample:
+            auto& sampleInfo(locus.getSample(sampleIndex));
+            if (not locus.dgt.is_snp) continue;
+
             static const bool isComputeDevelopmentFeatures(false);
             const bool isUniformDepthExpected(_dopt.is_max_depth());
-            si.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth);
-        }
-        si.empiricalVariantScore = error_prob_to_qphred(_snvScoringModelPtr->scoreVariant(si.EVSFeatures.getAll()));
+            if (not _isReportEVSFeatures)
+            {
+                GermlineDiploidSiteLocusInfo::computeEmpiricalScoringFeatures(
+                    locus, sampleIndex, _isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures,
+                    _dopt.norm_depth, locus.evsFeatures, locus.evsDevelopmentFeatures);
+            }
 
-        static const int maxEmpiricalVariantScore(60);
-        si.empiricalVariantScore = std::min(si.empiricalVariantScore, maxEmpiricalVariantScore);
+            static const int maxEmpiricalVariantScore(60);
+            sampleInfo.empiricalVariantScore = std::min(
+                error_prob_to_qphred(_snvScoringModelPtr->scoreVariant(locus.evsFeatures.getAll())),
+                maxEmpiricalVariantScore);
 
-        if (si.empiricalVariantScore < snvEVSThreshold())
-        {
-            si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+            if (sampleInfo.empiricalVariantScore < snvEVSThreshold())
+            {
+                sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+            }
         }
     }
     else
     {
         // don't know what to do with this site, throw it to the old default filters
-        default_classify_site(si, si.allele);
+        default_classify_site(locus, locus.allele);
     }
-}
-
-
-
-bool
-ScoringModelManager::
-checkIsVariantUsableInEVSModel(const GermlineDiploidIndelLocusInfo& ii) const
-{
-    // empirical scoring does not handle homref sites
-    if (not ii.isVariantLocus()) return false;
-
-    // and doesn't work on breakpoints...
-    return (not ii.isAnyBreakpointAlleles());
 }
 
 
@@ -126,38 +139,55 @@ checkIsVariantUsableInEVSModel(const GermlineDiploidIndelLocusInfo& ii) const
 void
 ScoringModelManager::
 classify_indel_impl(
-    const bool isVariantUsableInEVSModel,
-    GermlineDiploidIndelLocusInfo& ii) const
+    GermlineDiploidIndelLocusInfo& locus) const
 {
+    /// locus must have at least one variant and no breakpoints
+    const bool isVariantUsableInEVSModel(locus.isVariantLocus() and (not locus.isAnyBreakpointAlleles()));
+
+    const unsigned sampleCount(locus.getSampleCount());
     if (isVariantUsableInEVSModel && _isReportEVSFeatures)
     {
+        assert(sampleCount == 1);
+        const unsigned sampleIndex(0);
+
         // when reporting is turned on, we need to compute EVS features
         // for any usable variant regardless of EVS model type:
         const bool isUniformDepthExpected(_dopt.is_max_depth());
-        ii.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, _isReportEVSFeatures, _dopt.norm_depth);
+        GermlineDiploidIndelLocusInfo::computeEmpiricalScoringFeatures(
+            locus, sampleIndex, _isRNA, isUniformDepthExpected,_isReportEVSFeatures,
+            _dopt.norm_depth, locus.evsFeatures, locus.evsDevelopmentFeatures);
     }
 
-    if (isEVSIndelModel() && isVariantUsableInEVSModel)
+    if (isVariantUsableInEVSModel && isEVSIndelModel())
     {
-        if (ii.features.empty())
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
+            auto& sampleInfo(locus.getSample(sampleIndex));
+            if (not sampleInfo.isVariant()) continue;
+
             static const bool isComputeDevelopmentFeatures(false);
             const bool isUniformDepthExpected(_dopt.is_max_depth());
-            ii.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth);
-        }
-        ii.empiricalVariantScore = error_prob_to_qphred(_indelScoringModelPtr->scoreVariant(ii.features.getAll()));
+            if (not _isReportEVSFeatures)
+            {
+                GermlineDiploidIndelLocusInfo::computeEmpiricalScoringFeatures(
+                    locus, sampleIndex, _isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures,
+                    _dopt.norm_depth, locus.evsFeatures, locus.evsDevelopmentFeatures);
+            }
 
-        static const int maxEmpiricalVariantScore(60);
-        ii.empiricalVariantScore = std::min(ii.empiricalVariantScore, maxEmpiricalVariantScore);
+            static const int maxEmpiricalVariantScore(60);
+            sampleInfo.empiricalVariantScore = std::min(
+                error_prob_to_qphred(_indelScoringModelPtr->scoreVariant(locus.evsFeatures.getAll())),
+                maxEmpiricalVariantScore);
 
-        if (ii.empiricalVariantScore < indelEVSThreshold())
-        {
-            ii.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+            if (sampleInfo.empiricalVariantScore < indelEVSThreshold())
+            {
+                sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+            }
         }
     }
     else
     {
-        default_classify_indel(ii);
+        default_classify_indel(locus);
     }
 }
 
@@ -166,30 +196,9 @@ classify_indel_impl(
 void
 ScoringModelManager::
 classify_indel(
-    GermlineDiploidIndelLocusInfo& ii) const
+    GermlineDiploidIndelLocusInfo& locus) const
 {
-    classify_indel_impl(checkIsVariantUsableInEVSModel(ii), ii);
-}
-
-
-
-void
-ScoringModelManager::
-classify_indels(
-    std::vector<std::unique_ptr<GermlineDiploidIndelLocusInfo>>& indels) const
-{
-    bool isVariantUsableInEVSModel = true;
-    for (const auto& indel : indels)
-    {
-        if (! isVariantUsableInEVSModel) break;
-        isVariantUsableInEVSModel = checkIsVariantUsableInEVSModel(*indel);
-    }
-
-    for (auto& indel : indels)
-    {
-        GermlineDiploidIndelLocusInfo& ii(*indel);
-        classify_indel_impl(isVariantUsableInEVSModel, ii);
-    }
+    classify_indel_impl(locus);
 }
 
 
@@ -197,42 +206,42 @@ classify_indels(
 void
 ScoringModelManager::
 default_classify_site(
-    GermlineSiteLocusInfo& si,
+    GermlineSiteLocusInfo& locus,
     const GermlineVariantAlleleInfo& allele) const
 {
     if (_opt.is_min_gqx)
     {
-        const unsigned sampleCount(si.getSampleCount());
+        const unsigned sampleCount(locus.getSampleCount());
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
-            LocusSampleInfo& sampleInfo(si.getSample(sampleIndex));
+            LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
             if (sampleInfo.gqx < _opt.min_gqx) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
         }
     }
     if (_dopt.is_max_depth())
     {
-        if ((si.n_used_calls+si.n_unused_calls) > _dopt.max_depth)
-            si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+        if ((locus.n_used_calls+locus.n_unused_calls) > _dopt.max_depth)
+            locus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
     // high DPFratio filter
     if (_opt.is_max_base_filt)
     {
-        const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
+        const unsigned total_calls(locus.n_used_calls+locus.n_unused_calls);
         if (total_calls>0)
         {
-            const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
-            if (filt>_opt.max_base_filt) si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighBaseFilt);
+            const double filt(static_cast<double>(locus.n_unused_calls)/static_cast<double>(total_calls));
+            if (filt>_opt.max_base_filt) locus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighBaseFilt);
         }
     }
-    if (si.is_snp())
+    if (locus.is_snp())
     {
         if (_opt.is_max_snv_sb)
         {
-            if (allele.strand_bias>_opt.max_snv_sb) si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
+            if (allele.strand_bias>_opt.max_snv_sb) locus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
         }
         if (_opt.is_max_snv_hpol)
         {
-            if (static_cast<int>(si.hpol)>_opt.max_snv_hpol) si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighSNVHPOL);
+            if (static_cast<int>(locus.hpol)>_opt.max_snv_hpol) locus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighSNVHPOL);
         }
     }
 }
@@ -242,26 +251,29 @@ default_classify_site(
 void
 ScoringModelManager::
 default_classify_indel(
-    GermlineIndelLocusInfo& ii) const
+    GermlineIndelLocusInfo& locus) const
 {
+    const unsigned sampleCount(locus.getSampleCount());
     if (_opt.is_min_gqx)
     {
-        const unsigned sampleCount(ii.getSampleCount());
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
-            LocusSampleInfo& sampleInfo(ii.getSample(sampleIndex));
+            LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
             if (sampleInfo.gqx < _opt.min_gqx) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
         }
     }
 
     if (this->_dopt.is_max_depth())
     {
-        /// TODO STREL-125 generalize to multiple samples
-        const auto& firstIndelSampleInfo(ii.getIndelSample(0));
-        const auto& sampleReportInfo(firstIndelSampleInfo.reportInfo);
+        unsigned allSampleLocusDepth(0);
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        {
+            const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
+            allSampleLocusDepth += indelSampleInfo.reportInfo.mapqTracker.count;
+        }
 
-        if (sampleReportInfo.tier1Depth > this->_dopt.max_depth)
-            ii.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+        if (allSampleLocusDepth > this->_dopt.max_depth)
+            locus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
 
     if (_opt.is_max_ref_rep())
@@ -270,7 +282,7 @@ default_classify_indel(
         /// could trigger a filtration of the whole locus b/c of single allele's properties.
         ///
         /// would need unary format to express filtration per allele in a sane way....
-        for (const auto& allele : ii.getIndelAlleles())
+        for (const auto& allele : locus.getIndelAlleles())
         {
             const auto& iri(allele.indelReportInfo);
             if (iri.is_repeat_unit())
@@ -278,7 +290,7 @@ default_classify_indel(
                 if ((iri.repeat_unit.size() <= 2) &&
                     (static_cast<int>(iri.ref_repeat_count) > _opt.max_ref_rep))
                 {
-                    ii.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighRefRep);
+                    locus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighRefRep);
                 }
             }
         }

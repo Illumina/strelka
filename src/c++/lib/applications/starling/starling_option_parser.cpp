@@ -168,7 +168,6 @@ finalize_starling_options(
                 log_os << "Overriding min q_score to: " << min_qscore << " to support noise floor " << opt.noise_floor << "\n";
 #endif
             }
-
         }
         if (opt.noise_floor >= 0.5 || opt.noise_floor <= 0.0)
         {
@@ -178,7 +177,16 @@ finalize_starling_options(
         {
             pinfo.usage("min-het-vf must be in range (0, 0.5)");
         }
+    }
 
+    if (opt.isReportEVSFeatures)
+    {
+        /// EVS feature output is contrained to the single-sample input case right now:
+        const unsigned sampleCount(opt.alignFileOpt.alignmentFilename.size());
+        if (1 != sampleCount)
+        {
+            pinfo.usage("EVS features can only be reported when analyzing a single sample");
+        }
     }
 
     checkOptionalFile(pinfo, opt.snv_scoring_model_filename, "SNV empirical scoring model");

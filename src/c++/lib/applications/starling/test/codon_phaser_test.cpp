@@ -226,7 +226,7 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
         std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         auto& sampleInfo(si->getSample(sampleIndex));
         si->allele.is_covered = si->allele.is_used_covered = true;
-        sampleInfo.genotypeQualityPolymorphic = si->dgt.genome.snp_qphred = si->empiricalVariantScore = 40;
+        sampleInfo.genotypeQualityPolymorphic = si->dgt.genome.snp_qphred = sampleInfo.empiricalVariantScore = 40;
         si->dgt.ref_gt = base_to_id(si->ref);
 
         si->allele.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));

@@ -48,24 +48,20 @@ struct ScoringModelManager
 
     void
     classify_site(
-        GermlineDiploidSiteLocusInfo& si) const;
+        GermlineDiploidSiteLocusInfo& locus) const;
 
     void
     classify_indel(
-        GermlineDiploidIndelLocusInfo& ii) const;
-
-    void
-    classify_indels(
-        std::vector<std::unique_ptr<GermlineDiploidIndelLocusInfo>>& indels) const;
+        GermlineDiploidIndelLocusInfo& locus) const;
 
     /// default rules based site model
     void default_classify_site(
-        GermlineSiteLocusInfo& si,
+        GermlineSiteLocusInfo& locus,
         const GermlineVariantAlleleInfo& allele) const;
 
     /// default rules based indel model
     void default_classify_indel(
-        GermlineIndelLocusInfo& ii) const;
+        GermlineIndelLocusInfo& locus) const;
 
     bool
     isEVSSiteModel() const
@@ -80,12 +76,8 @@ struct ScoringModelManager
     }
 
 private:
-    bool checkIsVariantUsableInEVSModel(const GermlineDiploidIndelLocusInfo& ii) const;
-
     void
-    classify_indel_impl(
-        const bool is_model_usable,
-        GermlineDiploidIndelLocusInfo& ii) const;
+    classify_indel_impl(GermlineDiploidIndelLocusInfo& locus) const;
 
     double
     snvEVSThreshold() const

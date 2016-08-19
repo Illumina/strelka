@@ -158,6 +158,14 @@ struct LocusSupportingReadStats
         return (isFwdStrand ? fwdCounts : revCounts);
     }
 
+    void
+    clear()
+    {
+        fwdCounts.clear();
+        revCounts.clear();
+        tier1Depth = 0;
+    }
+
     SupportingReadCountGroup fwdCounts;
     SupportingReadCountGroup revCounts;
 
