@@ -21,7 +21,7 @@ cat << END > $hook1
 #
 
 # this adds the branch name to the beginning of the commit message
-BRANCH_NAME=\$(git rev-parse --abbrev-ref HEAD)
+BRANCH_NAME=\$(git rev-parse --abbrev-ref HEAD | sed "s/^features-//g")
 FIRST_LINE=\$(head -1 \$1)
 if [ -z \$FIRST_LINE ] ; then
     if [ "X\$BRANCH_NAME" != "Xmaster" ] && [ "X\$BRANCH_NAME" != "Xdevelop" ] ; then
