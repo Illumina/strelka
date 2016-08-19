@@ -59,12 +59,14 @@ getAlleleLikelihoodsFromRead(
 /// ranks the alleles in the input 'alleles' set according
 /// to supporting read evidence in sample 'sampleId'
 ///
-/// \param[in] sampleId index of the sample from which ranking evidence will be drawn
+/// \param[in] sampleIndex index of the sample from which ranking evidence will be drawn
 /// \param[in] alleleGroup unsorted list of input alleles
+/// \param[out] referenceRank rank of the reference allele if it did exist in alleleGroup,
+///                           for instances referenceRank of 0 indicates that reference is the most likely allele
 ///
 void
 rankOrthogonalAllelesInSample(
-    const unsigned sampleId,
+    const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     OrthogonalVariantAlleleCandidateGroup& rankedAlleleGroup,
     unsigned& referenceRank);
@@ -75,9 +77,20 @@ rankOrthogonalAllelesInSample(
 /// the top N (or N-1) non-reference alleles
 void
 selectTopOrthogonalAllelesInSample(
-    const unsigned sampleId,
-    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    const unsigned sampleIndex,
+    const OrthogonalVariantAlleleCandidateGroup& inputAlleleGroup,
     const unsigned selectionSize,
+    OrthogonalVariantAlleleCandidateGroup& topAlleleGroup);
+
+
+/// In each sample, select the top N alleles, N = ploidy. Aggregate these
+/// top alleles over all samples, and use an approximate global ranking based
+/// on the within-sample rankings
+void
+selectTopOrthogonalAllelesInAllSamples(
+    const unsigned sampleCount,
+    const std::vector<unsigned>& callerPloidy,
+    const OrthogonalVariantAlleleCandidateGroup& inputAlleleGroup,
     OrthogonalVariantAlleleCandidateGroup& topAlleleGroup);
 
 
@@ -89,9 +102,9 @@ selectTopOrthogonalAllelesInSample(
 ///
 bool
 addAllelesAtOtherPositions(
+    const unsigned sampleCount,
+    const std::vector<unsigned>& callerPloidy,
     const pos_t pos,
     const pos_t largest_total_indel_ref_span_per_read,
-    const unsigned sampleIndex,
-    const int callerPloidy,
     const IndelBuffer& indelBuffer,
     OrthogonalVariantAlleleCandidateGroup& alleleGroup);

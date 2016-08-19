@@ -60,12 +60,11 @@ private:
     void
     process_pos_variants_impl(const pos_t pos) override
     {
-        process_pos_error_counts(pos,0);
+        process_pos_error_counts(pos);
     }
 
     void process_pos_error_counts(
-        const pos_t pos,
-        const unsigned sampleId);
+        const pos_t pos);
 
     void
     write_counts(const pos_range&) const override {}

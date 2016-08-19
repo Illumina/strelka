@@ -21,6 +21,7 @@
 #include "OrthogonalVariantAlleleCandidateGroupUtil.hh"
 #include "indel_util.hh"
 #include "blt_util/prob_util.hh"
+#include "blt_util/sort_util.hh"
 
 #include <vector>
 
@@ -174,29 +175,9 @@ getAlleleLikelihoodsFromRead(
 
 
 
-template <typename T>
-std::vector<size_t>
-sortIndices(const std::vector<T>& v)
-{
-    // initialize original index locations
-    std::vector<size_t> idx(v.size());
-    for (size_t i = 0; i != idx.size(); ++i) idx[i] = i;
-
-    // sort indexes based on comparing values in v
-    std::sort(idx.begin(), idx.end(),
-              [&v](size_t i1, size_t i2)
-    {
-        return v[i1] > v[i2];
-    });
-
-    return idx;
-}
-
-
-
 void
 rankOrthogonalAllelesInSample(
-    const unsigned sampleId,
+    const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     OrthogonalVariantAlleleCandidateGroup& rankedAlleleGroup,
     unsigned& referenceRank)
@@ -205,7 +186,7 @@ rankOrthogonalAllelesInSample(
     assert(nonrefAlleleCount!=0);
 
     std::set<unsigned> readIds;
-    getAlleleGroupSupportingReadIds(sampleId, alleleGroup, readIds);
+    getAlleleGroupSupportingReadIds(sampleIndex, alleleGroup, readIds);
 
     // count of all haplotypes including reference
     const unsigned fullAlleleCount(nonrefAlleleCount+1);
@@ -215,7 +196,7 @@ rankOrthogonalAllelesInSample(
     for (const auto readId : readIds)
     {
         std::vector<double> lhood(fullAlleleCount);
-        getAlleleLikelihoodsFromRead(sampleId, alleleGroup, readId, lhood);
+        getAlleleLikelihoodsFromRead(sampleIndex, alleleGroup, readId, lhood);
         for (unsigned fullAlleleIndex(0); fullAlleleIndex<fullAlleleCount; fullAlleleIndex++)
         {
             support[fullAlleleIndex] += lhood[fullAlleleIndex];
@@ -242,13 +223,13 @@ rankOrthogonalAllelesInSample(
 
 void
 selectTopOrthogonalAllelesInSample(
-    const unsigned sampleId,
-    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    const unsigned sampleIndex,
+    const OrthogonalVariantAlleleCandidateGroup& inputAlleleGroup,
     const unsigned selectionSize,
     OrthogonalVariantAlleleCandidateGroup& topAlleleGroup)
 {
     unsigned referenceRank(0);
-    rankOrthogonalAllelesInSample(sampleId, alleleGroup, topAlleleGroup, referenceRank);
+    rankOrthogonalAllelesInSample(sampleIndex, inputAlleleGroup, topAlleleGroup, referenceRank);
 
     unsigned topSize(selectionSize);
     if (referenceRank<topSize)
@@ -256,7 +237,7 @@ selectTopOrthogonalAllelesInSample(
         topSize -= 1;
     }
 
-    if (topSize<alleleGroup.size())
+    if (topSize<inputAlleleGroup.size())
     {
         topAlleleGroup.alleles.resize(topSize);
     }
@@ -264,12 +245,74 @@ selectTopOrthogonalAllelesInSample(
 
 
 
+void
+selectTopOrthogonalAllelesInAllSamples(
+    const unsigned sampleCount,
+    const std::vector<unsigned>& callerPloidy,
+    const OrthogonalVariantAlleleCandidateGroup& inputAlleleGroup,
+    OrthogonalVariantAlleleCandidateGroup& topAlleleGroup)
+{
+    assert(sampleCount == callerPloidy.size());
+
+    // this structure is used to create an approximate allele rank over all samples
+    std::map<IndelKey,unsigned> topVariantAlleleKeyScore;
+
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+    {
+        // in each sample, rank and select top N alleles, N=callerPloidy, and accumulate these top alleles
+        // over all samples in topAlleleGroup
+        //
+        const unsigned sampleCallerPloidy(callerPloidy[sampleIndex]);
+        OrthogonalVariantAlleleCandidateGroup topAlleleGroupInSample;
+        assert(callerPloidy[sampleIndex] > 0);
+        selectTopOrthogonalAllelesInSample(sampleIndex, inputAlleleGroup, sampleCallerPloidy,
+                                           topAlleleGroupInSample);
+
+        const unsigned topAllelesInSampleCount(topAlleleGroupInSample.size());
+        for (unsigned alleleIndex(0); alleleIndex < topAllelesInSampleCount; alleleIndex++)
+        {
+            const IndelKey& indelKey(topAlleleGroupInSample.key(alleleIndex));
+            auto indelKeyIter(topVariantAlleleKeyScore.find(indelKey));
+            if (indelKeyIter == topVariantAlleleKeyScore.end())
+            {
+                auto retVal = topVariantAlleleKeyScore.insert(std::make_pair(indelKey,0));
+                indelKeyIter = retVal.first;
+                topAlleleGroup.addVariantAllele(topAlleleGroupInSample.iter(alleleIndex));
+            }
+            indelKeyIter->second += (sampleCallerPloidy-alleleIndex);
+        }
+    }
+
+    // approximately rank topVariantAlleleGroup alleles based on sample rankings
+    if (sampleCount > 1)
+    {
+        std::vector<int> support;
+        const unsigned topAllelesCount(topAlleleGroup.size());
+        for (unsigned alleleIndex(0); alleleIndex < topAllelesCount; alleleIndex++)
+        {
+            const IndelKey& indelKey(topAlleleGroup.key(alleleIndex));
+            const auto indelKeyIter(topVariantAlleleKeyScore.find(indelKey));
+            assert(indelKeyIter != topVariantAlleleKeyScore.end());
+            support.push_back(indelKeyIter->second);
+        }
+
+        const OrthogonalVariantAlleleCandidateGroup tmpCopy(topAlleleGroup);
+        topAlleleGroup.clear();
+        for (const unsigned altAlleleIndex : sortIndices(support))
+        {
+            topAlleleGroup.addVariantAllele(tmpCopy.iter(altAlleleIndex));
+        }
+    }
+}
+
+
+
 bool
 addAllelesAtOtherPositions(
+    const unsigned sampleCount,
+    const std::vector<unsigned>& callerPloidy,
     const pos_t pos,
     const pos_t largest_total_indel_ref_span_per_read,
-    const unsigned sampleIndex,
-    const int callerPloidy,
     const IndelBuffer& indelBuffer,
     OrthogonalVariantAlleleCandidateGroup& alleleGroup)
 {
@@ -282,7 +325,7 @@ addAllelesAtOtherPositions(
 
     // first get the set of candidate alt alleles from positions other than 'pos'
     //
-    std::vector<IndelKey> filteredAltAlleles;
+    OrthogonalVariantAlleleCandidateGroup newAltAlleleGroup;
     {
         const known_pos_range inputAlleleGroupRange(alleleGroup.getReferenceRange());
 
@@ -325,34 +368,81 @@ addAllelesAtOtherPositions(
             }
 
             // made it! add allele to the set we move forward with:
-            filteredAltAlleles.push_back(altAlleleKey);
+            const auto altIter(indelBuffer.getIndelIter(altAlleleKey));
+            newAltAlleleGroup.addVariantAllele(altIter);
         }
     }
 
-    if (filteredAltAlleles.empty()) return isEveryAltOrthogonal;
+    if (newAltAlleleGroup.empty()) return isEveryAltOrthogonal;
 
-    OrthogonalVariantAlleleCandidateGroup altAlleleGroup;
-    for (const auto& altAlleleKey : filteredAltAlleles)
+
+    const unsigned newAltAlleleCount(newAltAlleleGroup.size());
+    if (newAltAlleleCount > 1)
     {
-        const auto altIter(indelBuffer.getIndelIter(altAlleleKey));
-        altAlleleGroup.addVariantAllele(altIter);
-    }
+        // rank new alt alleles according to support level over all samples
+        OrthogonalVariantAlleleCandidateGroup rankedNewAltAlleleGroup;
+        {
+            // this structure is used to create an approximate aggregate allele rank over all samples
+            std::map<IndelKey, unsigned> newAltAlleleKeyScore;
+            for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+            {
+                // rank alt alleles and include from highest to lowest unless interference clique is broken:
+                //
+                /// TODO shouldn't this ranking be done wrt all alleles and not just the new alts?
+                unsigned referenceRank(0);
+                OrthogonalVariantAlleleCandidateGroup rankedNewAltAlleleGroupPerSample;
+                rankOrthogonalAllelesInSample(sampleIndex, newAltAlleleGroup, rankedNewAltAlleleGroupPerSample,
+                                              referenceRank);
 
-    if (altAlleleGroup.size()>1)
-    {
-        // rank alt alleles and include from highest to lowest unless interference clique is broken:
-        unsigned referenceRank(0);
-        OrthogonalVariantAlleleCandidateGroup rankedAltAlleleGroup;
-        rankOrthogonalAllelesInSample(sampleIndex, altAlleleGroup, rankedAltAlleleGroup, referenceRank);
+                unsigned refPenalty(0);
+                for (unsigned alleleIndex(0); alleleIndex < newAltAlleleCount; alleleIndex++)
+                {
+                    const IndelKey& indelKey(rankedNewAltAlleleGroupPerSample.key(alleleIndex));
+                    auto indelKeyIter(newAltAlleleKeyScore.find(indelKey));
+                    if (indelKeyIter == newAltAlleleKeyScore.end())
+                    {
+                        auto retVal = newAltAlleleKeyScore.insert(std::make_pair(indelKey, 0));
+                        indelKeyIter = retVal.first;
+                        rankedNewAltAlleleGroup.addVariantAllele(rankedNewAltAlleleGroupPerSample.iter(alleleIndex));
 
-        altAlleleGroup.clear();
+                    }
+                    if (referenceRank == alleleIndex) refPenalty = 1;
+                    indelKeyIter->second += ((newAltAlleleCount + 1) - (alleleIndex + refPenalty));
+                }
+            }
 
-        for (const auto& rankedAltAlleleIter : rankedAltAlleleGroup.alleles)
+
+            // approximately rank rankedNewAltAlleleGroup alleles based on sample rankings, if sampleCount ==1 this
+            // has already been done
+            if (sampleCount > 1)
+            {
+                std::vector<int> support;
+                const unsigned topAllelesCount(rankedNewAltAlleleGroup.size());
+                for (unsigned alleleIndex(0); alleleIndex < topAllelesCount; alleleIndex++)
+                {
+                    const IndelKey& indelKey(rankedNewAltAlleleGroup.key(alleleIndex));
+                    const auto indelKeyIter(newAltAlleleKeyScore.find(indelKey));
+                    assert(indelKeyIter != newAltAlleleKeyScore.end());
+                    support.push_back(indelKeyIter->second);
+                }
+
+                const OrthogonalVariantAlleleCandidateGroup tmpCopy(rankedNewAltAlleleGroup);
+                rankedNewAltAlleleGroup.clear();
+                for (const unsigned altAlleleIndex : sortIndices(support))
+                {
+                    rankedNewAltAlleleGroup.addVariantAllele(tmpCopy.iter(altAlleleIndex));
+                }
+            }
+        }
+
+        newAltAlleleGroup.clear();
+
+        for (const auto& rankedNewAltAlleleIter : rankedNewAltAlleleGroup.alleles)
         {
             bool isGroupOrthogonal(true);
-            for (const auto& altAlleleIter : altAlleleGroup.alleles)
+            for (const auto& newAltAlleleIter : newAltAlleleGroup.alleles)
             {
-                if (not is_indel_conflict(rankedAltAlleleIter->first, altAlleleIter->first))
+                if (not is_indel_conflict(rankedNewAltAlleleIter->first, newAltAlleleIter->first))
                 {
                     isGroupOrthogonal = false;
                     break;
@@ -360,21 +450,22 @@ addAllelesAtOtherPositions(
             }
             if (isGroupOrthogonal)
             {
-                altAlleleGroup.alleles.push_back(rankedAltAlleleIter);
+                newAltAlleleGroup.alleles.push_back(rankedNewAltAlleleIter);
             }
         }
     }
 
     // put all qualifying alts back together with variants to form an extended allele set:
     OrthogonalVariantAlleleCandidateGroup extendedVariantAlleleGroup(alleleGroup);
-    for (const auto& altAlleleIter : altAlleleGroup.alleles)
+    for (const auto& newAltAlleleIter : newAltAlleleGroup.alleles)
     {
-        extendedVariantAlleleGroup.alleles.push_back(altAlleleIter);
+        extendedVariantAlleleGroup.alleles.push_back(newAltAlleleIter);
     }
 
-    // rerank and reselect top N alleles, N=callerPloidy
+    // rerank and reselect top N alleles, N=callerPloidy per sample, over all samples
     //
-    selectTopOrthogonalAllelesInSample(sampleIndex, extendedVariantAlleleGroup, callerPloidy, alleleGroup);
+    selectTopOrthogonalAllelesInAllSamples(
+        sampleCount, callerPloidy, extendedVariantAlleleGroup, alleleGroup);
 
     return isEveryAltOrthogonal;
 }

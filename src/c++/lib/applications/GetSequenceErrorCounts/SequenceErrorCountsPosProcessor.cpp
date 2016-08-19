@@ -251,15 +251,18 @@ mergeIndelObservations(
 void
 SequenceErrorCountsPosProcessor::
 process_pos_error_counts(
-    const pos_t pos,
-    const unsigned sampleId)
+    const pos_t pos)
 {
-    static const unsigned maxHpolLength(20);
+    const unsigned sampleCount(getSampleCount());
 
-    // note multi-sample status -- can still be called only for one sample
-    // and only for sample 0. working on generalization:
+    // note multi-sample status -- can still be called only for one sample, working on generalization:
     //
-    if (sampleId!=0) return;
+    assert(sampleCount==1);
+    const unsigned sampleIndex(0);
+    sample_info& sif(sample(sampleIndex));
+
+
+    static const unsigned maxHpolLength(20);
 
     const char refBase(_ref.get_base(pos));
 
@@ -267,9 +270,6 @@ process_pos_error_counts(
 
     BaseErrorCounts& baseCounts(_counts.getBaseCounts());
     IndelErrorCounts& indelCounts(_counts.getIndelCounts());
-
-
-    const sample_info& sif(sample(sampleId));
 
     // right now there's only one baseContext, so just set it const here and leave it
     const BaseErrorContext baseContext;
@@ -421,8 +421,16 @@ process_pos_error_counts(
         const bool isForcedOutput(indelData.isForcedOutput);
         if (not isForcedOutput)
         {
-            const IndelSampleData& indelSampleData(indelData.getSampleData(sampleId));
-            const bool isZeroCoverage(indelSampleData.read_path_lnp.empty());
+            bool isZeroCoverage(true);
+            for (unsigned sampleIndex2(0); sampleIndex2 < sampleCount; ++sampleIndex2)
+            {
+                const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex2));
+                if (not indelSampleData.read_path_lnp.empty())
+                {
+                    isZeroCoverage = false;
+                    break;
+                }
+            }
 
             if (isZeroCoverage) continue;
             if (not getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
@@ -445,6 +453,7 @@ process_pos_error_counts(
     // handle the noise accurately as variant density goes up
     //
     const unsigned maxOverlap(4);
+    std::vector<unsigned> callerPloidy = { maxOverlap };
 
 
     if (orthogonalVariantAlleles.size() > maxOverlap) return;
@@ -460,8 +469,8 @@ process_pos_error_counts(
     {
         {
             const bool isEveryAltIncluded = \
-                                            addAllelesAtOtherPositions(pos, get_largest_total_indel_ref_span_per_read(), sampleId,
-                                                                       (maxOverlap + 1), getIndelBuffer(), orthogonalVariantAlleles);
+                addAllelesAtOtherPositions(sampleCount, callerPloidy, pos, get_largest_total_indel_ref_span_per_read(),
+                                           getIndelBuffer(), orthogonalVariantAlleles);
 
             if (not isEveryAltIncluded) return;
 
@@ -470,7 +479,7 @@ process_pos_error_counts(
 
         const unsigned nonrefAlleleCount(orthogonalVariantAlleles.size());
         std::vector<unsigned> support;
-        getOrthogonalHaplotypeSupportCounts(orthogonalVariantAlleles, sampleId, support);
+        getOrthogonalHaplotypeSupportCounts(orthogonalVariantAlleles, sampleIndex, support);
 
         for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<nonrefAlleleCount; ++nonrefAlleleIndex)
         {

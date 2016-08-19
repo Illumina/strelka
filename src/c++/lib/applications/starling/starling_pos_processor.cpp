@@ -25,6 +25,7 @@
 #include "blt_common/position_nonref_2allele_test.hh"
 #include "blt_common/ref_context.hh"
 #include "blt_util/log.hh"
+#include "blt_util/sort_util.hh"
 #include "starling_common/AlleleGroupGenotype.hh"
 #include "starling_common/AlleleReportInfoUtil.hh"
 #include "starling_common/indel_util.hh"
@@ -785,18 +786,9 @@ process_pos_indel_digt(const pos_t pos)
         callerPloidy[sampleIndex] = ((groupLocusPloidy[sampleIndex] == 0) ? 2 : groupLocusPloidy[sampleIndex]);
     }
 
-    //   ************* end of sample generalization progress
-    assert(sampleCount==1);
-    const unsigned sampleIndex(0);
-    sample_info& sif(sample(sampleIndex));
-
-    // add candidate alleles to topVariant group, then order (including reference) according to
-    // read evidence and take the top N allele candidates, N = callerPloidy
-    //
     // track all forced output alleles in a separate group (even if they go into topVariant group)
-    // to ensure that these are output even if not included in the most likely genotype
+    // to ensure that these are output even if not included in the most likely genotype for any sample
     //
-    OrthogonalVariantAlleleCandidateGroup topVariantAlleleGroup;
     OrthogonalVariantAlleleCandidateGroup forcedOutputAlleleGroup;
     {
         const unsigned orthogonalVariantAlleleCount(orthogonalVariantAlleles.size());
@@ -808,19 +800,28 @@ process_pos_indel_digt(const pos_t pos)
                 forcedOutputAlleleGroup.addVariantAllele(orthogonalVariantAlleles.iter(alleleIndex));
             }
         }
-
-        // rank and select top N alleles, N=callerPloidy
-        assert(callerPloidy[sampleIndex]>0);
-        selectTopOrthogonalAllelesInSample(sampleIndex, orthogonalVariantAlleles, callerPloidy[sampleIndex], topVariantAlleleGroup);
     }
 
-    // at this point topVariantAlleleGroup represents the best alleles at the current position, now we
-    // add conflicting alleles at other positions and re-rank, re-select the top alleles again:
+    // rank input alleles to pick the top N, N=ploidy, per sample, and aggregate/rank these
+    // over all samples
+    OrthogonalVariantAlleleCandidateGroup topVariantAlleleGroup;
+    selectTopOrthogonalAllelesInAllSamples(
+        sampleCount, callerPloidy, orthogonalVariantAlleles, topVariantAlleleGroup);
+
+    // At this point topVariantAlleleGroup represents the best alleles which
+    // start at the current position (over all samples). Now we add conflicting
+    // alleles at other positions and re-rank, re-select the top alleles again:
     if (not topVariantAlleleGroup.empty())
     {
-        addAllelesAtOtherPositions(pos, get_largest_total_indel_ref_span_per_read(), sampleIndex,
-                                   callerPloidy[sampleIndex], getIndelBuffer(), topVariantAlleleGroup);
+        addAllelesAtOtherPositions(sampleCount, callerPloidy, pos, get_largest_total_indel_ref_span_per_read(),
+                                   getIndelBuffer(), topVariantAlleleGroup);
     }
+
+    //   ************* end of sample generalization progress
+    assert(sampleCount==1);
+    const unsigned sampleIndex(0);
+    sample_info& sif(sample(sampleIndex));
+
 
     // genotype and report topVariantAlleleGroup
     //
