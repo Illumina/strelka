@@ -958,7 +958,12 @@ score_indels(
             // assemble basic score data:
             //
             // where is the indel in fwd_strand read coordinates wrt the most likely read alignment?
-            /// TODO: this needs to be corrected to account for indels in maxCandAlignment
+            //
+            /// TODO: should this be the most-likely alignment (present setting) or the most likely
+            ///       alignment which contains the indel. If the former setting we need to do something
+            ///       about handling negative positions.
+            ///
+            /// TODO: this needs to be corrected to account for indels (besides the evaluationIndel in maxCandAlignment
             const pos_t rawReadPos(evaluationIndel.pos - maxCandAlignment.al.pos);
             const pos_t readpos(maxCandAlignment.al.is_fwd_strand ?
                                 rawReadPos : (static_cast<pos_t>(read_length) - rawReadPos -1));

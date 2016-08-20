@@ -310,6 +310,8 @@ getAlleleSampleReportInfo(
             if ((! is_tier2_pass) && (! path_lnp.is_tier1_read)) continue;
 
             const ReadPathScores pprob(indel_lnp_to_pprob(dopt,path_lnp,is_tier2_pass,is_use_alt_indel));
+
+            const unsigned usableReadPos(std::max(0,static_cast<int>(path_lnp.read_pos)));
             if       (pprob.ref >= opt.readConfidentSupportThreshold.numval())
             {
                 isri.n_confident_ref_reads++;
@@ -322,7 +324,7 @@ getAlleleSampleReportInfo(
                     ++isri.n_confident_ref_reads_rev;
                 }
 
-                isri.readpos_ranksum.add_observation(true, path_lnp.read_pos);
+                isri.readpos_ranksum.add_observation(true, usableReadPos);
             }
             else if (pprob.indel >= opt.readConfidentSupportThreshold.numval())
             {
@@ -336,7 +338,7 @@ getAlleleSampleReportInfo(
                     ++isri.n_confident_indel_reads_rev;
                 }
 
-                isri.readpos_ranksum.add_observation(false, path_lnp.read_pos);
+                isri.readpos_ranksum.add_observation(false, usableReadPos);
             }
             else
             {
