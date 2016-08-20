@@ -145,6 +145,13 @@ struct GermlineFilterKeeper
         filters |= filterKeeper.filters;
     }
 
+    // bit-wise and over each flag
+    void
+    unionMerge(const GermlineFilterKeeper& filterKeeper)
+    {
+        filters &= filterKeeper.filters;
+    }
+
     void
     clear()
     {

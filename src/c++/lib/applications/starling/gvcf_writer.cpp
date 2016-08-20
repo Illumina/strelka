@@ -293,6 +293,32 @@ print_site_ad(
 
 
 
+/// extend the locus filter set such that any sample filter applied to all samples is added to the locus filters
+static
+GermlineFilterKeeper
+getExtendedLocusFilters(const LocusInfo& locus)
+{
+    GermlineFilterKeeper locusFilters = locus.filters;
+    GermlineFilterKeeper sampleFilterUnion;
+    const unsigned sampleCount(locus.getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+    {
+        const auto& sampleInfo(locus.getSample(sampleIndex));
+        if (sampleIndex == 0)
+        {
+            sampleFilterUnion = sampleInfo.filters;
+        }
+        else
+        {
+            sampleFilterUnion.unionMerge(sampleInfo.filters);
+        }
+    }
+    locusFilters.merge(sampleFilterUnion);
+    return locusFilters;
+}
+
+
+
 static
 void
 print_site_ad_strand(
@@ -362,7 +388,7 @@ write_site_record(
     os << '\t';
 
     // FILTER:
-    si.filters.write(os);
+    getExtendedLocusFilters(si).write(os);
     os << '\t';
 
     // INFO:
@@ -581,7 +607,7 @@ write_site_record(
     os << si.anyVariantAlleleQuality << '\t';
 
     // FILTER:
-    si.filters.write(os);
+    getExtendedLocusFilters(si).write(os);
     os << '\t';
 
     // INFO
@@ -754,7 +780,7 @@ write_indel_record(
     os << ii.anyVariantAlleleQuality << '\t'; //QUAL
 
     // FILTER:
-    ii.filters.write(os);
+    getExtendedLocusFilters(ii).write(os);
     os << '\t';
 
     // INFO
