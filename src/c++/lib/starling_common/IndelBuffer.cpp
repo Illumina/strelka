@@ -116,6 +116,7 @@ addIndelObservation(
     const unsigned sampleId,
     const IndelObservation& obs)
 {
+    assert(_isFinalized);
     assert(obs.key.type != INDEL::NONE);
 
     // if not previously observed
