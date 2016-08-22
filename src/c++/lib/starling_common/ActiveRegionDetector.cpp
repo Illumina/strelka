@@ -30,6 +30,20 @@ void ActiveRegionDetector::insertMatch(const align_id_t alignId, const pos_t pos
     addAlignIdToPos(alignId, pos);
 }
 
+void ActiveRegionDetector::insertSoftClipMatch(const align_id_t alignId, const pos_t pos)
+{
+    // soft clipp doesn't add mismatch count, but the base is used in haplotype generation
+    setMatch(alignId, pos);
+    addAlignIdToPos(alignId, pos);
+}
+
+void ActiveRegionDetector::insertSoftClipMismatch(const align_id_t alignId, const pos_t pos, const char baseChar)
+{
+    // soft clipp doesn't add mismatch count, but the base is used in haplotype generation
+    setMismatch(alignId, pos, baseChar);
+    addAlignIdToPos(alignId, pos);
+}
+
 void
 ActiveRegionDetector::insertMismatch(const align_id_t alignId, const pos_t pos, const char baseChar)
 {
