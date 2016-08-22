@@ -432,20 +432,23 @@ add_alignment_indels_to_sppr(
             {
                 if (sppr.is_active_region_detector_enabled() && !isLowMapQuality)
                 {
+                    pos_t softClipStartPos(ref_head_pos);
+                    if (is_begin_edge)
+                        softClipStartPos -= ps.length;
                     for (unsigned j(0); j < ps.length; ++j)
                     {
-                        const pos_t ref_pos(ref_head_pos + static_cast<pos_t>(j));
-                        pos_t read_pos = read_offset + j;
+                        const pos_t refPos(softClipStartPos + static_cast<pos_t>(j));
+                        pos_t readPos = read_offset + j;
 
-                        char base_char = read_seq.get_char(read_pos);
+                        char base_char = read_seq.get_char(readPos);
 
-                        if (ref.get_base(ref_pos) != base_char)
+                        if (ref.get_base(refPos) != base_char)
                         {
-                            active_region_detector.insertSoftClipMismatch(id, ref_pos, base_char);
+                            active_region_detector.insertSoftClipMismatch(id, refPos, base_char);
                         }
                         else
                         {
-                            active_region_detector.insertSoftClipMatch(id, ref_pos);
+                            active_region_detector.insertSoftClipMatch(id, refPos);
                         }
                     }
                 }
