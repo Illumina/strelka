@@ -218,7 +218,6 @@ getSequenceErrorCountsRun(
             {
                 if (vcfRecord.is_indel())
                 {
-                    // processTrueIndelVariantRecord(opt.max_indel_size, vcfRecord);
                     processTrueIndelVariantRecord(opt.max_indel_size, vcfRecord, sppr);
                 }
             }

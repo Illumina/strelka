@@ -28,11 +28,14 @@
 #include "blt_util/log.hh"
 #include "blt_util/seq_util.hh"
 
+#include "common/Exceptions.hh"
+
 #include <cassert>
 #include <cstdlib>
 #include <sys/stat.h>
 
 #include <iostream>
+#include <sstream>
 #include <set>
 #include <string>
 
@@ -74,9 +77,11 @@ check_bam_bcf_header_compatability(
 vcf_streamer::
 vcf_streamer(
     const char* filename,
-    const char* region) :
+    const char* region,
+    const bool isRequireNormalized) :
     hts_streamer(filename,region),
-    _hdr(nullptr)
+    _hdr(nullptr),
+    _isRequireNormalized(isRequireNormalized)
 {
     //
     // note with the switch to samtools 1.X vcf/bcf still involve predominantly separate
@@ -134,6 +139,17 @@ next(
         }
         if (! _vcfrec.is_valid()) continue;
         if (is_indel_only && (! _vcfrec.is_indel())) continue;
+        if ( _isRequireNormalized)
+        {
+            if (! _vcfrec.is_normalized())
+            {
+                std::ostringstream oss;
+                oss << "ERROR: Input VCF has an unnormalized variant:\n";
+                report_state(oss);
+                oss << "Please normalize variants in this VCF with a tool such as vt, then resubmit\n";
+                BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+            }
+        }
 
         break; // found expected vcf record type
     }

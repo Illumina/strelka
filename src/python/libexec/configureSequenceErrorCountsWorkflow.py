@@ -59,7 +59,8 @@ This script configures the Strelka sequence error counts workflow.
                          "Matching alt alleles in the error counts file will be marked with a known copy number. There is no"
                          "handling of hom ref assertions, whether remaining unlabeled loci are treated as known hom ref is left to the"
                          "downstream estimation model. Note this option does not promote the known variants to candidate or forced GT"
-                         "status, to do so the same VCF file can be resubmitted to the appropriate additional argument.")
+                         "status, to do so the same VCF file can be resubmitted to the appropriate additional argument. "
+                         " Input VCF must be tabixed and normalized.")
         group.add_option("--reportObservedIndels", dest="isReportObservedIndels", action="store_true", default = False,
                          help="Report all observed indels by location in a separate BED file in addition to the"
                          "summary counts")

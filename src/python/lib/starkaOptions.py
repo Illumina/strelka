@@ -53,13 +53,13 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         group.add_option("--indelCandidates", type="string", dest="indelCandidatesList", metavar="FILE", action="append",
                          help="Specify a vcf describing indel candidates. Candidates are always evaluated but only output"
                               " if a variant genotype is likely."
-                              " File must be tabix indexed."
+                              " File must be tabix indexed and normalized."
                               " Option may be specified more than once, multiple inputs will be merged."
                               " SNVs in the indel candidates file will be ignored."
                               " (default: None)")
         group.add_option("--forcedGT", type="string", dest="forcedGTList", metavar="FILE", action="append",
                          help="Specify a vcf describing variants which must be genotyped and output even if a variant genotype is unlikely."
-                              " File must be tabix indexed."
+                              " File must be tabix indexed and normalized."
                               " Option may be specified more than once, multiple inputs will be merged."
                               " Note that for SNVs, a site will be forced (or for gVCF, excluded from block compression), but the ALT value is ignored."
                               " (default: None)")
