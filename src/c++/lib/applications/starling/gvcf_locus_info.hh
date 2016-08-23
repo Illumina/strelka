@@ -30,6 +30,7 @@
 #include "blt_util/math_util.hh"
 #include "blt_util/PolymorphicObject.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
+#include "gvcf_options.hh"
 
 #include <bitset>
 #include <iosfwd>
@@ -178,6 +179,7 @@ std::ostream& operator<<(std::ostream& os,const GermlineVariantSimpleGenotypeInf
 struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInfo
 {
     GermlineIndelSimpleGenotypeInfo(
+        const gvcf_deriv_options& gvcfDerivedOptions,
         const IndelKey& indelKey,
         const IndelData& indelData,
         const starling_indel_report_info indelReportInfo,
@@ -186,6 +188,8 @@ struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInf
         , _indelData(indelData)
         , _indelReportInfo(indelReportInfo)
         , _indelSampleReportInfo(indelSampleReportInfo)
+        , features(gvcfDerivedOptions.indelFeatureSet)
+        , developmentFeatures(gvcfDerivedOptions.indelDevelopmentFeatureSet)
     {}
 
     void
@@ -210,8 +214,8 @@ struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInf
     ALIGNPATH::path_t cigar;
 
     /// production and development features used in the empirical scoring model:
-    VariantScoringFeatureKeeper<GERMLINE_INDEL_SCORING_FEATURES> features;
-    VariantScoringFeatureKeeper<GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES> developmentFeatures;
+    VariantScoringFeatureKeeper features;
+    VariantScoringFeatureKeeper developmentFeatures;
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineIndelSimpleGenotypeInfo& shi);
@@ -221,17 +225,19 @@ std::ostream& operator<<(std::ostream& os,const GermlineIndelSimpleGenotypeInfo&
 struct GermlineDiploidIndelSimpleGenotypeInfo : public GermlineIndelSimpleGenotypeInfo
 {
     GermlineDiploidIndelSimpleGenotypeInfo(
+        const gvcf_deriv_options& gvcfDerivedOptions,
         const IndelKey& indelKey,
         const IndelData& indelData,
         const starling_indel_report_info& indelReportInfo,
         const starling_indel_sample_report_info& indelSampleReportInfo,
         const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
-        : GermlineIndelSimpleGenotypeInfo(indelKey, indelData, indelReportInfo, indelSampleReportInfo)
+        : GermlineIndelSimpleGenotypeInfo(gvcfDerivedOptions, indelKey, indelData, indelReportInfo, indelSampleReportInfo)
         , _dindel(dindel)
     {}
 
     void
     computeEmpiricalScoringFeatures(
+        const bool isRNA,
         const bool isUniformDepthExpected,
         const bool isComputeDevelopmentFeatures,
         const double chromDepth,
@@ -283,7 +289,11 @@ get_label(const unsigned idx)
 /// restrict to the case where variant is site/SNV and calling model is diploid
 struct GermlineDiploidSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInfo
 {
-    GermlineDiploidSiteSimpleGenotypeInfo()
+    explicit
+    GermlineDiploidSiteSimpleGenotypeInfo(
+        const gvcf_deriv_options& gvcfDerivedOptions)
+        : features(gvcfDerivedOptions.snvFeatureSet),
+          developmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
     {
         clear();
     }
@@ -327,8 +337,8 @@ struct GermlineDiploidSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenot
     unsigned max_gt;
 
     /// production and development features used in the empirical scoring model:
-    VariantScoringFeatureKeeper<GERMLINE_SNV_SCORING_FEATURES> features;
-    VariantScoringFeatureKeeper<GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES> developmentFeatures;
+    VariantScoringFeatureKeeper features;
+    VariantScoringFeatureKeeper developmentFeatures;
 };
 
 
@@ -357,13 +367,14 @@ struct GermlineContinuousSiteSimpleGenotypeInfo : public GermlineVariantSimpleGe
 struct GermlineContinuousIndelSimpleGenotypeInfo : public GermlineIndelSimpleGenotypeInfo
 {
     GermlineContinuousIndelSimpleGenotypeInfo(
+        const gvcf_deriv_options& gvcfDerivedOptions,
         unsigned totalDepth,
         unsigned alleleDepth,
         const IndelKey& indelKey,
         const IndelData& indelData,
         const starling_indel_report_info& indelReportInfo,
         const starling_indel_sample_report_info& indelSampleReportInfo)
-        : GermlineIndelSimpleGenotypeInfo(indelKey, indelData, indelReportInfo, indelSampleReportInfo)
+        : GermlineIndelSimpleGenotypeInfo(gvcfDerivedOptions, indelKey, indelData, indelReportInfo, indelSampleReportInfo)
         , _totalDepth(totalDepth)
         , _alleleDepth(alleleDepth)
     {
@@ -405,13 +416,14 @@ struct GermlineIndelCallInfo
 struct GermlineDiploidIndelCallInfo : public GermlineIndelCallInfo
 {
     GermlineDiploidIndelCallInfo(
+        const gvcf_deriv_options& gvcfDerivedOptions,
         const IndelKey& initIndelKey,
         const IndelData& initIndelData,
         const GermlineDiploidIndelSimpleGenotypeInfoCore& init_dindel,
         const starling_indel_report_info& initIndelReportInfo,
         const starling_indel_sample_report_info& initIndelSampleReportInfo) : GermlineIndelCallInfo(initIndelKey.pos)
     {
-        _calls.emplace_back(initIndelKey, initIndelData, initIndelReportInfo, initIndelSampleReportInfo, init_dindel);
+        _calls.emplace_back(gvcfDerivedOptions, initIndelKey, initIndelData, initIndelReportInfo, initIndelSampleReportInfo, init_dindel);
     }
 
     bool is_forced_output() const override
@@ -426,7 +438,7 @@ struct GermlineDiploidIndelCallInfo : public GermlineIndelCallInfo
     {
         return std::any_of(_calls.begin(), _calls.end(), [](const GermlineDiploidIndelSimpleGenotypeInfo& x)
         {
-            return x._dindel.is_indel;
+            return x._dindel.isIndel();
         });
     }
     void set_filter(GERMLINE_VARIANT_VCF_FILTERS::index_t filter) override
@@ -594,20 +606,28 @@ private:
 /// specify that calling model is diploid
 struct GermlineDiploidSiteCallInfo : public GermlineSiteCallInfo
 {
-    GermlineDiploidSiteCallInfo(const pos_t init_pos,
-                                const char init_ref,
-                                const snp_pos_info& good_pi,
-                                const int used_allele_count_min_qscore,
-                                const bool is_forced_output = false)
-        : GermlineSiteCallInfo(init_pos, init_ref, good_pi, used_allele_count_min_qscore, is_forced_output)
+    GermlineDiploidSiteCallInfo(
+        const gvcf_deriv_options& gvcfDerivedOptions,
+        const pos_t init_pos,
+        const char init_ref,
+        const snp_pos_info& good_pi,
+        const int used_allele_count_min_qscore,
+        const bool is_forced_output = false)
+        : GermlineSiteCallInfo(init_pos, init_ref, good_pi, used_allele_count_min_qscore, is_forced_output),
+          smod(gvcfDerivedOptions)
     {}
 
-    GermlineDiploidSiteCallInfo() = default;
+    explicit
+    GermlineDiploidSiteCallInfo(
+        const gvcf_deriv_options& gvcfDerivedOptions)
+        : smod(gvcfDerivedOptions)
+    {}
 
     bool is_snp() const override
     {
         return dgt.is_snp;
     }
+
     void set_filter (GERMLINE_VARIANT_VCF_FILTERS::index_t filter) override
     {
         smod.set_filter(filter);
@@ -633,6 +653,7 @@ struct GermlineDiploidSiteCallInfo : public GermlineSiteCallInfo
 
     void
     computeEmpiricalScoringFeatures(
+        const bool isRNA,
         const bool isUniformDepthExpected,
         const bool isComputeDevelopmentFeatures,
         const double chromDepth,

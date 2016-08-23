@@ -88,6 +88,8 @@ python_scratch_dir=$project_base_dir/scratch/error_fitting
 cmake_base_dir=$project_base_dir/src
 shell_base_dir=$project_base_dir/src
 
+util_base_dir=$project_base_dir/scratch/util
+
 for file in $(find_cxx_source $cxx_base_dir) $(find_cconfig_source $cxx_base_dir); do
     reheader_file "python $thisdir/reheader_cxx_file.py" $file
 done
@@ -97,8 +99,10 @@ get_script_files() {
     #echo $(find_python_source $python_base_dir | grep -v $python_exclude_dir) \
     echo $(find_python_source $python_base_dir) \
         $(find_python_source $python_scratch_dir) \
+        $(find_python_source $util_base_dir) \
         $(find_cmake_source $cmake_base_dir) \
         $(find_shell_source $shell_base_dir) \
+        $(find_shell_source $util_base_dir) \
 
 }
 

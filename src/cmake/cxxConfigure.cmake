@@ -284,7 +284,6 @@ elseif (MSVC)
 
     # suppress warning of symbol names greater than N (...where N=4096 for VSC++15)
     append_args(CXX_WARN_FLAGS "/wd4503")
-    add_definitions(/D_CRT_SECURE_NO_WARNINGS)
 endif ()
 
 if     (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -379,7 +378,9 @@ endif()
 
 append_args (CMAKE_CXX_FLAGS "${CXX_WARN_FLAGS}")
 
-
+#
+# other customizations
+#
 if (${GNU_COMPAT_COMPILER})
     if ((NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel") OR (${COMPILER_VERSION} VERSION_LESS "15.0"))
         append_args (CMAKE_CXX_FLAGS "-std=c++0x")
@@ -400,6 +401,14 @@ if (${GNU_COMPAT_COMPILER})
     #    set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
     #endif ()
 endif()
+
+if (MSVC)
+    add_definitions(/D_CRT_SECURE_NO_WARNINGS)
+
+    # allow us to use standard c++ logical keywords
+    append_args (CMAKE_CXX_FLAGS "/FI\"ciso646\"")
+endif()
+
 
 # if ASan build type is requested, check that the compiler supports it:
 if (CMAKE_BUILD_TYPE STREQUAL "ASan")

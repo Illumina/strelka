@@ -18,8 +18,7 @@
 //
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 #include "position_loghood_minfunc.hh"
@@ -47,7 +46,6 @@ get_max_lhood_allele_freq(const snp_pos_info& pi,
                           bool* is_allele_used,
                           double& loghood)
 {
-
     // minimization constants:
     static const double line_tol(1e-7);
     static const double start_ratio(0.05);
@@ -93,7 +91,6 @@ position_strand_distro_anomaly_lrt_expert(const snp_pos_info& pi,
                                           double& alt_loghood,
                                           unsigned& df)
 {
-
     null_loghood=0;
     alt_loghood=0;
     df=0;
@@ -208,7 +205,6 @@ bool
 position_strand_distro_anomaly_lrt(const double alpha,
                                    const snp_pos_info& pi)
 {
-
     double null_loghood(0);
     double alt_loghood(0);
     unsigned df(0);

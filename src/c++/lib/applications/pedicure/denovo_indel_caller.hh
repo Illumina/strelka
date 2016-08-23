@@ -34,8 +34,6 @@ get_denovo_indel_call(
     const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
     const std::vector<const starling_sample_options*>& sampleOptions,
-    const double indel_error_prob,
-    const double ref_error_prob,
     const IndelKey& indelKey,
     const IndelData& indelData,
     const bool is_use_alt_indel,

@@ -48,7 +48,7 @@ double
 calculateIndelAF(
     const starling_indel_sample_report_info& isri)
 {
-    return safeFrac(isri.n_q30_indel_reads, isri.n_q30_ref_reads + isri.n_q30_alt_reads + isri.n_q30_indel_reads);
+    return safeFrac(isri.n_confident_indel_reads, isri.n_confident_ref_reads + isri.n_confident_alt_reads + isri.n_confident_indel_reads);
 }
 
 
@@ -57,7 +57,7 @@ double
 calculateIndelOF(
     const starling_indel_sample_report_info& isri)
 {
-    return safeFrac(isri.n_other_reads, isri.n_other_reads + isri.n_q30_ref_reads + isri.n_q30_alt_reads + isri.n_q30_indel_reads);
+    return safeFrac(isri.n_other_reads, isri.n_other_reads + isri.n_confident_ref_reads + isri.n_confident_alt_reads + isri.n_confident_indel_reads);
 }
 
 
@@ -69,10 +69,10 @@ calculateSOR(
     // from
     // http://www.people.fas.harvard.edu/~mparzen/published/parzen17.pdf
     // we add .5 to each count to deal with the case of 0 / inf outcomes
-    double Y1  = isri.n_q30_ref_reads_fwd + 0.5;
-    double n1_minus_Y1 = isri.n_q30_indel_reads_fwd + 0.5;
-    double Y2  = isri.n_q30_ref_reads_rev + 0.5;
-    double n2_minus_Y2 = isri.n_q30_indel_reads_rev + 0.5;
+    double Y1  = isri.n_confident_ref_reads_fwd + 0.5;
+    double n1_minus_Y1 = isri.n_confident_indel_reads_fwd + 0.5;
+    double Y2  = isri.n_confident_ref_reads_rev + 0.5;
+    double n2_minus_Y2 = isri.n_confident_indel_reads_rev + 0.5;
 
     return log10((Y1*n1_minus_Y1)/(Y2*n2_minus_Y2));
 }
@@ -82,8 +82,8 @@ calculateSOR(
 double
 calculateFS(const starling_indel_sample_report_info& isri)
 {
-    return fisher_exact_test_pval_2x2(isri.n_q30_ref_reads_fwd, isri.n_q30_indel_reads_fwd,
-                                      isri.n_q30_ref_reads_rev, isri.n_q30_indel_reads_rev);
+    return fisher_exact_test_pval_2x2(isri.n_confident_ref_reads_fwd, isri.n_confident_indel_reads_fwd,
+                                      isri.n_confident_ref_reads_rev, isri.n_confident_indel_reads_rev);
 }
 
 
@@ -91,7 +91,7 @@ calculateFS(const starling_indel_sample_report_info& isri)
 double
 calculateBSA(const starling_indel_sample_report_info& isri)
 {
-    return get_binomial_twosided_exact_pval(0.5, isri.n_q30_indel_reads_fwd, isri.n_q30_indel_reads) ;
+    return get_binomial_twosided_exact_pval(0.5, isri.n_confident_indel_reads_fwd, isri.n_confident_indel_reads) ;
 }
 
 
@@ -133,11 +133,11 @@ calculateTumorNoiseRate(const starling_indel_sample_report_info& tumorIndelSampl
 
 double
 calculateLogAltRatio(
-     const starling_indel_sample_report_info& normalIndelSampleReportInfo,
-     const starling_indel_sample_report_info& tumorIndelSampleReportInfo)
+    const starling_indel_sample_report_info& normalIndelSampleReportInfo,
+    const starling_indel_sample_report_info& tumorIndelSampleReportInfo)
 {
-    const unsigned n_ref_reads = normalIndelSampleReportInfo.n_q30_ref_reads;
-    const unsigned t_alt_reads = tumorIndelSampleReportInfo.n_q30_indel_reads;
+    const unsigned n_ref_reads = normalIndelSampleReportInfo.n_confident_ref_reads;
+    const unsigned t_alt_reads = tumorIndelSampleReportInfo.n_confident_indel_reads;
     return log10(safeFrac(t_alt_reads, n_ref_reads));
 }
 
@@ -148,10 +148,10 @@ calculateLogOddsRatio(
     const starling_indel_sample_report_info& normalIndelSampleReportInfo,
     const starling_indel_sample_report_info& tumorIndelSampleReportInfo)
 {
-    const double n_ref_reads = normalIndelSampleReportInfo.n_q30_ref_reads + .5;
-    const double n_alt_reads = normalIndelSampleReportInfo.n_q30_indel_reads + .5;
-    const double t_ref_reads = tumorIndelSampleReportInfo.n_q30_ref_reads + .5;
-    const double t_alt_reads = tumorIndelSampleReportInfo.n_q30_indel_reads + .5;
+    const double n_ref_reads = normalIndelSampleReportInfo.n_confident_ref_reads + .5;
+    const double n_alt_reads = normalIndelSampleReportInfo.n_confident_indel_reads + .5;
+    const double t_ref_reads = tumorIndelSampleReportInfo.n_confident_ref_reads + .5;
+    const double t_alt_reads = tumorIndelSampleReportInfo.n_confident_indel_reads + .5;
 
     return log10(t_ref_reads*n_alt_reads / t_alt_reads / n_ref_reads);
 }

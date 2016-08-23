@@ -18,12 +18,10 @@
 //
 //
 
-/// \file
-
 /// \author Chris Saunders
 ///
-#ifndef __POSITION_STRAND_DISTRO_ANOMALY_HH
-#define __POSITION_STRAND_DISTRO_ANOMALY_HH
+
+#pragma once
 
 #include "blt_common/snp_pos_info.hh"
 
@@ -41,5 +39,3 @@ bool
 position_strand_distro_anomaly(const double alpha,
                                const snp_pos_info& pi,
                                double* ws);
-
-#endif

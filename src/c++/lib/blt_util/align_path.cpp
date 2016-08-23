@@ -874,8 +874,9 @@ is_seq_swap(const path_t& apath)
 
 
 bool
-is_segment_swap_start(const path_t& apath,
-                      unsigned i)
+is_segment_swap_start(
+    const path_t& apath,
+    unsigned i)
 {
     using namespace ALIGNPATH;
 

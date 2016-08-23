@@ -84,21 +84,6 @@ write_shared_vcf_header_info(
 
 
 
-static
-void
-repeatedFeatureLabelError(
-    const char* label,
-    const std::string& featureLabel)
-{
-    using namespace illumina::common;
-
-    std::ostringstream oss;
-    oss << "ERROR: repeated " << label << " EVS training feature label '" << featureLabel << "'\n";
-    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-}
-
-
-
 strelka_streams::
 strelka_streams(
     const strelka_options& opt,
@@ -110,14 +95,14 @@ strelka_streams(
 {
     {
         using namespace STRELKA_SAMPLE_TYPE;
-        if (opt.is_realigned_read_file)
+        if (opt.is_realigned_read_file())
         {
-            _realign_bam_ptr[NORMAL].reset(initialize_realign_bam(opt.is_clobber,pinfo,opt.realigned_read_filename,"normal sample realigned-read BAM",header));
+            _realign_bam_ptr[NORMAL].reset(initialize_realign_bam(opt.realigned_read_filename,header));
         }
 
         if (opt.is_tumor_realigned_read())
         {
-            _realign_bam_ptr[TUMOR].reset(initialize_realign_bam(opt.is_clobber,pinfo,opt.tumor_realigned_read_filename,"tumor sample realigned-read BAM",header));
+            _realign_bam_ptr[TUMOR].reset(initialize_realign_bam(opt.tumor_realigned_read_filename,header));
         }
     }
 
@@ -128,13 +113,12 @@ strelka_streams(
         std::ofstream* fosptr(new std::ofstream);
         _somatic_snv_osptr.reset(fosptr);
         std::ofstream& fos(*fosptr);
-        open_ofstream(pinfo,opt.somatic_snv_filename,"somatic-snv",opt.is_clobber,fos);
+        open_ofstream(pinfo,opt.somatic_snv_filename,"somatic-snv",fos);
 
         if (! opt.sfilter.is_skip_header)
         {
             write_vcf_audit(opt,pinfo,cmdline,header,fos);
             fos << "##content=strelka somatic snv calls\n"
-                << "##germlineSnvTheta=" << opt.bsnp_diploid_theta << "\n"
                 << "##priorSomaticSnvRate=" << opt.somatic_snv_rate << "\n";
 
             // this is already captured in commandline call to strelka written to the vcf header:
@@ -151,8 +135,8 @@ strelka_streams(
             fos << "##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Combined depth across samples\">\n";
             fos << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS Mapping Quality\">\n";
             fos << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
-            fos << "##INFO=<ID=ALTPOS,Number=1,Type=Integer,Description=\"Tumor alternate allele read position median\">\n";
-            fos << "##INFO=<ID=ALTMAP,Number=1,Type=Integer,Description=\"Tumor alternate allele read position MAP\">\n";
+//            fos << "##INFO=<ID=ALTPOS,Number=1,Type=Integer,Description=\"Tumor alternate allele read position median\">\n";
+//            fos << "##INFO=<ID=ALTMAP,Number=1,Type=Integer,Description=\"Tumor alternate allele read position MAP\">\n";
             fos << "##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref read-position in the tumor\">\n";
             fos << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"Somatic SNV site strand bias\">\n";
             fos << "##INFO=<ID=PNOISE,Number=1,Type=Float,Description=\"Fraction of panel containing non-reference noise at this site\">\n";
@@ -210,33 +194,10 @@ strelka_streams(
 
             if (opt.isReportEVSFeatures)
             {
-                std::set<std::string> featureLabels;
                 fos << "##snv_scoring_features=";
-                for (unsigned featureIndex = 0; featureIndex < SOMATIC_SNV_SCORING_FEATURES::SIZE; ++featureIndex)
-                {
-                    if (featureIndex > 0)
-                    {
-                        fos << ",";
-                    }
-                    const std::string featureLabel(SOMATIC_SNV_SCORING_FEATURES::get_feature_label(featureIndex));
-                    const auto retVal = featureLabels.insert(featureLabel);
-                    if (not retVal.second)
-                    {
-                        repeatedFeatureLabelError("SNV", featureLabel);
-                    }
-                    fos << featureLabel;
-                }
-                for (int featureIndex = 0; featureIndex < SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
-                {
-                    fos << ',';
-                    const std::string featureLabel(SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex));
-                    const auto retVal = featureLabels.insert(featureLabel);
-                    if (not retVal.second)
-                    {
-                        repeatedFeatureLabelError("SNV", featureLabel);
-                    }
-                    fos << featureLabel;
-                }
+                writeExtendedFeatureSet(SOMATIC_SNV_SCORING_FEATURES::getInstance(),
+                                        SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::getInstance(),
+                                        "SNV", fos);
                 fos << "\n";
             }
 
@@ -257,13 +218,12 @@ strelka_streams(
         _somatic_indel_osptr.reset(fosptr);
         std::ofstream& fos(*fosptr);
 
-        open_ofstream(pinfo,opt.somatic_indel_filename,"somatic-indel",opt.is_clobber,fos);
+        open_ofstream(pinfo,opt.somatic_indel_filename,"somatic-indel",fos);
 
         if (! opt.sfilter.is_skip_header)
         {
             write_vcf_audit(opt,pinfo,cmdline,header,fos);
             fos << "##content=strelka somatic indel calls\n"
-                << "##germlineIndelTheta=" << opt.bindel_diploid_theta << "\n"
                 << "##priorSomaticIndelRate=" << opt.somatic_indel_rate << "\n";
 
             // this is already captured in commandline call to strelka written to the vcf header:
@@ -353,33 +313,10 @@ strelka_streams(
 
             if (opt.isReportEVSFeatures)
             {
-                std::set<std::string> featureLabels;
                 fos << "##indel_scoring_features=";
-                for (unsigned featureIndex = 0; featureIndex < SOMATIC_INDEL_SCORING_FEATURES::SIZE; ++featureIndex)
-                {
-                    if (featureIndex > 0)
-                    {
-                        fos << ",";
-                    }
-                    const std::string featureLabel(SOMATIC_INDEL_SCORING_FEATURES::get_feature_label(featureIndex));
-                    const auto retVal = featureLabels.insert(featureLabel);
-                    if (not retVal.second)
-                    {
-                        repeatedFeatureLabelError("indel", featureLabel);
-                    }
-                    fos << featureLabel;
-                }
-                for (unsigned featureIndex = 0; featureIndex < SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
-                {
-                    fos << ',';
-                    const std::string featureLabel(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex));
-                    const auto retVal = featureLabels.insert(featureLabel);
-                    if (not retVal.second)
-                    {
-                        repeatedFeatureLabelError("indel", featureLabel);
-                    }
-                    fos << featureLabel;
-                }
+                writeExtendedFeatureSet(SOMATIC_INDEL_SCORING_FEATURES::getInstance(),
+                                        SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::getInstance(),
+                                        "indel", fos);
                 fos << "\n";
             }
 
@@ -398,7 +335,7 @@ strelka_streams(
         _somatic_callable_osptr.reset(fosptr);
         std::ofstream& fos(*fosptr);
 
-        open_ofstream(pinfo,opt.somatic_callable_filename,"somatic-callable-regions",opt.is_clobber,fos);
+        open_ofstream(pinfo,opt.somatic_callable_filename,"somatic-callable-regions",fos);
 
         // post samtools 1.0 tabix doesn't handle header information anymore, so take this out entirely:
 #if 0

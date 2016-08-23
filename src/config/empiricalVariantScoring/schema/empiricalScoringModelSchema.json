@@ -1,0 +1,160 @@
+{
+    "$schema": "http://json-schema.org/draft-04/hyper-schema#",
+    "title": "EmpiricalVariantScoringModel",
+    "description": "JSON schema describing empirical scoring model details for small variants in Strelka",
+    "type": "object",
+    "properties": {
+        "CalibrationModels": {
+            "description": "Property is actually a key describing the application type",
+            "comment": "This really should be an applicationType property in the model metadata, with these values provided as keys",
+            "type": "object",
+            "minProperties": 1,
+            "patternProperties": {
+                "^(Germline|RNAseq|Somatic)$": {
+                    "description": "Property is actually a key describing the variant type",
+                    "comment": "This really should be a variantType property in the model metadata, with these values provided as keys",
+                    "type": "object",
+                    "minProperties": 1,
+                    "patternProperties": {
+                        "^(SNP|INDEL)$": {
+                            "$ref": "#/definitions/StrelkaEVSModel"
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        }
+    },
+    "required": ["CalibrationModels"],
+    "additionalProperties": false,
+
+    "definitions":
+    {
+        "StrelkaEVSModel" :
+        {
+            "type" : "object",
+            "properties":
+            {
+                "Calibration":
+                {
+                    "description": "Transformations of the raw model error prob to improve calibration of result",
+                    "type": "object",
+                    "properties": {
+                        "Power": {
+                            "description": "Raise raw model error prob to the given power",
+                            "type": "number"
+                        },
+                        "Scale": {
+                            "description": "Scale error prob after optionally applying power transformation",
+                            "type": "number",
+                            "minimum": 0
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "Date":
+                {
+                    "description": "Training/creation time of model",
+                    "type": "string"
+                },
+                "Features":
+                {
+                    "description": "Label and order of features assumed by the model",
+                    "type": "array",
+                    "minItems" : 1,
+                    "items" : { "type": "string" },
+                    "uniqueItems": true
+                },
+                "FilterCutoff":
+                {
+                    "description": "recommended default maximum error prob which should be PASS'd",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "ModelType":
+                {
+                    "description": "Indicates the model type (parameters for which are supplied in Model)",
+                    "enum": [ "RandomForest" ]
+                },
+                "Model":
+                {
+                    "oneOf": [
+                        { "$ref": "#/definitions/RandomForestModel" }
+                    ]
+                }
+            },
+            "required": ["Features","Model","ModelType"]
+        },
+
+        "RandomForestModel" :
+        {
+            "description": "array of objects, each object is a decision tree from the random forest",
+            "type" : "array",
+            "minItems" : 1,
+            "items" : {
+                "$ref": "#/definitions/RandomForestModelDecisionTree"
+            }
+        },
+        "RandomForestModelDecisionTree" :
+        {
+            "comment": "tree is currently described using index keys, this could be cleaner/more compact as a simple array of tree nodes",
+            "type" : "object",
+            "properties": {
+                "decisions": {
+                    "description": "Key is tree node id (zero-indexed), value is feature threshold to descent to left/right node",
+                    "type" : "object",
+                    "minProperties": 1,
+                    "patternProperties": {
+                        "^[0-9]*$": {
+                            "description": "First value if 0-indexed feature id, second value is feature threshold. If observed feature value is GT this threshold we descend to the right. Leaf nodes have feature id of -1",
+                            "type" : "array",
+                            "minItems" : 2,
+                            "maxItems" : 2,
+                            "items" : { "type": "number" }
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "node_votes": {
+                    "description": "Key is tree node id (zero-indexed), values are (in order) the number of false and true calls at the node",
+                    "type" : "object",
+                    "minProperties": 1,
+                    "patternProperties": {
+                        "^[0-9]*$": {
+                            "type" : "array",
+                            "minItems" : 2,
+                            "maxItems" : 2,
+                            "items" : {
+                                "type": "number",
+                                "minimum": 0
+                            }
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "tree": {
+                    "description": "Key is tree node id (zero-indexed) of the parent, values are (in order) the left and right child ids of this parent. Leaf nodes have child ids set to -1.",
+                    "type" : "object",
+                    "minProperties": 1,
+                    "patternProperties": {
+                        "^[0-9]*$": {
+                            "type" : "array",
+                            "minItems" : 2,
+                            "maxItems" : 2,
+                            "items" : {
+                                "type": "integer",
+                                "minimum": -1
+                            }
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "required": ["decisions","node_votes","tree"],
+            "additionalProperties": false
+        }
+    }
+}
+

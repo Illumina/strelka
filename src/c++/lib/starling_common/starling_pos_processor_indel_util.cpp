@@ -56,10 +56,11 @@ finish_indel_sppr(IndelObservation& obs,
 
 static
 void
-bam_seq_to_str(const bam_seq_base& bs,
-               const unsigned start,
-               const unsigned end,
-               std::string& s)
+bam_seq_to_str(
+    const bam_seq_base& bs,
+    const unsigned start,
+    const unsigned end,
+    std::string& s)
 {
     s.clear();
     for (unsigned i(start); i<end; ++i) s.push_back(bs.get_char(i));
@@ -71,23 +72,24 @@ const unsigned max_cand_filter_insert_size(10);
 
 
 
-// Handle edge inserts. For contigs we take the edge insert verbatim. For contig
+/// Handle edge inserts. For contigs we take the edge insert verbatim. For contig
 // reads we need to find out what (usually larger) indel this edge corresponds to.
-// for regular reads we record this as a private indel (ie. it does not count towards
-// candidacy.
-//
+/// for regular reads we record this as a private indel (ie. it does not count towards
+/// candidacy.
+///
 static
 void
-process_edge_insert(const unsigned max_indel_size,
-                    const ALIGNPATH::path_t& path,
-                    const bam_seq_base& bseq,
-                    starling_pos_processor_base& sppr,
-                    IndelObservation& obs,
-                    const unsigned sample_no,
-                    const unsigned path_index,
-                    const unsigned read_offset,
-                    const pos_t ref_head_pos,
-                    const bool is_pinned_indel)
+process_edge_insert(
+    const unsigned max_indel_size,
+    const ALIGNPATH::path_t& path,
+    const bam_seq_base& bseq,
+    starling_pos_processor_base& sppr,
+    IndelObservation& obs,
+    const unsigned sample_no,
+    const unsigned path_index,
+    const unsigned read_offset,
+    const pos_t ref_head_pos,
+    const bool is_pinned_indel)
 {
     using namespace ALIGNPATH;
 
@@ -100,15 +102,15 @@ process_edge_insert(const unsigned max_indel_size,
         if (ps.length > max_indel_size) return;
 
         obs.key.pos=ref_head_pos;
-        obs.key.length = ps.length;
         assert(ps.type == INSERT);
-        obs.key.type=INDEL::INSERT;
+        obs.key.type=INDEL::INDEL;
 
 #ifdef SPI_DEBUG
         log_os << "FOOBAR: adding pinned edge indel: " << obs.key << "\n";
 #endif
 
-        bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.data.insert_seq);
+        bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.key.insertSequence);
+
         finish_indel_sppr(obs,sppr,sample_no);
     }
 }
@@ -117,20 +119,19 @@ process_edge_insert(const unsigned max_indel_size,
 
 /// handle edge deletions
 ///
-/// currently these are only alllowed for indels adjacent to an intron
+/// currently these are only allowed for indels adjacent to an intron
 ///
 static
 void
-process_edge_delete(const unsigned max_indel_size,
-                    const ALIGNPATH::path_t& path,
-                    const bam_seq_base& bseq,
-                    starling_pos_processor_base& sppr,
-                    IndelObservation& obs,
-                    const unsigned sample_no,
-                    const unsigned path_index,
-                    const unsigned read_offset,
-                    const pos_t ref_head_pos,
-                    const bool is_pinned_indel)
+process_edge_delete(
+    const unsigned max_indel_size,
+    const ALIGNPATH::path_t& path,
+    starling_pos_processor_base& sppr,
+    IndelObservation& obs,
+    const unsigned sample_no,
+    const unsigned path_index,
+    const pos_t ref_head_pos,
+    const bool is_pinned_indel)
 {
     using namespace ALIGNPATH;
 
@@ -142,15 +143,13 @@ process_edge_delete(const unsigned max_indel_size,
     if (ps.length > max_indel_size) return;
 
     obs.key.pos=ref_head_pos;
-    obs.key.length = ps.length;
+    obs.key.deletionLength = ps.length;
     assert(ps.type == DELETE);
-    obs.key.type=INDEL::DELETE;
+    obs.key.type=INDEL::INDEL;
 
 #ifdef SPI_DEBUG
     log_os << "FOOBAR: adding pinned edge indel: " << obs.key << "\n";
 #endif
-
-    bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.data.insert_seq);
     finish_indel_sppr(obs,sppr,sample_no);
 }
 
@@ -164,15 +163,16 @@ process_edge_delete(const unsigned max_indel_size,
 //
 static
 unsigned
-process_swap(const unsigned max_indel_size,
-             const ALIGNPATH::path_t& path,
-             const bam_seq_base& bseq,
-             starling_pos_processor_base& sppr,
-             IndelObservation& obs,
-             const unsigned sample_no,
-             const unsigned path_index,
-             const unsigned read_offset,
-             const pos_t ref_head_pos)
+process_swap(
+    const unsigned max_indel_size,
+    const ALIGNPATH::path_t& path,
+    const bam_seq_base& bseq,
+    starling_pos_processor_base& sppr,
+    IndelObservation& obs,
+    const unsigned sample_no,
+    const unsigned path_index,
+    const unsigned read_offset,
+    const pos_t ref_head_pos)
 {
     using namespace ALIGNPATH;
 
@@ -191,10 +191,9 @@ process_swap(const unsigned max_indel_size,
     if (swap_size <= max_indel_size)
     {
         obs.key.pos=ref_head_pos;
-        obs.key.length=sinfo.insert_length;
-        obs.key.swap_dlength=sinfo.delete_length;
-        obs.key.type = INDEL::SWAP;
-        bam_seq_to_str(bseq,read_offset,read_offset+sinfo.insert_length,obs.data.insert_seq);
+        obs.key.deletionLength=sinfo.delete_length;
+        obs.key.type = INDEL::INDEL;
+        bam_seq_to_str(bseq,read_offset,read_offset+sinfo.insert_length,obs.key.insertSequence);
         finish_indel_sppr(obs,sppr,sample_no);
 
     }
@@ -203,23 +202,21 @@ process_swap(const unsigned max_indel_size,
         // left side BP:
         {
             obs.key.pos=ref_head_pos;
-            obs.key.length=swap_size;
             obs.key.type=INDEL::BP_LEFT;
             const unsigned start(read_offset);
             const unsigned size(bseq.size()-read_offset);
             const unsigned end(start+std::min(size,max_indel_size));
-            bam_seq_to_str(bseq,start,end,obs.data.insert_seq);
+            bam_seq_to_str(bseq,start,end,obs.data.breakpointInsertionSequence);
             finish_indel_sppr(obs,sppr,sample_no);
         }
 
         // right side BP:
         {
             obs.key.pos=ref_head_pos+sinfo.delete_length;
-            obs.key.length=swap_size;
             obs.key.type=INDEL::BP_RIGHT;
             const unsigned next_read_offset(read_offset+sinfo.insert_length);
             const unsigned start_offset(next_read_offset-std::min(next_read_offset,max_indel_size));
-            bam_seq_to_str(bseq,start_offset,next_read_offset,obs.data.insert_seq);
+            bam_seq_to_str(bseq,start_offset,next_read_offset,obs.data.breakpointInsertionSequence);
             finish_indel_sppr(obs,sppr,sample_no);
         }
     }
@@ -234,15 +231,16 @@ process_swap(const unsigned max_indel_size,
 //
 static
 void
-process_simple_indel(const unsigned max_indel_size,
-                     const ALIGNPATH::path_t& path,
-                     const bam_seq_base& bseq,
-                     starling_pos_processor_base& sppr,
-                     IndelObservation& obs,
-                     const unsigned sample_no,
-                     const unsigned path_index,
-                     const unsigned read_offset,
-                     const pos_t ref_head_pos)
+process_simple_indel(
+    const unsigned max_indel_size,
+    const ALIGNPATH::path_t& path,
+    const bam_seq_base& bseq,
+    starling_pos_processor_base& sppr,
+    IndelObservation& obs,
+    const unsigned sample_no,
+    const unsigned path_index,
+    const unsigned read_offset,
+    const pos_t ref_head_pos)
 {
     using namespace ALIGNPATH;
 
@@ -257,20 +255,18 @@ process_simple_indel(const unsigned max_indel_size,
             obs.data.is_noise=false;
         }
     }
+
     if (ps.length <= max_indel_size)
     {
         obs.key.pos=ref_head_pos;
-        obs.key.length = ps.length;
-        if (ps.type == INSERT)
+        obs.key.type=INDEL::INDEL;
+        if (ps.type == DELETE)
         {
-            obs.key.type=INDEL::INSERT;
-//            log_os << "l: " << bseq << "\n";
-            bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.data.insert_seq);
-
+            obs.key.deletionLength = ps.length;
         }
         else
         {
-            obs.key.type=INDEL::DELETE;
+            bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.key.insertSequence);
         }
         finish_indel_sppr(obs,sppr,sample_no);
     }
@@ -279,30 +275,26 @@ process_simple_indel(const unsigned max_indel_size,
         // left side BP:
         {
             obs.key.pos=ref_head_pos;
-            obs.key.length=ps.length;
             obs.key.type=INDEL::BP_LEFT;
             const unsigned start(read_offset);
             const unsigned size(bseq.size()-read_offset);
             const unsigned end(start+std::min(size,max_indel_size));
-            bam_seq_to_str(bseq,start,end,obs.data.insert_seq);
+            bam_seq_to_str(bseq,start,end,obs.data.breakpointInsertionSequence);
             finish_indel_sppr(obs,sppr,sample_no);
         }
         // right side BP:
         {
             obs.key.pos=ref_head_pos;
             if (ps.type == DELETE) obs.key.pos+=ps.length;
-            obs.key.length=ps.length;
             obs.key.type=INDEL::BP_RIGHT;
 
             const unsigned next_read_offset(read_offset+((ps.type==INSERT) ? ps.length : 0));
             const unsigned start_offset(next_read_offset-std::min(next_read_offset,max_indel_size));
-            bam_seq_to_str(bseq,start_offset,next_read_offset,obs.data.insert_seq);
+            bam_seq_to_str(bseq,start_offset,next_read_offset,obs.data.breakpointInsertionSequence);
             finish_indel_sppr(obs,sppr,sample_no);
         }
     }
 }
-
-
 
 // Extract indel information from an alignment and store this
 // in the starling_pos_processor indel buffer.
@@ -310,20 +302,21 @@ process_simple_indel(const unsigned max_indel_size,
 // assumes that path is already validated for seq!!!
 //
 unsigned
-add_alignment_indels_to_sppr(const unsigned max_indel_size,
-                             const reference_contig_segment& ref,
-                             const alignment& al,
-                             const bam_seq_base& read_seq,
-                             starling_pos_processor_base& sppr,
-                             const INDEL_ALIGN_TYPE::index_t iat,
-                             const align_id_t id,
-                             const unsigned sample_no,
-                             const std::pair<bool,bool>& edge_pin)
+add_alignment_indels_to_sppr(
+    const unsigned max_indel_size,
+    const reference_contig_segment& ref,
+    const alignment& al,
+    const bam_seq_base& read_seq,
+    starling_pos_processor_base& sppr,
+    const INDEL_ALIGN_TYPE::index_t iat,
+    const align_id_t id,
+    const unsigned sample_no,
+    const std::pair<bool,bool>& edge_pin,
+    const bool isLowMapQuality)
 {
     using namespace ALIGNPATH;
 
     const unsigned seq_len(read_seq.size());
-//    log_os << rs << "\n";
     if (is_apath_invalid(al.path,seq_len))
     {
         std::ostringstream oss;
@@ -351,6 +344,13 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
 
     unsigned total_indel_ref_span_per_read(0);
     const unsigned aps(al.path.size());
+
+    auto& active_region_detector(sppr.get_active_region_detector());
+    if (sppr.is_active_region_detector_enabled())
+    {
+        active_region_detector.setAlignInfo(id, sample_no, iat);
+    }
+
     while (path_index<aps)
     {
         const path_segment& ps(al.path[path_index]);
@@ -368,6 +368,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
         IndelObservation obs;
         obs.data.iat = iat;
         obs.data.id = id;
+        obs.data.is_low_map_quality = isLowMapQuality;
 
         if (! is_segment_align_match(ps.type))
         {
@@ -423,10 +424,33 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
             {
                 if (is_pinned_indel)
                 {
-                    process_edge_delete(max_indel_size,al.path,read_seq,
-                                        sppr,obs,sample_no,
-                                        path_index,read_offset,ref_head_pos,
+                    process_edge_delete(max_indel_size, al.path, sppr, obs, sample_no, path_index, ref_head_pos,
                                         is_pinned_indel);
+                }
+            }
+            else if (ps.type == SOFT_CLIP)
+            {
+                if (sppr.is_active_region_detector_enabled() && !isLowMapQuality)
+                {
+                    pos_t softClipStartPos(ref_head_pos);
+                    if (is_begin_edge)
+                        softClipStartPos -= ps.length;
+                    for (unsigned j(0); j < ps.length; ++j)
+                    {
+                        const pos_t refPos(softClipStartPos + static_cast<pos_t>(j));
+                        pos_t readPos = read_offset + j;
+
+                        char base_char = read_seq.get_char(readPos);
+
+                        if (ref.get_base(refPos) != base_char)
+                        {
+                            active_region_detector.insertSoftClipMismatch(id, refPos, base_char);
+                        }
+                        else
+                        {
+                            active_region_detector.insertSoftClipMatch(id, refPos);
+                        }
+                    }
                 }
             }
         }
@@ -449,13 +473,32 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                                  sppr,obs,sample_no,
                                  path_index,read_offset,ref_head_pos);
         }
+        else if (sppr.is_active_region_detector_enabled() && !isLowMapQuality && is_segment_align_match(ps.type))
+        {
+            // detect active regions (match/mismatch)
+            for (unsigned j(0); j < ps.length; ++j)
+            {
+                const pos_t ref_pos(ref_head_pos + static_cast<pos_t>(j));
+                pos_t read_pos = read_offset + j;
+
+                char base_char = read_seq.get_char(read_pos);
+
+                if (ref.get_base(ref_pos) != base_char)
+                {
+                    active_region_detector.insertMismatch(id, ref_pos, base_char);
+                }
+                else
+                {
+                    active_region_detector.insertMatch(id, ref_pos);
+                }
+            }
+        }
 
         for (unsigned i(0); i<n_seg; ++i)
         {
             increment_path(al.path,path_index,read_offset,ref_head_pos);
         }
     }
+
     return total_indel_ref_span_per_read;
 }
-
-

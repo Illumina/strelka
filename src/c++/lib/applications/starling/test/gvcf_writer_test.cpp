@@ -73,9 +73,10 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
     opt.is_user_genome_size = true;
     opt.user_genome_size = rcs.seq().size();
     opt.bam_seq_name = "dummy";
+    starling_deriv_options dopt(opt,rcs);
 
     const snp_pos_info& spi(bc_buff.get_pos(snp_pos));
-    std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(snp_pos, rcs.get_base(snp_pos), spi, 30));
+    std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(dopt.gvcf, snp_pos, rcs.get_base(snp_pos), spi, 30));
     si->smod.is_covered = si->smod.is_used_covered = true;
     si->dgt.ref_gt = base_to_id(si->ref);
 
@@ -86,15 +87,12 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
 
     // now make sure it is rendered with the Unphased info field
 
-    starling_deriv_options dopt(opt,rcs);
 
     RegionTracker regions;
     const std::string sampleName = "SAMPLE";
     std::stringstream os;
-    opt.germline_variant_scoring_models_filename = TEST_CONFIG_PATH;
-    opt.germline_variant_scoring_model_name = "QScoreHPDRE100_v4";
 
-    gvcf_deriv_options gvcf_options(opt.gvcf, "dummy");
+    gvcf_deriv_options gvcf_options(dopt.gvcf);
     gvcf_options.chrom_depth["dummy"] = 30.734;
     ScoringModelManager cm(opt, gvcf_options);
 

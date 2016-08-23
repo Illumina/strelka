@@ -178,11 +178,8 @@ struct known_pos_range : public pos_range
     operator<(const pos_range& rhs) const
     {
         if (begin_pos < rhs.begin_pos) return true;
-        if (begin_pos == rhs.begin_pos)
-        {
-            if (end_pos < rhs.end_pos) return true;
-        }
-        return false;
+        if (begin_pos != rhs.begin_pos) return false;
+        return (end_pos < rhs.end_pos);
     }
 
     bool

@@ -302,8 +302,6 @@ process_pos_indel_somatic(const pos_t pos)
             _dopt.sicaller_grid().get_somatic_indel(_opt,_dopt,
                                                     normal_sif.sample_opt,
                                                     tumor_sif.sample_opt,
-                                                    indelData.errorRates.refToIndelErrorProb,
-                                                    indelData.errorRates.indelToRefErrorProb,
                                                     indelKey, indelData, NORMAL,TUMOR,
                                                     is_use_alt_indel,
                                                     sindel);
@@ -318,10 +316,10 @@ process_pos_indel_somatic(const pos_t pos)
                 for (unsigned t(0); t<2; ++t)
                 {
                     const bool is_include_tier2(t!=0);
-                    get_starling_indel_sample_report_info(_dopt,indelKey,normalIndelSampleData,normal_sif.bc_buff,
+                    get_starling_indel_sample_report_info(_opt, _dopt,indelKey,normalIndelSampleData,normal_sif.bc_buff,
                                                           is_include_tier2,is_use_alt_indel,
                                                           siInfo.nisri[t]);
-                    get_starling_indel_sample_report_info(_dopt,indelKey,tumorIndelSampleData,tumor_sif.bc_buff,
+                    get_starling_indel_sample_report_info(_opt, _dopt,indelKey,tumorIndelSampleData,tumor_sif.bc_buff,
                                                           is_include_tier2,is_use_alt_indel,
                                                           siInfo.tisri[t]);
                 }
@@ -397,6 +395,7 @@ write_counts(const pos_range& output_report_range) const
 }
 
 
+
 void
 strelka_pos_processor::
 run_post_call_step(
@@ -416,3 +415,4 @@ run_post_call_step(
 
     _indelWriter.addIndelWindowData(pos, was_normal, was_tumor);
 }
+

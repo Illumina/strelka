@@ -64,18 +64,6 @@ known_pos_range
 get_alignment_zone(const alignment& al,
                    const unsigned seq_length);
 
-/// Return true if indel, ik, is in alignment, al, or is consistent
-/// with an edge-insertion in al
-///
-/// read_indel_pr is set to the left and right breakpoints in the
-/// coordinates of al. The left or right value will not be set if the
-/// breakpoint does not occur within the read.
-///
-bool
-is_indel_in_alignment(const alignment& al,
-                      const IndelKey& indelKey,
-                      pos_range& read_indel_pr);
-
 /// remove any edge deletions and properly adjust pos for leading deletions:
 alignment
 remove_edge_deletions(
@@ -119,14 +107,4 @@ void
 getAlignmentFromBamRecord(
     const bam_record& br,
     alignment& al);
-
-#if 0
-/// Shift all indels as far "to the left" as possible -- note that
-/// some indels may be lost. Returns true if the alignment was changed.
-///
-bool
-normalize_alignment(alignment& al,
-                    const std::string& read_seq,
-                    const std::string& ref_seq);
-#endif
 

@@ -18,13 +18,13 @@
 //
 //
 
-/// \file
-
 /// \author Chris Saunders
 ///
 
 #include "gvcf_options.hh"
 #include "blt_util/blt_exception.hh"
+#include "germlineVariantEmpiricalScoringFeatures.hh"
+#include "rnaVariantEmpiricalScoringFeatures.hh"
 
 #include <cassert>
 
@@ -36,7 +36,12 @@
 gvcf_deriv_options::
 gvcf_deriv_options(
     const gvcf_options& opt,
-    const std::string& bam_seq_name)
+    const std::string& bam_seq_name,
+    const bool isRNA)
+    : snvFeatureSet(isRNA ? RNA_SNV_SCORING_FEATURES::getInstance() : GERMLINE_SNV_SCORING_FEATURES::getInstance()),
+      snvDevelopmentFeatureSet(isRNA ? RNA_SNV_SCORING_DEVELOPMENT_FEATURES::getInstance() : GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::getInstance()),
+      indelFeatureSet(isRNA ? RNA_INDEL_SCORING_FEATURES::getInstance() : GERMLINE_INDEL_SCORING_FEATURES::getInstance()),
+      indelDevelopmentFeatureSet(isRNA ? RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::getInstance() : GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::getInstance())
 {
     {
         std::ostringstream oss;

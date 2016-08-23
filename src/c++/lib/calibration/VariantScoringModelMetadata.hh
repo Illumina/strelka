@@ -41,10 +41,16 @@ struct VariantScoringModelMetadata
         const featureMap_t& featureMap,
         const Json::Value& root);
 
-    //std::string name;
-    //std::string version;
     std::string date;
     std::string ModelType;
-    double FilterCutoff;
+
+    /// as part of an optional calibration component to all models, raise the raw prob by this power before reporting:
+    double probPow = 1.;
+
+    /// as part of an optional calibration component to all models, scale the prob using this factor (after power transform) before reporting:
+    double probScale = 1.;
+
+    /// \TODO Doc this. what is the orientation of this number? <,>,<=,>=? Does it mean filter stuff to remove or to keep?
+    double filterCutoff;
 };
 

@@ -21,10 +21,6 @@
 ///
 /// \author Chris Saunders
 ///
-/// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the beginning of the range
-/// XXX_end_pos is zero-index position 1 step after the end of the range
-///
 
 #include "starling_run.hh"
 #include "starling_pos_processor.hh"
@@ -134,8 +130,9 @@ starling_run(
             // Approximate begin range filter: (removed for RNA-Seq)
             //if((current_pos+MAX_READ_SIZE+max_indel_size) <= rlimit.begin_pos) continue;
 
-            process_genomic_read(opt, ref, readStream, streamData.getCurrentBam(),
-                                 currentPos, rlimit.begin_pos, brc, sppr);
+            processInputReadAlignment(opt, ref, streamData.getCurrentBamStreamer(),
+                                      streamData.getCurrentBam(), currentPos,
+                                      rlimit.begin_pos, brc, sppr, currentIndex);
         }
         else if (HTS_TYPE::VCF == currentHtsType)
         {
@@ -171,7 +168,7 @@ starling_run(
             if     (INPUT_TYPE::PLOIDY_REGION == currentIndex)
             {
                 known_pos_range2 ploidyRange(bedRecord.begin,bedRecord.end);
-                const int ploidy(parsePloidyFromBedStrict(bedRecord.line));
+                const unsigned ploidy(parsePloidyFromBedStrict(bedRecord.line));
                 if ((ploidy == 0) || (ploidy == 1))
                 {
                     const bool retval(sppr.insert_ploidy_region(ploidyRange,ploidy));

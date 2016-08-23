@@ -27,6 +27,7 @@
 #include "starling_pos_processor_base_stages.hh"
 
 #include "blt_common/blt_shared.hh"
+#include "blt_util/PrettyFloat.hh"
 #include "blt_util/reference_contig_segment.hh"
 #include "starling_common/min_count_binom_gte_cache.hh"
 #include "starling_common/starling_align_limit.hh"
@@ -35,27 +36,8 @@
 #include <cmath>
 
 
-// starling max read size increases to the highest observed read size,
-// up to the following practical limit:
-//
-enum { STARLING_MAX_READ_SIZE = 25000 };
-
-
-
-struct avg_window_data
-{
-    bool
-    operator<(const avg_window_data& rhs) const
-    {
-        return (flank_size < rhs.flank_size);
-    }
-
-    unsigned flank_size;
-    std::string filename;
-};
-
-std::ostream&
-operator<<(std::ostream& os, const avg_window_data& awd);
+/// this limit is set as an arbitrary sanity-check
+enum { STRELKA_MAX_READ_SIZE = 25000 };
 
 
 
@@ -63,7 +45,8 @@ struct starling_base_options : public blt_options
 {
     typedef blt_options base_t;
 
-    starling_base_options() {}
+    starling_base_options()
+    {}
 
     virtual
     bool
@@ -78,20 +61,32 @@ struct starling_base_options : public blt_options
         return (! candidate_indel_filename.empty());
     }
 
-    // parameters inherited from varling caller:
+    bool
+    is_realigned_read_file() const
+    {
+        return (not realigned_read_filename.empty());
+    }
+
     //
     double bindel_diploid_theta = 0.0001;
-    double bindel_diploid_het_bias = 0;
-    bool is_bindel_diploid_het_bias = false;
+
+    // use this theta in long homopolymers (germline only)
+    double indelHighRepeatTheta = 0.01;
+    // definition of "long homopolymer" above
+    unsigned indelHighRepeatCount = 16;
+
     uint32_t user_genome_size = 0; // genome size specified by user for the indel calling model -- actual value used is in deriv_options.
     bool is_user_genome_size = false;
+
+    // parameter to enable/disable short haplotype calling
+    bool is_short_haplotyping_enabled = false;
 
     // to contribute to a breakpoint likelihood, a read must have at least
     // this many bases on each side of the breakpoint:
     //
     // This is the default used in all samples unless an override is provided for the sample.
     //
-    int default_min_read_bp_flank = 6;
+    int default_min_read_bp_flank = 5;
 
     // starling parameters:
     //
@@ -138,8 +133,6 @@ struct starling_base_options : public blt_options
     // more paths before pileup or realigned read output
     bool is_clip_ambiguous_path = true;
 
-    bool is_realigned_read_file = false;
-
     // this option imposes a consistency criteria on alignments with
     // nearly equal score to favor certain alignments even if they do
     // not have the optimal score.
@@ -166,14 +159,6 @@ struct starling_base_options : public blt_options
     bool is_write_candidate_indels_only = false;
 
     double indel_nonsite_match_prob = 0.25;
-
-    std::vector<avg_window_data> variant_windows;
-
-    // Test if an indel is not in the two most likely indel alleles
-    // among a conflicting set.  if not remove from variant
-    // calling. This option is for single sample calling only.
-    //
-    bool is_noise_indel_filter = false;
 
     // Assume a ploidy-based prior (0%, 50%, 100% or 0% 100% for haploid, diploid
     // If false, a continuous model is used
@@ -222,6 +207,11 @@ struct starling_base_options : public blt_options
     // temporary indel erorr rate hack applied to germline only
     bool isIndelErrorRateFactor = false;
     double indelErrorRateFactor = 1.;
+
+    // when P(read | allele) is >= this value the read counts as "supporting"
+    // the given allele
+    // WARNING: this value impacts several count-based EVS metrics
+    PrettyFloat<double> readConfidentSupportThreshold = PrettyFloat<double>("0.9");
 };
 
 
@@ -230,6 +220,7 @@ struct starling_base_options : public blt_options
 //
 struct starling_sample_options
 {
+    explicit
     starling_sample_options(
         const starling_base_options& opt)
         : min_read_bp_flank(opt.default_min_read_bp_flank)
@@ -242,12 +233,15 @@ struct starling_sample_options
 
 struct IndelErrorModel;
 struct indel_digt_caller;
+struct GenotypePriorSet;
 
 
-
-// data deterministically derived from the input options:
-//
-struct starling_base_deriv_options : public blt_deriv_options
+/// data deterministically derived from the input options:
+///
+/// Note that non-copyable status is in here b/c of all the unique ptrs below,
+/// if needed workaround by usual c++ methods (shared_ptr, move ctor, etc..)
+///
+struct starling_base_deriv_options : public blt_deriv_options, private boost::noncopyable
 {
     typedef blt_deriv_options base_t;
 
@@ -285,6 +279,12 @@ struct starling_base_deriv_options : public blt_deriv_options
         return *_indelErrorModel;
     }
 
+    const GenotypePriorSet&
+    getIndelGenotypePriors() const
+    {
+        return *_indelGenotypePriors;
+    }
+
 protected:
     unsigned
     addPostCallStage(
@@ -308,11 +308,13 @@ public:
 
     const min_count_binom_gte_cache countCache;
 
+    // cache the log of options->indelErrroRateFactor
     const double logIndelErrorRateFactor;
 
 private:
     std::unique_ptr<IndelErrorModel> _indelErrorModel;
     std::unique_ptr<indel_digt_caller> _incaller; // object to precalculate bindel_diploid priors..
+    std::unique_ptr<GenotypePriorSet> _indelGenotypePriors;
 
     std::vector<unsigned> _postCallStage;
 };

@@ -6,6 +6,7 @@ Strelka Developer Guide
 * [Scope](#scope)
   * [Developer Build Notes](#developer-build-notes)
     * [Building from source repository vs. versioned code distribution:](#building-from-source-repository-vs-versioned-code-distribution)
+    * [Static code analysis](#static-code-analysis)
     * [Source auto-documentation](#source-auto-documentation)
     * [Improving build time](#improving-build-time)
     * [General Debugging: Address Sanitizer](#general-debugging-address-sanitizer)
@@ -16,6 +17,8 @@ Strelka Developer Guide
     * [Source formatting](#source-formatting)
     * [Error handling](#error-handling)
     * [Unit tests](#unit-tests)
+  * [IDE support](#ide-support)
+    * [Clion](#clion)
 [] (END automated TOC section, any edits will be overwritten on next source refresh)
 
 # Scope
@@ -48,6 +51,16 @@ such that:
 
 Note that all unit tests are always run and required to pass for the build
 procedure to complete.
+
+### Static code analysis
+
+As described above, if the c++ static analyzer cppcheck is found in the users `PATH`
+during configuration, then it will be run against the entire c++ portion of the
+source tree as part of the build process, and any cppcheck warning will be treated
+as a build error. Execution of cppcheck is managed by [run_cppcheck.py](../../src/srcqc/run_cppcheck.py)
+
+The Strelka source code is currently maintained to screen against all warnings
+from cppcheck v1.69 only.
 
 ### Source auto-documentation
 
@@ -211,3 +224,15 @@ self.flowLog("Initiating Starling workflow version: %s" % (__version__)
 * Unit tests are already enabled for every library "test" subdirectory, additional tests in these directories will be automatically detected
   * Example [blt_util unit tests directory](../../src/c++/lib/blt_util/test)
 
+
+## IDE support
+
+Strelka includes little support for any specific IDE except as made available by cmake generators, and the maintenance of a partial windows build capability for Visual Studio users. IDE-specific configuration files maintained in the project are described below.
+
+### Clion
+
+A subset of code formatting settings which can be imported into Clion are available in the configuration file
+
+`${STRELKA_REPO_PATH}/scratch/ideConfiguration/CLion/referenceCodeStyleSettings.xml`
+
+..note that the automated `asytle` formatting settings still define the project defaults, the above configuration simply provides a starting point for CLion which is closer to the project's formatting norms.

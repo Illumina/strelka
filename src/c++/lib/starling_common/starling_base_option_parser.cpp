@@ -59,46 +59,9 @@ checkOptionalFile(
 
 
 
-const unsigned max_flank_size(1000);
-
-
-
-void validate(boost::any& v,
-              const std::vector<std::string>& values,
-              std::vector<avg_window_data>*, int)
-{
-    if (v.empty())
-    {
-        v = boost::any(std::vector<avg_window_data>());
-    }
-    std::vector<avg_window_data>* tv = boost::any_cast< std::vector<avg_window_data> >(&v);
-    assert(NULL != tv);
-
-    avg_window_data awd;
-
-    // Extract tokens from values string vector and populate avg_window_data struct.
-    if (values.size() != 2)
-    {
-        throw po::validation_error(po::validation_error::invalid_option_value);
-    }
-
-    try
-    {
-        awd.flank_size = boost::lexical_cast<unsigned>(values[0]);
-    }
-    catch (const boost::bad_lexical_cast&)
-    {
-        throw po::validation_error(po::validation_error::invalid_option_value);
-    }
-    awd.filename = values[1];
-
-    tv->push_back(awd);
-}
-
-
-
 po::options_description
-get_starling_base_option_parser(starling_base_options& opt)
+get_starling_base_option_parser(
+    starling_base_options& opt)
 {
     po::options_description geno_opt("genotyping options");
     geno_opt.add_options()
@@ -157,12 +120,6 @@ get_starling_base_option_parser(starling_base_options& opt)
      "Specify bed file describing ploidy of regions. Ploidy value is read from the 5th 'score' field. Any value besides 1 and 0 are ignored at present. (must be bgzip compressed and tabix indexed)")
     ;
 
-    po::options_description window_opt("window-options");
-    window_opt.add_options()
-    ("variant-window-flank-file", po::value(&opt.variant_windows)->multitoken(),
-     "Print out regional average basecall statistics at variant sites within a window of the variant call. Must provide arguments for window flank size and output file. Option can be specified multiple times. (example: '--variant-window-flank-file 10 window10.txt')")
-    ;
-
     po::options_description input_opt("input-options");
     input_opt.add_options()
     ("max-input-depth", po::value(&opt.max_input_depth),
@@ -188,7 +145,7 @@ get_starling_base_option_parser(starling_base_options& opt)
     po::options_description new_opt("Shared small-variant options");
 
     new_opt.add(geno_opt).add(blt_nonref_opt);
-    new_opt.add(realign_opt).add(indel_opt).add(ploidy_opt).add(window_opt);
+    new_opt.add(realign_opt).add(indel_opt).add(ploidy_opt);
     new_opt.add(input_opt).add(other_opt);
 
     return new_opt;
@@ -215,19 +172,8 @@ write_starling_legacy_options(
        "                    - Set bias term for the heterozygous state in the bsnp model, such that\n"
        "                      hets are expected at allele ratios in the range [0.5-x,0.5+x] (default: 0)\n"
 #if 0
-       " -bsnp-monoploid x  - Use Bayesian monoploid genotype snp caller with theta=x\n"
        " -bsnp-nploid n x   - Use Bayesian nploid genotype snp caller with ploidy=n and prior(snp)=x\n"
        " -lsnp-alpha x      - Use likelihood ratio test snp caller with alpha=x\n"
-       " -anom-distro-table-alpha x\n"
-       "                    - Test whether strands were sampled from different distributions at snp\n"
-       "                      call sites. The test has a false positive rate of x over all snp calls.\n"
-       "                      Implemented as a contingency table test.\n"
-       " -anom-distro-lrt-alpha x\n"
-       "                    - Test whether strands were sampled from different distributions at snp\n"
-       "                      call sites. The test has a false positive rate of x over all snp calls.\n"
-       "                      Implemented as a likelihood ratio test.\n"
-       " -anom-cov-alpha x  - Detect strand coverage anomaly with alpha=x\n"
-       " -filter-anom-calls - Don't write any variants at positions where an anomaly is detected\n"
 #endif
        " -min-qscore n      - Don't use base if qscore<n (default: " << default_opt.min_qscore << ")\n"
        " -max-window-mismatch n m\n"
@@ -241,13 +187,9 @@ write_starling_legacy_options(
        " -include-singleton - Include paired reads with unmapped mates\n"
        " -include-anomalous - Include paired reads which are not part of a 'proper pair' (anomalous orientation or insert size)\n"
        " -counts file       - Write observation counts for every position to 'file'\n"
-       " -clobber           - Overwrite pre-existing output files\n"
        " -print-evidence    - Print the observed data at single site events (does not include indels)\n"
        " -print-all-site-evidence\n"
        "                    - Print the observed data for all sites (does not include indels)\n"
-       " -bindel-diploid-het-bias x\n"
-       "                    - Set bias term for the heterozygous state in the bindel model, such that\n"
-       "                      hets are expected at allele ratios in the range [0.5-x,0.5+x] (default: 0)\n"
        " -bindel-diploid-file file\n"
        "                    - Run Bayesian diploid genotype caller, write results to 'file'\n"
        " -indel-error-rate x\n"
@@ -285,15 +227,12 @@ write_starling_legacy_options(
        " -realign-submapped-reads\n"
        "                    - When this argument is provided, even reads which fail the variant calling mapping thresholds\n"
        "                      are realigned using the same procedure as the variant calling reads.\n"
-       " -snp-max-basecall-filter-fraction x\n"
-       "                    - Do not call snps at sites where the fraction of filtered basecalls exceeds x. (default: " << default_opt.max_basecall_filter_fraction << ")\n"
        " -no-ambiguous-path-clip\n"
        "                    - Turn off ambiguous read trimming after realignment.\n"
        " -max-indel-size    - Sets the maximum size for indels processed for indel genotype calling and realignment.\n"
        "                      Increasing this value should lead to an approx linear increase in memory consumption.\n"
        "                      (default: " << default_opt.max_indel_size << ")\n"
        "\n"
-       " -print-all-poly-gt - Print all polymorphic-site genotype probabilties in the diploid sites and snps files\n"
        " -used-allele-count-min-qscore x\n"
        "                    - If printing used allele counts, filter them for qscore >= x\n"
        "\n"
@@ -390,34 +329,6 @@ finalize_starling_base_options(
     if (vm.count("max-input-depth"))
     {
         opt.is_max_input_depth=true;
-    }
-
-    std::sort(opt.variant_windows.begin(),opt.variant_windows.end());
-    const unsigned vs(opt.variant_windows.size());
-    unsigned last_fs(0);
-    std::set<std::string> filenames;
-    for (unsigned i(0); i<vs; ++i)
-    {
-        const std::string& filename(opt.variant_windows[i].filename);
-        if (filenames.count(filename))
-        {
-            pinfo.usage((boost::format("variant-window-flank-file options contain a repeated filename: '%s'") % filename).str().c_str());
-        }
-        filenames.insert(filename);
-        const unsigned fs(opt.variant_windows[i].flank_size);
-        if (fs>max_flank_size)
-        {
-            pinfo.usage((boost::format("variant-window-flank-file flank size %u exceeds maximum flank size of %u") % fs % max_flank_size).str().c_str());
-        }
-        if (fs<1)
-        {
-            pinfo.usage((boost::format("variant-window-flank-file flank size %u is less than minimum flank size of 1") % fs).str().c_str());
-        }
-        if ((i!=0) && (fs==last_fs))
-        {
-            pinfo.usage((boost::format("Repeated flank size of %u provided to variant-window-flank-file") % fs).str().c_str());
-        }
-        last_fs=fs;
     }
 
     checkOptionalFile(pinfo,opt.indel_error_models_filename,"indel error models");

@@ -31,8 +31,6 @@
 
 struct starling_options : public starling_base_options
 {
-    typedef starling_options base_t;
-
     starling_options()
     {
         // set command-line defaults for starling only:
@@ -49,8 +47,8 @@ struct starling_options : public starling_base_options
         isIndelErrorRateFactor = true;
         indelErrorRateFactor = 100.;
 
-        // TODO double-check with MK:
-        ///upstream_oligo_size = 10;
+        // turn on short haplotying
+        is_short_haplotyping_enabled = true;
     }
 
     bool
@@ -68,20 +66,21 @@ struct starling_options : public starling_base_options
     bool
     is_compute_germline_scoring_metrics() const override
     {
-        return (isReportEVSFeatures || (! germline_variant_scoring_model_name.empty()));
+        return (isReportEVSFeatures || (! snv_scoring_model_filename.empty()) || (! indel_scoring_model_filename.empty()));
     }
 
-    /// germline scoring models
-    std::string germline_variant_scoring_models_filename;
-
-    /// Which scoring model should we use?
-    std::string germline_variant_scoring_model_name;
+    /// empirical scoring models
+    std::string snv_scoring_model_filename;
+    std::string indel_scoring_model_filename;
 
     // Apply codon phasing:
     bool do_codon_phasing = false;
 
     // Size of the window we are phasing in, default is codon range (=3)
     int phasing_window = 3;
+
+    // apply special behaviors for RNA-Seq analysis
+    bool isRNA = false;
 
     gvcf_options gvcf;
 };
@@ -97,7 +96,7 @@ struct starling_deriv_options : public starling_base_deriv_options
         const starling_options& opt,
         const reference_contig_segment& ref)
         : base_t(opt,ref),
-          gvcf(opt.gvcf,opt.bam_seq_name)
+          gvcf(opt.gvcf, opt.bam_seq_name, opt.isRNA)
     {}
 
     gvcf_deriv_options gvcf;

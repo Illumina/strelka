@@ -52,11 +52,11 @@ write_vcf_isri_tiers(
        << sep
        << isri2.tier1Depth
        << sep
-       << isri1.n_q30_ref_reads+isri1.n_q30_alt_reads << ','
-       << isri2.n_q30_ref_reads+isri2.n_q30_alt_reads
+       << isri1.n_confident_ref_reads+isri1.n_confident_alt_reads << ','
+       << isri2.n_confident_ref_reads+isri2.n_confident_alt_reads
        << sep
-       << isri1.n_q30_indel_reads << ','
-       << isri2.n_q30_indel_reads
+       << isri1.n_confident_indel_reads << ','
+       << isri2.n_confident_indel_reads
        << sep
        << isri1.n_other_reads << ','
        << isri2.n_other_reads;
@@ -209,24 +209,12 @@ writeSomaticIndelVcfGrid(
         const StreamScoper ss(os);
         os << std::setprecision(5);
         os << ";EVSF=";
-        for (unsigned featureIndex = 0; featureIndex < SOMATIC_INDEL_SCORING_FEATURES::SIZE; ++featureIndex)
-        {
-            if (featureIndex > 0)
-            {
-                os << ",";
-            }
-            os << smod.features.get(static_cast<SOMATIC_INDEL_SCORING_FEATURES::index_t>(featureIndex));
-        }
-
-        for (unsigned featureIndex = 0; featureIndex < SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
-        {
-            os << ",";
-            os << smod.dfeatures.get(static_cast<SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::index_t>(featureIndex));
-        }
+        smod.features.writeValues(os);
+        os << ",";
+        smod.dfeatures.writeValues(os);
     }
 
-    if ((siInfo.indelReportInfo.it == INDEL::BP_LEFT) ||
-        (siInfo.indelReportInfo.it == INDEL::BP_RIGHT))
+    if (siInfo.indelReportInfo.it == SimplifiedIndelReportType::BREAKPOINT)
     {
         os << ";SVTYPE=BND";
     }

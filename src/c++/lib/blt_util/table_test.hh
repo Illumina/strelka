@@ -18,7 +18,6 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -36,8 +35,6 @@
 ///
 
 #pragma once
-
-#include <ciso646>
 
 
 #ifdef HAVE_FISHER_EXACT_TEST

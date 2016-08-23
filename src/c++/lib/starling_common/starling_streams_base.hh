@@ -43,9 +43,9 @@ struct starling_streams_base : public blt_streams
         const SampleSetSummary& si);
 
     bam_dumper*
-    realign_bam_ptr(const unsigned sample_no) const
+    realign_bam_ptr(const unsigned sampleIndex) const
     {
-        return _realign_bam_ptr[sample_no].get();
+        return _realign_bam_ptr[sampleIndex].get();
     }
 
     std::ostream*
@@ -54,39 +54,22 @@ struct starling_streams_base : public blt_streams
         return _candidate_indel_osptr.get();
     }
 
-    std::ostream*
-    variant_window_osptr(const unsigned window_no) const
-    {
-        return _window_osptr.at(window_no).get();
-    }
-
 protected:
     bam_dumper*
     initialize_realign_bam(
-        const bool is_clobber,
-        const prog_info& pinfo,
         const std::string& filename,
-        const char* label,
         const bam_hdr_t& header);
 
     static
     std::ostream*
-    initialize_candidate_indel_file(const starling_base_options& client_opt,
-                                    const prog_info& pinfo,
-                                    const std::string& filename);
-
-    static
-    std::ostream*
-    initialize_window_file(const starling_base_options& opt,
-                           const prog_info& pinfo,
-                           const avg_window_data& awd,
-                           const SampleSetSummary& si);
+    initialize_candidate_indel_file(
+        const starling_base_options& opt,
+        const prog_info& pinfo,
+        const std::string& filename);
 
     std::unique_ptr<bam_dumper> _realign_bam_ptr[MAX_SAMPLE];
 private:
     std::unique_ptr<std::ostream> _candidate_indel_osptr;
 protected:
     unsigned _n_samples;
-private:
-    std::vector<std::shared_ptr<std::ostream>> _window_osptr;
 };

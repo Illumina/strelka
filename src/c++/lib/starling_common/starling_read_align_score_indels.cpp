@@ -96,20 +96,26 @@ overlap_map_tick(
 
 
 
-/// does "new_indel" interfere with any of the indel set "current_indels"?
+/// if "new_indel" interferes with any of the indel set "current_indels", return iterator pointing to one
+/// current_indels member which is conflicing
 static
-bool
-is_interfering_indel(
+indel_set_t::const_iterator
+which_interfering_indel(
     const indel_set_t& current_indels,
-    const IndelKey& newIndel)
+    const IndelKey& new_indel)
 {
-    if (current_indels.count(newIndel) != 0) return false;
+    typedef indel_set_t::const_iterator ci;
+    ci end(current_indels.end());
+    if (current_indels.count(new_indel) != 0) return end;
 
-    for (const IndelKey& currentIndel : current_indels)
+    ci iter(current_indels.begin());
+    const ci iter_end(current_indels.end());
+    for (; iter != iter_end; ++iter)
     {
-        if (is_indel_conflict(currentIndel, newIndel)) return true;
+        const IndelKey& currentIndel(*iter);
+        if (is_indel_conflict(currentIndel, new_indel)) return iter;
     }
-    return false;
+    return end;
 }
 
 
@@ -236,14 +242,12 @@ bool
 is_equiv_candidate(
     const candidate_alignment& cal1,
     const candidate_alignment& cal2,
-    const unsigned max_indel_size,
     indel_pair_set& equiv_keys)
 {
     equiv_keys.clear();
 
-    indel_set_t is1,is2;
-    get_alignment_indels(cal1,max_indel_size,is1);
-    get_alignment_indels(cal2,max_indel_size,is2);
+    const indel_set_t& is1(cal1.getIndels());
+    const indel_set_t& is2(cal2.getIndels());
 
     const unsigned s1(is1.size());
     const unsigned s2(is2.size());
@@ -257,7 +261,8 @@ is_equiv_candidate(
     {
         if (*it1==*it2) continue;
         if (it1->type != it2->type) return false;
-        if (it1->length != it2->length) return false;
+        if (it1->delete_length() != it2->delete_length()) return false;
+        if (it1->insert_seq() != it2->insert_seq()) return false;
         equiv_keys.insert(std::make_pair(*it1,*it2));
     }
     return true;
@@ -348,7 +353,6 @@ late_indel_normalization_filter(
             if (smoothScores[sortedIndex2]+equiv_lnp_range < smoothScores[sortedIndex1]) break;
             const bool is_equiv(is_equiv_candidate(*(candAlignmentPtrs[sortedIndex1]),
                                                    *(candAlignmentPtrs[sortedIndex2]),
-                                                   opt.max_indel_size,
                                                    indelPairs));
 
             if (! is_equiv) continue;
@@ -520,23 +524,14 @@ score_indels(
     //
     // The criteria for indels in this set are:
     // 1) the indel is not private to the read
-    // 2) the read overlaps at least one indel breakpoint by at least option:min_read_bp_flank bases in at least one candidate alignment
-    // 3) the indel is not in the nonnorm set
-    // 4) the read meets whatever mapping quality criteria have been setup for snp-calling
+    // 2) the indel is not in the nonnorm set
+    // 3) the read overlaps at least one indel breakpoint by at least option:min_read_bp_flank bases in at least one candidate alignment
     //
-    // graveyard:
-    // //?? 2) the most likely alignment path intersects the indel    //
-    // //?? 4) the most likely read alignment does not contain an interfering indel
-    //
-    // TODO deal with mapping issues somehow??
-    //
-    const bool is_tier1_read(rseg.is_tier1_mapping());
 
     const candidate_alignment& maxCandAlignment(*maxCandAlignmentPtr);
 
     indel_set_t indelsToEvaluate;
-    indel_set_t indelsInMaxCandAlignment;
-    indel_status_map_t isIndelOrthogonalToMaxCandAlignment;
+    const indel_set_t& indelsInMaxCandAlignment(maxCandAlignment.getIndels());
     {
         const known_pos_range maxCandAlignmentRange(get_soft_clip_alignment_range(maxCandAlignment.al));
 
@@ -545,7 +540,7 @@ score_indels(
                << "VARMIT: max_cal.al: " << maxCandAlignment.al << "\n"
                << "VARMIT: max_pr: " << maxCandAlignmentRange << "\n";
 #endif
-        get_alignment_indels(maxCandAlignment,opt.max_indel_size,indelsInMaxCandAlignment);
+
 #ifdef DEBUG_ALIGN
         log_os << "VARMIT max_path extracted indels:\n";
         dump_indel_set(indelsInMaxCandAlignment,log_os);
@@ -560,10 +555,11 @@ score_indels(
             log_os << "VARMIT: max path eval indel candidate: " << evaluationIndel;
 #endif
 
-            if (!indelBuffer.isCandidateIndel(evaluationIndel, indelData)) continue;
+            if (not indelBuffer.isCandidateIndel(evaluationIndel, indelData)) continue;
+            if (nonnorm_indels.count(evaluationIndel) != 0) continue;
 
 #ifdef DEBUG_ALIGN
-            log_os << "VARMIT: max path indel is candidate\n";
+            log_os << "VARMIT: max path indel is candidate and normed\n";
 #endif
 
             const bool isIndelInMaxCandAlignment(indelsInMaxCandAlignment.count(evaluationIndel)!=0);
@@ -592,8 +588,7 @@ score_indels(
 
                         if (isFilterCandAlignment[candAlignmentIndex]) continue;
 
-                        indel_set_t indelsInCandAlignment;
-                        get_alignment_indels(candAlignment,opt.max_indel_size,indelsInCandAlignment);
+                        const indel_set_t& indelsInCandAlignment(candAlignment.getIndels());
                         const bool isIndelInCandAlignment(indelsInCandAlignment.count(evaluationIndel)!=0);
                         if (! isIndelInCandAlignment) continue;
 
@@ -618,6 +613,7 @@ score_indels(
                 {
                     if (bpo>0)
                     {
+                        const bool is_tier1_read(rseg.is_tier1_mapping());
                         IndelSampleData& indelSampleData(getIndelData(indelIter).getSampleData(sampleId));
 
                         if (is_tier1_read) indelSampleData.suboverlap_tier1_read_ids.insert(rseg.id());
@@ -633,7 +629,6 @@ score_indels(
             log_os << "VARMIT: inserting indel to evaluate " << evaluationIndel << "\n";
 #endif
             indelsToEvaluate.insert(evaluationIndel);
-            isIndelOrthogonalToMaxCandAlignment[evaluationIndel] = is_interfering_indel(indelsInMaxCandAlignment,evaluationIndel);
         }
     }
 
@@ -647,22 +642,20 @@ score_indels(
     {
         indel_set_t::const_iterator i(indelsToEvaluate.begin());
         const indel_set_t::const_iterator i_end(indelsToEvaluate.end());
-        for (; i!=i_end; ++i)
+        for (; i != i_end; ++i)
         {
             indel_set_t::const_iterator j(i);
             ++j;
-            for (; j!=i_end; ++j)
+            for (; j != i_end; ++j)
             {
-                if (is_indel_conflict(*i,*j))
+                if (is_indel_conflict(*i, *j))
                 {
-                    overlap_map_tick(orthogonalIndelMap,*i,*j);
-                    overlap_map_tick(orthogonalIndelMap,*j,*i);
+                    overlap_map_tick(orthogonalIndelMap, *i, *j);
+                    overlap_map_tick(orthogonalIndelMap, *j, *i);
                 }
             }
         }
     }
-
-
 
     // (2b) Create index of highest scoring alignment set for each
     //      evaluation indel (found in step 2a). The set of alignments
@@ -687,40 +680,6 @@ score_indels(
     //
     iks_map_t indelScoringInfo;
     {
-        {
-            // as a simple acceleration to the full max scoring
-            // alignment path search below -- we go through all indel
-            // states present in the global maximum scoring alignment,
-            // taking advantage of our knowledge that this will be the
-            // highest scoring path already:
-            //
-            const align_info_t maxCandAlignmentInfo(std::make_pair(maxCandAlignmentScore,&maxCandAlignment));
-            for (const IndelKey& evaluationIndel : indelsToEvaluate)
-            {
-                const bool isIndelInMaxCandAlignment(indelsInMaxCandAlignment.count(evaluationIndel)!=0);
-                const auto indelPresentInfo(std::make_pair(isIndelInMaxCandAlignment,evaluationIndel));
-
-                if (isIndelInMaxCandAlignment)
-                {
-                    indelScoringInfo[std::make_pair(evaluationIndel,indelPresentInfo)] = maxCandAlignmentInfo;
-
-                    // mark this as an alternate indel score for interfering indels:
-                    for (const IndelKey& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
-                    {
-                        indelScoringInfo[std::make_pair(orthogonalIndel,indelPresentInfo)] = maxCandAlignmentInfo;
-                    }
-                }
-                else
-                {
-                    // check that this indel does not interfere with the max-set:
-                    if (! isIndelOrthogonalToMaxCandAlignment[evaluationIndel])
-                    {
-                        indelScoringInfo[std::make_pair(evaluationIndel,indelPresentInfo)] = maxCandAlignmentInfo;
-                    }
-                }
-            }
-        }
-
         std::set<candidate_alignment>::const_iterator candAlignmentIter(candAlignments.begin()),candAlignmentIter_end(candAlignments.end());
         for (unsigned candAlignmentIndex(0); candAlignmentIter!=candAlignmentIter_end; ++candAlignmentIter,++candAlignmentIndex)
         {
@@ -732,60 +691,151 @@ score_indels(
                 assert(! isMaxCandAlignment);
                 continue;
             }
-            if (isMaxCandAlignment) continue;
 
             const double score(candAlignmentScores[candAlignmentIndex]);
 
-            indel_set_t indelsInCandAlignment;
-            get_alignment_indels(candAlignment,opt.max_indel_size,indelsInCandAlignment);
+            const indel_set_t& indelsInCandAlignment(candAlignment.getIndels());
+
+            indel_set_t nonCandidateIndelsOrthogonalToEvaluationIndels;
+
+            //
+            // SPECIAL NOTATION NOTE:
+            //
+            // In the following section there is a lot of documentation about a read having X haplotype in the sample,
+            // but observed as Y haplotype, where the (X->Y) transformation represents a sequencing error.
+            //
+            // For consistency this is noted as:
+            //
+            // [[SAMPLE haplotype X TO OBSERVED haplotype Y]]
+            //
+            // This is intentionally overly-verbose b/c there have been past bugs and confusion on how we handle
+            // these relationships
+            //
 
             for (const IndelKey& evaluationIndel : indelsToEvaluate)
             {
+                const IndelData* idPtr(indelBuffer.getIndelDataPtr(evaluationIndel));
+                assert(idPtr != nullptr);
+                const auto& ep(idPtr->errorRates);
                 const bool isIndelInCandAlignment(indelsInCandAlignment.count(evaluationIndel)!=0);
                 if (isIndelInCandAlignment)
                 {
+                    // [[SAMPLE haplotype evaluationIndel TO OBSERVED haplotype (evaluationIndel+basecalling error)]]
+                    //
                     // this represents the score of the read arising from the evaluationIndel haplotype, as explained by a gapless alignment:
                     //
                     updateIndelScoringInfo(indelScoringInfo,evaluationIndel,isIndelInCandAlignment,evaluationIndel,score,&candAlignment);
 
+                    // [[SAMPLE haplotype reference TO OBSERVED haplotype (evaluationIndel+basecalling error)]]
+                    //
+                    // this represents the score of the read arising from the reference haplotype, as explained by a single indel error
+                    //
+                    updateIndelScoringInfo(indelScoringInfo,evaluationIndel,false,evaluationIndel,score+ep.scaledRefToIndelErrorProb.getLogValue(),&candAlignment);
+
                     // mark this as an alternate indel score for orthogonal indels:
                     for (const IndelKey& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
                     {
-                        // this represents the score of the read arising from the evaluationIndel haplotype,
-                        // (as above) but this is the copy we use when we are evaluating the orthogonalIndel haplotype
+                        // [[SAMPLE haplotype reference TO OBSERVED haplotype (evaluationIndel+basecalling error)]]
                         //
-                        updateIndelScoringInfo(indelScoringInfo,orthogonalIndel,isIndelInCandAlignment,evaluationIndel,score,&candAlignment);
+                        // same number as above, but provided in a format so that it is easily accessed from orthogonalIndel
+                        //
+                        updateIndelScoringInfo(indelScoringInfo, orthogonalIndel, false, orthogonalIndel,
+                                               score + ep.scaledRefToIndelErrorProb.getLogValue(), &candAlignment);
+
+                        {
+                            // Note that this entry is designed to support the legacy "alt_indels" enumeration attached to ReadScoreData below, once that system is retired
+                            //  (because indel overlap will be explicitely modeled), then this type of entry can be removed and the scoring structure can be simplified:
+
+                            // [[SAMPLE haplotype evaluationIndel TO OBSERVED haplotype (evaluationIndel+basecalling error)]]
+                            //
+                            // same number as above, but provided in a format so that it is easily accessed from orthogonalIndel
+                            //
+                            updateIndelScoringInfo(indelScoringInfo,orthogonalIndel,true,evaluationIndel,score,&candAlignment);
+                        }
                     }
                 }
                 else
                 {
-                    // if indel is not present, we must determine
-                    // whether an orthogonal indel is present in the
-                    // alignment to score this alignment in the right
-                    // category:
+                    // if indel is not present, we must determine whether an orthogonal indel is present in the
+                    // alignment to score this alignment in the right category:
                     //
-                    bool isIndelOrthogonalToCandAlignment(false);
-                    for (const IndelKey& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
+                    const auto othogonalIndelIter(which_interfering_indel(indelsInCandAlignment,evaluationIndel));
+                    const bool isIndelOrthogonalToCandAlignment(othogonalIndelIter != indelsInCandAlignment.end());
+
+                    // record nonCandidate indels which are orthogonal to the evaluation set
+                    // these will be handled separately below
+                    //
+                    // TODO what if more than one orthogonal indels are found?
+                    if (isIndelOrthogonalToCandAlignment)
                     {
-                        if (indelsInCandAlignment.count(orthogonalIndel)!=0)
+                        if (! indelsToEvaluate.count(*othogonalIndelIter))
                         {
-                            isIndelOrthogonalToCandAlignment=true;
-                            break;
+                            nonCandidateIndelsOrthogonalToEvaluationIndels.insert(*othogonalIndelIter);
                         }
                     }
 
                     if (! isIndelOrthogonalToCandAlignment)
                     {
+                        // [[SAMPLE haplotype reference TO OBSERVED haplotype (reference+basecalling error)]]
+                        //
                         // this represents the score of the read arising from the reference haplotype
                         //
                         // note that "reference haplotype" means the reference allele over the reference span
                         // of the evaluation indel only
                         //
-                        updateIndelScoringInfo(indelScoringInfo,evaluationIndel,isIndelInCandAlignment,evaluationIndel,score,&candAlignment);
+                        updateIndelScoringInfo(indelScoringInfo,evaluationIndel,false,evaluationIndel,score,&candAlignment);
 
+                        // [[SAMPLE haplotype evaluationIndel TO OBSERVED haplotype (reference+basecalling error)]]
+                        //
+                        // this represents the score of the read arising from the evaluationIndel haplotype
+                        // but with a single indel error reverting it to reference:
+                        //
+                        updateIndelScoringInfo(indelScoringInfo,evaluationIndel,true,evaluationIndel,score+ep.scaledIndelToRefErrorProb.getLogValue(),&candAlignment);
+                    }
+                    else
+                    {
+                        // [[SAMPLE haplotype evaluationIndel TO OBSERVED haplotype (orthogonalIndel+basecalling error)]]
+                        //
+                        // this represents the score of the read arising from the evaluationIndel haplotype
+                        // but with a single indel error leading to an observation of the orthogonal haplotype
+                        //
+                        // note in the absence of and indel->indel2 error rate, we use the indel->ref rate as a proxy
+                        //
+                        updateIndelScoringInfo(indelScoringInfo,evaluationIndel,true,evaluationIndel,score+ep.scaledIndelToRefErrorProb.getLogValue(),&candAlignment);
                     }
                 }
             }
+
+            // run a separate loop to handle the remaining non-candidate indels in this alignment
+            // which are orthogonal to at least one evaluation indel:
+            //
+            for (const IndelKey& nonCandidateIndel : nonCandidateIndelsOrthogonalToEvaluationIndels)
+            {
+                const IndelData* indelDataPtr(indelBuffer.getIndelDataPtr(nonCandidateIndel));
+                assert(indelDataPtr != nullptr);
+                const auto& ep(indelDataPtr->errorRates);
+
+                // test whether indel is orthogonal to each evaluationIndel, if it is, then:
+                //
+                // record the (nonCandidateIndel from ref) score as a possible ref obs for the evaluationIndel
+                //
+                // ?TODO? -- also could make an observation on the (evalautionIndel TO nonCandidateIndel) score here,
+                //          although it is handled above as well
+
+                for (const IndelKey& evaluationIndel : indelsToEvaluate)
+                {
+                    const bool isIndelOrthogonalToCandAlignment(is_indel_conflict(nonCandidateIndel,evaluationIndel));
+                    if (! isIndelOrthogonalToCandAlignment) continue;
+
+                    // [[SAMPLE haplotype reference TO OBSERVED haplotype (nonCandidateIndel+basecalling error)]]
+                    //
+                    // this represents the score of the read arising from the reference haplotype
+                    // but with a single indel error leading to an observation of the noncandidateIndel
+                    //
+                    updateIndelScoringInfo(indelScoringInfo,evaluationIndel,false,evaluationIndel,score+ep.scaledRefToIndelErrorProb.getLogValue(),&candAlignment);
+                }
+            }
+
         }
     }
 
@@ -808,6 +858,8 @@ score_indels(
     }
 
     {
+        const bool is_tier1_read(rseg.is_tier1_mapping());
+
         for (const IndelKey& evaluationIndel : indelsToEvaluate)
         {
             // we test for presence of the indel on the highest
@@ -836,13 +888,6 @@ score_indels(
                 if (! is_found)
                 {
                     if (is_incomplete_search) continue;
-                    // TODO -- get more precise information on exactly when we expect an indel which overlaps a max_cal indel to not be found, for
-                    // now we have to give a pass on all cases:
-                    if (isIndelOrthogonalToMaxCandAlignment[evaluationIndel]) continue;
-
-                    // for the nonnorm cases, we've already eliminated at least some of the alignments which contain them
-                    // and in certain circumstances there won't be alternates available
-                    if (nonnorm_indels.count(evaluationIndel)!=0) continue;
 
                     if (is_safe_mode)
                     {
@@ -912,8 +957,11 @@ score_indels(
 
             // assemble basic score data:
             //
-            int readpos = maxCandAlignment.al.is_fwd_strand ? ((signed) (evaluationIndel.pos - maxCandAlignment.al.pos)) :
-                          ((signed) (read_length - evaluationIndel.pos + maxCandAlignment.al.pos - 1));
+            // where is the indel in fwd_strand read coordinates wrt the most likely read alignment?
+            /// TODO: this needs to be corrected to account for indels in maxCandAlignment
+            const pos_t rawReadPos(evaluationIndel.pos - maxCandAlignment.al.pos);
+            const pos_t readpos(maxCandAlignment.al.is_fwd_strand ?
+                                rawReadPos : (static_cast<pos_t>(read_length) - rawReadPos -1));
 
 #ifdef DEBUG_ALIGN
             //            correct for strandedness

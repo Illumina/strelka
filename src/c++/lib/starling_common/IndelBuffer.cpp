@@ -116,6 +116,7 @@ addIndelObservation(
     const unsigned sampleId,
     const IndelObservation& obs)
 {
+    assert(_isFinalized);
     assert(obs.key.type != INDEL::NONE);
 
     // if not previously observed
@@ -166,7 +167,7 @@ isCandidateIndelImplTestSignalNoise(
         // test to see if the observed indel coverage has a binomial exact test
         // p-value above the rejection threshold. If this does not occur for the
         // counts observed in any sample, the indel cannot become a candidate
-        if (_countCache.isRejectNull(totalReadCount, indelData.errorRates.indelToRefErrorProb, tier1ReadSupportCount))
+        if (_countCache.isRejectNull(totalReadCount, indelData.errorRates.indelToRefErrorProb.getValue(), tier1ReadSupportCount))
         {
             return true;
         }
@@ -207,24 +208,32 @@ isCandidateIndelImplTest(
         // get standard rates:
         starling_indel_report_info indelReportInfo;
         get_starling_indel_report_info(indelKey, indelData, _ref, indelReportInfo);
-        _dopt.getIndelErrorModel().getIndelErrorRate(indelReportInfo,
-                                                     indelData.errorRates.refToIndelErrorProb,
-                                                     indelData.errorRates.indelToRefErrorProb);
+        double refToIndelErrorProb;
+        double indelToRefErrorProb;
+        _dopt.getIndelErrorModel().getIndelErrorRate(indelKey, indelReportInfo, refToIndelErrorProb, indelToRefErrorProb);
+        indelData.errorRates.refToIndelErrorProb.updateValue(refToIndelErrorProb);
+        indelData.errorRates.indelToRefErrorProb.updateValue(indelToRefErrorProb);
 
         // compute scaled rates:
-        indelData.errorRates.scaledIndelToRefErrorProb = indelData.errorRates.indelToRefErrorProb;
-        indelData.errorRates.scaledRefToIndelErrorProb = indelData.errorRates.refToIndelErrorProb;
+        double scaledRefToIndelErrorProb = indelData.errorRates.refToIndelErrorProb.getValue();
+        double scaledIndelToRefErrorProb = indelData.errorRates.indelToRefErrorProb.getValue();
         if (_opt.isIndelErrorRateFactor)
         {
-            scaleIndelErrorRate(_dopt.logIndelErrorRateFactor, indelData.errorRates.scaledRefToIndelErrorProb);
-            scaleIndelErrorRate(_dopt.logIndelErrorRateFactor, indelData.errorRates.scaledIndelToRefErrorProb);
+            scaleIndelErrorRate(_dopt.logIndelErrorRateFactor, scaledRefToIndelErrorProb);
+            scaleIndelErrorRate(_dopt.logIndelErrorRateFactor, scaledIndelToRefErrorProb);
         }
+
+        indelData.errorRates.scaledRefToIndelErrorProb.updateValue(scaledRefToIndelErrorProb);
+        indelData.errorRates.scaledIndelToRefErrorProb.updateValue(scaledIndelToRefErrorProb);
 
         indelData.errorRates.isInit = true;
     }
 
     // check whether the candidate has been externally specified:
     if (indelData.is_external_candidate) return true;
+
+    // if short haplotyping is enabled, any indels not confirmed in active region are not candidate
+    if (_opt.is_short_haplotyping_enabled && !indelData.isConfirmedInActiveRegion) return false;
 
     if (_opt.is_candidate_indel_signal_test)
     {
@@ -241,7 +250,7 @@ isCandidateIndelImplTest(
     // call getInsertSize() instead of asking for the insert seq
     // so as to not finalize any incomplete insertions:
     if (indelKey.is_breakpoint() &&
-        (_opt.min_candidate_indel_open_length > indelData.getInsertSize()))
+        (_opt.min_candidate_indel_open_length > indelData.getBreakpointInsertSize()))
     {
         return false;
     }

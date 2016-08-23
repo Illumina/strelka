@@ -36,7 +36,6 @@ BOOST_AUTO_TEST_CASE( test_cmodel_gqx )
     // disable for now. These don't fail in unit test form, only integrated
     starling_options opts;
     opts.calibration_models_filename = TEST_CONFIG_PATH;
-    opts.is_clobber = true;
     opts.min_paired_align_score=20;
     opts.min_single_align_score=20;
     opts.min_qscore=17 ;
@@ -82,9 +81,9 @@ BOOST_AUTO_TEST_CASE( test_cmodel_gqx )
     iri.ihpol=5;
     iri.it=INDEL::INSERT;
     starling_indel_sample_report_info isri;
-    isri.n_q30_ref_reads=1;
-    isri.n_q30_indel_reads=6;
-    isri.n_q30_alt_reads=4;
+    isri.n_confident_ref_reads=1;
+    isri.n_confident_indel_reads=6;
+    isri.n_confident_alt_reads=4;
     isri.n_other_reads=17;
     isri.depth=28;
 
@@ -131,9 +130,9 @@ BOOST_AUTO_TEST_CASE( test_cmodel_gqx )
     iri2.it=INDEL::INSERT;
 
     starling_indel_sample_report_info isri2;
-    isri2.n_q30_ref_reads=1;
-    isri2.n_q30_indel_reads=4;
-    isri2.n_q30_alt_reads=6;
+    isri2.n_confident_ref_reads=1;
+    isri2.n_confident_indel_reads=4;
+    isri2.n_confident_alt_reads=6;
     isri2.n_other_reads=17;
     isri2.depth=28;
 

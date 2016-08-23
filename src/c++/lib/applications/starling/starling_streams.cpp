@@ -43,7 +43,7 @@ initialize_gvcf_file(
     if (filename != "-")
     {
         std::ofstream* fos_ptr(new std::ofstream);
-        open_ofstream(pinfo,filename,"gvcf",opt.is_clobber,*fos_ptr);
+        open_ofstream(pinfo,filename,"gvcf",*fos_ptr);
         os_ptr_auto.reset(fos_ptr);
         osptr=os_ptr_auto.get();
     }
@@ -55,9 +55,7 @@ initialize_gvcf_file(
 
         write_vcf_audit(opt,pinfo,cmdline,header,os);
 
-        os << "##content=" << pinfo.name() << " small-variant calls\n"
-           << "##SnvTheta=" << opt.bsnp_diploid_theta << "\n"
-           << "##IndelTheta=" << opt.bindel_diploid_theta << "\n";
+        os << "##content=" << pinfo.name() << " small-variant calls\n";
     }
     return osptr;
 }
@@ -81,8 +79,8 @@ starling_streams(
         _gvcf_osptr = initialize_gvcf_file(opt,pinfo,opt.gvcf.out_file,header,_gvcf_osptr_auto);
     }
 
-    if (opt.is_realigned_read_file)
+    if (opt.is_realigned_read_file())
     {
-        _realign_bam_ptr[0].reset(initialize_realign_bam(opt.is_clobber,pinfo,opt.realigned_read_filename,"realigned-read BAM/CRAM",header));
+        _realign_bam_ptr[0].reset(initialize_realign_bam(opt.realigned_read_filename, header));
     }
 }

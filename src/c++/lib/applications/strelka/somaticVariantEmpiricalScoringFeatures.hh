@@ -19,7 +19,7 @@
 //
 
 /*
- *      Author: mkallberg
+ *      Author: Morten Kallberg
  */
 
 #pragma once
@@ -30,8 +30,16 @@
 #include <cassert>
 
 
-struct SOMATIC_SNV_SCORING_FEATURES
+struct SOMATIC_SNV_SCORING_FEATURES : public FeatureSet
 {
+    static
+    const FeatureSet&
+    getInstance()
+    {
+        static const auto featureSet = SOMATIC_SNV_SCORING_FEATURES();
+        return featureSet;
+    }
+
     static
     const char*
     get_name()
@@ -45,18 +53,13 @@ struct SOMATIC_SNV_SCORING_FEATURES
     enum index_t
     {
         QSS_NT,
-        N_FDP_RATE,
-        T_FDP_RATE,
-        N_SDP_RATE,
-        T_SDP_RATE,
         N_DP_RATE,
         TIER1_ALT_RATE,
         MQ,
         MQ0_FRAC,
         strandBias,
         ReadPosRankSum,
-        altmap,
-        altpos,
+        LOR,
         SIZE
     };
 
@@ -68,16 +71,6 @@ struct SOMATIC_SNV_SCORING_FEATURES
         {
         case QSS_NT:
             return "QSS_NT";
-        case N_FDP_RATE:
-            return "N_FDP_RATE";
-        case T_FDP_RATE:
-            return "T_FDP_RATE";
-        case N_SDP_RATE:
-            return "N_SDP_RATE";
-        case T_SDP_RATE:
-            return "T_SDP_RATE";
-        case N_DP_RATE:
-            return "N_DP_RATE";
         case TIER1_ALT_RATE:
             return "TIER1_ALT_RATE";
         case MQ:
@@ -88,23 +81,35 @@ struct SOMATIC_SNV_SCORING_FEATURES
             return "strandBias";
         case ReadPosRankSum:
             return "ReadPosRankSum";
-        case altmap:
-            return "altmap";
-        case altpos:
-            return "altpos";
+        case N_DP_RATE:
+            return "N_DP_RATE";
+        case LOR:
+            return "LOR";
         default:
             assert(false && "Unknown feature");
             return nullptr;
         }
     }
 
-    static
-    const VariantScoringModelMetadata::featureMap_t&
-    getFeatureMap()
+    const char*
+    getName() const override
     {
-        static const FeatureMapMaker<SOMATIC_SNV_SCORING_FEATURES> fmm;
-        return fmm.result;
+        return get_name();
     }
+
+    unsigned
+    size() const override
+    {
+        return SIZE;
+    }
+
+
+    const char*
+    getFeatureLabel(const unsigned idx) const override
+    {
+        return get_feature_label(idx);
+    }
+
 };
 
 
@@ -113,8 +118,16 @@ struct SOMATIC_SNV_SCORING_FEATURES
 ///
 /// these should only be output as part of a non-default training mode
 ///
-struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES
+struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
 {
+    static
+    const FeatureSet&
+    getInstance()
+    {
+        static const auto featureSet = SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES();
+        return featureSet;
+    }
+
     static
     const char*
     get_name()
@@ -124,7 +137,12 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES
 
     enum index_t
     {
-        LOR,
+        altmap,
+        altpos,
+        N_FDP_RATE,
+        T_FDP_RATE,
+        N_SDP_RATE,
+        T_SDP_RATE,
         SIZE
     };
 
@@ -134,22 +152,59 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES
     {
         switch (idx)
         {
-        case LOR:
-            return "LogOddsRatio";
+        case altmap:
+            return "altmap";
+        case altpos:
+            return "altpos";
+        case N_FDP_RATE:
+            return "N_FDP_RATE";
+        case T_FDP_RATE:
+            return "T_FDP_RATE";
+        case N_SDP_RATE:
+            return "N_SDP_RATE";
+        case T_SDP_RATE:
+            return "T_SDP_RATE";
         default:
             assert(false && "Unknown feature");
             return nullptr;
         }
     }
+
+    const char*
+    getName() const override
+    {
+        return get_name();
+    }
+
+    unsigned
+    size() const override
+    {
+        return SIZE;
+    }
+
+
+    const char*
+    getFeatureLabel(const unsigned idx) const override
+    {
+        return get_feature_label(idx);
+    }
+
 };
 
 
 
-struct SOMATIC_INDEL_SCORING_FEATURES
+struct SOMATIC_INDEL_SCORING_FEATURES : public FeatureSet
 {
     static
+    const FeatureSet&
+    getInstance()
+    {
+        static const auto featureSet = SOMATIC_INDEL_SCORING_FEATURES();
+        return featureSet;
+    }
+
     const char*
-    get_name()
+    getName() const override
     {
         return "SOMATIC_INDEL_SCORING_FEATURES";
     }
@@ -171,9 +226,15 @@ struct SOMATIC_INDEL_SCORING_FEATURES
         SIZE
     };
 
-    static
+    unsigned
+    size() const override
+    {
+        return SIZE;
+    }
+
+
     const char*
-    get_feature_label(const unsigned idx)
+    getFeatureLabel(const unsigned idx) const override
     {
         switch (idx)
         {
@@ -203,13 +264,6 @@ struct SOMATIC_INDEL_SCORING_FEATURES
         }
     }
 
-    static
-    const VariantScoringModelMetadata::featureMap_t&
-    getFeatureMap()
-    {
-        static const FeatureMapMaker<SOMATIC_INDEL_SCORING_FEATURES> fmm;
-        return fmm.result;
-    }
 };
 
 
@@ -218,8 +272,16 @@ struct SOMATIC_INDEL_SCORING_FEATURES
 ///
 /// these should only be output as part of a non-default training mode
 ///
-struct SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES
+struct SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
 {
+    static
+    const FeatureSet&
+    getInstance()
+    {
+        static const auto featureSet = SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES();
+        return featureSet;
+    }
+
     static
     const char*
     get_name()
@@ -261,5 +323,25 @@ struct SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES
             return nullptr;
         }
     }
+
+    const char*
+    getName() const override
+    {
+        return get_name();
+    }
+
+    unsigned
+    size() const override
+    {
+        return SIZE;
+    }
+
+
+    const char*
+    getFeatureLabel(const unsigned idx) const override
+    {
+        return get_feature_label(idx);
+    }
+
 };
 

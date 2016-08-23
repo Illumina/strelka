@@ -46,6 +46,17 @@ get_sum_path_pprob(
     const bool is_init_total = true);
 
 
+/// get expected allele ratio for long indels
+void
+get_het_observed_allele_ratio(
+    const unsigned read_length,
+    const unsigned min_overlap,
+    const IndelKey& indelKey,
+    const double het_allele_ratio,
+    double& log_ref_prob,
+    double& log_indel_prob);
+
+
 /// precalculates prior distributions based on theta value:
 ///
 struct indel_digt_caller : private boost::noncopyable
@@ -61,8 +72,6 @@ struct indel_digt_caller : private boost::noncopyable
         const starling_base_options& client_opt,
         const starling_base_deriv_options& client_dopt,
         const starling_sample_options& sample_opt,
-        const double indel_error_prob,
-        const double ref_error_prob,
         const IndelKey& indelKey,
         const IndelSampleData& indelSampleData,
         const bool is_use_alt_indel,
@@ -89,10 +98,6 @@ struct indel_digt_caller : private boost::noncopyable
         const starling_base_options& opt,
         const starling_base_deriv_options& dopt,
         const starling_sample_options& sample_opt,
-        const double indel_error_lnp,
-        const double indel_real_lnp,
-        const double ref_error_lnp,
-        const double ref_real_lnp,
         const IndelKey& indelKey,
         const IndelSampleData& indelSampleData,
         const double het_ratio,
@@ -107,12 +112,8 @@ struct indel_digt_caller : private boost::noncopyable
         const starling_base_options& opt,
         const starling_base_deriv_options& dopt,
         const starling_sample_options& sample_opt,
-        const double indel_error_prob,
-        const double ref_error_prob,
         const IndelKey& indelKey,
         const IndelSampleData& indelSampleData,
-        const bool is_het_bias,
-        const double het_bias,
         const bool is_include_tier2,
         const bool is_use_alt_indel,
         double* const lhood);

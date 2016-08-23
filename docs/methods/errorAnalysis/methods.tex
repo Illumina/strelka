@@ -55,11 +55,11 @@ The pattern counts are collected for many instances of the context and possibly 
 For both SNV and indels, reads are filtered from the error analysis if they
 
 \begin{enumerate}
-	\item fail platform quality test
-	\item are PCR/optical duplicates
-	\item are not mapped
-	\item are not "proper pair"
-	\item input alignment contains more than 2 indels
+\item fail platform quality test
+\item are PCR/optical duplicates
+\item are not mapped
+\item are not "proper pair"
+\item input alignment contains more than 2 indels
 \end{enumerate}
 
 Additionally, reads are read in but not used to generate error counts, if their MAPQ score is less than 60. Note that lower MAPQ reads are still read in so that it is still possible to determine depth relative to chromosome mean for the purpose of filtering high-depth regions (details below).
@@ -70,9 +70,18 @@ For indels, the context set is factored on homopolymer length, $h$. Each base is
 
 During indel pattern matching, counts are recorded for 7 allele types, these are: (1) the reference allele (2) insertions and deletions of length 1 or 2 (3) all insertions and deletions of length greater than 3 condensed to a single "3+" length category, one each for insertions and deletions. Any complex indels represented by a combination insertion/deletion event are skipped.
 
-The counting process itself uses the same mapped read scanning and realignment strategy used by the small variant caller, with the following major differences: (1) all reads with greater than 2 indels are filtered out on input (2) there is no threshold for indel candidacy (3) no indel errors are allowed when read likelihood for each indel allele is computed. Note that item (2) above means that an alignment gap  observed once in an input read is treated as a "candidate" for the purposes of error evaluation, thus an attempt is made to realign all other reads to that indel, and in the process the likelihood of each read supporting the given indel is found. Item (3) above means that all read likelihoods for each indel allele have to be explained by basecalling errors only.
+The counting process itself uses the same mapped read scanning and realignment strategy used by the small variant caller, with the following major differences:
+ \begin{enumerate}
+ \item all reads with greater than 2 indels are filtered out on input
+ \item there is no threshold for indel candidacy
+ \item no indel errors are allowed when read likelihood for each indel allele is computed
+ \item there is no restriction on the number of overlapping allele candidates based on ploidy
+ \item there is an arbitrary restriction of no more than 4 overlapping allele candidates for practical complexity management, if more than this are found the whole locus is skipped
+ \item if the set of overlapping alleles at a locus are not all mutually incompatible with the same haplotype the locus is skipped
+ \end{enumerate}
+Note that item (2) above means that an alignment gap observed once in an input read is treated as a "candidate" for the purpose of error evaluation, thus an attempt is made to realign all other reads to that indel, and in the process the likelihood of each read supporting the given indel is found. Item (3) above means that all read likelihoods for each indel allele have to be explained by basecalling errors only.
 
-Additional but less critical modifications to error counting process compared to the variant caller include suspending indel candidacy and the candidate process for any region where the pileup depth is observed to be more than 3 times the chromosome mean. When the high depth threshold is triggered the error counting process suspends the collection of any evidence. The number of contexts affected by such filtration is recorded so that it is still possible to verify the total number of contexts observed during the counting process.
+Additional but less critical modifications to the error counting process compared to the variant caller include suspending indel candidacy and the candidate process for any region where the pileup depth is observed to be more than 3 times the chromosome mean. When the high depth threshold is triggered the error counting process suspends the collection of any evidence. The number of contexts affected by such filtration is recorded so that it is still possible to verify the total number of contexts observed during the counting process.
 
 \paragraph{Criteria used for counting supporting evidence}
 
@@ -97,10 +106,10 @@ Additional filtration which is specific to SNVs: (1) No basecall error counts ar
 Basecalls are marked as 'noise' for any of the following reasons:
 
 \begin{enumerate}
-	\item comes from a read with MAPQ < 60
-	\item is "N"
-	\item has quality lower than 17
-	\item fails the mismatch density filter, which for the pattern analyzer has been made very stringent: only 1 mismatch is allowed in the flanking 100 bases on each side of a site (effectively the allele of interest can be the only mismatch in most typical reads)
+\item comes from a read with MAPQ \textless 60
+\item is "N"
+\item has quality lower than 17
+\item fails the mismatch density filter, which for the pattern analyzer has been made very stringent: only 1 mismatch is allowed in the flanking 100 bases on each side of a site (effectively the allele of interest can be the only mismatch in most typical reads)
 \end{enumerate}
 
 The basecall filtration is designed to be extremely conservative, with the goal of removing mapping and assembly errors so that the downstream basecall error estimation models can focus on the basecall error process itself. Given this goal, the most important consideration is whether any of the above steps introduce a filtration bias that would impact the error estimates, which is probably true for the mismatch density filter above, and a potential focus for future improvements.
@@ -113,8 +122,8 @@ Gathering supporting count evidence for basecall errors is generally similar to 
 Regarding the handling of basecalls - naively storing  the counts of all basecall quality groupings at all sites quickly becomes unmanageable from the perspective of both storage (too many quality count patterns in RAM/on disk) and computing likelihood models downstream (too many quality count patterns to iterate over to evaluate model likelihood). For this reason, we need to plan ahead of time exactly what types of likelihoods we want to generate for this case and what minimum information required to do this -- based on this analysis the quality compression scheme for SNVs is:
 
 \begin{enumerate}
-	\item no basecall quality information is stored (per-site+strand) for any base matching the reference, instead we record a simple reference count for each site+strand
-	\item basecall qualities are stored for all non-reference basecalls
+\item no basecall quality information is stored (per-site+strand) for any base matching the reference, instead we record a simple reference count for each site+strand
+\item basecall qualities are stored for all non-reference basecalls
 \end{enumerate}
 
 An additional counting structure is added to record the aggregate reference basecall quality distribution over all sites, which is used in the current downstream likelihood models described below. This scheme should provide a reasonable solution for single sample analysis, if multiple samples with different basecall quality distributions are combined this approximation would need to be revisited.
@@ -367,8 +376,8 @@ P (d \vert \theta, g_{hom}) = m_c (1-e_{ref})^{c(alt)} {e_{ref}}^{c(ref)}
 The genotype priors $P(G)$ described above are a function of $\theta_{SNV}$, with
 
 \begin{eqnarray*}
-	P(het) &=& \theta_{SNV} \\
-	P(hom) &=& \theta_{SNV} / 2
+P(het) &=& \theta_{SNV} \\
+P(hom) &=& \theta_{SNV} / 2
 \end{eqnarray*}
 
 

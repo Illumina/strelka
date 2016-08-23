@@ -113,7 +113,6 @@ integrate_out_sites(const starling_base_deriv_options& dopt,
 //
 // Note this routine does not account for overlapping indels
 //
-static
 void
 get_het_observed_allele_ratio(
     const unsigned read_length,
@@ -123,9 +122,7 @@ get_het_observed_allele_ratio(
     double& log_ref_prob,
     double& log_indel_prob)
 {
-    assert((indelKey.type==INDEL::INSERT) ||
-           (indelKey.type==INDEL::DELETE) ||
-           (indelKey.type == INDEL::SWAP));
+    assert(indelKey.type==INDEL::INDEL);
 
     // the expected relative read depth for two breakpoints separated by a distance of 0:
     const unsigned base_expect( (read_length+1)<(2*min_overlap) ? 0 : (read_length+1)-(2*min_overlap) );
@@ -157,10 +154,6 @@ get_high_low_het_ratio_lhood(
     const starling_base_options& /*opt*/,
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sample_opt,
-    const double indel_error_lnp,
-    const double indel_real_lnp,
-    const double ref_error_lnp,
-    const double ref_real_lnp,
     const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
     const double het_ratio,
@@ -205,8 +198,8 @@ get_high_low_het_ratio_lhood(
         }
 #endif
 
-        const double noindel_lnp(log_sum(alt_path_lnp+ref_real_lnp,path_lnp.indel+indel_error_lnp));
-        const double hom_lnp(log_sum(alt_path_lnp+ref_error_lnp,path_lnp.indel+indel_real_lnp));
+        const double noindel_lnp(alt_path_lnp);
+        const double hom_lnp(path_lnp.indel);
 
         // allele ratio convention is that the indel occurs at the
         // het_allele ratio and the alternate allele occurs at
@@ -247,10 +240,6 @@ increment_het_ratio_lhood(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sample_opt,
-    const double indel_error_lnp,
-    const double indel_real_lnp,
-    const double ref_error_lnp,
-    const double ref_real_lnp,
     const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
     const double het_ratio,
@@ -263,8 +252,6 @@ increment_het_ratio_lhood(
     double het_lhood_low;
 
     indel_digt_caller::get_high_low_het_ratio_lhood(opt,dopt,sample_opt,
-                                                    indel_error_lnp,indel_real_lnp,
-                                                    ref_error_lnp,ref_real_lnp,
                                                     indelKey,indelSampleData,het_ratio,is_tier2_pass,
                                                     is_use_alt_indel,
                                                     het_lhood_high,het_lhood_low);
@@ -330,101 +317,14 @@ get_sum_path_pprob(
 
 
 
-// Run a simple approx noise-filter first for sites with many indel
-// alleles
-//
-// The goal of this filter is to identify obvious invalid cases where
-// these are detectable without a full haplotype model -- it thus will
-// let some obvious noise cases through.
-//
-// is_include_alt_indel == true is implied by calling this function
-//
-static
-bool
-is_diploid_indel_noise(
-    const starling_base_deriv_options& dopt,
-    const IndelSampleData& indelSampleData,
-    const bool is_tier2_pass)
-{
-    static const bool is_use_alt_indel(true);
-
-    // test is to *sum* the likelihoods supporting each indel:
-    //
-
-    // first sum every read intersecting the indel:
-    ReadPathScores total_pprob;
-    get_sum_path_pprob(dopt,indelSampleData,is_tier2_pass,is_use_alt_indel,total_pprob);
-
-    enum iallele_t
-    {
-        INDEL = -2,
-        REF = -1
-    };
-
-    // next determine the top two indel alleles:
-    int max1_id(INDEL);
-    int max2_id(REF);
-    double max1(total_pprob.indel);
-    double max2(total_pprob.ref);
-    if (max1<max2)
-    {
-        std::swap(max1,max2);
-        std::swap(max1_id,max2_id);
-    }
-    const ReadPathScores::alt_indel_t& ai(total_pprob.alt_indel);
-    const int ais(ai.size());
-    for (int i(0); i<ais; ++i)
-    {
-        if       (ai[i].second>max1)
-        {
-            max2=max1;
-            max2_id=max1_id;
-            max1=ai[i].second;
-            max1_id=i;
-        }
-        else if (ai[i].second>max2)
-        {
-            max2=ai[i].second;
-            max2_id=i;
-        }
-    }
-
-#if 0
-    std::cerr << "BUG: id: " << id;
-    std::cerr << "BUG: total_pprob: " << total_pprob << "\n";
-    std::cerr << "BUG: max1_id,max2_id " << max1_id << " " << max2_id << "\n";
-#endif
-
-    // If the top two alleles are both alternate indels, check that
-    // they interfere with each other.  If not, we are forced to make
-    // the conservative assumption that they occur as part of the same
-    // haplotype:
-    //
-    if (max1_id>=0 && max2_id>=0)
-    {
-        if (! is_indel_conflict(ai[max1_id].first,ai[max2_id].first))
-        {
-            return (total_pprob.ref>total_pprob.indel);
-        }
-    }
-
-    return ((max1_id!=INDEL) && (max2_id!=INDEL));
-}
-
-
-
 void
 indel_digt_caller::
 get_indel_digt_lhood(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sample_opt,
-    const double indel_error_prob,
-    const double ref_error_prob,
     const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
-    const bool is_het_bias,
-    const double het_bias,
     const bool is_tier2_pass,
     const bool is_use_alt_indel,
     double* const lhood)
@@ -434,11 +334,6 @@ get_indel_digt_lhood(
     for (unsigned gt(0); gt<STAR_DIINDEL::SIZE; ++gt) lhood[gt] = 0.;
 
     const bool is_breakpoint(indelKey.is_breakpoint());
-
-    const double indel_error_lnp(std::log(indel_error_prob));
-    const double indel_real_lnp(std::log(1.-indel_error_prob));
-    const double ref_error_lnp(std::log(ref_error_prob));
-    const double ref_real_lnp(std::log(1.-ref_error_prob));
 
     for (const auto& score : indelSampleData.read_path_lnp)
     {
@@ -465,8 +360,8 @@ get_indel_digt_lhood(
         }
 #endif
 
-        const double noindel_lnp(log_sum(alt_path_lnp+ref_real_lnp,path_lnp.indel+indel_error_lnp));
-        const double hom_lnp(log_sum(alt_path_lnp+ref_error_lnp,path_lnp.indel+indel_real_lnp));
+        const double noindel_lnp(alt_path_lnp);
+        const double hom_lnp(path_lnp.indel);
 
         // allele ratio convention is that the indel occurs at the
         // het_allele ratio and the alternate allele occurs at
@@ -493,6 +388,14 @@ get_indel_digt_lhood(
     }
 
 
+
+    // mothballing het-bias feature as implemented in this indel model, but keeping as a template for
+    // implementation in the new diplotype model. het_bias doc is:
+    //
+    // "                    - Set bias term for the heterozygous state in the bindel model, such that\n"
+    // "                      hets are expected at allele ratios in the range [0.5-x,0.5+x] (default: 0)\n"
+    static const bool is_het_bias(false);
+    static const double het_bias(0.);
     if (is_het_bias)
     {
         // loop is currently setup to assume a uniform het ratio subgenotype prior
@@ -502,8 +405,6 @@ get_indel_digt_lhood(
         {
             const double het_ratio(0.5+(step+1)*ratio_increment);
             increment_het_ratio_lhood(opt,dopt,sample_opt,
-                                      indel_error_lnp,indel_real_lnp,
-                                      ref_error_lnp,ref_real_lnp,
                                       indelKey,indelSampleData,het_ratio,is_tier2_pass,is_use_alt_indel,lhood);
         }
 
@@ -523,8 +424,6 @@ starling_indel_call_pprob_digt(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sample_opt,
-    const double indel_error_prob,
-    const double ref_error_prob,
     const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
     const bool is_use_alt_indel,
@@ -535,19 +434,9 @@ starling_indel_call_pprob_digt(
 
     const bool is_haploid(dindel.is_haploid());
 
-    if (opt.is_noise_indel_filter && is_diploid_indel_noise(dopt,indelSampleData,is_tier2_pass))
-    {
-        dindel.is_indel=false;
-        return;
-    }
-
-    // turn off het bias in haploid case:
-    const bool is_het_bias((!is_haploid) && opt.is_bindel_diploid_het_bias);
-
     // get likelihood of each genotype:
     double lhood[STAR_DIINDEL::SIZE];
-    get_indel_digt_lhood(opt,dopt,sample_opt,indel_error_prob,ref_error_prob,indelKey,indelSampleData,
-                         is_het_bias,opt.bindel_diploid_het_bias,
+    get_indel_digt_lhood(opt,dopt,sample_opt,indelKey,indelSampleData,
                          is_tier2_pass,is_use_alt_indel,lhood);
 
     // mult by prior distro to get unnormalized pprob:
@@ -559,14 +448,14 @@ starling_indel_call_pprob_digt(
         }
     }
 
-    normalize_ln_distro(dindel.pprob,dindel.pprob+STAR_DIINDEL::SIZE,dindel.max_gt);
+    normalize_ln_distro(dindel.pprob.begin(),dindel.pprob.end(),dindel.max_gt);
 
 #ifdef DEBUG_INDEL_CALL
     log_os << "INDEL_CALL pprob(noindel),pprob(hom),pprob(het): " << dindel.pprob[STAR_DIINDEL::NOINDEL] << " " << dindel.pprob[STAR_DIINDEL::HOM] << " " << dindel.pprob[STAR_DIINDEL::HET] << "\n";
 #endif
 
     dindel.indel_qphred=error_prob_to_qphred(dindel.pprob[STAR_DIINDEL::NOINDEL]);
-    dindel.max_gt_qphred=error_prob_to_qphred(prob_comp(dindel.pprob,dindel.pprob+STAR_DIINDEL::SIZE,dindel.max_gt));
+    dindel.max_gt_qphred=error_prob_to_qphred(prob_comp(dindel.pprob.begin(),dindel.pprob.end(),dindel.max_gt));
 
     // set phredLoghood:
     {
@@ -593,8 +482,4 @@ starling_indel_call_pprob_digt(
     }
     normalize_ln_distro(lhood,lhood+STAR_DIINDEL::SIZE,dindel.max_gt_poly);
     dindel.max_gt_poly_qphred=error_prob_to_qphred(prob_comp(lhood,lhood+STAR_DIINDEL::SIZE,dindel.max_gt_poly));
-
-    // old report criteria:
-    //dindel.is_indel=(dindel.max_gt != STAR_DIINDEL::NOINDEL);
-    dindel.is_indel=(dindel.indel_qphred != 0);
 }

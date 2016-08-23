@@ -64,6 +64,7 @@ gvcf_writer(
     , _dopt(dopt.gvcf)
     , _block(_opt.gvcf)
     , _head_pos(dopt.report_range.begin_pos)
+    , _empty_site(_dopt)
     , _gvcf_comp(opt.gvcf,nocompress_regions)
     , _CM(cm)
 {
@@ -78,7 +79,7 @@ gvcf_writer(
 
     if (! _opt.gvcf.is_skip_header)
     {
-        finish_gvcf_header(_opt,_dopt, _dopt.chrom_depth, sampleName, *_osptr, cm);
+        finish_gvcf_header(_opt, _dopt, _dopt.chrom_depth, sampleName, *_osptr);
     }
 
     variant_prefilter_stage::add_site_modifiers(_empty_site, _empty_site.smod, cm);
@@ -394,19 +395,9 @@ write_site_record(
                 const StreamScoper ss(os);
                 os << std::setprecision(5);
                 os << ";EVSF=";
-                for (unsigned featureIndex(0); featureIndex < GERMLINE_SNV_SCORING_FEATURES::SIZE; ++featureIndex)
-                {
-                    if (featureIndex > 0)
-                    {
-                        os << ",";
-                    }
-                    os << si.smod.features.get(static_cast<GERMLINE_SNV_SCORING_FEATURES::index_t>(featureIndex));
-                }
-                for (unsigned featureIndex(0); featureIndex < GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
-                {
-                    os << ",";
-                    os << si.smod.developmentFeatures.get(static_cast<GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::index_t>(featureIndex));
-                }
+                si.smod.features.writeValues(os);
+                os << ",";
+                si.smod.developmentFeatures.writeValues(os);
             }
         }
 
@@ -794,19 +785,9 @@ write_indel_record(
             const StreamScoper ss(os);
             os << std::setprecision(5);
             os << ";EVSF=";
-            for (unsigned featureIndex(0); featureIndex < GERMLINE_INDEL_SCORING_FEATURES::SIZE; ++featureIndex)
-            {
-                if (featureIndex > 0)
-                {
-                    os << ",";
-                }
-                os << call.features.get(static_cast<GERMLINE_INDEL_SCORING_FEATURES::index_t>(featureIndex));
-            }
-            for (unsigned featureIndex(0); featureIndex < GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
-            {
-                os << ",";
-                os << call.developmentFeatures.get(static_cast<GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::index_t>(featureIndex));
-            }
+            call.features.writeValues(os);
+            os << ",";
+            call.developmentFeatures.writeValues(os);
         }
     }
 
@@ -827,7 +808,7 @@ write_indel_record(
     {
         auto orderRefReads = [](const GermlineDiploidIndelSimpleGenotypeInfo& a, const GermlineDiploidIndelSimpleGenotypeInfo& b)
         {
-            return (a._indelSampleReportInfo.n_q30_ref_reads < b._indelSampleReportInfo.n_q30_ref_reads);
+            return (a._indelSampleReportInfo.n_confident_ref_reads < b._indelSampleReportInfo.n_confident_ref_reads);
         };
 
         const auto maxRefCountIter(
@@ -836,24 +817,24 @@ write_indel_record(
         const auto& maxRefIsri(maxRefCountIter->_indelSampleReportInfo);
 
         // AD
-        os << ':' << maxRefIsri.n_q30_ref_reads;
+        os << ':' << maxRefIsri.n_confident_ref_reads;
         for (const auto& icall : ii._calls)
         {
-            os << ',' << icall._indelSampleReportInfo.n_q30_indel_reads;
+            os << ',' << icall._indelSampleReportInfo.n_confident_indel_reads;
         }
 
         // ADF
-        os << ':' << maxRefIsri.n_q30_ref_reads_fwd;
+        os << ':' << maxRefIsri.n_confident_ref_reads_fwd;
         for (const auto& icall : ii._calls)
         {
-            os << ',' << icall._indelSampleReportInfo.n_q30_indel_reads_fwd;
+            os << ',' << icall._indelSampleReportInfo.n_confident_indel_reads_fwd;
         }
 
         // ADR
-        os << ':' << maxRefIsri.n_q30_ref_reads_rev;
+        os << ':' << maxRefIsri.n_confident_ref_reads_rev;
         for (const auto& icall : ii._calls)
         {
-            os << ',' << icall._indelSampleReportInfo.n_q30_indel_reads_rev;
+            os << ',' << icall._indelSampleReportInfo.n_confident_indel_reads_rev;
         }
     }
 
@@ -975,16 +956,16 @@ write_indel_record(
         os << ':' << call._indelSampleReportInfo.tier1Depth;
 
         // AD:
-        os << ':' << call._indelSampleReportInfo.n_q30_ref_reads
-           << ',' << call._indelSampleReportInfo.n_q30_indel_reads;
+        os << ':' << call._indelSampleReportInfo.n_confident_ref_reads
+           << ',' << call._indelSampleReportInfo.n_confident_indel_reads;
 
         // ADF
-        os << ':' << call._indelSampleReportInfo.n_q30_ref_reads_fwd
-           << ',' << call._indelSampleReportInfo.n_q30_indel_reads_fwd;
+        os << ':' << call._indelSampleReportInfo.n_confident_ref_reads_fwd
+           << ',' << call._indelSampleReportInfo.n_confident_indel_reads_fwd;
 
         // ADR
-        os << ':' << call._indelSampleReportInfo.n_q30_ref_reads_rev
-           << ',' << call._indelSampleReportInfo.n_q30_indel_reads_rev;
+        os << ':' << call._indelSampleReportInfo.n_confident_ref_reads_rev
+           << ',' << call._indelSampleReportInfo.n_confident_indel_reads_rev;
 
         // VF
         {
@@ -994,3 +975,4 @@ write_indel_record(
         os << '\n';
     }
 }
+

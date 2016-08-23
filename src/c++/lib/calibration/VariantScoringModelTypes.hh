@@ -17,8 +17,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
+
 /*
- *  Created on: Aug 20, 2014
  *      Author: Morten Kallberg
  */
 
@@ -31,6 +31,8 @@ namespace SCORING_CALL_TYPE
 {
 enum index_t
 {
+    GERMLINE,
+    RNA,
     SOMATIC,
     SIZE
 };
@@ -41,8 +43,12 @@ get_label(const index_t i)
 {
     switch (i)
     {
+    case GERMLINE:
+        return "Germline";
+    case RNA:
+        return "RNAseq";
     case SOMATIC:
-        return "somatic_rf"; // Temporary, change this to SOMATIC
+        return "Somatic";
     default:
         assert(false && "Unknown scoring model call type.");
         return nullptr;

@@ -29,6 +29,7 @@
 #include "htsapi/bam_seq.hh"
 #include "starling_common/alignment.hh"
 #include "starling_common/read_mismatch_info.hh"
+#include "ActiveRegionDetector.hh"
 
 
 // the position used to buffer alignments allows for the possibility that
@@ -48,6 +49,7 @@ create_mismatch_filter_map(const blt_options& client_opt,
                            const bam_seq_base& read_seq,
                            const unsigned read_begin,
                            const unsigned read_end,
+                           const ActiveRegionDetector& activeRegionDetector,
                            read_mismatch_info& rmi);
 
 

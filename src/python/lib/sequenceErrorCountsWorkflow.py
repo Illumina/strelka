@@ -72,7 +72,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segCmd = [ self.params.getCountsBin ]
 
-    segCmd.append("-clobber")
     segCmd.extend(["-bam-seq-name", gseg.chromLabel] )
     segCmd.extend(["-report-range-begin", str(gseg.beginPos) ])
     segCmd.extend(["-report-range-end", str(gseg.endPos) ])

@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "starling_common/indel.hh"
+#include "starling_common/IndelKey.hh"
 
 #include <iosfwd>
 #include <set>
@@ -34,5 +34,6 @@ typedef std::set<IndelKey> indel_set_t;
 
 
 void
-dump_indel_set(const indel_set_t& is,
-               std::ostream& os);
+dump_indel_set(
+    const indel_set_t& is,
+    std::ostream& os);

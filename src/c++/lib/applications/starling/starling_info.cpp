@@ -86,10 +86,9 @@ usage(const char* xmessage) const
     std::ostream& os(log_os);
 
     os <<
-       "\n" << name() << " - joint snp/small-indel caller\n"
+       "\n" << name() << " - germline small variant caller\n"
        "\tversion: " << version() << "\n"
        "\n"
-       "usage: " << name() << " -bam-file file [options] > event_report\n"
        "\n";
 
     static starling_options default_opt;

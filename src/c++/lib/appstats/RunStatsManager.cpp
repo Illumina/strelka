@@ -58,5 +58,6 @@ RunStatsManager::
         lifeTime.stop();
         runStats.runStatsData.lifeTime=lifeTime.getTimes();
         runStats.save(*_osPtr);
+        delete _osPtr;
     }
 }

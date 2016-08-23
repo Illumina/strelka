@@ -18,7 +18,6 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -342,11 +341,11 @@ soft_clip_alignment(alignment& al,
 
 
 void
-get_clipped_alignment_from_cal_pool(const cal_pool_t& max_cal_pool,
-                                    const unsigned best_cal_id,
-                                    alignment& al)
+get_clipped_alignment_from_cal_pool(
+    const cal_pool_t& max_cal_pool,
+    const unsigned best_cal_id,
+    alignment& al)
 {
-
     const unsigned n_cal(max_cal_pool.size());
     assert(n_cal>0);
     assert(best_cal_id<n_cal);
@@ -356,6 +355,10 @@ get_clipped_alignment_from_cal_pool(const cal_pool_t& max_cal_pool,
 
     // create read_pos->ref_pos map for first alignment -- start
     // marking off the conflict positions in other alignments:
+    //
+    // format is:
+    // vector index is read position
+    // vector value contains ref position + some type info
     std::vector<ref_map_type> ref_map;
     get_alignment_ref_map(al,ref_map);
 #ifdef DEBUG_ALIGN_CLIP

@@ -17,36 +17,34 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
+
 /*
- *  Created on: Oct 10, 2013
- *  Author: Morten Kallberg
+ *  \author Morten Kallberg
  */
 
 #pragma once
 
+#include "gvcf_locus_info.hh"
 #include "starling_shared.hh"
-
-#include "boost/utility.hpp"
-#include "LogisticAndRuleScoringModels.hh"
+#include "calibration/VariantScoringModelServer.hh"
 
 
-/// handles site and indel filter labeling and also possibly EVS scoring
-/// for (1) a logisitic model read from a file (2) a default hard-threshold
-/// model and (3) and file-based hard-threshold model.
+/// handles site and indel filter labeling OR EVS scoring and filtering
 ///
-struct ScoringModelManager : private boost::noncopyable
+/// EVS model is specified in a json container expressing parameters for
+/// potentially several model types.
+///
+/// When EVS cannot be applied, a fallback set of hard filters are applied
+/// to the variant.
+///
+/// Also supports a legacy EVS model expressing both a logistic regression
+/// model and a rule based filter, this model is deprecated.
+///
+struct ScoringModelManager
 {
     ScoringModelManager(
-        const starling_options& init_opt,
-        const gvcf_deriv_options& init_dopt)
-        : _opt(init_opt.gvcf),
-          _dopt(init_dopt),
-          _isReportEVSFeatures(init_opt.isReportEVSFeatures)
-    {
-        load_models(
-            init_opt.germline_variant_scoring_models_filename,
-            init_opt.germline_variant_scoring_model_name);
-    }
+        const starling_options& opt,
+        const gvcf_deriv_options& gvcfDerivedOptions);
 
     void
     classify_site(
@@ -62,30 +60,29 @@ struct ScoringModelManager : private boost::noncopyable
     classify_indels(
         std::vector<std::unique_ptr<GermlineDiploidIndelCallInfo>>& indels) const;
 
-    // mimics behavior of previous hard filters
+    /// default rules based site model
     void default_classify_site(
         const GermlineSiteCallInfo& si,
         GermlineVariantSimpleGenotypeInfo& call) const;
 
+    /// default rules based indel model
     void default_classify_indel(GermlineIndelSimpleGenotypeInfo& call) const;
 
+    bool
+    isEVSSiteModel() const
+    {
+        return static_cast<bool>(_snvScoringModelPtr);
+    }
 
-    bool is_current_logistic() const;
-
-    int
-    get_case_cutoff(const CALIBRATION_MODEL::var_case my_case) const;
+    bool
+    isEVSIndelModel() const
+    {
+        return static_cast<bool>(_indelScoringModelPtr);
+    }
 
 private:
-    LogisticAndRuleScoringModels& get_model()
-    {
-        return *modelPtr;
-    }
-    const LogisticAndRuleScoringModels& get_model() const
-    {
-        return *modelPtr;
-    }
-
     bool checkIsVariantUsableInEVSModel(const GermlineDiploidIndelCallInfo& ii) const;
+
     void set_indel_modifiers(
         const GermlineDiploidIndelCallInfo& ii,
         GermlineDiploidIndelSimpleGenotypeInfo& call) const;
@@ -96,22 +93,26 @@ private:
         const GermlineDiploidIndelCallInfo& ii,
         GermlineDiploidIndelSimpleGenotypeInfo& call) const;
 
-    // set options
-    void load_models(
-        const std::string& model_file,
-        const std::string& name);
-
-    bool
-    is_default_model() const
+    double
+    snvEVSThreshold() const
     {
-        return (!modelPtr);
+        return _opt.min_gqx;
+//        return _snvScoringModelPtr->scoreFilterThreshold();
+    }
+
+    double
+    indelEVSThreshold() const
+    {
+        return _opt.min_gqx;
+//        return _indelScoringModelPtr->scoreFilterThreshold();
     }
 
     // for setting the vcf header filters
     const gvcf_options& _opt;
     const gvcf_deriv_options& _dopt;
     bool _isReportEVSFeatures;
+    bool _isRNA;
 
-    std::unique_ptr<LogisticAndRuleScoringModels> modelPtr;
+    std::unique_ptr<VariantScoringModelServer> _snvScoringModelPtr;
+    std::unique_ptr<VariantScoringModelServer> _indelScoringModelPtr;
 };
-

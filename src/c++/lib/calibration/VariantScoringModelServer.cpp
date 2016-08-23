@@ -53,8 +53,8 @@ VariantScoringModelServer::
 VariantScoringModelServer(
     const VariantScoringModelMetadata::featureMap_t& featureMap,
     const std::string& model_file,
-    const SCORING_CALL_TYPE::index_t ctype,
-    const SCORING_VARIANT_TYPE::index_t vtype)
+    const SCORING_CALL_TYPE::index_t callType,
+    const SCORING_VARIANT_TYPE::index_t variantType)
 {
     Json::Value root;
     {
@@ -66,11 +66,11 @@ VariantScoringModelServer(
     const Json::Value models = root[model_type];
     if (models.isNull()) modelParseError(model_file,model_type);
 
-    const std::string call_type(SCORING_CALL_TYPE::get_label(ctype));
+    const std::string call_type(SCORING_CALL_TYPE::get_label(callType));
     const Json::Value callmodels = models[call_type];
     if (callmodels.isNull()) modelParseError(model_file,call_type);
 
-    const std::string var_type(SCORING_VARIANT_TYPE::get_label(vtype));
+    const std::string var_type(SCORING_VARIANT_TYPE::get_label(variantType));
     const Json::Value varmodel = callmodels[var_type];
     if (varmodel.isNull()) modelParseError(model_file,var_type);
 

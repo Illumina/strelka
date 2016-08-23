@@ -34,6 +34,7 @@ enum index_t
     POST_ALIGN,
     CLEAR_SITE_ANNOTATION,
     CLEAR_READ_BUFFER, // placement depends on various options
+    CLEAR_INDEL_BUFFER,
     POST_CALL,
     SIZE
 };

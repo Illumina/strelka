@@ -18,37 +18,67 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
 #pragma once
 
-#include "starling_common/alignment.hh"
+#include "alignment.hh"
 #include "starling_common/indel_set.hh"
+#include "starling_read_segment.hh"
+
+#include <cassert>
 
 
+/// a richer alignment format used by the realignment routine
+///
+/// compared to a regular alignment this adds the insert sequence
+/// for each indel (by keeping indel keys instead of a CIGAR), and
+/// special fields for (possibly incomplete) edge indels.
+///
 struct candidate_alignment
 {
     bool
     operator<(const candidate_alignment& rhs) const
     {
         if (al < rhs.al) return true;
-        if (al == rhs.al)
-        {
-            if (leading_indel_key < rhs.leading_indel_key) return true;
-            if (leading_indel_key == rhs.leading_indel_key)
-            {
-                return (trailing_indel_key < rhs.trailing_indel_key);
-            }
-        }
-        return false;
+        if (not (al == rhs.al)) return false;
+        if (_indels < rhs._indels) return true;
+        if (_indels != rhs._indels) return false;
+        if (leading_indel_key < rhs.leading_indel_key) return true;
+        if (not (leading_indel_key == rhs.leading_indel_key)) return false;
+        return (trailing_indel_key < rhs.trailing_indel_key);
+    }
+
+    /// a new extension to specify the exact keys of all indels included
+    /// in the alignment. this is a transitional bandaid required to
+    /// distinguish insertions with different sequences, which can't
+    /// be expressed in the path of the alignment structure below
+    ///
+    void
+    setIndels(
+        const indel_set_t& indels)
+    {
+        assert(not _isIndelsSet);
+        _indels=indels;
+        _isIndelsSet = true;
+    }
+
+    const indel_set_t&
+    getIndels() const
+    {
+        assert(_isIndelsSet);
+        return _indels;
     }
 
     alignment al;
     IndelKey leading_indel_key;
     IndelKey trailing_indel_key;
+
+private:
+    indel_set_t _indels;
+    bool _isIndelsSet = false;
 };
 
 
@@ -59,6 +89,8 @@ std::ostream& operator<<(std::ostream& os, const candidate_alignment& cal);
 // get the keys of the indels present in the candidate alignment
 //
 void
-get_alignment_indels(const candidate_alignment& cal,
-                     const unsigned max_indel_size,
-                     indel_set_t& indels);
+get_alignment_indels(
+    const candidate_alignment& cal,
+    const read_segment& rseg,
+    const unsigned max_indel_size,
+    indel_set_t& indels);

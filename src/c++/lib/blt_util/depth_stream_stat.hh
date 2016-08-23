@@ -24,7 +24,6 @@
 
 #pragma once
 
-#include <ciso646>
 #include <cmath>
 
 #include <iosfwd>

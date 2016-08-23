@@ -22,24 +22,17 @@
 /// \author Chris Saunders
 ///
 
+#include "starling_common/starling_base_shared.hh"
+
 #include "blt_util/math_util.hh"
 #include "calibration/IndelErrorModel.hh"
 #include "htsapi/bam_streamer.hh"
-#include "starling_common/starling_base_shared.hh"
+#include "starling_common/AlleleGroupGenotype.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 
 #include <cmath>
 
 #include <iostream>
-
-
-
-std::ostream&
-operator<<(std::ostream& os, const avg_window_data& awd)
-{
-    os << "flank_size: " << awd.flank_size << " file: " << awd.filename << "\n";
-    return os;
-}
 
 
 
@@ -55,6 +48,7 @@ starling_base_deriv_options(
     , logIndelErrorRateFactor(std::log(opt.indelErrorRateFactor))
     , _indelErrorModel(new IndelErrorModel(opt.indel_error_model_name,opt.indel_error_models_filename))
     , _incaller(new indel_digt_caller(opt.bindel_diploid_theta))
+    , _indelGenotypePriors(new GenotypePriorSet(opt.bindel_diploid_theta, opt.indelHighRepeatTheta, opt.indelHighRepeatCount))
 {
     indel_nonsite_match_lnp=std::log(opt.indel_nonsite_match_prob);
     if (opt.tier2.is_tier2_indel_nonsite_match_prob)
@@ -85,29 +79,14 @@ starling_base_deriv_options(
         nonsite_lnprior=log1p_switch(-site_prior);
     }
 
-    //
     // register post-call stages:
     //
 
-    // register variant_windows as post-call stages:
-    const unsigned vs(opt.variant_windows.size());
-    for (unsigned i(0); i<vs; ++i)
-    {
-        const unsigned stage_no(addPostCallStage(opt.variant_windows[i].flank_size));
-
-        if (i == 0)
-        {
-            variant_window_first_stage=stage_no;
-        }
-        if ((i+1) == vs)
-        {
-            variant_window_last_stage=stage_no;
-        }
-    }
+    // no post-call stages remain in latest design!
 }
 
 
-// required for unique_ptr
+// dtor is required here for unique_ptr
 starling_base_deriv_options::
 ~starling_base_deriv_options() {}
 

@@ -20,12 +20,45 @@
 
 #pragma once
 
-#include "starling_common/indel_core.hh"
+#include "starling_common/IndelKey.hh"
 
 #include <cassert>
 
 #include <algorithm>
 #include <vector>
+
+
+namespace IndelErrorRateType
+{
+/// the indel error model current reduces all alternate alleles to the following
+/// simplified states
+///
+enum index_t
+{
+    INSERT,
+    DELETE,
+    OTHER
+};
+
+inline
+index_t
+getRateType(
+    const IndelKey& indelKey)
+{
+    if     (indelKey.isPrimitiveDeletionAllele())
+    {
+        return DELETE;
+    }
+    else if (indelKey.isPrimitiveInsertionAllele())
+    {
+        return INSERT;
+    }
+    else
+    {
+        return OTHER;
+    }
+}
+}
 
 
 /// helper object used by IndelErrorModel
@@ -40,7 +73,7 @@ struct IndelErrorRateSet
     getRate(
         unsigned repeatingPatternSize,
         unsigned patternRepeatCount,
-        const INDEL::index_t it) const
+        const IndelErrorRateType::index_t simpleIndelType) const
     {
         assert(_isFinalized);
         assert(repeatingPatternSize>0);
@@ -63,7 +96,7 @@ struct IndelErrorRateSet
 
         const auto& theRates(patternRates[patternRepeatCount]);
 
-        return theRates.getRate(it);
+        return theRates.getRate(simpleIndelType);
     }
 
     void
@@ -129,15 +162,16 @@ private:
         }
 
         double
-        getRate(const INDEL::index_t it) const
+        getRate(const IndelErrorRateType::index_t simpleIndelType) const
         {
-            switch (it)
+            using namespace IndelErrorRateType;
+            switch (simpleIndelType)
             {
-            case INDEL::DELETE :
+            case DELETE:
                 return deletionErrorRate;
-            case INDEL::INSERT :
+            case INSERT:
                 return insertionErrorRate;
-            default :
+            default:
                 assert(false && "Unexpected indel type");
                 return 0.;
             }

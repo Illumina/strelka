@@ -1,3 +1,18 @@
+v2.6.0
+- STREL-163 Update germline EVS model training with ambiguous call handling
+- STREL-122/STARKA-454 Updated somatic scoring model, integrate somatic indel EVS model
+- STREL-175 restore somatic callability tract
+- STREL-155 determine indel candidacy in active regions
+- STREL-75 fix sample limit in pedicure
+- STREL-118 relax MMDF using short haplotyping
+v2.5.0
+- STREL-138 adjust indel theta based on hpol context in germline model
+- STREL-124 integrate new RF scoring model for germline variants
+- STREL-128 correctly call overlapping same pos/same length insertions
+- STARKA-372 prototype RNA-Seq support
+- STREL-50 add active region detection and short haplotype enumeration
+- STREL-103 add new diplotype model for germline indels
+- STREL-111 Updated somatic EVS model to support liquid tumor and bwamem bams
 - STREL-116 fix germline MQ/MQ0, EVS feature norm, add new EVS dev features
 - STREL-104 provide corrected germline MQ/MQ0, EVS feature norm and exome support
 - STREL-101 update to simplified log-linear indel error rates

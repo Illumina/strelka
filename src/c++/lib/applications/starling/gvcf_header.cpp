@@ -23,7 +23,6 @@
 ///
 
 #include "gvcf_header.hh"
-#include "germlineVariantEmpiricalScoringFeatures.hh"
 #include "gvcf_locus_info.hh"
 #include "blt_util/io_util.hh"
 #include "htsapi/bam_header_util.hh"
@@ -43,13 +42,11 @@ void
 add_gvcf_filters(
     const starling_options& sopt,
     const cdmap_t& chrom_depth,
-    std::ostream& os,
-    const ScoringModelManager& CM)
+    std::ostream& os)
 {
     const gvcf_options& opt(sopt.gvcf);
 
     using namespace GERMLINE_VARIANT_VCF_FILTERS;
-    os << "##VariantQualityScoringModel=" << sopt.germline_variant_scoring_model_name << "\n";
     write_vcf_filter(os,get_label(IndelConflict),"Locus is in region with conflicting indel calls");
     write_vcf_filter(os,get_label(SiteConflict),"Site genotype conflicts with proximal indel call. This is typically a heterozygous SNV call made inside of a heterozygous deletion");
 
@@ -67,7 +64,7 @@ add_gvcf_filters(
         write_vcf_filter(os,get_label(HighBaseFilt),oss.str().c_str());
     }
 
-    if (opt.is_max_snv_sb && (!CM.is_current_logistic()))
+    if (opt.is_max_snv_sb)
     {
         std::ostringstream oss;
         oss << "SNV strand bias value (SNVSB) exceeds " << opt.max_snv_sb;
@@ -80,25 +77,11 @@ add_gvcf_filters(
         write_vcf_filter(os,get_label(HighSNVHPOL),oss.str().c_str());
     }
 
-    if (opt.is_max_ref_rep && !CM.is_current_logistic())
+    if (opt.is_max_ref_rep())
     {
         std::ostringstream oss;
         oss << "Locus contains an indel allele occurring in a homopolymer or dinucleotide track with a reference repeat greater than " << opt.max_ref_rep;
         write_vcf_filter(os,get_label(HighRefRep),oss.str().c_str());
-    }
-
-    if (CM.is_current_logistic())
-    {
-        for (unsigned varType(0); varType<CALIBRATION_MODEL::SIZE; ++varType)
-        {
-            using namespace CALIBRATION_MODEL;
-            if (varType == HetAltSNP) continue;
-
-            const var_case vti(static_cast<var_case>(varType));
-            std::ostringstream oss;
-            oss << "Locus GQX is less than " << CM.get_case_cutoff(vti)  << " for " << get_label_header(vti);
-            write_vcf_filter(os,GERMLINE_VARIANT_VCF_FILTERS::get_label(get_Qscore_filter(vti)),oss.str().c_str());
-        }
     }
 
     // Inconsistent phasing, meaning we cannot confidently identify haplotypes in windows
@@ -110,7 +93,7 @@ add_gvcf_filters(
         write_vcf_filter(os,get_label(PhasingConflict),oss.str().c_str());
     }
 
-    if ((! chrom_depth.empty()))
+    if (! chrom_depth.empty())
     {
         std::ostringstream oss;
         oss << "Locus depth is greater than " << opt.max_depth_factor << "x the mean chromosome depth";
@@ -122,8 +105,8 @@ add_gvcf_filters(
         for (const auto& val : chrom_depth)
         {
             const std::string& chrom(val.first);
-            const double max_depth(opt.max_depth_factor*val.second);
-            os << "##MaxDepth_" << chrom << '=' << max_depth << "\n";
+            const double expectedDepth(val.second);
+            os << "##Depth_" << chrom << '=' << expectedDepth << "\n";
         }
     }
 
@@ -141,29 +124,13 @@ add_gvcf_filters(
 
 
 
-static
-void
-repeatedFeatureLabelError(
-    const char* label,
-    const std::string& featureLabel)
-{
-    using namespace illumina::common;
-
-    std::ostringstream oss;
-    oss << "ERROR: repeated " << label << " EVS training feature label '" << featureLabel << "'\n";
-    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-}
-
-
-
 void
 finish_gvcf_header(
     const starling_options& opt,
     const gvcf_deriv_options& dopt,
     const cdmap_t& chrom_depth,
     const std::string& sample_name,
-    std::ostream& os,
-    const ScoringModelManager& CM)
+    std::ostream& os)
 {
     //INFO:
     os << "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the region described in this record\">\n";
@@ -215,7 +182,7 @@ finish_gvcf_header(
     os << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Filtered basecall depth used for site genotyping\">\n";
     os << "##FORMAT=<ID=DPF,Number=1,Type=Integer,Description=\"Basecalls filtered from input prior to site genotyping\">\n";
 
-    os << "##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"Allelic depths for the ref and alt alleles in the order listed. For indels this value only includes reads which confidently support each allele (posterior prob 0.999 or higher that read contains indicated allele vs all other intersecting indel alleles)\">\n";
+    os << "##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"Allelic depths for the ref and alt alleles in the order listed. For indels this value only includes reads which confidently support each allele (posterior prob " << opt.readConfidentSupportThreshold.strval() << " or higher that read contains indicated allele vs all other intersecting indel alleles)\">\n";
     os << "##FORMAT=<ID=ADF,Number=.,Type=Integer,Description=\"Allelic depths on the forward strand\">\n";
     os << "##FORMAT=<ID=ADR,Number=.,Type=Integer,Description=\"Allelic depths on the reverse strand\">\n";
     if (!opt.is_ploidy_prior ||
@@ -230,67 +197,21 @@ finish_gvcf_header(
 
     // FILTER:
 
-    add_gvcf_filters(opt,chrom_depth,os,CM);
+    add_gvcf_filters(opt, chrom_depth, os);
 
 
     if (opt.isReportEVSFeatures)
     {
-        std::set<std::string> featureLabels;
         os << "##snv_scoring_features=";
-        for (unsigned featureIndex = 0; featureIndex < GERMLINE_SNV_SCORING_FEATURES::SIZE; ++featureIndex)
-        {
-            if (featureIndex > 0)
-            {
-                os << ",";
-            }
-            const std::string featureLabel(GERMLINE_SNV_SCORING_FEATURES::get_feature_label(featureIndex));
-            const auto retVal = featureLabels.insert(featureLabel);
-            if (not retVal.second)
-            {
-                repeatedFeatureLabelError("SNV", featureLabel);
-            }
-            os << featureLabel;
-        }
-        for (unsigned featureIndex = 0; featureIndex < GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
-        {
-            os << ',';
-            const std::string featureLabel(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex));
-            const auto retVal = featureLabels.insert(featureLabel);
-            if (not retVal.second)
-            {
-                repeatedFeatureLabelError("SNV", featureLabel);
-            }
-            os << featureLabel;
-        }
+        writeExtendedFeatureSet(dopt.snvFeatureSet,
+                                dopt.snvDevelopmentFeatureSet,
+                                "SNV", os);
         os << "\n";
 
-        featureLabels.clear();
         os << "##indel_scoring_features=";
-        for (unsigned featureIndex = 0; featureIndex < GERMLINE_INDEL_SCORING_FEATURES::SIZE; ++featureIndex)
-        {
-            if (featureIndex > 0)
-            {
-                os << ",";
-            }
-            const std::string featureLabel(GERMLINE_INDEL_SCORING_FEATURES::get_feature_label(featureIndex));
-            const auto retVal = featureLabels.insert(featureLabel);
-            if (not retVal.second)
-            {
-                repeatedFeatureLabelError("indel", featureLabel);
-            }
-            os << featureLabel;
-        }
-        for (unsigned featureIndex = 0; featureIndex < GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
-        {
-            os << ',';
-            const std::string featureLabel(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex));
-            const auto retVal = featureLabels.insert(featureLabel);
-            if (not retVal.second)
-            {
-                repeatedFeatureLabelError("indel", featureLabel);
-            }
-            os << featureLabel;
-        }
+        writeExtendedFeatureSet(dopt.indelFeatureSet,
+                                dopt.indelDevelopmentFeatureSet,
+                                "indel", os);
         os << "\n";
     }
 

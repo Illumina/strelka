@@ -24,12 +24,14 @@
 
 #pragma once
 
+#include "blt_util/LogValuePair.hh"
 #include "blt_util/ranksum.hh"
 #include "starling_common/indel_align_type.hh"
 #include "starling_common/IndelKey.hh"
 #include "starling_common/starling_types.hh"
 
 #include <cassert>
+
 #include <iosfwd>
 #include <map>
 #include <string>
@@ -42,11 +44,13 @@
 struct IndelObservationData
 {
     bool is_noise = false;
-    bool is_external_candidate = false;
-    bool is_forced_output = false; // results of gt tests must be output even for very unlikely cases
+    bool is_external_candidate = false; ///< if true, the allele is automatically promoted to candidate status
+    bool is_forced_output = false; ///< if true, the allele must be scored in output
+    bool is_low_map_quality = false;
     INDEL_ALIGN_TYPE::index_t iat = INDEL_ALIGN_TYPE::GENOME_SUBMAP_READ;
     align_id_t id = 0;
-    std::string insert_seq;
+
+    std::string breakpointInsertionSequence; ///< partial breakpont sequence, do not use to describe regular indels
 };
 
 
@@ -107,18 +111,19 @@ struct ReadPathScores
 
 
 
-/// Accumulates evidence of the consensus insert sequence.
-/// These classes make no attempt to find two insertions of the
-/// same length with different insert sequences, but for these
-/// cases this class will at least insure that we test and report
-/// the most common insert sequence.
+/// Accumulates evidence of a consensus breakpoint insert sequence.
 ///
-/// Note that for open-breakends we also report the longest insert
-/// candidate, and consider the most prevalent as a secondary term.
+/// Assumes that long sequences for breakpoints will be noisy and that
+/// breakpoints are rare, such that there will be only one insert
+/// sequence for a given breakpoint type and position.
 ///
-struct InsertSequenceManager
+/// given multiple candidates the "consensus" is just a selection for
+/// the longeest insertion, and then a selection of the most common
+/// observation among the longest candidates.
+///
+struct BreakpointInsertSequenceManager
 {
-    // get final consensus sequence:
+    /// get final consensus insert sequence:
     const std::string&
     get()
     {
@@ -152,9 +157,14 @@ struct InsertSequenceManager
     void
     addObservation(const std::string& seq)
     {
+        if (seq.empty())
+        {
+            _exception("Attempting to add breakpoint observation with empty insertion sequence");
+        }
+
         if (_is_consensus)
         {
-            _exception("Attempting to add insert observation after finalizing");
+            _exception("Attempting to add breakpoint insert observation after finalizing");
         }
 
         // if we don't know what the most common insert will be after
@@ -263,17 +273,17 @@ struct IndelData
         const IndelObservationData& obs_data);
 
     const std::string&
-    getInsertSeq() const
+    getBreakpointInsertSeq() const
     {
-        return _insert_seq.get();
+        return _breakpointInsertSeq.get();
     }
 
     /// this test is different than asking for insert-seq in that it does not
     /// trigger insert sequence consensus generation:
     unsigned
-    getInsertSize() const
+    getBreakpointInsertSize() const
     {
-        return _insert_seq.getSize();
+        return _breakpointInsertSeq.getSize();
     }
 
 private:
@@ -287,14 +297,16 @@ public:
     // if true candidates should be output even if very unlikely:
     bool is_forced_output = false;
 
+    bool isConfirmedInActiveRegion = false;
+
     struct ErrorRates
     {
         bool isInit = false;
-        double indelToRefErrorProb = 0.;
-        double refToIndelErrorProb = 0.;
+        LogValuePair indelToRefErrorProb;
+        LogValuePair refToIndelErrorProb;
 
-        double scaledIndelToRefErrorProb = 0.;
-        double scaledRefToIndelErrorProb = 0.;
+        LogValuePair scaledIndelToRefErrorProb;
+        LogValuePair scaledRefToIndelErrorProb;
     };
 
     struct status_t
@@ -308,7 +320,7 @@ public:
 
 private:
     std::vector<IndelSampleData> _sampleData;
-    mutable InsertSequenceManager _insert_seq;
+    mutable BreakpointInsertSequenceManager _breakpointInsertSeq;
 
     // indel key stored for debugging only
     IndelKey _indelKey;

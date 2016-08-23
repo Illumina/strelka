@@ -34,7 +34,7 @@ pyflowDir=os.path.join(scriptDir,"pyflow")
 sys.path.append(os.path.abspath(pyflowDir))
 
 from configBuildTimeInfo import workflowVersion
-from configureUtil import safeSetBool, getIniSections, dumpIniSections
+from configureUtil import safeSetBool, getIniSections, dumpIniSections, joinFile
 from pyflow import WorkflowRunner
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, runDepthFromAlignments
 from starkaWorkflow import runCount, SharedPathInfo, \
@@ -106,7 +106,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segCmd = [ quote(self.params.starlingBin) ]
 
-    segCmd.append("-clobber")
     segCmd.extend(["-min-mapping-quality",self.params.minMapq])
     segCmd.extend(["-bam-seq-name", gseg.chromLabel] )
     segCmd.extend(["-report-range-begin", str(gseg.beginPos) ])
@@ -117,9 +116,8 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["-max-indel-size", "50"] )
 
     segCmd.extend(["--gvcf-file","-"])
-    segCmd.extend(['--gvcf-min-gqx','30'])
+    segCmd.extend(['--gvcf-min-gqx','15'])
     segCmd.extend(['--gvcf-max-snv-strand-bias','10'])
-    segCmd.extend(['--gvcf-max-indel-ref-repeat', '-1'])
     segCmd.extend(['-min-qscore','17'])
     segCmd.extend(['-bsnp-ssd-no-mismatch', '0.35'])
     segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
@@ -134,10 +132,17 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segFiles.stats.append(self.paths.getTmpRunStatsPath(segStr))
     segCmd.extend(["--stats-file", quote(segFiles.stats[-1])])
 
+    # RNA-Seq het calls are considered over a wider frequency range:
+    if self.params.isRNA:
+        segCmd.extend(['-bsnp-diploid-het-bias', '0.40'])
+        segCmd.extend(['--use-rna-scoring'])
+
     # Empirical Variant Scoring(EVS):
     if self.params.isEVS :
-        segCmd.extend(['--variant-scoring-models-file',quote(self.params.evsModelFile)])
-        segCmd.extend(['--variant-scoring-model-name',self.params.evsModelName])
+        if self.params.germlineSnvScoringModelFile is not None :
+            segCmd.extend(['--snv-scoring-model-file', quote(self.params.germlineSnvScoringModelFile)])
+        if self.params.germlineIndelScoringModelFile is not None :
+            segCmd.extend(['--indel-scoring-model-file', quote(self.params.germlineIndelScoringModelFile)])
 
     if self.params.indelErrorModelName is not None :
         segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
@@ -350,6 +355,10 @@ class StarlingWorkflow(StarkaWorkflow) :
 
         if self.params.isExome :
             self.params.isEVS = False
+
+        if self.params.isRNA :
+            self.params.germlineSnvScoringModelFile = joinFile(self.params.configDir,'RNAVariantScoringModels.json')
+            self.params.germlineIndelScoringModelFile = None
 
 
     def getSuccessMessage(self) :

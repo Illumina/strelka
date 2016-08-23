@@ -41,6 +41,8 @@
 #include "starling_common/starling_pos_processor_win_avg_set.hh"
 #include "starling_common/starling_read_buffer.hh"
 #include "starling_common/starling_streams_base.hh"
+#include "starling_common/ActiveRegionDetector.hh"
+
 
 #include "boost/utility.hpp"
 
@@ -91,7 +93,7 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
         const starling_base_deriv_options& dopt,
         const reference_contig_segment& ref,
         const starling_streams_base& streams,
-        const unsigned n_samples);
+        const unsigned sampleCount);
 
     virtual
     ~starling_pos_processor_base();
@@ -102,11 +104,19 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
 
     // note that indel position should be normalized before calling:
     //
-    // returns true if this indel is novel to the buffer
-    //
-    bool
+    void
     insert_indel(const IndelObservation& obs,
                  const unsigned sampleId);
+
+    bool is_active_region_detector_enabled()
+    {
+        return _opt.is_short_haplotyping_enabled;
+    }
+    ActiveRegionDetector&
+    get_active_region_detector()
+    {
+        return _active_region_detector;
+    }
 
     // in range [begin,end), is the estimated depth always below
     // depth?
@@ -117,21 +127,19 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
         const unsigned depth,
         const unsigned sample_no) const;
 
-    // return value is true if the alignment is accepted into
-    // the buffer (alignments can fail a number of quality checks --
-    // such as being located too far away from other alignments of the
-    // same read or having an indel that is too large
-    //
-    // if true, the return value provides the read's ide in this structures
-    // read buffer
-    //
+    /// insert read into read buffer
+    ///
+    /// \return true if the alignment is accepted into the buffer (alignments can fail a number of quality checks --
+    /// such as being located too far away from other alignments of the same read or having an indel that is too large.
+    /// If true, the return value provides the read's id in this structure's ead buffer
+    ///
     boost::optional<align_id_t>
     insert_read(
         const bam_record& br,
         const alignment& al,
         const char* chrom_name,
         const MAPLEVEL::index_t maplev,
-        const unsigned sample_no);
+        const unsigned sampleIndex);
 
     /// snv gt and stats must be reported for this pos (note only honored in strelka and starling right now)
     void
@@ -142,7 +150,7 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     bool
     insert_ploidy_region(
         const known_pos_range2& range,
-        const int ploidy);
+        const unsigned ploidy);
 
 #if 0
     starling_read*
@@ -286,12 +294,7 @@ public:
             , ssn(knownref_report_size)
             , used_ssn(knownref_report_size)
             , wav()
-        {
-            for (const auto& val : opt.variant_windows)
-            {
-                wav.add_win(val.flank_size*2);
-            }
-        }
+        {}
 
         pos_basecall_buffer bc_buff;
         starling_read_buffer read_buff;
@@ -338,18 +341,6 @@ protected:
     }
 
 public:
-    // data for haplotoype regions, shared between all samples:
-    //
-    struct htype_region_data
-    {
-        htype_region_data()
-            : is_first_region(true)
-            , region_alignment(0) {}
-
-        bool is_first_region;
-        pos_t region_alignment;
-    };
-
     ///////////////////////////////
     // static methods:
     //
@@ -418,13 +409,23 @@ private:
     load_read_in_depth_buffer(const read_segment& rseg,
                               const unsigned sample_no);
 
+    /// process read segment alignment for indels
     void
-    init_read_segment(const read_segment& rseg,
-                      const unsigned sample_no);
+    init_read_segment(
+        const read_segment& rseg,
+        const unsigned sampleIndex);
 
+    /// Run init_read_segment for all spliced read segments buffered at the current position
+    ///
     void
     init_read_segment_pos(const pos_t pos);
 
+    /// For all reads buffered at the current position:
+    /// 1) determine the set of candidate indels that the read overlaps
+    /// 2) determine the set of private indels within the read's discovery alignments
+    /// 3) Find the most likely alignment given both sets of indels
+    /// 4) evaluate the probability that the read supports each candidate indel vs. the reference
+    ///
     void
     align_pos(const pos_t pos);
 
@@ -436,7 +437,7 @@ private:
 
     void
     pileup_read_segment(const read_segment& rseg,
-                        const unsigned sample_no);
+                        const unsigned sampleIndex);
 
     void
     write_reads(const pos_t pos);
@@ -449,9 +450,6 @@ private:
     process_pos_site_stats(
         const pos_t pos,
         const unsigned sample_no);
-
-    const diploid_genotype&
-    get_empty_dgt(const char ref) const;
 
     void
     process_pos_variants(const pos_t pos);
@@ -476,8 +474,9 @@ protected:
     virtual
     void
     run_post_call_step(
-        const int stage_no,
-        const pos_t pos);
+        const int /*stage_no*/,
+        const pos_t /*pos*/)
+    {}
 
     unsigned
     get_largest_read_size() const
@@ -494,12 +493,14 @@ private:
     bool
     update_largest_read_size(const unsigned rs);
 
+protected:
     unsigned
     get_largest_total_indel_ref_span_per_read() const
     {
         return _largest_total_indel_ref_span_per_read;
     }
 
+private:
     void
     update_largest_indel_ref_span(const unsigned is);
 
@@ -525,7 +526,6 @@ private:
                 if (! sif.bc_buff.empty()) return false;
             }
             if (! _indelBuffer.empty()) return false;
-            if (! _variant_print_pos.empty()) return false;
             if (! _forced_output_pos.empty()) return false;
             if (! derived_empty()) return false;
             _is_skip_process_pos=true;
@@ -549,11 +549,11 @@ protected:
         return (_forced_output_pos.find(pos) != _forced_output_pos.end());
     }
 
-    int
+    unsigned
     get_ploidy(const pos_t pos) const
     {
         const auto val(_ploidy_regions.isIntersectRegion(pos));
-        return (val ? *val : 2);
+        return (val ? *val : 2u);
     }
 
     //////////////////////////////////
@@ -586,19 +586,16 @@ protected:
 
     std::unique_ptr<diploid_genotype> _empty_dgt[N_BASE];
     std::unique_ptr<nploid_info> _ninfo;
-    std::unique_ptr<double> _ws;
 
-    std::set<pos_t> _variant_print_pos;
     std::set<pos_t> _forced_output_pos;
-
-    htype_region_data _hregion;
-
-    bool _is_variant_windows;
 
     PileupCleaner _pileupCleaner;
 
-    RegionPayloadTracker<int> _ploidy_regions;
+    RegionPayloadTracker<unsigned> _ploidy_regions;
 
 private:
     IndelBuffer _indelBuffer;
+
+    // to keep active regions
+    ActiveRegionDetector _active_region_detector;
 };

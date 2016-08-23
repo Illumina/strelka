@@ -18,7 +18,6 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -55,11 +54,11 @@ legacy_starling_arg_parse(
 
     bool is_max_can_indel_density_set(false);
 
-    bool is_max_basecall_filter_fraction(false);
-
     bool is_max_vexp_iterations(false);
 
     bool is_max_indel_size(false);
+
+    bool is_realigned_read_file(false);
 
     bool is_cif(false);
 
@@ -78,10 +77,6 @@ legacy_starling_arg_parse(
         {
             set_xrange_arg(i,ad,opt.is_lsnp,opt.lsnp_alpha);
         }
-        else if (ad.argstr[i]=="-bsnp-monoploid")
-        {
-            set_xrange_arg(i,ad,opt.is_bsnp_monoploid,opt.bsnp_monoploid_theta);
-        }
         else if (ad.argstr[i]=="-bsnp-ssd-no-mismatch")
         {
 //            log_os << "testing -bsnp-ssd-no-mismatch \n";
@@ -99,22 +94,6 @@ legacy_starling_arg_parse(
         else if (ad.argstr[i]=="-bsnp-nploid")
         {
             set_nploid_arg(i,ad,opt.is_bsnp_nploid,opt.bsnp_nploid_ploidy,opt.bsnp_nploid_snp_prob);
-        }
-        else if (ad.argstr[i]=="-bindel-diploid-het-bias")
-        {
-            set_xrange_arg(i,ad,opt.is_bindel_diploid_het_bias,opt.bindel_diploid_het_bias,true);
-        }
-        else if (ad.argstr[i]=="-anom-distro-table-alpha")
-        {
-            set_xrange_arg(i,ad,opt.is_adis_table,opt.adis_table_alpha);
-        }
-        else if (ad.argstr[i]=="-anom-distro-lrt-alpha")
-        {
-            set_xrange_arg(i,ad,opt.is_adis_lrt,opt.adis_lrt_alpha);
-        }
-        else if (ad.argstr[i]=="-anom-cov-alpha")
-        {
-            set_xrange_arg(i,ad,opt.is_acov,opt.acov_alpha);
         }
         else if (ad.argstr[i]=="-print-evidence")
         {
@@ -145,10 +124,6 @@ legacy_starling_arg_parse(
         else if (ad.argstr[i]=="-counts")
         {
             set_filename_arg(i,ad,opt.is_counts,opt.counts_filename);
-        }
-        else if (ad.argstr[i]=="-clobber")
-        {
-            opt.is_clobber = true;
         }
         else if (ad.argstr[i]=="-bam-file")
         {
@@ -193,10 +168,6 @@ legacy_starling_arg_parse(
         {
             set_arg(i,ad,opt.is_user_genome_size,opt.user_genome_size);
         }
-        else if (ad.argstr[i]=="-print-all-poly-gt")
-        {
-            opt.is_print_all_poly_gt=true;
-        }
         else if (ad.argstr[i]=="-used-allele-count-min-qscore")
         {
             set_arg(i,ad,is_uacmq_set,opt.used_allele_count_min_qscore);
@@ -207,15 +178,11 @@ legacy_starling_arg_parse(
         }
         else if (ad.argstr[i]=="-realigned-read-file")
         {
-            set_filename_arg(i,ad,opt.is_realigned_read_file,opt.realigned_read_filename);
+            set_filename_arg(i,ad,is_realigned_read_file,opt.realigned_read_filename);
         }
         else if (ad.argstr[i]=="-realign-submapped-reads")
         {
             opt.is_realign_submapped_reads=true;
-        }
-        else if (ad.argstr[i]=="-snp-max-basecall-filter-fraction")
-        {
-            set_xrange_arg(i,ad,is_max_basecall_filter_fraction,opt.max_basecall_filter_fraction,true);
         }
         else if (ad.argstr[i]=="-max-vexp-iterations")
         {

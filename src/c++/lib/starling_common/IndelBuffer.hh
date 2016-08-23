@@ -120,6 +120,22 @@ struct IndelBuffer
         return ((i==_indelBuffer.end()) ? nullptr : &(i->second) );
     }
 
+    iterator
+    getIndelIter(const IndelKey& indelKey)
+    {
+        const iterator iter(_indelBuffer.find(indelKey));
+        assert(iter != _indelBuffer.end());
+        return iter;
+    }
+
+    const_iterator
+    getIndelIter(const IndelKey& indelKey) const
+    {
+        const const_iterator iter(_indelBuffer.find(indelKey));
+        assert(iter != _indelBuffer.end());
+        return iter;
+    }
+
     /// is an indel treated as a candidate for genotype calling and
     /// realignment or as a "private" (ie. noise) indel?
     ///
@@ -165,6 +181,7 @@ struct IndelBuffer
     void
     dump(std::ostream& os) const;
 
+
 private:
 
     /// helper struct for indel_syncronizer
@@ -201,6 +218,7 @@ private:
     isCandidateIndelImplTest(
         const IndelKey& indelKey,
         const IndelData& indelData) const;
+
 
     void
     isCandidateIndelImpl(

@@ -137,7 +137,7 @@ is_normalized() const
         unsigned alt_length = alt_allele.size();
         assert (alt_length != 0);
 
-        // all normalized variants with the same length ref and alt 
+        // all normalized variants with the same length ref and alt
         // must differ at the last ref and alt base.  Any indel that
         // has more than one base in both the ref and the alt must
         // also differ at the last base (this should only happen at

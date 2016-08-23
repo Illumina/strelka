@@ -50,14 +50,6 @@ checkOptionalFile(
     const char* label);
 
 
-// Called by program_options to parse avg_window_data:
-//
-void validate(
-    boost::any& v,
-    const std::vector<std::string>& values,
-    std::vector<avg_window_data>*, int);
-
-
 po::options_description
 get_starling_base_option_parser(
     starling_base_options& opt);

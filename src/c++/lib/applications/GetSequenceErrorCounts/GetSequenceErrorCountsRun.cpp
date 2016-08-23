@@ -188,8 +188,8 @@ getSequenceErrorCountsRun(
                 if (apath_indel_count(apath) > 2) continue;
             }
 
-            process_genomic_read(opt, ref, readStream, read,
-                                 currentPos, rlimit.begin_pos, brc, sppr);
+            processInputReadAlignment(opt, ref, streamData.getCurrentBamStreamer(),
+                                      read, currentPos, rlimit.begin_pos, brc, sppr);
         }
         else if (HTS_TYPE::VCF == currentHtsType)
         {
@@ -249,4 +249,3 @@ getSequenceErrorCountsRun(
 
     sppr.reset();
 }
-

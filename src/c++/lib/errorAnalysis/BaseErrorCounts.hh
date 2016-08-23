@@ -75,11 +75,9 @@ struct StrandBaseCounts
     operator<(
         const StrandBaseCounts& rhs) const
     {
-        if (refCount == rhs.refCount)
-        {
-            return (alt < rhs.alt);
-        }
-        return (refCount < rhs.refCount);
+        if (refCount < rhs.refCount) return true;
+        if (refCount != rhs.refCount) return false;
+        return (alt < rhs.alt);
     }
 
     void
@@ -121,11 +119,9 @@ struct BaseErrorContextObservation
     operator<(
         const BaseErrorContextObservation& rhs) const
     {
-        if (strand0 == rhs.strand0)
-        {
-            return (strand1 < rhs.strand1);
-        }
-        return (strand0 < rhs.strand0);
+        if (strand0 < rhs.strand0) return true;
+        if (not (strand0 == rhs.strand0)) return false;
+        return (strand1 < rhs.strand1);
     }
 
     void
@@ -190,11 +186,9 @@ struct BaseErrorContextObservationExportStrandObservation
     operator<(
         const BaseErrorContextObservationExportStrandObservation& rhs) const
     {
-        if (refCount == rhs.refCount)
-        {
-            return (altCount < rhs.altCount);
-        }
-        return (refCount < rhs.refCount);
+        if (refCount < rhs.refCount) return true;
+        if (refCount != rhs.refCount) return false;
+        return (altCount < rhs.altCount);
     }
 
     unsigned refCount = 0;
@@ -207,11 +201,9 @@ struct BaseErrorContextObservationExportObservation
     operator<(
         const BaseErrorContextObservationExportObservation& rhs) const
     {
-        if (strand0 == rhs.strand0)
-        {
-            return (strand1 < rhs.strand1);
-        }
-        return (strand0 < rhs.strand0);
+        if (strand0 < rhs.strand0) return true;
+        if (not (strand0 == rhs.strand0)) return false;
+        return (strand1 < rhs.strand1);
     }
 
     BaseErrorContextObservationExportStrandObservation strand0;

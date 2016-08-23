@@ -73,12 +73,12 @@ get_vcf_summary_strings(
         if       (indelKey.type == INDEL::BP_LEFT)
         {
             copy_ref_subseq(ref,indelKey.pos-1,indelKey.pos,vcf_ref_seq);
-            vcf_indel_seq = vcf_ref_seq + indelData.getInsertSeq() + '.';
+            vcf_indel_seq = vcf_ref_seq + indelData.getBreakpointInsertSeq() + '.';
         }
         else if (indelKey.type == INDEL::BP_RIGHT)
         {
             copy_ref_subseq(ref,indelKey.pos,indelKey.pos+1,vcf_ref_seq);
-            vcf_indel_seq = '.' + indelData.getInsertSeq() + vcf_ref_seq;
+            vcf_indel_seq = '.' + indelData.getBreakpointInsertSeq() + vcf_ref_seq;
         }
         else
         {
@@ -89,7 +89,7 @@ get_vcf_summary_strings(
     {
         copy_ref_subseq(ref,indelKey.pos-1,indelKey.pos+indelKey.delete_length(),vcf_ref_seq);
         copy_ref_subseq(ref,indelKey.pos-1,indelKey.pos,vcf_indel_seq);
-        vcf_indel_seq += indelData.getInsertSeq();
+        vcf_indel_seq += indelKey.insert_seq();
     }
 }
 
@@ -102,22 +102,22 @@ set_repeat_info(
     const reference_contig_segment& ref,
     starling_indel_report_info& indelReportInfo)
 {
-    if (! ((indelReportInfo.it == INDEL::INSERT) ||
-           (indelReportInfo.it == INDEL::DELETE) ||
-           (indelReportInfo.it == INDEL::SWAP))) return;
+    if (! ((indelReportInfo.it == SimplifiedIndelReportType::INSERT) ||
+           (indelReportInfo.it == SimplifiedIndelReportType::DELETE) ||
+           (indelReportInfo.it == SimplifiedIndelReportType::SWAP))) return;
 
     unsigned insert_repeat_count(0);
     unsigned delete_repeat_count(0);
 
-    if       (indelReportInfo.it == INDEL::INSERT)
+    if       (indelReportInfo.it == SimplifiedIndelReportType::INSERT)
     {
         get_vcf_seq_repeat_unit(indelReportInfo.vcf_indel_seq,indelReportInfo.repeat_unit,insert_repeat_count);
     }
-    else if (indelReportInfo.it == INDEL::DELETE)
+    else if (indelReportInfo.it == SimplifiedIndelReportType::DELETE)
     {
         get_vcf_seq_repeat_unit(indelReportInfo.vcf_ref_seq,indelReportInfo.repeat_unit,delete_repeat_count);
     }
-    else if (indelReportInfo.it == INDEL::SWAP)
+    else if (indelReportInfo.it == SimplifiedIndelReportType::SWAP)
     {
         std::string insert_ru;
         std::string delete_ru;
@@ -190,7 +190,7 @@ get_starling_indel_report_info(
     // indel summary info
     get_vcf_summary_strings(indelKey,indelData,ref,indelReportInfo.vcf_indel_seq,indelReportInfo.vcf_ref_seq);
 
-    indelReportInfo.it=indelKey.type;
+    indelReportInfo.it=SimplifiedIndelReportType::getRateType(indelKey);
 
     const pos_t indel_begin_pos(indelKey.pos);
     const pos_t indel_end_pos(indelKey.right_pos());
@@ -287,6 +287,7 @@ indel_lnp_to_pprob(const starling_base_deriv_options& dopt,
 
 void
 get_starling_indel_sample_report_info(
+    const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
@@ -297,8 +298,6 @@ get_starling_indel_sample_report_info(
 {
     // get read info:
     {
-        static const double path_pprob_thresh(0.999);
-
         unsigned n_subscore_reads(0);
 
         for (const auto& val : indelSampleData.read_path_lnp)
@@ -309,30 +308,30 @@ get_starling_indel_sample_report_info(
             if ((! is_tier2_pass) && (! path_lnp.is_tier1_read)) continue;
 
             const ReadPathScores pprob(indel_lnp_to_pprob(dopt,path_lnp,is_tier2_pass,is_use_alt_indel));
-            if       (pprob.ref >= path_pprob_thresh)
+            if       (pprob.ref >= opt.readConfidentSupportThreshold.numval())
             {
-                isri.n_q30_ref_reads++;
+                isri.n_confident_ref_reads++;
                 if (path_lnp.is_fwd_strand)
                 {
-                    ++isri.n_q30_ref_reads_fwd;
+                    ++isri.n_confident_ref_reads_fwd;
                 }
                 else
                 {
-                    ++isri.n_q30_ref_reads_rev;
+                    ++isri.n_confident_ref_reads_rev;
                 }
 
                 isri.readpos_ranksum.add_observation(true, path_lnp.read_pos);
             }
-            else if (pprob.indel >= path_pprob_thresh)
+            else if (pprob.indel >= opt.readConfidentSupportThreshold.numval())
             {
-                isri.n_q30_indel_reads++;
+                isri.n_confident_indel_reads++;
                 if (path_lnp.is_fwd_strand)
                 {
-                    ++isri.n_q30_indel_reads_fwd;
+                    ++isri.n_confident_indel_reads_fwd;
                 }
                 else
                 {
-                    ++isri.n_q30_indel_reads_rev;
+                    ++isri.n_confident_indel_reads_rev;
                 }
 
                 isri.readpos_ranksum.add_observation(false, path_lnp.read_pos);
@@ -341,24 +340,24 @@ get_starling_indel_sample_report_info(
             {
                 bool is_alt_found(false);
 #if 0
-                if (pprob.is_alt && (pprob.alt >= path_pprob_thresh))
+                if (pprob.is_alt && (pprob.alt >= path_confident_support_threshold))
                 {
-                    isri.n_q30_alt_reads++;
+                    isri.n_confident_alt_reads++;
                     is_alt_found=true;
                 }
 #else
                 for (const auto& palt : pprob.alt_indel)
                 {
-                    if (palt.second >= path_pprob_thresh)
+                    if (palt.second >= opt.readConfidentSupportThreshold.numval())
                     {
-                        isri.n_q30_alt_reads++;
+                        isri.n_confident_alt_reads++;
                         if (path_lnp.is_fwd_strand)
                         {
-                            ++isri.n_q30_alt_reads_fwd;
+                            ++isri.n_confident_alt_reads_fwd;
                         }
                         else
                         {
-                            ++isri.n_q30_alt_reads_rev;
+                            ++isri.n_confident_alt_reads_rev;
                         }
                         is_alt_found=true;
                         break;
@@ -407,9 +406,9 @@ get_starling_indel_sample_report_info(
 
 void starling_indel_sample_report_info::dump(std::ostream& os) const
 {
-    os << "n_q30_ref_reads=" << n_q30_ref_reads
-       << ",n_q30_indel_reads=" << n_q30_indel_reads
-       << ",n_q30_alt_reads=" << n_q30_alt_reads
+    os << "n_confident_ref_reads=" << n_confident_ref_reads
+       << ",n_confident_indel_reads=" << n_confident_indel_reads
+       << ",n_confident_alt_reads=" << n_confident_alt_reads
        << ",n_other_reads=" << n_other_reads
        << ",tier1Depth=" << tier1Depth;
 }

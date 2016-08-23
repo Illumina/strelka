@@ -198,11 +198,8 @@ struct path_segment
     operator<(const path_segment& rhs) const
     {
         if (type<rhs.type) return true;
-        if (type==rhs.type)
-        {
-            return length<rhs.length;
-        }
-        return false;
+        if (type!=rhs.type) return false;
+        return (length<rhs.length);
     }
 
     align_t type;

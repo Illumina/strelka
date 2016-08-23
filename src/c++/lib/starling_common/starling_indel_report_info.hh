@@ -31,6 +31,50 @@
 #include <string>
 
 
+namespace SimplifiedIndelReportType
+{
+
+/// some components of the indel reporting need to reduce all alternate alleles to the following
+/// simplified states:
+enum index_t
+{
+    INSERT,
+    DELETE,
+    SWAP,
+    BREAKPOINT,
+    OTHER
+};
+
+inline
+index_t
+getRateType(
+    const IndelKey& indelKey)
+{
+    if     (indelKey.isPrimitiveDeletionAllele())
+    {
+        return DELETE;
+    }
+    else if (indelKey.isPrimitiveInsertionAllele())
+    {
+        return INSERT;
+    }
+    else if (indelKey.type == INDEL::INDEL)
+    {
+        return SWAP;
+    }
+    else if (indelKey.is_breakpoint())
+    {
+        return BREAKPOINT;
+    }
+    else
+    {
+        return OTHER;
+    }
+}
+}
+
+
+
 /// indel summary information which is shared between all samples:
 ///
 struct starling_indel_report_info
@@ -54,7 +98,7 @@ struct starling_indel_report_info
     unsigned ihpol = 0; ///< interrupted homopolymer length
 
     // not directly reported, but handy to have pre-calculated:
-    INDEL::index_t it = INDEL::NONE;
+    SimplifiedIndelReportType::index_t it = SimplifiedIndelReportType::OTHER;
 };
 
 std::ostream& operator<<(std::ostream& os, const starling_indel_report_info& obj);
@@ -66,9 +110,9 @@ struct starling_indel_sample_report_info
 {
     starling_indel_sample_report_info() {}
 
-    unsigned n_q30_ref_reads = 0;
-    unsigned n_q30_indel_reads = 0;
-    unsigned n_q30_alt_reads = 0;
+    unsigned n_confident_ref_reads = 0;
+    unsigned n_confident_indel_reads = 0;
+    unsigned n_confident_alt_reads = 0;
 
     // number of lower-quality reads
     unsigned n_other_reads = 0;
@@ -77,22 +121,22 @@ struct starling_indel_sample_report_info
     unsigned tier1Depth = 0;
 
     // same as above, but by strand
-    unsigned n_q30_ref_reads_fwd = 0;
-    unsigned n_q30_indel_reads_fwd = 0;
-    unsigned n_q30_alt_reads_fwd = 0;
+    unsigned n_confident_ref_reads_fwd = 0;
+    unsigned n_confident_indel_reads_fwd = 0;
+    unsigned n_confident_alt_reads_fwd = 0;
     unsigned n_other_reads_fwd = 0;
-    unsigned n_q30_ref_reads_rev = 0;
-    unsigned n_q30_indel_reads_rev = 0;
-    unsigned n_q30_alt_reads_rev = 0;
+    unsigned n_confident_ref_reads_rev = 0;
+    unsigned n_confident_indel_reads_rev = 0;
+    unsigned n_confident_alt_reads_rev = 0;
     unsigned n_other_reads_rev = 0;
 
     MapqTracker mapqTracker;
 
     ranksum readpos_ranksum;
 
-    unsigned total_q30_reads() const
+    unsigned total_confident_reads() const
     {
-        return n_q30_alt_reads + n_q30_indel_reads + n_q30_ref_reads;
+        return n_confident_alt_reads + n_confident_indel_reads + n_confident_ref_reads;
     }
 
     void dump(std::ostream& os) const;
@@ -127,6 +171,7 @@ struct pos_basecall_buffer;
 
 void
 get_starling_indel_sample_report_info(
+    const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,

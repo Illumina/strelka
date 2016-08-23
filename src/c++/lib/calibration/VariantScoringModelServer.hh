@@ -27,6 +27,7 @@
 #include "VariantScoringModelMetadata.hh"
 #include "VariantScoringModelTypes.hh"
 
+#include <algorithm>
 #include <memory>
 
 
@@ -39,19 +40,20 @@ struct VariantScoringModelServer
     VariantScoringModelServer(
         const VariantScoringModelMetadata::featureMap_t& featureMap,
         const std::string& model_file,
-        const SCORING_CALL_TYPE::index_t ctype,
-        const SCORING_VARIANT_TYPE::index_t vtype);
+        const SCORING_CALL_TYPE::index_t callType,
+        const SCORING_VARIANT_TYPE::index_t variantType);
 
+    /// \return prob variant call is false
     double
     scoreVariant(
         const VariantScoringModelBase::featureInput_t& features) const
     {
-        return _model->getProb(features);
+        return std::max(0.,std::min(1.,(_meta.probScale * std::pow(_model->getProb(features), _meta.probPow))));
     }
 
     double scoreFilterThreshold() const
     {
-        return _meta.FilterCutoff;
+        return _meta.filterCutoff;
     }
 
 private:

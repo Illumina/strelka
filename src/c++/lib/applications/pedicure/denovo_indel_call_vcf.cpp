@@ -42,7 +42,7 @@ write_vcf_sample_info(
 {
 
 //	GT:GQ:GQX:DP:DP2:AD:PL
-    int total = indelSampleReportInfo1.n_q30_ref_reads + indelSampleReportInfo1.n_q30_indel_reads;
+    int total = indelSampleReportInfo1.n_confident_ref_reads + indelSampleReportInfo1.n_confident_indel_reads;
 
     static const char sep(':');
     if (dinc.gtstring.size()>0 && total>0)
@@ -61,28 +61,9 @@ write_vcf_sample_info(
 
     os << indelSampleReportInfo1.tier1Depth
        << sep
-//	   n_q30_alt_reads + n_q30_indel_reads + n_q30_ref_reads;
-       << indelSampleReportInfo1.n_q30_ref_reads << ','
-       << indelSampleReportInfo1.n_q30_indel_reads;// + indelSampleReportInfo1.n_q30_alt_reads;
-//       << indelSampleReportInfo1.n_q30_ref_reads+isri2.n_q30_ref_reads << ','
-//        << indelSampleReportInfo1.n_q30_alt_reads+isri2.n_q30_alt_reads
-//       << sep
-//       << indelSampleReportInfo1.n_q30_indel_reads << ','
-//       << isri2.n_q30_indel_reads
-//       << sep
-//       << indelSampleReportInfo1.n_other_reads << ','
-//       << isri2.n_other_reads;
+       << indelSampleReportInfo1.n_confident_ref_reads << ','
+       << indelSampleReportInfo1.n_confident_indel_reads;
 }
-
-
-#if 0
-static
-double
-safeFrac(const int num, const int denom)
-{
-    return ( (denom > 0) ? (num/static_cast<double>(denom)) : 0.);
-}
-#endif
 
 
 
@@ -113,10 +94,6 @@ denovo_indel_call_vcf(
             }
         }
 
-//        if (rs.is_overlap)
-//        {
-//            smod.set_filter(PEDICURE_VCF_FILTERS::OverlapConflict);
-//        }
 
         for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++)
         {
@@ -143,27 +120,6 @@ denovo_indel_call_vcf(
             smod.set_filter(PEDICURE_VCF_FILTERS::iHpol);
         }
 
-
-//        {
-//            const int normalFilt(wasNormal.ss_filt_win.avg());
-//            const int normalUsed(wasNormal.ss_used_win.avg());
-//            const float normalWinFrac(safeFrac(normalFilt,(normalFilt+normalUsed)));
-//
-//            const int tumorFilt(wasTumor.ss_filt_win.avg());
-//            const int tumorUsed(wasTumor.ss_used_win.avg());
-//            const float tumorWinFrac(safeFrac(tumorFilt,(tumorFilt+tumorUsed)));
-//
-//            if ((normalWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac) ||
-//                (tumorWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac))
-//            {
-//                smod.set_filter(STRELKA_VCF_FILTERS::IndelBCNoise);
-//            }
-//        }
-
-//        if ((rs.ntype != NTYPE::REF) || (rs.sindel_from_ntype_qphred < opt.sfilter.sindelQuality_LowerBound))
-//        {
-//            smod.set_filter(STRELKA_VCF_FILTERS::QSI_ref);
-//        }
 
     }
 

@@ -139,6 +139,89 @@ score_segment(const starling_base_options& /*opt*/,
 
 
 
+static
+IndelKey
+getMatchingIndelKey(
+    const candidate_alignment& cal,
+    const pos_t ref_head_pos,
+    const unsigned delete_length,
+    const unsigned insert_length,
+    const std::pair<unsigned,unsigned>& ends,
+    const unsigned path_index)
+{
+    // check if this is an edge swap:
+    IndelKey indelKey;
+    if ((path_index<ends.first) || (path_index>ends.second))
+    {
+        if (path_index<ends.first)
+        {
+            indelKey = cal.leading_indel_key;
+        }
+        else
+        {
+            indelKey = cal.trailing_indel_key;
+        }
+    }
+    else
+    {
+        // find the indel corresponding to this point in the CIGAR alignment:
+        //
+        // do a dumb linear search for now...
+        bool isFound(false);
+        const indel_set_t& calIndels(cal.getIndels());
+        for (const IndelKey& calIndel : calIndels)
+        {
+            if ((calIndel.pos == ref_head_pos) and
+                (calIndel.type == INDEL::INDEL) and
+                (calIndel.delete_length() == delete_length) and
+                (calIndel.insert_length() == insert_length))
+            {
+                assert(not isFound);
+                indelKey=calIndel;
+                isFound=true;
+            }
+            else
+            {
+                if (calIndel.pos > ref_head_pos) break;
+            }
+        }
+        assert(isFound);
+    }
+
+    assert(indelKey.type != INDEL::NONE);
+    return indelKey;
+}
+
+
+
+/// retrieve insertion sequence from either a breakpoint or a regular insertion
+static
+const std::string&
+getInsertSeq(
+    const IndelKey& indelKey,
+    const IndelBuffer& indelBuffer,
+    const candidate_alignment& cal)
+{
+    if (indelKey.is_breakpoint())
+    {
+        const IndelData* indelDataPtr(indelBuffer.getIndelDataPtr(indelKey));
+        if (nullptr == indelDataPtr)
+        {
+            std::ostringstream oss;
+            oss << "ERROR: candidate alignment does not contain expected breakpoint insertion: " << indelKey << "\n"
+                << "\tcandidate alignment: " << cal << "\n";
+            throw blt_exception(oss.str().c_str());
+        }
+        return indelDataPtr->getBreakpointInsertSeq();
+    }
+    else
+    {
+        return indelKey.insertSequence;
+    }
+}
+
+
+
 double
 score_candidate_alignment(
     const starling_base_options& opt,
@@ -187,32 +270,13 @@ score_candidate_alignment(
             const swap_info sinfo(path,path_index);
             n_seg=sinfo.n_seg;
 
-            IndelKey indelKey(ref_head_pos,INDEL::SWAP,sinfo.insert_length,sinfo.delete_length);
+            const IndelKey indelKey(getMatchingIndelKey(cal,ref_head_pos,sinfo.delete_length,sinfo.insert_length,
+                                                        ends,path_index));
 
-            // check if this is an edge swap:
-            if ((path_index<ends.first) || (path_index>ends.second))
-            {
-                if (path_index<ends.first)
-                {
-                    indelKey=cal.leading_indel_key;
-                }
-                else
-                {
-                    indelKey=cal.trailing_indel_key;
-                }
-                assert(indelKey.type!=INDEL::NONE);
-            }
+            // a combined insert/delete event should not produce a breakpoint:
+            assert(not indelKey.is_breakpoint());
 
-            const IndelData* indelDataPtr(indelBuffer.getIndelDataPtr(indelKey));
-            if (nullptr == indelDataPtr)
-            {
-                std::ostringstream oss;
-                oss << "ERROR: candidate alignment does not contain expected swap indel: " << indelKey << "\n"
-                    << "\tcandidate alignment: " << cal << "\n";
-                throw blt_exception(oss.str().c_str());
-            }
-
-            const string_bam_seq insert_bseq(indelDataPtr->getInsertSeq());
+            const string_bam_seq insert_bseq(indelKey.insertSequence);
 
             // if this is a leading edge-insertion we need to set
             // insert_seq_head_pos accordingly:
@@ -270,32 +334,10 @@ score_candidate_alignment(
         }
         else if (ps.type==INSERT)
         {
-            IndelKey indelKey(ref_head_pos,INDEL::INSERT,ps.length);
+            const IndelKey indelKey(getMatchingIndelKey(cal,ref_head_pos,0,ps.length,
+                                                        ends,path_index));
 
-            // check if this is an edge insertion:
-            if ((path_index<ends.first) || (path_index>ends.second))
-            {
-                if (path_index<ends.first)
-                {
-                    indelKey=cal.leading_indel_key;
-                }
-                else
-                {
-                    indelKey=cal.trailing_indel_key;
-                }
-                assert(indelKey.type!=INDEL::NONE);
-            }
-
-            const IndelData* indelDataPtr(indelBuffer.getIndelDataPtr(indelKey));
-            if (nullptr == indelDataPtr)
-            {
-                std::ostringstream oss;
-                oss << "ERROR: candidate alignment does not contain expected insertion: " << indelKey << "\n"
-                    << "\tcandidate alignment: " << cal << "\n";
-                throw blt_exception(oss.str().c_str());
-            }
-
-            const string_bam_seq insert_bseq(indelDataPtr->getInsertSeq());
+            const string_bam_seq insert_bseq(getInsertSeq(indelKey,indelBuffer,cal));
 
             // if this is a leading edge-insertion we need to set
             // insert_seq_head_pos accordingly:
