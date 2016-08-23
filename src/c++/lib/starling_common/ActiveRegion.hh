@@ -100,6 +100,11 @@ public:
     /// \param polySites
     void processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites) const;
 
+    void setSoftClipped(const align_id_t alignId)
+    {
+        _alignIdSoftClipped.insert(alignId);
+    }
+
 private:
     pos_t _start;
     pos_t _end;
@@ -109,11 +114,12 @@ private:
 
     std::map<align_id_t, std::string> _alignIdToHaplotype;
     std::set<align_id_t> _alignIdReachingEnd;
+    std::set<align_id_t> _alignIdSoftClipped;
 
     void convertToPrimitiveAlleles(
         const std::string& haploptypeSeq,
         const std::vector<align_id_t>& alignIdList,
-        const bool relaxMMDF,
+        const unsigned totalReadCount,
         IndelBuffer& indelBuffer,
         RangeSet& polySites) const;
 };

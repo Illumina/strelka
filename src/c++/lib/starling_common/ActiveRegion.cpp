@@ -42,30 +42,44 @@ void ActiveRegion::insertHaplotypeBase(align_id_t alignId, pos_t pos, const std:
 void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites) const
 {
     std::map<std::string, std::vector<align_id_t>> haplotypeToAlignIdSet;
+//    std::map<std::string, unsigned> softClipCount;
     for (const auto& entry : _alignIdToHaplotype)
     {
         align_id_t alignId = entry.first;
         const std::string& haplotype(entry.second);
 
+        // ignore if the read does not cover the start of the active region
+        if (haplotype.empty() || haplotype[0] == missingPrefix) continue;
+
         // ignore if the read does not reach the end of the active region
         if (_alignIdReachingEnd.find(alignId) == _alignIdReachingEnd.end()) continue;
+
+        if (_alignIdSoftClipped.find(alignId) != _alignIdSoftClipped.end()) continue;
+
+//        if (_alignIdSoftClipped.find(alignId) != _alignIdSoftClipped.end())
+//        {
+//            // soft clipped
+//            if (not softClipCount.count(haplotype))
+//                softClipCount[haplotype] = 1;
+//            else
+//                ++softClipCount[haplotype];
+//        }
 
         if (!haplotypeToAlignIdSet.count(haplotype))
             haplotypeToAlignIdSet[haplotype] = std::vector<align_id_t>();
         haplotypeToAlignIdSet[haplotype].push_back(alignId);
     }
 
-    // determine threshold to select 2 haplotypes with the largest counts
-    unsigned largestCount = MinHaplotypeCount;
-    unsigned secondLargestCount = MinHaplotypeCount;
-    unsigned thirdLargestCount = MinHaplotypeCount;
+    // determine threshold to select 3 haplotypes with the largest counts
+    unsigned minHaplotypeCount = _refSeq.length() > 9 ? 2 : MinHaplotypeCount;
+    unsigned largestCount = minHaplotypeCount;
+    unsigned secondLargestCount = minHaplotypeCount;
+    unsigned thirdLargestCount = minHaplotypeCount;
     unsigned totalCount = 0;
     for (const auto& entry : haplotypeToAlignIdSet)
     {
-        const std::string& haplotype(entry.first);
-        if (haplotype.empty() || haplotype[0] == missingPrefix) continue;
-
         auto count = entry.second.size();
+
         totalCount += count;
         if (count > thirdLargestCount)
         {
@@ -88,17 +102,19 @@ void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySit
         }
     }
 
+//    std::cout << '>' << _start+1 << '\t' << _end+1 << '\t' << _refSeq << std::endl;
     for (const auto& entry : haplotypeToAlignIdSet)
     {
         const std::string& haplotype(entry.first);
         if (haplotype.empty() || haplotype[0] == missingPrefix) continue;
 
         const auto& alignIdList(entry.second);
-        auto numReads = alignIdList.size();
-        if (numReads >= thirdLargestCount && haplotype != _refSeq)
+        auto count = alignIdList.size();
+
+//        std::cout << haplotype << '\t' << count << '\t' << softClipCount[haplotype] << std::endl;
+        if (count >= thirdLargestCount and haplotype != _refSeq)
         {
-//            std::cout << haplotype << '\t' << numReads << std::endl;
-            convertToPrimitiveAlleles(haplotype, alignIdList, numReads >= totalCount*HaplotypeFrequencyThreshold,
+            convertToPrimitiveAlleles(haplotype, alignIdList, totalCount,
                                       indelBuffer, polySites);
         }
     }
@@ -107,7 +123,7 @@ void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySit
 void ActiveRegion::convertToPrimitiveAlleles(
     const std::string& haploptypeSeq,
     const std::vector<align_id_t>& alignIdList,
-    const bool relaxMMDF,
+    const unsigned totalReadCount,
     IndelBuffer& indelBuffer,
     RangeSet& polySites) const
 {
@@ -122,6 +138,8 @@ void ActiveRegion::convertToPrimitiveAlleles(
         assert(false && "Unexpected alignment segment");
     }
 
+    std::vector<pos_t> mismatchPositions;
+    unsigned numVariants(0);
     for (unsigned pathIndex(0); pathIndex<alignPath.size(); ++pathIndex)
     {
         const ALIGNPATH::path_segment& pathSegment(alignPath[pathIndex]);
@@ -137,11 +155,11 @@ void ActiveRegion::convertToPrimitiveAlleles(
         case ALIGNPATH::SEQ_MISMATCH:
             for (unsigned i(0); i<segmentLength; ++i)
             {
-                if (relaxMMDF)
-                    polySites.getRef(referencePos) = 1;
+                mismatchPositions.push_back(referencePos);
                 ++referencePos;
                 ++haplotypePosOffset;
             }
+            ++numVariants;
             break;
         case ALIGNPATH::INSERT:
         {
@@ -149,12 +167,14 @@ void ActiveRegion::convertToPrimitiveAlleles(
             indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(referencePos, INDEL::INDEL, 0, insertSeq.c_str()));
 
             haplotypePosOffset += segmentLength;
+            ++numVariants;
             break;
         }
         case ALIGNPATH::DELETE:
         {
             indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(referencePos, INDEL::INDEL, segmentLength));
             referencePos += segmentLength;
+            ++numVariants;
             break;
         }
         default:
@@ -183,6 +203,12 @@ void ActiveRegion::convertToPrimitiveAlleles(
             indelDataPtr->isConfirmedInActiveRegion = true;
         }
     }
+
+    unsigned numReads = alignIdList.size();
+    if (numVariants == 1 and (numReads < totalReadCount*HaplotypeFrequencyThreshold))
+        return;
+    for (pos_t mismatchPos : mismatchPositions)
+        polySites.getRef(mismatchPos) = 1;
 }
 
 

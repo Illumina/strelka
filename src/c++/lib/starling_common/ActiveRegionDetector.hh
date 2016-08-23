@@ -40,16 +40,17 @@ class ActiveRegionDetector
 public:
 
     // maximum buffer size in bases (must be larger than the maximum read size + max indel size
-    static const unsigned MaxBufferSize = 1000;
+    static const unsigned MaxBufferSize = 1000u;
 
     // maximum read depth
     static const unsigned MaxDepth = ActiveRegion::MaxDepth;
 
     // variant count to add for a single indel
+    static const int MismatchWeight = 1;
     static const int IndelWeight = 4;
 
     // maximum distance between two variants belonging to the same active region
-    static const int MaxDistanceBetweenTwoVariants = 14;
+    static const int MaxDistanceBetweenTwoVariants = 14u;
 
     // alignment scores, same as bwa default values
     static const int ScoreMatch = 1;
@@ -57,6 +58,9 @@ public:
     static const int ScoreOpen = -5;
     static const int ScoreExtend = -1;
     static const int ScoreOffEdge = -100;
+
+    const unsigned MaxRepeatUnitLength = 3u;
+    const unsigned MaxRepeatSpan = 20u;
 
     // minimum alternative allele fraction to call a position as a candidate variant
     const float MinAlternativeAlleleFraction = 0.2;
@@ -151,6 +155,8 @@ private:
     {
         MATCH,
         MISMATCH,
+        SOFT_CLIP_MATCH,
+        SOFT_CLIP_MISMATCH,
         DELETE,
         INSERT,
         MISMATCH_INSERT
@@ -186,6 +192,8 @@ private:
 
     // aligner to be used in active regions
     GlobalAligner<int> _aligner;
+
+    void getExpandedRange(const pos_t origStart, const pos_t origEnd, pos_t& newStart, pos_t& newEnd);
 
     bool isCandidateVariant(const pos_t pos) const;
 
@@ -224,9 +232,11 @@ private:
 
     void setMatch(const align_id_t id, const pos_t pos);
     void setMismatch(const align_id_t id, const pos_t pos, char baseChar);
+    void setSoftClipMatch(const align_id_t id, const pos_t pos);
+    void setSoftClipMismatch(const align_id_t id, const pos_t pos, char baseChar);
     void setDelete(const align_id_t id, const pos_t pos);
     void setInsert(const align_id_t id, const pos_t pos, const std::string& insertSeq);
-    void setHaplotypeBase(const align_id_t id, const pos_t pos, std::string& base) const;
+    bool setHaplotypeBase(const align_id_t id, const pos_t pos, std::string& base) const;
 
     inline void clearPos(pos_t pos)
     {
