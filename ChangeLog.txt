@@ -1,4 +1,5 @@
 v2.6.0
+- STREL-188 haplotype generation includes soft-clipped reads
 - STREL-163 Update germline EVS model training with ambiguous call handling
 - STREL-122/STARKA-454 Updated somatic scoring model, integrate somatic indel EVS model
 - STREL-175 restore somatic callability tract
