@@ -33,18 +33,18 @@
 
 void
 getAlleleGroupUnionReadIds(
-    const unsigned sampleId,
+    const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     std::set<unsigned>& readIds,
-    const bool is_tier1_only)
+    const bool isTier1Only)
 {
     const unsigned nonrefAlleleCount(alleleGroup.size());
     for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex < nonrefAlleleCount; nonrefAlleleIndex++)
     {
-        const IndelSampleData& isd(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleId));
+        const IndelSampleData& isd(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleIndex));
         for (const auto& score : isd.read_path_lnp)
         {
-            if (is_tier1_only && (! score.second.is_tier1_read)) continue;
+            if (isTier1Only && (! score.second.is_tier1_read)) continue;
 
             readIds.insert(score.first);
         }
@@ -55,7 +55,7 @@ getAlleleGroupUnionReadIds(
 
 void
 getAlleleGroupIntersectionReadIds(
-    const unsigned sampleId,
+    const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     std::set<unsigned>& readIds,
     const bool isTier1Only)
@@ -64,7 +64,7 @@ getAlleleGroupIntersectionReadIds(
     std::map<unsigned,unsigned> countReadIds;
     for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<nonrefAlleleCount; nonrefAlleleIndex++)
     {
-        const IndelSampleData& isd(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleId));
+        const IndelSampleData& isd(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleIndex));
         for (const auto& score : isd.read_path_lnp)
         {
             if (isTier1Only && (! score.second.is_tier1_read)) continue;
@@ -93,44 +93,40 @@ getAlleleGroupIntersectionReadIds(
 
 
 
-/// find set of read ids which support the entire set of alleles in alleleGroup
-///
-static
 void
 getAlleleGroupSupportingReadIds(
-    const unsigned sampleId,
+    const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
-    std::set<unsigned>& readIds)
+    std::set<unsigned>& readIds,
+    const bool isTier1Only)
 {
-    static const bool isTier1Only(false);
-
 #ifdef USE_GERMLINE_SUPPORTING_READ_UNION
     getAlleleGroupUnionReadIds(sampleId, alleleGroup, readIds, isTier1Only);
 #else
-    getAlleleGroupIntersectionReadIds(sampleId, alleleGroup, readIds, isTier1Only);
+    getAlleleGroupIntersectionReadIds(sampleIndex, alleleGroup, readIds, isTier1Only);
 #endif
 }
 
 
 
 void
-getAlleleLikelihoodsFromRead(
-    const unsigned sampleId,
+getAlleleLogLhoodFromRead(
+    const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     const unsigned readId,
-    std::vector<double>& lhood)
+    std::vector<double>& alleleLogLhood)
 {
     const unsigned nonrefAlleleCount(alleleGroup.size());
     const unsigned fullAlleleCount(nonrefAlleleCount+1);
     const unsigned refAlleleIndex(nonrefAlleleCount);
 
-    lhood.resize(fullAlleleCount);
+    alleleLogLhood.resize(fullAlleleCount);
 
     bool isZeroAlleleCoverage(true);
     bool isPartialAlleleCoverage(false);
     for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<nonrefAlleleCount; nonrefAlleleIndex++)
     {
-        const IndelSampleData& isd(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleId));
+        const IndelSampleData& isd(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleIndex));
 
         const auto iditer(isd.read_path_lnp.find(readId));
         if (iditer==isd.read_path_lnp.end())
@@ -142,13 +138,13 @@ getAlleleLikelihoodsFromRead(
 
         if (isZeroAlleleCoverage)
         {
-            lhood[refAlleleIndex] = static_cast<double>(path_lnp.ref);
+            alleleLogLhood[refAlleleIndex] = static_cast<double>(path_lnp.ref);
         }
         else
         {
-            lhood[refAlleleIndex] = std::max(lhood[refAlleleIndex],static_cast<double>(path_lnp.ref));
+            alleleLogLhood[refAlleleIndex] = std::max(alleleLogLhood[refAlleleIndex],static_cast<double>(path_lnp.ref));
         }
-        lhood[nonrefAlleleIndex] = path_lnp.indel;
+        alleleLogLhood[nonrefAlleleIndex] = path_lnp.indel;
 
         isZeroAlleleCoverage=false;
     }
@@ -160,19 +156,29 @@ getAlleleLikelihoodsFromRead(
     {
         for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex < nonrefAlleleCount; nonrefAlleleIndex++)
         {
-            const IndelSampleData& isd(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleId));
+            const IndelSampleData& isd(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleIndex));
 
             const auto iditer(isd.read_path_lnp.find(readId));
             if (iditer != isd.read_path_lnp.end()) continue;
 
-            lhood[nonrefAlleleIndex] = lhood[refAlleleIndex];
+            alleleLogLhood[nonrefAlleleIndex] = alleleLogLhood[refAlleleIndex];
         }
     }
-
-    unsigned maxIndex(0);
-    normalize_ln_distro(lhood.begin(),lhood.end(),maxIndex);
 }
 
+
+
+void
+getAlleleNaivePosteriorFromRead(
+    const unsigned sampleIndex,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    const unsigned readId,
+    std::vector<double>& alleleProb)
+{
+    getAlleleLogLhoodFromRead(sampleIndex, alleleGroup, readId, alleleProb);
+    unsigned maxIndex(0);
+    normalize_ln_distro(alleleProb.begin(),alleleProb.end(),maxIndex);
+}
 
 
 void
@@ -185,8 +191,9 @@ rankOrthogonalAllelesInSample(
     const unsigned nonrefAlleleCount(alleleGroup.size());
     assert(nonrefAlleleCount!=0);
 
+    static const bool isTier1Only(false);
     std::set<unsigned> readIds;
-    getAlleleGroupSupportingReadIds(sampleIndex, alleleGroup, readIds);
+    getAlleleGroupSupportingReadIds(sampleIndex, alleleGroup, readIds, isTier1Only);
 
     // count of all haplotypes including reference
     const unsigned fullAlleleCount(nonrefAlleleCount+1);
@@ -196,7 +203,7 @@ rankOrthogonalAllelesInSample(
     for (const auto readId : readIds)
     {
         std::vector<double> lhood(fullAlleleCount);
-        getAlleleLikelihoodsFromRead(sampleIndex, alleleGroup, readId, lhood);
+        getAlleleNaivePosteriorFromRead(sampleIndex, alleleGroup, readId, lhood);
         for (unsigned fullAlleleIndex(0); fullAlleleIndex<fullAlleleCount; fullAlleleIndex++)
         {
             support[fullAlleleIndex] += lhood[fullAlleleIndex];
@@ -250,12 +257,15 @@ selectTopOrthogonalAllelesInAllSamples(
     const unsigned sampleCount,
     const std::vector<unsigned>& callerPloidy,
     const OrthogonalVariantAlleleCandidateGroup& inputAlleleGroup,
-    OrthogonalVariantAlleleCandidateGroup& topAlleleGroup)
+    OrthogonalVariantAlleleCandidateGroup& topAlleleGroup,
+    std::vector<unsigned>& topVariantAlleleIndexPerSample)
 {
     assert(sampleCount == callerPloidy.size());
 
     // this structure is used to create an approximate allele rank over all samples
     std::map<IndelKey,unsigned> topVariantAlleleKeyScore;
+
+    std::vector<IndelKey> topVariantAllelePerSample;
 
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
@@ -280,6 +290,11 @@ selectTopOrthogonalAllelesInAllSamples(
                 topAlleleGroup.addVariantAllele(topAlleleGroupInSample.iter(alleleIndex));
             }
             indelKeyIter->second += (sampleCallerPloidy-alleleIndex);
+
+            if (alleleIndex == 0)
+            {
+                topVariantAllelePerSample[sampleIndex] = indelKey;
+            }
         }
     }
 
@@ -303,6 +318,23 @@ selectTopOrthogonalAllelesInAllSamples(
             topAlleleGroup.addVariantAllele(tmpCopy.iter(altAlleleIndex));
         }
     }
+
+    // convert top variant per sample from indel key to topAlleleGroup index:
+    {
+        std::map<IndelKey,unsigned> indelIndex;
+        const unsigned topAllelesCount(topAlleleGroup.size());
+        for (unsigned alleleIndex(0); alleleIndex < topAllelesCount; alleleIndex++)
+        {
+            const IndelKey& indelKey(topAlleleGroup.key(alleleIndex));
+            indelIndex[indelKey] = alleleIndex;
+        }
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        {
+            const auto indelIter(indelIndex.find(topVariantAllelePerSample[sampleIndex]));
+            assert(indelIter != indelIndex.end());
+            topVariantAlleleIndexPerSample[sampleIndex] = indelIter->second;
+        }
+    }
 }
 
 
@@ -314,7 +346,8 @@ addAllelesAtOtherPositions(
     const pos_t pos,
     const pos_t largest_total_indel_ref_span_per_read,
     const IndelBuffer& indelBuffer,
-    OrthogonalVariantAlleleCandidateGroup& alleleGroup)
+    OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    std::vector<unsigned>& topVariantAlleleIndexPerSample)
 {
     const pos_t minIndelBufferPos(pos-largest_total_indel_ref_span_per_read);
 
@@ -465,7 +498,7 @@ addAllelesAtOtherPositions(
     // rerank and reselect top N alleles, N=callerPloidy per sample, over all samples
     //
     selectTopOrthogonalAllelesInAllSamples(
-        sampleCount, callerPloidy, extendedVariantAlleleGroup, alleleGroup);
+        sampleCount, callerPloidy, extendedVariantAlleleGroup, alleleGroup, topVariantAlleleIndexPerSample);
 
     return isEveryAltOrthogonal;
 }

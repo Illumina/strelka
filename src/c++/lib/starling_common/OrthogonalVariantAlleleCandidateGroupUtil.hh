@@ -27,7 +27,7 @@
 ///
 void
 getAlleleGroupUnionReadIds(
-    const unsigned sampleId,
+    const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     std::set<unsigned>& readIds,
     const bool isTier1Only);
@@ -37,23 +37,43 @@ getAlleleGroupUnionReadIds(
 ///
 void
 getAlleleGroupIntersectionReadIds(
-    const unsigned sampleId,
+    const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     std::set<unsigned>& readIds,
     const bool isTier1Only);
 
 
-/// enumerate read likelihood P(read | allele) for read 'readId' over all alleles in 'alleleGroup'
+/// find set of read ids which support the entire set of alleles in alleleGroup
 ///
-/// \param lhood[out] (normalized) likelihood for each allele, set to dimension "alleleGroup.alleles.size() + 1",
+void
+getAlleleGroupSupportingReadIds(
+    const unsigned sampleIndex,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    std::set<unsigned>& readIds,
+    const bool isTier1Only);
+
+
+/// enumerate (log of) read likelihood P(read | allele) for read 'readId' over all ref + all alt alleles in 'alleleGroup'
+///
+/// \param alleleLogLhood[out] log likelihood for each allele, set to dimension "alleleGroup.alleles.size() + 1",
 ///                   with an extra reference allele state represented at the end of the array
 ///
 void
-getAlleleLikelihoodsFromRead(
-    const unsigned sampleId,
+getAlleleLogLhoodFromRead(
+    const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     const unsigned readId,
-    std::vector<double>& lhood);
+    std::vector<double>& alleleLogLhood);
+
+
+/// same as above except allele likelihoods are is normalized
+///
+void
+getAlleleNaivePosteriorFromRead(
+    const unsigned sampleIndex,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    const unsigned readId,
+    std::vector<double>& alleleProb);
 
 
 /// ranks the alleles in the input 'alleles' set according
@@ -91,7 +111,8 @@ selectTopOrthogonalAllelesInAllSamples(
     const unsigned sampleCount,
     const std::vector<unsigned>& callerPloidy,
     const OrthogonalVariantAlleleCandidateGroup& inputAlleleGroup,
-    OrthogonalVariantAlleleCandidateGroup& topAlleleGroup);
+    OrthogonalVariantAlleleCandidateGroup& topAlleleGroup,
+    std::vector<unsigned>& topVariantAlleleIndexPerSample);
 
 
 /// augment alleleGroup with overlapping alleles that have position other than 'pos',
@@ -107,4 +128,5 @@ addAllelesAtOtherPositions(
     const pos_t pos,
     const pos_t largest_total_indel_ref_span_per_read,
     const IndelBuffer& indelBuffer,
-    OrthogonalVariantAlleleCandidateGroup& alleleGroup);
+    OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    std::vector<IndelKey>& topVariantAllelePerSample);

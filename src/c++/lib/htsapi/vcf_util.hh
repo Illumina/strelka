@@ -127,6 +127,26 @@ parse_gt(
 
 struct VcfGenotypeUtil
 {
+    static
+    unsigned
+    getGenotypeCount(
+        const unsigned ploidy,
+        const uint8_t alleleCount)
+    {
+        if (ploidy == 1)
+        {
+            return alleleCount;
+        }
+        else if (ploidy == 2)
+        {
+            return getGenotypeIndex(0, alleleCount);
+        }
+        else
+        {
+            assert(false and "unexpected ploidy");
+        }
+    }
+
     /// allele to genotype functions
     ///
     /// ploidy is implied by the number of arguments
@@ -137,6 +157,7 @@ struct VcfGenotypeUtil
     {
         return allele0Index;
     }
+
 
     static
     unsigned

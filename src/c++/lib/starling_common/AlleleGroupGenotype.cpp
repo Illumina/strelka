@@ -19,6 +19,7 @@
 //
 
 #include "AlleleGroupGenotype.hh"
+#include "OrthogonalVariantAlleleCandidateGroupUtil.hh"
 
 #include "starling_indel_call_pprob_digt.hh"
 #include "blt_util/math_util.hh"
@@ -92,6 +93,89 @@ accumulateLogLhoodFromReadObservation(
         const double normalizeHetRatio(log_sum(logHet0Allele0Prior, logHet1Allele1Prior));
         const double het01_lnp(log_sum(variantAllele0_lnp+(logHet0Allele0Prior-normalizeHetRatio),variantAllele1_lnp+(logHet1Allele1Prior-normalizeHetRatio)));
         logLhood[AG_GENOTYPE::HET01] += integrate_out_sites(dopt,nsite,het01_lnp, isTier2Pass);
+    }
+}
+
+
+
+static
+void
+updateGenotypeLogLhoodFromAlleleLogLhood(
+    const starling_base_deriv_options& dopt,
+    const starling_sample_options& sampleOptions,
+    const unsigned callerPloidy,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    const std::vector<double>& alleleLogLhood,
+    const ReadPathScores& readScore,
+    std::vector<double>& genotypeLogLhood)
+{
+    static const bool isTier2Pass(false);
+
+    const uint8_t nonRefAlleleCount(alleleGroup.size());
+    const uint8_t fullAlleleCount(nonRefAlleleCount+1);
+
+    if (callerPloidy == 1)
+    {
+        for (unsigned allele0Index(0); allele0Index<=fullAlleleCount; ++allele0Index)
+        {
+            const unsigned genotypeIndex(VcfGenotypeUtil::getGenotypeIndex(allele0Index));
+            genotypeLogLhood[genotypeIndex] += integrate_out_sites(dopt, readScore.nsite, alleleLogLhood[allele0Index],
+                                                                   isTier2Pass);
+        }
+    }
+    else if(callerPloidy == 2)
+    {
+        for (unsigned allele1Index(0); allele1Index < fullAlleleCount; ++allele1Index)
+        {
+            for (unsigned allele0Index(0); allele0Index <= allele1Index; ++allele0Index)
+            {
+                const bool isHet(allele0Index != allele1Index);
+                const unsigned genotypeIndex(VcfGenotypeUtil::getGenotypeIndex(allele0Index, allele1Index));
+
+
+                double rawLogLhood(0);
+                if (isHet)
+                {
+                    static const double hetAlleleRatio(0.5);
+                    static const double loghalf(std::log(0.5));
+
+                    assert(allele1Index > 0);
+                    double logHetAllele0Prior(loghalf);
+                    double logHetAllele1Prior(loghalf);
+                    const IndelKey& allele1Key(alleleGroup.key(allele1Index - 1));
+                    get_het_observed_allele_ratio(readScore.read_length, sampleOptions.min_read_bp_flank,
+                                                  allele1Key, hetAlleleRatio, logHetAllele0Prior, logHetAllele1Prior);
+
+                    if (allele0Index > 0)
+                    {
+                        // het-alt genotype -- approximate the expected allele ratio in this case
+                        double logRefPrior(loghalf);
+                        logHetAllele0Prior = loghalf;
+                        const IndelKey& allele0Key(alleleGroup.key(allele0Index - 1));
+                        get_het_observed_allele_ratio(readScore.read_length, sampleOptions.min_read_bp_flank,
+                                                      allele0Key, hetAlleleRatio, logRefPrior, logHetAllele0Prior);
+
+                        const double normalizeHetRatio(log_sum(logHetAllele0Prior, logHetAllele1Prior));
+                        logHetAllele0Prior -= normalizeHetRatio;
+                        logHetAllele1Prior -= normalizeHetRatio;
+                    }
+
+                    rawLogLhood = log_sum(alleleLogLhood[allele0Index] + logHetAllele0Prior,
+                                          alleleLogLhood[allele1Index] + logHetAllele1Prior);
+                }
+                else
+                {
+                    rawLogLhood = alleleLogLhood[allele0Index];
+                }
+
+                genotypeLogLhood[genotypeIndex] += integrate_out_sites(dopt, readScore.nsite, rawLogLhood,
+                                                                       isTier2Pass);
+            }
+        }
+    }
+    else
+    {
+        assert(false and "Unexpected ploidy value");
     }
 }
 
@@ -201,121 +285,80 @@ updateSupportingReadStats(
 
 
 
+const ReadPathScores&
+getExemplarReadScore(
+    const unsigned sampleIndex,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    const unsigned readId)
+{
+    const uint8_t nonRefAlleleCount(alleleGroup.size());
+
+    const ReadPathScores* readScorePtr(nullptr);
+    for (unsigned nonRefAlleleIndex(0); nonRefAlleleIndex < nonRefAlleleCount; nonRefAlleleIndex++)
+    {
+        const IndelSampleData& isd(alleleGroup.data(nonRefAlleleIndex).getSampleData(sampleIndex));
+        const auto iditer(isd.read_path_lnp.find(readId));
+        if (iditer != isd.read_path_lnp.end())
+        {
+            readScorePtr = &(iditer->second);
+            break;
+        }
+    }
+    assert(nullptr != readScorePtr);
+    return (*readScorePtr);
+}
+
+
+
 void
-getVariantAlleleGroupGenotypeLhoods(
+getVariantAlleleGroupGenotypeLhoodsForSample(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sampleOptions,
-    const unsigned groupLocusPloidy,
+    const unsigned callerPloidy,
     const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
-    AlleleGroupGenotype& locusGenotype,
+    std::vector<double>& genotypeLogLhood,
     LocusSupportingReadStats& locusReadStats)
 {
-    assert(groupLocusPloidy>0u);
-    assert(alleleGroup.size()<=groupLocusPloidy);
-    assert(groupLocusPloidy<3u);
+    assert(callerPloidy>0u);
+    assert(callerPloidy<3u);
 
     const uint8_t nonRefAlleleCount(alleleGroup.size());
     const uint8_t fullAlleleCount(nonRefAlleleCount+1);
+    const unsigned genotypeCount(VcfGenotypeUtil::getGenotypeCount(callerPloidy, fullAlleleCount));
 
-    GenotypeInfo ginfo(groupLocusPloidy, fullAlleleCount);
-    const unsigned genotypeCount(ginfo.genotypeCount());
-    assert(genotypeCount<=AlleleGroupGenotype::MAX_GENOTYPE_COUNT);
-    double genotypeLogLhood[AlleleGroupGenotype::MAX_GENOTYPE_COUNT];
-    std::fill(genotypeLogLhood,genotypeLogLhood+genotypeCount,0.);
-
-    const bool is3AlleleModel(fullAlleleCount == 3);
-
-    //---------------------------------------------------
-    // get patternRepeatCount, punt on figuring out how to do this for more than one alt allele
-    //
-    /// TODO set PatternRepeatCount for multiple alts
-    //
-    unsigned patternRepeatCount(1);
-    if (nonRefAlleleCount==1)
-    {
-        const unsigned nonRefAllele0Index(0);
-        const IndelData& allele0Data(alleleGroup.data(nonRefAllele0Index));
-
-        const AlleleReportInfo& indelReportInfo(allele0Data.getReportInfo());
-        patternRepeatCount=std::max(1u,indelReportInfo.ref_repeat_count);
-    }
-
-    const ContextGenotypePriors& genotypePriors(dopt.getIndelGenotypePriors().getContextSpecificPriorSet(patternRepeatCount));
+    genotypeLogLhood.resize(genotypeCount);
+    std::fill(genotypeLogLhood.begin(), genotypeLogLhood.end(), 0.);
 
     //---------------------------------------------------
     // get genotype likelihoods
     //
     if (nonRefAlleleCount>0)
     {
-        const unsigned nonRefAllele0Index(0);
-        const IndelKey& allele0Key(alleleGroup.key(nonRefAllele0Index));
-        const IndelData& allele0Data(alleleGroup.data(nonRefAllele0Index));
-        const IndelSampleData& allele0SampleData(allele0Data.getSampleData(sampleIndex));
-
-        const unsigned nonRefAllele1Index(is3AlleleModel ? 1 : 0);
-        const IndelKey& allele1Key(alleleGroup.key(nonRefAllele1Index));
-        const IndelData& allele1Data(alleleGroup.data(nonRefAllele1Index));
-        const IndelSampleData& allele1SampleData(allele1Data.getSampleData(sampleIndex));
-
         // threshold used to generate supporting count summary (not used for GT likelihoods):
         const double readSupportTheshold(opt.readConfidentSupportThreshold.numval());
         locusReadStats.setAltCount(nonRefAlleleCount);
 
-        // used for support counts only:
-        std::vector<double> alleleLogLhood(fullAlleleCount);
+        static const bool isTier1Only(true);
+        std::set<unsigned> readIds;
+        getAlleleGroupSupportingReadIds(sampleIndex, alleleGroup, readIds, isTier1Only);
 
-        for (const auto& score : allele0SampleData.read_path_lnp)
+        for (const auto readId : readIds)
         {
-            const auto readIndex(score.first);
-            const ReadPathScores& allele0ReadScores(score.second);
+            std::vector<double> alleleLogLhood(fullAlleleCount);
+            getAlleleLogLhoodFromRead(sampleIndex, alleleGroup, readId, alleleLogLhood);
 
-            if (!allele0ReadScores.is_tier1_read) continue;
+            // get an exemplar read score object, doesn't really matter from which allele...
+            const ReadPathScores& readScore(getExemplarReadScore(sampleIndex, alleleGroup, readId));
 
-            const ReadPathScores* allele1ReadScoresPtr(nullptr);
-            if (is3AlleleModel)
-            {
-                /// skip this read if it's not aligned to both alleles:
-                const auto allele1ReadScoresIter(allele1SampleData.read_path_lnp.find(readIndex));
-                if (allele1ReadScoresIter == allele1SampleData.read_path_lnp.end()) continue;
-                allele1ReadScoresPtr = (&(allele1ReadScoresIter->second));
-            }
+            updateGenotypeLogLhoodFromAlleleLogLhood(dopt, sampleOptions, callerPloidy, alleleGroup, alleleLogLhood,
+                                                     readScore, genotypeLogLhood);
 
-            double refAllele_lnp(allele0ReadScores.ref);
-            const double variantAllele0_lnp(allele0ReadScores.indel);
-            double variantAllele1_lnp(variantAllele0_lnp);
-
-            if (is3AlleleModel)
-            {
-                const ReadPathScores& allele1ReadScores(*allele1ReadScoresPtr);
-                refAllele_lnp = std::max(refAllele_lnp, (double) allele1ReadScores.ref);
-                variantAllele1_lnp = allele1ReadScores.indel;
-            }
-
-            accumulateLogLhoodFromReadObservation(
-                dopt, sampleOptions,
-                allele0ReadScores.nsite, allele0ReadScores.read_length,
-                is3AlleleModel,
-                refAllele_lnp, variantAllele0_lnp, variantAllele1_lnp,
-                allele0Key, allele1Key, genotypeLogLhood);
-
-            //---------------------------------------------------
-            // get support counts for each allele from P(read | allele)
-            //
-
-            alleleLogLhood[0] = refAllele_lnp;
-            alleleLogLhood[1] = variantAllele0_lnp;
-            if (is3AlleleModel)
-            {
-                alleleLogLhood[2] = variantAllele1_lnp;
-            }
-            updateSupportingReadStats(dopt, readSupportTheshold, allele0ReadScores.nsite, allele0ReadScores.is_fwd_strand, alleleLogLhood, locusReadStats);
+            updateSupportingReadStats(
+                dopt, readSupportTheshold, readScore.nsite, readScore.is_fwd_strand, alleleLogLhood, locusReadStats);
         }
     }
-
-    const bool isHaploid(groupLocusPloidy==1);
-    logLhoodToLocusGenotype(genotypePriors, genotypeCount, is3AlleleModel, isHaploid, genotypeLogLhood, locusGenotype);
 }
 
 

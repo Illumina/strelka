@@ -24,6 +24,8 @@
 #include "starling_common/OrthogonalVariantAlleleCandidateGroup.hh"
 #include "LocusSupportingReadStats.hh"
 
+#include "htsapi/vcf_util.hh"
+
 
 /// produce various genotype information based on
 /// - ploidy
@@ -39,7 +41,6 @@ struct GenotypeInfo
         assert(ploidy>0);
         assert(ploidy<=2);
         assert(alleleCount>0);
-        assert(alleleCount<=3);
     }
 
     /// return number of possible genotypes:
@@ -48,24 +49,7 @@ struct GenotypeInfo
     uint8_t
     genotypeCount() const
     {
-        if (_ploidy==1)
-        {
-            return _alleleCount;
-        }
-        else if (_ploidy==2)
-        {
-            switch (_alleleCount)
-            {
-            case 1:
-                return 1;
-            case 2:
-                return 3;
-            case 3:
-                return 6;
-            }
-        }
-        assert(false && "Unexpected ploidy or haplotype count");
-        return 0;
+        return VcfGenotypeUtil::getGenotypeCount(_ploidy, _alleleCount);
     }
 
 #if 0
@@ -128,17 +112,19 @@ struct AlleleGroupGenotype
 
 namespace AG_GENOTYPE
 {
-enum index_t
-{
-    HOMREF,
-    HOM0,
-    HET0,
-    HOM1,
-    HET1,
-    HET01,
-    SIZE
-};
+    /// genotype enum generalized to handle-multi sample as follows:
+    enum index_t
+    {
+        HOMREF,
+        HET0, ///< ref + most likely alt
+        HOM0, ///< most likely alt
+        HET1, ///< ref + any other alt
+        HOM1, ///< any other alt
+        HET01, ///< most likely alt + any other alt
+        SIZE
+    };
 
+#if 0
 /// ploidy is infered from command-line arguments:
 inline
 index_t
@@ -288,7 +274,7 @@ getAlleleHomId(
         return SIZE;
     }
 }
-
+#endif
 }
 
 
@@ -301,114 +287,65 @@ struct ContextGenotypePriors
     {
         static const double log0(-std::numeric_limits<double>::infinity());
 
-        prior2AlleleDiploid[AG_GENOTYPE::HOMREF] = std::log(1. - (theta * 3 / 2));
-        prior2AlleleDiploid[AG_GENOTYPE::HOM0] = std::log(theta / 2.);
-        prior2AlleleDiploid[AG_GENOTYPE::HET0] = std::log(theta);
+        priorNAlleleDiploid[AG_GENOTYPE::HOMREF] = std::log(1. - (theta * 3. / 2.));
+        priorNAlleleDiploid[AG_GENOTYPE::HOM0] = std::log(theta / 2.);
+        priorNAlleleDiploid[AG_GENOTYPE::HET0] = std::log(theta);
+        priorNAlleleDiploid[AG_GENOTYPE::HOM1] = std::log(theta * theta / 2);
+        priorNAlleleDiploid[AG_GENOTYPE::HET1] = std::log(theta * theta);
+        priorNAlleleDiploid[AG_GENOTYPE::HET01] = std::log(theta * theta);
 
-        prior2AlleleDiploidPolymorphic[AG_GENOTYPE::HOMREF] = std::log(0.25);
-        prior2AlleleDiploidPolymorphic[AG_GENOTYPE::HOM0] = std::log(0.25);
-        prior2AlleleDiploidPolymorphic[AG_GENOTYPE::HET0] = std::log(0.5);
+        priorNAlleleDiploidPolymorphic[AG_GENOTYPE::HOMREF] = std::log(0.25);
+        priorNAlleleDiploidPolymorphic[AG_GENOTYPE::HOM0] = std::log(0.25);
+        priorNAlleleDiploidPolymorphic[AG_GENOTYPE::HET0] = std::log(0.5);
+        priorNAlleleDiploidPolymorphic[AG_GENOTYPE::HOM1] = std::log(0.25 * theta);
+        priorNAlleleDiploidPolymorphic[AG_GENOTYPE::HET1] = std::log(0.5 * theta);
+        priorNAlleleDiploidPolymorphic[AG_GENOTYPE::HET01] = std::log(0.5 * theta);
 
-        prior2AlleleHaploid[AG_GENOTYPE::HOMREF] = std::log(1. - theta);
-        prior2AlleleHaploid[AG_GENOTYPE::HOM0] = std::log(theta);
-        prior2AlleleHaploid[AG_GENOTYPE::HET0] = log0;
+        priorNAlleleHaploid[AG_GENOTYPE::HOMREF] = std::log(1. - theta);
+        priorNAlleleHaploid[AG_GENOTYPE::HOM0] = std::log(theta);
+        priorNAlleleHaploid[AG_GENOTYPE::HET0] = log0;
+        priorNAlleleHaploid[AG_GENOTYPE::HOM1] = std::log(theta * theta);
+        priorNAlleleHaploid[AG_GENOTYPE::HET1] = log0;
+        priorNAlleleHaploid[AG_GENOTYPE::HET01] = log0;
 
-        prior2AlleleHaploidPolymorphic[AG_GENOTYPE::HOMREF] = std::log(0.5);
-        prior2AlleleHaploidPolymorphic[AG_GENOTYPE::HOM0] = std::log(0.5);
-        prior2AlleleHaploidPolymorphic[AG_GENOTYPE::HET0] = log0;
-
-        prior3AlleleDiploid[AG_GENOTYPE::HOMREF] = std::log(1. - (theta * 3. / 2.));
-        prior3AlleleDiploid[AG_GENOTYPE::HOM0] = std::log(theta / 2.);
-        prior3AlleleDiploid[AG_GENOTYPE::HET0] = std::log(theta);
-        prior3AlleleDiploid[AG_GENOTYPE::HOM1] = std::log(theta * theta / 2);
-        prior3AlleleDiploid[AG_GENOTYPE::HET1] = std::log(theta * theta);
-        prior3AlleleDiploid[AG_GENOTYPE::HET01] = std::log(theta * theta);
-
-        prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HOMREF] = std::log(0.25);
-        prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HOM0] = std::log(0.25);
-        prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HET0] = std::log(0.5);
-        prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HOM1] = std::log(0.25 * theta);
-        prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HET1] = std::log(0.5 * theta);
-        prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HET01] = std::log(0.5 * theta);
-
-        prior3AlleleHaploid[AG_GENOTYPE::HOMREF] = std::log(1. - theta);
-        prior3AlleleHaploid[AG_GENOTYPE::HOM0] = std::log(theta);
-        prior3AlleleHaploid[AG_GENOTYPE::HET0] = log0;
-        prior3AlleleHaploid[AG_GENOTYPE::HOM1] = std::log(theta * theta);
-        prior3AlleleHaploid[AG_GENOTYPE::HET1] = log0;
-        prior3AlleleHaploid[AG_GENOTYPE::HET01] = log0;
-
-        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HOMREF] = std::log(0.5);
-        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HOM0] = std::log(0.5);
-        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HET0] = log0;
-        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HOM1] = std::log(0.5 * theta);
-        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HET1] = log0;
-        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HET01] = log0;
+        priorNAlleleHaploidPolymorphic[AG_GENOTYPE::HOMREF] = std::log(0.5);
+        priorNAlleleHaploidPolymorphic[AG_GENOTYPE::HOM0] = std::log(0.5);
+        priorNAlleleHaploidPolymorphic[AG_GENOTYPE::HET0] = log0;
+        priorNAlleleHaploidPolymorphic[AG_GENOTYPE::HOM1] = std::log(0.5 * theta);
+        priorNAlleleHaploidPolymorphic[AG_GENOTYPE::HET1] = log0;
+        priorNAlleleHaploidPolymorphic[AG_GENOTYPE::HET01] = log0;
     }
 
     const double*
-    get2Allele(const bool isHaploid) const
+    getNAllele(const bool isHaploid) const
     {
         if (isHaploid)
         {
-            return prior2AlleleHaploid;
+            return priorNAlleleHaploid;
         }
         else
         {
-            return prior2AlleleDiploid;
+            return priorNAlleleDiploid;
         }
     }
 
     const double*
-    get3Allele(const bool isHaploid) const
+    getNAllelePolymorphic(const bool isHaploid) const
     {
         if (isHaploid)
         {
-            return prior3AlleleHaploid;
+            return priorNAlleleHaploidPolymorphic;
         }
         else
         {
-            return prior3AlleleDiploid;
+            return priorNAlleleDiploidPolymorphic;
         }
     }
 
-    const double*
-    get2AllelePolymorphic(const bool isHaploid) const
-    {
-        if (isHaploid)
-        {
-            return prior2AlleleHaploidPolymorphic;
-        }
-        else
-        {
-            return prior2AlleleDiploidPolymorphic;
-        }
-    }
-
-    const double*
-    get3AllelePolymorphic(const bool isHaploid) const
-    {
-        if (isHaploid)
-        {
-            return prior3AlleleHaploidPolymorphic;
-        }
-        else
-        {
-            return prior3AlleleDiploidPolymorphic;
-        }
-    }
-
-    double prior2AlleleDiploid[3];
-    double prior3AlleleDiploid[6];
-
-    double prior2AlleleHaploid[3];
-    double prior3AlleleHaploid[6];
-
-    double prior2AlleleDiploidPolymorphic[3];
-    double prior3AlleleDiploidPolymorphic[6];
-
-    double prior2AlleleHaploidPolymorphic[3];
-    double prior3AlleleHaploidPolymorphic[6];
+    double priorNAlleleDiploid[AG_GENOTYPE::SIZE];
+    double priorNAlleleHaploid[AG_GENOTYPE::SIZE];
+    double priorNAlleleDiploidPolymorphic[AG_GENOTYPE::SIZE];
+    double priorNAlleleHaploidPolymorphic[AG_GENOTYPE::SIZE];
 };
 
 
@@ -447,16 +384,15 @@ private:
 };
 
 
-
 void
-getVariantAlleleGroupGenotypeLhoods(
+getVariantAlleleGroupGenotypeLhoodsForSample(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sampleOptions,
-    const unsigned groupLocusPloidy,
+    const unsigned callerPloidy,
     const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
-    AlleleGroupGenotype& locusGenotype,
+    std::vector<double>& genotypeLogLhood,
     LocusSupportingReadStats& locusReadStats);
 
 void

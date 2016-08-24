@@ -46,7 +46,13 @@ get_sum_path_pprob(
     const bool is_init_total = true);
 
 
-/// get expected allele ratio for long indels
+/// get expected allele ratio between two indel alleles (where one allele must be reference)
+///
+/// this  only serves an important role for indels which are long relative to the read size
+/// For sites and single breakpoints this is expected to match the sample allele ratio.
+///
+/// Currently assuming second allele is the reference, generalization TBD
+///
 void
 get_het_observed_allele_ratio(
     const unsigned read_length,

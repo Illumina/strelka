@@ -171,7 +171,7 @@ getOrthogonalHaplotypeSupportCounts(
     for (const auto readId : readIds)
     {
         std::vector<double> lhood(fullAlleleCount);
-        getAlleleLikelihoodsFromRead(sampleId, alleleGroup, readId, lhood);
+        getAlleleNaivePosteriorFromRead(sampleId, alleleGroup, readId, lhood);
         for (unsigned fullAlleleIndex(0); fullAlleleIndex<fullAlleleCount; fullAlleleIndex++)
         {
             if (lhood[fullAlleleIndex]>0.999)

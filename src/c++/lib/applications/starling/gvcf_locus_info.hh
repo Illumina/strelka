@@ -275,8 +275,10 @@ struct LocusSampleInfo
     clear()
     {
         genotypeQualityPolymorphic = 0;
-        gqx = 0;
         maxGenotypeIndexPolymorphic = 0;
+        genotypeQuality = 0;
+        maxGenotypeIndex = 0;
+        gqx = 0;
         empiricalVariantScore = -1;
         genotypePhredLoghood.clear();
         filters.clear();
@@ -329,11 +331,14 @@ struct LocusSampleInfo
     /// VCF GQ
     int genotypeQualityPolymorphic=0;
 
-    /// VCF GQX
-    int gqx=0;
-
     /// VCF GT
     unsigned maxGenotypeIndexPolymorphic=0;
+
+    int genotypeQuality=0;
+    unsigned maxGenotypeIndex=0;
+
+    /// VCF GQX
+    int gqx=0;
 
     /// likelihoods for all possible genotypes, defined as a function of ploidy and altAllele count
     /// used to write VCF PL vals

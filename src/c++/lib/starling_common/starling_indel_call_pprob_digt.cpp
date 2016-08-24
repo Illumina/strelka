@@ -106,13 +106,6 @@ integrate_out_sites(const starling_base_deriv_options& dopt,
 
 
 
-// Calculate the expected ratio of reads observed to support each
-// allele. Note that for sites and single breakpoints this is expected
-// to match the sample allele ratio, however for indels this can
-// change as a funciton of indel and read length.
-//
-// Note this routine does not account for overlapping indels
-//
 void
 get_het_observed_allele_ratio(
     const unsigned read_length,
