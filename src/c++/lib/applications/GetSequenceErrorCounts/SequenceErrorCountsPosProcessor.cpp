@@ -468,9 +468,10 @@ process_pos_error_counts(
     if (not orthogonalVariantAlleles.empty())
     {
         {
+            std::vector<unsigned> topVariantAlleleIndexPerSample;
             const bool isEveryAltIncluded = \
                 addAllelesAtOtherPositions(sampleCount, callerPloidy, pos, get_largest_total_indel_ref_span_per_read(),
-                                           getIndelBuffer(), orthogonalVariantAlleles);
+                                           getIndelBuffer(), orthogonalVariantAlleles, topVariantAlleleIndexPerSample);
 
             if (not isEveryAltIncluded) return;
 

@@ -197,6 +197,18 @@ struct GenotypeLikelihoods
         _ploidy=ploidy;
     }
 
+    std::vector<unsigned>&
+    getGenotypeLikelihood()
+    {
+        return _genotypePhredLoghood;
+    }
+
+    const std::vector<unsigned>&
+    getGenotypeLikelihood() const
+    {
+        return _genotypePhredLoghood;
+    }
+
     unsigned&
     getGenotypeLikelihood(
         const uint8_t allele0Index)

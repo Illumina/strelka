@@ -488,223 +488,6 @@ process_pos_indel(const pos_t pos)
 
 
 
-static
-unsigned
-translateOldToNewGenotypeIndex(
-    const int ploidy,
-    const unsigned oldGenotype)
-{
-    using namespace AG_GENOTYPE;
-
-    if (ploidy==1)
-    {
-        switch (static_cast<AG_GENOTYPE::index_t>(oldGenotype))
-        {
-        case HOMREF:
-            return VcfGenotypeUtil::getGenotypeIndex(0);
-        case HOM0:
-            return VcfGenotypeUtil::getGenotypeIndex(1);
-        case HOM1:
-            return VcfGenotypeUtil::getGenotypeIndex(2);
-        default:
-            assert(false and "Unexpected genotype");
-        }
-    }
-    else if (ploidy==2)
-    {
-        switch (static_cast<AG_GENOTYPE::index_t>(oldGenotype))
-        {
-        case HOMREF:
-            return VcfGenotypeUtil::getGenotypeIndex(0,0);
-        case HOM0:
-            return VcfGenotypeUtil::getGenotypeIndex(1,1);
-        case HOM1:
-            return VcfGenotypeUtil::getGenotypeIndex(2,2);
-        case HET0:
-            return VcfGenotypeUtil::getGenotypeIndex(0,1);
-        case HET1:
-            return VcfGenotypeUtil::getGenotypeIndex(0,2);
-        case HET01:
-            return VcfGenotypeUtil::getGenotypeIndex(1,2);
-        default:
-            assert(false and "Unexpected genotype");
-        }
-    }
-    else
-    {
-        assert(0);
-    }
-}
-
-
-
-/// convert the new AlleleGroupGenotype format to 0..N similar starling_diploid_indel intermediates as a
-/// tempoary way for this method to communicate with the gVCF writer
-///
-/// TODO remove this function once we eliminate starling_diploid_indel as an intermediary format
-static
-bool
-hackDiplotypeCallToCopyNumberCalls(
-    const starling_base_options& opt,
-    const starling_deriv_options& dopt,
-    const pos_basecall_buffer& basecallBuffer,
-    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
-    const AlleleGroupGenotype& locusGenotype,
-    const std::vector<LocusSupportingReadStats>& locusReadStats,
-    const unsigned callerPloidy,
-    const unsigned groupLocusPloidy,
-    const bool isForcedOutput,
-    gvcf_aggregator& gvcfer)
-{
-    /// TODO STREL-125 generalize to multi-sample
-    const unsigned sampleCount(1);
-
-    if (not (isForcedOutput or (locusGenotype.maxGenotypeIndex != AG_GENOTYPE::HOMREF)))
-    {
-        return false;
-    }
-
-    // setup new indel locus:
-    std::unique_ptr<GermlineIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount));
-
-    //
-    // add sample-independent info:
-    //
-    ii->anyVariantAlleleQuality = locusGenotype.anyVariantAlleleQuality;
-
-    // cycle through variant alleles and add them to locus:
-    const unsigned alleleGroupSize(alleleGroup.size());
-    for (unsigned genotypeAlleleIndex(0); genotypeAlleleIndex < alleleGroupSize; ++genotypeAlleleIndex)
-    {
-        const IndelKey& indelKey(alleleGroup.key(genotypeAlleleIndex));
-        const IndelData& indelData(alleleGroup.data(genotypeAlleleIndex));
-
-        // right now, a locus-level forced output flag should only correspond to forced alleles:
-        assert ((not isForcedOutput) || indelData.isForcedOutput);
-
-        ii->addAltIndelAllele(indelKey, indelData);
-    }
-
-    //
-    // add sample-dependent info:
-    //
-    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
-    {
-        auto& sampleInfo(ii->getSample(sampleIndex));
-        sampleInfo.setPloidy(callerPloidy);
-        if (callerPloidy != groupLocusPloidy)
-        {
-            sampleInfo.setPloidyConflict();
-        }
-        sampleInfo.supportCounts = locusReadStats[sampleIndex];
-
-        // transfer max_gt
-        sampleInfo.maxGenotypeIndexPolymorphic = translateOldToNewGenotypeIndex(callerPloidy,
-                                                                                locusGenotype.maxGenotypeIndexPolymorphic);
-        sampleInfo.genotypeQualityPolymorphic = locusGenotype.genotypeQualityPolymorphic;
-
-        // maxGenotypeIndex != maxGenotypeIndexPolymorphic indicates we're in a boundary zone between variant and hom-ref call
-        if (locusGenotype.maxGenotypeIndex != locusGenotype.maxGenotypeIndexPolymorphic)
-        {
-            sampleInfo.gqx = 0;
-        }
-        else
-        {
-            sampleInfo.gqx = std::min(locusGenotype.genotypeQuality, locusGenotype.genotypeQualityPolymorphic);
-        }
-
-        // add info for PLs
-        const unsigned fullAlleleCount(alleleGroupSize + 1);
-        auto& samplePLs(sampleInfo.genotypePhredLoghood);
-        if (sampleInfo.getPloidy().isHaploid())
-        {
-            for (unsigned fullAlleleIndex(0); fullAlleleIndex < fullAlleleCount; ++fullAlleleIndex)
-            {
-                samplePLs.getGenotypeLikelihood(
-                    fullAlleleIndex) = locusGenotype.phredLoghood[AG_GENOTYPE::getGenotypeId(fullAlleleIndex)];
-            }
-        }
-        else if (sampleInfo.getPloidy().isDiploid())
-        {
-            for (unsigned fullAlleleIndex(0); fullAlleleIndex < fullAlleleCount; ++fullAlleleIndex)
-            {
-                for (unsigned fullAlleleIndex2(fullAlleleIndex); fullAlleleIndex2 < fullAlleleCount; ++fullAlleleIndex2)
-                {
-                    samplePLs.getGenotypeLikelihood(fullAlleleIndex,
-                                                    fullAlleleIndex2) = locusGenotype.phredLoghood[AG_GENOTYPE::getGenotypeId(
-                        fullAlleleIndex, fullAlleleIndex2)];
-                }
-            }
-        }
-        else
-        {
-            assert(false and "InvalidPloidy");
-        }
-
-        GermlineIndelSampleInfo indelSampleInfo;
-
-        // set sitePloidy:
-        const auto& range(ii->range());
-
-        auto& sitePloidy(indelSampleInfo.sitePloidy);
-        sitePloidy.resize(range.size());
-
-        auto updateSitePloidyForAlleleIndex = [&](const uint8_t alleleIndex) {
-            if (alleleIndex == 0) return;
-
-            const IndelKey& indelKey2(ii->getIndelAlleles()[alleleIndex - 1].indelKey);
-
-            pos_t leadingOffset(indelKey2.pos - range.begin_pos());
-            pos_t trailingOffset(indelKey2.right_pos() - range.begin_pos());
-            for (pos_t locusOffset(leadingOffset); locusOffset < trailingOffset; ++locusOffset)
-            {
-                sitePloidy[locusOffset] -= 1;
-            }
-        };
-
-        std::fill(sitePloidy.begin(), sitePloidy.end(), callerPloidy);
-        if (callerPloidy == 2)
-        {
-            uint8_t allele0Index, allele1Index;
-            VcfGenotypeUtil::getAlleleIndices(sampleInfo.maxGenotypeIndexPolymorphic, allele0Index, allele1Index);
-            updateSitePloidyForAlleleIndex(allele0Index);
-            updateSitePloidyForAlleleIndex(allele1Index);
-        }
-        else if (callerPloidy == 1)
-        {
-            uint8_t allele0Index;
-            VcfGenotypeUtil::getAlleleIndices(sampleInfo.maxGenotypeIndexPolymorphic, allele0Index);
-            updateSitePloidyForAlleleIndex(allele0Index);
-        }
-        else
-        {
-            assert(false);
-        }
-
-        // add misc sample info from legacy sample indel report:
-        {
-            static const bool is_tier2_pass(false);
-            static const bool is_use_alt_indel(false);
-
-            /// TODO STREL-125 legacy structure assumes single indel allele, get rid of this....
-            const IndelKey& indelKey(alleleGroup.key(0));
-            const IndelData& indelData(alleleGroup.data(0));
-            const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
-            getAlleleSampleReportInfo(opt, dopt, indelKey, indelSampleData, basecallBuffer,
-                                      is_tier2_pass, is_use_alt_indel, indelSampleInfo.reportInfo);
-        }
-
-        ii->setIndelSampleInfo(sampleIndex, indelSampleInfo);
-    }
-
-
-    gvcfer.add_indel(std::move(ii));
-
-    return true;
-}
-
-
-
 void
 addIndelAllelesToLocus(
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
@@ -881,6 +664,8 @@ getPriorIndex(
 /// -- also use lhoods to produce support counts (AD/ADR/ADR)
 /// -- other misc locus per-sample reporting requirements
 ///
+/// \param contrastGroup these are alleles meant to be grouped together into an "other" category, such as that reported
+///                      as the <*> allele in VCF
 static
 void
 updateIndelLocusWithSampleInfo(
@@ -888,6 +673,7 @@ updateIndelLocusWithSampleInfo(
     const starling_deriv_options& dopt,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     const unsigned topAlleleIndexInSample,
+    const OrthogonalVariantAlleleCandidateGroup& contrastGroup,
     const starling_pos_processor::sample_info& sif,
     const unsigned callerPloidy,
     const unsigned groupLocusPloidy,
@@ -905,7 +691,7 @@ updateIndelLocusWithSampleInfo(
     // score all possible genotypes from topVariantAlleleGroup for this sample
     std::vector<double> genotypeLogLhood;
     getVariantAlleleGroupGenotypeLhoodsForSample(
-        opt, dopt, sif.sample_opt, callerPloidy, sampleIndex, alleleGroup,
+        opt, dopt, sif.sample_opt, callerPloidy, sampleIndex, alleleGroup, contrastGroup,
         genotypeLogLhood, sampleInfo.supportCounts);
 
     // set phredLoghood:
@@ -916,10 +702,12 @@ updateIndelLocusWithSampleInfo(
         {
             if (genotypeLogLhood[gtIndex] > genotypeLogLhood[maxGtIndex]) maxGtIndex = gtIndex;
         }
+
+        auto& samplePL(sampleInfo.genotypePhredLoghood.getGenotypeLikelihood());
         for (unsigned gtIndex(1); gtIndex<gtCount; ++gtIndex)
         {
             // don't enforce maxQ at this point, b/c we're going to possibly select down from this list:
-            sampleInfo.genotypePhredLoghood[gtIndex] = ln_error_prob_to_qphred(genotypeLogLhood[gtIndex]-genotypeLogLhood[maxGtIndex]);
+            samplePL[gtIndex] = ln_error_prob_to_qphred(genotypeLogLhood[gtIndex]-genotypeLogLhood[maxGtIndex]);
         }
     }
 
@@ -1027,6 +815,7 @@ updateIndelLocusWithSampleInfo(
 }
 
 
+
 void
 starling_pos_processor::
 process_pos_indel_digt(const pos_t pos)
@@ -1125,7 +914,7 @@ process_pos_indel_digt(const pos_t pos)
         }
     }
 
-    // track top alt allele within each sample -- this is used as a tempoary crutch to transfer the previous prior
+    // track top alt allele within each sample -- this is used as a temporary crutch to transfer the previous prior
     // calcualation from single to multi-sample, and should be removed when a matured prior scheme is put in place
     std::vector<unsigned> topVariantAlleleIndexPerSample(sampleCount);
 
@@ -1149,6 +938,7 @@ process_pos_indel_digt(const pos_t pos)
 
     // overlapping allele groups are reported only once, when grouped together from the left-most position
     bool isReportableLocus(true);
+    bool isReportedLocus(false);
     {
         const unsigned alleleGroupSize(topVariantAlleleGroup.size());
         for (unsigned genotypeAlleleIndex(0); genotypeAlleleIndex < alleleGroupSize; ++genotypeAlleleIndex)
@@ -1166,6 +956,7 @@ process_pos_indel_digt(const pos_t pos)
     {
         // parameter inputs if/when we wrap this as a function:
         static const bool isForcedOutput(false);
+        static OrthogonalVariantAlleleCandidateGroup emptyGroup;
 
         // setup new indel locus:
         std::unique_ptr<GermlineIndelLocusInfo> locusPtr(new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount));
@@ -1178,26 +969,21 @@ process_pos_indel_digt(const pos_t pos)
         for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
             updateIndelLocusWithSampleInfo(
-                _opt, _dopt, topVariantAlleleGroup, topVariantAlleleIndexPerSample[sampleIndex], sample(sampleIndex),
+                _opt, _dopt, topVariantAlleleGroup, topVariantAlleleIndexPerSample[sampleIndex], emptyGroup, sample(sampleIndex),
                 callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex, *locusPtr, homRefLogProb);
         }
 
         // add sample-independent info:
         locusPtr->anyVariantAlleleQuality = ln_error_prob_to_qphred(homRefLogProb);
 
-
         if (isForcedOutput or (locusPtr->anyVariantAlleleQuality != 0))
         {
             // finished! send this locus down the pipe:
             _gvcfer->add_indel(std::move(locusPtr));
+
+            isReportedLocus = true;
         }
     }
-
-    //   ************* end of sample generalization progress
-    assert(sampleCount==1);
-    const unsigned sampleIndex(0);
-    sample_info& sif(sample(sampleIndex));
-
 
     // update data structure to track which forced alleles have already been output ahead of the current position
     {
@@ -1205,14 +991,14 @@ process_pos_indel_digt(const pos_t pos)
         const auto endIter(_forcedAllelesAlreadyOutput.lower_bound(IndelKey(pos)));
         _forcedAllelesAlreadyOutput.erase(_forcedAllelesAlreadyOutput.begin(),endIter);
 
-        if (isReportableLocus)
+        if (isReportedLocus)
         {
-            // look through current topVaraintAlleleGroup and note any forced output alleles already reported:
+            // look through current topVariantAlleleGroup and note any forced output alleles already reported:
             const unsigned alleleGroupSize(topVariantAlleleGroup.size());
-            for (unsigned genotypeAlleleIndex(0); genotypeAlleleIndex < alleleGroupSize; ++genotypeAlleleIndex)
+            for (unsigned alleleIndex(0); alleleIndex < alleleGroupSize; ++alleleIndex)
             {
-                const IndelKey& indelKey(topVariantAlleleGroup.key(genotypeAlleleIndex));
-                const IndelData& indelData(topVariantAlleleGroup.data(genotypeAlleleIndex));
+                const IndelKey& indelKey(topVariantAlleleGroup.key(alleleIndex));
+                const IndelData& indelData(topVariantAlleleGroup.data(alleleIndex));
 
                 if (indelData.isForcedOutput)
                 {
@@ -1239,33 +1025,39 @@ process_pos_indel_digt(const pos_t pos)
             }
         }
 
+        static const bool isForcedOutput(true);
+
         // enumerate support for remaining forced output alleles compared to orthogonal genotyped variant alleles above
         const unsigned forcedOutputAlleleCount(forcedOutputAlleleGroup.size());
         for (unsigned forcedOutputAlleleIndex(0);
              forcedOutputAlleleIndex < forcedOutputAlleleCount; ++forcedOutputAlleleIndex)
         {
-            AlleleGroupGenotype forcedAlleleLocusGenotype;
-            getGenotypeLhoodsForForcedOutputAllele(_opt, _dopt, sif.sample_opt, callerPloidy[sampleIndex], sampleIndex,
-                                                   topVariantAlleleGroup,
-                                                   forcedOutputAlleleGroup, forcedOutputAlleleIndex,
-                                                   forcedAlleleLocusGenotype, locusReadStats[sampleIndex]);
-
-            // The above function should be set to force <*> and REF alleles into just REF for now,
-            // so the most likely genotype should not contain the second allele
-            //
-            // This alleles compression should be relaxed once we have a way to express this in
-            // the output.
-            assert(not AG_GENOTYPE::isAllelePresent(forcedAlleleLocusGenotype.maxGenotypeIndex, 1));
+            // setup new indel locus:
+            std::unique_ptr<GermlineIndelLocusInfo> locusPtr(new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount));
 
             // fake an allele group with only the forced output allele so that we can output using
             // standard data structures
             OrthogonalVariantAlleleCandidateGroup fakeForcedOutputAlleleGroup;
             fakeForcedOutputAlleleGroup.addVariantAllele(forcedOutputAlleleGroup.alleles[forcedOutputAlleleIndex]);
-            static const bool isForcedOutput(true);
-            hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, sif.bc_buff, fakeForcedOutputAlleleGroup,
-                                               forcedAlleleLocusGenotype,
-                                               locusReadStats, callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex],
-                                               isForcedOutput, *_gvcfer);
+            const unsigned fakeTopVariantAlleleIndexPerSample(0);
+
+            // cycle through variant alleles and add them to locus (the locus interface requires that this is done first):
+            addIndelAllelesToLocus(fakeForcedOutputAlleleGroup, isForcedOutput, *locusPtr);
+
+            // add sample-dependent info:
+            double homRefLogProb(0);
+            for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+            {
+                updateIndelLocusWithSampleInfo(
+                    _opt, _dopt, fakeForcedOutputAlleleGroup, fakeTopVariantAlleleIndexPerSample, topVariantAlleleGroup, sample(sampleIndex),
+                    callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex, *locusPtr, homRefLogProb);
+            }
+
+            // add sample-independent info:
+            locusPtr->anyVariantAlleleQuality = ln_error_prob_to_qphred(homRefLogProb);
+
+            // finished! send this locus down the pipe:
+            _gvcfer->add_indel(std::move(locusPtr));
         }
     }
 }

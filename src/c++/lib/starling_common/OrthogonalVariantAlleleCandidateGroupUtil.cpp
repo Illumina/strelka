@@ -328,6 +328,7 @@ selectTopOrthogonalAllelesInAllSamples(
             const IndelKey& indelKey(topAlleleGroup.key(alleleIndex));
             indelIndex[indelKey] = alleleIndex;
         }
+        topVariantAlleleIndexPerSample.resize(sampleCount);
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
             const auto indelIter(indelIndex.find(topVariantAllelePerSample[sampleIndex]));

@@ -106,6 +106,8 @@ selectTopOrthogonalAllelesInSample(
 /// In each sample, select the top N alleles, N = ploidy. Aggregate these
 /// top alleles over all samples, and use an approximate global ranking based
 /// on the within-sample rankings
+///
+/// \param topVariantAlleleIndexPerSample[out] index of most likely alt per sample, where index references topAlleleGroup order, no initialization conditions required on input
 void
 selectTopOrthogonalAllelesInAllSamples(
     const unsigned sampleCount,
@@ -129,4 +131,4 @@ addAllelesAtOtherPositions(
     const pos_t largest_total_indel_ref_span_per_read,
     const IndelBuffer& indelBuffer,
     OrthogonalVariantAlleleCandidateGroup& alleleGroup,
-    std::vector<IndelKey>& topVariantAllelePerSample);
+    std::vector<unsigned>& topVariantAlleleIndexPerSample);

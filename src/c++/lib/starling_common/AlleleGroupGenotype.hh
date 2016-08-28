@@ -27,89 +27,6 @@
 #include "htsapi/vcf_util.hh"
 
 
-/// produce various genotype information based on
-/// - ploidy
-/// - no of haplotypes
-///
-struct GenotypeInfo
-{
-    GenotypeInfo(
-        const uint8_t ploidy,
-        const uint8_t alleleCount)
-        : _ploidy(ploidy), _alleleCount(alleleCount)
-    {
-        assert(ploidy>0);
-        assert(ploidy<=2);
-        assert(alleleCount>0);
-    }
-
-    /// return number of possible genotypes:
-    ///
-    // just hard-code in the cases we need for now...
-    uint8_t
-    genotypeCount() const
-    {
-        return VcfGenotypeUtil::getGenotypeCount(_ploidy, _alleleCount);
-    }
-
-#if 0
-    /// for a specific genotype number, the haplotype
-    /// for chomosomeIndex N, where N<ploidy
-    uint8_t
-    getHapIndexFromGenotypeIndex(
-        const uint8_t genotypeIndex,
-        const uint8_t chromIndex) const
-    {
-
-    }
-
-    uint8_t
-    getIndexFromAlleles(
-        const uint8_t a1,
-        const uint8_t a2) const
-    {
-        assert(a1<=a2);
-        return (a2*(a2+1)/2)+a1;
-    }
-#endif
-
-private:
-    uint8_t _ploidy;
-    uint8_t _alleleCount;
-};
-
-
-/// generalized allele genotype object which could apply to SNVs and indels
-///
-/// to make this a high performance object, we fix the array sizes
-/// for now
-///
-/// genotype ordering follows VCF convention
-///
-/// first allele is always the implicit reference allele
-///
-struct AlleleGroupGenotype
-{
-    static const uint8_t MAX_GENOTYPE_COUNT = 6;
-
-    bool
-    isNonReferenceGenotype() const
-    {
-        return (anyVariantAlleleQuality != 0);
-    }
-
-    unsigned maxGenotypeIndex;
-    unsigned maxGenotypeIndexPolymorphic;
-
-    double anyVariantAlleleQuality;
-    double genotypeQuality;
-    double genotypeQualityPolymorphic;
-    double posteriorProb[MAX_GENOTYPE_COUNT];
-    double phredLoghood[MAX_GENOTYPE_COUNT];
-};
-
-
-
 namespace AG_GENOTYPE
 {
     /// genotype enum generalized to handle-multi sample as follows:
@@ -123,160 +40,7 @@ namespace AG_GENOTYPE
         HET01, ///< most likely alt + any other alt
         SIZE
     };
-
-#if 0
-/// ploidy is infered from command-line arguments:
-inline
-index_t
-getGenotypeId(
-    const unsigned alleleId0)
-{
-    assert(alleleId0 <= 2);
-
-    if (alleleId0 == 0)
-    {
-        return HOMREF;
-    }
-    else if (alleleId0 == 1)
-    {
-        return HOM0;
-    }
-    else if (alleleId0 == 2)
-    {
-        return HOM1;
-    }
-    assert(false and "Shouldn't be here");
-    return HOMREF;
 }
-
-inline
-index_t
-getGenotypeId(
-    const unsigned alleleId0,
-    const unsigned alleleId1)
-{
-    assert(alleleId0 <= 2);
-    assert(alleleId1 <= 2);
-    assert(alleleId0 <= alleleId1);
-
-    if (alleleId0 == 0)
-    {
-        if (alleleId1 == 0)
-        {
-            return HOMREF;
-        }
-        else if (alleleId1 == 1)
-        {
-            return HET0;
-        }
-        else if (alleleId1 == 2)
-        {
-            return HET1;
-        }
-    }
-    else if (alleleId0 == 1)
-    {
-        if (alleleId1 == 1)
-        {
-            return HOM0;
-        }
-        else if (alleleId1 == 2)
-        {
-            return HET01;
-        }
-    }
-    else if (alleleId0 == 2)
-    {
-        if (alleleId1 == 2)
-        {
-            return HOM1;
-        }
-    }
-    assert(false and "Shouldn't be here");
-    return HOMREF;
-}
-
-inline
-bool
-isAllelePresent(
-    const unsigned genotypeId,
-    const unsigned alleleId)
-{
-    if (alleleId==0)
-    {
-        switch (static_cast<index_t>(genotypeId))
-        {
-        case HOM0:
-        case HET0:
-        case HET01:
-            return true;
-        default:
-            return false;
-        }
-    }
-    else if (alleleId == 1)
-    {
-        switch (static_cast<index_t>(genotypeId))
-        {
-        case HOM1:
-        case HET1:
-        case HET01:
-            return true;
-        default:
-            return false;
-        }
-    }
-    else
-    {
-        assert(false and "Unsupported alleleId");
-        return false;
-    }
-}
-
-/// return the heterozygous genotype composed of (alleleId, reference allele)
-inline
-index_t
-getAlleleHetId(
-    const unsigned alleleId)
-{
-    if (alleleId == 0)
-    {
-        return HET0;
-    }
-    else if (alleleId == 1)
-    {
-        return HET1;
-    }
-    else
-    {
-        assert(false and "Unsupported alleleId");
-        return SIZE;
-    }
-}
-
-/// return the homozygous genotype composed by alleleId
-inline
-index_t
-getAlleleHomId(
-    const unsigned alleleId)
-{
-    if (alleleId == 0)
-    {
-        return HOM0;
-    }
-    else if (alleleId == 1)
-    {
-        return HOM1;
-    }
-    else
-    {
-        assert(false and "Unsupported alleleId");
-        return SIZE;
-    }
-}
-#endif
-}
-
 
 
 struct ContextGenotypePriors
@@ -384,6 +148,8 @@ private:
 };
 
 
+/// contrast group contains alleles intended for an "other" category, such as reported by the <*> allele in
+/// vcf
 void
 getVariantAlleleGroupGenotypeLhoodsForSample(
     const starling_base_options& opt,
@@ -392,18 +158,6 @@ getVariantAlleleGroupGenotypeLhoodsForSample(
     const unsigned callerPloidy,
     const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    const OrthogonalVariantAlleleCandidateGroup& contrastGroup,
     std::vector<double>& genotypeLogLhood,
-    LocusSupportingReadStats& locusReadStats);
-
-void
-getGenotypeLhoodsForForcedOutputAllele(
-    const starling_base_options& opt,
-    const starling_base_deriv_options& dopt,
-    const starling_sample_options& sampleOptions,
-    const unsigned groupLocusPloidy,
-    const unsigned sampleId,
-    const OrthogonalVariantAlleleCandidateGroup& variantAlleleGroup,
-    const OrthogonalVariantAlleleCandidateGroup& forcedOutputAlleleGroup,
-    const unsigned forcedOutputAlleleIndex,
-    AlleleGroupGenotype& locusGenotype,
     LocusSupportingReadStats& locusReadStats);

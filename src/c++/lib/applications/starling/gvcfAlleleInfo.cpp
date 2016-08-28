@@ -112,17 +112,3 @@ operator<<(
     os << "AleleReportInfo: " << shi.indelReportInfo << "\n";
     return os;
 }
-
-
-
-std::ostream&
-operator<<(
-    std::ostream& os,
-    const GermlineDiploidIndelAlleleInfo& dic)
-{
-    os << static_cast<GermlineIndelAlleleInfo>(dic) << '\n';
-
-    dic._dindel.dump(os);
-
-    return os;
-}

@@ -128,52 +128,12 @@ struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
         }
     }
 
-#if 0
-    void
-    clear()
-    {
-        GermlineVariantAlleleInfo::clear();
-        cigar.clear();
-    }
-#endif
-
-    void
-    set_hap_cigar(
-        const unsigned lead=1,
-        const unsigned trail=0)
-    {
-        setIndelAlleleCigar(lead, trail, indelKey, cigar);
-    }
-
     const IndelKey indelKey;
     std::string breakpointInsertSeq;
     const AlleleReportInfo indelReportInfo;
-
-    /// TODO STREL-125 deprecated, remove this
-    ALIGNPATH::path_t cigar;
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineIndelAlleleInfo& shi);
-
-
-/// restrict to diploid calling models
-struct GermlineDiploidIndelAlleleInfo : public GermlineIndelAlleleInfo
-{
-    GermlineDiploidIndelAlleleInfo(
-        const IndelKey& initIndelKey,
-        const IndelData& indelData,
-        const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
-        : GermlineIndelAlleleInfo(initIndelKey, indelData)
-        , _dindel(dindel)
-    {}
-
-    /// TODO: this object is only here to trigger an auto copy ctor, seems like we can simplify now?
-    /// TODO: Make indel_overlapper create new call objects, then revert this to const
-    GermlineDiploidIndelSimpleGenotypeInfoCore _dindel;
-};
-
-std::ostream& operator<<(std::ostream& os,const GermlineDiploidIndelAlleleInfo& dic);
-
 
 
 namespace MODIFIED_SITE_GT

@@ -24,12 +24,8 @@
 
 #pragma once
 
-#include "blt_util/qscore.hh"
-
-#include "boost/utility.hpp"
-
-#include <iosfwd>
-#include <vector>
+#include <cassert>
+#include <cstdint>
 
 
 namespace STAR_DIINDEL
@@ -89,104 +85,4 @@ get_allele(
     return res[idx][chromidx];
 }
 
-
-#if 0
-// states are the number of copies of I,R,NR
-// I=called indel allele
-// R=reference (no indels which interfere with I)
-// NR=first indel allele interfering with I
-enum index_t
-{
-    I2,
-    I1R1,
-    I1NR1,
-    R2,
-    R1NR1,
-    NR2,
-    SIZE
-};
-
-inline
-const char*
-label(const unsigned idx)
-{
-    switch (idx)
-    {
-    case I2:
-        return "hom";
-    case I1R1:
-        return "het";
-    case I1NR1:
-        return "nonref_het";
-    case R2:
-        return "ref";
-    case R1NR1:
-    case NR2:
-        return "other";
-    default:
-        return "xxx";
-    }
 }
-#endif
-}
-
-
-// separate out core with automatic copy ctor:
-//
-struct GermlineDiploidIndelSimpleGenotypeInfoCore
-{
-    GermlineDiploidIndelSimpleGenotypeInfoCore()
-        : max_gt(0), max_gt_poly(0), phredLoghood(STAR_DIINDEL::SIZE, 0)
-    {
-        static const int qp(error_prob_to_qphred((1. - init_p())));
-        max_gt_qphred = qp;
-        max_gt_poly_qphred = qp;
-    }
-
-    // debug
-    void dump(std::ostream& os) const;
-
-    /// only applies to PLs so far:
-    static const int maxQ;
-
-protected:
-
-    static
-    double
-    init_p()
-    {
-        static const double p(1./static_cast<double>(STAR_DIINDEL::SIZE));
-        return p;
-    }
-
-public:
-
-    unsigned max_gt;
-    int max_gt_qphred;
-
-    unsigned max_gt_poly;
-    int max_gt_poly_qphred;
-
-    /// true if this allele was indentified as a hetalt 'early', ie. in the diplotype model.
-    bool is_diplotype_model_hetalt = false;
-
-    std::vector<unsigned> phredLoghood;
-};
-
-
-
-struct starling_diploid_indel : public GermlineDiploidIndelSimpleGenotypeInfoCore
-{
-    starling_diploid_indel()
-        : GermlineDiploidIndelSimpleGenotypeInfoCore()
-    {
-        static const double p(init_p());
-        for (unsigned i(0); i<STAR_DIINDEL::SIZE; ++i) pprob[i] = p;
-    }
-
-    void dump(std::ostream& os) const;
-
-    // members:
-    std::array<double,STAR_DIINDEL::SIZE> pprob;
-};
-

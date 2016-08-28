@@ -25,6 +25,7 @@
 #include "denovo_indel_caller.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
+#include "blt_util/qscore.hh"
 #include "starling_common/indel_util.hh"
 #include "starling_common/starling_diploid_indel.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
