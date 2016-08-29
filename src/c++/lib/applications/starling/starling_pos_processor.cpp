@@ -378,7 +378,7 @@ process_pos_snp_single_sample_impl(
     }
 #endif
 
-    const bool is_snp(nrc.is_snp || si->dgt.is_snp);
+    const bool is_snp(nrc.is_snp || si->dgt.is_snp());
 
     //    const bool is_nf_snp(is_snp && (! is_filter_snp));
     if (is_snp || is_forced)

@@ -645,6 +645,17 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
 };
 
 
+/// specify that variant is indel and a continuous frequency calling model
+struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
+{
+    explicit
+    GermlineContinuousIndelLocusInfo(
+        const unsigned sampleCount)
+        : GermlineIndelLocusInfo(sampleCount)
+    {}
+};
+
+
 
 /// represents an site call at the level of a full VCF record, containing possibly multiple alleles
 struct GermlineSiteLocusInfo : public LocusInfo
@@ -748,7 +759,7 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
 
     bool is_snp() const override
     {
-        return dgt.is_snp;
+        return dgt.is_snp();
     }
 
     const char*
@@ -906,15 +917,4 @@ struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
     std::vector<GermlineContinuousSiteAlleleInfo> altAlleles;
 private:
     double _min_het_vf;
-};
-
-
-/// specify that variant is indel and a continuous frequency calling model
-struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
-{
-    explicit
-    GermlineContinuousIndelLocusInfo(
-        const unsigned sampleCount)
-        : GermlineIndelLocusInfo(sampleCount)
-    {}
 };

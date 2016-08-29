@@ -59,7 +59,6 @@ struct diploid_genotype
 
     void reset()
     {
-        is_snp=false;
         ploidy=2;
         ref_gt=0;
         strand_bias=0;
@@ -79,23 +78,22 @@ struct diploid_genotype
         reset()
         {
             max_gt=0;
-            static const double p(1./static_cast<double>(pprob.size()));
-            static const int qp(error_prob_to_qphred((1.-p)));
-            snp_qphred=qp;
-            max_gt_qphred=qp;
-            std::fill(pprob.begin(),pprob.end(),p);
+            snp_qphred=0;
+            max_gt_qphred=0;
         }
 
         unsigned max_gt;
         int snp_qphred;
         int max_gt_qphred;
-        std::array<double,DIGT::SIZE> pprob; // note this is intentionally stored at higher float resolution than the rest of the computation
     };
 
     // only used for PLs
     static const int maxQ;
 
-    bool is_snp;
+    bool is_snp() const
+    {
+        return (genome.snp_qphred != 0);
+    }
 
     /// a cheap way to add haploid calling capability, better solution: either haploid calls have their own object
     /// or this object is generalized to any ploidy

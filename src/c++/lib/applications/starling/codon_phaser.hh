@@ -68,7 +68,7 @@ struct Codon_phaser : public variant_pipe_stage_base
     is_phasable_site(
         const std::unique_ptr<GermlineDiploidSiteLocusInfo>& si)
     {
-        return (si->dgt.is_snp && si->is_het());
+        return (si->dgt.is_snp() && si->is_het());
     }
 
     // clear all object data

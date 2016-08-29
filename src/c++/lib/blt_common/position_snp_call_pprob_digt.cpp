@@ -418,17 +418,19 @@ calculate_result_set(const blt_float_t* lhood,
                      const unsigned ref_gt,
                      result_set& rs)
 {
+    std::array<double,DIGT::SIZE> pprob; // note this is intentionally stored at higher float resolution than the rest of the computation
+
     // mult by prior distro to get unnormalized pprob:
     //
     for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
     {
-        rs.pprob[gt] = lhood[gt] + lnprior[gt];
+        pprob[gt] = lhood[gt] + lnprior[gt];
     }
 
-    normalize_ln_distro(rs.pprob.begin(),rs.pprob.end(),rs.max_gt);
+    normalize_ln_distro(pprob.begin(), pprob.end(),rs.max_gt);
 
-    rs.snp_qphred=error_prob_to_qphred(rs.pprob[ref_gt]);
-    rs.max_gt_qphred=error_prob_to_qphred(prob_comp(rs.pprob.begin(),rs.pprob.end(),rs.max_gt));
+    rs.snp_qphred=error_prob_to_qphred(pprob[ref_gt]);
+    rs.max_gt_qphred=error_prob_to_qphred(prob_comp(pprob.begin(),pprob.end(),rs.max_gt));
 }
 
 
@@ -516,11 +518,9 @@ position_snp_call_pprob_digt(
     // get polymorphic site results:
     calculate_result_set(lhood,lnprior_polymorphic(dgt.ref_gt,dgt.is_haploid()),dgt.ref_gt,dgt.poly);
 
-    dgt.is_snp=(dgt.genome.snp_qphred != 0);
-
     // compute strand-bias here:
     const bool is_compute_sb(true);
-    if (is_compute_sb && dgt.is_snp)
+    if (is_compute_sb && dgt.is_snp())
     {
         blt_float_t lhood_fwd[DIGT::SIZE];
         get_diploid_gt_lhood(opt,epi,is_het_bias,opt.bsnp_diploid_het_bias,lhood_fwd,true,true);

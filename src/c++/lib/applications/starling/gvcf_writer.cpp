@@ -395,7 +395,7 @@ write_site_record(
     os << '\t';
 
     // INFO:
-    if (si.dgt.is_snp)
+    if (si.dgt.is_snp())
     {
         os << "SNVSB=";
         {
@@ -460,11 +460,11 @@ write_site_record(
     os << '\t';
 
     const bool is_nonref_gt(si.allele.max_gt != si.dgt.ref_gt);
-    const bool is_print_pl(is_nonref_gt || si.dgt.is_snp);
+    const bool is_print_pl(is_nonref_gt || si.dgt.is_snp());
 
     //FORMAT
     os << "GT";
-    if (si.dgt.is_snp)
+    if (si.dgt.is_snp())
     {
         os << ":GQ";
     }
@@ -488,7 +488,7 @@ write_site_record(
         os << '\t';
 
         os << si.get_gt() << ':';
-        if (si.dgt.is_snp)
+        if (si.dgt.is_snp())
         {
             os << sampleInfo.genotypeQualityPolymorphic << ':';
         }

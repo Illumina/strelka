@@ -83,7 +83,7 @@ classify_site(
 {
     /// locus must have at least one variant
     /// TODO STREL-125 fix for multi-sample
-    const bool isVariantUsableInEVSModel(locus.dgt.is_snp);
+    const bool isVariantUsableInEVSModel(locus.dgt.is_snp());
 
     const unsigned sampleCount(locus.getSampleCount());
     if (isVariantUsableInEVSModel && _isReportEVSFeatures)
@@ -105,7 +105,7 @@ classify_site(
         {
             /// TODO STREL-125 fix for multi-sample:
             auto& sampleInfo(locus.getSample(sampleIndex));
-            if (not locus.dgt.is_snp) continue;
+            if (not locus.dgt.is_snp()) continue;
 
             static const bool isComputeDevelopmentFeatures(false);
             const bool isUniformDepthExpected(_dopt.is_max_depth());

@@ -106,9 +106,11 @@ getTestSink(
             new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->allele.is_covered = si->allele.is_used_covered = true;
         si->dgt.ref_gt = base_to_id(si->ref);
-
+        if (si->ref != read1Seq[i] || si->ref != read2Seq[i])
+        {
+            si->dgt.genome.snp_qphred = 60;
+        }
         si->allele.max_gt = DIGT::get_gt_with_alleles(base_to_id(read1Seq[i]), base_to_id(read2Seq[i]));
-        si->dgt.is_snp = si->ref != read1Seq[i] || si->ref != read2Seq[i];
 
         phaser.process(std::move(si));
     }
@@ -230,7 +232,10 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
         si->dgt.ref_gt = base_to_id(si->ref);
 
         si->allele.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
+        if (si->ref != r1[i] || si->ref != r2[i])
+        {
+            si->dgt.genome.snp_qphred = 60;
+        }
 
         phaser.process(std::move(si));
     }
