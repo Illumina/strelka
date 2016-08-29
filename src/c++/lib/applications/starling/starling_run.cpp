@@ -66,10 +66,14 @@ starling_run(
 
     HtsMergeStreamer streamData(bam_region.c_str());
 
-    std::vector<unsigned> registrationIndices(opt.alignFileOpt.alignmentFilename.size(),0);
-    const auto allHeaders(registerAlignments(opt, opt.alignFileOpt, registrationIndices, streamData));
+    const unsigned sampleCount(opt.alignFileOpt.alignmentFilename.size());
 
-    const unsigned sampleCount(allHeaders.size());
+    std::vector<unsigned> registrationIndices;
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+    {
+        registrationIndices.push_back(sampleIndex);
+    }
+    const auto allHeaders(registerAlignments(opt, opt.alignFileOpt, registrationIndices, streamData));
     starling_streams client_io(opt, pinfo, allHeaders, sampleCount);
 
     starling_pos_processor sppr(opt,dopt,ref,client_io);
