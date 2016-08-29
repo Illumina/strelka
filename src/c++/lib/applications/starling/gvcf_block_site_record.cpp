@@ -90,7 +90,7 @@ testCanSiteJoinSampleBlockShared(
     // pos must be +1 from end of record:
     if ((pos+count) != si.pos) return false;
 
-    const LocusSampleInfo& sampleInfo(getSample(sampleIndex));
+    const LocusSampleInfo& sampleInfo(getSample(0));
     const LocusSampleInfo& inputSampleInfo(si.getSample(sampleIndex));
 
     // filters must match:
@@ -146,7 +146,7 @@ testCanSiteJoinSampleBlock(
 {
     if (count==0) return true;
 
-    if(not testCanSiteJoinSampleBlockShared(si,sampleIndex)) return false;
+    if (not testCanSiteJoinSampleBlockShared(si,sampleIndex)) return false;
 
     const LocusSampleInfo& inputSampleInfo(si.getSample(sampleIndex));
 
@@ -179,7 +179,7 @@ joinSiteToSampleBlock(
     const GermlineDiploidSiteLocusInfo& si,
     const unsigned sampleIndex)
 {
-    LocusSampleInfo& sampleInfo(getSample(sampleIndex));
+    LocusSampleInfo& sampleInfo(getSample(0));
     const LocusSampleInfo& inputSampleInfo(si.getSample(sampleIndex));
 
     if (count == 0)
@@ -254,7 +254,7 @@ joinSiteToSampleBlock(
     const GermlineContinuousSiteLocusInfo& si,
     const unsigned sampleIndex)
 {
-    LocusSampleInfo& sampleInfo(getSample(sampleIndex));
+    LocusSampleInfo& sampleInfo(getSample(0));
     const LocusSampleInfo& inputSampleInfo(si.getSample(sampleIndex));
 
     if (count == 0)

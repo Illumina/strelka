@@ -63,7 +63,7 @@ gvcf_writer(
     , _chrom(opt.bam_seq_name.c_str())
     , _dopt(dopt.gvcf)
     , _head_pos(dopt.report_range.begin_pos)
-    , _empty_site(_dopt, 1)
+    , _empty_site(_dopt, sampleNames.size())
     , _gvcf_comp(opt.gvcf,nocompress_regions)
     , _CM(cm)
 {
@@ -123,7 +123,8 @@ void gvcf_writer::filter_site_by_last_indel_overlap(GermlineDiploidSiteLocusInfo
     }
 }
 
-// fill in missing sites
+
+
 void
 gvcf_writer::
 skip_to_pos(const pos_t target_pos)

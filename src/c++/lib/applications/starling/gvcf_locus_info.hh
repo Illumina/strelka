@@ -418,12 +418,14 @@ struct LocusInfo : public PolymorphicObject
     LocusSampleInfo&
     getSample(const unsigned sampleIndex)
     {
+        //assert(sampleIndex<_sampleInfo.size());
         return _sampleInfo[sampleIndex];
     }
 
     const LocusSampleInfo&
     getSample(const unsigned sampleIndex) const
     {
+        //assert(sampleIndex<_sampleInfo.size());
         return _sampleInfo[sampleIndex];
     }
 
@@ -715,6 +717,8 @@ private:
     std::array<unsigned,N_BASE> fwd_counts;
     std::array<unsigned,N_BASE> rev_counts;
 };
+
+std::ostream& operator<<(std::ostream& os,const GermlineSiteLocusInfo& si);
 
 
 /// specify that calling model is diploid

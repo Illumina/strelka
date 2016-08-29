@@ -150,6 +150,28 @@ operator<<(
 
 
 
+std::ostream&
+operator<<(std::ostream& os,
+           const GermlineSiteLocusInfo& si)
+{
+    os << "GermlineSiteLocusInfo ";
+    os << static_cast<const LocusInfo&>(si);
+    return os;
+}
+
+
+
+std::ostream&
+operator<<(std::ostream& os,
+           const GermlineDiploidSiteLocusInfo& si)
+{
+    os << "GermlineDiploidSiteLocusInfo ";
+    os << static_cast<const GermlineSiteLocusInfo&>(si);
+    return os;
+}
+
+
+
 void
 GermlineDiploidSiteLocusInfo::
 computeEmpiricalScoringFeatures(
@@ -326,16 +348,6 @@ computeEmpiricalScoringFeatures(
                                        (r1 * filteredLocusDepthFactor));
         }
     }
-}
-
-
-
-std::ostream&
-operator<<(std::ostream& os,
-           const GermlineDiploidSiteLocusInfo& si)
-{
-    os << "pos: " << (si.pos+1) << " " << si.get_gt();
-    return os;
 }
 
 
