@@ -155,6 +155,8 @@ skip_to_pos(const pos_t target_pos)
 
 void gvcf_writer::process(std::unique_ptr<GermlineSiteLocusInfo> si)
 {
+    assert(si->getSampleCount() == getSampleCount());
+    
     skip_to_pos(si->pos);
 
     if (dynamic_cast<GermlineDiploidSiteLocusInfo*>(si.get()) != nullptr)

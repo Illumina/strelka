@@ -293,10 +293,12 @@ selectTopOrthogonalAllelesInAllSamples(
 
             if (alleleIndex == 0)
             {
-                topVariantAllelePerSample[sampleIndex] = indelKey;
+                topVariantAllelePerSample.push_back(indelKey);
             }
         }
     }
+
+    assert(topVariantAllelePerSample.size() == sampleCount);
 
     // approximately rank topVariantAlleleGroup alleles based on sample rankings
     if (sampleCount > 1)

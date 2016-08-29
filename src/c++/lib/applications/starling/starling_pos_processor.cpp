@@ -250,7 +250,7 @@ process_pos_snp_single_sample_continuous(
         if (not si->altAlleles.empty())
         {
             isSiteAddedForPosition = true;
-            _gvcfer->add_site(std::move(si));
+//            _gvcfer->add_site(std::move(si));
         }
     };
 
@@ -464,7 +464,7 @@ process_pos_snp_single_sample_impl(
     }
 
     //Add site to gvcf
-    _gvcfer->add_site(std::move(si));
+//    _gvcfer->add_site(std::move(si));
 }
 
 
@@ -704,7 +704,8 @@ updateIndelLocusWithSampleInfo(
         }
 
         auto& samplePL(sampleInfo.genotypePhredLoghood.getGenotypeLikelihood());
-        for (unsigned gtIndex(1); gtIndex<gtCount; ++gtIndex)
+        samplePL.resize(gtCount);
+        for (unsigned gtIndex(0); gtIndex<gtCount; ++gtIndex)
         {
             // don't enforce maxQ at this point, b/c we're going to possibly select down from this list:
             samplePL[gtIndex] = ln_error_prob_to_qphred(genotypeLogLhood[gtIndex]-genotypeLogLhood[maxGtIndex]);
@@ -725,7 +726,7 @@ updateIndelLocusWithSampleInfo(
     const uint8_t fullAlleleCount(nonRefAlleleCount+1);
 
     // get polymorphic posterior
-    std::vector<double> genotypePosterior;
+    std::vector<double> genotypePosterior(genotypeLogLhood.size());
     if (callerPloidy == 1)
     {
         static const bool isHaploid(true);
