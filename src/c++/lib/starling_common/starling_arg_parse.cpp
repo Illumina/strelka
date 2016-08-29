@@ -166,7 +166,7 @@ legacy_starling_arg_parse(
         }
         else if (ad.argstr[i]=="-realigned-read-file")
         {
-            set_filename_arg(i,ad,is_realigned_read_file,opt.realigned_read_filename);
+            set_filename_arg(i,ad,is_realigned_read_file,opt.realignedReadFilenamePrefix);
         }
         else if (ad.argstr[i]=="-realign-submapped-reads")
         {

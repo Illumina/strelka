@@ -65,8 +65,8 @@ snoise_run(
     assert(not allHeaders.empty());
     const bam_hdr_t& referenceHeader(allHeaders.front());
 
-    SampleSetSummary ssi;
-    snoise_streams streams(opt,pinfo,referenceHeader,ssi);
+    const unsigned sampleCount(1);
+    snoise_streams streams(opt, pinfo, referenceHeader, sampleCount);
 
     snoise_pos_processor sppr(opt,dopt,ref,streams);
     starling_read_counts brc;

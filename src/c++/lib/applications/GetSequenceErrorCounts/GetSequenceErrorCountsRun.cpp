@@ -118,8 +118,7 @@ getSequenceErrorCountsRun(
     assert(not allHeaders.empty());
     const bam_hdr_t& referenceHeader(allHeaders.front());
 
-    SampleSetSummary ssi;
-    SequenceErrorCountsStreams client_io(opt,pinfo,referenceHeader,ssi);
+    SequenceErrorCountsStreams client_io(opt,pinfo,referenceHeader);
 
     SequenceErrorCountsPosProcessor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;

@@ -84,7 +84,7 @@ pedicure_streams(
     const prog_info& pinfo,
     const bam_hdr_t& header,
     const PedicureSampleSetSummary& ssi)
-    : base_t(opt,pinfo,ssi)
+    : base_t(opt,pinfo,ssi.size())
 {
     assert(! opt.is_realigned_read_file());
 

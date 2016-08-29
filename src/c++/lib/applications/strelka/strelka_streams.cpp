@@ -91,18 +91,18 @@ strelka_streams(
     const prog_info& pinfo,
     const bam_hdr_t& header,
     const StrelkaSampleSetSummary& ssi)
-    : base_t(opt,pinfo,ssi)
+    : base_t(opt,pinfo,ssi.size())
 {
     {
         using namespace STRELKA_SAMPLE_TYPE;
         if (opt.is_realigned_read_file())
         {
-            _realign_bam_ptr[NORMAL].reset(initialize_realign_bam(opt.realigned_read_filename,header));
+            _realign_bam_ptr[NORMAL] = std::move(initialize_realign_bam(opt.realignedReadFilenamePrefix,header));
         }
 
         if (opt.is_tumor_realigned_read())
         {
-            _realign_bam_ptr[TUMOR].reset(initialize_realign_bam(opt.tumor_realigned_read_filename,header));
+            _realign_bam_ptr[TUMOR] = std::move(initialize_realign_bam(opt.tumor_realigned_read_filename,header));
         }
     }
 

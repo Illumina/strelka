@@ -34,8 +34,7 @@ struct SequenceErrorCountsStreams : public starling_streams_base
     SequenceErrorCountsStreams(
         const SequenceErrorCountsOptions& client_opt,
         const prog_info& pinfo,
-        const bam_hdr_t& bam_header,
-        const SampleSetSummary& ssi);
+        const bam_hdr_t& bam_header);
 
     const std::string&
     getSampleName() const

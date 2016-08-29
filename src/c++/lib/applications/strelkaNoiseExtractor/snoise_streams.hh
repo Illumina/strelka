@@ -35,7 +35,7 @@ struct snoise_streams : public starling_streams_base
         const snoise_options& client_opt,
         const prog_info& pinfo,
         const bam_hdr_t& bam_header,
-        const SampleSetSummary& ssi);
+        const unsigned sampleCount);
 
     std::ostream*
     snoise_osptr() const

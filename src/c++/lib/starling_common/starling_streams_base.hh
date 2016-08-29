@@ -30,7 +30,6 @@
 #include "starling_common/starling_types.hh"
 
 #include <vector>
-#include "SampleSetSummary.hh"
 
 
 struct starling_streams_base : public blt_streams
@@ -40,7 +39,7 @@ struct starling_streams_base : public blt_streams
     starling_streams_base(
         const starling_base_options& opt,
         const prog_info& pinfo,
-        const SampleSetSummary& si);
+        const unsigned sampleCount);
 
     bam_dumper*
     realign_bam_ptr(const unsigned sampleIndex) const
@@ -54,8 +53,14 @@ struct starling_streams_base : public blt_streams
         return _candidate_indel_osptr.get();
     }
 
+    unsigned
+    getSampleCount() const
+    {
+        return _sampleCount;
+    }
+
 protected:
-    bam_dumper*
+    std::unique_ptr<bam_dumper>
     initialize_realign_bam(
         const std::string& filename,
         const bam_hdr_t& header);
@@ -70,6 +75,5 @@ protected:
     std::vector<std::unique_ptr<bam_dumper>> _realign_bam_ptr;
 private:
     std::unique_ptr<std::ostream> _candidate_indel_osptr;
-protected:
-    unsigned _n_samples;
+    unsigned _sampleCount;
 };

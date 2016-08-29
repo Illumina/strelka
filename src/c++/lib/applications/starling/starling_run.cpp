@@ -69,8 +69,8 @@ starling_run(
     std::vector<unsigned> registrationIndices(opt.alignFileOpt.alignmentFilename.size(),0);
     const auto allHeaders(registerAlignments(opt, opt.alignFileOpt, registrationIndices, streamData));
 
-    SampleSetSummary ssi;
-    starling_streams client_io(opt, pinfo, allHeaders, ssi);
+    const unsigned sampleCount(allHeaders.size());
+    starling_streams client_io(opt, pinfo, allHeaders, sampleCount);
 
     starling_pos_processor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;

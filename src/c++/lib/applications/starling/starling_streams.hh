@@ -32,10 +32,10 @@ struct starling_streams : public starling_streams_base
     typedef starling_streams_base base_t;
 
     starling_streams(
-        const starling_options& client_opt,
+        const starling_options& opt,
         const prog_info& pinfo,
         const std::vector<std::reference_wrapper<const bam_hdr_t>>& bamHeaders,
-        const SampleSetSummary& ssi);
+        const unsigned sampleCount);
 
     std::ostream*
     gvcf_osptr() const

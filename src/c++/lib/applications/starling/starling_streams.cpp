@@ -67,10 +67,9 @@ starling_streams(
     const starling_options& opt,
     const prog_info& pinfo,
     const std::vector<std::reference_wrapper<const bam_hdr_t>>& bamHeaders,
-    const SampleSetSummary& ssi)
-    : base_t(opt,pinfo,ssi)
+    const unsigned sampleCount)
+    : base_t(opt, pinfo, sampleCount)
 {
-    assert(_n_samples == 1);
     _gvcf_osptr = nullptr;
     for (const bam_hdr_t& bamHeader : bamHeaders)
     {
@@ -87,7 +86,12 @@ starling_streams(
 
     if (opt.is_realigned_read_file())
     {
-        /// TODO STREL-125 extend realigned output to multi-bam files
-        _realign_bam_ptr[0].reset(initialize_realign_bam(opt.realigned_read_filename, referenceHeader));
+        const unsigned inputAlignFileCount(bamHeaders.size());
+        for (unsigned alignFileIndex(0); alignFileIndex < inputAlignFileCount; alignFileIndex++)
+        {
+            std::ostringstream rfile;
+            rfile << opt.realignedReadFilenamePrefix << ".S" << alignFileIndex << ".bam";
+            _realign_bam_ptr[alignFileIndex] = std::move(initialize_realign_bam(rfile.str(), bamHeaders[alignFileIndex]));
+        }
     }
 }

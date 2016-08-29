@@ -21,7 +21,6 @@
 /// \author Chris Saunders
 ///
 
-#include "htsapi/bam_dumper.hh"
 #include "starling_common/starling_streams_base.hh"
 
 #include <cassert>
@@ -31,7 +30,7 @@
 
 
 
-bam_dumper*
+std::unique_ptr<bam_dumper>
 starling_streams_base::
 initialize_realign_bam(
     const std::string& filename,
@@ -42,7 +41,7 @@ initialize_realign_bam(
     //fp->header = bam_header_dup((const bam_header_t*)aux);
     //fos << "@PG\tID:" << pinfo.name() << "\tVN:" << pinfo.version() << "\tCL:" << cmdline << "\n";
 
-    return new bam_dumper(filename.c_str(),header);
+    return std::unique_ptr<bam_dumper>(new bam_dumper(filename.c_str(),header));
 }
 
 
@@ -75,12 +74,12 @@ starling_streams_base::
 starling_streams_base(
     const starling_base_options& opt,
     const prog_info& pinfo,
-    const SampleSetSummary& si)
+    const unsigned sampleCount)
     : base_t(opt,pinfo),
-      _realign_bam_ptr(si.size()),
-      _n_samples(si.size())
+      _realign_bam_ptr(sampleCount),
+      _sampleCount(sampleCount)
 {
-    assert(_n_samples>0);
+    assert(_sampleCount > 0);
 
     if (opt.is_write_candidate_indels())
     {
