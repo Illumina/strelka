@@ -508,8 +508,9 @@ process_pos_error_counts(
             IndelErrorContextObservation obs;
 
             const INDEL_SIGNAL_TYPE::index_t sigIndex(getIndelType(indelReportInfo));
-            obs.signalCounts[sigIndex] = support[nonrefAlleleIndex];
-            obs.refCount = support[nonrefAlleleCount];
+            obs.signalCounts[sigIndex] = support[nonrefAlleleIndex+1];
+            static const unsigned refAlleleIndex(0);
+            obs.refCount = support[refAlleleIndex];
             obs.assignKnownStatus(overlappingRecords);
 
             // an indel candidate can have 0 q30 indel reads when it is only supported by
@@ -517,7 +518,7 @@ process_pos_error_counts(
             // see lib/starling_common/starling_read_util.cpp::get_valid_alignment_range)
             // in this case, we're not going to report the incidence as noise, since it's
             // not a read we would consider in variant calling
-            if (support[nonrefAlleleIndex] > 0 && _opt.is_write_observations())
+            if (support[nonrefAlleleIndex+1] > 0 && _opt.is_write_observations())
             {
                 std::ostream& obs_os(*_streams.observation_bed_osptr());
                 obs_os << _opt.bam_seq_name << "\t";

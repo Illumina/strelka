@@ -56,7 +56,7 @@ getAlleleGroupSupportingReadIds(
 /// enumerate (log of) read likelihood P(read | allele) for read 'readId' over all ref + all alt alleles in 'alleleGroup'
 ///
 /// \param alleleLogLhood[out] log likelihood for each allele, set to dimension "alleleGroup.alleles.size() + 1",
-///                   with an extra reference allele state represented at the end of the array
+///                   with an extra reference allele state represented at the begining of the array
 ///
 void
 getAlleleLogLhoodFromRead(

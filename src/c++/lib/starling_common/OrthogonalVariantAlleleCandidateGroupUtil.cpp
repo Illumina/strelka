@@ -118,7 +118,7 @@ getAlleleLogLhoodFromRead(
 {
     const unsigned nonrefAlleleCount(alleleGroup.size());
     const unsigned fullAlleleCount(nonrefAlleleCount+1);
-    const unsigned refAlleleIndex(nonrefAlleleCount);
+    const unsigned refAlleleIndex(0);
 
     alleleLogLhood.resize(fullAlleleCount);
 
@@ -144,7 +144,7 @@ getAlleleLogLhoodFromRead(
         {
             alleleLogLhood[refAlleleIndex] = std::max(alleleLogLhood[refAlleleIndex],static_cast<double>(path_lnp.ref));
         }
-        alleleLogLhood[nonrefAlleleIndex] = path_lnp.indel;
+        alleleLogLhood[nonrefAlleleIndex+1] = path_lnp.indel;
 
         isZeroAlleleCoverage=false;
     }
@@ -161,7 +161,7 @@ getAlleleLogLhoodFromRead(
             const auto iditer(isd.read_path_lnp.find(readId));
             if (iditer != isd.read_path_lnp.end()) continue;
 
-            alleleLogLhood[nonrefAlleleIndex] = alleleLogLhood[refAlleleIndex];
+            alleleLogLhood[nonrefAlleleIndex+1] = alleleLogLhood[refAlleleIndex];
         }
     }
 }
@@ -197,7 +197,7 @@ rankOrthogonalAllelesInSample(
 
     // count of all haplotypes including reference
     const unsigned fullAlleleCount(nonrefAlleleCount+1);
-    const unsigned refAlleleIndex(nonrefAlleleCount);
+    static const unsigned refAlleleIndex(0);
 
     std::vector<double> support(fullAlleleCount,0.);
     for (const auto readId : readIds)
@@ -222,7 +222,8 @@ rankOrthogonalAllelesInSample(
             continue;
         }
         if (not isReferenceRankFound) referenceRank++;
-        rankedAlleleGroup.addVariantAllele(alleleGroup.iter(fullAlleleIndex));
+        assert(fullAlleleIndex>0);
+        rankedAlleleGroup.addVariantAllele(alleleGroup.iter(fullAlleleIndex-1));
     }
 }
 
