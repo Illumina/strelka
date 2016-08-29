@@ -940,7 +940,7 @@ write_indel_record(
         os << '\t';
 
         //FORMAT
-        os << "GT:GQ:GQX:DPI:AD:ADF:ADR:VF";
+        os << "GT:GQ:GQX:DPI:AD:ADF:ADR:FT:VF";
 
         //SAMPLE
         const unsigned sampleCount(ii.getSampleCount());
@@ -973,6 +973,10 @@ write_indel_record(
             // ADR
             os << ':' << sampleReportInfo.n_confident_ref_reads_rev
                << ',' << sampleReportInfo.n_confident_indel_reads_rev;
+
+            // FT
+            os << ':';
+            sampleInfo.filters.write(os);
 
             // VF
             {
