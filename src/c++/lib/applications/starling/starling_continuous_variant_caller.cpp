@@ -154,21 +154,21 @@ add_indel_call(
    const starling_base_options& opt,
    const IndelKey& indelKey,
    const IndelData& indelData,
-   GermlineContinuousIndelLocusInfo& locusInfo)
+   GermlineContinuousIndelLocusInfo& locus)
 {
     // continuous caller reports only one alt per vcf record (locus)
-    assert(locusInfo.getAltAlleleCount() == 0);
+    assert(locus.getAltAlleleCount() == 0);
 
     // first test to see if this indel qualifies as a variant in any sample
     //
-    const unsigned sampleCount(locusInfo.getSampleCount());
+    const unsigned sampleCount(locus.getSampleCount());
 
     if (not indelData.isForcedOutput)
     {
         bool isIncludeIndel(false);
         for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
-            const auto& sampleIndelInfo(locusInfo.getIndelSample(sampleIndex));
+            const auto& sampleIndelInfo(locus.getIndelSample(sampleIndex));
             const double alleleFrequency(sampleIndelInfo.alleleFrequency());
             if (alleleFrequency > opt.min_het_vf)
             {
@@ -182,14 +182,14 @@ add_indel_call(
     // indel qualifies!
     //
     // Insert indel and compute GQ for each sample
-    locusInfo.addAltIndelAllele(indelKey, indelData);
+    locus.addAltIndelAllele(indelKey, indelData);
 
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        const auto& sampleIndelInfo(locusInfo.getIndelSample(sampleIndex));
+        const auto& sampleIndelInfo(locus.getIndelSample(sampleIndex));
         const auto& sampleReportInfo(sampleIndelInfo.reportInfo);
 
-        LocusSampleInfo& sampleInfo(locusInfo.getSample(sampleIndex));
+        LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
 
         sampleInfo.gqx = sampleInfo.genotypeQualityPolymorphic = poisson_qscore(sampleReportInfo.n_confident_indel_reads,
                                                     sampleReportInfo.total_confident_reads(),
@@ -206,11 +206,11 @@ add_indel_call(
 
     // get the qual score:
     //
-    locusInfo.anyVariantAlleleQuality = 0;
+    locus.anyVariantAlleleQuality = 0;
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
-        auto& sampleInfo(locusInfo.getSample(sampleIndex));
-        locusInfo.anyVariantAlleleQuality = std::max(locusInfo.anyVariantAlleleQuality, sampleInfo.genotypeQualityPolymorphic);
+        auto& sampleInfo(locus.getSample(sampleIndex));
+        locus.anyVariantAlleleQuality = std::max(locus.anyVariantAlleleQuality, sampleInfo.genotypeQualityPolymorphic);
     }
 }
 

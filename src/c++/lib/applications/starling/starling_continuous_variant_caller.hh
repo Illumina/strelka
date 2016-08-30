@@ -43,7 +43,7 @@ struct starling_continuous_variant_caller
        const starling_base_options& opt,
        const IndelKey& indelKey,
        const IndelData& indelData,
-       GermlineContinuousIndelLocusInfo& locusInfo);
+       GermlineContinuousIndelLocusInfo& locus);
 
     static double strand_bias(unsigned fwdAlt, unsigned revAlt, unsigned fwdOther, unsigned revOther, double noise);
 };

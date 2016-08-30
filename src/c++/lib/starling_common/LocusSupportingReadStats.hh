@@ -137,7 +137,6 @@ struct LocusSupportingReadStats
     {
         fwdCounts.setAltCount(altAlleleCount);
         revCounts.setAltCount(altAlleleCount);
-        tier1Depth = 0;
     }
 
     unsigned
@@ -158,19 +157,21 @@ struct LocusSupportingReadStats
         return (isFwdStrand ? fwdCounts : revCounts);
     }
 
+    unsigned
+    totalConfidentCounts() const
+    {
+        return getCounts(true).totalConfidentCounts() + getCounts(false).totalConfidentCounts();
+    }
+
     void
     clear()
     {
         fwdCounts.clear();
         revCounts.clear();
-        tier1Depth = 0;
     }
 
     SupportingReadCountGroup fwdCounts;
     SupportingReadCountGroup revCounts;
-
-    /// the depth of the pileup preceding the alt alleles;
-    unsigned tier1Depth = 0;
 };
 
 

@@ -263,7 +263,7 @@ default_classify_indel(
         }
     }
 
-    if (this->_dopt.is_max_depth())
+    if (_dopt.is_max_depth())
     {
         unsigned allSampleLocusDepth(0);
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
@@ -272,7 +272,7 @@ default_classify_indel(
             allSampleLocusDepth += indelSampleInfo.reportInfo.mapqTracker.count;
         }
 
-        if (allSampleLocusDepth > this->_dopt.max_depth)
+        if (allSampleLocusDepth > _dopt.max_depth)
             locus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
 

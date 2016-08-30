@@ -51,7 +51,5 @@ operator<<(
         os << rev.confidentAlleleCount(alleleIndex) << ",";
     }
     os << rev.nonConfidentCount << "\n";
-
-    os << "depth: " << lsrs.tier1Depth << "\n";
     return os;
 }
