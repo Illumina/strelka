@@ -367,9 +367,6 @@ computeEmpiricalScoringFeatures(
     const auto& sampleInfo(locus.getSample(sampleIndex));
     const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
 
-    ///TODO STREL-125 generalize to multiple alts:
-    const auto& firstAltAllele(locus.getIndelAlleles().front());
-
     const auto& sampleReportInfo(indelSampleInfo.reportInfo);
 
     // filtered locus depth/total locus depth/confidentDepth for this sample:
@@ -393,20 +390,40 @@ computeEmpiricalScoringFeatures(
     const double locusDepthFactor(safeFrac(1,locusDepth));
     const double confidentDepthFactor(safeFrac(1,confidentDepth));
 
-    const bool isDiploid(sampleInfo.getPloidy().isDiploid());
+    const auto& ploidy(sampleInfo.getPloidy());
     uint8_t allele0Index(0);
     uint8_t allele1Index(0);
+    unsigned primaryAltAlleleIndex(0);
 
-    if (isDiploid)
+    if (ploidy.isDiploid())
     {
         VcfGenotypeUtil::getAlleleIndices(sampleInfo.max_gt(), allele0Index, allele1Index);
+        if (allele0Index>0)
+        {
+            primaryAltAlleleIndex = (allele0Index - 1);
+        }
+        else if (allele1Index>0)
+        {
+            primaryAltAlleleIndex = (allele1Index - 1);
+        }
     }
+    else if (ploidy.isHaploid())
+    {
+        VcfGenotypeUtil::getAlleleIndices(sampleInfo.max_gt(), allele0Index);
+        if (allele0Index>0)
+        {
+            primaryAltAlleleIndex = allele0Index-1;
+        }
+    }
+
+    ///TODO STREL-125 generalize to multiple alts:
+    const auto& primaryAltAllele(locus.getIndelAlleles()[primaryAltAlleleIndex]);
 
     // cdf of binomial prob of seeing no more than the number of 'allele A' reads out of A reads + B reads, given p=0.5
     // cdf of binomial prob of seeing no more than the number of 'allele B' reads out of A reads + B reads, given p=0.5
     double allelebiaslower = 0;
     double allelebiasupper = 0;
-    if (isDiploid)
+    if (ploidy.isDiploid())
     {
         const auto& fwdCounts(sampleInfo.supportCounts.getCounts(true));
         const auto& revCounts(sampleInfo.supportCounts.getCounts(false));
@@ -424,9 +441,9 @@ computeEmpiricalScoringFeatures(
     {
         features.set(RNA_INDEL_SCORING_FEATURES::QUAL, (locus.anyVariantAlleleQuality * allSampleChromDepthFactor));
         features.set(RNA_INDEL_SCORING_FEATURES::F_GQX, (sampleInfo.gqx * allSampleChromDepthFactor));
-        features.set(RNA_INDEL_SCORING_FEATURES::REFREP1, (firstAltAllele.indelReportInfo.ref_repeat_count));
-        features.set(RNA_INDEL_SCORING_FEATURES::IDREP1, (firstAltAllele.indelReportInfo.indel_repeat_count));
-        features.set(RNA_INDEL_SCORING_FEATURES::RULEN1, (firstAltAllele.indelReportInfo.repeat_unit.length()));
+        features.set(RNA_INDEL_SCORING_FEATURES::REFREP1, (primaryAltAllele.indelReportInfo.ref_repeat_count));
+        features.set(RNA_INDEL_SCORING_FEATURES::IDREP1, (primaryAltAllele.indelReportInfo.indel_repeat_count));
+        features.set(RNA_INDEL_SCORING_FEATURES::RULEN1, (primaryAltAllele.indelReportInfo.repeat_unit.length()));
         features.set(RNA_INDEL_SCORING_FEATURES::AD0,
                      (sampleReportInfo.n_confident_ref_reads * allSampleChromDepthFactor));
         features.set(RNA_INDEL_SCORING_FEATURES::AD1,
@@ -483,7 +500,7 @@ computeEmpiricalScoringFeatures(
         {
             // HET
             double genotype(0);
-            if (isDiploid)
+            if (ploidy.isDiploid())
             {
                 // HOM
                 if (allele0Index == allele1Index)
@@ -499,8 +516,8 @@ computeEmpiricalScoringFeatures(
             features.set(GERMLINE_INDEL_SCORING_FEATURES::GENO, genotype);
         }
 
-        features.set(GERMLINE_INDEL_SCORING_FEATURES::IDREP1, (firstAltAllele.indelReportInfo.indel_repeat_count));
-        features.set(GERMLINE_INDEL_SCORING_FEATURES::RULEN1, (firstAltAllele.indelReportInfo.repeat_unit.length()));
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::IDREP1, (primaryAltAllele.indelReportInfo.indel_repeat_count));
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::RULEN1, (primaryAltAllele.indelReportInfo.repeat_unit.length()));
 
         // +1e-30 to avoid log(0) in extreme cases
         features.set(GERMLINE_INDEL_SCORING_FEATURES::ABlower, (-std::log(allelebiaslower + 1.e-30)));
@@ -529,7 +546,7 @@ computeEmpiricalScoringFeatures(
         // compute any experimental features not currently used in production
         if (isComputeDevelopmentFeatures)
         {
-            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::REFREP1, (firstAltAllele.indelReportInfo.ref_repeat_count));
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::REFREP1, (primaryAltAllele.indelReportInfo.ref_repeat_count));
 
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction,
                                     (sampleReportInfo.mapqTracker.getZeroFrac()));
