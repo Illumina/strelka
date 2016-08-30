@@ -752,6 +752,43 @@ write_site_record(
 
 
 
+/// print sample AD/ADF/ADR
+static
+void
+printSampleAD(
+    const LocusSupportingReadStats& counts,
+    const unsigned expectedAltAlleleCount,
+    std::ostream& os)
+{
+    // verify locus and sample allele counts are in sync:
+    assert(counts.getAltCount() == expectedAltAlleleCount);
+    const unsigned fullAlleleCount(expectedAltAlleleCount+1);
+
+    // AD
+    os << ':';
+    for (unsigned alleleIndex(0); alleleIndex < fullAlleleCount; ++alleleIndex)
+    {
+       if (alleleIndex>0) os << ',';
+        os << (counts.getCounts(true).confidentAlleleCount(alleleIndex) + counts.getCounts(false).confidentAlleleCount(alleleIndex));
+    }
+
+    // ADF/ADR
+    for (unsigned strandIndex(0); strandIndex<2; ++strandIndex)
+    {
+        const bool isFwdStrand(strandIndex==0);
+        const auto& strandCounts(counts.getCounts(isFwdStrand));
+
+        os << ':';
+        for (unsigned alleleIndex(0); alleleIndex < fullAlleleCount; ++alleleIndex)
+        {
+            if (alleleIndex>0) os << ',';
+            os << strandCounts.confidentAlleleCount(alleleIndex);
+        }
+    }
+}
+
+
+
 void
 gvcf_writer::
 write_indel_record(
@@ -771,7 +808,6 @@ write_indel_record(
 
     // ALT
     const unsigned altAlleleCount(ii.getAltAlleleCount());
-    const unsigned fullAlleleCount(altAlleleCount+1);
 
     for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
     {
@@ -881,35 +917,7 @@ write_indel_record(
 
             os << ':' << sampleReportInfo.tier1Depth;
 
-            // SAMPLE AD/ADF/ADR:
-            {
-                const auto& counts(sampleInfo.supportCounts);
-
-                // verify locus and sample allele counts are in sync:
-                assert(counts.getAltCount() == altAlleleCount);
-
-                // AD
-                os << ':';
-                for (unsigned alleleIndex(0); alleleIndex < fullAlleleCount; ++alleleIndex)
-                {
-                    if (alleleIndex>0) os << ',';
-                    os << (counts.getCounts(true).confidentAlleleCount(alleleIndex) + counts.getCounts(false).confidentAlleleCount(alleleIndex));
-                }
-
-                // ADF/ADR
-                for (unsigned strandIndex(0); strandIndex<2; ++strandIndex)
-                {
-                    const bool isFwdStrand(strandIndex==0);
-                    const auto& strandCounts(counts.getCounts(isFwdStrand));
-
-                    os << ':';
-                    for (unsigned alleleIndex(0); alleleIndex < fullAlleleCount; ++alleleIndex)
-                    {
-                        if (alleleIndex>0) os << ',';
-                        os << strandCounts.confidentAlleleCount(alleleIndex);
-                    }
-                }
-            }
+            printSampleAD(sampleInfo.supportCounts, altAlleleCount, os);
 
             // FT
             os << ':';
