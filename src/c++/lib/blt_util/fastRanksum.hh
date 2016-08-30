@@ -53,6 +53,19 @@ struct fastRanksum
 //        }
     }
 
+    void
+    merge(
+        const fastRanksum& rhs,
+        const bool isFlipObservationCategories = false)
+    {
+        if (rhs._obs.size() > _obs.size()) _obs.resize(rhs._obs.size());
+        const unsigned obsCount(_obs.size());
+        for (unsigned obsIndex(0); obsIndex < obsCount; ++obsIndex)
+        {
+            _obs[obsIndex].merge(rhs._obs[obsIndex], isFlipObservationCategories);
+        }
+    }
+
     //return rank-sum U statistic
     double get_u_stat() const;
 
@@ -89,6 +102,23 @@ private:
             else
             {
                 B++;
+            }
+        }
+
+        void
+        merge(
+            const ranksumObs& rhs,
+            const bool isFlipObservationCategories)
+        {
+            if (isFlipObservationCategories)
+            {
+                A += rhs.A;
+                B += rhs.B;
+            }
+            else
+            {
+                A += rhs.B;
+                B += rhs.A;
             }
         }
 
