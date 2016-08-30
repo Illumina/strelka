@@ -30,17 +30,10 @@ void ActiveRegionDetector::insertMatch(const align_id_t alignId, const pos_t pos
     addAlignIdToPos(alignId, pos);
 }
 
-void ActiveRegionDetector::insertSoftClipMatch(const align_id_t alignId, const pos_t pos)
-{
-    // soft clip doesn't add mismatch count, but the base is used in haplotype generation
-    setSoftClipMatch(alignId, pos);
-    addAlignIdToPos(alignId, pos);
-}
-
-void ActiveRegionDetector::insertSoftClipMismatch(const align_id_t alignId, const pos_t pos, const char baseChar)
+void ActiveRegionDetector::insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string segmentSeq)
 {
     // soft clipp doesn't add mismatch count, but the base is used in haplotype generation
-    setSoftClipMismatch(alignId, pos, baseChar);
+    setSoftClipSegment(alignId, pos, segmentSeq);
     addAlignIdToPos(alignId, pos);
 }
 
@@ -236,17 +229,13 @@ void ActiveRegionDetector::setMismatch(const align_id_t id, const pos_t pos, cha
     _snvBuffer[idIndex][posIndex] = baseChar;
 }
 
-void ActiveRegionDetector::setSoftClipMatch(const align_id_t id, const pos_t pos)
-{
-    _variantInfo[id % MaxDepth][pos % MaxBufferSize] = SOFT_CLIP_MATCH;
-}
 
-void ActiveRegionDetector::setSoftClipMismatch(const align_id_t id, const pos_t pos, char baseChar)
+void ActiveRegionDetector::setSoftClipSegment(const align_id_t id, const pos_t pos, const std::string& segmentSeq)
 {
     unsigned idIndex = id % MaxDepth;
     unsigned posIndex = pos % MaxBufferSize;
-    _variantInfo[idIndex][posIndex] = SOFT_CLIP_MISMATCH;
-    _snvBuffer[idIndex][posIndex] = baseChar;
+    _variantInfo[idIndex][posIndex] = SOFT_CLIP;
+    _insertSeqBuffer[idIndex][posIndex] = segmentSeq;
 }
 
 void ActiveRegionDetector::setDelete(const align_id_t id, const pos_t pos)
@@ -270,11 +259,9 @@ bool ActiveRegionDetector::setHaplotypeBase(const align_id_t id, const pos_t pos
     switch (variant)
     {
     case MATCH:
-    case SOFT_CLIP_MATCH:
         base = _ref.get_base(pos);
         break;
     case MISMATCH:
-    case SOFT_CLIP_MISMATCH:
         base = std::string(1, _snvBuffer[idIndex][posIndex]);
         break;
     case DELETE:
@@ -283,13 +270,14 @@ bool ActiveRegionDetector::setHaplotypeBase(const align_id_t id, const pos_t pos
     case INSERT:
         base = _ref.get_base(pos) + _insertSeqBuffer[idIndex][posIndex];
         break;
+    case SOFT_CLIP:
+        base = _insertSeqBuffer[idIndex][posIndex];
+        break;
     case MISMATCH_INSERT:
         base = _snvBuffer[idIndex][posIndex] + _insertSeqBuffer[idIndex][posIndex];
     }
 
-    if (variant == SOFT_CLIP_MATCH or variant == SOFT_CLIP_MISMATCH)
-        return true;
-    return false;
+    return variant == SOFT_CLIP;
 }
 
 bool

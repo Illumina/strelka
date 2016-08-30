@@ -109,16 +109,11 @@ public:
     /// \param baseChar read base char
     void insertMismatch(const align_id_t alignId, const pos_t pos, const char baseChar);
 
-    /// insert match in a soft clipped region
+    /// insert soft-clipped segment
     /// \param alignId align id
     /// \param pos reference position
-    void insertSoftClipMatch(const align_id_t alignId, const pos_t pos);
-
-    /// insert mismatch in a soft clipped region
-    /// \param alignId align id
-    /// \param pos reference position
-    /// \param baseChar read base char
-    void insertSoftClipMismatch(const align_id_t alignId, const pos_t pos, const char baseChar);
+    /// \param baseChar soft-clipped segment sequence
+    void insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string segmentSeq);
 
     /// insert indel
     /// \param sampleId sample id
@@ -155,8 +150,7 @@ private:
     {
         MATCH,
         MISMATCH,
-        SOFT_CLIP_MATCH,
-        SOFT_CLIP_MISMATCH,
+        SOFT_CLIP,
         DELETE,
         INSERT,
         MISMATCH_INSERT
@@ -232,10 +226,10 @@ private:
 
     void setMatch(const align_id_t id, const pos_t pos);
     void setMismatch(const align_id_t id, const pos_t pos, char baseChar);
-    void setSoftClipMatch(const align_id_t id, const pos_t pos);
-    void setSoftClipMismatch(const align_id_t id, const pos_t pos, char baseChar);
     void setDelete(const align_id_t id, const pos_t pos);
     void setInsert(const align_id_t id, const pos_t pos, const std::string& insertSeq);
+    void setSoftClipSegment(const align_id_t id, const pos_t pos, const std::string& segmentSeq);
+
     bool setHaplotypeBase(const align_id_t id, const pos_t pos, std::string& base) const;
 
     inline void clearPos(pos_t pos)

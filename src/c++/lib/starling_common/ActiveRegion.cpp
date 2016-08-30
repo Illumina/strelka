@@ -22,6 +22,7 @@
 /// \author Sangtae Kim
 ///
 
+#include <boost/algorithm/string.hpp>
 #include "ActiveRegion.hh"
 
 void ActiveRegion::insertHaplotypeBase(align_id_t alignId, pos_t pos, const std::string& base)
@@ -42,7 +43,7 @@ void ActiveRegion::insertHaplotypeBase(align_id_t alignId, pos_t pos, const std:
 void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites) const
 {
     std::map<std::string, std::vector<align_id_t>> haplotypeToAlignIdSet;
-//    std::map<std::string, unsigned> softClipCount;
+    std::vector<std::pair<std::string, align_id_t>> softClippedReads;
     for (const auto& entry : _alignIdToHaplotype)
     {
         align_id_t alignId = entry.first;
@@ -54,27 +55,39 @@ void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySit
         // ignore if the read does not reach the end of the active region
         if (_alignIdReachingEnd.find(alignId) == _alignIdReachingEnd.end()) continue;
 
-        if (_alignIdSoftClipped.find(alignId) != _alignIdSoftClipped.end()) continue;
-
-//        if (_alignIdSoftClipped.find(alignId) != _alignIdSoftClipped.end())
-//        {
-//            // soft clipped
-//            if (not softClipCount.count(haplotype))
-//                softClipCount[haplotype] = 1;
-//            else
-//                ++softClipCount[haplotype];
-//        }
+        if (_alignIdSoftClipped.find(alignId) != _alignIdSoftClipped.end())
+        {
+            softClippedReads.push_back(std::pair<std::string, align_id_t>(haplotype, alignId));
+            continue;
+        }
 
         if (!haplotypeToAlignIdSet.count(haplotype))
             haplotypeToAlignIdSet[haplotype] = std::vector<align_id_t>();
         haplotypeToAlignIdSet[haplotype].push_back(alignId);
     }
 
+    // match soft-clipped reads to the haplotypes
+    for (auto& entry : haplotypeToAlignIdSet)
+    {
+        const std::string& haplotype(entry.first);
+        auto& alignIdList(entry.second);
+
+        for (const auto& softClipEntry : softClippedReads)
+        {
+            const std::string& softClippedRead(softClipEntry.first);
+            if (boost::starts_with(softClippedRead, haplotype)
+                or boost::ends_with(softClippedRead, haplotype))
+            {
+                align_id_t alignId(softClipEntry.second);
+                alignIdList.push_back(alignId);
+            }
+        }
+    }
+
     // determine threshold to select 3 haplotypes with the largest counts
-    unsigned minHaplotypeCount = _refSeq.length() > 9 ? 2 : MinHaplotypeCount;
-    unsigned largestCount = minHaplotypeCount;
-    unsigned secondLargestCount = minHaplotypeCount;
-    unsigned thirdLargestCount = minHaplotypeCount;
+    unsigned largestCount = MinHaplotypeCount;
+    unsigned secondLargestCount = MinHaplotypeCount;
+    unsigned thirdLargestCount = MinHaplotypeCount;
     unsigned totalCount = 0;
     for (const auto& entry : haplotypeToAlignIdSet)
     {
@@ -111,7 +124,7 @@ void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySit
         const auto& alignIdList(entry.second);
         auto count = alignIdList.size();
 
-//        std::cout << haplotype << '\t' << count << '\t' << softClipCount[haplotype] << std::endl;
+//        std::cout << haplotype << '\t' << count << std::endl;
         if (count >= thirdLargestCount and haplotype != _refSeq)
         {
             convertToPrimitiveAlleles(haplotype, alignIdList, totalCount,
