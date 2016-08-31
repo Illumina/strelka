@@ -141,7 +141,7 @@ operator<<(
     {
         const auto& indelSampleInfo(ii.getIndelSample(sampleIndex));
         os << "IndelSample" << sampleIndex << "\n";
-        os << indelSampleInfo.reportInfo << "\n";
+        os << indelSampleInfo.legacyReportInfo << "\n";
         os << "sp size: " << indelSampleInfo.sitePloidy.size() << "\n";
     }
 
@@ -367,12 +367,10 @@ computeEmpiricalScoringFeatures(
     const auto& sampleInfo(locus.getSample(sampleIndex));
     const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
 
-    const auto& sampleReportInfo(indelSampleInfo.reportInfo);
-
     // filtered locus depth/total locus depth/confidentDepth for this sample:
-    const double filteredLocusDepth(sampleReportInfo.tier1Depth);
-    const double locusDepth(sampleReportInfo.mapqTracker.count);
-    const double confidentDepth(sampleReportInfo.total_confident_reads());
+    const double filteredLocusDepth(indelSampleInfo.tier1Depth);
+    const double locusDepth(indelSampleInfo.mapqTracker.count);
+    const double confidentDepth(sampleInfo.supportCounts.totalConfidentCounts());
 
     // total locus depth summed over all samples (compatible with chromDepth, which is computed over all samples):
     /// TODO account for local copy number in both total locus depth and expected (chrom) depth
@@ -381,7 +379,7 @@ computeEmpiricalScoringFeatures(
         const unsigned sampleCount(locus.getSampleCount());
         for (unsigned sampleIndex2(0); sampleIndex2<sampleCount; ++sampleIndex2)
         {
-            allSampleocusDepth += locus.getIndelSample(sampleIndex2).reportInfo.mapqTracker.count;
+            allSampleocusDepth += locus.getIndelSample(sampleIndex2).mapqTracker.count;
         }
     }
 
@@ -419,6 +417,13 @@ computeEmpiricalScoringFeatures(
     ///TODO STREL-125 generalize to multiple alts:
     const auto& primaryAltAllele(locus.getIndelAlleles()[primaryAltAlleleIndex]);
 
+    const unsigned confidentRefCount(
+        sampleInfo.supportCounts.getCounts(true).confidentRefAlleleCount() +
+        sampleInfo.supportCounts.getCounts(false).confidentRefAlleleCount());
+    const unsigned confidentPrimaryAltCount(
+        sampleInfo.supportCounts.getCounts(true).confidentAltAlleleCount(primaryAltAlleleIndex) +
+        sampleInfo.supportCounts.getCounts(false).confidentAltAlleleCount(primaryAltAlleleIndex));
+
     // cdf of binomial prob of seeing no more than the number of 'allele A' reads out of A reads + B reads, given p=0.5
     // cdf of binomial prob of seeing no more than the number of 'allele B' reads out of A reads + B reads, given p=0.5
     double allelebiaslower = 0;
@@ -445,12 +450,10 @@ computeEmpiricalScoringFeatures(
         features.set(RNA_INDEL_SCORING_FEATURES::IDREP1, (primaryAltAllele.indelReportInfo.indel_repeat_count));
         features.set(RNA_INDEL_SCORING_FEATURES::RULEN1, (primaryAltAllele.indelReportInfo.repeat_unit.length()));
         features.set(RNA_INDEL_SCORING_FEATURES::AD0,
-                     (sampleReportInfo.n_confident_ref_reads * allSampleChromDepthFactor));
+                     (confidentRefCount * allSampleChromDepthFactor));
         features.set(RNA_INDEL_SCORING_FEATURES::AD1,
-                     (sampleReportInfo.n_confident_indel_reads * allSampleChromDepthFactor));
-        features.set(RNA_INDEL_SCORING_FEATURES::AD2,
-                     (sampleReportInfo.n_confident_alt_reads * allSampleChromDepthFactor));
-        features.set(RNA_INDEL_SCORING_FEATURES::F_DPI, (sampleReportInfo.tier1Depth * allSampleChromDepthFactor));
+                     (confidentPrimaryAltCount * allSampleChromDepthFactor));
+        features.set(RNA_INDEL_SCORING_FEATURES::F_DPI, (indelSampleInfo.tier1Depth * allSampleChromDepthFactor));
 
         // +1e-30 to avoid log(0) in extreme cases
         features.set(RNA_INDEL_SCORING_FEATURES::ABlower, (-std::log(allelebiaslower + 1.e-30)));
@@ -465,9 +468,9 @@ computeEmpiricalScoringFeatures(
 
             // how unreliable are the read mappings near this locus?
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_MQ,
-                                    (sampleReportInfo.mapqTracker.getRMS()));
+                                    (indelSampleInfo.mapqTracker.getRMS()));
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction,
-                                    (sampleReportInfo.mapqTracker.getZeroFrac()));
+                                    (indelSampleInfo.mapqTracker.getZeroFrac()));
 
             // how noisy is the locus?
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_DPI_NORM,
@@ -483,11 +486,9 @@ computeEmpiricalScoringFeatures(
                                     (sampleInfo.genotypeQualityPolymorphic * filteredLocusDepthFactor));
 
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
-                                    (sampleReportInfo.n_confident_ref_reads * confidentDepthFactor));
+                                    (confidentRefCount * confidentDepthFactor));
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::AD1_NORM,
-                                    (sampleReportInfo.n_confident_indel_reads * confidentDepthFactor));
-            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::AD2_NORM,
-                                    (sampleReportInfo.n_confident_alt_reads * confidentDepthFactor));
+                                    (confidentPrimaryAltCount * confidentDepthFactor));
 
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (locus.anyVariantAlleleQuality));
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (sampleInfo.gqx));
@@ -526,7 +527,7 @@ computeEmpiricalScoringFeatures(
 
         // how unreliable are the read mappings near this locus?
         features.set(GERMLINE_INDEL_SCORING_FEATURES::F_MQ,
-                     (sampleReportInfo.mapqTracker.getRMS()));
+                     (indelSampleInfo.mapqTracker.getRMS()));
 
         // how surprising is the depth relative to expect? This is the only value will be modified for exome/targeted runs
         //
@@ -539,7 +540,7 @@ computeEmpiricalScoringFeatures(
         features.set(GERMLINE_INDEL_SCORING_FEATURES::TDP_NORM, relativeLocusDepth);
 
         features.set(GERMLINE_INDEL_SCORING_FEATURES::AD1_NORM,
-                     (sampleReportInfo.n_confident_indel_reads * confidentDepthFactor));
+                     (confidentPrimaryAltCount * confidentDepthFactor));
 
         features.set(GERMLINE_INDEL_SCORING_FEATURES::F_GQX_EXACT, (sampleInfo.gqx));
 
@@ -549,7 +550,7 @@ computeEmpiricalScoringFeatures(
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::REFREP1, (primaryAltAllele.indelReportInfo.ref_repeat_count));
 
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction,
-                                    (sampleReportInfo.mapqTracker.getZeroFrac()));
+                                    (indelSampleInfo.mapqTracker.getZeroFrac()));
 
             // how noisy is the locus?
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_DPI_NORM,
@@ -564,9 +565,7 @@ computeEmpiricalScoringFeatures(
                                     (sampleInfo.genotypeQualityPolymorphic * filteredLocusDepthFactor));
 
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
-                                    (sampleReportInfo.n_confident_ref_reads * confidentDepthFactor));
-            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD2_NORM,
-                                    (sampleReportInfo.n_confident_alt_reads * confidentDepthFactor));
+                                    (confidentRefCount * confidentDepthFactor));
 
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (locus.anyVariantAlleleQuality));
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (sampleInfo.genotypeQualityPolymorphic));

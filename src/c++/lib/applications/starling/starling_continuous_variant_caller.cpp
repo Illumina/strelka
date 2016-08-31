@@ -187,7 +187,7 @@ add_indel_call(
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         const auto& sampleIndelInfo(locus.getIndelSample(sampleIndex));
-        const auto& sampleReportInfo(sampleIndelInfo.reportInfo);
+        const auto& sampleReportInfo(sampleIndelInfo.legacyReportInfo);
 
         LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
 

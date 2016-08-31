@@ -460,15 +460,23 @@ std::ostream& operator<<(std::ostream& os,const LocusInfo& li);
 
 struct GermlineIndelSampleInfo
 {
-    double alleleFrequency() const
-    {
-        return safeFrac(reportInfo.n_confident_indel_reads, reportInfo.total_confident_reads());
-    }
-
-    AlleleSampleReportInfo reportInfo;
-
     /// the expected ploidy of sites spanning the indel locus assuming the ML GT is true
     std::vector<uint8_t> sitePloidy;
+
+    /// the depth of the pileup at the position preceding the locus
+    unsigned tier1Depth = 0;
+
+    /// mapq stats at the position preceding the locus
+    MapqTracker mapqTracker;
+
+    /// TODO STREL-125 deprecated - replaced by supportCounts in LocusSampleInfo
+    double alleleFrequency() const
+    {
+        return safeFrac(legacyReportInfo.n_confident_indel_reads, legacyReportInfo.total_confident_reads());
+    }
+
+    /// TODO STREL-125 deprecated - replaced by supportCounts in LocusSampleInfo
+    AlleleSampleReportInfo legacyReportInfo;
 };
 
 

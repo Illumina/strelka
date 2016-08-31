@@ -906,7 +906,6 @@ write_indel_record(
         {
             const auto& sampleInfo(ii.getSample(sampleIndex));
             const auto& indelSampleInfo(ii.getIndelSample(sampleIndex));
-            const auto& sampleReportInfo(indelSampleInfo.reportInfo);
 
             os << '\t';
 
@@ -915,7 +914,7 @@ write_indel_record(
 
             os << ':' << ((sampleInfo.empiricalVariantScore >= 0) ? sampleInfo.empiricalVariantScore : sampleInfo.gqx);
 
-            os << ':' << sampleReportInfo.tier1Depth;
+            os << ':' << indelSampleInfo.tier1Depth;
 
             printSampleAD(sampleInfo.supportCounts, altAlleleCount, os);
 
@@ -956,7 +955,6 @@ write_indel_record(
         {
             const auto& sampleInfo(ii.getSample(sampleIndex));
             const auto& indelSampleInfo(ii.getIndelSample(sampleIndex));
-            const auto& sampleReportInfo(indelSampleInfo.reportInfo);
 
             os << '\t';
 
@@ -968,19 +966,23 @@ write_indel_record(
 
             os << ':' << sampleInfo.gqx;
 
-            os << ':' << sampleReportInfo.tier1Depth;
+            os << ':' << indelSampleInfo.tier1Depth;
 
-            // AD:
-            os << ':' << sampleReportInfo.n_confident_ref_reads
-               << ',' << sampleReportInfo.n_confident_indel_reads;
+            {
+                const auto& sampleReportInfo(indelSampleInfo.legacyReportInfo);
 
-            // ADF
-            os << ':' << sampleReportInfo.n_confident_ref_reads_fwd
-               << ',' << sampleReportInfo.n_confident_indel_reads_fwd;
+                // AD:
+                os << ':' << sampleReportInfo.n_confident_ref_reads
+                   << ',' << sampleReportInfo.n_confident_indel_reads;
 
-            // ADR
-            os << ':' << sampleReportInfo.n_confident_ref_reads_rev
-               << ',' << sampleReportInfo.n_confident_indel_reads_rev;
+                // ADF
+                os << ':' << sampleReportInfo.n_confident_ref_reads_fwd
+                   << ',' << sampleReportInfo.n_confident_indel_reads_fwd;
+
+                // ADR
+                os << ':' << sampleReportInfo.n_confident_ref_reads_rev
+                   << ',' << sampleReportInfo.n_confident_indel_reads_rev;
+            }
 
             // FT
             os << ':';

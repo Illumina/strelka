@@ -563,6 +563,17 @@ updateIndelSampleInfo(
         assert(false);
     }
 
+    {
+        // get various indel stats from the pileup:
+        pos_t pileupPos(range.begin_pos()-1);
+        const IndelKey& indelKey0(alleleGroup.key(0));
+        if (indelKey0.type == INDEL::BP_RIGHT) pileupPos=range.end_pos();
+        const snp_pos_info& spi(basecallBuffer.get_pos(pileupPos));
+        indelSampleInfo.tier1Depth=spi.calls.size();
+        indelSampleInfo.mapqTracker=spi.mapqTracker;
+    }
+
+    /// TODO STREL-125 deprecated
     // add misc sample info from legacy sample indel report:
     {
         static const bool is_tier2_pass(false);
@@ -573,7 +584,7 @@ updateIndelSampleInfo(
         const IndelData& indelData(alleleGroup.data(0));
         const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
         getAlleleSampleReportInfo(opt, dopt, indelKey, indelSampleData, basecallBuffer,
-                                  is_tier2_pass, is_use_alt_indel, indelSampleInfo.reportInfo);
+                                  is_tier2_pass, is_use_alt_indel, indelSampleInfo.legacyReportInfo);
     }
 
     locus.setIndelSampleInfo(sampleIndex, indelSampleInfo);
@@ -1118,12 +1129,12 @@ process_pos_indel_continuous(const pos_t pos)
 
             GermlineIndelSampleInfo indelSampleInfo;
             getAlleleSampleReportInfo(_opt, _dopt, indelKey, indelSampleData, sif.bc_buff, is_tier2_pass,
-                                      is_use_alt_indel, indelSampleInfo.reportInfo);
+                                      is_use_alt_indel, indelSampleInfo.legacyReportInfo);
             locusInfo->setIndelSampleInfo(sampleIndex, indelSampleInfo);
 
             if (not isReportableAllele)
             {
-                if (indelSampleInfo.reportInfo.n_confident_indel_reads > 0) isReportableAllele = true;
+                if (indelSampleInfo.legacyReportInfo.n_confident_indel_reads > 0) isReportableAllele = true;
             }
         }
 

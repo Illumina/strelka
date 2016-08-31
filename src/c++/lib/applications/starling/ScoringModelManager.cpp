@@ -269,7 +269,7 @@ default_classify_indel(
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
             const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
-            allSampleLocusDepth += indelSampleInfo.reportInfo.mapqTracker.count;
+            allSampleLocusDepth += indelSampleInfo.legacyReportInfo.mapqTracker.count;
         }
 
         if (allSampleLocusDepth > _dopt.max_depth)
