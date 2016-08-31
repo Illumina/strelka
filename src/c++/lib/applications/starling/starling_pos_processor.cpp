@@ -182,9 +182,34 @@ void
 starling_pos_processor::
 process_pos_snp_continuous(const pos_t pos)
 {
-    const unsigned sampleIndex(0);
+    const unsigned sampleCount(getSampleCount());
+    const bool isForcedOutput(is_forced_output_pos(pos));
+
+    if (not isForcedOutput)
+    {
+        bool isZeroCoverage(true);
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        {
+            const sample_info& sif(sample(sampleIndex));
+            const CleanedPileup& cpi(sif.cpi);
+            const snp_pos_info& pi(cpi.rawPileup());
+
+            if (not pi.calls.empty())
+            {
+                isZeroCoverage = false;
+                break;
+            }
+        }
+
+        if (isZeroCoverage) return;
+    }
+
+
+    // end sample generalization
+
     /// TODO STREL-125 generalize to multisample
-    const unsigned sampleCount(1);
+    assert(sampleCount == 1);
+    const unsigned sampleIndex(0);
 
     sample_info& sif(sample(sampleIndex));
 
@@ -194,9 +219,6 @@ process_pos_snp_continuous(const pos_t pos)
     _pileupCleaner.CleanPileupErrorProb(sif.cpi);
 
     const snp_pos_info& good_pi(cpi.cleanedPileup());
-    const bool isForcedOutput(is_forced_output_pos(pos));
-
-    if (pi.calls.empty() && !isForcedOutput) return;
 
     GermlineContinuousSiteLocusInfo templateLocus(sampleCount, pos, pi.get_ref_base(), good_pi,
                                             _opt.used_allele_count_min_qscore, _opt.min_het_vf, isForcedOutput);
