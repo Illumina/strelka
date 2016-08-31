@@ -21,8 +21,6 @@
 #include "starling_pos_processor.hh"
 
 #include "starling_continuous_variant_caller.hh"
-#include "blt_common/position_nonref_test.hh"
-#include "blt_common/position_nonref_2allele_test.hh"
 #include "blt_common/ref_context.hh"
 #include "blt_util/log.hh"
 #include "blt_util/prob_util.hh"
@@ -277,29 +275,21 @@ process_pos_snp_digt(const pos_t pos)
     }
 
     /// end multi-sample generalization:
+    assert(sampleCount == 1);
     const unsigned sampleIndex(0);
     sample_info& sif(sample(sampleIndex));
 
     const CleanedPileup& cpi(sif.cpi);
     const snp_pos_info& pi(cpi.rawPileup());
 
-
     _pileupCleaner.CleanPileupErrorProb(sif.cpi);
 
     const snp_pos_info& good_pi(cpi.cleanedPileup());
     const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
-
     std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore, isForcedOutput));
     locusPtr->n_used_calls=cpi.n_used_calls();
     locusPtr->n_unused_calls=cpi.n_unused_calls();
-
-
-    // delay writing any snpcalls so that anomaly tests can (optionally) be applied as filters:
-    //
-    nonref_test_call nrc;
-    //lrt_snp_call lsc;
-    //std::unique_ptr<nploid_genotype> ngt_ptr;
 
     // check whether we're in a haploid region:
     locusPtr->dgt.ploidy=(get_ploidy(pos, sampleIndex));
@@ -317,10 +307,8 @@ process_pos_snp_digt(const pos_t pos)
             _opt,good_epi,locusPtr->dgt, _opt.is_all_sites());
     }
 
-    const bool is_snp(nrc.is_snp || locusPtr->dgt.is_snp());
-
     //    const bool is_nf_snp(is_snp && (! is_filter_snp));
-    if (is_snp || isForcedOutput)
+    if (isForcedOutput or locusPtr->dgt.is_snp())
     {
         if (_opt.is_compute_hapscore)
         {
