@@ -159,6 +159,35 @@ process_pos_snp(const pos_t pos)
 {
     try
     {
+        const unsigned sampleCount(getSampleCount());
+
+        const bool isForcedOutput(is_forced_output_pos(pos));
+
+        // the second term in is_skippable below forces sites to go through the pipeline
+        // if phaser has put a hold on buffer cleanup. This ensures that the phaser will be turned back off
+        //
+        // TODO: there must be a way to force correct usage into the phaser's API instead of requiring this brittle hack
+        const bool isSkippable(! (isForcedOutput || is_save_pileup_buffer()));
+
+        if (isSkippable)
+        {
+            bool isZeroCoverage(true);
+            for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+            {
+                const sample_info& sif(sample(sampleIndex));
+                const CleanedPileup& cpi(sif.cpi);
+                const snp_pos_info& pi(cpi.rawPileup());
+
+                if (not pi.calls.empty())
+                {
+                    isZeroCoverage = false;
+                    break;
+                }
+            }
+
+            if (isZeroCoverage) return;
+        }
+
         if (_opt.is_bsnp_diploid())
         {
             process_pos_snp_digt(pos);
@@ -185,28 +214,7 @@ process_pos_snp_continuous(const pos_t pos)
     const unsigned sampleCount(getSampleCount());
     const bool isForcedOutput(is_forced_output_pos(pos));
 
-    if (not isForcedOutput)
-    {
-        bool isZeroCoverage(true);
-        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
-        {
-            const sample_info& sif(sample(sampleIndex));
-            const CleanedPileup& cpi(sif.cpi);
-            const snp_pos_info& pi(cpi.rawPileup());
-
-            if (not pi.calls.empty())
-            {
-                isZeroCoverage = false;
-                break;
-            }
-        }
-
-        if (isZeroCoverage) return;
-    }
-
-
     // end sample generalization
-
     /// TODO STREL-125 generalize to multisample
     assert(sampleCount == 1);
     const unsigned sampleIndex(0);
@@ -268,33 +276,7 @@ starling_pos_processor::
 process_pos_snp_digt(const pos_t pos)
 {
     const unsigned sampleCount(getSampleCount());
-
     const bool isForcedOutput(is_forced_output_pos(pos));
-
-    // the second term in is_skippable below forces sites to go through the pipeline
-    // if phaser has put a hold on buffer cleanup. This ensures that the phaser will be turned back off
-    //
-    // TODO: there must be a way to force correct usage into the phaser's API instead of requiring this brittle hack
-    const bool isSkippable(! (isForcedOutput || is_save_pileup_buffer()));
-
-    if (isSkippable)
-    {
-        bool isZeroCoverage(true);
-        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
-        {
-            const sample_info& sif(sample(sampleIndex));
-            const CleanedPileup& cpi(sif.cpi);
-            const snp_pos_info& pi(cpi.rawPileup());
-
-            if (not pi.calls.empty())
-            {
-                isZeroCoverage = false;
-                break;
-            }
-        }
-
-        if (isZeroCoverage) return;
-    }
 
     /// end multi-sample generalization:
     assert(sampleCount == 1);
