@@ -50,10 +50,12 @@ class ActiveRegion
 {
 public:
     // maximum read depth
-    static const unsigned MaxDepth = 1000;
+    static const unsigned MaxDepth = 1000u;
+    static const unsigned HighDepth = 20u;
 
     // minimum haplotype count to consider
-    static const unsigned MinHaplotypeCount = 3;
+    static const unsigned MinHaplotypeCount = 3u;
+    static const unsigned MaxSNVHpolSize = 4u;
 
     // minimum haplotype frequency to relax MMDF
     const float HaplotypeFrequencyThreshold = 0.4;
@@ -63,22 +65,30 @@ public:
     /// Creates an active region object
     /// \param start start position
     /// \param end end position
-    /// \param refSeq reference sequence corresponding to this active region
+    /// \param ref reference
     /// \param aligner aligner for aligning haplotypes to the reference
     /// \param alignIdToAlignInfo map from align id to (sampleId, indelAlignType)
     /// \return active region object
-    ActiveRegion(pos_t start, pos_t end, const std::string& refSeq, const GlobalAligner<int>& aligner, const std::vector<AlignInfo>& alignIdToAlignInfo):
-        _start(start), _end(end), _refSeq(refSeq),
+    ActiveRegion(pos_t start, pos_t end, const reference_contig_segment& ref, const GlobalAligner<int>& aligner, const std::vector<AlignInfo>& alignIdToAlignInfo):
+        _start(start), _end(end), _ref(ref),
         _aligner(aligner),
         _alignIdToAlignInfo(alignIdToAlignInfo),
         _alignIdToHaplotype(),
         _alignIdReachingEnd()
-    {}
+    {
+        _ref.get_substring(start, getLength(), _refSeq);
+    }
 
     /// \return start position of the active region
     pos_t getStart() const
     {
         return _start;
+    }
+
+    /// \return length of the active region
+    unsigned getLength() const
+    {
+        return _end - _start + 1;
     }
 
     /// \param pos reference position
@@ -100,6 +110,8 @@ public:
     /// \param polySites
     void processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites) const;
 
+    /// Mark a read soft-clipped
+    /// \param alignId align id
     void setSoftClipped(const align_id_t alignId)
     {
         _alignIdSoftClipped.insert(alignId);
@@ -108,7 +120,8 @@ public:
 private:
     pos_t _start;
     pos_t _end;
-    const std::string& _refSeq;
+    const reference_contig_segment& _ref;
+    std::string _refSeq;
     const GlobalAligner<int> _aligner;
     const std::vector<AlignInfo>&  _alignIdToAlignInfo;
 
@@ -120,6 +133,7 @@ private:
         const std::string& haploptypeSeq,
         const std::vector<align_id_t>& alignIdList,
         const unsigned totalReadCount,
+        const bool isTopTwo,
         IndelBuffer& indelBuffer,
         RangeSet& polySites) const;
 };

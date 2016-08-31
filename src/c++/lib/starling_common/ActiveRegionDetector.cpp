@@ -26,11 +26,12 @@
 
 void ActiveRegionDetector::insertMatch(const align_id_t alignId, const pos_t pos)
 {
+    ++_depth[pos % MaxBufferSize];
     setMatch(alignId, pos);
     addAlignIdToPos(alignId, pos);
 }
 
-void ActiveRegionDetector::insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string segmentSeq)
+void ActiveRegionDetector::insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string& segmentSeq)
 {
     // soft clipp doesn't add mismatch count, but the base is used in haplotype generation
     setSoftClipSegment(alignId, pos, segmentSeq);
@@ -40,7 +41,7 @@ void ActiveRegionDetector::insertSoftClipSegment(const align_id_t alignId, const
 void
 ActiveRegionDetector::insertMismatch(const align_id_t alignId, const pos_t pos, const char baseChar)
 {
-    addCount(pos, MismatchWeight);
+    addVariantCount(pos, MismatchWeight);
     setMismatch(alignId, pos, baseChar);
     addAlignIdToPos(alignId, pos);
 }
@@ -56,8 +57,8 @@ ActiveRegionDetector::insertIndel(const unsigned sampleId, const IndelObservatio
     {
         if (indelKey.isPrimitiveInsertionAllele())
         {
-            addCount(pos - 1, IndelWeight);
-            addCount(pos, IndelWeight);
+            addVariantCount(pos - 1, IndelWeight);
+            addVariantCount(pos, IndelWeight);
             setInsert(alignId, pos - 1, indelObservation.key.insert_seq());
             addAlignIdToPos(alignId, pos - 1);
         }
@@ -66,11 +67,11 @@ ActiveRegionDetector::insertIndel(const unsigned sampleId, const IndelObservatio
             unsigned length = indelObservation.key.deletionLength;
             for (unsigned i(0); i<length; ++i)
             {
-                addCount(pos + i, IndelWeight);
+                addVariantCount(pos + i, IndelWeight);
                 setDelete(alignId, pos + i);
                 addAlignIdToPos(alignId, pos + i);
             }
-            addCount(pos - 1, IndelWeight);
+            addVariantCount(pos - 1, IndelWeight);
         }
         else
         {
@@ -129,15 +130,12 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
             pos_t origStart = _activeRegionStartPos;
             pos_t origEnd = _prevVariantPos;
             pos_t start, end;
+
+            // expand active region to include repeats
             getExpandedRange(origStart, origEnd, start, end);
 
-            // close existing active region
-            std::string refStr = "";
-            _ref.get_substring(start, end - start + 1, refStr);
-
-            // TODO: calculate ploidy
-            _activeRegions.emplace_back(start, end, refStr, _aligner, _alignIdToAlignInfo);
-            ActiveRegion& activeRegion(_activeRegions.back());
+            _activeRegions.emplace_back(start, end, _ref, _aligner, _alignIdToAlignInfo);
+            auto& activeRegion(_activeRegions.back());
             // add haplotype bases
             for (pos_t activeRegionPos(start); activeRegionPos<=end; ++activeRegionPos)
             {
@@ -167,8 +165,8 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
         }
     }
 
-    const pos_t minPosWithBase = pos - _maxDetectionWindowSize - _maxDeletionSize;
-    clearPos(minPosWithBase);
+    const pos_t posToClear = pos - _maxDetectionWindowSize - _maxDeletionSize;
+    clearPos(posToClear);
 }
 
 void ActiveRegionDetector::getExpandedRange(const pos_t origStart, const pos_t origEnd, pos_t& newStart, pos_t& newEnd)
@@ -192,7 +190,12 @@ void ActiveRegionDetector::getExpandedRange(const pos_t origStart, const pos_t o
             deltaPos = std::max(deltaPos, repeatSpan);
     }
     deltaPos = std::min(deltaPos, MaxRepeatSpan);
-    newStart = origStart - deltaPos;
+    pos_t minStart(std::max(origStart - deltaPos, 0u));
+    for (newStart = origStart; newStart > minStart; --newStart)
+    {
+        if (getDepth(newStart-1) < MinDepth)
+            break;
+    }
 
     // calculate newEnd
     deltaPos = 0;
@@ -213,7 +216,12 @@ void ActiveRegionDetector::getExpandedRange(const pos_t origStart, const pos_t o
     }
     deltaPos = std::min(deltaPos, MaxRepeatSpan);
 
-    newEnd = origEnd + deltaPos;
+    pos_t maxEnd(std::min(origEnd + deltaPos, _ref.end()-1u));
+    for (newEnd = origEnd; newEnd < maxEnd; ++newEnd)
+    {
+        if (getDepth(newEnd+1) < MinDepth)
+            break;
+    }
 }
 
 void ActiveRegionDetector::setMatch(const align_id_t id, const pos_t pos)
@@ -228,7 +236,6 @@ void ActiveRegionDetector::setMismatch(const align_id_t id, const pos_t pos, cha
     _variantInfo[idIndex][posIndex] = MISMATCH;
     _snvBuffer[idIndex][posIndex] = baseChar;
 }
-
 
 void ActiveRegionDetector::setSoftClipSegment(const align_id_t id, const pos_t pos, const std::string& segmentSeq)
 {
@@ -283,7 +290,7 @@ bool ActiveRegionDetector::setHaplotypeBase(const align_id_t id, const pos_t pos
 bool
 ActiveRegionDetector::isCandidateVariant(const pos_t pos) const
 {
-    auto count = getCount(pos);
+    auto count = getVariantCount(pos);
     return count >= _minNumVariantsPerPosition && count >= (MinAlternativeAlleleFraction*getDepth(pos));
 }
 

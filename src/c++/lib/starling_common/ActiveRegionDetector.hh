@@ -45,6 +45,9 @@ public:
     // maximum read depth
     static const unsigned MaxDepth = ActiveRegion::MaxDepth;
 
+    // minimum read depth
+    static const unsigned MinDepth = ActiveRegion::MinHaplotypeCount;
+
     // variant count to add for a single indel
     static const int MismatchWeight = 1;
     static const int IndelWeight = 4;
@@ -59,6 +62,7 @@ public:
     static const int ScoreExtend = -1;
     static const int ScoreOffEdge = -100;
 
+    // for expansion of active regions
     const unsigned MaxRepeatUnitLength = 3u;
     const unsigned MaxRepeatSpan = 20u;
 
@@ -87,6 +91,7 @@ public:
         _minNumVariantsPerPosition(minNumVariantsPerPosition),
         _minNumVariantsPerRegion(minNumVariantsPerRegion),
         _variantCounter(MaxBufferSize),
+        _depth(MaxBufferSize),
         _positionToAlignIds(MaxBufferSize),
         _alignIdToAlignInfo(MaxDepth),
         _variantInfo(MaxDepth, std::vector<VariantType>(MaxBufferSize, VariantType())),
@@ -113,7 +118,7 @@ public:
     /// \param alignId align id
     /// \param pos reference position
     /// \param baseChar soft-clipped segment sequence
-    void insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string segmentSeq);
+    void insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string& segmentSeq);
 
     /// insert indel
     /// \param sampleId sample id
@@ -170,6 +175,7 @@ private:
 
     std::list<ActiveRegion> _activeRegions;
     std::vector<unsigned> _variantCounter;
+    std::vector<unsigned> _depth;
 
     // for haplotypes
     std::vector<std::vector<align_id_t>> _positionToAlignIds;
@@ -187,21 +193,26 @@ private:
     // aligner to be used in active regions
     GlobalAligner<int> _aligner;
 
+    // expand [origStart, newStart] to cover repeats
     void getExpandedRange(const pos_t origStart, const pos_t origEnd, pos_t& newStart, pos_t& newEnd);
 
     bool isCandidateVariant(const pos_t pos) const;
 
     inline void resetCounter(const pos_t pos)
     {
-        _variantCounter[pos % MaxBufferSize] = 0;
+        int index = pos % MaxBufferSize;
+        _variantCounter[index] = 0;
+        _depth[index] = 0;
     }
 
-    inline void addCount(const pos_t pos, unsigned count = 1)
+    inline void addVariantCount(const pos_t pos, unsigned count = 1)
     {
-        _variantCounter[pos % MaxBufferSize] += count;
+        int index = pos % MaxBufferSize;
+        _variantCounter[index] += count;
+        ++_depth[index];
     }
 
-    inline unsigned getCount(const pos_t pos) const
+    inline unsigned getVariantCount(const pos_t pos) const
     {
         return _variantCounter[pos % MaxBufferSize];
     }
@@ -213,10 +224,11 @@ private:
             _positionToAlignIds[index].push_back(alignId);
     }
 
-    inline int getDepth(const pos_t pos) const
+    inline unsigned getDepth(const pos_t pos) const
     {
         int index = pos % MaxBufferSize;
-        return (int)_positionToAlignIds[index].size();
+//        return (unsigned)_positionToAlignIds[index].size();
+        return _depth[index];
     }
 
     inline const std::vector<align_id_t>& getPositionToAlignIds(const pos_t pos) const

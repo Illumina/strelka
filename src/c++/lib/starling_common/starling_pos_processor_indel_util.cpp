@@ -433,6 +433,8 @@ add_alignment_indels_to_sppr(
                 if (sppr.is_active_region_detector_enabled() && !isLowMapQuality)
                 {
                     pos_t softClipStartPos(ref_head_pos);
+
+                    // for leading/trailing soft-clip, place the segment at the end/start position
                     if (is_begin_edge)
                         --softClipStartPos;
 
