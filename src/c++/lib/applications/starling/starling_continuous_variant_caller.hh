@@ -39,11 +39,5 @@ struct starling_continuous_variant_caller
         const bool isForcedOutput,
         GermlineContinuousSiteLocusInfo& locusInfo);
 
-    static void add_indel_call(
-       const starling_base_options& opt,
-       const IndelKey& indelKey,
-       const IndelData& indelData,
-       GermlineContinuousIndelLocusInfo& locus);
-
     static double strand_bias(unsigned fwdAlt, unsigned revAlt, unsigned fwdOther, unsigned revOther, double noise);
 };

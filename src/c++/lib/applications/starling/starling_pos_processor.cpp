@@ -1076,6 +1076,53 @@ process_pos_indel_digt(const pos_t pos)
 
 
 
+/// fill in all sample-specific locus info
+///
+static
+void
+updateContinuousIndelLocusWithSampleInfo(
+    const starling_base_options& opt,
+    const starling_deriv_options& dopt,
+    const unsigned sampleIndex,
+    const pos_basecall_buffer& bc_buff,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    GermlineIndelLocusInfo& locus)
+{
+    static const bool is_tier2_pass(false);
+    static const bool is_use_alt_indel(true);
+
+    auto& sampleInfo(locus.getSample(sampleIndex));
+    sampleInfo.setPloidy(-1);
+
+    // tmp until new count structures are in place:
+    assert(alleleGroup.size() == 1);
+    const auto& indelKey(alleleGroup.key(0));
+    const auto& indelData(alleleGroup.data(0));
+
+    const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
+
+    GermlineIndelSampleInfo indelSampleInfo;
+    getAlleleSampleReportInfo(opt, dopt, indelKey, indelSampleData, bc_buff, is_tier2_pass,
+                              is_use_alt_indel, indelSampleInfo.legacyReportInfo);
+    locus.setIndelSampleInfo(sampleIndex, indelSampleInfo);
+
+    sampleInfo.gqx = sampleInfo.genotypeQualityPolymorphic =
+        starling_continuous_variant_caller::poisson_qscore(
+            indelSampleInfo.legacyReportInfo.n_confident_indel_reads,
+            indelSampleInfo.legacyReportInfo.total_confident_reads(),
+            (unsigned) opt.min_qscore, 40);
+
+    // use diploid gt codes as a convenient way to summarize the continuous variant calls:
+    static const unsigned hetGtIndex(VcfGenotypeUtil::getGenotypeIndex(0,1));
+    static const unsigned homGtIndex(VcfGenotypeUtil::getGenotypeIndex(1,1));
+
+    const bool isHetLike(indelSampleInfo.alleleFrequency() < (1 - opt.min_het_vf));
+
+    sampleInfo.maxGenotypeIndexPolymorphic = (isHetLike ? hetGtIndex : homGtIndex);
+}
+
+
+
 void
 starling_pos_processor::
 process_pos_indel_continuous(const pos_t pos)
@@ -1110,37 +1157,54 @@ process_pos_indel_continuous(const pos_t pos)
             if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
         }
 
-        // sample-independent info:
-        static const bool is_tier2_pass(false);
-        static const bool is_use_alt_indel(true);
 
-        bool isReportableAllele(isForcedOutput);
+        // the way things are handled in continuous mode right now we only add one allele per locus
+        OrthogonalVariantAlleleCandidateGroup topVariantAlleleGroup;
+        topVariantAlleleGroup.alleles.push_back(it);
 
-        std::unique_ptr<GermlineContinuousIndelLocusInfo> locusInfo(new GermlineContinuousIndelLocusInfo(sampleCount));
+        // setup new indel locus:
+        std::unique_ptr<GermlineContinuousIndelLocusInfo> locusPtr(new GermlineContinuousIndelLocusInfo(sampleCount));
 
-        starling_continuous_variant_caller::add_indel_call(_opt, indelKey, indelData, *locusInfo);
+        // cycle through variant alleles and add them to locus (the locus interface requires that this is done first):
+        addIndelAllelesToLocus(topVariantAlleleGroup, isForcedOutput, *locusPtr);
 
+        // add sample-dependent info:
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
-            locusInfo->getSample(sampleIndex).setPloidy(-1);
-
-            const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
-            const sample_info& sif(sample(sampleIndex));
-
-            GermlineIndelSampleInfo indelSampleInfo;
-            getAlleleSampleReportInfo(_opt, _dopt, indelKey, indelSampleData, sif.bc_buff, is_tier2_pass,
-                                      is_use_alt_indel, indelSampleInfo.legacyReportInfo);
-            locusInfo->setIndelSampleInfo(sampleIndex, indelSampleInfo);
-
-            if (not isReportableAllele)
-            {
-                if (indelSampleInfo.legacyReportInfo.n_confident_indel_reads > 0) isReportableAllele = true;
-            }
+            updateContinuousIndelLocusWithSampleInfo(
+                _opt, _dopt, sampleIndex, sample(sampleIndex).bc_buff, topVariantAlleleGroup, *locusPtr);
         }
 
+        // add sample-independent info:
+        {
+            int anyVariantAlleleQuality = 0;
+            for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+            {
+                auto& sampleInfo(locusPtr->getSample(sampleIndex));
+                anyVariantAlleleQuality = std::max(anyVariantAlleleQuality,
+                                                         sampleInfo.genotypeQualityPolymorphic);
+            }
+            locusPtr->anyVariantAlleleQuality = anyVariantAlleleQuality;
+        }
+
+        // determine if this locus is printable:
+        bool isReportableAllele(isForcedOutput);
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        {
+            const auto& indelSampleInfo(locusPtr->getIndelSample(sampleIndex));
+            if (not isReportableAllele)
+            {
+                const double alleleFrequency(indelSampleInfo.alleleFrequency());
+                if ((indelSampleInfo.legacyReportInfo.n_confident_indel_reads > 0) and
+                    (alleleFrequency > _opt.min_het_vf))
+                {
+                    isReportableAllele = true;
+                }
+            }
+        }
         if (not isReportableAllele) continue;
 
-        _gvcfer->add_indel(std::move(locusInfo));
+        _gvcfer->add_indel(std::move(locusPtr));
     }
 }
 
