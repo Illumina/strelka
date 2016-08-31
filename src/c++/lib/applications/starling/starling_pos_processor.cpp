@@ -247,18 +247,7 @@ void
 starling_pos_processor::
 process_pos_snp_digt(const pos_t pos)
 {
-    const unsigned sampleIndex(0);
-    sample_info& sif(sample(sampleIndex));
-
-    const CleanedPileup& cpi(sif.cpi);
-    const snp_pos_info& pi(cpi.rawPileup());
-
-    // note multi-sample status -- can still be called only for one sample
-    // and only for sample 0. working on generalization:
-    //
-    if (sampleIndex!=0) return;
-
-    const unsigned sampleCount(1);
+    const unsigned sampleCount(getSampleCount());
 
     const bool isForcedOutput(is_forced_output_pos(pos));
 
@@ -266,9 +255,34 @@ process_pos_snp_digt(const pos_t pos)
     // if phaser has put a hold on buffer cleanup. This ensures that the phaser will be turned back off
     //
     // TODO: there must be a way to force correct usage into the phaser's API instead of requiring this brittle hack
-    const bool is_skippable(! (isForcedOutput || is_save_pileup_buffer()));
+    const bool isSkippable(! (isForcedOutput || is_save_pileup_buffer()));
 
-    if (pi.calls.empty() && is_skippable) return;
+    if (isSkippable)
+    {
+        bool isZeroCoverage(true);
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        {
+            const sample_info& sif(sample(sampleIndex));
+            const CleanedPileup& cpi(sif.cpi);
+            const snp_pos_info& pi(cpi.rawPileup());
+
+            if (not pi.calls.empty())
+            {
+                isZeroCoverage = false;
+                break;
+            }
+        }
+
+        if (isZeroCoverage) return;
+    }
+
+    /// end multi-sample generalization:
+    const unsigned sampleIndex(0);
+    sample_info& sif(sample(sampleIndex));
+
+    const CleanedPileup& cpi(sif.cpi);
+    const snp_pos_info& pi(cpi.rawPileup());
+
 
     _pileupCleaner.CleanPileupErrorProb(sif.cpi);
 
