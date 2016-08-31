@@ -71,23 +71,6 @@ get_starling_base_option_parser(
      "Set indel theta")
     ;
 
-    po::options_description blt_nonref_opt("nonref-model-options");
-    blt_nonref_opt.add_options()
-    ("nonref-test-file", po::value(&opt.nonref_test_filename),
-     "Test for non-reference alleles at any frequency, write results to specified filename")
-    ("nonref-sites-file", po::value(&opt.nonref_sites_filename),
-     "Print results of non-reference allele test at every site to file")
-    ("nonref-variant-rate", po::value(&opt.nonref_variant_rate)->default_value(opt.nonref_variant_rate),
-     "The expected non-reference variant frequency used with nonref-test")
-    ("min-nonref-freq", po::value(&opt.min_nonref_freq)->default_value(opt.min_nonref_freq),
-     "The minimum non-reference allele frequency considered in nonref-test")
-    ("nonref-site-error-rate", po::value(&opt.nonref_site_error_rate)->default_value(opt.nonref_site_error_rate),
-     "The expected rate of erroneous non-reference allele sites applied to the nonref model. At error sites a nonref allele is expected in the frequency range [0,decay_freq], with a probability that linearly decays to zero at decay_freq.")
-    ("nonref-site-error-decay-freq",
-     po::value(&opt.nonref_site_error_decay_freq)->default_value(opt.nonref_site_error_decay_freq),
-     "The decay_freq used for the site-error state as described above.")
-    ;
-
     po::options_description realign_opt("realignment-options");
     realign_opt.add_options()
     ("max-indel-toggle-depth", po::value(&opt.max_read_indel_toggle)->default_value(opt.max_read_indel_toggle),
@@ -144,7 +127,7 @@ get_starling_base_option_parser(
 
     po::options_description new_opt("Shared small-variant options");
 
-    new_opt.add(geno_opt).add(blt_nonref_opt);
+    new_opt.add(geno_opt);
     new_opt.add(realign_opt).add(indel_opt).add(ploidy_opt);
     new_opt.add(input_opt).add(other_opt);
 
@@ -304,12 +287,6 @@ finalize_starling_base_options(
     const po::variables_map& vm,
     starling_base_options& opt)
 {
-    // blt section:
-    check_option_arg_range(pinfo,opt.nonref_variant_rate,"nonref-variant-rate",0.,1.);
-    check_option_arg_range(pinfo,opt.min_nonref_freq,"min-nonref-freq",0.,1.);
-
-    // starling section:
-
     // max_theta for indels is actually 2./3., but because we don't
     // allow non-reference hets, we stick with the lower value
     // used for snps:

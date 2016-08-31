@@ -46,14 +46,6 @@ struct blt_streams
     {
         return _counts_osptr.get();
     }
-    std::ostream* nonref_test_osptr() const
-    {
-        return _nonref_test_osptr.get();
-    }
-    std::ostream* nonref_sites_osptr() const
-    {
-        return _nonref_sites_osptr.get();
-    }
 
 protected:
 
@@ -87,6 +79,4 @@ protected:
 private:
     std::unique_ptr<std::ostream> _report_osptr;
     std::unique_ptr<std::ostream> _counts_osptr;
-    std::unique_ptr<std::ostream> _nonref_test_osptr;
-    std::unique_ptr<std::ostream> _nonref_sites_osptr;
 };

@@ -18,7 +18,6 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -105,12 +104,6 @@ validate_blt_opt(
         {
             pinfo.usage("-bsnp-diploid-het-bias argument must be in range [0,0.5)\n");
         }
-    }
-
-    if (opt.is_nonref_test())
-    {
-        check_option_arg_range(pinfo,opt.nonref_variant_rate,"nonref-variant-rate",0.,1.);
-        check_option_arg_range(pinfo,opt.min_nonref_freq,"min-nonref-freq",0.,1.);
     }
 
     const pos_range& rr(opt.user_report_range);

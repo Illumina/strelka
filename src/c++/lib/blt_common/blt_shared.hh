@@ -67,18 +67,6 @@ struct blt_options
         return (is_samtools_ref_set);
     }
 
-    bool
-    is_nonref_test() const
-    {
-        return (! nonref_test_filename.empty());
-    }
-
-    bool
-    is_nonref_sites() const
-    {
-        return (! nonref_sites_filename.empty());
-    }
-
     virtual
     bool
     is_compute_germline_scoring_metrics() const
@@ -152,13 +140,6 @@ struct blt_options
     //
     const double het_bias_inc_fudge = 0.0001;
     const double het_bias_max_ratio_inc = 0.05 + het_bias_inc_fudge;
-
-    double nonref_variant_rate = 0.000001;
-    double min_nonref_freq = 0;
-    double nonref_site_error_rate = 0.0001;
-    double nonref_site_error_decay_freq = 0.01;
-    std::string nonref_test_filename;
-    std::string nonref_sites_filename;
 
     bool is_max_input_depth = false;
     unsigned max_input_depth = 0;

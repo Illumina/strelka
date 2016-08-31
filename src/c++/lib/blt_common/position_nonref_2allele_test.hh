@@ -73,11 +73,20 @@ label(const index_t i)
 /// inevitably call higher frequency germline variation (without
 /// correct priors) if present.
 ///
+/// \param nonref_variant_rate The expected non-reference variant frequency (suggested start point: 0.000001)
+/// \param min_nonref_freq The minimum non-reference allele frequency considered
+/// \param nonref_site_error_rate The expected rate of erroneous non-reference allele sites applied to the nonref model. At error sites a nonref allele is expected in the frequency range [0,decay_freq], with a probability that linearly decays to zero at decay_freq. (suggested start point: 0.0001)
+/// \param nonref_site_error_decay_freq The decay_freq used for the site-error state as described above. (suggested start point 0.01)
+///
 void
-position_nonref_2allele_test(const snp_pos_info& pi,
-                             const blt_options& opt,
-                             const bool is_always_test,
-                             nonref_test_call& nrc);
+position_nonref_2allele_test(
+    const snp_pos_info& pi,
+    const double nonref_variant_rate,
+    const double min_nonref_freq,
+    const double nonref_site_error_rate,
+    const double nonref_site_error_decay_freq,
+    const bool /*is_always_test*/,
+    nonref_test_call& nrc);
 
 
 void

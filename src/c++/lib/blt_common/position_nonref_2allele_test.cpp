@@ -73,12 +73,15 @@ private:
 
 
 void
-position_nonref_2allele_test(const snp_pos_info& pi,
-                             const blt_options& opt,
-                             const bool /*is_always_test*/,
-                             nonref_test_call& nrc)
+position_nonref_2allele_test(
+    const snp_pos_info& pi,
+    const double nonref_variant_rate,
+    const double min_nonref_freq,
+    const double nonref_site_error_rate,
+    const double nonref_site_error_decay_freq,
+    const bool /*is_always_test*/,
+    nonref_test_call& nrc)
 {
-
     static const bool is_mle_freq(false);
 
     if (pi.get_ref_base()=='N') return;
@@ -145,8 +148,8 @@ position_nonref_2allele_test(const snp_pos_info& pi,
     sample_uniform_range(0.,1.,nlf);
     //sample_uniform_range(min_nonref_freq,1.,nlf);
 
-    lhood[NR2TEST::NONREF_MF] = integrate_ln_sparsefunc(sf, opt.min_nonref_freq, 1,1,1);
-    lhood[NR2TEST::NONREF_MF_NOISE] = integrate_ln_sparsefunc(sf, 0, opt.nonref_site_error_decay_freq,1,0);
+    lhood[NR2TEST::NONREF_MF] = integrate_ln_sparsefunc(sf, min_nonref_freq, 1,1,1);
+    lhood[NR2TEST::NONREF_MF_NOISE] = integrate_ln_sparsefunc(sf, 0, nonref_site_error_decay_freq,1,0);
 
     static const blt_float_t neginf(-std::numeric_limits<blt_float_t>::infinity());
     lhood[NR2TEST::NONREF_OTHER] = neginf;
@@ -157,12 +160,12 @@ position_nonref_2allele_test(const snp_pos_info& pi,
 
     // this goes in here just in case someone cranks both parameters up near 1:
     //
-    const double nonref_variant_rate_used = opt.nonref_variant_rate*(1-opt.nonref_site_error_rate);
+    const double nonref_variant_rate_used = nonref_variant_rate*(1-nonref_site_error_rate);
 
     blt_float_t prior[NR2TEST::SIZE];
-    prior[NR2TEST::REF] = log1p_switch(-(nonref_variant_rate_used+opt.nonref_site_error_rate));
+    prior[NR2TEST::REF] = log1p_switch(-(nonref_variant_rate_used+nonref_site_error_rate));
     prior[NR2TEST::NONREF_MF] = std::log(nonref_variant_rate_used/3);
-    prior[NR2TEST::NONREF_MF_NOISE] = std::log(opt.nonref_site_error_rate);
+    prior[NR2TEST::NONREF_MF_NOISE] = std::log(nonref_site_error_rate);
     prior[NR2TEST::NONREF_OTHER] = std::log(2*nonref_variant_rate_used/3);
 
     double pprob[NR2TEST::SIZE];

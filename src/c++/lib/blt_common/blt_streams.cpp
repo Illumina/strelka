@@ -124,41 +124,6 @@ write_file_audit(const blt_options& opt,
 
 
 
-
-static
-void
-setup_nonref_output(const blt_options& opt,
-                    const prog_info& pinfo,
-                    std::unique_ptr<std::ostream>& osptr,
-                    const char* filename,
-                    const char* label)
-{
-    const char* const cmdline(opt.cmdline.c_str());
-
-    std::ofstream* fosptr(new std::ofstream);
-    osptr.reset(fosptr);
-    std::ofstream& fos(*fosptr);
-    open_ofstream(pinfo,filename,label,fos);
-
-    fos << "# ** " << pinfo.name() << " nonref allele test file **\n";
-    write_file_audit(opt,pinfo,cmdline,fos);
-    fos << "#$ COLUMNS seq_name pos bcalls_used bcalls_filt ref Q(snv) max_gt Q(max_gt)";
-
-    for (unsigned b(0); b<N_BASE; ++b)
-    {
-        fos << " " << id_to_base(b) << "_used";
-    }
-
-    for (unsigned b(0); b<N_BASE; ++b)
-    {
-        fos << " " << id_to_base(b) << "_meanQ";
-    }
-
-    fos << "\n";
-}
-
-
-
 void
 blt_streams::
 write_file_audit(const blt_options& opt,
@@ -224,39 +189,5 @@ blt_streams(
         fos << "# ** " << pinfo.name() << " counts file **\n";
         write_file_audit(opt,pinfo,cmdline,fos);
         fos << "#$ COLUMNS pos A_used C_used G_used T_used unused\n";
-    }
-
-    if (opt.is_nonref_test())
-    {
-        setup_nonref_output(opt,pinfo,_nonref_test_osptr,opt.nonref_test_filename.c_str(),"nonref test");
-    }
-
-    if (opt.is_nonref_sites())
-    {
-        setup_nonref_output(opt,pinfo,_nonref_sites_osptr,opt.nonref_sites_filename.c_str(),"nonref sites");
-    }
-
-    if (opt.is_nonref_sites())
-    {
-        std::ofstream* fosptr(new std::ofstream);
-        _nonref_test_osptr.reset(fosptr);
-        std::ofstream& fos(*fosptr);
-        open_ofstream(pinfo,opt.nonref_test_filename,"nonref test",fos);
-
-        fos << "# ** " << pinfo.name() << " nonref allele test file **\n";
-        write_file_audit(opt,pinfo,cmdline,fos);
-        fos << "#$ COLUMNS seq_name pos bcalls_used bcalls_filt ref Q(snv) max_gt Q(max_gt)";
-
-        for (unsigned b(0); b<N_BASE; ++b)
-        {
-            fos << " " << id_to_base(b) << "_used";
-        }
-
-        for (unsigned b(0); b<N_BASE; ++b)
-        {
-            fos << " " << id_to_base(b) << "_meanQ";
-        }
-
-        fos << "\n";
     }
 }
