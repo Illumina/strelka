@@ -175,46 +175,38 @@ reset()
 
 void
 starling_pos_processor::
-process_pos_snp_single_sample(
-    const pos_t pos,
-    const unsigned sample_no)
+process_pos_snp(const pos_t pos)
 {
     try
     {
-        /// TODO rm this legacy option:
-        assert(_opt.gvcf.is_gvcf_output());
-
         if (_opt.is_bsnp_diploid())
         {
-            process_pos_snp_single_sample_impl(pos,sample_no);
+            process_pos_snp_digt(pos);
         }
         else
         {
-            process_pos_snp_single_sample_continuous(pos,sample_no);
+            process_pos_snp_continuous(pos);
         }
 
     }
     catch (...)
     {
-        log_os << "Exception caught in starling_pos_processor_base.process_pos_snp_single_sample_impl() while processing chromosome position: " << (pos+1) << "\n"
-               << "snp_pos_info:\n";
-        log_os << sample(sample_no).bc_buff.get_pos(pos) << "\n";
+        log_os << "Exception caught in starling_pos_processor_base.process_pos_snp() while processing chromosome position: " << (pos+1) << "\n";
         throw;
     }
 }
 
+
+
 void
 starling_pos_processor::
-process_pos_snp_single_sample_continuous(
-    const pos_t pos,
-    const unsigned sample_no)
+process_pos_snp_continuous(const pos_t pos)
 {
-    if (sample_no!=0) return;
-
+    const unsigned sampleIndex(0);
     /// TODO STREL-125 generalize to multisample
     const unsigned sampleCount(1);
 
-    sample_info& sif(sample(sample_no));
+    sample_info& sif(sample(sampleIndex));
 
     const CleanedPileup& cpi(sif.cpi);
     const snp_pos_info& pi(cpi.rawPileup());
@@ -271,27 +263,9 @@ process_pos_snp_single_sample_continuous(
 
 void
 starling_pos_processor::
-process_pos_snp_single_sample_impl(
-    const pos_t pos,
-    const unsigned sampleIndex)
+process_pos_snp_digt(const pos_t pos)
 {
-    // TODO:
-    //
-    // note this might not matter wrt larger changes taking place, but here goes:
-    //
-    // change filters to support vcf concept of 1..N filters which are added to the genotype information
-    //
-    // generalize site tests with an object
-    //
-    // genotype_test {
-    //    ctor(); // setup any cached values
-    //
-    //    test(site_info);
-    //
-    //    write()?? (do we need to even bother with this?)
-    // }
-    //
-
+    const unsigned sampleIndex(0);
     sample_info& sif(sample(sampleIndex));
 
     const CleanedPileup& cpi(sif.cpi);
@@ -473,9 +447,6 @@ void
 starling_pos_processor::
 process_pos_indel(const pos_t pos)
 {
-    /// TODO remove this legacy option, germline calling is *always and only* gvcf output now:
-    assert(_opt.gvcf.is_gvcf_output());
-
     if (_opt.is_bsnp_diploid())
     {
         process_pos_indel_digt(pos);

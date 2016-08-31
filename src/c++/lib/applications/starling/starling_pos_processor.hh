@@ -67,24 +67,21 @@ private:
     void
     process_pos_variants_impl(const pos_t pos) override
     {
+        /// TODO rm this legacy option:
+        assert(_opt.gvcf.is_gvcf_output());
+
         process_pos_indel(pos);
-        process_pos_snp_single_sample(pos,0);
+        process_pos_snp(pos);
     }
 
     void
-    process_pos_snp_single_sample(
-        const pos_t pos,
-        const unsigned sample_no);
+    process_pos_snp(const pos_t pos);
 
     void
-    process_pos_snp_single_sample_impl(
-        const pos_t pos,
-        const unsigned sampleIndex);
+    process_pos_snp_digt(const pos_t pos);
 
     void
-    process_pos_snp_single_sample_continuous(
-        const pos_t pos,
-        const unsigned sample_no);
+    process_pos_snp_continuous(const pos_t pos);
 
     void
     process_pos_indel(const pos_t pos);
