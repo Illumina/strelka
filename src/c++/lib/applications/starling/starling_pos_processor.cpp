@@ -252,7 +252,7 @@ process_pos_snp_continuous(const pos_t pos)
         if (not locusPtr->altAlleles.empty())
         {
             isSiteAddedForPosition = true;
-//            _gvcfer->add_site(std::move(si));
+            _gvcfer->add_site(std::move(locusPtr));
         }
     };
 
@@ -337,7 +337,7 @@ process_pos_snp_digt(const pos_t pos)
     }
 
     //Add site to gvcf
-//    _gvcfer->add_site(std::move(si));
+    _gvcfer->add_site(std::move(locusPtr));
 }
 
 
