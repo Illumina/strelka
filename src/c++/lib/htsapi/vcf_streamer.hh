@@ -30,8 +30,8 @@
 
 struct vcf_streamer : public hts_streamer
 {
-    /// \param isRequireNormalized - if true and exception is thrown for any input variant records which are not
-    ///                              left shifted
+    /// \param isRequireNormalized[in] if true an exception is thrown for any input variant records which are not
+    ///                                left shifted
     vcf_streamer(
         const char* filename,
         const char* region,
@@ -60,11 +60,9 @@ struct vcf_streamer : public hts_streamer
     validateBamHeaderChromSync(
         const bam_hdr_t& header) const;
 
-    void requireNormalized() {_isRequireNormalized = true;}
-    void noRequireNormalized() {_isRequireNormalized = false;}
-
 private:
     bcf_hdr_t* _hdr;
     vcf_record _vcfrec;
     bool _isRequireNormalized;
 };
+
