@@ -226,13 +226,9 @@ process_pos_snp_digt(
     // check whether we're in a haploid region:
     locusPtr->dgt.ploidy=(get_ploidy(pos, tmpSampleIndex));
 
-    if (_opt.is_bsnp_diploid())
-    {
-        _dopt.pdcaller().position_snp_call_pprob_digt(
-            _opt,good_epi,locusPtr->dgt, _opt.is_all_sites());
-    }
+    _dopt.pdcaller().position_snp_call_pprob_digt(
+        _opt,good_epi,locusPtr->dgt, _opt.is_all_sites());
 
-    //    const bool is_nf_snp(is_snp && (! is_filter_snp));
     if (isForcedOutput or locusPtr->dgt.is_snp())
     {
         if (_opt.is_compute_hapscore)
