@@ -177,17 +177,4 @@ blt_streams(
 
         write_audit(opt,pinfo,cmdline,fos);
     }
-
-    if (opt.is_counts)
-    {
-        std::ofstream* fosptr(new std::ofstream);
-        _counts_osptr.reset(fosptr);
-        std::ofstream& fos(*fosptr);
-        open_ofstream(pinfo,opt.counts_filename,"counts",fos);
-
-
-        fos << "# ** " << pinfo.name() << " counts file **\n";
-        write_file_audit(opt,pinfo,cmdline,fos);
-        fos << "#$ COLUMNS pos A_used C_used G_used T_used unused\n";
-    }
 }

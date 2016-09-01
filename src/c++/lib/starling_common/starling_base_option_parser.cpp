@@ -164,7 +164,6 @@ write_starling_legacy_options(
        "                      mapping score of zero in both reads of the pair\n"
        " -include-singleton - Include paired reads with unmapped mates\n"
        " -include-anomalous - Include paired reads which are not part of a 'proper pair' (anomalous orientation or insert size)\n"
-       " -counts file       - Write observation counts for every position to 'file'\n"
        " -print-evidence    - Print the observed data at single site events (does not include indels)\n"
        " -print-all-site-evidence\n"
        "                    - Print the observed data for all sites (does not include indels)\n"

@@ -36,34 +36,6 @@
 
 
 
-static
-void
-report_counts(
-    const snp_pos_info& pi,
-    const unsigned n_unused_calls,
-    const pos_t output_pos,
-    std::ostream& os)
-{
-    unsigned base_count[N_BASE];
-
-    for (unsigned i(0); i<N_BASE; ++i) base_count[i] = 0;
-
-    for (const auto& bc : pi.calls)
-    {
-        assert(bc.base_id!=BASE_ID::ANY);
-        base_count[bc.base_id]++;
-    }
-
-    os << output_pos << '\t';
-    for (unsigned i(0); i<N_BASE; ++i)
-    {
-        os << base_count[i] << '\t';
-    }
-    os << n_unused_calls << '\n';
-}
-
-
-
 starling_pos_processor::
 starling_pos_processor(
     const starling_options& opt,
@@ -254,13 +226,6 @@ process_pos_snp_digt(
     // check whether we're in a haploid region:
     locusPtr->dgt.ploidy=(get_ploidy(pos, tmpSampleIndex));
 
-    const pos_t output_pos(pos+1);
-
-    if (_opt.is_counts)
-    {
-        report_counts(good_pi,locusPtr->n_unused_calls,output_pos,*_streams.counts_osptr());
-    }
-
     if (_opt.is_bsnp_diploid())
     {
         _dopt.pdcaller().position_snp_call_pprob_digt(
@@ -326,11 +291,6 @@ process_pos_snp_continuous(const pos_t pos)
     templateLocus.n_unused_calls = cpi.n_unused_calls();
     // hpol filter
     templateLocus.hpol = get_snp_hpol_size(pos, _ref);
-
-    if (_opt.is_counts)
-    {
-        report_counts(good_pi, templateLocus.n_unused_calls, templateLocus.pos + 1, *_streams.counts_osptr());
-    }
 
     // report one locus (ie. vcf record) per alt allele in continuous mode
     bool isSiteAddedForPosition(false);

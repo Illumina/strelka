@@ -106,7 +106,6 @@ struct blt_options
     bool is_max_win_mismatch = false;
     unsigned max_win_mismatch = 0;
     unsigned max_win_mismatch_flank_size = 0;
-    bool is_counts = false;
     bool is_print_evidence = false;
     bool is_print_all_site_evidence = false;
     pos_range user_report_range;   // requested report range
@@ -116,8 +115,6 @@ struct blt_options
 
     bool is_include_singleton = false;
     bool is_include_anomalous = false;
-
-    std::string counts_filename;
 
     bool is_report_range_ref = false;
     int used_allele_count_min_qscore = 0; // print the above with a qscore cutoff...

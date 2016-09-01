@@ -42,10 +42,6 @@ struct blt_streams
     {
         return _report_osptr.get();
     }
-    std::ostream* counts_osptr() const
-    {
-        return _counts_osptr.get();
-    }
 
 protected:
 
@@ -78,5 +74,4 @@ protected:
 
 private:
     std::unique_ptr<std::ostream> _report_osptr;
-    std::unique_ptr<std::ostream> _counts_osptr;
 };

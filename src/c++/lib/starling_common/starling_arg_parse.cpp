@@ -121,10 +121,6 @@ legacy_starling_arg_parse(
         {
             set_arg(i,ad,is_min_pascore_set,opt.min_mapping_quality);
         }
-        else if (ad.argstr[i]=="-counts")
-        {
-            set_filename_arg(i,ad,opt.is_counts,opt.counts_filename);
-        }
         else if (ad.argstr[i]=="-bam-seq-name")
         {
             bool is_bam_seq_name(! opt.bam_seq_name.empty());
