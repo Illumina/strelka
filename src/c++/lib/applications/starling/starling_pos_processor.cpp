@@ -207,86 +207,36 @@ process_pos_snp(const pos_t pos)
 
 
 
+static
 void
-starling_pos_processor::
-process_pos_snp_continuous(const pos_t pos)
+updateSnvLocusWithSampleInfo(
+    const unsigned ploidy,
+    const unsigned sampleIndex,
+    GermlineDiploidSiteLocusInfo& locus)
 {
-    const unsigned sampleCount(getSampleCount());
-    const bool isForcedOutput(is_forced_output_pos(pos));
-
-    // end sample generalization
-    /// TODO STREL-125 generalize to multisample
-    assert(sampleCount == 1);
-    const unsigned sampleIndex(0);
-
-    sample_info& sif(sample(sampleIndex));
-
-    const CleanedPileup& cpi(sif.cpi);
-    const snp_pos_info& pi(cpi.rawPileup());
-
-    _pileupCleaner.CleanPileupErrorProb(sif.cpi);
-
-    const snp_pos_info& good_pi(cpi.cleanedPileup());
-
-    GermlineContinuousSiteLocusInfo templateLocus(sampleCount, pos, pi.get_ref_base(), good_pi,
-                                            _opt.used_allele_count_min_qscore, _opt.min_het_vf, isForcedOutput);
-
-    templateLocus.n_used_calls = cpi.n_used_calls();
-    templateLocus.n_unused_calls = cpi.n_unused_calls();
-    // hpol filter
-    templateLocus.hpol = get_snp_hpol_size(pos, _ref);
-
-    if (_opt.is_counts)
-    {
-        report_counts(good_pi, templateLocus.n_unused_calls, templateLocus.pos + 1, *_streams.counts_osptr());
-    }
-
-    // report one locus (ie. vcf record) per alt allele in continuous mode
-    bool isSiteAddedForPosition(false);
-
-    auto addBase = [&](const uint8_t baseId, const bool isForcedOutputUsed)
-    {
-        std::unique_ptr<GermlineContinuousSiteLocusInfo> locusPtr(new GermlineContinuousSiteLocusInfo(templateLocus));
-        starling_continuous_variant_caller::position_snp_call_continuous(_opt, good_pi, baseId, isForcedOutputUsed,
-                                                                         (GermlineContinuousSiteLocusInfo&) *locusPtr);
-        if (not locusPtr->altAlleles.empty())
-        {
-            isSiteAddedForPosition = true;
-            _gvcfer->add_site(std::move(locusPtr));
-        }
-    };
-
-    for (unsigned baseId(0); baseId < N_BASE; ++baseId)
-    {
-        addBase(baseId,isForcedOutput);
-    }
-
-    /// ensure that at least one base is added for site
-    if (not isSiteAddedForPosition)
-    {
-        const uint8_t refBaseId = base_to_id(templateLocus.ref);
-        addBase(refBaseId,true);
-    }
+    auto& sampleInfo(locus.getSample(sampleIndex));
+    sampleInfo.setPloidy(ploidy);
 }
 
 
 
 void
 starling_pos_processor::
-process_pos_snp_digt(const pos_t pos)
+process_pos_snp_digt(
+    const pos_t pos)
 {
     const unsigned sampleCount(getSampleCount());
     const bool isForcedOutput(is_forced_output_pos(pos));
 
     /// end multi-sample generalization:
     assert(sampleCount == 1);
-    const unsigned sampleIndex(0);
-    sample_info& sif(sample(sampleIndex));
+    const unsigned tmpSampleIndex(0);
+    sample_info& tmpSif(sample(tmpSampleIndex));
 
-    const CleanedPileup& cpi(sif.cpi);
+    const CleanedPileup& cpi(tmpSif.cpi);
     const snp_pos_info& pi(cpi.rawPileup());
 
-    _pileupCleaner.CleanPileupErrorProb(sif.cpi);
+    _pileupCleaner.CleanPileupErrorProb(tmpSif.cpi);
 
     const snp_pos_info& good_pi(cpi.cleanedPileup());
     const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
@@ -295,8 +245,14 @@ process_pos_snp_digt(const pos_t pos)
     locusPtr->n_used_calls=cpi.n_used_calls();
     locusPtr->n_unused_calls=cpi.n_unused_calls();
 
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+    {
+        const unsigned ploidy(get_ploidy(pos, sampleIndex));
+        updateSnvLocusWithSampleInfo(ploidy, sampleIndex, *locusPtr);
+    }
+
     // check whether we're in a haploid region:
-    locusPtr->dgt.ploidy=(get_ploidy(pos, sampleIndex));
+    locusPtr->dgt.ploidy=(get_ploidy(pos, tmpSampleIndex));
 
     const pos_t output_pos(pos+1);
 
@@ -338,6 +294,70 @@ process_pos_snp_digt(const pos_t pos)
 
     //Add site to gvcf
     _gvcfer->add_site(std::move(locusPtr));
+}
+
+
+
+void
+starling_pos_processor::
+process_pos_snp_continuous(const pos_t pos)
+{
+    const unsigned sampleCount(getSampleCount());
+    const bool isForcedOutput(is_forced_output_pos(pos));
+
+    // end sample generalization
+    /// TODO STREL-125 generalize to multisample
+    assert(sampleCount == 1);
+    const unsigned sampleIndex(0);
+
+    sample_info& sif(sample(sampleIndex));
+
+    const CleanedPileup& cpi(sif.cpi);
+    const snp_pos_info& pi(cpi.rawPileup());
+
+    _pileupCleaner.CleanPileupErrorProb(sif.cpi);
+
+    const snp_pos_info& good_pi(cpi.cleanedPileup());
+
+    GermlineContinuousSiteLocusInfo templateLocus(sampleCount, pos, pi.get_ref_base(), good_pi,
+                                                  _opt.used_allele_count_min_qscore, _opt.min_het_vf, isForcedOutput);
+
+    templateLocus.n_used_calls = cpi.n_used_calls();
+    templateLocus.n_unused_calls = cpi.n_unused_calls();
+    // hpol filter
+    templateLocus.hpol = get_snp_hpol_size(pos, _ref);
+
+    if (_opt.is_counts)
+    {
+        report_counts(good_pi, templateLocus.n_unused_calls, templateLocus.pos + 1, *_streams.counts_osptr());
+    }
+
+    // report one locus (ie. vcf record) per alt allele in continuous mode
+    bool isSiteAddedForPosition(false);
+
+    auto addBase = [&](const uint8_t baseId, const bool isForcedOutputUsed)
+    {
+        std::unique_ptr<GermlineContinuousSiteLocusInfo> locusPtr(new GermlineContinuousSiteLocusInfo(templateLocus));
+        starling_continuous_variant_caller::position_snp_call_continuous(_opt, good_pi, baseId, isForcedOutputUsed,
+                                                                         (GermlineContinuousSiteLocusInfo&) *locusPtr);
+        if (not locusPtr->altAlleles.empty())
+        {
+            isSiteAddedForPosition = true;
+            _gvcfer->add_site(std::move(locusPtr));
+        }
+    };
+
+    for (unsigned baseId(0); baseId < N_BASE; ++baseId)
+    {
+        addBase(baseId,isForcedOutput);
+    }
+
+    /// ensure that at least one base is added for site
+    if (not isSiteAddedForPosition)
+    {
+        const uint8_t refBaseId = base_to_id(templateLocus.ref);
+        addBase(refBaseId,true);
+    }
 }
 
 
