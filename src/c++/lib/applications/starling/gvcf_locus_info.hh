@@ -863,12 +863,6 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     }
 
     bool
-    is_deletion() const
-    {
-        return ((not isRefUnknown()) && allele.is_used_covered && (!allele.is_zero_ploidy) && (is_nonref()));
-    }
-
-    bool
     is_qual() const
     {
         return ((not isRefUnknown()) && allele.is_used_covered && (!allele.is_zero_ploidy) && (is_nonref()));
