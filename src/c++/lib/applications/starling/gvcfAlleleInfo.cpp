@@ -83,17 +83,17 @@ operator<<(
 
 std::ostream&
 operator<<(std::ostream& os,
-           const GermlineDiploidSiteAlleleInfo& smod)
+           const GermlineDiploidSiteAlleleInfo& allele)
 {
-    os << static_cast<GermlineVariantAlleleInfo>(smod) << '\n';
+    os << static_cast<GermlineVariantAlleleInfo>(allele) << '\n';
 
-    os << " is_covered: " << smod.is_covered;
-    os << " is_used_coverage: " << smod.is_used_covered;
-    os << " is_zero_ploidy: " << smod.is_zero_ploidy;
+    os << " is_covered: " << allele.is_covered;
+    os << " is_used_coverage: " << allele.is_used_covered;
+    os << " is_zero_ploidy: " << allele.is_zero_ploidy;
 
-    if (smod.modified_gt != MODIFIED_SITE_GT::NONE)
+    if (allele.modified_gt != MODIFIED_SITE_GT::NONE)
     {
-        os << " modgt: " << MODIFIED_SITE_GT::get_label(smod.modified_gt);
+        os << " modgt: " << MODIFIED_SITE_GT::get_label(allele.modified_gt);
     }
 
     return os;
@@ -104,10 +104,10 @@ operator<<(std::ostream& os,
 std::ostream&
 operator<<(
     std::ostream& os,
-    const GermlineIndelAlleleInfo& shi)
+    const GermlineIndelAlleleInfo& allele)
 {
-    os << static_cast<GermlineVariantAlleleInfo>(shi) << '\n';
-    os << "IndelKey: " << shi.indelKey << "\n";
-    os << "AleleReportInfo: " << shi.indelReportInfo << "\n";
+    os << static_cast<GermlineVariantAlleleInfo>(allele) << '\n';
+    os << "IndelKey: " << allele.indelKey << "\n";
+    os << "AleleReportInfo: " << allele.indelReportInfo << "\n";
     return os;
 }

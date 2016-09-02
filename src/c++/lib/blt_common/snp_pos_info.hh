@@ -148,7 +148,7 @@ struct snp_pos_info
         is_n_ref_warn=false;
         calls.clear();
         tier2_calls.clear();
-        n_spandel=0;
+        spanningDeletionReadCount=0;
         n_submapped=0;
         mapqTracker.clear();
         hap_set.clear();
@@ -270,7 +270,7 @@ public:
     std::vector<base_call> calls;
     std::vector<base_call> tier2_calls; // call not passing stringent quality criteria
     // number of spanning deletions crossing the site:
-    unsigned n_spandel;
+    unsigned spanningDeletionReadCount;
 
     // number of submapped reads crossing the site.
     // note this could be usable,filtered or spanning deletion,

@@ -102,7 +102,7 @@ get_single_sample_scoring_features(
         // {2,N_FDP_RATE},{3,T_FDP_RATE},{4,N_SDP_RATE},
         // {5,T_SDP_RATE},{6,N_DP_RATE},{7,TIER1_ALLELE_RATE}
         const double FDP_ratio(safeFrac(tier1_cpi.n_unused_calls(), tier1_cpi.n_calls()));
-        const double SDP_ratio(safeFrac(tier1_cpi.rawPileup().n_spandel, tier1_cpi.n_calls()+tier1_cpi.rawPileup().n_spandel));
+        const double SDP_ratio(safeFrac(tier1_cpi.rawPileup().spanningDeletionReadCount, tier1_cpi.n_calls()+tier1_cpi.rawPileup().spanningDeletionReadCount));
 
         smod.dfeatures.set((isNormalSample ? SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::N_FDP_RATE : SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::T_FDP_RATE), FDP_ratio);
         smod.dfeatures.set((isNormalSample ? SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::N_SDP_RATE : SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::T_SDP_RATE), SDP_ratio);
@@ -272,7 +272,7 @@ write_vcf_sample_info(
        << ':'
        << tier1_cpi.n_unused_calls()
        << ':'
-       << tier1_cpi.rawPileup().n_spandel
+       << tier1_cpi.rawPileup().spanningDeletionReadCount
        << ':'
        << tier1_cpi.rawPileup().n_submapped;
 
@@ -339,8 +339,8 @@ write_vcf_somatic_snv_genotype_strand_grid(
         }
 
         {
-            const unsigned normalSDP(n1_epd.rawPileup().n_spandel);
-            const unsigned tumorSDP(t1_epd.rawPileup().n_spandel);
+            const unsigned normalSDP(n1_epd.rawPileup().spanningDeletionReadCount);
+            const unsigned tumorSDP(t1_epd.rawPileup().spanningDeletionReadCount);
             const unsigned normalSpanTot(normalDP + normalSDP);
             const unsigned tumorSpanTot(tumorDP + tumorSDP);
 

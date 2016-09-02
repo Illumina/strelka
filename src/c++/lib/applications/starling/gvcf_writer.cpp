@@ -589,10 +589,10 @@ write_site_record(
     const auto& allele(locus.altAlleles.front());
 
     std::vector<uint8_t> altOrder;
-    const bool is_no_alt(allele._base == ref_base_id);
+    const bool is_no_alt(allele.base == ref_base_id);
     if (! is_no_alt)
     {
-        altOrder.push_back(allele._base);
+        altOrder.push_back(allele.base);
     }
 
     std::ostream& os(*_osptr);
@@ -609,7 +609,7 @@ write_site_record(
     if (is_no_alt)
         os << ".";
     else
-        os << id_to_base(allele._base);
+        os << id_to_base(allele.base);
     os << '\t';
 
     // QUAL:

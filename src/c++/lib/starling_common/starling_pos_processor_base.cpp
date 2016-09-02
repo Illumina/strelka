@@ -1538,7 +1538,7 @@ process_pos_site_stats(
     static const bool is_include_tier2(false);
     _pileupCleaner.CleanPileupFilter(pi,is_include_tier2,sif.cpi);
 
-    const unsigned n_spandel(pi.n_spandel);
+    const unsigned n_spandel(pi.spanningDeletionReadCount);
     const unsigned n_submapped(pi.n_submapped);
 
     sif.ss.update(sif.cpi.n_calls());

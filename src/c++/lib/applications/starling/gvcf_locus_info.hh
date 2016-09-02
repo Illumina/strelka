@@ -709,7 +709,7 @@ struct GermlineSiteLocusInfo : public LocusInfo
         isForcedOutput = initIsForcedOutput;
         good_pi.get_known_counts(fwd_counts,used_allele_count_min_qscore,true);
         good_pi.get_known_counts(rev_counts,used_allele_count_min_qscore,false);
-        spanning_deletions = good_pi.n_spandel;
+        spanning_deletions = good_pi.spanningDeletionReadCount;
     }
 
     explicit
@@ -930,15 +930,15 @@ struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
         auto ref_id = base_to_id(ref);
         return altAlleles.end() !=
                std::find_if(altAlleles.begin(), altAlleles.end(),
-                            [&](const GermlineContinuousSiteAlleleInfo& call)
+                            [&](const GermlineContinuousSiteAlleleInfo& allele)
         {
-            return call._base != ref_id;
+            return allele.base != ref_id;
         });
     }
 
     const char* get_gt(const GermlineContinuousSiteAlleleInfo& call) const
     {
-        if (call._base == base_to_id(ref))
+        if (call.base == base_to_id(ref))
             return "0/0";
         else if (call.variant_frequency() >= (1 -_min_het_vf))
             return "1/1";

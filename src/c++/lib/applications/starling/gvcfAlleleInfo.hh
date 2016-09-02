@@ -108,8 +108,7 @@ struct GermlineVariantAlleleInfo : public PolymorphicObject
     bool isForcedOutput = false;
 };
 
-
-std::ostream& operator<<(std::ostream& os,const GermlineVariantAlleleInfo& shmod);
+std::ostream& operator<<(std::ostream& os,const GermlineVariantAlleleInfo& allele);
 
 
 /// restrict to the case where variant is indel
@@ -133,7 +132,7 @@ struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
     const AlleleReportInfo indelReportInfo;
 };
 
-std::ostream& operator<<(std::ostream& os,const GermlineIndelAlleleInfo& shi);
+std::ostream& operator<<(std::ostream& os,const GermlineIndelAlleleInfo& allele);
 
 
 namespace MODIFIED_SITE_GT
@@ -208,12 +207,11 @@ struct GermlineDiploidSiteAlleleInfo : public GermlineVariantAlleleInfo
 /// restrict to the case where variant is site/SNV and calling model is continuous
 struct GermlineContinuousSiteAlleleInfo : public GermlineVariantAlleleInfo
 {
-    GermlineContinuousSiteAlleleInfo(unsigned totalDepth, unsigned alleleDepth, BASE_ID::index_t base)
+    GermlineContinuousSiteAlleleInfo(unsigned totalDepth, unsigned alleleDepth, BASE_ID::index_t initBase)
         : _totalDepth(totalDepth)
         , _alleleDepth(alleleDepth)
-        , _base(base)
-    {
-    }
+        , base(initBase)
+    {}
 
     double variant_frequency() const
     {
@@ -222,8 +220,7 @@ struct GermlineContinuousSiteAlleleInfo : public GermlineVariantAlleleInfo
 
     unsigned _totalDepth;
     unsigned _alleleDepth;
-    BASE_ID::index_t _base;
+    BASE_ID::index_t base;
 };
 
-
-std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteAlleleInfo& smod);
+std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteAlleleInfo& allele);
