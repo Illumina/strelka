@@ -93,11 +93,11 @@ add_site_modifiers(
 
 void
 variant_prefilter_stage::
-process(std::unique_ptr<GermlineSiteLocusInfo> siteLocusPtr)
+process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr)
 {
-    if (dynamic_cast<GermlineDiploidSiteLocusInfo*>(siteLocusPtr.get()) != nullptr)
+    if (dynamic_cast<GermlineDiploidSiteLocusInfo*>(locusPtr.get()) != nullptr)
     {
-        auto si(downcast<GermlineDiploidSiteLocusInfo>(std::move(siteLocusPtr)));
+        auto si(downcast<GermlineDiploidSiteLocusInfo>(std::move(locusPtr)));
 
         add_site_modifiers(*si, _model);
         if (si->dgt.is_haploid())
@@ -123,7 +123,7 @@ process(std::unique_ptr<GermlineSiteLocusInfo> siteLocusPtr)
     }
     else
     {
-        auto si(downcast<GermlineContinuousSiteLocusInfo>(std::move(siteLocusPtr)));
+        auto si(downcast<GermlineContinuousSiteLocusInfo>(std::move(locusPtr)));
         for (auto& altAllele : si->altAlleles)
         {
             _model.default_classify_site(*si, altAllele);
@@ -137,19 +137,19 @@ process(std::unique_ptr<GermlineSiteLocusInfo> siteLocusPtr)
 
 void
 variant_prefilter_stage::
-process(std::unique_ptr<GermlineIndelLocusInfo> info)
+process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr)
 {
     // we can't handle breakends at all right now:
-    for (const auto& altAllele : info->getIndelAlleles())
+    for (const auto& altAllele : locusPtr->getIndelAlleles())
     {
         if (altAllele.indelKey.is_breakpoint()) return;
     }
 
-    // add filter for all indels in no-ploid regions:
-    const unsigned sampleCount(info->getSampleCount());
+    // add filter for all indels in 'no-ploid' regions:
+    const unsigned sampleCount(locusPtr->getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
-        LocusSampleInfo& sampleInfo(info->getSample(sampleIndex));
+        LocusSampleInfo& sampleInfo(locusPtr->getSample(sampleIndex));
         if (sampleInfo.isPloidyConflict())
         {
             sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
@@ -157,14 +157,14 @@ process(std::unique_ptr<GermlineIndelLocusInfo> info)
     }
 
     // apply filtration/EVS model:
-    if (dynamic_cast<GermlineContinuousIndelLocusInfo*>(info.get()) != nullptr)
+    if (dynamic_cast<GermlineContinuousIndelLocusInfo*>(locusPtr.get()) != nullptr)
     {
-        _model.default_classify_indel(*info);
+        _model.default_classify_indel_locus(*locusPtr);
     }
     else
     {
-        _model.classify_indel(dynamic_cast<GermlineDiploidIndelLocusInfo&>(*info));
+        _model.classify_indel(dynamic_cast<GermlineDiploidIndelLocusInfo&>(*locusPtr));
     }
 
-    _sink->process(std::move(info));
+    _sink->process(std::move(locusPtr));
 }

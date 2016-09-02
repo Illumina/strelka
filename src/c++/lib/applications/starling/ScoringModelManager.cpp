@@ -160,10 +160,16 @@ classify_indel_impl(
 
     if (isVariantUsableInEVSModel && isEVSIndelModel())
     {
+        const unsigned allSampleLocusDepth(locus.getTotalReadDepth());
         for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
             auto& sampleInfo(locus.getSample(sampleIndex));
-            if (not sampleInfo.isVariant()) continue;
+            if (not sampleInfo.isVariant())
+            {
+                // revert to hard-filters for this sample:
+                default_classify_indel(sampleIndex, allSampleLocusDepth, locus);
+                continue;
+            }
 
             static const bool isComputeDevelopmentFeatures(false);
             const bool isUniformDepthExpected(_dopt.is_max_depth());
@@ -187,7 +193,7 @@ classify_indel_impl(
     }
     else
     {
-        default_classify_indel(locus);
+        default_classify_indel_locus(locus);
     }
 }
 
@@ -251,29 +257,21 @@ default_classify_site(
 void
 ScoringModelManager::
 default_classify_indel(
+    const unsigned sampleIndex,
+    const unsigned allSampleLocusDepth,
     GermlineIndelLocusInfo& locus) const
 {
-    const unsigned sampleCount(locus.getSampleCount());
+    LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
+
     if (_opt.is_min_gqx)
     {
-        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-        {
-            LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
-            if (sampleInfo.gqx < _opt.min_gqx) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
-        }
+        if (sampleInfo.gqx < _opt.min_gqx) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
     }
 
     if (_dopt.is_max_depth())
     {
-        unsigned allSampleLocusDepth(0);
-        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-        {
-            const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
-            allSampleLocusDepth += indelSampleInfo.legacyReportInfo.mapqTracker.count;
-        }
-
         if (allSampleLocusDepth > _dopt.max_depth)
-            locus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+            sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
 
     if (_opt.is_max_ref_rep())
@@ -290,9 +288,24 @@ default_classify_indel(
                 if ((iri.repeat_unit.size() <= 2) &&
                     (static_cast<int>(iri.ref_repeat_count) > _opt.max_ref_rep))
                 {
-                    locus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighRefRep);
+                    sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighRefRep);
                 }
             }
         }
+    }
+}
+
+
+
+void
+ScoringModelManager::
+default_classify_indel_locus(
+    GermlineIndelLocusInfo& locus) const
+{
+    const unsigned sampleCount(locus.getSampleCount());
+    const unsigned allSampleLocusDepth(locus.getTotalReadDepth());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    {
+        default_classify_indel(sampleIndex, allSampleLocusDepth, locus);
     }
 }

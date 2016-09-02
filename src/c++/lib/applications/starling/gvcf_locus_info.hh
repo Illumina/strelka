@@ -463,6 +463,15 @@ std::ostream& operator<<(std::ostream& os,const LocusInfo& li);
 
 struct GermlineIndelSampleInfo
 {
+    /// get the count of reads crossing indel or reference alleles at any teir or mapq value, including MAPQ0 reads
+    ///
+    /// TODO get a more exact definition of requrements for read to be counted here - how are mulitple indel alleles handled, by how many bases must the read cross an indel breakend? etc...
+    unsigned
+    getTotalReadDepth() const
+    {
+        return mapqTracker.count;
+    }
+
     /// the expected ploidy of sites spanning the indel locus assuming the ML GT is true
     std::vector<uint8_t> sitePloidy;
 
@@ -471,6 +480,8 @@ struct GermlineIndelSampleInfo
 
     /// mapq stats at the position preceding the locus
     MapqTracker mapqTracker;
+
+
 
     /// TODO STREL-125 deprecated - replaced by supportCounts in LocusSampleInfo
     double alleleFrequency() const
@@ -590,6 +601,20 @@ struct GermlineIndelLocusInfo : public LocusInfo
             if (allele.indelKey.is_breakpoint()) return true;
         }
         return false;
+    }
+
+    /// return "totalReadDepth" summed over all samples, see method of same name in indel
+    /// sample object for totalReadDepth definition.
+    unsigned
+    getTotalReadDepth() const
+    {
+        const unsigned sampleCount(getSampleCount());
+        unsigned allSampleLocusDepth(0);
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        {
+            allSampleLocusDepth += getIndelSample(sampleIndex).getTotalReadDepth();
+        }
+        return allSampleLocusDepth;
     }
 
     /// run all internal consistency checks
