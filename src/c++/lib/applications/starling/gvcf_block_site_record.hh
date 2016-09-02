@@ -34,10 +34,12 @@
 ///
 struct gvcf_block_site_record : public GermlineSiteLocusInfo
 {
+    typedef GermlineSiteLocusInfo base_t;
+
     explicit
     gvcf_block_site_record(
         const gvcf_options& opt)
-        : GermlineSiteLocusInfo(1),
+        : base_t(1),
           frac_tol(static_cast<double>(opt.block_percent_tol)/100.)
         , abs_tol(opt.block_abs_tol)
     {
@@ -47,7 +49,7 @@ struct gvcf_block_site_record : public GermlineSiteLocusInfo
     void
     reset()
     {
-        GermlineSiteLocusInfo::clear();
+        base_t::clear();
 
         allele.clear();
 

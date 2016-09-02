@@ -384,19 +384,6 @@ struct LocusInfo : public PolymorphicObject
         _sampleInfo(sampleCount)
     {}
 
-    void
-    clear()
-    {
-        pos = 0;
-        anyVariantAlleleQuality = 0;
-        filters.clear();
-        for (auto& sample : _sampleInfo)
-        {
-            sample.clear();
-        }
-        _altAlleleCount=0;
-    }
-
     unsigned
     getAltAlleleCount() const
     {
@@ -444,6 +431,23 @@ struct LocusInfo : public PolymorphicObject
 #endif
     }
 
+protected:
+    void
+    clear()
+    {
+        pos = 0;
+        anyVariantAlleleQuality = 0;
+        filters.clear();
+        for (auto& sample : _sampleInfo)
+        {
+            sample.clear();
+        }
+        _altAlleleCount=0;
+        _isLockAlleles = false;
+    }
+
+public:
+    // ---------------------------------------------------------
     /// zero-index position of the locus, alleles may not all start here:
     pos_t pos = 0;
 
@@ -456,6 +460,11 @@ struct LocusInfo : public PolymorphicObject
 private:
     std::vector<LocusSampleInfo> _sampleInfo;
     unsigned _altAlleleCount = 0;
+
+protected:
+    /// to sanity check input, locus must be specified by adding all alleles, and then adding all sample information, this bool enforces the allele->sample ordering
+    bool _isLockAlleles = false;
+
 };
 
 std::ostream& operator<<(std::ostream& os,const LocusInfo& li);
@@ -640,9 +649,6 @@ private:
 
     /// the refernece range of all indel alleles at this locus:
     known_pos_range2 _range;
-
-    /// to sanity check input, locus must be specified by adding all alleles, and then adding all sample information, this bool enforces the allele->sample ordering
-    bool _isLockAlleles = false;
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineIndelLocusInfo& ii);
@@ -696,6 +702,8 @@ struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
 /// represents an site call at the level of a full VCF record, containing possibly multiple alleles
 struct GermlineSiteLocusInfo : public LocusInfo
 {
+    typedef LocusInfo base_t;
+
     GermlineSiteLocusInfo(
         const unsigned sampleCount,
         const pos_t initPos,
@@ -703,7 +711,7 @@ struct GermlineSiteLocusInfo : public LocusInfo
         const snp_pos_info& good_pi,
         const int used_allele_count_min_qscore,
         const bool initIsForcedOutput = false)
-      : LocusInfo(sampleCount, initPos)
+      : base_t(sampleCount, initPos)
     {
         ref=(init_ref);
         isForcedOutput = initIsForcedOutput;
@@ -740,7 +748,7 @@ struct GermlineSiteLocusInfo : public LocusInfo
     void
     clear()
     {
-        LocusInfo::clear();
+        base_t::clear();
         ref = 'N';
         n_used_calls = 0;
         n_unused_calls = 0;

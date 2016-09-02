@@ -169,6 +169,8 @@ get_label(const unsigned idx)
 /// restrict to the case where variant is site/SNV and calling model is diploid
 struct GermlineDiploidSiteAlleleInfo : public GermlineVariantAlleleInfo
 {
+    typedef GermlineVariantAlleleInfo base_t;
+
     GermlineDiploidSiteAlleleInfo()
     {
         clear();
@@ -177,7 +179,7 @@ struct GermlineDiploidSiteAlleleInfo : public GermlineVariantAlleleInfo
     void
     clear()
     {
-        GermlineVariantAlleleInfo::clear();
+        base_t::clear();
         is_covered=false;
         is_used_covered=false;
         is_zero_ploidy=false;
