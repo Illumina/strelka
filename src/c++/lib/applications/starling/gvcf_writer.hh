@@ -61,8 +61,8 @@ private:
     }
     void flush_impl() override;
 
-    void add_site_internal(GermlineDiploidSiteLocusInfo& si);
-    void add_site_internal(GermlineContinuousSiteLocusInfo& si);
+    void add_site_internal(GermlineDiploidSiteLocusInfo& locus);
+    void add_site_internal(GermlineContinuousSiteLocusInfo& locus);
 
     /// write out compressed non-variant block for one sample
     ///
@@ -114,11 +114,11 @@ private:
         }
     }
 
-    void write_site_record(const GermlineDiploidSiteLocusInfo& si) const;
-    void write_site_record(const GermlineContinuousSiteLocusInfo& si) const;
-    void write_site_record(const gvcf_block_site_record& si) const;
+    void write_site_record(const GermlineDiploidSiteLocusInfo& locus) const;
+    void write_site_record(const GermlineContinuousSiteLocusInfo& locus) const;
+    void write_site_record(const gvcf_block_site_record& locus) const;
 
-    void write_indel_record(const GermlineIndelLocusInfo& ii) const;
+    void write_indel_record(const GermlineIndelLocusInfo& locus) const;
 
     /// fill in missing sites
     void skip_to_pos(const pos_t target_pos);
@@ -144,7 +144,7 @@ private:
 
     std::unique_ptr<GermlineDiploidIndelLocusInfo> _last_indel;
 
-    void filter_site_by_last_indel_overlap(GermlineDiploidSiteLocusInfo& si);
+    void filter_site_by_last_indel_overlap(GermlineDiploidSiteLocusInfo& locus);
 
     gvcf_compressor _gvcf_comp;
     const ScoringModelManager& _CM;

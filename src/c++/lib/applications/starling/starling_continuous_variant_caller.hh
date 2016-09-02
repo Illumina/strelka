@@ -37,7 +37,7 @@ struct starling_continuous_variant_caller
         const snp_pos_info& good_pi,
         const unsigned baseId,
         const bool isForcedOutput,
-        GermlineContinuousSiteLocusInfo& locusInfo);
+        GermlineContinuousSiteLocusInfo& locus);
 
     static double strand_bias(unsigned fwdAlt, unsigned revAlt, unsigned fwdOther, unsigned revOther, double noise);
 };

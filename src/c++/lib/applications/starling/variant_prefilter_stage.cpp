@@ -47,45 +47,45 @@ set_site_gt(
 void
 variant_prefilter_stage::
 add_site_modifiers(
-    GermlineDiploidSiteLocusInfo& si,
+    GermlineDiploidSiteLocusInfo& locus,
     const ScoringModelManager& model)
 {
-    auto& allele(si.allele);
+    auto& allele(locus.allele);
     allele.clear();
 
     /// TODO STREL-125 generalize to multi-sample
-    LocusSampleInfo& sampleInfo(si.getSample(0));
+    LocusSampleInfo& sampleInfo(locus.getSample(0));
 
-    allele.is_used_covered=(si.n_used_calls!=0);
-    allele.is_covered=(si.allele.is_used_covered || si.n_unused_calls!=0);
-    allele.strand_bias=si.dgt.strand_bias;
+    allele.is_used_covered=(locus.n_used_calls!=0);
+    allele.is_covered=(locus.allele.is_used_covered || locus.n_unused_calls!=0);
+    allele.strand_bias=locus.dgt.strand_bias;
 
-    if     (si.isRefUnknown())
+    if     (locus.isRefUnknown())
     {
         sampleInfo.gqx=0;
         sampleInfo.genotypeQualityPolymorphic=0;
         allele.max_gt=0;
     }
-    else if (si.dgt.genome.max_gt != si.dgt.poly.max_gt)
+    else if (locus.dgt.genome.max_gt != locus.dgt.poly.max_gt)
     {
         sampleInfo.gqx=0;
-        sampleInfo.genotypeQualityPolymorphic=si.dgt.poly.max_gt_qphred;
-        allele.max_gt=si.dgt.poly.max_gt;
+        sampleInfo.genotypeQualityPolymorphic=locus.dgt.poly.max_gt_qphred;
+        allele.max_gt=locus.dgt.poly.max_gt;
     }
     else
     {
-        if (si.dgt.genome.max_gt_qphred<si.dgt.poly.max_gt_qphred)
+        if (locus.dgt.genome.max_gt_qphred<locus.dgt.poly.max_gt_qphred)
         {
-            set_site_gt(si.dgt.genome,allele, sampleInfo);
+            set_site_gt(locus.dgt.genome,allele, sampleInfo);
         }
         else
         {
-            set_site_gt(si.dgt.poly,allele, sampleInfo);
+            set_site_gt(locus.dgt.poly,allele, sampleInfo);
         }
-        sampleInfo.genotypeQualityPolymorphic=si.dgt.poly.max_gt_qphred;
+        sampleInfo.genotypeQualityPolymorphic=locus.dgt.poly.max_gt_qphred;
     }
 
-    model.classify_site(si);
+    model.classify_site(locus);
 }
 
 

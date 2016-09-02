@@ -79,36 +79,36 @@ position_snp_call_continuous(
     const snp_pos_info& good_pi,
     const unsigned baseId,
     const bool isForcedOutput,
-    GermlineContinuousSiteLocusInfo& locusInfo)
+    GermlineContinuousSiteLocusInfo& locus)
 {
     // continuous caller reports only one alt per vcf record (locus)
-    assert(locusInfo.altAlleles.empty());
+    assert(locus.altAlleles.empty());
 
-    unsigned totalDepth = locusInfo.spanning_deletions;
+    unsigned totalDepth = locus.spanning_deletions;
     for (unsigned baseId2(0); baseId2 < N_BASE; ++baseId2)
     {
-        totalDepth += locusInfo.alleleObservationCounts(baseId2);
+        totalDepth += locus.alleleObservationCounts(baseId2);
     }
-    uint8_t ref_base_id = base_to_id(locusInfo.ref);
+    uint8_t ref_base_id = base_to_id(locus.ref);
 
     bool isOutputAllele(false);
-    GermlineContinuousSiteAlleleInfo allele(totalDepth, locusInfo.alleleObservationCounts(baseId),
+    GermlineContinuousSiteAlleleInfo allele(totalDepth, locus.alleleObservationCounts(baseId),
                                             (BASE_ID::index_t) baseId);
 
-    const unsigned sampleCount(locusInfo.getSampleCount());
+    const unsigned sampleCount(locus.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
-        auto& sampleInfo(locusInfo.getSample(sampleIndex));
-        const double vf = safeFrac(locusInfo.alleleObservationCounts(baseId), totalDepth);
+        auto& sampleInfo(locus.getSample(sampleIndex));
+        const double vf = safeFrac(locus.alleleObservationCounts(baseId), totalDepth);
         if (((ref_base_id != baseId ) && (vf > opt.min_het_vf)) || isForcedOutput)
         {
-            sampleInfo.gqx = sampleInfo.genotypeQualityPolymorphic = poisson_qscore(locusInfo.alleleObservationCounts(baseId), totalDepth,
+            sampleInfo.gqx = sampleInfo.genotypeQualityPolymorphic = poisson_qscore(locus.alleleObservationCounts(baseId), totalDepth,
                                                         (unsigned) opt.min_qscore, 40);
 
             if (ref_base_id != baseId)
             {
                 // flag the whole site as a SNP if any call above the VF threshold is non-ref
-                locusInfo._is_snp = locusInfo._is_snp || vf > opt.min_het_vf;
+                locus._is_snp = locus._is_snp || vf > opt.min_het_vf;
                 unsigned int fwdAlt = 0;
                 unsigned revAlt = 0;
                 unsigned fwdOther = 0;
@@ -133,16 +133,16 @@ position_snp_call_continuous(
             isOutputAllele = true;
         }
     }
-    if (isOutputAllele) locusInfo.altAlleles.push_back(allele);
+    if (isOutputAllele) locus.altAlleles.push_back(allele);
 
-    if (not locusInfo.altAlleles.empty())
+    if (not locus.altAlleles.empty())
     {
        // get the qual score:
-        locusInfo.anyVariantAlleleQuality = 0;
+        locus.anyVariantAlleleQuality = 0;
         for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
-            auto& sampleInfo(locusInfo.getSample(sampleIndex));
-            locusInfo.anyVariantAlleleQuality = std::max(locusInfo.anyVariantAlleleQuality, sampleInfo.genotypeQualityPolymorphic);
+            auto& sampleInfo(locus.getSample(sampleIndex));
+            locus.anyVariantAlleleQuality = std::max(locus.anyVariantAlleleQuality, sampleInfo.genotypeQualityPolymorphic);
         }
     }
 }

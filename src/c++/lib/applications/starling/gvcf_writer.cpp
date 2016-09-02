@@ -108,17 +108,17 @@ writeSampleNonVariantBlockRecord(
 
 
 
-void gvcf_writer::filter_site_by_last_indel_overlap(GermlineDiploidSiteLocusInfo& si)
+void gvcf_writer::filter_site_by_last_indel_overlap(GermlineDiploidSiteLocusInfo& locus)
 {
     if (_last_indel)
     {
-        if (si.pos >= _last_indel->end())
+        if (locus.pos >= _last_indel->end())
         {
             _last_indel.reset(nullptr);
         }
         else
         {
-            indel_overlapper::modify_overlapping_site(*_last_indel, si, _CM);
+            indel_overlapper::modify_overlapping_site(*_last_indel, locus, _CM);
         }
     }
 }
@@ -153,19 +153,19 @@ skip_to_pos(const pos_t target_pos)
 }
 
 
-void gvcf_writer::process(std::unique_ptr<GermlineSiteLocusInfo> si)
+void gvcf_writer::process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr)
 {
-    assert(si->getSampleCount() == getSampleCount());
+    assert(locusPtr->getSampleCount() == getSampleCount());
     
-    skip_to_pos(si->pos);
+    skip_to_pos(locusPtr->pos);
 
-    if (dynamic_cast<GermlineDiploidSiteLocusInfo*>(si.get()) != nullptr)
+    if (dynamic_cast<GermlineDiploidSiteLocusInfo*>(locusPtr.get()) != nullptr)
     {
-        add_site_internal(*downcast<GermlineDiploidSiteLocusInfo>(std::move(si)));
+        add_site_internal(*downcast<GermlineDiploidSiteLocusInfo>(std::move(locusPtr)));
     }
     else
     {
-        add_site_internal(*downcast<GermlineContinuousSiteLocusInfo>(std::move(si)));
+        add_site_internal(*downcast<GermlineContinuousSiteLocusInfo>(std::move(locusPtr)));
     }
 
 }
@@ -174,17 +174,17 @@ void gvcf_writer::process(std::unique_ptr<GermlineSiteLocusInfo> si)
 
 void
 gvcf_writer::
-process(std::unique_ptr<GermlineIndelLocusInfo> ii)
+process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr)
 {
-    skip_to_pos(ii->pos);
+    skip_to_pos(locusPtr->pos);
 
     // flush any non-variant block before starting:
     writeAllNonVariantBlockRecords();
 
-    write_indel_record(*ii);
-    if (dynamic_cast<GermlineDiploidIndelLocusInfo*>(ii.get()) != nullptr)
+    write_indel_record(*locusPtr);
+    if (dynamic_cast<GermlineDiploidIndelLocusInfo*>(locusPtr.get()) != nullptr)
     {
-        _last_indel = downcast<GermlineDiploidIndelLocusInfo>(std::move(ii));
+        _last_indel = downcast<GermlineDiploidIndelLocusInfo>(std::move(locusPtr));
     }
 }
 
@@ -203,30 +203,30 @@ flush_impl()
 void
 gvcf_writer::
 add_site_internal(
-    GermlineDiploidSiteLocusInfo& si)
+    GermlineDiploidSiteLocusInfo& locus)
 {
-    filter_site_by_last_indel_overlap(si);
-    if (si.allele.is_phased_region)
+    filter_site_by_last_indel_overlap(locus);
+    if (locus.allele.is_phased_region)
     {
-        _head_pos=si.pos+si.phased_ref.length();
+        _head_pos=locus.pos+locus.phased_ref.length();
     }
     else
     {
-        _head_pos=si.pos+1;
+        _head_pos=locus.pos+1;
     }
     // write_site
-    queue_site_record(si);
+    queue_site_record(locus);
 }
 
 void
 gvcf_writer::
 add_site_internal(
-    GermlineContinuousSiteLocusInfo& si)
+    GermlineContinuousSiteLocusInfo& locus)
 {
     // TODO: phasing
-    _head_pos=si.pos+1;
+    _head_pos=locus.pos+1;
     // write_site
-    queue_site_record(si);
+    queue_site_record(locus);
 }
 
 
@@ -282,15 +282,15 @@ print_vcf_alt(
 static
 void
 print_site_ad(
-    const GermlineSiteLocusInfo& si,
+    const GermlineSiteLocusInfo& locus,
     const std::vector<uint8_t>& altOrder,
     std::ostream& os)
 {
-    os << si.alleleObservationCounts(base_to_id(si.ref));
+    os << locus.alleleObservationCounts(base_to_id(locus.ref));
 
     for (const auto& b : altOrder)
     {
-        os << ',' << si.alleleObservationCounts(b);
+        os << ',' << locus.alleleObservationCounts(b);
     }
 }
 
@@ -325,16 +325,16 @@ getExtendedLocusFilters(const LocusInfo& locus)
 static
 void
 print_site_ad_strand(
-    const GermlineSiteLocusInfo& si,
+    const GermlineSiteLocusInfo& locus,
     const std::vector<uint8_t>& altOrder,
     const bool is_fwd_strand,
     std::ostream& os)
 {
-    os << si.alleleObservationCountsByStrand(is_fwd_strand, base_to_id(si.ref));
+    os << locus.alleleObservationCountsByStrand(is_fwd_strand, base_to_id(locus.ref));
 
     for (const auto& b : altOrder)
     {
-        os << ',' << si.alleleObservationCountsByStrand(is_fwd_strand,b);
+        os << ',' << locus.alleleObservationCountsByStrand(is_fwd_strand,b);
     }
 }
 
@@ -344,45 +344,45 @@ print_site_ad_strand(
 void
 gvcf_writer::
 write_site_record(
-    const GermlineDiploidSiteLocusInfo& si) const
+    const GermlineDiploidSiteLocusInfo& locus) const
 {
     std::ostream& os(*_osptr);
 
     os << _chrom << '\t'  // CHROM
-       << (si.pos+1) << '\t'  // POS
+       << (locus.pos+1) << '\t'  // POS
        << ".\t";           // ID
 
-    if (si.allele.is_phased_region)
+    if (locus.allele.is_phased_region)
     {
-        os  << si.phased_ref << '\t'; // REF
+        os  << locus.phased_ref << '\t'; // REF
     }
     else
     {
-        os  << si.ref << '\t'; // REF
+        os  << locus.ref << '\t'; // REF
     }
 
     // ALT
     std::vector<uint8_t> altOrder;
-    const bool isNoAlt(si.isRefUnknown());
+    const bool isNoAlt(locus.isRefUnknown());
     if (isNoAlt)
     {
         os << '.';
     }
-    else if (si.allele.is_phased_region)
+    else if (locus.allele.is_phased_region)
     {
-        os << si.phased_alt;
+        os << locus.phased_alt;
     }
     else
     {
-        get_visible_alt_order(si,altOrder);
+        get_visible_alt_order(locus,altOrder);
         print_vcf_alt(altOrder,os);
     }
     os << '\t';
 
     // QUAL:
-    if (si.is_qual())
+    if (locus.is_qual())
     {
-        os << si.dgt.genome.snp_qphred;
+        os << locus.dgt.genome.snp_qphred;
     }
     else
     {
@@ -391,42 +391,42 @@ write_site_record(
     os << '\t';
 
     // FILTER:
-    getExtendedLocusFilters(si).write(os);
+    getExtendedLocusFilters(locus).write(os);
     os << '\t';
 
     // INFO:
-    if (si.dgt.is_snp())
+    if (locus.dgt.is_snp())
     {
         os << "SNVSB=";
         {
             const StreamScoper ss(os);
-            os << std::fixed << std::setprecision(1) << si.allele.strand_bias;
+            os << std::fixed << std::setprecision(1) << locus.allele.strand_bias;
         }
         os << ';';
-        os << "SNVHPOL=" << si.hpol;
+        os << "SNVHPOL=" << locus.hpol;
         if (_opt.is_compute_hapscore)
         {
             os << ';';
-            os << "HaplotypeScore=" << si.hapscore;
+            os << "HaplotypeScore=" << locus.hapscore;
         }
 
         if (_opt.isReportEVSFeatures)
         {
 #ifdef SUPPORT_LEGACY_EVS_TRAINING_SCRIPTS
             os << ';';
-            os << "MQ=" << si.mapqRMS;
+            os << "MQ=" << locus.mapqRMS;
             os << ';';
-            os << "MQ0=" << si.mapqZeroCount;
+            os << "MQ0=" << locus.mapqZeroCount;
             os << ';';
-            os << "MQRankSum=" << si.MQRankSum;
+            os << "MQRankSum=" << locus.MQRankSum;
             os << ';';
-            os << "BaseQRankSum=" << si.BaseQRankSum;
+            os << "BaseQRankSum=" << locus.BaseQRankSum;
             os << ';';
-            os << "ReadPosRankSum=" << si.ReadPosRankSum;
+            os << "ReadPosRankSum=" << locus.ReadPosRankSum;
             os << ';';
-            os << "AvgBaseQ=" << si.avgBaseQ;
+            os << "AvgBaseQ=" << locus.avgBaseQ;
             os << ';';
-            os << "AvgPos=" << si.rawPos;
+            os << "AvgPos=" << locus.rawPos;
             // if you uncomment the following, make sure you also uncomment the matching INFO header entry in gvcf_header.cpp
             //                os << ';';
             //                os << "MapQ0Count=" << si.mapq_zero;
@@ -437,18 +437,18 @@ write_site_record(
 #endif
 
             // EVS features may not be computed for certain records, so check first:
-            if (! si.evsFeatures.empty())
+            if (! locus.evsFeatures.empty())
             {
                 const StreamScoper ss(os);
                 os << std::setprecision(5);
                 os << ";EVSF=";
-                si.evsFeatures.writeValues(os);
+                locus.evsFeatures.writeValues(os);
                 os << ",";
-                si.evsDevelopmentFeatures.writeValues(os);
+                locus.evsDevelopmentFeatures.writeValues(os);
             }
         }
 
-        if (si.allele.is_phasing_insufficient_depth)
+        if (locus.allele.is_phasing_insufficient_depth)
         {
             os << ";Unphased";
         }
@@ -459,12 +459,12 @@ write_site_record(
     }
     os << '\t';
 
-    const bool is_nonref_gt(si.allele.max_gt != si.dgt.ref_gt);
-    const bool is_print_pl(is_nonref_gt || si.dgt.is_snp());
+    const bool is_nonref_gt(locus.allele.max_gt != locus.dgt.ref_gt);
+    const bool is_print_pl(is_nonref_gt || locus.dgt.is_snp());
 
     //FORMAT
     os << "GT";
-    if (si.dgt.is_snp())
+    if (locus.dgt.is_snp())
     {
         os << ":GQ";
     }
@@ -480,23 +480,23 @@ write_site_record(
     }
 
     //SAMPLE
-    const unsigned sampleCount(si.getSampleCount());
+    const unsigned sampleCount(locus.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        const auto& sampleInfo(si.getSample(sampleIndex));
+        const auto& sampleInfo(locus.getSample(sampleIndex));
 
         os << '\t';
 
-        os << si.get_gt() << ':';
-        if (si.dgt.is_snp())
+        os << locus.get_gt() << ':';
+        if (locus.dgt.is_snp())
         {
             os << sampleInfo.genotypeQualityPolymorphic << ':';
         }
 
-        bool is_gqx(not si.isRefUnknown());
+        bool is_gqx(not locus.isRefUnknown());
         if (is_gqx)
         {
-            is_gqx = si.allele.is_gqx_tmp();
+            is_gqx = locus.allele.is_gqx_tmp();
         }
         if (is_gqx)
         {
@@ -508,27 +508,27 @@ write_site_record(
         }
         os << ':';
         //print DP:DPF
-        os << si.n_used_calls << ':'
-           << si.n_unused_calls;
+        os << locus.n_used_calls << ':'
+           << locus.n_unused_calls;
 
         if (isNoAlt)
         {
             // pass
         }
-        else if (si.allele.is_phased_region)
+        else if (locus.allele.is_phased_region)
         {
-            os << ':' << si.phased_AD
-               << ':' << si.phased_ADF
-               << ':' << si.phased_ADR;
+            os << ':' << locus.phased_AD
+               << ':' << locus.phased_ADF
+               << ':' << locus.phased_ADR;
         }
         else
         {
             os << ':';
-            print_site_ad(si, altOrder, os);
+            print_site_ad(locus, altOrder, os);
             os << ':';
-            print_site_ad_strand(si, altOrder, true, os);
+            print_site_ad_strand(locus, altOrder, true, os);
             os << ':';
-            print_site_ad_strand(si, altOrder, false, os);
+            print_site_ad_strand(locus, altOrder, false, os);
         }
 
         // FT
@@ -539,36 +539,36 @@ write_site_record(
         {
             // print PL values
             os << ':';
-            if (si.is_hetalt())
+            if (locus.is_hetalt())
             {
-                const unsigned print_gt(si.allele.max_gt);
+                const unsigned print_gt(locus.allele.max_gt);
                 const uint8_t a0(DIGT::get_allele(print_gt, 0));
                 const uint8_t a1(DIGT::get_allele(print_gt, 1));
-                os << si.dgt.phredLoghood[si.dgt.ref_gt] << ','
-                   << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(si.dgt.ref_gt, a0)] << ','
-                   << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0, a0)] << ','
-                   << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(si.dgt.ref_gt, a1)] << ','
-                   << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0, a1)] << ','
-                   << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a1, a1)];
+                os << locus.dgt.phredLoghood[locus.dgt.ref_gt] << ','
+                   << locus.dgt.phredLoghood[DIGT::get_gt_with_alleles(locus.dgt.ref_gt, a0)] << ','
+                   << locus.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0, a0)] << ','
+                   << locus.dgt.phredLoghood[DIGT::get_gt_with_alleles(locus.dgt.ref_gt, a1)] << ','
+                   << locus.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0, a1)] << ','
+                   << locus.dgt.phredLoghood[DIGT::get_gt_with_alleles(a1, a1)];
             }
-            else if (si.dgt.is_haploid() || (si.allele.modified_gt == MODIFIED_SITE_GT::ONE))
+            else if (locus.dgt.is_haploid() || (locus.allele.modified_gt == MODIFIED_SITE_GT::ONE))
             {
-                os << si.dgt.phredLoghood[si.dgt.ref_gt] << ','
-                   << si.dgt.phredLoghood[si.allele.max_gt];
+                os << locus.dgt.phredLoghood[locus.dgt.ref_gt] << ','
+                   << locus.dgt.phredLoghood[locus.allele.max_gt];
             }
             else
             {
-                const unsigned print_gt(si.allele.max_gt);
+                const unsigned print_gt(locus.allele.max_gt);
                 const uint8_t a0(DIGT::get_allele(print_gt, 0));
                 const uint8_t a1(DIGT::get_allele(print_gt, 1));
                 uint8_t alt(a0);
-                if (si.dgt.ref_gt == a0)
+                if (locus.dgt.ref_gt == a0)
                 {
                     alt = a1;
                 }
-                os << si.dgt.phredLoghood[si.dgt.ref_gt] << ','
-                   << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(si.dgt.ref_gt, alt)] << ','
-                   << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(alt, alt)];
+                os << locus.dgt.phredLoghood[locus.dgt.ref_gt] << ','
+                   << locus.dgt.phredLoghood[DIGT::get_gt_with_alleles(locus.dgt.ref_gt, alt)] << ','
+                   << locus.dgt.phredLoghood[DIGT::get_gt_with_alleles(alt, alt)];
             }
         }
     }
@@ -581,12 +581,12 @@ write_site_record(
 void
 gvcf_writer::
 write_site_record(
-    const GermlineContinuousSiteLocusInfo& si) const
+    const GermlineContinuousSiteLocusInfo& locus) const
 {
-    auto ref_base_id = base_to_id(si.ref);
+    auto ref_base_id = base_to_id(locus.ref);
 
-    assert(si.altAlleles.size() == 1);
-    const auto& allele(si.altAlleles.front());
+    assert(locus.altAlleles.size() == 1);
+    const auto& allele(locus.altAlleles.front());
 
     std::vector<uint8_t> altOrder;
     const bool is_no_alt(allele._base == ref_base_id);
@@ -598,12 +598,12 @@ write_site_record(
     std::ostream& os(*_osptr);
 
     os << _chrom << '\t'  // CHROM
-       << (si.pos+1) << '\t'  // POS
+       << (locus.pos+1) << '\t'  // POS
        << ".\t";           // ID
 
-    os  << si.ref << '\t'; // REF
+    os  << locus.ref << '\t'; // REF
 
-    std::string gt(si.get_gt(allele));
+    std::string gt(locus.get_gt(allele));
 
     // ALT
     if (is_no_alt)
@@ -613,16 +613,16 @@ write_site_record(
     os << '\t';
 
     // QUAL:
-    os << si.anyVariantAlleleQuality << '\t';
+    os << locus.anyVariantAlleleQuality << '\t';
 
     // FILTER:
-    getExtendedLocusFilters(si).write(os);
+    getExtendedLocusFilters(locus).write(os);
     os << '\t';
 
     // INFO
     std::ostringstream info;
 
-    if (si._is_snp)
+    if (locus._is_snp)
     {
         info << "SNVSB=";
         {
@@ -630,7 +630,7 @@ write_site_record(
             info << std::fixed << std::setprecision(1) << allele.strand_bias;
         }
         info << ';';
-        info << "SNVHPOL=" << si.hpol;
+        info << "SNVHPOL=" << locus.hpol;
     }
 
     if (!is_no_alt)
@@ -657,10 +657,10 @@ write_site_record(
     os << "FT:VF";
 
     //SAMPLE
-    const unsigned sampleCount(si.getSampleCount());
+    const unsigned sampleCount(locus.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        const auto& sampleInfo(si.getSample(sampleIndex));
+        const auto& sampleInfo(locus.getSample(sampleIndex));
 
         os << '\t';
 
@@ -670,16 +670,16 @@ write_site_record(
            << ':' << sampleInfo.gqx;
 
         // DP:DPF
-        os << ':' << si.n_used_calls << ':' << si.n_unused_calls;
+        os << ':' << locus.n_used_calls << ':' << locus.n_unused_calls;
 
         if (!is_no_alt)
         {
             os << ':';
-            print_site_ad(si, altOrder, os);
+            print_site_ad(locus, altOrder, os);
             os << ':';
-            print_site_ad_strand(si, altOrder, true, os);
+            print_site_ad_strand(locus, altOrder, true, os);
             os << ':';
-            print_site_ad_strand(si, altOrder, false, os);
+            print_site_ad_strand(locus, altOrder, false, os);
         }
 
         // FT
@@ -700,15 +700,15 @@ write_site_record(
 void
 gvcf_writer::
 write_site_record(
-    const gvcf_block_site_record& si) const
+    const gvcf_block_site_record& locus) const
 {
     std::ostream& os(*_osptr);
 
     os << _chrom << '\t'  // CHROM
-       << (si.pos+1) << '\t'  // POS
+       << (locus.pos+1) << '\t'  // POS
        << ".\t";           // ID
 
-    os  << si.ref << '\t'; // REF
+    os  << locus.ref << '\t'; // REF
 
     // ALT
     os << '.';
@@ -719,13 +719,13 @@ write_site_record(
     os << '\t';
 
     // FILTER:
-    si.filters.write(os);
+    locus.filters.write(os);
     os << '\t';
 
     // INFO:
-    if (si.count>1)
+    if (locus.count>1)
     {
-        os << "END=" << (si.pos+si.count) << ';';
+        os << "END=" << (locus.pos+locus.count) << ';';
         os << _dopt.block_label;
     }
     else
@@ -740,10 +740,10 @@ write_site_record(
     os << '\t';
 
     //SAMPLE
-    os << si.get_gt() << ':';
-    if (si.has_call)
+    os << locus.get_gt() << ':';
+    if (locus.has_call)
     {
-        os << si.block_gqx.min();
+        os << locus.block_gqx.min();
     }
     else
     {
@@ -751,8 +751,8 @@ write_site_record(
     }
     os << ':';
     //print DP:DPF
-    os << si.block_dpu.min() << ':'
-       << si.block_dpf.min();
+    os << locus.block_dpu.min() << ':'
+       << locus.block_dpf.min();
     os << '\n';
 }
 
@@ -798,12 +798,12 @@ printSampleAD(
 void
 gvcf_writer::
 write_indel_record(
-    const GermlineIndelLocusInfo& ii) const
+    const GermlineIndelLocusInfo& locus) const
 {
     std::ostream& os(*_osptr);
 
     // create VCF specific transformation of the alt allele list
-    const auto& indelAlleles(ii.getIndelAlleles());
+    const auto& indelAlleles(locus.getIndelAlleles());
     OrthogonalAlleleSetLocusReportInfo locusReportInfo;
     getLocusReportInfoFromAlleles(_ref, indelAlleles, locusReportInfo);
 
@@ -813,7 +813,7 @@ write_indel_record(
        << locusReportInfo.vcfRefSeq << '\t'; // REF
 
     // ALT
-    const unsigned altAlleleCount(ii.getAltAlleleCount());
+    const unsigned altAlleleCount(locus.getAltAlleleCount());
 
     for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
     {
@@ -822,10 +822,10 @@ write_indel_record(
     }
     os << '\t';
 
-    os << ii.anyVariantAlleleQuality << '\t'; //QUAL
+    os << locus.anyVariantAlleleQuality << '\t'; //QUAL
 
     // FILTER:
-    getExtendedLocusFilters(ii).write(os);
+    getExtendedLocusFilters(locus).write(os);
     os << '\t';
 
     // INFO
@@ -881,23 +881,23 @@ write_indel_record(
         }
     }
 
-    const GermlineDiploidIndelLocusInfo* iiDiploidPtr(dynamic_cast<const GermlineDiploidIndelLocusInfo*>(&ii));
-    if (iiDiploidPtr != nullptr)
+    const GermlineDiploidIndelLocusInfo* diploidLocusPtr(dynamic_cast<const GermlineDiploidIndelLocusInfo*>(&locus));
+    if (diploidLocusPtr != nullptr)
     {
-        const GermlineDiploidIndelLocusInfo& iiDiploid(*iiDiploidPtr);
+        const GermlineDiploidIndelLocusInfo& diploidLocus(*diploidLocusPtr);
 
         //FORMAT
         if (_opt.isReportEVSFeatures)
         {
             // EVS features may not be computed for certain records, so check first:
-            if (! iiDiploid.evsFeatures.empty())
+            if (! diploidLocus.evsFeatures.empty())
             {
                 const StreamScoper ss(os);
                 os << std::setprecision(5);
                 os << ";EVSF=";
-                iiDiploid.evsFeatures.writeValues(os);
+                diploidLocus.evsFeatures.writeValues(os);
                 os << ",";
-                iiDiploid.evsDevelopmentFeatures.writeValues(os);
+                diploidLocus.evsDevelopmentFeatures.writeValues(os);
             }
         }
 
@@ -907,11 +907,11 @@ write_indel_record(
         os << "GT:GQ:GQX:DPI:AD:ADF:ADR:FT:PL";
 
         //SAMPLE
-        const unsigned sampleCount(ii.getSampleCount());
+        const unsigned sampleCount(locus.getSampleCount());
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
-            const auto& sampleInfo(ii.getSample(sampleIndex));
-            const auto& indelSampleInfo(ii.getIndelSample(sampleIndex));
+            const auto& sampleInfo(locus.getSample(sampleIndex));
+            const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
 
             os << '\t';
 
@@ -956,11 +956,11 @@ write_indel_record(
         os << "GT:GQ:GQX:DPI:AD:ADF:ADR:FT:VF";
 
         //SAMPLE
-        const unsigned sampleCount(ii.getSampleCount());
+        const unsigned sampleCount(locus.getSampleCount());
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
-            const auto& sampleInfo(ii.getSample(sampleIndex));
-            const auto& indelSampleInfo(ii.getIndelSample(sampleIndex));
+            const auto& sampleInfo(locus.getSample(sampleIndex));
+            const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
 
             os << '\t';
 
