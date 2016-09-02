@@ -78,11 +78,13 @@ struct diploid_genotype
         reset()
         {
             max_gt=0;
+            ref_pprob=0.;
             snp_qphred=0;
             max_gt_qphred=0;
         }
 
         unsigned max_gt;
+        double ref_pprob;
         int snp_qphred;
         int max_gt_qphred;
     };

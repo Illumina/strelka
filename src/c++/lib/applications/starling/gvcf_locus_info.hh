@@ -434,11 +434,14 @@ struct LocusInfo : public PolymorphicObject
     bool
     isVariantLocus() const
     {
+        return (anyVariantAlleleQuality != 0);
+#if 0
         for (const auto& sample : _sampleInfo)
         {
             if (sample.isVariant()) return true;
         }
         return false;
+#endif
     }
 
     /// zero-index position of the locus, alleles may not all start here:

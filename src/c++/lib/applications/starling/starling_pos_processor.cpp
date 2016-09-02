@@ -182,12 +182,39 @@ process_pos_snp(const pos_t pos)
 static
 void
 updateSnvLocusWithSampleInfo(
+    const starling_base_options& opt,
+    const starling_deriv_options& dopt,
+    starling_pos_processor::sample_info& sif,
+    const PileupCleaner& pileupCleaner,
     const unsigned ploidy,
     const unsigned sampleIndex,
-    GermlineDiploidSiteLocusInfo& locus)
+    GermlineDiploidSiteLocusInfo& locus,
+    double& homRefLogProb)
 {
     auto& sampleInfo(locus.getSample(sampleIndex));
     sampleInfo.setPloidy(ploidy);
+
+    const CleanedPileup& cpi(sif.cpi);
+    //const snp_pos_info& pi(cpi.rawPileup());
+
+    pileupCleaner.CleanPileupErrorProb(sif.cpi);
+
+    //const snp_pos_info& good_pi(cpi.cleanedPileup());
+    const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
+
+    diploid_genotype dgt;
+    dgt.ploidy=ploidy;
+    dopt.pdcaller().position_snp_call_pprob_digt(
+        opt, good_epi, dgt, opt.is_all_sites());
+
+    sampleInfo.genotypeQualityPolymorphic = dgt.poly.max_gt_qphred;
+    sampleInfo.maxGenotypeIndexPolymorphic = dgt.poly.max_gt;
+
+    sampleInfo.genotypeQuality = dgt.genome.max_gt_qphred;
+    sampleInfo.maxGenotypeIndex = dgt.genome.max_gt;
+
+    // update homref prob for QUAL
+    homRefLogProb += std::log(dgt.genome.ref_pprob);
 }
 
 
@@ -217,11 +244,17 @@ process_pos_snp_digt(
     locusPtr->n_used_calls=cpi.n_used_calls();
     locusPtr->n_unused_calls=cpi.n_unused_calls();
 
+    // add sample-dependent info:
+    double homRefLogProb(0);
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
         const unsigned ploidy(get_ploidy(pos, sampleIndex));
-        updateSnvLocusWithSampleInfo(ploidy, sampleIndex, *locusPtr);
+        updateSnvLocusWithSampleInfo(_opt, _dopt, sample(sampleIndex), _pileupCleaner, ploidy, sampleIndex,
+                                     *locusPtr, homRefLogProb);
     }
+
+    // add sample-independent info:
+    locusPtr->anyVariantAlleleQuality = ln_error_prob_to_qphred(homRefLogProb);
 
     // check whether we're in a haploid region:
     locusPtr->dgt.ploidy=(get_ploidy(pos, tmpSampleIndex));
@@ -229,7 +262,7 @@ process_pos_snp_digt(
     _dopt.pdcaller().position_snp_call_pprob_digt(
         _opt,good_epi,locusPtr->dgt, _opt.is_all_sites());
 
-    if (isForcedOutput or locusPtr->dgt.is_snp())
+    if (isForcedOutput or locusPtr->isVariantLocus())
     {
         if (_opt.is_compute_hapscore)
         {
@@ -834,7 +867,7 @@ process_pos_indel_digt(const pos_t pos)
         // add sample-independent info:
         locusPtr->anyVariantAlleleQuality = ln_error_prob_to_qphred(homRefLogProb);
 
-        if (isForcedOutput or (locusPtr->anyVariantAlleleQuality != 0))
+        if (isForcedOutput or locusPtr->isVariantLocus())
         {
             // finished! send this locus down the pipe:
             _gvcfer->add_indel(std::move(locusPtr));
