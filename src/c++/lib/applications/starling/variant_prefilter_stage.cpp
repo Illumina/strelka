@@ -52,7 +52,6 @@ add_site_modifiers(
 {
     auto& allele(si.allele);
     allele.clear();
-    allele.is_unknown=(si.ref=='N');
 
     /// TODO STREL-125 generalize to multi-sample
     LocusSampleInfo& sampleInfo(si.getSample(0));
@@ -61,7 +60,7 @@ add_site_modifiers(
     allele.is_covered=(si.allele.is_used_covered || si.n_unused_calls!=0);
     allele.strand_bias=si.dgt.strand_bias;
 
-    if     (allele.is_unknown)
+    if     (si.isRefUnknown())
     {
         sampleInfo.gqx=0;
         sampleInfo.genotypeQualityPolymorphic=0;

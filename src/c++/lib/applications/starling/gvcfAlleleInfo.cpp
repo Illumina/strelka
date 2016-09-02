@@ -87,7 +87,6 @@ operator<<(std::ostream& os,
 {
     os << static_cast<GermlineVariantAlleleInfo>(smod) << '\n';
 
-    os << "is_unknown: " << smod.is_unknown;
     os << " is_covered: " << smod.is_covered;
     os << " is_used_coverage: " << smod.is_used_covered;
     os << " is_zero_ploidy: " << smod.is_zero_ploidy;

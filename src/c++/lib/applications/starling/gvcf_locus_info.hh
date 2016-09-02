@@ -793,6 +793,11 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
           evsDevelopmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
     {}
 
+    bool isRefUnknown() const
+    {
+        return (ref == 'N');
+    }
+
     bool is_snp() const override
     {
         return dgt.is_snp();
@@ -854,19 +859,19 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     bool
     is_print_unknowngt() const
     {
-        return (allele.is_unknown || (!allele.is_used_covered));
+        return (isRefUnknown() || (!allele.is_used_covered));
     }
 
     bool
     is_deletion() const
     {
-        return ((!allele.is_unknown) && allele.is_used_covered && (!allele.is_zero_ploidy) && (is_nonref()));
+        return ((not isRefUnknown()) && allele.is_used_covered && (!allele.is_zero_ploidy) && (is_nonref()));
     }
 
     bool
     is_qual() const
     {
-        return ((!allele.is_unknown) && allele.is_used_covered && (!allele.is_zero_ploidy) && (is_nonref()));
+        return ((not isRefUnknown()) && allele.is_used_covered && (!allele.is_zero_ploidy) && (is_nonref()));
     }
 
     void

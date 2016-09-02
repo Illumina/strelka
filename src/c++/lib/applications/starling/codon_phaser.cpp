@@ -458,7 +458,6 @@ create_phased_record()
     LocusSampleInfo& sampleInfo(base->getSample(sampleIndex));
 
     base->phased_ref = this->reference;
-    base->allele.is_unknown = false;
     base->allele.max_gt = max_gt;
     base->dgt.ref_gt = ref_gt;
 

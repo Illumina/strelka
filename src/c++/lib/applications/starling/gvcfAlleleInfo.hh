@@ -179,7 +179,6 @@ struct GermlineDiploidSiteAlleleInfo : public GermlineVariantAlleleInfo
     clear()
     {
         GermlineVariantAlleleInfo::clear();
-        is_unknown=true;
         is_covered=false;
         is_used_covered=false;
         is_zero_ploidy=false;
@@ -190,12 +189,11 @@ struct GermlineDiploidSiteAlleleInfo : public GermlineVariantAlleleInfo
     }
 
     bool
-    is_gqx() const
+    is_gqx_tmp() const
     {
-        return ((!is_unknown) && is_used_covered && (!is_zero_ploidy));
+        return (is_used_covered && (!is_zero_ploidy));
     }
 
-    bool is_unknown;
     bool is_covered;
     bool is_used_covered;
     bool is_zero_ploidy;

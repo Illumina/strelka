@@ -363,7 +363,7 @@ write_site_record(
 
     // ALT
     std::vector<uint8_t> altOrder;
-    const bool isNoAlt(si.allele.is_unknown);
+    const bool isNoAlt(si.isRefUnknown());
     if (isNoAlt)
     {
         os << '.';
@@ -492,7 +492,13 @@ write_site_record(
         {
             os << sampleInfo.genotypeQualityPolymorphic << ':';
         }
-        if (si.allele.is_gqx())
+
+        bool is_gqx(not si.isRefUnknown());
+        if (is_gqx)
+        {
+            is_gqx = si.allele.is_gqx_tmp();
+        }
+        if (is_gqx)
         {
             os << ((sampleInfo.empiricalVariantScore >= 0) ? sampleInfo.empiricalVariantScore : sampleInfo.gqx);
         }

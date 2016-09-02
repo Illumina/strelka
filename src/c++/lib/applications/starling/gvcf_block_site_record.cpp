@@ -160,9 +160,15 @@ testCanSiteJoinSampleBlock(
     if (ploidy != si.dgt.ploidy) return false;
 
     // test blocking values:
+    bool is_gqx(not si.isRefUnknown());
+    if (is_gqx)
+    {
+        is_gqx = si.allele.is_gqx_tmp();
+    }
+
     if (! is_new_value_blockable(inputSampleInfo.gqx,
                                  block_gqx,frac_tol,abs_tol,
-                                 si.allele.is_gqx(),
+                                 is_gqx,
                                  has_call))
     {
         return false;
@@ -182,6 +188,12 @@ joinSiteToSampleBlock(
     LocusSampleInfo& sampleInfo(getSample(0));
     const LocusSampleInfo& inputSampleInfo(si.getSample(sampleIndex));
 
+    bool is_gqx(not si.isRefUnknown());
+    if (is_gqx)
+    {
+        is_gqx = si.allele.is_gqx_tmp();
+    }
+
     if (count == 0)
     {
         filters = si.filters;
@@ -191,10 +203,10 @@ joinSiteToSampleBlock(
         is_used_covered = si.allele.is_used_covered;
         is_covered = si.allele.is_covered;
         ploidy = si.dgt.ploidy;
-        has_call = si.allele.is_gqx();
+        has_call = is_gqx;
     }
 
-    if (si.allele.is_gqx())
+    if (is_gqx)
     {
         block_gqx.add(inputSampleInfo.gqx);
     }
