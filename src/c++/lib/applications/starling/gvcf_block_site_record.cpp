@@ -212,9 +212,6 @@ testCanSiteJoinSampleBlock(
     const GermlineContinuousSiteLocusInfo& locus,
     const unsigned sampleIndex) const
 {
-    if (locus.altAlleles.size() != 1)
-        return false;
-
     if (count==0) return true;
 
     if (has_call && locus.altAlleles.empty())

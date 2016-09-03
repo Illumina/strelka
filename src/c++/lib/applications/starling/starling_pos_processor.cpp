@@ -388,38 +388,64 @@ process_pos_snp_continuous(const pos_t pos)
     // hpol filter
     templateLocus.hpol = get_snp_hpol_size(pos, _ref);
 
+    const uint8_t refBaseId = base_to_id(pi.get_ref_base());
+
     // report one locus (ie. vcf record) per alt allele in continuous mode
-    bool isSiteAddedForPosition(false);
+    bool isAnySiteOutputAtPosition(false);
 
     auto addBase = [&](const uint8_t baseId, const bool isForcedOutputUsed)
     {
+        const bool isRefAllele(baseId == refBaseId);
         std::unique_ptr<GermlineContinuousSiteLocusInfo> locusPtr(new GermlineContinuousSiteLocusInfo(templateLocus));
-        // set sample-dependent info
+
+        // setup alt allele first:
+        if (not isRefAllele)
+        {
+            GermlineSiteAlleleInfo allele((BASE_ID::index_t) baseId);
+            locusPtr->altAlleles.push_back(allele);
+        }
+
+        // set some sample-dependent info
         for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
             updateContinuousSnvLocusWithSampleInfo(
                 sample(sampleIndex), _pileupCleaner, sampleIndex, baseId, *locusPtr);
         }
 
-        starling_continuous_variant_caller::position_snp_call_continuous(_opt, good_pi, baseId, isForcedOutputUsed,
-                                                                         (GermlineContinuousSiteLocusInfo&) *locusPtr);
-
-        if (not locusPtr->altAlleles.empty())
+        // determine if this is an output allele
+        bool isOutputAllele(isForcedOutputUsed);
+        if (not isOutputAllele)
         {
-            isSiteAddedForPosition = true;
-            _gvcfer->add_site(std::move(locusPtr));
+            for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+            {
+                const auto& continuousSiteSampleInfo(locusPtr->getContinuousSiteSample(sampleIndex));
+                const double alleleFrequency(continuousSiteSampleInfo.getContinuousAlleleFrequency());
+
+                if ((not isRefAllele) && (alleleFrequency > _opt.min_het_vf))
+                {
+                    isOutputAllele = true;
+                    break;
+                }
+            }
         }
+
+        if (not isOutputAllele) return;
+
+        starling_continuous_variant_caller::position_snp_call_continuous(_opt, good_pi, baseId, *locusPtr);
+
+        isAnySiteOutputAtPosition = true;
+        _gvcfer->add_site(std::move(locusPtr));
     };
 
     for (unsigned baseId(0); baseId < N_BASE; ++baseId)
     {
+        if (baseId == refBaseId) continue;
         addBase(baseId,isForcedOutput);
     }
 
-    /// ensure that at least one base is added for site
-    if (not isSiteAddedForPosition)
+    // ensure that at least one base is added for site
+    if (not isAnySiteOutputAtPosition)
     {
-        const uint8_t refBaseId = base_to_id(templateLocus.ref);
         addBase(refBaseId,true);
     }
 }
