@@ -699,6 +699,19 @@ struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
 
 
 
+struct GermlineSiteSampleInfo
+{
+    void
+    clear()
+    {
+        spanningDeletionReadCount = 0;
+    }
+
+    unsigned spanningDeletionReadCount = 0;
+};
+
+
+
 /// represents an site call at the level of a full VCF record, containing possibly multiple alleles
 struct GermlineSiteLocusInfo : public LocusInfo
 {
@@ -711,13 +724,13 @@ struct GermlineSiteLocusInfo : public LocusInfo
         const snp_pos_info& good_pi,
         const int used_allele_count_min_qscore,
         const bool initIsForcedOutput = false)
-      : base_t(sampleCount, initPos)
+      : base_t(sampleCount, initPos),
+        _siteSampleInfo(sampleCount)
     {
         ref=(init_ref);
         isForcedOutput = initIsForcedOutput;
         good_pi.get_known_counts(fwd_counts,used_allele_count_min_qscore,true);
         good_pi.get_known_counts(rev_counts,used_allele_count_min_qscore,false);
-        spanning_deletions = good_pi.spanningDeletionReadCount;
     }
 
     explicit
@@ -726,7 +739,30 @@ struct GermlineSiteLocusInfo : public LocusInfo
         : LocusInfo(sampleCount)
     {}
 
-    //GermlineSiteLocusInfo() = default;
+    bool
+    isRefUnknown() const
+    {
+        return (ref == 'N');
+    }
+
+
+    void
+    setSiteSampleInfo(
+        const unsigned sampleIndex,
+        const GermlineSiteSampleInfo& siteSampleInfo)
+    {
+        // ensure that no alleles are added once we start adding samples...
+        assert(getAltAlleleCount()>0);
+        _isLockAlleles = true;
+        assert(sampleIndex < _siteSampleInfo.size());
+        _siteSampleInfo[sampleIndex] = siteSampleInfo;
+    }
+
+    const GermlineSiteSampleInfo&
+    getSiteSample(const unsigned sampleIndex) const
+    {
+        return _siteSampleInfo[sampleIndex];
+    }
 
     virtual bool is_snp() const = 0;
     virtual bool is_nonref() const = 0;
@@ -753,9 +789,13 @@ struct GermlineSiteLocusInfo : public LocusInfo
         n_used_calls = 0;
         n_unused_calls = 0;
         hpol = 0;
-        spanning_deletions = 0;
         Unphasable = false;
         isForcedOutput = false;
+
+        for (auto& siteSample : _siteSampleInfo)
+        {
+            siteSample.clear();
+        }
     }
 
     char ref = 'N';
@@ -764,11 +804,12 @@ struct GermlineSiteLocusInfo : public LocusInfo
 
     unsigned hpol = 0;
 
-    unsigned spanning_deletions = 0;
     bool Unphasable = false;        // Set to true if the site should never be included in a phasing block
     bool isForcedOutput = false;
 
 private:
+    std::vector<GermlineSiteSampleInfo> _siteSampleInfo;
+
     std::array<unsigned,N_BASE> fwd_counts;
     std::array<unsigned,N_BASE> rev_counts;
 };
@@ -800,11 +841,6 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
           evsFeatures(gvcfDerivedOptions.snvFeatureSet),
           evsDevelopmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
     {}
-
-    bool isRefUnknown() const
-    {
-        return (ref == 'N');
-    }
 
     bool is_snp() const override
     {
@@ -907,26 +943,42 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
 std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteLocusInfo& si);
 
 
+/// TODO STREL-125 - transition to using regular counts structures
+struct GermlineContinuousSiteSampleInfo
+{
+    void
+    clear()
+    {
+        continuousTotalDepth = 0;
+        continuousAlleleDepth = 0;
+    }
+
+    double
+    getContinuousAlleleFrequency() const
+    {
+        return safeFrac(continuousAlleleDepth, continuousTotalDepth);
+    }
+
+    unsigned continuousTotalDepth = 0;
+    unsigned continuousAlleleDepth = 0;
+};
+
+
 /// specify that variant is site/SNV and a continuous frequency calling model
 struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
 {
+    typedef GermlineSiteLocusInfo base_t;
+
     GermlineContinuousSiteLocusInfo(
         const unsigned sampleCount,
         const pos_t init_pos,
         const char init_ref,
         const snp_pos_info& good_pi,
         const int used_allele_count_min_qscore,
-        const double min_het_vf,
         const bool is_forced_output = false)
-        : GermlineSiteLocusInfo(sampleCount,
-                                init_pos,
-                                init_ref,
-                                good_pi,
-                                used_allele_count_min_qscore,
-                                is_forced_output),
-          _min_het_vf(min_het_vf)
-    {
-    }
+        : base_t(sampleCount, init_pos, init_ref, good_pi, used_allele_count_min_qscore, is_forced_output),
+          _continuousSiteSampleInfo(sampleCount)
+    {}
 
     bool is_snp() const override
     {
@@ -938,26 +990,47 @@ struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
         auto ref_id = base_to_id(ref);
         return altAlleles.end() !=
                std::find_if(altAlleles.begin(), altAlleles.end(),
-                            [&](const GermlineContinuousSiteAlleleInfo& allele)
+                            [&](const GermlineSiteAlleleInfo& allele)
         {
             return allele.base != ref_id;
         });
     }
 
-    const char* get_gt(const GermlineContinuousSiteAlleleInfo& call) const
+    void
+    clear()
     {
-        if (call.base == base_to_id(ref))
-            return "0/0";
-        else if (call.variant_frequency() >= (1 -_min_het_vf))
-            return "1/1";
-        else if (call.variant_frequency() < _min_het_vf)
-            return "0/0"; // STAR-66 - desired behavior
-        else
-            return "0/1";
+        base_t::clear();
+
+        _is_snp = false;
+        altAlleles.clear();
+        for (auto& sample : _continuousSiteSampleInfo)
+        {
+            sample.clear();
+        }
     }
 
+    void
+    setContinuousSiteSampleInfo(
+        const unsigned sampleIndex,
+        const GermlineContinuousSiteSampleInfo& siteSampleInfo)
+    {
+        // ensure that no alleles are added once we start adding samples...
+        assert(getAltAlleleCount()>0);
+        _isLockAlleles = true;
+        assert(sampleIndex < _continuousSiteSampleInfo.size());
+        _continuousSiteSampleInfo[sampleIndex] = siteSampleInfo;
+    }
+
+    const GermlineContinuousSiteSampleInfo&
+    getContinuousSiteSample(const unsigned sampleIndex) const
+    {
+        return _continuousSiteSampleInfo[sampleIndex];
+    }
+
+
     bool _is_snp = false;
-    std::vector<GermlineContinuousSiteAlleleInfo> altAlleles;
+    std::vector<GermlineSiteAlleleInfo> altAlleles;
+
 private:
-    double _min_het_vf;
+    std::vector<GermlineContinuousSiteSampleInfo> _continuousSiteSampleInfo;
 };

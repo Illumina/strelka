@@ -166,6 +166,18 @@ get_label(const unsigned idx)
 }
 
 
+/// restrict to the case where variant is site/SNV
+struct GermlineSiteAlleleInfo : public GermlineVariantAlleleInfo
+{
+    explicit
+    GermlineSiteAlleleInfo(BASE_ID::index_t initBase)
+        : base(initBase)
+    {}
+
+    BASE_ID::index_t base;
+};
+
+
 /// restrict to the case where variant is site/SNV and calling model is diploid
 struct GermlineDiploidSiteAlleleInfo : public GermlineVariantAlleleInfo
 {
@@ -205,24 +217,5 @@ struct GermlineDiploidSiteAlleleInfo : public GermlineVariantAlleleInfo
     unsigned max_gt;
 };
 
-
-/// restrict to the case where variant is site/SNV and calling model is continuous
-struct GermlineContinuousSiteAlleleInfo : public GermlineVariantAlleleInfo
-{
-    GermlineContinuousSiteAlleleInfo(unsigned totalDepth, unsigned alleleDepth, BASE_ID::index_t initBase)
-        : _totalDepth(totalDepth)
-        , _alleleDepth(alleleDepth)
-        , base(initBase)
-    {}
-
-    double variant_frequency() const
-    {
-        return safeFrac(_alleleDepth, _totalDepth);
-    }
-
-    unsigned _totalDepth;
-    unsigned _alleleDepth;
-    BASE_ID::index_t base;
-};
-
 std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteAlleleInfo& allele);
+

@@ -84,31 +84,51 @@ position_snp_call_continuous(
     // continuous caller reports only one alt per vcf record (locus)
     assert(locus.altAlleles.empty());
 
-    unsigned totalDepth = locus.spanning_deletions;
-    for (unsigned baseId2(0); baseId2 < N_BASE; ++baseId2)
-    {
-        totalDepth += locus.alleleObservationCounts(baseId2);
-    }
-    uint8_t ref_base_id = base_to_id(locus.ref);
+    const uint8_t ref_base_id = base_to_id(locus.ref);
 
     bool isOutputAllele(false);
-    GermlineContinuousSiteAlleleInfo allele(totalDepth, locus.alleleObservationCounts(baseId),
-                                            (BASE_ID::index_t) baseId);
+    GermlineSiteAlleleInfo allele((BASE_ID::index_t) baseId);
 
     const unsigned sampleCount(locus.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
         auto& sampleInfo(locus.getSample(sampleIndex));
-        const double vf = safeFrac(locus.alleleObservationCounts(baseId), totalDepth);
-        if (((ref_base_id != baseId ) && (vf > opt.min_het_vf)) || isForcedOutput)
+        const auto& continuousSiteSampleInfo(locus.getContinuousSiteSample(sampleIndex));
+
+        const double alleleFrequency(continuousSiteSampleInfo.getContinuousAlleleFrequency());
+
         {
-            sampleInfo.gqx = sampleInfo.genotypeQualityPolymorphic = poisson_qscore(locus.alleleObservationCounts(baseId), totalDepth,
-                                                        (unsigned) opt.min_qscore, 40);
+            // use diploid gt codes as a convenient way to summarize the continuous variant calls:
+            static const unsigned homrefGtIndex(VcfGenotypeUtil::getGenotypeIndex(0, 0));
+            static const unsigned hetGtIndex(VcfGenotypeUtil::getGenotypeIndex(0, 1));
+            static const unsigned homGtIndex(VcfGenotypeUtil::getGenotypeIndex(1, 1));
+
+            auto getGtIndex = [&]() -> unsigned
+                {
+                    if (allele.base == ref_base_id)
+                        return homrefGtIndex;
+                    else if (alleleFrequency >= (1. - opt.min_het_vf))
+                        return homGtIndex;
+                    else if (alleleFrequency < opt.min_het_vf)
+                        return homrefGtIndex; // STAR-66 - desired behavior
+                    else
+                        return hetGtIndex;
+                };
+
+            sampleInfo.maxGenotypeIndexPolymorphic = getGtIndex();
+        }
+
+        if (((ref_base_id != baseId ) && (alleleFrequency > opt.min_het_vf)) || isForcedOutput)
+        {
+            sampleInfo.gqx = sampleInfo.genotypeQualityPolymorphic =
+                poisson_qscore(continuousSiteSampleInfo.continuousAlleleDepth,
+                               continuousSiteSampleInfo.continuousTotalDepth,
+                               (unsigned) opt.min_qscore, 40);
 
             if (ref_base_id != baseId)
             {
                 // flag the whole site as a SNP if any call above the VF threshold is non-ref
-                locus._is_snp = locus._is_snp || vf > opt.min_het_vf;
+                locus._is_snp = locus._is_snp || alleleFrequency > opt.min_het_vf;
                 unsigned int fwdAlt = 0;
                 unsigned revAlt = 0;
                 unsigned fwdOther = 0;

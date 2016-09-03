@@ -204,7 +204,7 @@ struct VcfGenotypeUtil
     static
     void
     writeGenotype(
-        const unsigned ploidy,
+        const int ploidy,
         const unsigned genotypeIndex,
         std::ostream& os)
     {
@@ -214,7 +214,7 @@ struct VcfGenotypeUtil
             getAlleleIndices(genotypeIndex, allele0Index);
             writeGenotype(allele0Index, os);
         }
-        else if (ploidy == 2)
+        else if ((ploidy == 2) or (ploidy == -1))
         {
             uint8_t allele0Index;
             uint8_t allele1Index;

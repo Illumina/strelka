@@ -269,7 +269,8 @@ public:
     bool is_n_ref_warn;
     std::vector<base_call> calls;
     std::vector<base_call> tier2_calls; // call not passing stringent quality criteria
-    // number of spanning deletions crossing the site:
+
+    // number of spanning deletion reads crossing the site:
     unsigned spanningDeletionReadCount;
 
     // number of submapped reads crossing the site.

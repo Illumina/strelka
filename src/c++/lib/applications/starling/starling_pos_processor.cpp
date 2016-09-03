@@ -179,6 +179,23 @@ process_pos_snp(const pos_t pos)
 
 
 
+/// setup siteSampleInfo assuming that corresponding sampleInfo has already been initialized
+static
+void
+updateSiteSampleInfo(
+    const unsigned sampleIndex,
+    const snp_pos_info& good_pi,
+    GermlineSiteLocusInfo& locus)
+{
+    GermlineSiteSampleInfo siteSampleInfo;
+
+    siteSampleInfo.spanningDeletionReadCount = good_pi.spanningDeletionReadCount;
+
+    locus.setSiteSampleInfo(sampleIndex, siteSampleInfo);
+}
+
+
+
 static
 void
 updateSnvLocusWithSampleInfo(
@@ -199,7 +216,7 @@ updateSnvLocusWithSampleInfo(
 
     pileupCleaner.CleanPileupErrorProb(sif.cpi);
 
-    //const snp_pos_info& good_pi(cpi.cleanedPileup());
+    const snp_pos_info& good_pi(cpi.cleanedPileup());
     const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
     diploid_genotype dgt;
@@ -215,6 +232,8 @@ updateSnvLocusWithSampleInfo(
 
     // update homref prob for QUAL
     homRefLogProb += std::log(dgt.genome.ref_pprob);
+
+    updateSiteSampleInfo(sampleIndex, good_pi, locus);
 }
 
 
@@ -292,6 +311,54 @@ process_pos_snp_digt(
 
 
 
+static
+void
+updateContinuousSiteSampleInfo(
+    const unsigned sampleIndex,
+    const unsigned baseId, ///< TODO STREL-125 TMP!!!!!!
+    GermlineContinuousSiteLocusInfo& locus)
+{
+    const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
+
+    GermlineContinuousSiteSampleInfo siteContinuousSampleInfo;
+
+    siteContinuousSampleInfo.continuousTotalDepth = siteSampleInfo.spanningDeletionReadCount;
+    for (unsigned baseId2(0); baseId2 < N_BASE; ++baseId2)
+    {
+        /// TODO STREL-125 sample generalization
+        siteContinuousSampleInfo.continuousTotalDepth += locus.alleleObservationCounts(baseId2);
+    }
+
+    siteContinuousSampleInfo.continuousAlleleDepth = locus.alleleObservationCounts(baseId);
+
+    locus.setContinuousSiteSampleInfo(sampleIndex, siteContinuousSampleInfo);
+}
+
+
+
+static
+void
+updateContinuousSnvLocusWithSampleInfo(
+    starling_pos_processor::sample_info& sif,
+    const PileupCleaner& pileupCleaner,
+    const unsigned sampleIndex,
+    const unsigned baseId, ///< TODO STREL-125 TMP!!!!!!
+    GermlineContinuousSiteLocusInfo& locus)
+{
+    const CleanedPileup& cpi(sif.cpi);
+    //const snp_pos_info& pi(cpi.rawPileup());
+
+    pileupCleaner.CleanPileupErrorProb(sif.cpi);
+
+    const snp_pos_info& good_pi(cpi.cleanedPileup());
+//    const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
+
+    updateSiteSampleInfo(sampleIndex, good_pi, locus);
+    updateContinuousSiteSampleInfo(sampleIndex, baseId, locus);
+}
+
+
+
 void
 starling_pos_processor::
 process_pos_snp_continuous(const pos_t pos)
@@ -302,9 +369,9 @@ process_pos_snp_continuous(const pos_t pos)
     // end sample generalization
     /// TODO STREL-125 generalize to multisample
     assert(sampleCount == 1);
-    const unsigned sampleIndex(0);
+    const unsigned tmpSampleIndex(0);
 
-    sample_info& sif(sample(sampleIndex));
+    sample_info& sif(sample(tmpSampleIndex));
 
     const CleanedPileup& cpi(sif.cpi);
     const snp_pos_info& pi(cpi.rawPileup());
@@ -314,7 +381,7 @@ process_pos_snp_continuous(const pos_t pos)
     const snp_pos_info& good_pi(cpi.cleanedPileup());
 
     GermlineContinuousSiteLocusInfo templateLocus(sampleCount, pos, pi.get_ref_base(), good_pi,
-                                                  _opt.used_allele_count_min_qscore, _opt.min_het_vf, isForcedOutput);
+                                                  _opt.used_allele_count_min_qscore, isForcedOutput);
 
     templateLocus.n_used_calls = cpi.n_used_calls();
     templateLocus.n_unused_calls = cpi.n_unused_calls();
@@ -327,8 +394,16 @@ process_pos_snp_continuous(const pos_t pos)
     auto addBase = [&](const uint8_t baseId, const bool isForcedOutputUsed)
     {
         std::unique_ptr<GermlineContinuousSiteLocusInfo> locusPtr(new GermlineContinuousSiteLocusInfo(templateLocus));
+        // set sample-dependent info
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        {
+            updateContinuousSnvLocusWithSampleInfo(
+                sample(sampleIndex), _pileupCleaner, sampleIndex, baseId, *locusPtr);
+        }
+
         starling_continuous_variant_caller::position_snp_call_continuous(_opt, good_pi, baseId, isForcedOutputUsed,
                                                                          (GermlineContinuousSiteLocusInfo&) *locusPtr);
+
         if (not locusPtr->altAlleles.empty())
         {
             isSiteAddedForPosition = true;

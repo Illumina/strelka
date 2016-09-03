@@ -71,16 +71,6 @@ is_new_value_blockable(const int new_val,
     return check_block_tolerance(ss2,frac_tol,abs_tol);
 }
 
-// sites that are 0/1 can be compressed if their non-ref allele ratios are low enough. So, fix those here
-static const char* map_gt_to_homref(const char* gt)
-{
-    if (0 == std::strcmp("0/1", gt))
-        return "0/0";
-    return gt;
-}
-
-
-
 bool
 gvcf_block_site_record::
 testCanSiteJoinSampleBlockShared(
@@ -150,7 +140,7 @@ testCanSiteJoinSampleBlock(
 
     const LocusSampleInfo& inputSampleInfo(locus.getSample(sampleIndex));
 
-    if (gt != map_gt_to_homref(locus.get_gt())) return false;
+    if (gt != locus.get_gt()) return false;
 
     // coverage states must match:
     if (is_covered != locus.allele.is_covered) return false;
@@ -199,7 +189,7 @@ joinSiteToSampleBlock(
         filters = locus.filters;
         sampleInfo.filters = inputSampleInfo.filters;
         setNonRef(locus.is_nonref());
-        gt = map_gt_to_homref(locus.get_gt());
+        gt = locus.get_gt();
         is_used_covered = locus.allele.is_used_covered;
         is_covered = locus.allele.is_covered;
         ploidy = locus.dgt.ploidy;
@@ -237,7 +227,9 @@ testCanSiteJoinSampleBlock(
 
     const LocusSampleInfo& inputSampleInfo(locus.getSample(sampleIndex));
 
-    if (gt != map_gt_to_homref(locus.get_gt(locus.altAlleles.front()))) return false;
+    std::ostringstream oss;
+    VcfGenotypeUtil::writeGenotype(inputSampleInfo.getPloidy().getPloidy(),inputSampleInfo.max_gt(),oss);
+    if (gt != oss.str()) return false;
 
     // coverage states must match:
     if (is_covered != (locus.n_used_calls != 0 || locus.n_unused_calls != 0)) return false;
@@ -275,7 +267,11 @@ joinSiteToSampleBlock(
         {
             filters = locus.filters;
             sampleInfo.filters = inputSampleInfo.filters;
-            gt = map_gt_to_homref(locus.get_gt(locus.altAlleles.front()));
+
+            std::ostringstream oss;
+            VcfGenotypeUtil::writeGenotype(sampleInfo.getPloidy().getPloidy(),sampleInfo.max_gt(),oss);
+            gt = oss.str();
+
             setNonRef(locus.is_nonref());
             // TODO: handle no coverage regions in continuous
             has_call = true;

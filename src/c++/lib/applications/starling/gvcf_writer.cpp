@@ -603,8 +603,6 @@ write_site_record(
 
     os  << locus.ref << '\t'; // REF
 
-    std::string gt(locus.get_gt(allele));
-
     // ALT
     if (is_no_alt)
         os << ".";
@@ -664,9 +662,10 @@ write_site_record(
 
         os << '\t';
 
+        VcfGenotypeUtil::writeGenotype(sampleInfo.getPloidy().getPloidy(),sampleInfo.max_gt(),os);
+
         //SAMPLE
-        os << gt
-           << ':' << sampleInfo.genotypeQualityPolymorphic
+        os << ':' << sampleInfo.genotypeQualityPolymorphic
            << ':' << sampleInfo.gqx;
 
         // DP:DPF
@@ -688,8 +687,9 @@ write_site_record(
 
         // VF
         {
+            const auto& continuousSiteSampleInfo(locus.getContinuousSiteSample(sampleIndex));
             const StreamScoper ss(os);
-            os << ':' << std::fixed << std::setprecision(3) << allele.variant_frequency();
+            os << ':' << std::fixed << std::setprecision(3) << continuousSiteSampleInfo.getContinuousAlleleFrequency();
         }
     }
     os << '\n';
