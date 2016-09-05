@@ -162,13 +162,6 @@ finish_gvcf_header(
     }
 #endif
 
-    // Unphased, flag if a site that is within a phasing window hasn't been phased
-    if (opt.do_codon_phasing ||
-        opt.gvcf.include_headers.end() != std::find(opt.gvcf.include_headers.begin(), opt.gvcf.include_headers.end(), "Phasing"))
-    {
-        os << "##INFO=<ID=Unphased,Number=0,Type=Flag,Description=\"Indicates a record that is within the specified phasing window of another variant but could not be phased due to lack of minimum read support.\">\n";
-    }
-
     if (opt.isReportEVSFeatures)
     {
         os << "##INFO=<ID=EVSF,Number=.,Type=Float,Description=\"Empirical variant scoring features.\">\n";

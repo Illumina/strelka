@@ -452,11 +452,6 @@ write_site_record(
                 locus.evsDevelopmentFeatures.writeValues(os);
             }
         }
-
-        if (locus.allele.is_phasing_insufficient_depth)
-        {
-            os << ";Unphased";
-        }
     }
     else
     {
@@ -658,16 +653,6 @@ write_site_record(
             info << ';';
         }
         info << "SNVHPOL=" << locus.hpol;
-    }
-
-    if (!is_no_alt)
-    {
-        if (_opt.do_codon_phasing)
-        {
-            if (!info.str().empty())
-                info << ";";
-            info << "Unphased"; // TODO: placeholder until we do phasing on continuous variants
-        }
     }
 
     os << (info.str().empty() ? "." : info.str()) << "\t";

@@ -250,9 +250,6 @@ BOOST_AUTO_TEST_CASE( low_depth_doesnt_phase )
     const auto next = getTestSink("ACGTACGTACGT", "ACGTACGTAC", "ACGTGCTTAC", 3, 4);
 
     BOOST_CHECK_EQUAL(2, next->the_sites.size());
-    BOOST_CHECK(next->the_sites.front()->allele.is_phasing_insufficient_depth);
-    BOOST_CHECK(next->the_sites.back()->allele.is_phasing_insufficient_depth);
-
 }
 
 

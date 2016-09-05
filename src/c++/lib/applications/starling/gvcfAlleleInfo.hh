@@ -204,13 +204,11 @@ struct GermlineDiploidSiteAlleleInfo : public GermlineSiteAlleleInfo
     {
         base_t::clear();
         is_phased_region=false;
-        is_phasing_insufficient_depth=false;
         modified_gt=MODIFIED_SITE_GT::NONE;
         max_gt=0;
     }
 
     bool is_phased_region;
-    bool is_phasing_insufficient_depth;
 
     MODIFIED_SITE_GT::index_t modified_gt;
     unsigned max_gt;

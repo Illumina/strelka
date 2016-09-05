@@ -197,12 +197,6 @@ create_phased_record()
     if (total_reads<10)
     {
         // some initial minimum conditions, look for at least 10 spanning reads support
-        // set flag on records saying too little evidence to phase
-        for (auto& si : _buffer)
-        {
-            if (si->is_het())
-                si->allele.is_phasing_insufficient_depth = true;
-        }
         return;
     }
 

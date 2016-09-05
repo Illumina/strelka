@@ -83,8 +83,6 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
     si->allele.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[snp_pos]),base_to_id(r2[snp_pos]));
     si->dgt.genome.snp_qphred = 60;
 
-    si->allele.is_phasing_insufficient_depth = true;
-
     // now make sure it is rendered with the Unphased info field
 
 
@@ -109,11 +107,6 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
     std::vector<std::string> strs;
     boost::split(strs, lines[1], boost::is_any_of("\t"));
     BOOST_CHECK(strs.size() > 7);
-
-    std::vector<std::string> infos;
-    boost::split(infos, strs[7], boost::is_any_of(";"));
-    BOOST_CHECK(infos.end() != std::find(infos.begin(), infos.end(), "Unphased"));
-
 }
 
 BOOST_AUTO_TEST_SUITE_END()
