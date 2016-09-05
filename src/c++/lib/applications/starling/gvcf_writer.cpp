@@ -399,8 +399,9 @@ write_site_record(
     {
         os << "SNVSB=";
         {
+            /// TODO STREL-125 generalize to multiple alts
             const StreamScoper ss(os);
-            os << std::fixed << std::setprecision(1) << locus.allele.strand_bias;
+            os << std::fixed << std::setprecision(1) << locus.allele.strandBias;
         }
         os << ';';
         os << "SNVHPOL=" << locus.hpol;
@@ -578,21 +579,46 @@ write_site_record(
 
 
 
+static
+void
+writeSiteVcfAltField(
+    const std::vector<GermlineSiteAlleleInfo>& siteAlleles,
+    std::ostream& os)
+{
+    if (siteAlleles.empty())
+    {
+        os << '.';
+    }
+    else
+    {
+        const unsigned altAlleleCount(siteAlleles.size());
+        for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; altAlleleIndex++)
+        {
+            if (altAlleleIndex != 0) os <<',';
+            os << id_to_base(siteAlleles[altAlleleIndex].baseId);
+        }
+    }
+
+}
+
+
+
 void
 gvcf_writer::
 write_site_record(
     const GermlineContinuousSiteLocusInfo& locus) const
 {
-    auto ref_base_id = base_to_id(locus.ref);
+    const auto refBaseId = base_to_id(locus.ref);
 
-    assert(locus.altAlleles.size() == 1);
-    const auto& allele(locus.altAlleles.front());
+    const auto& siteAlleles(locus.getSiteAlleles());
 
+    /// TODO STREL-125 tmp transitional structures:
+    const bool is_no_alt(siteAlleles.empty());
     std::vector<uint8_t> altOrder;
-    const bool is_no_alt(allele.base == ref_base_id);
-    if (! is_no_alt)
+    for (const auto& allele : siteAlleles)
     {
-        altOrder.push_back(allele.base);
+        assert(allele.baseId != refBaseId);
+        altOrder.push_back(allele.baseId);
     }
 
     std::ostream& os(*_osptr);
@@ -604,10 +630,7 @@ write_site_record(
     os  << locus.ref << '\t'; // REF
 
     // ALT
-    if (is_no_alt)
-        os << ".";
-    else
-        os << id_to_base(allele.base);
+    writeSiteVcfAltField(locus.getSiteAlleles(), os);
     os << '\t';
 
     // QUAL:
@@ -622,12 +645,18 @@ write_site_record(
 
     if (locus._is_snp)
     {
-        info << "SNVSB=";
         {
-            const StreamScoper ss(info);
-            info << std::fixed << std::setprecision(1) << allele.strand_bias;
+            assert(not siteAlleles.empty());
+
+            /// TODO STREL-125 generalize to multiple alts
+            const auto& allele(siteAlleles.front());
+            info << "SNVSB=";
+            {
+                const StreamScoper ss(info);
+                info << std::fixed << std::setprecision(1) << allele.strandBias;
+            }
+            info << ';';
         }
-        info << ';';
         info << "SNVHPOL=" << locus.hpol;
     }
 
@@ -741,7 +770,7 @@ write_site_record(
 
     //SAMPLE
     os << locus.get_gt() << ':';
-    if (locus.has_call)
+    if (locus.isBlockGqxDefined)
     {
         os << locus.block_gqx.min();
     }

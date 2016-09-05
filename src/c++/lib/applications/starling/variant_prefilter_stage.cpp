@@ -58,7 +58,7 @@ add_site_modifiers(
 
     allele.is_used_covered=(locus.n_used_calls!=0);
     allele.is_covered=(locus.allele.is_used_covered || locus.n_unused_calls!=0);
-    allele.strand_bias=locus.dgt.strand_bias;
+    allele.strandBias=locus.dgt.strand_bias;
 
     if     (locus.isRefUnknown())
     {
@@ -123,7 +123,7 @@ process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr)
     else
     {
         auto si(downcast<GermlineContinuousSiteLocusInfo>(std::move(locusPtr)));
-        for (auto& altAllele : si->altAlleles)
+        for (auto& altAllele : si->getSiteAlleles())
         {
             _model.default_classify_site(*si, altAllele);
         }

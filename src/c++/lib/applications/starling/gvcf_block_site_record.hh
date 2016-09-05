@@ -60,7 +60,7 @@ struct gvcf_block_site_record : public GermlineSiteLocusInfo
         pos=-1;
         ref=(char)0;
         gt = ".";
-        has_call = is_covered = is_used_covered = _isNonRef=false;
+        isBlockGqxDefined = is_covered = is_used_covered = _isNonRef=false;
         ploidy = 0;
     }
 
@@ -139,7 +139,7 @@ public:
     stream_stat block_dpu;
     stream_stat block_dpf;
 
-    bool has_call;
+    bool isBlockGqxDefined;
     //stream_stat _blockMQ;
 
 private:

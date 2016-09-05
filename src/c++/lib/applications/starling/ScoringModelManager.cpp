@@ -243,7 +243,7 @@ default_classify_site(
     {
         if (_opt.is_max_snv_sb)
         {
-            if (allele.strand_bias>_opt.max_snv_sb) locus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
+            if (allele.strandBias>_opt.max_snv_sb) locus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
         }
         if (_opt.is_max_snv_hpol)
         {

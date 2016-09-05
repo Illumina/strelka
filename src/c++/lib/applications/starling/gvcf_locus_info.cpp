@@ -234,7 +234,7 @@ computeEmpiricalScoringFeatures(
         features.set(RNA_SNV_SCORING_FEATURES::I_ReadPosRankSum, (locus.ReadPosRankSum));
 
         features.set(RNA_SNV_SCORING_FEATURES::I_SNVHPOL, (locus.hpol));
-        features.set(RNA_SNV_SCORING_FEATURES::I_SNVSB, (locus.allele.strand_bias));
+        features.set(RNA_SNV_SCORING_FEATURES::I_SNVSB, (locus.allele.strandBias));
 
         features.set(RNA_SNV_SCORING_FEATURES::AD0, (r0 * chromDepthFactor));
         features.set(RNA_SNV_SCORING_FEATURES::AD1, (r1 * chromDepthFactor));
@@ -281,7 +281,7 @@ computeEmpiricalScoringFeatures(
 
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQ, (locus.mapqRMS));
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVHPOL, (locus.hpol));
-        features.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVSB, (locus.allele.strand_bias));
+        features.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVSB, (locus.allele.strandBias));
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQRankSum, (locus.MQRankSum));
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_ReadPosRankSum, (locus.ReadPosRankSum));
 

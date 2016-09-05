@@ -401,8 +401,7 @@ process_pos_snp_continuous(const pos_t pos)
         // setup alt allele first:
         if (not isRefAllele)
         {
-            GermlineSiteAlleleInfo allele((BASE_ID::index_t) baseId);
-            locusPtr->altAlleles.push_back(allele);
+            locusPtr->addAltSiteAllele(static_cast<BASE_ID::index_t>(baseId));
         }
 
         // set some sample-dependent info
@@ -431,6 +430,7 @@ process_pos_snp_continuous(const pos_t pos)
 
         if (not isOutputAllele) return;
 
+        // set sample-independent info:
         starling_continuous_variant_caller::position_snp_call_continuous(_opt, good_pi, baseId, *locusPtr);
 
         isAnySiteOutputAtPosition = true;

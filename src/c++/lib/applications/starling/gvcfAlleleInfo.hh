@@ -98,14 +98,15 @@ struct GermlineVariantAlleleInfo : public PolymorphicObject
     void
     clear()
     {
-        strand_bias = 0;
         isForcedOutput = false;
+        strandBias = 0.;
     }
 
-    double strand_bias = 0;
-
-    ///< this allele must appear in the VCF output:
+    /// if true, this allele must appear in the VCF output:
     bool isForcedOutput = false;
+
+    /// does this allele appear biased to one strand over all samples?:
+    double strandBias = 0.;
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineVariantAlleleInfo& allele);
@@ -169,20 +170,30 @@ get_label(const unsigned idx)
 /// restrict to the case where variant is site/SNV
 struct GermlineSiteAlleleInfo : public GermlineVariantAlleleInfo
 {
+    typedef GermlineVariantAlleleInfo base_t;
+
     explicit
-    GermlineSiteAlleleInfo(BASE_ID::index_t initBase)
-        : base(initBase)
+    GermlineSiteAlleleInfo(const BASE_ID::index_t initBaseId = BASE_ID::ANY)
+        : baseId(initBaseId)
     {}
 
-    BASE_ID::index_t base;
+    void
+    clear()
+    {
+        base_t::clear();
+        baseId = BASE_ID::ANY;
+    }
+
+    BASE_ID::index_t baseId;
 };
 
 
 /// restrict to the case where variant is site/SNV and calling model is diploid
-struct GermlineDiploidSiteAlleleInfo : public GermlineVariantAlleleInfo
+struct GermlineDiploidSiteAlleleInfo : public GermlineSiteAlleleInfo
 {
-    typedef GermlineVariantAlleleInfo base_t;
+    typedef GermlineSiteAlleleInfo base_t;
 
+    explicit
     GermlineDiploidSiteAlleleInfo()
     {
         clear();
@@ -218,4 +229,3 @@ struct GermlineDiploidSiteAlleleInfo : public GermlineVariantAlleleInfo
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteAlleleInfo& allele);
-

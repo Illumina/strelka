@@ -567,8 +567,6 @@ struct GermlineIndelLocusInfo : public LocusInfo
             _range.merge_range(known_pos_range2(indelKey.pos, indelKey.right_pos()));
             if (pos > _range.begin_pos()) pos = _range.begin_pos();
         }
-
-
     }
 
     const std::vector<GermlineIndelAlleleInfo>&
@@ -764,6 +762,28 @@ struct GermlineSiteLocusInfo : public LocusInfo
         return _siteSampleInfo[sampleIndex];
     }
 
+    void
+    addAltSiteAllele(
+        const BASE_ID::index_t baseId)
+    {
+        assert(not _isLockAlleles);
+
+        _siteAlleleInfo.emplace_back(baseId);
+        incrementAltAlleleCount();
+    }
+
+    std::vector<GermlineSiteAlleleInfo>&
+    getSiteAlleles()
+    {
+        return _siteAlleleInfo;
+    }
+
+    const std::vector<GermlineSiteAlleleInfo>&
+    getSiteAlleles() const
+    {
+        return _siteAlleleInfo;
+    }
+
     virtual bool is_snp() const = 0;
     virtual bool is_nonref() const = 0;
 
@@ -791,6 +811,7 @@ struct GermlineSiteLocusInfo : public LocusInfo
         hpol = 0;
         Unphasable = false;
         isForcedOutput = false;
+        _siteAlleleInfo.clear();
 
         for (auto& siteSample : _siteSampleInfo)
         {
@@ -808,6 +829,7 @@ struct GermlineSiteLocusInfo : public LocusInfo
     bool isForcedOutput = false;
 
 private:
+    std::vector<GermlineSiteAlleleInfo> _siteAlleleInfo;
     std::vector<GermlineSiteSampleInfo> _siteSampleInfo;
 
     std::array<unsigned,N_BASE> fwd_counts;
@@ -833,7 +855,6 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
           evsDevelopmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
     {}
 
-    explicit
     GermlineDiploidSiteLocusInfo(
         const gvcf_deriv_options& gvcfDerivedOptions,
         const unsigned sampleCount)
@@ -988,11 +1009,12 @@ struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
     bool is_nonref() const override
     {
         auto ref_id = base_to_id(ref);
+        const auto& altAlleles(getSiteAlleles());
         return altAlleles.end() !=
                std::find_if(altAlleles.begin(), altAlleles.end(),
                             [&](const GermlineSiteAlleleInfo& allele)
         {
-            return allele.base != ref_id;
+            return allele.baseId != ref_id;
         });
     }
 
@@ -1002,7 +1024,6 @@ struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
         base_t::clear();
 
         _is_snp = false;
-        altAlleles.clear();
         for (auto& sample : _continuousSiteSampleInfo)
         {
             sample.clear();
@@ -1029,7 +1050,6 @@ struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
 
 
     bool _is_snp = false;
-    std::vector<GermlineSiteAlleleInfo> altAlleles;
 
 private:
     std::vector<GermlineContinuousSiteSampleInfo> _continuousSiteSampleInfo;

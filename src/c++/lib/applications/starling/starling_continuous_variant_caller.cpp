@@ -74,6 +74,17 @@ double starling_continuous_variant_caller::strand_bias(
 
 
 
+/// strand bias values summed over all samples
+struct StrandBiasCounts
+{
+    unsigned fwdAlt = 0;
+    unsigned revAlt = 0;
+    unsigned fwdOther = 0;
+    unsigned revOther = 0;
+};
+
+
+
 void
 starling_continuous_variant_caller::
 position_snp_call_continuous(
@@ -84,6 +95,11 @@ position_snp_call_continuous(
 {
     const uint8_t refBaseId = base_to_id(locus.ref);
     const bool isRefAllele(refBaseId == baseId);
+
+    auto& siteAlleles(locus.getSiteAlleles());
+    const auto alleleCount(siteAlleles.size());
+
+    std::vector<StrandBiasCounts> strandBiasCounts(alleleCount);
 
     const unsigned sampleCount(locus.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
@@ -122,30 +138,38 @@ position_snp_call_continuous(
         {
             // flag the whole site as a SNP if any call above the VF threshold is non-ref
             locus._is_snp = locus._is_snp || alleleFrequency > opt.min_het_vf;
-            unsigned int fwdAlt = 0;
-            unsigned revAlt = 0;
-            unsigned fwdOther = 0;
-            unsigned revOther = 0;
+        }
+
+        // update strand bias intermediates:
+        for (unsigned alleleIndex(0); alleleIndex < alleleCount; ++alleleIndex)
+        {
+            const auto& allele(siteAlleles[alleleIndex]);
+            auto& sbcounts(strandBiasCounts[alleleIndex]);
+
             for (const base_call& bc : good_pi.calls)
             {
                 if (bc.is_fwd_strand)
                 {
-                    if (bc.base_id == baseId)
-                        fwdAlt++;
+                    if (bc.base_id == allele.baseId)
+                        sbcounts.fwdAlt++;
                     else
-                        fwdOther++;
+                        sbcounts.fwdOther++;
                 }
-                else if (bc.base_id == baseId)
-                    revAlt++;
+                else if (bc.base_id == allele.baseId)
+                    sbcounts.revAlt++;
                 else
-                    revOther++;
+                    sbcounts.revOther++;
             }
-
-            /// TODO STREL-125 generalize to multi-alt
-            assert(not locus.altAlleles.empty());
-            auto& allele(locus.altAlleles.front());
-            allele.strand_bias = strand_bias(fwdAlt, revAlt, fwdOther, revOther, opt.noise_floor);
         }
+    }
+
+    // update strand bias for each allele:
+    for (unsigned alleleIndex(0); alleleIndex < alleleCount; ++alleleIndex)
+    {
+        auto& allele(siteAlleles[alleleIndex]);
+        const auto& sbcounts(strandBiasCounts[alleleIndex]);
+        allele.strandBias = strand_bias(
+            sbcounts.fwdAlt, sbcounts.revAlt, sbcounts.fwdOther, sbcounts.revOther, opt.noise_floor);
     }
 
     // get the qual score:

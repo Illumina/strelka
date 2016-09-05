@@ -159,7 +159,7 @@ testCanSiteJoinSampleBlock(
     if (! is_new_value_blockable(inputSampleInfo.gqx,
                                  block_gqx,frac_tol,abs_tol,
                                  is_gqx,
-                                 has_call))
+                                 isBlockGqxDefined))
     {
         return false;
     }
@@ -193,7 +193,7 @@ joinSiteToSampleBlock(
         is_used_covered = locus.allele.is_used_covered;
         is_covered = locus.allele.is_covered;
         ploidy = locus.dgt.ploidy;
-        has_call = is_gqx;
+        isBlockGqxDefined = is_gqx;
     }
 
     if (is_gqx)
@@ -214,12 +214,6 @@ testCanSiteJoinSampleBlock(
 {
     if (count==0) return true;
 
-    if (has_call && locus.altAlleles.empty())
-        return false;
-
-    // ploidy must match. This catches mixing digt && continuous
-    if (ploidy != -1) return false;
-
     if(not testCanSiteJoinSampleBlockShared(locus,sampleIndex)) return false;
 
     const LocusSampleInfo& inputSampleInfo(locus.getSample(sampleIndex));
@@ -232,7 +226,7 @@ testCanSiteJoinSampleBlock(
     if (is_covered != (locus.n_used_calls != 0 || locus.n_unused_calls != 0)) return false;
     if (is_used_covered != (locus.n_used_calls != 0)) return false;
 
-    if (has_call)
+    if (isBlockGqxDefined)
     {
         // test blocking values:
         if (! is_new_value_blockable(inputSampleInfo.gqx,
@@ -260,33 +254,22 @@ joinSiteToSampleBlock(
 
     if (count == 0)
     {
-        if (!locus.altAlleles.empty())
-        {
-            filters = locus.filters;
-            sampleInfo.filters = inputSampleInfo.filters;
+        filters = locus.filters;
+        sampleInfo.filters = inputSampleInfo.filters;
 
-            std::ostringstream oss;
-            VcfGenotypeUtil::writeGenotype(sampleInfo.getPloidy().getPloidy(),sampleInfo.max_gt(),oss);
-            gt = oss.str();
+        std::ostringstream oss;
+        VcfGenotypeUtil::writeGenotype(sampleInfo.getPloidy().getPloidy(),sampleInfo.max_gt(),oss);
+        gt = oss.str();
+        setNonRef(locus.is_nonref());
 
-            setNonRef(locus.is_nonref());
-            // TODO: handle no coverage regions in continuous
-            has_call = true;
-        }
-        else
-        {
-            has_call = false;
-        }
+        // GQX is always defined in continuous call mode:
+        isBlockGqxDefined = true;
         is_used_covered = locus.n_used_calls != 0;
         is_covered = locus.n_used_calls != 0 || locus.n_unused_calls != 0;
         ploidy = -1;
     }
 
-    // TODO: handle no coverage regions in continuous
-    if (locus.altAlleles.size() == 1)
-    {
-        block_gqx.add(inputSampleInfo.gqx);
-    }
+    block_gqx.add(inputSampleInfo.gqx);
 
     joinSiteToSampleBlockShared(locus, sampleIndex);
 }
