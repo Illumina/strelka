@@ -57,10 +57,9 @@ is_site_compressable(
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
             const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
-            /// TODO STREL-125 --   compute reffrac for each sample
             if (siteSampleInfo.n_used_calls > 0)
             {
-                const double reffrac(static_cast<double>(locus.alleleObservationCounts(base_to_id(locus.ref))) /
+                const double reffrac(static_cast<double>(siteSampleInfo.alleleObservationCounts(base_to_id(locus.ref))) /
                                      static_cast<double>(siteSampleInfo.n_used_calls));
                 if ((reffrac + _opt.block_max_nonref) <= 1) return false;
             }

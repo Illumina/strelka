@@ -282,15 +282,16 @@ print_vcf_alt(
 static
 void
 print_site_ad(
-    const GermlineSiteLocusInfo& locus,
+    const uint8_t refBaseId,
+    const GermlineSiteSampleInfo& siteSampleInfo,
     const std::vector<uint8_t>& altOrder,
     std::ostream& os)
 {
-    os << locus.alleleObservationCounts(base_to_id(locus.ref));
+    os << siteSampleInfo.alleleObservationCounts(refBaseId);
 
     for (const auto& b : altOrder)
     {
-        os << ',' << locus.alleleObservationCounts(b);
+        os << ',' << siteSampleInfo.alleleObservationCounts(b);
     }
 }
 
@@ -325,16 +326,17 @@ getExtendedLocusFilters(const LocusInfo& locus)
 static
 void
 print_site_ad_strand(
-    const GermlineSiteLocusInfo& locus,
+    const uint8_t refBaseId,
+    const GermlineSiteSampleInfo& siteSampleInfo,
     const std::vector<uint8_t>& altOrder,
     const bool is_fwd_strand,
     std::ostream& os)
 {
-    os << locus.alleleObservationCountsByStrand(is_fwd_strand, base_to_id(locus.ref));
+    os << siteSampleInfo.alleleObservationCountsByStrand(is_fwd_strand, refBaseId);
 
     for (const auto& b : altOrder)
     {
-        os << ',' << locus.alleleObservationCountsByStrand(is_fwd_strand,b);
+        os << ',' << siteSampleInfo.alleleObservationCountsByStrand(is_fwd_strand,b);
     }
 }
 
@@ -347,6 +349,8 @@ write_site_record(
     const GermlineDiploidSiteLocusInfo& locus) const
 {
     std::ostream& os(*_osptr);
+
+    const uint8_t refBaseId(base_to_id(locus.ref));
 
     os << _chrom << '\t'  // CHROM
        << (locus.pos+1) << '\t'  // POS
@@ -526,11 +530,11 @@ write_site_record(
         else
         {
             os << ':';
-            print_site_ad(locus, altOrder, os);
+            print_site_ad(refBaseId, siteSampleInfo, altOrder, os);
             os << ':';
-            print_site_ad_strand(locus, altOrder, true, os);
+            print_site_ad_strand(refBaseId, siteSampleInfo, altOrder, true, os);
             os << ':';
-            print_site_ad_strand(locus, altOrder, false, os);
+            print_site_ad_strand(refBaseId, siteSampleInfo, altOrder, false, os);
         }
 
         // FT
@@ -705,11 +709,11 @@ write_site_record(
         if (!is_no_alt)
         {
             os << ':';
-            print_site_ad(locus, altOrder, os);
+            print_site_ad(refBaseId, siteSampleInfo, altOrder, os);
             os << ':';
-            print_site_ad_strand(locus, altOrder, true, os);
+            print_site_ad_strand(refBaseId, siteSampleInfo, altOrder, true, os);
             os << ':';
-            print_site_ad_strand(locus, altOrder, false, os);
+            print_site_ad_strand(refBaseId, siteSampleInfo, altOrder, false, os);
         }
 
         // FT

@@ -183,6 +183,7 @@ process_pos_snp(const pos_t pos)
 static
 void
 updateSiteSampleInfo(
+    const starling_base_options& opt,
     const unsigned sampleIndex,
     const CleanedPileup& cpi,
     GermlineSiteLocusInfo& locus)
@@ -195,6 +196,9 @@ updateSiteSampleInfo(
 
     siteSampleInfo.n_used_calls=cpi.n_used_calls();
     siteSampleInfo.n_unused_calls=cpi.n_unused_calls();
+
+    good_pi.get_known_counts(siteSampleInfo.fwd_counts, opt.used_allele_count_min_qscore, true);
+    good_pi.get_known_counts(siteSampleInfo.rev_counts, opt.used_allele_count_min_qscore, false);
 
     locus.setSiteSampleInfo(sampleIndex, siteSampleInfo);
 }
@@ -237,7 +241,7 @@ updateSnvLocusWithSampleInfo(
     // update homref prob for QUAL
     homRefLogProb += std::log(dgt.genome.ref_pprob);
 
-    updateSiteSampleInfo(sampleIndex, cpi, locus);
+    updateSiteSampleInfo(opt, sampleIndex, cpi, locus);
 }
 
 
@@ -260,10 +264,9 @@ process_pos_snp_digt(
 
     _pileupCleaner.CleanPileupErrorProb(tmpSif.cpi);
 
-    const snp_pos_info& good_pi(cpi.cleanedPileup());
     const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
-    std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore, isForcedOutput));
+    std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, pos,pi.get_ref_base(), isForcedOutput));
 
     // add sample-dependent info:
     double homRefLogProb(0);
@@ -328,35 +331,153 @@ updateContinuousSiteSampleInfo(
     for (unsigned baseId2(0); baseId2 < N_BASE; ++baseId2)
     {
         /// TODO STREL-125 sample generalization
-        siteContinuousSampleInfo.continuousTotalDepth += locus.alleleObservationCounts(baseId2);
+        siteContinuousSampleInfo.continuousTotalDepth += siteSampleInfo.alleleObservationCounts(baseId2);
     }
 
-    siteContinuousSampleInfo.continuousAlleleDepth = locus.alleleObservationCounts(baseId);
+    siteContinuousSampleInfo.continuousAlleleDepth = siteSampleInfo.alleleObservationCounts(baseId);
 
     locus.setContinuousSiteSampleInfo(sampleIndex, siteContinuousSampleInfo);
 }
 
 
 
+/// strand bias values summed over all samples
+struct StrandBiasCounts
+{
+    unsigned fwdAlt = 0;
+    unsigned revAlt = 0;
+    unsigned fwdOther = 0;
+    unsigned revOther = 0;
+};
+
+
+
 static
 void
 updateContinuousSnvLocusWithSampleInfo(
+    const starling_base_options& opt,
     starling_pos_processor::sample_info& sif,
     const PileupCleaner& pileupCleaner,
     const unsigned sampleIndex,
     const unsigned baseId, ///< TODO STREL-125 TMP!!!!!!
+    std::vector<StrandBiasCounts>& strandBiasCounts,
     GermlineContinuousSiteLocusInfo& locus)
 {
+    const uint8_t refBaseId = base_to_id(locus.ref);
+    const bool isRefAllele(refBaseId == baseId);
+
+    auto& siteAlleles(locus.getSiteAlleles());
+    const auto alleleCount(siteAlleles.size());
+
     const CleanedPileup& cpi(sif.cpi);
+
+    updateSiteSampleInfo(opt, sampleIndex, cpi, locus);
+    updateContinuousSiteSampleInfo(sampleIndex, baseId, locus);
+
+
     //const snp_pos_info& pi(cpi.rawPileup());
 
     pileupCleaner.CleanPileupErrorProb(sif.cpi);
 
-    //const snp_pos_info& good_pi(cpi.cleanedPileup());
+    const snp_pos_info& good_pi(cpi.cleanedPileup());
 //    const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
-    updateSiteSampleInfo(sampleIndex, cpi, locus);
-    updateContinuousSiteSampleInfo(sampleIndex, baseId, locus);
+    {
+        auto& sampleInfo(locus.getSample(sampleIndex));
+        const auto& continuousSiteSampleInfo(locus.getContinuousSiteSample(sampleIndex));
+
+        const double alleleFrequency(continuousSiteSampleInfo.getContinuousAlleleFrequency());
+
+        {
+            // use diploid gt codes as a convenient way to summarize the continuous variant calls:
+            static const unsigned homrefGtIndex(VcfGenotypeUtil::getGenotypeIndex(0, 0));
+            static const unsigned hetGtIndex(VcfGenotypeUtil::getGenotypeIndex(0, 1));
+            static const unsigned homGtIndex(VcfGenotypeUtil::getGenotypeIndex(1, 1));
+
+            auto getGtIndex = [&]() -> unsigned {
+                if (isRefAllele)
+                    return homrefGtIndex;
+                else if (alleleFrequency >= (1. - opt.min_het_vf))
+                    return homGtIndex;
+                else if (alleleFrequency < opt.min_het_vf)
+                    return homrefGtIndex; // STAR-66 - desired behavior
+                else
+                    return hetGtIndex;
+            };
+
+            sampleInfo.maxGenotypeIndexPolymorphic = getGtIndex();
+        }
+
+        sampleInfo.gqx = sampleInfo.genotypeQualityPolymorphic =
+            starling_continuous_variant_caller::poisson_qscore(
+                continuousSiteSampleInfo.continuousAlleleDepth,
+                continuousSiteSampleInfo.continuousTotalDepth,
+                (unsigned) opt.min_qscore, 40);
+
+        if (not isRefAllele)
+        {
+            // flag the whole site as a SNP if any call above the VF threshold is non-ref
+            locus._is_snp = locus._is_snp || alleleFrequency > opt.min_het_vf;
+        }
+
+        // update strand bias intermediates:
+        for (unsigned alleleIndex(0); alleleIndex < alleleCount; ++alleleIndex)
+        {
+            const auto& allele(siteAlleles[alleleIndex]);
+            auto& sbcounts(strandBiasCounts[alleleIndex]);
+
+            for (const base_call& bc : good_pi.calls)
+            {
+                if (bc.is_fwd_strand)
+                {
+                    if (bc.base_id == allele.baseId)
+                        sbcounts.fwdAlt++;
+                    else
+                        sbcounts.fwdOther++;
+                }
+                else if (bc.base_id == allele.baseId)
+                    sbcounts.revAlt++;
+                else
+                    sbcounts.revOther++;
+            }
+        }
+    }
+}
+
+
+
+void
+updateContinuousSnvLocusInfo(
+    const starling_options& opt,
+    const reference_contig_segment& ref,
+    const pos_t pos,
+    const std::vector<StrandBiasCounts>& strandBiasCounts,
+    GermlineContinuousSiteLocusInfo& locus)
+{
+    const unsigned sampleCount(locus.getSampleCount());
+
+    auto& siteAlleles(locus.getSiteAlleles());
+    const unsigned alleleCount(siteAlleles.size());
+
+    // set sample-independent info:
+    locus.hpol = get_snp_hpol_size(pos, ref);
+
+    // update strand bias for each allele:
+    for (unsigned alleleIndex(0); alleleIndex < alleleCount; ++alleleIndex)
+    {
+        auto& allele(siteAlleles[alleleIndex]);
+        const auto& sbcounts(strandBiasCounts[alleleIndex]);
+        allele.strandBias = starling_continuous_variant_caller::strand_bias(
+            sbcounts.fwdAlt, sbcounts.revAlt, sbcounts.fwdOther, sbcounts.revOther, opt.noise_floor);
+    }
+
+    // get the qual score:
+    locus.anyVariantAlleleQuality = 0;
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+    {
+        const auto& sampleInfo(locus.getSample(sampleIndex));
+        locus.anyVariantAlleleQuality = std::max(locus.anyVariantAlleleQuality, sampleInfo.genotypeQualityPolymorphic);
+    }
 }
 
 
@@ -380,8 +501,6 @@ process_pos_snp_continuous(const pos_t pos)
 
     _pileupCleaner.CleanPileupErrorProb(sif.cpi);
 
-    const snp_pos_info& good_pi(cpi.cleanedPileup());
-
     const uint8_t refBaseId = base_to_id(pi.get_ref_base());
 
     // report one locus (ie. vcf record) per alt allele in continuous mode
@@ -391,7 +510,7 @@ process_pos_snp_continuous(const pos_t pos)
     {
         const bool isRefAllele(baseId == refBaseId);
         std::unique_ptr<GermlineContinuousSiteLocusInfo> locusPtr(new GermlineContinuousSiteLocusInfo(
-            sampleCount, pos, pi.get_ref_base(), good_pi, _opt.used_allele_count_min_qscore, isForcedOutput));
+            sampleCount, pos, pi.get_ref_base(), isForcedOutput));
 
         // setup alt allele first:
         if (not isRefAllele)
@@ -400,10 +519,14 @@ process_pos_snp_continuous(const pos_t pos)
         }
 
         // set some sample-dependent info
+        const auto& siteAlleles(locusPtr->getSiteAlleles());
+        const auto alleleCount(siteAlleles.size());
+        std::vector<StrandBiasCounts> strandBiasCounts(alleleCount);
+
         for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
             updateContinuousSnvLocusWithSampleInfo(
-                sample(sampleIndex), _pileupCleaner, sampleIndex, baseId, *locusPtr);
+                _opt, sample(sampleIndex), _pileupCleaner, sampleIndex, baseId, strandBiasCounts, *locusPtr);
         }
 
         // determine if this is an output allele
@@ -426,9 +549,8 @@ process_pos_snp_continuous(const pos_t pos)
         if (not isOutputAllele) return;
 
         // set sample-independent info:
-        locusPtr->hpol = get_snp_hpol_size(pos, _ref);
-
-        starling_continuous_variant_caller::position_snp_call_continuous(_opt, good_pi, baseId, *locusPtr);
+        updateContinuousSnvLocusInfo(
+            _opt, _ref, pos, strandBiasCounts,*locusPtr);
 
         isAnySiteOutputAtPosition = true;
         _gvcfer->add_site(std::move(locusPtr));

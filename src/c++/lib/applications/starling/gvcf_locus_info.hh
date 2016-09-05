@@ -699,7 +699,6 @@ struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
 
 struct GermlineSiteSampleInfo
 {
-
     /// get the count of reads crossing the site at any teir or mapq value, including MAPQ0 reads
     ///
     /// TODO get a more exact definition of requrements for read to be counted here... soft-clip, overlapping frags, basecallQual = 0 , etc...
@@ -708,6 +707,20 @@ struct GermlineSiteSampleInfo
     getTotalReadDepth() const
     {
         return n_used_calls + n_unused_calls;
+    }
+
+    unsigned
+    alleleObservationCounts(const int base_id) const
+    {
+        return (fwd_counts[base_id]+rev_counts[base_id]);
+    }
+
+    unsigned
+    alleleObservationCountsByStrand(
+        const bool is_fwd_strand,
+        const int base_id) const
+    {
+        return (is_fwd_strand ? fwd_counts[base_id] : rev_counts[base_id]);
     }
 
     void
@@ -723,6 +736,9 @@ struct GermlineSiteSampleInfo
 
     unsigned n_used_calls = 0;
     unsigned n_unused_calls = 0;
+
+    std::array<unsigned,N_BASE> fwd_counts;
+    std::array<unsigned,N_BASE> rev_counts;
 };
 
 
@@ -736,16 +752,12 @@ struct GermlineSiteLocusInfo : public LocusInfo
         const unsigned sampleCount,
         const pos_t initPos,
         const char init_ref,
-        const snp_pos_info& good_pi,
-        const int used_allele_count_min_qscore,
         const bool initIsForcedOutput = false)
       : base_t(sampleCount, initPos),
         _siteSampleInfo(sampleCount)
     {
         ref=(init_ref);
         isForcedOutput = initIsForcedOutput;
-        good_pi.get_known_counts(fwd_counts,used_allele_count_min_qscore,true);
-        good_pi.get_known_counts(rev_counts,used_allele_count_min_qscore,false);
     }
 
     explicit
@@ -826,20 +838,6 @@ struct GermlineSiteLocusInfo : public LocusInfo
     virtual bool is_snp() const = 0;
     virtual bool is_nonref() const = 0;
 
-    unsigned
-    alleleObservationCounts(const int base_id) const
-    {
-        return (fwd_counts[base_id]+rev_counts[base_id]);
-    }
-
-    unsigned
-    alleleObservationCountsByStrand(
-        const bool is_fwd_strand,
-        const int base_id) const
-    {
-        return (is_fwd_strand ? fwd_counts[base_id] : rev_counts[base_id]);
-    }
-
     void
     clear()
     {
@@ -866,9 +864,6 @@ struct GermlineSiteLocusInfo : public LocusInfo
 private:
     std::vector<GermlineSiteAlleleInfo> _siteAlleleInfo;
     std::vector<GermlineSiteSampleInfo> _siteSampleInfo;
-
-    std::array<unsigned,N_BASE> fwd_counts;
-    std::array<unsigned,N_BASE> rev_counts;
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineSiteLocusInfo& si);
@@ -882,10 +877,8 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         const unsigned sampleCount,
         const pos_t init_pos,
         const char init_ref,
-        const snp_pos_info& good_pi,
-        const int used_allele_count_min_qscore,
         const bool is_forced_output = false)
-        : GermlineSiteLocusInfo(sampleCount, init_pos, init_ref, good_pi, used_allele_count_min_qscore, is_forced_output),
+        : GermlineSiteLocusInfo(sampleCount, init_pos, init_ref, is_forced_output),
           evsFeatures(gvcfDerivedOptions.snvFeatureSet),
           evsDevelopmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
     {}
@@ -1029,10 +1022,8 @@ struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
         const unsigned sampleCount,
         const pos_t init_pos,
         const char init_ref,
-        const snp_pos_info& good_pi,
-        const int used_allele_count_min_qscore,
         const bool is_forced_output = false)
-        : base_t(sampleCount, init_pos, init_ref, good_pi, used_allele_count_min_qscore, is_forced_output),
+        : base_t(sampleCount, init_pos, init_ref, is_forced_output),
           _continuousSiteSampleInfo(sampleCount)
     {}
 

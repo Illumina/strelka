@@ -32,14 +32,7 @@ struct starling_continuous_variant_caller
     int
     poisson_qscore(unsigned callCount, unsigned coverage, unsigned estimatedBaseCallQuality, int maxQScore);
 
-    /// return true if the locus should be output
     static
-    void
-    position_snp_call_continuous(
-    const starling_base_options& opt,
-    const snp_pos_info& good_pi,
-    const unsigned baseId,
-    GermlineContinuousSiteLocusInfo& locus);
-
-    static double strand_bias(unsigned fwdAlt, unsigned revAlt, unsigned fwdOther, unsigned revOther, double noise);
+    double
+    strand_bias(unsigned fwdAlt, unsigned revAlt, unsigned fwdOther, unsigned revOther, double noise);
 };

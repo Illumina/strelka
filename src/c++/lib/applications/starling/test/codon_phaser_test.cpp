@@ -101,9 +101,9 @@ getTestSink(
 
     for (int i = 0; read1Seq[i]; i++)
     {
-        const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
+    //    const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
         std::unique_ptr<GermlineDiploidSiteLocusInfo> si(
-            new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+            new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, read_pos + i, rcs.get_base(read_pos + i)));
         si->allele.is_covered = si->allele.is_used_covered = true;
         si->dgt.ref_gt = base_to_id(si->ref);
         if (si->ref != read1Seq[i] || si->ref != read2Seq[i])
@@ -224,8 +224,8 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
 
     for (int i = 0; r1[i]; i++)
     {
-        const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        //const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
+        std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, read_pos + i, rcs.get_base(read_pos + i)));
         auto& sampleInfo(si->getSample(sampleIndex));
         si->allele.is_covered = si->allele.is_used_covered = true;
         sampleInfo.genotypeQualityPolymorphic = si->dgt.genome.snp_qphred = sampleInfo.empiricalVariantScore = 40;

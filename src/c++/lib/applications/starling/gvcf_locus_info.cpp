@@ -211,8 +211,9 @@ computeEmpiricalScoringFeatures(
     }
     assert(altBase != N_BASE);
 
-    const unsigned r0 = locus.alleleObservationCounts(locus.dgt.ref_gt);
-    const unsigned r1 = locus.alleleObservationCounts(altBase);
+    /// TODO STREL-125 generalize to multi-alt
+    const unsigned r0 = siteSampleInfo.alleleObservationCounts(locus.dgt.ref_gt);
+    const unsigned r1 = siteSampleInfo.alleleObservationCounts(altBase);
 
     const double mapqZeroFraction(safeFrac(locus.mapqZeroCount, locus.mapqCount));
 
