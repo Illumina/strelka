@@ -60,7 +60,7 @@ struct gvcf_block_site_record : public GermlineSiteLocusInfo
         pos=-1;
         ref=(char)0;
         gt = ".";
-        isBlockGqxDefined = is_covered = is_used_covered = _isNonRef=false;
+        isBlockGqxDefined = _isNonRef=false;
         ploidy = 0;
     }
 
@@ -131,8 +131,6 @@ public:
     const double frac_tol;
     const int abs_tol;
     int count;
-    bool is_covered;
-    bool is_used_covered;
     int ploidy;
     std::string gt;
     stream_stat block_gqx;

@@ -78,7 +78,6 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
     const unsigned sampleCount(1);
     //const snp_pos_info& spi(bc_buff.get_pos(snp_pos));
     std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, snp_pos, rcs.get_base(snp_pos)));
-    si->allele.is_covered = si->allele.is_used_covered = true;
     si->dgt.ref_gt = base_to_id(si->ref);
 
     si->allele.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[snp_pos]),base_to_id(r2[snp_pos]));

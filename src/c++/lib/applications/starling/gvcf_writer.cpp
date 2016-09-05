@@ -493,18 +493,13 @@ write_site_record(
 
         os << '\t';
 
-        os << locus.get_gt() << ':';
+        os << locus.get_gt(sampleIndex) << ':';
         if (locus.dgt.is_snp())
         {
             os << sampleInfo.genotypeQualityPolymorphic << ':';
         }
 
-        bool is_gqx(not locus.isRefUnknown());
-        if (is_gqx)
-        {
-            is_gqx = locus.allele.is_gqx_tmp();
-        }
-        if (is_gqx)
+        if (locus.is_gqx(sampleIndex))
         {
             os << ((sampleInfo.empiricalVariantScore >= 0) ? sampleInfo.empiricalVariantScore : sampleInfo.gqx);
         }

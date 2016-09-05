@@ -80,13 +80,16 @@ testCanSiteJoinSampleBlockShared(
     // pos must be +1 from end of record:
     if ((pos+count) != locus.pos) return false;
 
-    const LocusSampleInfo& sampleInfo(getSample(0));
     const LocusSampleInfo& inputSampleInfo(locus.getSample(sampleIndex));
     const auto& inputSiteSampleInfo(locus.getSiteSample(sampleIndex));
 
+    static const unsigned blockSampleIndex(0);
+    const LocusSampleInfo& blockSampleInfo(getSample(blockSampleIndex));
+    const auto& blockSiteSampleInfo(getSiteSample(blockSampleIndex));
+
     // filters must match:
     if (not (filters == locus.filters)) return false;
-    if (not (sampleInfo.filters == inputSampleInfo.filters)) return false;
+    if (not (blockSampleInfo.filters == inputSampleInfo.filters)) return false;
 
     if (is_nonref() || locus.is_nonref()) return false;
 
@@ -101,6 +104,10 @@ testCanSiteJoinSampleBlockShared(
         return false;
     }
 
+    // coverage states must match:
+    if (blockSiteSampleInfo.isAnyReadCoverage() != inputSiteSampleInfo.isAnyReadCoverage()) return false;
+    if (blockSiteSampleInfo.isUsedReadCoverage() != inputSiteSampleInfo.isUsedReadCoverage()) return false;
+
     return true;
 }
 
@@ -112,14 +119,21 @@ joinSiteToSampleBlockShared(
     const GermlineSiteLocusInfo& locus,
     const unsigned sampleIndex)
 {
-    //LocusSampleInfo& sampleInfo(getSample(sampleIndex));
-    //const LocusSampleInfo& inputSampleInfo(si.getSample(sampleIndex));
+    const LocusSampleInfo& inputSampleInfo(locus.getSample(sampleIndex));
     const auto& inputSiteSampleInfo(locus.getSiteSample(sampleIndex));
+
+    static const unsigned blockSampleIndex(0);
+    LocusSampleInfo& blockSampleInfo(getSample(blockSampleIndex));
 
     if (count == 0)
     {
         pos = locus.pos;
         ref = locus.ref;
+
+        filters = locus.filters;
+        blockSampleInfo.filters = inputSampleInfo.filters;
+        setNonRef(locus.is_nonref());
+        setSiteSampleInfo(blockSampleIndex, inputSiteSampleInfo);
     }
 
     block_dpu.add(inputSiteSampleInfo.n_used_calls);
@@ -142,25 +156,15 @@ testCanSiteJoinSampleBlock(
 
     const LocusSampleInfo& inputSampleInfo(locus.getSample(sampleIndex));
 
-    if (gt != locus.get_gt()) return false;
-
-    // coverage states must match:
-    if (is_covered != locus.allele.is_covered) return false;
-    if (is_used_covered != locus.allele.is_used_covered) return false;
+    if (gt != locus.get_gt(sampleIndex)) return false;
 
     // ploidy must match
     if (ploidy != locus.dgt.ploidy) return false;
 
     // test blocking values:
-    bool is_gqx(not locus.isRefUnknown());
-    if (is_gqx)
-    {
-        is_gqx = locus.allele.is_gqx_tmp();
-    }
-
     if (! is_new_value_blockable(inputSampleInfo.gqx,
                                  block_gqx,frac_tol,abs_tol,
-                                 is_gqx,
+                                 locus.is_gqx(sampleIndex),
                                  isBlockGqxDefined))
     {
         return false;
@@ -177,23 +181,12 @@ joinSiteToSampleBlock(
     const GermlineDiploidSiteLocusInfo& locus,
     const unsigned sampleIndex)
 {
-    LocusSampleInfo& sampleInfo(getSample(0));
     const LocusSampleInfo& inputSampleInfo(locus.getSample(sampleIndex));
 
-    bool is_gqx(not locus.isRefUnknown());
-    if (is_gqx)
-    {
-        is_gqx = locus.allele.is_gqx_tmp();
-    }
-
+    const bool is_gqx(locus.is_gqx(sampleIndex));
     if (count == 0)
     {
-        filters = locus.filters;
-        sampleInfo.filters = inputSampleInfo.filters;
-        setNonRef(locus.is_nonref());
-        gt = locus.get_gt();
-        is_used_covered = locus.allele.is_used_covered;
-        is_covered = locus.allele.is_covered;
+        gt = locus.get_gt(sampleIndex);
         ploidy = locus.dgt.ploidy;
         isBlockGqxDefined = is_gqx;
     }
@@ -219,15 +212,10 @@ testCanSiteJoinSampleBlock(
     if(not testCanSiteJoinSampleBlockShared(locus,sampleIndex)) return false;
 
     const LocusSampleInfo& inputSampleInfo(locus.getSample(sampleIndex));
-    const auto& inputSiteSampleInfo(locus.getSiteSample(sampleIndex));
 
     std::ostringstream oss;
     VcfGenotypeUtil::writeGenotype(inputSampleInfo.getPloidy().getPloidy(),inputSampleInfo.max_gt(),oss);
     if (gt != oss.str()) return false;
-
-    // coverage states must match:
-    if (is_covered != (inputSiteSampleInfo.n_used_calls != 0 || inputSiteSampleInfo.n_unused_calls != 0)) return false;
-    if (is_used_covered != (inputSiteSampleInfo.n_used_calls != 0)) return false;
 
     if (isBlockGqxDefined)
     {
@@ -252,24 +240,16 @@ joinSiteToSampleBlock(
     const GermlineContinuousSiteLocusInfo& locus,
     const unsigned sampleIndex)
 {
-    LocusSampleInfo& sampleInfo(getSample(0));
     const LocusSampleInfo& inputSampleInfo(locus.getSample(sampleIndex));
-    const auto& inputSiteSampleInfo(locus.getSiteSample(sampleIndex));
 
     if (count == 0)
     {
-        filters = locus.filters;
-        sampleInfo.filters = inputSampleInfo.filters;
-
         std::ostringstream oss;
-        VcfGenotypeUtil::writeGenotype(sampleInfo.getPloidy().getPloidy(),sampleInfo.max_gt(),oss);
+        VcfGenotypeUtil::writeGenotype(inputSampleInfo.getPloidy().getPloidy(),inputSampleInfo.max_gt(),oss);
         gt = oss.str();
-        setNonRef(locus.is_nonref());
 
         // GQX is always defined in continuous call mode:
         isBlockGqxDefined = true;
-        is_used_covered = inputSiteSampleInfo.n_used_calls != 0;
-        is_covered = inputSiteSampleInfo.n_used_calls != 0 || inputSiteSampleInfo.n_unused_calls != 0;
         ploidy = -1;
     }
 

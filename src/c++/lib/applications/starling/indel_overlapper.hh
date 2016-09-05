@@ -39,10 +39,15 @@ struct indel_overlapper : public variant_pipe_stage_base
         const reference_contig_segment& ref,
         std::shared_ptr<variant_pipe_stage_base> destination);
 
-    void process(std::unique_ptr<GermlineSiteLocusInfo> si) override;
-    void process(std::unique_ptr<GermlineIndelLocusInfo> ii) override;
+    void process(std::unique_ptr<GermlineSiteLocusInfo> siteLocusPtr) override;
+    void process(std::unique_ptr<GermlineIndelLocusInfo> indelLocusPtr) override;
 
-    static void modify_overlapping_site(const GermlineDiploidIndelLocusInfo& ii, GermlineDiploidSiteLocusInfo& si, const ScoringModelManager& model);
+    static
+    void
+    modify_overlapping_site(
+        const GermlineDiploidIndelLocusInfo& indelLocus,
+        GermlineDiploidSiteLocusInfo& siteLocus,
+        const ScoringModelManager& model);
 
 private:
     void flush_impl() override
@@ -51,14 +56,15 @@ private:
         process_overlaps();
     }
 
-    static void modify_indel_conflict_site(GermlineDiploidSiteLocusInfo& si);
-    static void modify_indel_overlap_site(const GermlineDiploidIndelLocusInfo& ii,
-                                          GermlineDiploidSiteLocusInfo& si,
-                                          const ScoringModelManager& model);
+    static void modify_indel_conflict_site(GermlineDiploidSiteLocusInfo& siteLocus);
+    static void modify_indel_overlap_site(
+        const GermlineDiploidIndelLocusInfo& indelLocus,
+        GermlineDiploidSiteLocusInfo& siteLocus,
+        const ScoringModelManager& model);
 
     void process_overlaps();
     void process_overlaps_impl();
-    void modify_single_indel_record(GermlineDiploidIndelLocusInfo& ii);
+    void modify_single_indel_record(GermlineDiploidIndelLocusInfo& indelLocus);
 
 
     void modify_conflict_indel_record();

@@ -203,24 +203,12 @@ struct GermlineDiploidSiteAlleleInfo : public GermlineSiteAlleleInfo
     clear()
     {
         base_t::clear();
-        is_covered=false;
-        is_used_covered=false;
-        is_zero_ploidy=false;
         is_phased_region=false;
         is_phasing_insufficient_depth=false;
         modified_gt=MODIFIED_SITE_GT::NONE;
         max_gt=0;
     }
 
-    bool
-    is_gqx_tmp() const
-    {
-        return (is_used_covered && (!is_zero_ploidy));
-    }
-
-    bool is_covered;
-    bool is_used_covered;
-    bool is_zero_ploidy;
     bool is_phased_region;
     bool is_phasing_insufficient_depth;
 

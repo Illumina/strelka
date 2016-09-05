@@ -723,12 +723,25 @@ struct GermlineSiteSampleInfo
         return (is_fwd_strand ? fwd_counts[base_id] : rev_counts[base_id]);
     }
 
+    bool
+    isUsedReadCoverage() const
+    {
+        return (n_used_calls != 0);
+    }
+
+    bool
+    isAnyReadCoverage() const
+    {
+        return (isUsedReadCoverage() or (n_unused_calls != 0));
+    }
+
     void
     clear()
     {
         spanningDeletionReadCount = 0;
         n_used_calls = 0;
         n_unused_calls = 0;
+        is_zero_ploidy = false;
     }
 
     /// count of reads which have a most likely alignment containing a deletion at the site in question
@@ -736,6 +749,9 @@ struct GermlineSiteSampleInfo
 
     unsigned n_used_calls = 0;
     unsigned n_unused_calls = 0;
+
+    /// set to true when the site is overlapped by a hom deletion:
+    bool is_zero_ploidy = false;
 
     std::array<unsigned,N_BASE> fwd_counts;
     std::array<unsigned,N_BASE> rev_counts;
@@ -780,7 +796,6 @@ struct GermlineSiteLocusInfo : public LocusInfo
         const GermlineSiteSampleInfo& siteSampleInfo)
     {
         // ensure that no alleles are added once we start adding samples...
-        assert(getAltAlleleCount()>0);
         _isLockAlleles = true;
         assert(sampleIndex < _siteSampleInfo.size());
         _siteSampleInfo[sampleIndex] = siteSampleInfo;
@@ -833,6 +848,16 @@ struct GermlineSiteLocusInfo : public LocusInfo
             allSampleLocusDepth += getSiteSample(sampleIndex).getTotalReadDepth();
         }
         return allSampleLocusDepth;
+    }
+
+    /// test whether known GQX value should be written for this locus/sample
+    bool
+    is_gqx(const unsigned sampleIndex) const
+    {
+        if (isRefUnknown()) return false;
+
+        const auto& siteSample(getSiteSample(sampleIndex));
+        return (siteSample.isUsedReadCoverage() and (not siteSample.is_zero_ploidy));
     }
 
     virtual bool is_snp() const = 0;
@@ -897,13 +922,13 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     }
 
     const char*
-    get_gt() const
+    get_gt(const unsigned sampleIndex) const
     {
         if       (allele.modified_gt != MODIFIED_SITE_GT::NONE)
         {
             return MODIFIED_SITE_GT::get_label(allele.modified_gt);
         }
-        else if (is_print_unknowngt())
+        else if (is_print_unknowngt(sampleIndex))
         {
             return ".";
         }
@@ -943,22 +968,38 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         return ((a0!=a1) && (dgt.ref_gt != a0) && (dgt.ref_gt != a1));
     }
 
+    /// TODO STREL-125 extend to multi-sample
     bool
     is_nonref() const override
     {
         return (allele.max_gt != dgt.ref_gt);
     }
 
+    /// test whether GQX should be written for this locus/sample
     bool
-    is_print_unknowngt() const
+    is_print_unknowngt(const unsigned sampleIndex) const
     {
-        return (isRefUnknown() || (!allele.is_used_covered));
+        const auto& siteSample(getSiteSample(sampleIndex));
+        return (isRefUnknown() or (not siteSample.isUsedReadCoverage()));
     }
 
+    /// test whether known QUAL value should be written for this locus
     bool
     is_qual() const
     {
-        return ((not isRefUnknown()) && allele.is_used_covered && (!allele.is_zero_ploidy) && (is_nonref()));
+        if (isRefUnknown()) return false;
+
+        // test for at least one non-empty sample:
+        const unsigned sampleCount(getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex< sampleCount; ++sampleIndex)
+        {
+            const auto& siteSample(getSiteSample(sampleIndex));
+            if (siteSample.isUsedReadCoverage() and (not siteSample.is_zero_ploidy) and is_nonref())
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     void

@@ -56,10 +56,7 @@ add_site_modifiers(
     /// TODO STREL-125 generalize to multi-sample
     const unsigned sampleIndex(0);
     LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
-    const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
 
-    allele.is_used_covered=(siteSampleInfo.n_used_calls!=0);
-    allele.is_covered=(locus.allele.is_used_covered || siteSampleInfo.n_unused_calls!=0);
     allele.strandBias=locus.dgt.strand_bias;
 
     if     (locus.isRefUnknown())
@@ -96,41 +93,43 @@ void
 variant_prefilter_stage::
 process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr)
 {
+    /// TODO STREL-125 generalize to N samples
+    static const unsigned sampleIndex(0);
+
     if (dynamic_cast<GermlineDiploidSiteLocusInfo*>(locusPtr.get()) != nullptr)
     {
-        auto si(downcast<GermlineDiploidSiteLocusInfo>(std::move(locusPtr)));
+        auto diploidLocusPtr(downcast<GermlineDiploidSiteLocusInfo>(std::move(locusPtr)));
 
-        add_site_modifiers(*si, _model);
-        if (si->dgt.is_haploid())
+        add_site_modifiers(*diploidLocusPtr, _model);
+        if (diploidLocusPtr->dgt.is_haploid())
         {
-            if (si->allele.max_gt == si->dgt.ref_gt)
+            if (diploidLocusPtr->allele.max_gt == diploidLocusPtr->dgt.ref_gt)
             {
-                si->allele.modified_gt=MODIFIED_SITE_GT::ZERO;
+                diploidLocusPtr->allele.modified_gt=MODIFIED_SITE_GT::ZERO;
             }
             else
             {
-                si->allele.modified_gt=MODIFIED_SITE_GT::ONE;
+                diploidLocusPtr->allele.modified_gt=MODIFIED_SITE_GT::ONE;
             }
         }
-        else if (si->dgt.is_noploid())
+        else if (diploidLocusPtr->dgt.is_noploid())
         {
-            if (! si->is_print_unknowngt())
+            if (! diploidLocusPtr->is_print_unknowngt(sampleIndex))
             {
-                si->filters.set(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
+                diploidLocusPtr->filters.set(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
             }
         }
 
-        _sink->process(std::move(si));
+        _sink->process(std::move(diploidLocusPtr));
     }
     else
     {
-        auto si(downcast<GermlineContinuousSiteLocusInfo>(std::move(locusPtr)));
-        for (auto& altAllele : si->getSiteAlleles())
+        for (auto& altAllele : locusPtr->getSiteAlleles())
         {
-            _model.default_classify_site_locus(*si, altAllele);
+            _model.default_classify_site_locus(*locusPtr, altAllele);
         }
 
-        _sink->process(std::move(si));
+        _sink->process(std::move(locusPtr));
     }
 }
 

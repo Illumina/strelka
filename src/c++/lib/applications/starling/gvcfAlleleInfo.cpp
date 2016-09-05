@@ -87,10 +87,6 @@ operator<<(std::ostream& os,
 {
     os << static_cast<GermlineVariantAlleleInfo>(allele) << '\n';
 
-    os << " is_covered: " << allele.is_covered;
-    os << " is_used_coverage: " << allele.is_used_covered;
-    os << " is_zero_ploidy: " << allele.is_zero_ploidy;
-
     if (allele.modified_gt != MODIFIED_SITE_GT::NONE)
     {
         os << " modgt: " << MODIFIED_SITE_GT::get_label(allele.modified_gt);

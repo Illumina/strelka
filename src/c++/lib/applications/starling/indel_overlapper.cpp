@@ -45,9 +45,9 @@ indel_overlapper::indel_overlapper(const ScoringModelManager& model, const refer
 
 void
 indel_overlapper::
-process(std::unique_ptr<GermlineSiteLocusInfo> site)
+process(std::unique_ptr<GermlineSiteLocusInfo> siteLocusPtr)
 {
-    std::unique_ptr<GermlineDiploidSiteLocusInfo> si(downcast<GermlineDiploidSiteLocusInfo>(std::move(site)));
+    std::unique_ptr<GermlineDiploidSiteLocusInfo> si(downcast<GermlineDiploidSiteLocusInfo>(std::move(siteLocusPtr)));
 
     // resolve any current or previous indels before queuing site:
     if (si->pos>=_indel_end_pos)
@@ -70,9 +70,9 @@ process(std::unique_ptr<GermlineSiteLocusInfo> site)
 
 void
 indel_overlapper::
-process(std::unique_ptr<GermlineIndelLocusInfo> locus)
+process(std::unique_ptr<GermlineIndelLocusInfo> indelLocusPtr)
 {
-    auto ii(downcast<GermlineDiploidIndelLocusInfo>(std::move(locus)));
+    auto ii(downcast<GermlineDiploidIndelLocusInfo>(std::move(indelLocusPtr)));
 
     const bool isNonVariantLocus(not ii->isVariantLocus());
 
@@ -280,15 +280,18 @@ void indel_overlapper::process_overlaps_impl()
 
 void
 indel_overlapper::
-modify_overlapping_site(const GermlineDiploidIndelLocusInfo& ii, GermlineDiploidSiteLocusInfo& si, const ScoringModelManager& model)
+modify_overlapping_site(
+    const GermlineDiploidIndelLocusInfo& indelLocus,
+    GermlineDiploidSiteLocusInfo& siteLocus,
+    const ScoringModelManager& model)
 {
-    if (ii.filters.test(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict))
+    if (indelLocus.filters.test(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict))
     {
-        modify_indel_conflict_site(si);
+        modify_indel_conflict_site(siteLocus);
     }
     else
     {
-        modify_indel_overlap_site(ii, si, model);
+        modify_indel_overlap_site(indelLocus, siteLocus, model);
     }
 }
 
@@ -297,8 +300,8 @@ modify_overlapping_site(const GermlineDiploidIndelLocusInfo& ii, GermlineDiploid
 void
 indel_overlapper::
 modify_indel_overlap_site(
-    const GermlineDiploidIndelLocusInfo& ii,
-    GermlineDiploidSiteLocusInfo& si,
+    const GermlineDiploidIndelLocusInfo& indelLocus,
+    GermlineDiploidSiteLocusInfo& siteLocus,
     const ScoringModelManager& model)
 {
 #ifdef DEBUG_GVCF
@@ -310,16 +313,16 @@ modify_indel_overlap_site(
     // this interacts poorly with empirical scoring)
 
     // apply at both locus level and sample level:
-    if (! ii.filters.none())
+    if (! indelLocus.filters.none())
     {
-        si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
+        siteLocus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
     }
 
-    const unsigned sampleCount(si.getSampleCount());
+    const unsigned sampleCount(siteLocus.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        const auto& indelSampleInfo(ii.getSample(sampleIndex));
-        auto& siteSampleInfo(si.getSample(sampleIndex));
+        const auto& indelSampleInfo(indelLocus.getSample(sampleIndex));
+        auto& siteSampleInfo(siteLocus.getSample(sampleIndex));
 
         if (! indelSampleInfo.filters.none())
         {
@@ -327,47 +330,49 @@ modify_indel_overlap_site(
         }
     }
 
-    const pos_t offset(si.pos-ii.pos);
+    const pos_t offset(siteLocus.pos-indelLocus.pos);
     assert(offset>=0);
 
     // limit qual and gq values to those of the indel, and modify site ploidy:
-    si.dgt.genome.snp_qphred = std::min(si.dgt.genome.snp_qphred, ii.anyVariantAlleleQuality);
+    siteLocus.dgt.genome.snp_qphred = std::min(siteLocus.dgt.genome.snp_qphred, indelLocus.anyVariantAlleleQuality);
 
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        const auto& indelSampleInfo(ii.getSample(sampleIndex));
-        auto& sampleInfo(si.getSample(sampleIndex));
+        const auto& indelSampleInfo(indelLocus.getSample(sampleIndex));
+        auto& sampleInfo(siteLocus.getSample(sampleIndex));
+        auto& siteSampleInfo(siteLocus.getSiteSample(sampleIndex));
+
         sampleInfo.gqx = std::min(sampleInfo.gqx, indelSampleInfo.gqx);
 
-        const unsigned ploidy(ii.getSitePloidy(sampleIndex, offset));
+        const unsigned ploidy(indelLocus.getSitePloidy(sampleIndex, offset));
 
         // change ploidy:
         if (ploidy == 1)
         {
             /// TODO STREL-125 change site GT to per-sample:
-            if (DIGT::is_het(si.allele.max_gt))
+            if (DIGT::is_het(siteLocus.allele.max_gt))
             {
                 sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
             }
             else
             {
-                if (si.allele.max_gt == si.dgt.ref_gt)
+                if (siteLocus.allele.max_gt == siteLocus.dgt.ref_gt)
                 {
-                    si.allele.modified_gt = MODIFIED_SITE_GT::ZERO;
+                    siteLocus.allele.modified_gt = MODIFIED_SITE_GT::ZERO;
                 }
                 else
                 {
-                    si.allele.modified_gt = MODIFIED_SITE_GT::ONE;
+                    siteLocus.allele.modified_gt = MODIFIED_SITE_GT::ONE;
                 }
             }
         }
         else if (ploidy == 0)
         {
-            if (si.allele.max_gt == si.dgt.ref_gt)
+            if (siteLocus.allele.max_gt == siteLocus.dgt.ref_gt)
             {
-                si.allele.modified_gt = MODIFIED_SITE_GT::UNKNOWN;
-                si.allele.is_zero_ploidy = true;
-                if (si.dgt.is_noploid())
+                siteLocus.allele.modified_gt = MODIFIED_SITE_GT::UNKNOWN;
+                siteSampleInfo.is_zero_ploidy = true;
+                if (siteLocus.dgt.is_noploid())
                 {
                     sampleInfo.filters.unset(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
                 }
@@ -384,15 +389,17 @@ modify_indel_overlap_site(
     }
 
     // after all those changes we need to rerun the site filters:
-    si.clearEVSFeatures();
-    model.classify_site(si);
+    siteLocus.clearEVSFeatures();
+    model.classify_site(siteLocus);
 }
 
 
 
-void indel_overlapper::modify_indel_conflict_site(GermlineDiploidSiteLocusInfo& si)
+void
+indel_overlapper::
+modify_indel_conflict_site(GermlineDiploidSiteLocusInfo& siteLocus)
 {
-    si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
+    siteLocus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
 }
 
 
