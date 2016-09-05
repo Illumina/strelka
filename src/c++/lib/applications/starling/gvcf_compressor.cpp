@@ -40,34 +40,35 @@ gvcf_compressor(
 bool
 gvcf_compressor::
 is_site_compressable(
-    const GermlineSiteLocusInfo& si) const
+    const GermlineSiteLocusInfo& locus) const
 {
-    if (si.isForcedOutput) return false;
+    if (locus.isForcedOutput) return false;
     if (! _opt.is_block_compression) return false;
 
-    const unsigned sampleCount(si.getSampleCount());
+    const unsigned sampleCount(locus.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         /// TODO STREL-125 -- account for is_snp in each sample
-        if (si.is_snp()) return false;
+        if (locus.is_snp()) return false;
     }
 
-    if (si.ref != 'N')
+    if (locus.ref != 'N')
     {
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
+            const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
             /// TODO STREL-125 --   compute reffrac for each sample
-            if (si.n_used_calls > 0)
+            if (siteSampleInfo.n_used_calls > 0)
             {
-                const double reffrac(static_cast<double>(si.alleleObservationCounts(base_to_id(si.ref))) /
-                                     static_cast<double>(si.n_used_calls));
+                const double reffrac(static_cast<double>(locus.alleleObservationCounts(base_to_id(locus.ref))) /
+                                     static_cast<double>(siteSampleInfo.n_used_calls));
                 if ((reffrac + _opt.block_max_nonref) <= 1) return false;
             }
         }
     }
 
     // check if site is in the pre-specified region that are not to be block-compressed
-    return (! _nocompress_regions.isIntersectRegion(si.pos));
+    return (! _nocompress_regions.isIntersectRegion(locus.pos));
 }
 
 

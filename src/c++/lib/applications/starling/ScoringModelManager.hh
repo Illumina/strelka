@@ -54,8 +54,16 @@ struct ScoringModelManager
     classify_indel(
         GermlineDiploidIndelLocusInfo& locus) const;
 
-    /// default rules based site model
-    void default_classify_site(
+    /// simple hard-cutoff filtration rules applied to site locus in one sample
+    void
+    default_classify_site(
+        const unsigned sampleIndex,
+        const unsigned allSampleLocusDepth,
+        GermlineSiteLocusInfo& locus,
+        const GermlineVariantAlleleInfo& allele) const;
+
+    /// simple hard-cutoff filtration rules applied to entire site locus
+    void default_classify_site_locus(
         GermlineSiteLocusInfo& locus,
         const GermlineVariantAlleleInfo& allele) const;
 

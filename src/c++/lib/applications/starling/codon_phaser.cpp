@@ -184,11 +184,12 @@ static bool is_genotype_represented(int genotype, unsigned offset, const std::st
     return true;
 }
 
+
+
 void
 Codon_phaser::
 create_phased_record()
 {
-
     // sanity check do we have all record we expect or are there un-accounted no-calls
     if (this->get_block_length()>this->_buffer.size())
         return;
@@ -454,29 +455,30 @@ create_phased_record()
     }
 
     // we have a phased record, modify site buffer to reflect the changes
-    auto& base = this->_buffer.at(0);
-    LocusSampleInfo& sampleInfo(base->getSample(sampleIndex));
+    auto& locusPtr = this->_buffer.at(0);
+    LocusSampleInfo& sampleInfo(locusPtr->getSample(sampleIndex));
+    GermlineSiteSampleInfo& siteSampleInfo(locusPtr->getSiteSample(sampleIndex));
 
-    base->phased_ref = this->reference;
-    base->allele.max_gt = max_gt;
-    base->dgt.ref_gt = ref_gt;
+    locusPtr->phased_ref = this->reference;
+    locusPtr->allele.max_gt = max_gt;
+    locusPtr->dgt.ref_gt = ref_gt;
 
     // set various quality fields conservatively
     sampleInfo.genotypeQualityPolymorphic = min_gq;
-    base->dgt.genome.snp_qphred  = min_qual;
-    base->dgt.phredLoghood       = pls;
+    locusPtr->dgt.genome.snp_qphred  = min_qual;
+    locusPtr->dgt.phredLoghood       = pls;
     sampleInfo.gqx               = std::min(min_gq,min_qual);
     sampleInfo.empiricalVariantScore  = min_EVS;
 
-    base->phased_alt = alt.str();
-    base->phased_AD  = AD.str();
-    base->phased_ADF  = ADF.str();
-    base->phased_ADR  = ADR.str();
+    locusPtr->phased_alt = alt.str();
+    locusPtr->phased_AD  = AD.str();
+    locusPtr->phased_ADF  = ADF.str();
+    locusPtr->phased_ADR  = ADR.str();
 
-    base->allele.is_phased_region = true;
+    locusPtr->allele.is_phased_region = true;
     const int reads_ignored = (this->total_reads-allele_sum);
-    base->n_used_calls = this->total_reads - reads_ignored;
-    base->n_unused_calls = this->total_reads_unused + reads_ignored; // second term mark all alleles that we didnt use as unused reads
+    siteSampleInfo.n_used_calls = this->total_reads - reads_ignored;
+    siteSampleInfo.n_unused_calls = this->total_reads_unused + reads_ignored; // second term mark all alleles that we didnt use as unused reads
 
     // case we want to report the phased record clean out buffer and push on the phased record only
 #ifdef DEBUG_CODON

@@ -54,10 +54,12 @@ add_site_modifiers(
     allele.clear();
 
     /// TODO STREL-125 generalize to multi-sample
-    LocusSampleInfo& sampleInfo(locus.getSample(0));
+    const unsigned sampleIndex(0);
+    LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
+    const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
 
-    allele.is_used_covered=(locus.n_used_calls!=0);
-    allele.is_covered=(locus.allele.is_used_covered || locus.n_unused_calls!=0);
+    allele.is_used_covered=(siteSampleInfo.n_used_calls!=0);
+    allele.is_covered=(locus.allele.is_used_covered || siteSampleInfo.n_unused_calls!=0);
     allele.strandBias=locus.dgt.strand_bias;
 
     if     (locus.isRefUnknown())
@@ -125,7 +127,7 @@ process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr)
         auto si(downcast<GermlineContinuousSiteLocusInfo>(std::move(locusPtr)));
         for (auto& altAllele : si->getSiteAlleles())
         {
-            _model.default_classify_site(*si, altAllele);
+            _model.default_classify_site_locus(*si, altAllele);
         }
 
         _sink->process(std::move(si));

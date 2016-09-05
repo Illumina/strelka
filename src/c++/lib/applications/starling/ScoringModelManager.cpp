@@ -101,11 +101,17 @@ classify_site(
 
     if (isVariantUsableInEVSModel && isEVSSiteModel())
     {
+        const unsigned allSampleLocusDepth(locus.getTotalReadDepth());
         for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
             /// TODO STREL-125 fix for multi-sample:
             auto& sampleInfo(locus.getSample(sampleIndex));
-            if (not locus.dgt.is_snp()) continue;
+            if (not locus.dgt.is_snp())
+            {
+                // revert to hard-filters for this sample:
+                default_classify_site(sampleIndex, allSampleLocusDepth, locus, locus.allele);
+                continue;
+            }
 
             static const bool isComputeDevelopmentFeatures(false);
             const bool isUniformDepthExpected(_dopt.is_max_depth());
@@ -130,7 +136,7 @@ classify_site(
     else
     {
         // don't know what to do with this site, throw it to the old default filters
-        default_classify_site(locus, locus.allele);
+        default_classify_site_locus(locus, locus.allele);
     }
 }
 
@@ -212,43 +218,58 @@ classify_indel(
 void
 ScoringModelManager::
 default_classify_site(
+    const unsigned sampleIndex,
+    const unsigned allSampleLocusDepth,
     GermlineSiteLocusInfo& locus,
     const GermlineVariantAlleleInfo& allele) const
 {
+    LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
+
     if (_opt.is_min_gqx)
     {
-        const unsigned sampleCount(locus.getSampleCount());
-        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-        {
-            LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
-            if (sampleInfo.gqx < _opt.min_gqx) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
-        }
+        if (sampleInfo.gqx < _opt.min_gqx) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
     }
     if (_dopt.is_max_depth())
     {
-        if ((locus.n_used_calls+locus.n_unused_calls) > _dopt.max_depth)
-            locus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+        if (allSampleLocusDepth > _dopt.max_depth)
+            sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
+
     // high DPFratio filter
     if (_opt.is_max_base_filt)
     {
-        const unsigned total_calls(locus.n_used_calls+locus.n_unused_calls);
-        if (total_calls>0)
-        {
-            const double filt(static_cast<double>(locus.n_unused_calls)/static_cast<double>(total_calls));
-            if (filt>_opt.max_base_filt) locus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighBaseFilt);
-        }
+        const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
+        const unsigned total_calls(siteSampleInfo.n_used_calls+siteSampleInfo.n_unused_calls);
+        const double unusedCallFraction(safeFrac(siteSampleInfo.n_unused_calls, total_calls));
+        if (unusedCallFraction>_opt.max_base_filt) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighBaseFilt);
     }
     if (locus.is_snp())
     {
         if (_opt.is_max_snv_sb)
         {
-            if (allele.strandBias>_opt.max_snv_sb) locus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
+            /// TODO STREL-125 solve strand bias for multi-alt/multi-sample:
+            if (allele.strandBias>_opt.max_snv_sb) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
         }
         if (_opt.is_max_snv_hpol)
         {
-            if (static_cast<int>(locus.hpol)>_opt.max_snv_hpol) locus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighSNVHPOL);
+            if (static_cast<int>(locus.hpol)>_opt.max_snv_hpol) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighSNVHPOL);
         }
+    }
+}
+
+
+
+void
+ScoringModelManager::
+default_classify_site_locus(
+    GermlineSiteLocusInfo& locus,
+    const GermlineVariantAlleleInfo& allele) const
+{
+    const unsigned sampleCount(locus.getSampleCount());
+    const unsigned allSampleLocusDepth(locus.getTotalReadDepth());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    {
+        default_classify_site(sampleIndex, allSampleLocusDepth, locus, allele);
     }
 }
 

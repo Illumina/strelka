@@ -82,6 +82,7 @@ testCanSiteJoinSampleBlockShared(
 
     const LocusSampleInfo& sampleInfo(getSample(0));
     const LocusSampleInfo& inputSampleInfo(locus.getSample(sampleIndex));
+    const auto& inputSiteSampleInfo(locus.getSiteSample(sampleIndex));
 
     // filters must match:
     if (not (filters == locus.filters)) return false;
@@ -89,13 +90,13 @@ testCanSiteJoinSampleBlockShared(
 
     if (is_nonref() || locus.is_nonref()) return false;
 
-    if (! is_new_value_blockable(locus.n_used_calls,
-                                 block_dpu,frac_tol,abs_tol))
+    if (! is_new_value_blockable(
+        inputSiteSampleInfo.n_used_calls, block_dpu, frac_tol, abs_tol))
     {
         return false;
     }
-    if (! is_new_value_blockable(locus.n_unused_calls,
-                                 block_dpf,frac_tol,abs_tol))
+    if (! is_new_value_blockable(
+        inputSiteSampleInfo.n_unused_calls, block_dpf, frac_tol, abs_tol))
     {
         return false;
     }
@@ -109,10 +110,11 @@ void
 gvcf_block_site_record::
 joinSiteToSampleBlockShared(
     const GermlineSiteLocusInfo& locus,
-    const unsigned /*sampleIndex*/)
+    const unsigned sampleIndex)
 {
     //LocusSampleInfo& sampleInfo(getSample(sampleIndex));
     //const LocusSampleInfo& inputSampleInfo(si.getSample(sampleIndex));
+    const auto& inputSiteSampleInfo(locus.getSiteSample(sampleIndex));
 
     if (count == 0)
     {
@@ -120,8 +122,8 @@ joinSiteToSampleBlockShared(
         ref = locus.ref;
     }
 
-    block_dpu.add(locus.n_used_calls);
-    block_dpf.add(locus.n_unused_calls);
+    block_dpu.add(inputSiteSampleInfo.n_used_calls);
+    block_dpf.add(inputSiteSampleInfo.n_unused_calls);
 
     count += 1;
 }
@@ -217,14 +219,15 @@ testCanSiteJoinSampleBlock(
     if(not testCanSiteJoinSampleBlockShared(locus,sampleIndex)) return false;
 
     const LocusSampleInfo& inputSampleInfo(locus.getSample(sampleIndex));
+    const auto& inputSiteSampleInfo(locus.getSiteSample(sampleIndex));
 
     std::ostringstream oss;
     VcfGenotypeUtil::writeGenotype(inputSampleInfo.getPloidy().getPloidy(),inputSampleInfo.max_gt(),oss);
     if (gt != oss.str()) return false;
 
     // coverage states must match:
-    if (is_covered != (locus.n_used_calls != 0 || locus.n_unused_calls != 0)) return false;
-    if (is_used_covered != (locus.n_used_calls != 0)) return false;
+    if (is_covered != (inputSiteSampleInfo.n_used_calls != 0 || inputSiteSampleInfo.n_unused_calls != 0)) return false;
+    if (is_used_covered != (inputSiteSampleInfo.n_used_calls != 0)) return false;
 
     if (isBlockGqxDefined)
     {
@@ -251,6 +254,7 @@ joinSiteToSampleBlock(
 {
     LocusSampleInfo& sampleInfo(getSample(0));
     const LocusSampleInfo& inputSampleInfo(locus.getSample(sampleIndex));
+    const auto& inputSiteSampleInfo(locus.getSiteSample(sampleIndex));
 
     if (count == 0)
     {
@@ -264,8 +268,8 @@ joinSiteToSampleBlock(
 
         // GQX is always defined in continuous call mode:
         isBlockGqxDefined = true;
-        is_used_covered = locus.n_used_calls != 0;
-        is_covered = locus.n_used_calls != 0 || locus.n_unused_calls != 0;
+        is_used_covered = inputSiteSampleInfo.n_used_calls != 0;
+        is_covered = inputSiteSampleInfo.n_used_calls != 0 || inputSiteSampleInfo.n_unused_calls != 0;
         ploidy = -1;
     }
 

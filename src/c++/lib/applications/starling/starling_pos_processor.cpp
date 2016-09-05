@@ -184,12 +184,17 @@ static
 void
 updateSiteSampleInfo(
     const unsigned sampleIndex,
-    const snp_pos_info& good_pi,
+    const CleanedPileup& cpi,
     GermlineSiteLocusInfo& locus)
 {
+    const snp_pos_info& good_pi(cpi.cleanedPileup());
+
     GermlineSiteSampleInfo siteSampleInfo;
 
     siteSampleInfo.spanningDeletionReadCount = good_pi.spanningDeletionReadCount;
+
+    siteSampleInfo.n_used_calls=cpi.n_used_calls();
+    siteSampleInfo.n_unused_calls=cpi.n_unused_calls();
 
     locus.setSiteSampleInfo(sampleIndex, siteSampleInfo);
 }
@@ -216,7 +221,6 @@ updateSnvLocusWithSampleInfo(
 
     pileupCleaner.CleanPileupErrorProb(sif.cpi);
 
-    const snp_pos_info& good_pi(cpi.cleanedPileup());
     const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
     diploid_genotype dgt;
@@ -233,7 +237,7 @@ updateSnvLocusWithSampleInfo(
     // update homref prob for QUAL
     homRefLogProb += std::log(dgt.genome.ref_pprob);
 
-    updateSiteSampleInfo(sampleIndex, good_pi, locus);
+    updateSiteSampleInfo(sampleIndex, cpi, locus);
 }
 
 
@@ -260,8 +264,6 @@ process_pos_snp_digt(
     const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
     std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore, isForcedOutput));
-    locusPtr->n_used_calls=cpi.n_used_calls();
-    locusPtr->n_unused_calls=cpi.n_unused_calls();
 
     // add sample-dependent info:
     double homRefLogProb(0);
@@ -350,10 +352,10 @@ updateContinuousSnvLocusWithSampleInfo(
 
     pileupCleaner.CleanPileupErrorProb(sif.cpi);
 
-    const snp_pos_info& good_pi(cpi.cleanedPileup());
+    //const snp_pos_info& good_pi(cpi.cleanedPileup());
 //    const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
-    updateSiteSampleInfo(sampleIndex, good_pi, locus);
+    updateSiteSampleInfo(sampleIndex, cpi, locus);
     updateContinuousSiteSampleInfo(sampleIndex, baseId, locus);
 }
 
@@ -380,14 +382,6 @@ process_pos_snp_continuous(const pos_t pos)
 
     const snp_pos_info& good_pi(cpi.cleanedPileup());
 
-    GermlineContinuousSiteLocusInfo templateLocus(sampleCount, pos, pi.get_ref_base(), good_pi,
-                                                  _opt.used_allele_count_min_qscore, isForcedOutput);
-
-    templateLocus.n_used_calls = cpi.n_used_calls();
-    templateLocus.n_unused_calls = cpi.n_unused_calls();
-    // hpol filter
-    templateLocus.hpol = get_snp_hpol_size(pos, _ref);
-
     const uint8_t refBaseId = base_to_id(pi.get_ref_base());
 
     // report one locus (ie. vcf record) per alt allele in continuous mode
@@ -396,7 +390,8 @@ process_pos_snp_continuous(const pos_t pos)
     auto addBase = [&](const uint8_t baseId, const bool isForcedOutputUsed)
     {
         const bool isRefAllele(baseId == refBaseId);
-        std::unique_ptr<GermlineContinuousSiteLocusInfo> locusPtr(new GermlineContinuousSiteLocusInfo(templateLocus));
+        std::unique_ptr<GermlineContinuousSiteLocusInfo> locusPtr(new GermlineContinuousSiteLocusInfo(
+            sampleCount, pos, pi.get_ref_base(), good_pi, _opt.used_allele_count_min_qscore, isForcedOutput));
 
         // setup alt allele first:
         if (not isRefAllele)
@@ -431,6 +426,8 @@ process_pos_snp_continuous(const pos_t pos)
         if (not isOutputAllele) return;
 
         // set sample-independent info:
+        locusPtr->hpol = get_snp_hpol_size(pos, _ref);
+
         starling_continuous_variant_caller::position_snp_call_continuous(_opt, good_pi, baseId, *locusPtr);
 
         isAnySiteOutputAtPosition = true;

@@ -184,14 +184,18 @@ computeEmpiricalScoringFeatures(
     VariantScoringFeatureKeeper& features,
     VariantScoringFeatureKeeper& developmentFeatures)
 {
+    const auto& sampleInfo(locus.getSample(sampleIndex));
+    const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
+
+    // filtered locus depth/total locus depth/confidentDepth for this sample:
+    const double filteredLocusDepth(siteSampleInfo.n_used_calls);
+    const double locusDepth(siteSampleInfo.getTotalReadDepth());
+
+    // total locus depth summed over all samples (compatible with chromDepth, which is computed over all samples):
+    /// TODO account for local copy number in both total locus depth and expected (chrom) depth
+    const double allSampleLocusDepth(locus.getTotalReadDepth());
+
     const double chromDepthFactor(safeFrac(1, allSampleChromDepth));
-
-    ///TODO STREL-125 generalize to multi-sample
-    const auto& firstSampleInfo(locus.getSample(sampleIndex));
-
-    const double filteredLocusDepth(locus.n_used_calls);
-    const double locusDepth(locus.mapqCount);
-
     const double filteredLocusDepthFactor(safeFrac(1, filteredLocusDepth));
     const double locusDepthFactor(safeFrac(1, locusDepth));
 
@@ -222,10 +226,10 @@ computeEmpiricalScoringFeatures(
         features.set(RNA_SNV_SCORING_FEATURES::GT, (genotype));
 
         features.set(RNA_SNV_SCORING_FEATURES::QUAL, (locus.dgt.genome.snp_qphred * chromDepthFactor));
-        features.set(RNA_SNV_SCORING_FEATURES::F_DP, (locus.n_used_calls * chromDepthFactor));
-        features.set(RNA_SNV_SCORING_FEATURES::F_DPF, (locus.n_unused_calls * chromDepthFactor));
-        features.set(RNA_SNV_SCORING_FEATURES::F_GQ, (firstSampleInfo.genotypeQualityPolymorphic * chromDepthFactor));
-        features.set(RNA_SNV_SCORING_FEATURES::F_GQX, (firstSampleInfo.gqx * chromDepthFactor));
+        features.set(RNA_SNV_SCORING_FEATURES::F_DP, (siteSampleInfo.n_used_calls * chromDepthFactor));
+        features.set(RNA_SNV_SCORING_FEATURES::F_DPF, (siteSampleInfo.n_unused_calls * chromDepthFactor));
+        features.set(RNA_SNV_SCORING_FEATURES::F_GQ, (sampleInfo.genotypeQualityPolymorphic * chromDepthFactor));
+        features.set(RNA_SNV_SCORING_FEATURES::F_GQX, (sampleInfo.gqx * chromDepthFactor));
 
         features.set(RNA_SNV_SCORING_FEATURES::I_AvgBaseQ, (locus.avgBaseQ));
         features.set(RNA_SNV_SCORING_FEATURES::I_AvgPos, (locus.rawPos));
@@ -255,9 +259,9 @@ computeEmpiricalScoringFeatures(
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM,
                                           (locus.dgt.genome.snp_qphred * filteredLocusDepthFactor));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
-                                          (firstSampleInfo.gqx * filteredLocusDepthFactor));
+                                          (sampleInfo.gqx * filteredLocusDepthFactor));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
-                                          (firstSampleInfo.genotypeQualityPolymorphic * filteredLocusDepthFactor));
+                                          (sampleInfo.genotypeQualityPolymorphic * filteredLocusDepthFactor));
 
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
                                           (r0 * filteredLocusDepthFactor));
@@ -266,8 +270,8 @@ computeEmpiricalScoringFeatures(
 
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT,
                                           (locus.dgt.genome.snp_qphred));
-            developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (firstSampleInfo.gqx));
-            developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (firstSampleInfo.genotypeQualityPolymorphic));
+            developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (sampleInfo.gqx));
+            developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (sampleInfo.genotypeQualityPolymorphic));
         }
     }
     else
@@ -290,7 +294,7 @@ computeEmpiricalScoringFeatures(
         double relativeLocusDepth(1.);
         if (isUniformDepthExpected)
         {
-            relativeLocusDepth = (locusDepth * chromDepthFactor);
+            relativeLocusDepth = (allSampleLocusDepth * chromDepthFactor);
         }
 
         features.set(GERMLINE_SNV_SCORING_FEATURES::TDP_NORM, relativeLocusDepth);
@@ -298,7 +302,7 @@ computeEmpiricalScoringFeatures(
         // how noisy is the locus?
         features.set(GERMLINE_SNV_SCORING_FEATURES::F_DP_NORM, locusUsedDepthFraction);
 
-        features.set(GERMLINE_SNV_SCORING_FEATURES::F_GQX_EXACT, (firstSampleInfo.gqx));
+        features.set(GERMLINE_SNV_SCORING_FEATURES::F_GQX_EXACT, (sampleInfo.gqx));
 
         // compute any experimental features not currently used in production
         //
@@ -333,16 +337,16 @@ computeEmpiricalScoringFeatures(
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM,
                                           (locus.dgt.genome.snp_qphred * filteredLocusDepthFactor));
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
-                                          (firstSampleInfo.gqx * filteredLocusDepthFactor));
+                                          (sampleInfo.gqx * filteredLocusDepthFactor));
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
-                                          (firstSampleInfo.genotypeQualityPolymorphic * filteredLocusDepthFactor));
+                                          (sampleInfo.genotypeQualityPolymorphic * filteredLocusDepthFactor));
 
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
                                           (r0 * filteredLocusDepthFactor));
 
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT,
                                           (locus.dgt.genome.snp_qphred));
-            developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (firstSampleInfo.genotypeQualityPolymorphic));
+            developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (sampleInfo.genotypeQualityPolymorphic));
 
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD1_NORM,
                                        (r1 * filteredLocusDepthFactor));
@@ -369,19 +373,12 @@ computeEmpiricalScoringFeatures(
 
     // filtered locus depth/total locus depth/confidentDepth for this sample:
     const double filteredLocusDepth(indelSampleInfo.tier1Depth);
-    const double locusDepth(indelSampleInfo.mapqTracker.count);
+    const double locusDepth(indelSampleInfo.getTotalReadDepth());
     const double confidentDepth(sampleInfo.supportCounts.totalConfidentCounts());
 
     // total locus depth summed over all samples (compatible with chromDepth, which is computed over all samples):
     /// TODO account for local copy number in both total locus depth and expected (chrom) depth
-    double allSampleocusDepth(0);
-    {
-        const unsigned sampleCount(locus.getSampleCount());
-        for (unsigned sampleIndex2(0); sampleIndex2<sampleCount; ++sampleIndex2)
-        {
-            allSampleocusDepth += locus.getIndelSample(sampleIndex2).mapqTracker.count;
-        }
-    }
+    const double allSampleLocusDepth(locus.getTotalReadDepth());
 
     const double allSampleChromDepthFactor(safeFrac(1,allSampleChromDepth));
     const double filteredLocusDepthFactor(safeFrac(1,filteredLocusDepth));
@@ -535,7 +532,7 @@ computeEmpiricalScoringFeatures(
         double relativeLocusDepth(1.);
         if (isUniformDepthExpected)
         {
-            relativeLocusDepth = (allSampleocusDepth * allSampleChromDepthFactor);
+            relativeLocusDepth = (allSampleLocusDepth * allSampleChromDepthFactor);
         }
         features.set(GERMLINE_INDEL_SCORING_FEATURES::TDP_NORM, relativeLocusDepth);
 

@@ -485,6 +485,7 @@ write_site_record(
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         const auto& sampleInfo(locus.getSample(sampleIndex));
+        const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
 
         os << '\t';
 
@@ -509,8 +510,8 @@ write_site_record(
         }
         os << ':';
         //print DP:DPF
-        os << locus.n_used_calls << ':'
-           << locus.n_unused_calls;
+        os << siteSampleInfo.n_used_calls << ':'
+           << siteSampleInfo.n_unused_calls;
 
         if (isNoAlt)
         {
@@ -688,6 +689,7 @@ write_site_record(
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         const auto& sampleInfo(locus.getSample(sampleIndex));
+        const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
 
         os << '\t';
 
@@ -698,7 +700,7 @@ write_site_record(
            << ':' << sampleInfo.gqx;
 
         // DP:DPF
-        os << ':' << locus.n_used_calls << ':' << locus.n_unused_calls;
+        os << ':' << siteSampleInfo.n_used_calls << ':' << siteSampleInfo.n_unused_calls;
 
         if (!is_no_alt)
         {

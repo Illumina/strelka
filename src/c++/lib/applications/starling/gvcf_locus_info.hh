@@ -699,13 +699,30 @@ struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
 
 struct GermlineSiteSampleInfo
 {
+
+    /// get the count of reads crossing the site at any teir or mapq value, including MAPQ0 reads
+    ///
+    /// TODO get a more exact definition of requrements for read to be counted here... soft-clip, overlapping frags, basecallQual = 0 , etc...
+    /// TODO how does this relate to AD?
+    unsigned
+    getTotalReadDepth() const
+    {
+        return n_used_calls + n_unused_calls;
+    }
+
     void
     clear()
     {
         spanningDeletionReadCount = 0;
+        n_used_calls = 0;
+        n_unused_calls = 0;
     }
 
+    /// count of reads which have a most likely alignment containing a deletion at the site in question
     unsigned spanningDeletionReadCount = 0;
+
+    unsigned n_used_calls = 0;
+    unsigned n_unused_calls = 0;
 };
 
 
@@ -734,7 +751,8 @@ struct GermlineSiteLocusInfo : public LocusInfo
     explicit
     GermlineSiteLocusInfo(
         const unsigned sampleCount)
-        : LocusInfo(sampleCount)
+        : base_t(sampleCount),
+          _siteSampleInfo(sampleCount)
     {}
 
     bool
@@ -754,6 +772,13 @@ struct GermlineSiteLocusInfo : public LocusInfo
         _isLockAlleles = true;
         assert(sampleIndex < _siteSampleInfo.size());
         _siteSampleInfo[sampleIndex] = siteSampleInfo;
+    }
+
+    /// TODO STREL-125 TMP ONLY - we shouldn't need any non-const access after codon phaser is cleaned up
+    GermlineSiteSampleInfo&
+    getSiteSample(const unsigned sampleIndex)
+    {
+        return _siteSampleInfo[sampleIndex];
     }
 
     const GermlineSiteSampleInfo&
@@ -784,6 +809,20 @@ struct GermlineSiteLocusInfo : public LocusInfo
         return _siteAlleleInfo;
     }
 
+    /// return "totalReadDepth" summed over all samples, see method of same name in site
+    /// sample object for totalReadDepth definition.
+    unsigned
+    getTotalReadDepth() const
+    {
+        const unsigned sampleCount(getSampleCount());
+        unsigned allSampleLocusDepth(0);
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        {
+            allSampleLocusDepth += getSiteSample(sampleIndex).getTotalReadDepth();
+        }
+        return allSampleLocusDepth;
+    }
+
     virtual bool is_snp() const = 0;
     virtual bool is_nonref() const = 0;
 
@@ -806,8 +845,6 @@ struct GermlineSiteLocusInfo : public LocusInfo
     {
         base_t::clear();
         ref = 'N';
-        n_used_calls = 0;
-        n_unused_calls = 0;
         hpol = 0;
         Unphasable = false;
         isForcedOutput = false;
@@ -820,8 +857,6 @@ struct GermlineSiteLocusInfo : public LocusInfo
     }
 
     char ref = 'N';
-    unsigned n_used_calls = 0;
-    unsigned n_unused_calls = 0;
 
     unsigned hpol = 0;
 
