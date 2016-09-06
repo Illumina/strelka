@@ -136,37 +136,6 @@ struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
 std::ostream& operator<<(std::ostream& os,const GermlineIndelAlleleInfo& allele);
 
 
-namespace MODIFIED_SITE_GT
-{
-
-enum index_t
-{
-    NONE,
-    UNKNOWN,
-    ZERO,
-    ONE
-};
-
-inline
-const char*
-get_label(const unsigned idx)
-{
-    switch (static_cast<index_t>(idx))
-    {
-    case ZERO:
-        return "0";
-    case ONE:
-        return "1";
-    case UNKNOWN:
-        return ".";
-    default:
-        assert(false && "Unknown site GT value");
-        return nullptr;
-    }
-}
-}
-
-
 /// restrict to the case where variant is site/SNV
 struct GermlineSiteAlleleInfo : public GermlineVariantAlleleInfo
 {
@@ -184,8 +153,10 @@ struct GermlineSiteAlleleInfo : public GermlineVariantAlleleInfo
         baseId = BASE_ID::ANY;
     }
 
-    BASE_ID::index_t baseId;
+    BASE_ID::index_t baseId = BASE_ID::ANY;
 };
+
+std::ostream& operator<<(std::ostream& os,const GermlineSiteAlleleInfo& allele);
 
 
 /// restrict to the case where variant is site/SNV and calling model is diploid
@@ -204,14 +175,7 @@ struct GermlineDiploidSiteAlleleInfo : public GermlineSiteAlleleInfo
     {
         base_t::clear();
         is_phased_region=false;
-        modified_gt=MODIFIED_SITE_GT::NONE;
-        max_gt=0;
     }
 
     bool is_phased_region;
-
-    MODIFIED_SITE_GT::index_t modified_gt;
-    unsigned max_gt;
 };
-
-std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteAlleleInfo& allele);

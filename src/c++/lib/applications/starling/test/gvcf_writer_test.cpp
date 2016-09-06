@@ -76,11 +76,13 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
     starling_deriv_options dopt(opt,rcs);
 
     const unsigned sampleCount(1);
+    const unsigned sampleIndex(0);
     //const snp_pos_info& spi(bc_buff.get_pos(snp_pos));
     std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, snp_pos, rcs.get_base(snp_pos)));
     locusPtr->dgt.ref_gt = base_to_id(locusPtr->ref);
 
-    locusPtr->allele.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[snp_pos]),base_to_id(r2[snp_pos]));
+    auto& siteSampleInfo(locusPtr->getSiteSample(sampleIndex));
+    siteSampleInfo.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[snp_pos]),base_to_id(r2[snp_pos]));
     locusPtr->anyVariantAlleleQuality = 60;
 
     // now make sure it is rendered with the Unphased info field

@@ -128,7 +128,7 @@ private:
     {
         _empty_site.pos = pos;
         _empty_site.ref = _ref.get_base(pos);
-        _empty_site.Unphasable = true;
+        _empty_site.isSiteUnphasable = true;
         return _empty_site;
     }
 

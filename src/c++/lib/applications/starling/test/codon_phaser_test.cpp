@@ -52,8 +52,12 @@ public:
     std::vector<std::unique_ptr<GermlineIndelLocusInfo>> the_indels;
     void process(std::unique_ptr<GermlineSiteLocusInfo> site) override
     {
+        /// TODO STREL-125 sample genearlize
+        assert(site->getSampleCount() == 1);
+        static const unsigned sampleIndex(0);
+
         auto si(downcast<GermlineDiploidSiteLocusInfo>(std::move(site)));
-        if (si->is_het() || si->is_hetalt() ) the_sites.push_back(std::move(si));
+        if (si->is_het(sampleIndex) || si->is_hetalt(sampleIndex) ) the_sites.push_back(std::move(si));
     }
     void process(std::unique_ptr<GermlineIndelLocusInfo> ii) override
     {
@@ -88,7 +92,7 @@ getTestSink(
     }
     starling_options opt;
     opt.phasing_window = phasingWindow;
-    opt.do_codon_phasing = true;
+    opt.isUseCodonPhaser = true;
     opt.is_user_genome_size = true;
     opt.user_genome_size = rcs.seq().size();
     opt.bam_seq_name = "dummy";
@@ -98,6 +102,7 @@ getTestSink(
     Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
 
     const unsigned sampleCount(1);
+    const unsigned sampleIndex(0);
 
     for (int i = 0; read1Seq[i]; i++)
     {
@@ -107,9 +112,10 @@ getTestSink(
         si->dgt.ref_gt = base_to_id(si->ref);
         if (si->ref != read1Seq[i] || si->ref != read2Seq[i])
         {
-            si->dgt.genome.snp_qphred = 60;
+            si->anyVariantAlleleQuality = 60;
         }
-        si->allele.max_gt = DIGT::get_gt_with_alleles(base_to_id(read1Seq[i]), base_to_id(read2Seq[i]));
+        auto& siteSampleInfo(si->getSiteSample(sampleIndex));
+        siteSampleInfo.max_gt = DIGT::get_gt_with_alleles(base_to_id(read1Seq[i]), base_to_id(read2Seq[i]));
 
         phaser.process(std::move(si));
     }
@@ -207,7 +213,7 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
 
     starling_options opt;
     opt.phasing_window = 3;
-    opt.do_codon_phasing = true;
+    opt.isUseCodonPhaser = true;
     opt.is_user_genome_size = true;
     opt.user_genome_size = rcs.seq().size();
     opt.bam_seq_name = "dummy";
@@ -226,13 +232,14 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
         //const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
         std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, read_pos + i, rcs.get_base(read_pos + i)));
         auto& sampleInfo(si->getSample(sampleIndex));
+        auto& siteSampleInfo(si->getSiteSample(sampleIndex));
         sampleInfo.genotypeQualityPolymorphic = si->dgt.genome.snp_qphred = sampleInfo.empiricalVariantScore = 40;
         si->dgt.ref_gt = base_to_id(si->ref);
 
-        si->allele.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        siteSampleInfo.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
         if (si->ref != r1[i] || si->ref != r2[i])
         {
-            si->dgt.genome.snp_qphred = 60;
+            si->anyVariantAlleleQuality = 60;
         }
 
         phaser.process(std::move(si));
@@ -240,7 +247,7 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
     phaser.flush();
     for (auto& site : sink.the_sites)
     {
-        BOOST_CHECK(! site->is_het() || site->filters.test(GERMLINE_VARIANT_VCF_FILTERS::PhasingConflict));
+        BOOST_CHECK(! site->is_het(sampleIndex) || site->filters.test(GERMLINE_VARIANT_VCF_FILTERS::PhasingConflict));
         BOOST_CHECK(!site->allele.is_phased_region);
     }
 }

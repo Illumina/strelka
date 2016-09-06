@@ -93,7 +93,7 @@ struct gvcf_block_site_record : public GermlineSiteLocusInfo
         return gt.c_str();
     }
 
-    bool is_nonref() const override
+    bool is_nonref(const unsigned /*sampleIndex*/) const override
     {
         return _isNonRef;
     }

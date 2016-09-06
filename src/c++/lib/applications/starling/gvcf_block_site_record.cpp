@@ -91,7 +91,7 @@ testCanSiteJoinSampleBlockShared(
     if (not (filters == locus.filters)) return false;
     if (not (blockSampleInfo.filters == inputSampleInfo.filters)) return false;
 
-    if (is_nonref() || locus.is_nonref()) return false;
+    if (is_nonref(blockSampleIndex) || locus.is_nonref(sampleIndex)) return false;
 
     if (! is_new_value_blockable(
         inputSiteSampleInfo.n_used_calls, block_dpu, frac_tol, abs_tol))
@@ -132,7 +132,7 @@ joinSiteToSampleBlockShared(
 
         filters = locus.filters;
         blockSampleInfo.filters = inputSampleInfo.filters;
-        setNonRef(locus.is_nonref());
+        setNonRef(locus.is_nonref(sampleIndex));
         setSiteSampleInfo(blockSampleIndex, inputSiteSampleInfo);
     }
 

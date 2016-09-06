@@ -235,16 +235,20 @@ add_site_internal(
 static
 void
 get_visible_alt_order(
-    const GermlineDiploidSiteLocusInfo& si,
+    const GermlineDiploidSiteLocusInfo& locus,
     std::vector<uint8_t>& altOrder)
 {
     altOrder.clear();
 
+    /// TODO STREL-125 generalize to samples
+    static const unsigned sampleIndex(0);
+    const auto& siteSample(locus.getSiteSample(sampleIndex));
+
     // list max_gt alts first:
     for (unsigned b(0); b<N_BASE; ++b)
     {
-        if (b==si.dgt.ref_gt) continue;
-        if (! DIGT::expect2(b,si.allele.max_gt)) continue;
+        if (b==locus.dgt.ref_gt) continue;
+        if (! DIGT::expect2(b, siteSample.max_gt)) continue;
         altOrder.push_back(b);
     }
 
@@ -350,6 +354,11 @@ write_site_record(
 {
     std::ostream& os(*_osptr);
 
+    const auto& siteAlleles(locus.getSiteAlleles());
+    const unsigned altAlleleCount(siteAlleles.size());
+    const bool isAltAlleles(altAlleleCount > 0);
+
+
     const uint8_t refBaseId(base_to_id(locus.ref));
 
     os << _chrom << '\t'  // CHROM
@@ -367,8 +376,7 @@ write_site_record(
 
     // ALT
     std::vector<uint8_t> altOrder;
-    const bool isNoAlt(locus.isRefUnknown());
-    if (isNoAlt)
+    if (not isAltAlleles)
     {
         os << '.';
     }
@@ -459,22 +467,19 @@ write_site_record(
     }
     os << '\t';
 
-    const bool is_nonref_gt(locus.allele.max_gt != locus.dgt.ref_gt);
-    const bool is_print_pl(is_nonref_gt || locus.dgt.is_snp());
-
     //FORMAT
     os << "GT";
-    if (locus.dgt.is_snp())
+    if (locus.isVariantLocus())
     {
         os << ":GQ";
     }
     os << ":GQX:DP:DPF";
-    if (! isNoAlt)
+    if (isAltAlleles)
     {
         os << ":AD:ADF:ADR";
     }
     os << ":FT";
-    if (is_print_pl)
+    if (isAltAlleles)
     {
         os << ":PL";
     }
@@ -489,7 +494,7 @@ write_site_record(
         os << '\t';
 
         os << locus.get_gt(sampleIndex) << ':';
-        if (locus.dgt.is_snp())
+        if (locus.isVariantLocus())
         {
             os << sampleInfo.genotypeQualityPolymorphic << ':';
         }
@@ -507,37 +512,36 @@ write_site_record(
         os << siteSampleInfo.n_used_calls << ':'
            << siteSampleInfo.n_unused_calls;
 
-        if (isNoAlt)
+        if (isAltAlleles)
         {
-            // pass
-        }
-        else if (locus.allele.is_phased_region)
-        {
-            os << ':' << locus.phased_AD
-               << ':' << locus.phased_ADF
-               << ':' << locus.phased_ADR;
-        }
-        else
-        {
-            os << ':';
-            print_site_ad(refBaseId, siteSampleInfo, altOrder, os);
-            os << ':';
-            print_site_ad_strand(refBaseId, siteSampleInfo, altOrder, true, os);
-            os << ':';
-            print_site_ad_strand(refBaseId, siteSampleInfo, altOrder, false, os);
+            if (locus.allele.is_phased_region)
+            {
+                os << ':' << locus.phased_AD
+                   << ':' << locus.phased_ADF
+                   << ':' << locus.phased_ADR;
+            }
+            else
+            {
+                os << ':';
+                print_site_ad(refBaseId, siteSampleInfo, altOrder, os);
+                os << ':';
+                print_site_ad_strand(refBaseId, siteSampleInfo, altOrder, true, os);
+                os << ':';
+                print_site_ad_strand(refBaseId, siteSampleInfo, altOrder, false, os);
+            }
         }
 
         // FT
         os << ':';
         sampleInfo.filters.write(os);
 
-        if (is_print_pl)
+        if (isAltAlleles)
         {
             // print PL values
             os << ':';
-            if (locus.is_hetalt())
+            if (locus.is_hetalt(sampleIndex))
             {
-                const unsigned print_gt(locus.allele.max_gt);
+                const unsigned print_gt(siteSampleInfo.max_gt);
                 const uint8_t a0(DIGT::get_allele(print_gt, 0));
                 const uint8_t a1(DIGT::get_allele(print_gt, 1));
                 os << locus.dgt.phredLoghood[locus.dgt.ref_gt] << ','
@@ -547,14 +551,14 @@ write_site_record(
                    << locus.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0, a1)] << ','
                    << locus.dgt.phredLoghood[DIGT::get_gt_with_alleles(a1, a1)];
             }
-            else if (locus.dgt.is_haploid() || (locus.allele.modified_gt == MODIFIED_SITE_GT::ONE))
+            else if (locus.dgt.is_haploid() || (siteSampleInfo.modified_gt == MODIFIED_SITE_GT::ONE))
             {
                 os << locus.dgt.phredLoghood[locus.dgt.ref_gt] << ','
-                   << locus.dgt.phredLoghood[locus.allele.max_gt];
+                   << locus.dgt.phredLoghood[siteSampleInfo.max_gt];
             }
             else
             {
-                const unsigned print_gt(locus.allele.max_gt);
+                const unsigned print_gt(siteSampleInfo.max_gt);
                 const uint8_t a0(DIGT::get_allele(print_gt, 0));
                 const uint8_t a1(DIGT::get_allele(print_gt, 1));
                 uint8_t alt(a0);

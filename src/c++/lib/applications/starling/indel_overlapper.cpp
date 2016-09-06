@@ -350,27 +350,27 @@ modify_indel_overlap_site(
         if (ploidy == 1)
         {
             /// TODO STREL-125 change site GT to per-sample:
-            if (DIGT::is_het(siteLocus.allele.max_gt))
+            if (DIGT::is_het(siteSampleInfo.max_gt))
             {
                 sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
             }
             else
             {
-                if (siteLocus.allele.max_gt == siteLocus.dgt.ref_gt)
+                if (siteSampleInfo.max_gt == siteLocus.dgt.ref_gt)
                 {
-                    siteLocus.allele.modified_gt = MODIFIED_SITE_GT::ZERO;
+                    siteSampleInfo.modified_gt = MODIFIED_SITE_GT::ZERO;
                 }
                 else
                 {
-                    siteLocus.allele.modified_gt = MODIFIED_SITE_GT::ONE;
+                    siteSampleInfo.modified_gt = MODIFIED_SITE_GT::ONE;
                 }
             }
         }
         else if (ploidy == 0)
         {
-            if (siteLocus.allele.max_gt == siteLocus.dgt.ref_gt)
+            if (siteSampleInfo.max_gt == siteLocus.dgt.ref_gt)
             {
-                siteLocus.allele.modified_gt = MODIFIED_SITE_GT::UNKNOWN;
+                siteSampleInfo.modified_gt = MODIFIED_SITE_GT::UNKNOWN;
                 siteSampleInfo.is_zero_ploidy = true;
                 if (siteLocus.dgt.is_noploid())
                 {

@@ -696,6 +696,36 @@ struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
 };
 
 
+namespace MODIFIED_SITE_GT
+{
+
+enum index_t
+{
+    NONE,
+    UNKNOWN,
+    ZERO,
+    ONE
+};
+
+inline
+const char*
+get_label(const unsigned idx)
+{
+    switch (static_cast<index_t>(idx))
+    {
+    case ZERO:
+        return "0";
+    case ONE:
+        return "1";
+    case UNKNOWN:
+        return ".";
+    default:
+        assert(false && "Unknown site GT value");
+        return nullptr;
+    }
+}
+}
+
 
 struct GermlineSiteSampleInfo
 {
@@ -742,6 +772,9 @@ struct GermlineSiteSampleInfo
         n_used_calls = 0;
         n_unused_calls = 0;
         is_zero_ploidy = false;
+
+        modified_gt=MODIFIED_SITE_GT::NONE;
+        max_gt=0;
     }
 
     /// count of reads which have a most likely alignment containing a deletion at the site in question
@@ -753,8 +786,13 @@ struct GermlineSiteSampleInfo
     /// set to true when the site is overlapped by a hom deletion:
     bool is_zero_ploidy = false;
 
+    /// TODO STREL-125 temporary
     std::array<unsigned,N_BASE> fwd_counts;
     std::array<unsigned,N_BASE> rev_counts;
+
+    /// TODO STREL-125 temporary
+    MODIFIED_SITE_GT::index_t modified_gt = MODIFIED_SITE_GT::NONE;
+    unsigned max_gt = 0;
 };
 
 
@@ -860,7 +898,7 @@ struct GermlineSiteLocusInfo : public LocusInfo
         return (siteSample.isUsedReadCoverage() and (not siteSample.is_zero_ploidy));
     }
 
-    virtual bool is_nonref() const = 0;
+    virtual bool is_nonref(const unsigned sampleIndex) const = 0;
 
     void
     clear()
@@ -868,7 +906,7 @@ struct GermlineSiteLocusInfo : public LocusInfo
         base_t::clear();
         ref = 'N';
         hpol = 0;
-        Unphasable = false;
+        isSiteUnphasable = false;
         isForcedOutput = false;
         _siteAlleleInfo.clear();
 
@@ -882,7 +920,7 @@ struct GermlineSiteLocusInfo : public LocusInfo
 
     unsigned hpol = 0;
 
-    bool Unphasable = false;        // Set to true if the site should never be included in a phasing block
+    bool isSiteUnphasable = false;        // Set to true if the site should never be included in a phasing block
     bool isForcedOutput = false;
 
 private:
@@ -918,9 +956,10 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     const char*
     get_gt(const unsigned sampleIndex) const
     {
-        if       (allele.modified_gt != MODIFIED_SITE_GT::NONE)
+        const auto& siteSampleInfo(getSiteSample(sampleIndex));
+        if       (siteSampleInfo.modified_gt != MODIFIED_SITE_GT::NONE)
         {
-            return MODIFIED_SITE_GT::get_label(allele.modified_gt);
+            return MODIFIED_SITE_GT::get_label(siteSampleInfo.modified_gt);
         }
         else if (is_print_unknowngt(sampleIndex))
         {
@@ -928,7 +967,7 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         }
         else
         {
-            const unsigned print_gt(allele.max_gt);
+            const unsigned print_gt(siteSampleInfo.max_gt);
             return DIGT::get_vcf_gt(print_gt,dgt.ref_gt);
         }
     }
@@ -947,16 +986,18 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         VariantScoringFeatureKeeper& developmentFeatures);
 
     bool
-    is_het() const
+    is_het(const unsigned sampleIndex) const
     {
-        unsigned print_gt(allele.max_gt);
+        const auto& siteSample(getSiteSample(sampleIndex));
+        unsigned print_gt(siteSample.max_gt);
         return DIGT::is_het(print_gt);
     }
 
     bool
-    is_hetalt() const
+    is_hetalt(const unsigned sampleIndex) const
     {
-        unsigned print_gt(allele.max_gt);
+        const auto& siteSample(getSiteSample(sampleIndex));
+        unsigned print_gt(siteSample.max_gt);
         const uint8_t a0(DIGT::get_allele(print_gt,0));
         const uint8_t a1(DIGT::get_allele(print_gt,1));
         return ((a0!=a1) && (dgt.ref_gt != a0) && (dgt.ref_gt != a1));
@@ -964,9 +1005,10 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
 
     /// TODO STREL-125 extend to multi-sample
     bool
-    is_nonref() const override
+    is_nonref(const unsigned sampleIndex) const override
     {
-        return (allele.max_gt != dgt.ref_gt);
+        const auto& siteSample(getSiteSample(sampleIndex));
+        return (siteSample.max_gt != dgt.ref_gt);
     }
 
     /// test whether GQX should be written for this locus/sample
@@ -988,7 +1030,7 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         for (unsigned sampleIndex(0); sampleIndex< sampleCount; ++sampleIndex)
         {
             const auto& siteSample(getSiteSample(sampleIndex));
-            if (siteSample.isUsedReadCoverage() and (not siteSample.is_zero_ploidy) and is_nonref())
+            if (siteSample.isUsedReadCoverage() and (not siteSample.is_zero_ploidy) and is_nonref(sampleIndex))
             {
                 return true;
             }
@@ -1062,7 +1104,7 @@ struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
           _continuousSiteSampleInfo(sampleCount)
     {}
 
-    bool is_nonref() const override
+    bool is_nonref(const unsigned /*sampleIndex*/) const override
     {
         auto ref_id = base_to_id(ref);
         const auto& altAlleles(getSiteAlleles());

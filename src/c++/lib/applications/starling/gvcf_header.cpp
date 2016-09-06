@@ -85,7 +85,7 @@ add_gvcf_filters(
     }
 
     // Inconsistent phasing, meaning we cannot confidently identify haplotypes in windows
-    if (sopt.do_codon_phasing ||
+    if (sopt.isUseCodonPhaser ||
         (opt.include_headers.end() != std::find(opt.include_headers.begin(), opt.include_headers.end(), "Phasing")))
     {
         std::ostringstream oss;

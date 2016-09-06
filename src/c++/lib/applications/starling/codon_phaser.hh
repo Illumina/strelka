@@ -66,9 +66,10 @@ struct Codon_phaser : public variant_pipe_stage_base
     static
     bool
     is_phasable_site(
-        const std::unique_ptr<GermlineDiploidSiteLocusInfo>& si)
+        const GermlineDiploidSiteLocusInfo& locus,
+        const unsigned sampleIndex)
     {
-        return (si->dgt.is_snp() && si->is_het());
+        return (locus.isVariantLocus() && locus.is_het(sampleIndex));
     }
 
     // clear all object data
@@ -92,7 +93,7 @@ private:
     /// add site to buffer
     ///
     /// \returns true when the buffer should be printed as a phased block
-    bool add_site(std::unique_ptr<GermlineDiploidSiteLocusInfo> si);
+    bool add_site(std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr);
 
     void make_record();                 // make phased record
 

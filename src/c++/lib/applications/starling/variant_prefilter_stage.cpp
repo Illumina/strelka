@@ -36,10 +36,10 @@ static
 void
 set_site_gt(
     const diploid_genotype::result_set& rs,
-    GermlineDiploidSiteAlleleInfo& allele,
-    LocusSampleInfo& sampleInfo)
+    LocusSampleInfo& sampleInfo,
+    GermlineSiteSampleInfo& siteSampleInfo)
 {
-    allele.max_gt=rs.max_gt;
+    siteSampleInfo.max_gt=rs.max_gt;
     sampleInfo.gqx=rs.max_gt_qphred;
 }
 
@@ -56,6 +56,7 @@ add_site_modifiers(
     /// TODO STREL-125 generalize to multi-sample
     const unsigned sampleIndex(0);
     LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
+    auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
 
     allele.strandBias=locus.dgt.strand_bias;
 
@@ -63,23 +64,23 @@ add_site_modifiers(
     {
         sampleInfo.gqx=0;
         sampleInfo.genotypeQualityPolymorphic=0;
-        allele.max_gt=0;
+        siteSampleInfo.max_gt=0;
     }
     else if (locus.dgt.genome.max_gt != locus.dgt.poly.max_gt)
     {
         sampleInfo.gqx=0;
         sampleInfo.genotypeQualityPolymorphic=locus.dgt.poly.max_gt_qphred;
-        allele.max_gt=locus.dgt.poly.max_gt;
+        siteSampleInfo.max_gt=locus.dgt.poly.max_gt;
     }
     else
     {
         if (locus.dgt.genome.max_gt_qphred<locus.dgt.poly.max_gt_qphred)
         {
-            set_site_gt(locus.dgt.genome,allele, sampleInfo);
+            set_site_gt(locus.dgt.genome, sampleInfo, siteSampleInfo);
         }
         else
         {
-            set_site_gt(locus.dgt.poly,allele, sampleInfo);
+            set_site_gt(locus.dgt.poly, sampleInfo, siteSampleInfo);
         }
         sampleInfo.genotypeQualityPolymorphic=locus.dgt.poly.max_gt_qphred;
     }
@@ -99,17 +100,18 @@ process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr)
     if (dynamic_cast<GermlineDiploidSiteLocusInfo*>(locusPtr.get()) != nullptr)
     {
         auto diploidLocusPtr(downcast<GermlineDiploidSiteLocusInfo>(std::move(locusPtr)));
+        auto& siteSampleInfo(diploidLocusPtr->getSiteSample(sampleIndex));
 
         add_site_modifiers(*diploidLocusPtr, _model);
         if (diploidLocusPtr->dgt.is_haploid())
         {
-            if (diploidLocusPtr->allele.max_gt == diploidLocusPtr->dgt.ref_gt)
+            if (siteSampleInfo.max_gt == diploidLocusPtr->dgt.ref_gt)
             {
-                diploidLocusPtr->allele.modified_gt=MODIFIED_SITE_GT::ZERO;
+                siteSampleInfo.modified_gt=MODIFIED_SITE_GT::ZERO;
             }
             else
             {
-                diploidLocusPtr->allele.modified_gt=MODIFIED_SITE_GT::ONE;
+                siteSampleInfo.modified_gt=MODIFIED_SITE_GT::ONE;
             }
         }
         else if (diploidLocusPtr->dgt.is_noploid())

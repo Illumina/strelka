@@ -88,7 +88,7 @@ get_starling_option_parser(
 
     po::options_description phase_opt("Read-backed phasing options");
     phase_opt.add_options()
-    ("do-short-range-phasing", po::value(&opt.do_codon_phasing)->zero_tokens(),
+    ("do-short-range-phasing", po::value(&opt.isUseCodonPhaser)->zero_tokens(),
      "Enable short-range SNP phasing")
     ("phasing-window", po::value(&opt.phasing_window)->default_value(opt.phasing_window),
      "The maximum window to consider for short-range phasing")

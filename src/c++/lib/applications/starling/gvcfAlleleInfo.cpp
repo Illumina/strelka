@@ -82,16 +82,12 @@ operator<<(
 
 
 std::ostream&
-operator<<(std::ostream& os,
-           const GermlineDiploidSiteAlleleInfo& allele)
+operator<<(
+    std::ostream& os,
+    const GermlineSiteAlleleInfo& allele)
 {
     os << static_cast<GermlineVariantAlleleInfo>(allele) << '\n';
-
-    if (allele.modified_gt != MODIFIED_SITE_GT::NONE)
-    {
-        os << " modgt: " << MODIFIED_SITE_GT::get_label(allele.modified_gt);
-    }
-
+    os << "base: " << id_to_base(allele.baseId);
     return os;
 }
 

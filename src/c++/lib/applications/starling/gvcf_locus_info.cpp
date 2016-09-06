@@ -204,7 +204,7 @@ computeEmpiricalScoringFeatures(
     for (unsigned b(0); b < N_BASE; ++b)
     {
         if (b == locus.dgt.ref_gt) continue;
-        if (DIGT::expect2(b, locus.allele.max_gt))
+        if (DIGT::expect2(b, siteSampleInfo.max_gt))
         {
             altBase = b;
         }
@@ -223,7 +223,7 @@ computeEmpiricalScoringFeatures(
     if (isRNA)
     {
         double genotype(2.0);
-        if (locus.is_het() or locus.is_hetalt()) genotype = 1.0;
+        if (locus.is_het(sampleIndex) or locus.is_hetalt(sampleIndex)) genotype = 1.0;
         features.set(RNA_SNV_SCORING_FEATURES::GT, (genotype));
 
         features.set(RNA_SNV_SCORING_FEATURES::QUAL, (locus.dgt.genome.snp_qphred * chromDepthFactor));
@@ -279,8 +279,8 @@ computeEmpiricalScoringFeatures(
     {
         {
             double genotype(0);
-            if (locus.is_hetalt()) genotype = 2;
-            else if (not locus.is_het()) genotype = 1;
+            if (locus.is_hetalt(sampleIndex)) genotype = 2;
+            else if (not locus.is_het(sampleIndex)) genotype = 1;
             features.set(GERMLINE_SNV_SCORING_FEATURES::GENO, genotype);
         }
 

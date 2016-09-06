@@ -37,10 +37,14 @@
 #endif
 
 
-void Codon_phaser::process(std::unique_ptr<GermlineSiteLocusInfo> site)
+void
+Codon_phaser::
+process(std::unique_ptr<GermlineSiteLocusInfo> site)
 {
+    /// TODO STREL-125 multi-sample
+    static const unsigned sampleIndex(0);
     std::unique_ptr<GermlineDiploidSiteLocusInfo> si(downcast<GermlineDiploidSiteLocusInfo>(std::move(site)));
-    if (opt.do_codon_phasing && (is_phasable_site(si) || is_in_block()))
+    if (opt.isUseCodonPhaser && (is_phasable_site(*si, sampleIndex) || is_in_block()))
     {
         auto emptyBuffer = add_site(std::move(si));
         if ((!is_in_block()) || emptyBuffer)
@@ -52,9 +56,11 @@ void Codon_phaser::process(std::unique_ptr<GermlineSiteLocusInfo> site)
     _sink->process(std::move(si));
 }
 
+
+
 void Codon_phaser::flush_impl()
 {
-    if (opt.do_codon_phasing)
+    if (opt.isUseCodonPhaser)
     {
         if (het_count>1)
         {
@@ -67,7 +73,7 @@ void Codon_phaser::flush_impl()
 // the Codon phaser can't work across indels, so flush any in-progress phasing
 void Codon_phaser::process(std::unique_ptr<GermlineIndelLocusInfo> ii)
 {
-    if (opt.do_codon_phasing && is_in_block())
+    if (opt.isUseCodonPhaser && is_in_block())
     {
         if (het_count>1)
         {
@@ -90,18 +96,23 @@ void Codon_phaser::output_buffer()
 
 // Add a SNP site to the phasing buffer
 bool
-Codon_phaser::add_site(std::unique_ptr<GermlineDiploidSiteLocusInfo> si)
+Codon_phaser::
+add_site(
+    std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr)
 {
 #ifdef DEBUG_CODON
     log_os << __FUNCTION__ << ": input si " << *si << "\n";
 #endif
 
+    /// TODO STREL-125 not generalized to multi-sample, try to replace this rather than fix
+    static const unsigned sampleIndex(0);
+
     // case: extending block with het call, update block_end position
-    if (is_phasable_site(si))
+    if (is_phasable_site(*locusPtr, sampleIndex))
     {
         if (! is_in_block())
         {
-            block_start = si->pos;
+            block_start = locusPtr->pos;
 #ifdef DEBUG_CODON
             log_os << __FUNCTION__ << ": phasable & starting block @ " << block_start << "\n";
 #endif
@@ -112,34 +123,34 @@ Codon_phaser::add_site(std::unique_ptr<GermlineDiploidSiteLocusInfo> si)
             log_os << __FUNCTION__ << ": phasable & continuing block to " << si->pos << "\n";
         }
 #endif
-        block_end = si->pos;
+        block_end = locusPtr->pos;
         het_count++;
-        _buffer.push_back(std::move(si));
+        _buffer.push_back(std::move(locusPtr));
         return false;
     }
 
     //case: we get a record that is explicitly set a unphaseable
-    if (si->Unphasable)
+    if (locusPtr->isSiteUnphasable)
     {
 #ifdef DEBUG_CODON
         log_os << __FUNCTION__ << ": I shouldn't phase this record " << *si << "\n";
 #endif
-        _buffer.push_back(std::move(si));
+        _buffer.push_back(std::move(locusPtr));
 
         return true;
     }
 
     // case: extending block with none-het call based on the phasing range
-    if (is_in_block() && (si->pos-block_end+1)<this->opt.phasing_window)
+    if (is_in_block() && (locusPtr->pos-block_end+1)<this->opt.phasing_window)
     {
 #ifdef DEBUG_CODON
         log_os << __FUNCTION__ << ": notphasable & continuing block to " << si->pos << "\n";
 #endif
-        _buffer.push_back(std::move(si));
+        _buffer.push_back(std::move(locusPtr));
 
         return false;
     }
-    _buffer.push_back(std::move(si));
+    _buffer.push_back(std::move(locusPtr));
 
 
     // case: setup the phased record and write out
@@ -190,6 +201,11 @@ void
 Codon_phaser::
 create_phased_record()
 {
+    /// not generalized to multi-sample, try to replace this rather than fix
+    static const unsigned sampleCount(1);
+    static const unsigned sampleIndex(0);
+
+
     // sanity check do we have all record we expect or are there un-accounted no-calls
     if (this->get_block_length()>this->_buffer.size())
         return;
@@ -202,11 +218,8 @@ create_phased_record()
 
     assert(_buffer.size()>0);
 
-
-    /// not generalized to multi-sample, try to replace this rather than fix
-    assert(_buffer[0]->getSampleCount() == 1);
-    static const unsigned sampleIndex(0);
-
+    /// TODO STREL-125 TMP:
+    assert(_buffer[0]->getSampleCount() == sampleCount);
 
     //Decide if we accept the novel alleles, very hacky criteria for now
     //at least 80% of the reads have to support a diploid model
@@ -332,12 +345,14 @@ create_phased_record()
         {
             const auto& si(_buffer.at(blockPosOffset));
             const auto& sampleInfo(si->getSample(sampleIndex));
-            if (! is_phasable_site(si)) continue;
+            const auto& siteSampleInfo(si->getSiteSample(sampleIndex));
+
+            if (! is_phasable_site(*si, sampleIndex)) continue;
             // It is possible for a weak hetalt call and a strong het call to be phased into a het
             // call, particularly at a site that is triallelic with one ref allele. In that case, it is
             // important to skip those calls' contribution to the resultant statistics. This logic causes
             // us to skip over these variants.
-            if (!is_genotype_represented(si->allele.max_gt, unsigned(si->pos - _buffer[0]->pos),
+            if (!is_genotype_represented(siteSampleInfo.max_gt, unsigned(si->pos - _buffer[0]->pos),
                                          max_alleles[0].first, max_alleles[1].first))
             {
 #ifdef DEBUG_CODON
@@ -378,7 +393,7 @@ create_phased_record()
     {
         for (auto& val : _buffer)
         {
-            if (! is_phasable_site(val)) continue;
+            if (! is_phasable_site(*val, sampleIndex)) continue;
             val->filters.set(GERMLINE_VARIANT_VCF_FILTERS::PhasingConflict);
         }
         return;
@@ -390,7 +405,7 @@ create_phased_record()
     {
         const auto& minsi0(*(_buffer.at(min_gq_idx0)));
         min_gq = minsi0.getSample(sampleIndex).genotypeQualityPolymorphic;
-        max_gt = minsi0.allele.max_gt;
+        max_gt = minsi0.getSiteSample(sampleIndex).max_gt;
         pls = minsi0.dgt.phredLoghood;
         ref_gt = minsi0.dgt.ref_gt;
 
@@ -422,8 +437,9 @@ create_phased_record()
 
             // hetalt site:
             const auto& minsi1(*(_buffer.at(min_gq_idx1)));
-            const uint8_t bx(DIGT::get_allele(minsi1.allele.max_gt,0));
-            const uint8_t by(DIGT::get_allele(minsi1.allele.max_gt,1));
+            const auto& siteSampleInfo1(minsi1.getSiteSample(sampleIndex));
+            const uint8_t bx(DIGT::get_allele(siteSampleInfo1.max_gt,0));
+            const uint8_t by(DIGT::get_allele(siteSampleInfo1.max_gt,1));
 
             // phase b0/b1 to match max_allele order;
             const bool is_swap2(max_alleles[1].first[min_gq_idx1] == id_to_base(bx));
@@ -454,7 +470,7 @@ create_phased_record()
     GermlineSiteSampleInfo& siteSampleInfo(locusPtr->getSiteSample(sampleIndex));
 
     locusPtr->phased_ref = this->reference;
-    locusPtr->allele.max_gt = max_gt;
+    siteSampleInfo.max_gt = max_gt;
     locusPtr->dgt.ref_gt = ref_gt;
 
     // set various quality fields conservatively
