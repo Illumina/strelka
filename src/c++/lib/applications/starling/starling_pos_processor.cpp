@@ -207,6 +207,22 @@ updateSiteSampleInfo(
 
 static
 void
+copmuteSampleDiploidSiteGenotype(
+    const starling_base_options& opt,
+    const starling_deriv_options& dopt,
+    const starling_pos_processor::sample_info& sif,
+    const unsigned ploidy,
+    diploid_genotype& dgt)
+{
+    const extended_pos_info& good_epi(sif.cpi.getExtendedPosInfo());
+    dgt.ploidy=ploidy;
+    dopt.pdcaller().position_snp_call_pprob_digt(
+        opt, good_epi, dgt, opt.is_all_sites());
+}
+
+
+static
+void
 updateSnvLocusWithSampleInfo(
     const starling_base_options& opt,
     const starling_deriv_options& dopt,
@@ -232,6 +248,8 @@ updateSnvLocusWithSampleInfo(
     dopt.pdcaller().position_snp_call_pprob_digt(
         opt, good_epi, dgt, opt.is_all_sites());
 
+    /// TODO indexes need to be converted here:
+
     sampleInfo.genotypeQualityPolymorphic = dgt.poly.max_gt_qphred;
     sampleInfo.maxGenotypeIndexPolymorphic = dgt.poly.max_gt;
 
@@ -242,6 +260,75 @@ updateSnvLocusWithSampleInfo(
     homRefLogProb += std::log(dgt.genome.ref_pprob);
 
     updateSiteSampleInfo(opt, sampleIndex, cpi, locus);
+}
+
+
+
+void
+starling_pos_processor::
+getSiteAltAlleles(
+    const uint8_t refBaseId,
+    const std::vector<diploid_genotype>& allDgt,
+    std::vector<uint8_t>& altAlleles) const
+{
+    const unsigned sampleCount(getSampleCount());
+
+    // rank alleles in each sample, sum score for each sample: first=2, second=1, not present in top PLOIDY alleles = 0
+    std::array<unsigned, N_BASE> alleleRank;
+    std::fill(std::begin(alleleRank), std::end(alleleRank), 0);
+
+    std::array<double, N_BASE> sampleBaseCounts;
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+    {
+        const auto& cpi(sample(sampleIndex).cpi);
+        const auto& good_pi(cpi.cleanedPileup());
+        good_pi.get_known_counts(sampleBaseCounts, _opt.used_allele_count_min_qscore);
+
+        static const double minAlleleFraction(0.10);
+        unsigned minCount(0);
+        {
+            for (unsigned baseId(0); baseId < N_BASE; ++baseId)
+            {
+                minCount += sampleBaseCounts[baseId];
+            }
+            minCount *= minAlleleFraction;
+            minCount = std::max(1u, minCount);
+        }
+
+        const auto ploidy(allDgt[sampleIndex].ploidy);
+        for (int ploidyIndex(0); ploidyIndex < ploidy; ++ploidyIndex)
+        {
+            unsigned maxBaseId(0);
+            for (unsigned baseId(1); baseId < N_BASE; ++baseId)
+            {
+                if (sampleBaseCounts[baseId] > sampleBaseCounts[maxBaseId])
+                {
+                    maxBaseId = baseId;
+                }
+            }
+            if (sampleBaseCounts[maxBaseId] >= minCount)
+            {
+                alleleRank[maxBaseId] += (2 - ploidyIndex);
+            }
+            sampleBaseCounts[maxBaseId] = 0;
+        }
+    }
+
+    while (true)
+    {
+        unsigned maxBaseId(0);
+        for (unsigned baseId(1); baseId < N_BASE; ++baseId)
+        {
+            if (alleleRank[baseId] > alleleRank[maxBaseId])
+            {
+                maxBaseId = baseId;
+            }
+        }
+        if (alleleRank[maxBaseId] == 0) break;
+        alleleRank[maxBaseId] = 0;
+        if (maxBaseId == refBaseId) continue;
+        altAlleles.push_back(maxBaseId);
+    }
 }
 
 
@@ -266,9 +353,44 @@ process_pos_snp_digt(
 
     const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
-    std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, pos,pi.get_ref_base(), isForcedOutput));
+    /// TODO currently using old "4-allele" genotyping system and then reducing down to number
+    /// of called alleles, transition this to work more like current indel model, where up to
+    /// 4 alleles are nominated as candidates and genotyping is based on the candidate alleles
+    /// only.
 
-    // add sample-dependent info:
+
+    // prep data for site locus creation:
+    //
+
+    // prep step 1) clean pileups in all samples:
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+    {
+        _pileupCleaner.CleanPileupErrorProb(sample(sampleIndex).cpi);
+    }
+
+    // prep step 2) compute diploid genotype object using older "4-allele" model:
+    std::vector<diploid_genotype> allDgt(sampleCount);
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+    {
+        const unsigned ploidy(get_ploidy(pos, sampleIndex));
+        copmuteSampleDiploidSiteGenotype(
+            _opt, _dopt, sample(sampleIndex), ploidy, allDgt[sampleIndex]);
+    }
+
+    // prep step 3) rank each allele in each sample, allowing up to ploidy alleles.
+    //              approximate an aggregate rank over all samples:
+    const uint8_t refBaseId(base_to_id(_ref.get_base(pos)));
+    std::vector<uint8_t> altAlleles;
+    getSiteAltAlleles(refBaseId, allDgt, altAlleles);
+
+    std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, pos, id_to_base(refBaseId), isForcedOutput));
+
+    // add all candidate alternate alleles:
+    for (const auto baseId : altAlleles)
+    {
+        locusPtr->addAltSiteAllele(static_cast<BASE_ID::index_t>(baseId));
+    }
+
     double homRefLogProb(0);
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {

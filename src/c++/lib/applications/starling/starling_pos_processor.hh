@@ -90,6 +90,12 @@ private:
     void process_pos_indel_continuous(const pos_t pos);
 
     void
+    getSiteAltAlleles(
+        const uint8_t refBaseId,
+        const std::vector<diploid_genotype>& allDgt,
+        std::vector<uint8_t>& altAlleles) const;
+
+    void
     write_counts(const pos_range& output_report_range) const override;
 
     const starling_options& _opt;
