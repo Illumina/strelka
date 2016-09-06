@@ -45,19 +45,15 @@ is_site_compressable(
     if (locus.isForcedOutput) return false;
     if (! _opt.is_block_compression) return false;
 
-    const unsigned sampleCount(locus.getSampleCount());
-    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-    {
-        /// TODO STREL-125 -- account for is_snp in each sample
-        if (locus.is_snp()) return false;
-    }
+    if (locus.isVariantLocus()) return false;
 
     if (locus.ref != 'N')
     {
+        const unsigned sampleCount(locus.getSampleCount());
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
             const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
-            if (siteSampleInfo.n_used_calls > 0)
+            if (siteSampleInfo.isUsedReadCoverage())
             {
                 const double reffrac(static_cast<double>(siteSampleInfo.alleleObservationCounts(base_to_id(locus.ref))) /
                                      static_cast<double>(siteSampleInfo.n_used_calls));

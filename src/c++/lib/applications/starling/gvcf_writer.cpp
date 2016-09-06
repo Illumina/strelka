@@ -638,7 +638,7 @@ write_site_record(
     // INFO
     std::ostringstream info;
 
-    if (locus._is_snp)
+    if (locus.isVariantLocus())
     {
         {
             assert(not siteAlleles.empty());

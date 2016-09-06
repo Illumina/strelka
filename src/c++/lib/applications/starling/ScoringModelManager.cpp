@@ -243,7 +243,7 @@ default_classify_site(
         const double unusedCallFraction(safeFrac(siteSampleInfo.n_unused_calls, total_calls));
         if (unusedCallFraction>_opt.max_base_filt) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighBaseFilt);
     }
-    if (locus.is_snp())
+    if (locus.isVariantLocus())
     {
         if (_opt.is_max_snv_sb)
         {

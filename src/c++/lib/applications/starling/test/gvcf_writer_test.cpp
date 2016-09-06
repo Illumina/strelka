@@ -77,11 +77,11 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
 
     const unsigned sampleCount(1);
     //const snp_pos_info& spi(bc_buff.get_pos(snp_pos));
-    std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, snp_pos, rcs.get_base(snp_pos)));
-    si->dgt.ref_gt = base_to_id(si->ref);
+    std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, snp_pos, rcs.get_base(snp_pos)));
+    locusPtr->dgt.ref_gt = base_to_id(locusPtr->ref);
 
-    si->allele.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[snp_pos]),base_to_id(r2[snp_pos]));
-    si->dgt.genome.snp_qphred = 60;
+    locusPtr->allele.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[snp_pos]),base_to_id(r2[snp_pos]));
+    locusPtr->anyVariantAlleleQuality = 60;
 
     // now make sure it is rendered with the Unphased info field
 
@@ -96,19 +96,17 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
 
 
     gvcf_writer writer(opt, dopt, rcs, regions, sampleNames, &os, cm);
-    writer.process(std::move(si));
+    writer.process(std::move(locusPtr));
 
     std::string x = os.str();
-    BOOST_CHECK(x.length() > 0);
+    BOOST_REQUIRE(x.length() > 0);
     std::vector<std::string> lines;
     boost::split(lines, x, boost::is_any_of("\n"));
-    BOOST_CHECK(lines.size() >= 2);
+    BOOST_REQUIRE(lines.size() == 3);
 
     std::vector<std::string> strs;
     boost::split(strs, lines[1], boost::is_any_of("\t"));
-    BOOST_CHECK(strs.size() > 7);
+    BOOST_REQUIRE(strs.size() > 7);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-
-

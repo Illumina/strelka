@@ -93,11 +93,6 @@ struct gvcf_block_site_record : public GermlineSiteLocusInfo
         return gt.c_str();
     }
 
-    bool is_snp() const override
-    {
-        return false;
-    }
-
     bool is_nonref() const override
     {
         return _isNonRef;

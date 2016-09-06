@@ -414,12 +414,6 @@ updateContinuousSnvLocusWithSampleInfo(
                 continuousSiteSampleInfo.continuousTotalDepth,
                 (unsigned) opt.min_qscore, 40);
 
-        if (not isRefAllele)
-        {
-            // flag the whole site as a SNP if any call above the VF threshold is non-ref
-            locus._is_snp = locus._is_snp || alleleFrequency > opt.min_het_vf;
-        }
-
         // update strand bias intermediates:
         for (unsigned alleleIndex(0); alleleIndex < alleleCount; ++alleleIndex)
         {
@@ -473,10 +467,14 @@ updateContinuousSnvLocusInfo(
 
     // get the qual score:
     locus.anyVariantAlleleQuality = 0;
-    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+    if (alleleCount != 0)
     {
-        const auto& sampleInfo(locus.getSample(sampleIndex));
-        locus.anyVariantAlleleQuality = std::max(locus.anyVariantAlleleQuality, sampleInfo.genotypeQualityPolymorphic);
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        {
+            const auto& sampleInfo(locus.getSample(sampleIndex));
+            locus.anyVariantAlleleQuality = std::max(locus.anyVariantAlleleQuality,
+                                                     sampleInfo.genotypeQualityPolymorphic);
+        }
     }
 }
 
@@ -529,24 +527,23 @@ process_pos_snp_continuous(const pos_t pos)
                 _opt, sample(sampleIndex), _pileupCleaner, sampleIndex, baseId, strandBiasCounts, *locusPtr);
         }
 
-        // determine if this is an output allele
-        bool isOutputAllele(isForcedOutputUsed);
-        if (not isOutputAllele)
+        // determine if this locus (in continuous case locus TEMPORARILY means "allele") is printable:
+        bool isReportableLocus(isForcedOutputUsed);
+        if ((not isReportableLocus) and (not isRefAllele))
         {
             for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
             {
                 const auto& continuousSiteSampleInfo(locusPtr->getContinuousSiteSample(sampleIndex));
                 const double alleleFrequency(continuousSiteSampleInfo.getContinuousAlleleFrequency());
 
-                if ((not isRefAllele) && (alleleFrequency > _opt.min_het_vf))
+                if (alleleFrequency > _opt.min_het_vf)
                 {
-                    isOutputAllele = true;
+                    isReportableLocus = true;
                     break;
                 }
             }
         }
-
-        if (not isOutputAllele) return;
+        if (not isReportableLocus) return;
 
         // set sample-independent info:
         updateContinuousSnvLocusInfo(
@@ -1286,22 +1283,22 @@ process_pos_indel_continuous(const pos_t pos)
             locusPtr->anyVariantAlleleQuality = anyVariantAlleleQuality;
         }
 
-        // determine if this locus is printable:
-        bool isReportableAllele(isForcedOutput);
+        // determine if this locus (in continuous case locus TEMPORARILY means "allele") is printable:
+        bool isReportableLocus(isForcedOutput);
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
             const auto& indelSampleInfo(locusPtr->getIndelSample(sampleIndex));
-            if (not isReportableAllele)
+            if (not isReportableLocus)
             {
                 const double alleleFrequency(indelSampleInfo.alleleFrequency());
                 if ((indelSampleInfo.legacyReportInfo.n_confident_indel_reads > 0) and
                     (alleleFrequency > _opt.min_het_vf))
                 {
-                    isReportableAllele = true;
+                    isReportableLocus = true;
                 }
             }
         }
-        if (not isReportableAllele) continue;
+        if (not isReportableLocus) continue;
 
         _gvcfer->add_indel(std::move(locusPtr));
     }

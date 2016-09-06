@@ -860,7 +860,6 @@ struct GermlineSiteLocusInfo : public LocusInfo
         return (siteSample.isUsedReadCoverage() and (not siteSample.is_zero_ploidy));
     }
 
-    virtual bool is_snp() const = 0;
     virtual bool is_nonref() const = 0;
 
     void
@@ -915,11 +914,6 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
           evsFeatures(gvcfDerivedOptions.snvFeatureSet),
           evsDevelopmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
     {}
-
-    bool is_snp() const override
-    {
-        return dgt.is_snp();
-    }
 
     const char*
     get_gt(const unsigned sampleIndex) const
@@ -1068,11 +1062,6 @@ struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
           _continuousSiteSampleInfo(sampleCount)
     {}
 
-    bool is_snp() const override
-    {
-        return _is_snp;
-    }
-
     bool is_nonref() const override
     {
         auto ref_id = base_to_id(ref);
@@ -1090,7 +1079,6 @@ struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
     {
         base_t::clear();
 
-        _is_snp = false;
         for (auto& sample : _continuousSiteSampleInfo)
         {
             sample.clear();
@@ -1114,9 +1102,6 @@ struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
     {
         return _continuousSiteSampleInfo[sampleIndex];
     }
-
-
-    bool _is_snp = false;
 
 private:
     std::vector<GermlineContinuousSiteSampleInfo> _continuousSiteSampleInfo;
