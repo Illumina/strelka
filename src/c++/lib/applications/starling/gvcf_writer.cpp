@@ -438,16 +438,6 @@ write_site_record(
 
         if (_opt.isReportEVSFeatures)
         {
-#ifdef SUPPORT_LEGACY_EVS_TRAINING_SCRIPTS
-            // if you uncomment the following, make sure you also uncomment the matching INFO header entry in gvcf_header.cpp
-            //                os << ';';
-            //                os << "MapQ0Count=" << si.mapq_zero;
-
-            // N.B. DP is in FORMAT already, and that seems to be where Nondas's code expects to find it, so suppress it here:
-            //                os << ';';
-            //                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
-#endif
-
             // EVS features may not be computed for certain records, so check first:
             if (! locus.evsFeatures.empty())
             {

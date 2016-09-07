@@ -31,9 +31,6 @@
 
 #include <iosfwd>
 
-/// TODO: remove this after STREL-97 transition period:
-#define SUPPORT_LEGACY_EVS_TRAINING_SCRIPTS
-
 
 void
 finish_gvcf_header(

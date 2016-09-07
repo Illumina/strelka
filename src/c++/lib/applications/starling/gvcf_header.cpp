@@ -150,16 +150,13 @@ finish_gvcf_header(
     os << "##INFO=<ID=IDREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in indel allele.\">\n";
     os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS of mapping quality\">\n";
 
-#ifdef SUPPORT_LEGACY_EVS_TRAINING_SCRIPTS
-    if (opt.isReportEVSFeatures)
-    {
-        os << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
-        os << "##INFO=<ID=MQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref mapping qualities\">\n";
-        os << "##INFO=<ID=BaseQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref base-call qualities\">\n";
-        os << "##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref read-position\">\n";
-        os << "##INFO=<ID=AvgBaseQ,Number=1,Type=Float,Description=\"Mean base Qscore\">\n";
-        os << "##INFO=<ID=AvgPos,Number=1,Type=Float,Description=\"Mean position in aligned reads\">\n";
-    }
+#if 0
+    os << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
+    os << "##INFO=<ID=MQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref mapping qualities\">\n";
+    os << "##INFO=<ID=BaseQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref base-call qualities\">\n";
+    os << "##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref read-position\">\n";
+    os << "##INFO=<ID=AvgBaseQ,Number=1,Type=Float,Description=\"Mean base Qscore\">\n";
+    os << "##INFO=<ID=AvgPos,Number=1,Type=Float,Description=\"Mean position in aligned reads\">\n";
 #endif
 
     if (opt.isReportEVSFeatures)
