@@ -38,14 +38,20 @@ public:
     void process(std::unique_ptr<GermlineSiteLocusInfo> si) override;
     void process(std::unique_ptr<GermlineIndelLocusInfo> ii) override;
 private:
+    void
+    load_next_region();
+
+    void
+    load_next_region_if_needed(const pos_t pos);
+
+    void
+    processLocus(LocusInfo& locus);
+
     std::unique_ptr<bed_streamer> _bed_streamer;
     const bed_record* _current_record;
 
     // TODO: move enforcement of regions into bed_streamer
     std::string _region;
     bool _is_end;
-
-    void load_next_region();
-    void load_next_region_if_needed(pos_t position);
 };
 

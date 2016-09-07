@@ -27,7 +27,11 @@
 #include "bedstreamprocessor.hh"
 
 
-bed_stream_processor::bed_stream_processor(const std::string& bed_file_name, const std::string& region, std::shared_ptr<variant_pipe_stage_base> next_stage)
+bed_stream_processor::
+bed_stream_processor(
+    const std::string& bed_file_name,
+    const std::string& region,
+    std::shared_ptr<variant_pipe_stage_base> next_stage)
     : variant_pipe_stage_base(next_stage)
     , _region(region)
     , _is_end(false)
@@ -39,57 +43,75 @@ bed_stream_processor::bed_stream_processor(const std::string& bed_file_name, con
     }
 }
 
-void bed_stream_processor::load_next_region()
+
+
+void
+bed_stream_processor::
+load_next_region()
 {
-    if (!_is_end)
+    if (_is_end) return;
+
+    if (_bed_streamer->next())
     {
-        if (_bed_streamer->next())
+        _current_record = _bed_streamer->get_record_ptr();
+        if (_current_record->chrom != _region)
         {
-            _current_record = _bed_streamer->get_record_ptr();
-            if (_current_record->chrom != _region)
-            {
-                _is_end = true;
-                _current_record = nullptr;
-            }
-        }
-        else
-        {
-            _current_record = nullptr;
             _is_end = true;
+            _current_record = nullptr;
         }
     }
-}
-
-void bed_stream_processor::load_next_region_if_needed(pos_t position)
-{
-    while (_current_record != nullptr && _current_record->end < position)
-        load_next_region();
-}
-
-void bed_stream_processor::process(std::unique_ptr<GermlineSiteLocusInfo> si)
-{
-    if (this->_bed_streamer)
+    else
     {
-        load_next_region_if_needed(si->pos);
-        if (_current_record == nullptr || si->pos < _current_record->begin || si->pos >= _current_record->end)
-        {
-            // TODO: make sure we don't apply to stuff we shouldn't? No coverage? I dunno
-            si->filters.set(GERMLINE_VARIANT_VCF_FILTERS::OffTarget);
-        }
+        _current_record = nullptr;
+        _is_end = true;
     }
+}
+
+
+
+void
+bed_stream_processor::
+load_next_region_if_needed(const pos_t pos)
+{
+    while ((_current_record != nullptr) && (_current_record->end < pos))
+    {
+        load_next_region();
+    }
+}
+
+
+
+void
+bed_stream_processor::
+processLocus(LocusInfo& locus)
+{
+    if (not _bed_streamer) return;
+
+    load_next_region_if_needed(locus.pos);
+
+    // include alleles if they start in a targeted region
+    if (_current_record == nullptr || locus.pos < _current_record->begin || locus.pos >= _current_record->end)
+    {
+        locus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::OffTarget);
+    }
+}
+
+
+
+void
+bed_stream_processor::
+process(std::unique_ptr<GermlineSiteLocusInfo> si)
+{
+    processLocus(*si);
     _sink->process(std::move(si));
 }
 
-void bed_stream_processor::process(std::unique_ptr<GermlineIndelLocusInfo> ii)
+
+
+void
+bed_stream_processor::
+process(std::unique_ptr<GermlineIndelLocusInfo> ii)
 {
-    if (this->_bed_streamer)
-    {
-        load_next_region_if_needed(ii->pos);
-        // include indels if they start in a targeted region
-        if (_current_record == nullptr || ii->pos < _current_record->begin || ii->pos >= _current_record->end)
-        {
-            ii->filters.set(GERMLINE_VARIANT_VCF_FILTERS::OffTarget);
-        }
-    }
+    processLocus(*ii);
     _sink->process(std::move(ii));
 }
