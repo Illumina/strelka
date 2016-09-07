@@ -45,7 +45,7 @@ struct GERMLINE_SNV_SCORING_FEATURES : public FeatureSet
     }
 
     /** any change here must be done together with changing
-        src/python/scoringModelTraining/germline/lib/features/StrelkaSNV.py
+        src/python/scoringModelTraining/germline/lib/evs/features/GermlineSNV.py
      */
     enum index_t
     {
@@ -53,7 +53,6 @@ struct GERMLINE_SNV_SCORING_FEATURES : public FeatureSet
         I_MQ,
         I_SNVHPOL,
         I_SNVSB,
-        I_BaseQRankSum,
         I_MQRankSum,
         I_ReadPosRankSum,
         TDP_NORM,
@@ -81,8 +80,6 @@ struct GERMLINE_SNV_SCORING_FEATURES : public FeatureSet
             return "I_SNVHPOL";
         case I_SNVSB:
             return "I_SNVSB";
-        case I_BaseQRankSum:
-            return "I_BaseQRankSum";
         case I_MQRankSum:
             return "I_MQRankSum";
         case I_ReadPosRankSum:
@@ -123,6 +120,7 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
 
     enum index_t
     {
+        I_BaseQRankSum,
         ABlower,
         AB,
         I_RawPos,
@@ -149,6 +147,8 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     {
         switch (idx)
         {
+        case I_BaseQRankSum:
+            return "I_BaseQRankSum";
         case ABlower:
             return "ABlower";
         case AB:
@@ -198,8 +198,10 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
         return "GERMLINE_INDEL_SCORING_FEATURES";
     }
 
-    /** Make sure the features are the same as used in the model
-     */
+    /** Make sure the features are the same as used in the model.
+        Any change here must be done together with changing
+        src/python/scoringModelTraining/germline/lib/evs/features/GermlineIndel.py
+    */
     enum index_t
     {
         GENO,

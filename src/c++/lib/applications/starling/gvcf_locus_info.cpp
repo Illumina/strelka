@@ -497,7 +497,6 @@ computeEmpiricalScoringFeatures(
         smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQ, (mapqRMS));
         smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVHPOL, (hpol));
         smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVSB, (smod.strand_bias));
-        smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_BaseQRankSum, (BaseQRankSum));
         smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQRankSum, (MQRankSum));
         smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_ReadPosRankSum, (ReadPosRankSum));
 
@@ -520,6 +519,10 @@ computeEmpiricalScoringFeatures(
         //
         if (isComputeDevelopmentFeatures)
         {
+
+          // BaseQRankSum
+          smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::I_BaseQRankSum, (BaseQRankSum));
+
             // allele bias metrics
             {
                 const double allelebiaslower = cdf(boost::math::binomial(r0 + r1, 0.5), r0);
