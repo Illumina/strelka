@@ -83,9 +83,7 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
     auto& siteSampleInfo(locusPtr->getSiteSample(sampleIndex));
     siteSampleInfo.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[snp_pos]),base_to_id(r2[snp_pos]));
     locusPtr->anyVariantAlleleQuality = 60;
-
-    // now make sure it is rendered with the Unphased info field
-
+    locusPtr->addAltSiteAllele(BASE_ID::G);
 
     RegionTracker regions;
     const std::vector<std::string> sampleNames = { "SAMPLE" };

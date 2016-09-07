@@ -1071,7 +1071,6 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     VariantScoringFeatureKeeper evsFeatures;
     VariantScoringFeatureKeeper evsDevelopmentFeatures;
 
-    GermlineSiteAlleleInfo allele;
     bool isPhasedRegion = false;
 };
 

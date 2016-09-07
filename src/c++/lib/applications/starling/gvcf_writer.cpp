@@ -408,11 +408,16 @@ write_site_record(
     // INFO:
     if (locus.isVariantLocus())
     {
-        os << "SNVSB=";
         {
+            assert(isAltAlleles);
+
             /// TODO STREL-125 generalize to multiple alts
-            const StreamScoper ss(os);
-            os << std::fixed << std::setprecision(1) << locus.allele.strandBias;
+            const auto& allele(siteAlleles.front());
+            os << "SNVSB=";
+            {
+                const StreamScoper ss(os);
+                os << std::fixed << std::setprecision(1) << allele.strandBias;
+            }
         }
         os << ';';
         os << "SNVHPOL=" << locus.hpol;
@@ -592,9 +597,9 @@ write_site_record(
 
     const unsigned sampleCount(locus.getSampleCount());
     const auto& siteAlleles(locus.getSiteAlleles());
+    const bool isAltAlleles(not siteAlleles.empty());
 
     /// TODO STREL-125 tmp transitional structures:
-    const bool is_no_alt(siteAlleles.empty());
     std::vector<uint8_t> altOrder;
     for (const auto& allele : siteAlleles)
     {
@@ -622,23 +627,21 @@ write_site_record(
     os << '\t';
 
     // INFO
-    std::ostringstream info;
-
     if (locus.isVariantLocus())
     {
         {
-            assert(not siteAlleles.empty());
+            assert(isAltAlleles);
 
             /// TODO STREL-125 generalize to multiple alts
             const auto& allele(siteAlleles.front());
-            info << "SNVSB=";
+            os << "SNVSB=";
             {
-                const StreamScoper ss(info);
-                info << std::fixed << std::setprecision(1) << allele.strandBias;
+                const StreamScoper ss(os);
+                os << std::fixed << std::setprecision(1) << allele.strandBias;
             }
-            info << ';';
         }
-        info << "SNVHPOL=" << locus.hpol;
+        os << ';';
+        os << "SNVHPOL=" << locus.hpol;
 
         // compute global MQ over all samples
         MapqTracker mapqTracker;
@@ -649,19 +652,23 @@ write_site_record(
                 mapqTracker.merge(siteSampleInfo.mapqTracker);
             }
         }
-        info << ';';
-        info << "MQ=" << mapqTracker.getRMS();
+        os << ';';
+        os << "MQ=" << mapqTracker.getRMS();
 
     }
+    else
+    {
+        os << ".";
+    }
 
-    os << (info.str().empty() ? "." : info.str()) << "\t";
+    os << "\t";
 
     //FORMAT
     os << "GT";
     os << ":GQ";
     os << ":GQX";
     os << ":DP:DPF";
-    if (!is_no_alt)
+    if (isAltAlleles)
     {
         os << ":AD:ADF:ADR";
     }
@@ -684,7 +691,7 @@ write_site_record(
         // DP:DPF
         os << ':' << siteSampleInfo.n_used_calls << ':' << siteSampleInfo.n_unused_calls;
 
-        if (!is_no_alt)
+        if (isAltAlleles)
         {
             os << ':';
             print_site_ad(refBaseId, siteSampleInfo, altOrder, os);

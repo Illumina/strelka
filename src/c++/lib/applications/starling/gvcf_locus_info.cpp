@@ -199,6 +199,11 @@ computeEmpiricalScoringFeatures(
     const double filteredLocusDepthFactor(safeFrac(1, filteredLocusDepth));
     const double locusDepthFactor(safeFrac(1, locusDepth));
 
+    // TODO STREL-125 generalize to multiple ALTs
+    const auto& siteAlleles(locus.getSiteAlleles());
+    assert(not siteAlleles.empty());
+    const auto& firstAltAllele(siteAlleles.front());
+
     // get the alt base id (choose second in case of an alt het....)
     unsigned altBase(N_BASE);
     const uint8_t refBaseId(base_to_id(locus.ref));
@@ -216,7 +221,6 @@ computeEmpiricalScoringFeatures(
     const unsigned r0 = siteSampleInfo.alleleObservationCounts(refBaseId);
     const unsigned r1 = siteSampleInfo.alleleObservationCounts(altBase);
 
-    ;
     const double mapqZeroFraction(siteSampleInfo.mapqTracker.getZeroFrac());
 
     const double locusUsedDepthFraction(filteredLocusDepth * locusDepthFactor);
@@ -241,7 +245,7 @@ computeEmpiricalScoringFeatures(
         features.set(RNA_SNV_SCORING_FEATURES::I_ReadPosRankSum, (siteSampleInfo.ReadPosRankSum));
 
         features.set(RNA_SNV_SCORING_FEATURES::I_SNVHPOL, (locus.hpol));
-        features.set(RNA_SNV_SCORING_FEATURES::I_SNVSB, (locus.allele.strandBias));
+        features.set(RNA_SNV_SCORING_FEATURES::I_SNVSB, (firstAltAllele.strandBias));
 
         features.set(RNA_SNV_SCORING_FEATURES::AD0, (r0 * chromDepthFactor));
         features.set(RNA_SNV_SCORING_FEATURES::AD1, (r1 * chromDepthFactor));
@@ -288,7 +292,7 @@ computeEmpiricalScoringFeatures(
 
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQ, (siteSampleInfo.mapqTracker.getRMS()));
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVHPOL, (locus.hpol));
-        features.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVSB, (locus.allele.strandBias));
+        features.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVSB, (firstAltAllele.strandBias));
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQRankSum, (siteSampleInfo.MQRankSum));
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_ReadPosRankSum, (siteSampleInfo.ReadPosRankSum));
 
