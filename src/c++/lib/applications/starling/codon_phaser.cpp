@@ -485,7 +485,7 @@ create_phased_record()
     locusPtr->phased_ADF  = ADF.str();
     locusPtr->phased_ADR  = ADR.str();
 
-    locusPtr->allele.is_phased_region = true;
+    locusPtr->isPhasedRegion = true;
     const int reads_ignored = (this->total_reads-allele_sum);
     siteSampleInfo.n_used_calls = this->total_reads - reads_ignored;
     siteSampleInfo.n_unused_calls = this->total_reads_unused + reads_ignored; // second term mark all alleles that we didnt use as unused reads

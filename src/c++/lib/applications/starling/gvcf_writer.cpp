@@ -206,7 +206,7 @@ add_site_internal(
     GermlineDiploidSiteLocusInfo& locus)
 {
     filter_site_by_last_indel_overlap(locus);
-    if (locus.allele.is_phased_region)
+    if (locus.isPhasedRegion)
     {
         _head_pos=locus.pos+locus.phased_ref.length();
     }
@@ -365,7 +365,7 @@ write_site_record(
        << (locus.pos+1) << '\t'  // POS
        << ".\t";           // ID
 
-    if (locus.allele.is_phased_region)
+    if (locus.isPhasedRegion)
     {
         os  << locus.phased_ref << '\t'; // REF
     }
@@ -380,7 +380,7 @@ write_site_record(
     {
         os << '.';
     }
-    else if (locus.allele.is_phased_region)
+    else if (locus.isPhasedRegion)
     {
         os << locus.phased_alt;
     }
@@ -514,7 +514,7 @@ write_site_record(
 
         if (isAltAlleles)
         {
-            if (locus.allele.is_phased_region)
+            if (locus.isPhasedRegion)
             {
                 os << ':' << locus.phased_AD
                    << ':' << locus.phased_ADF

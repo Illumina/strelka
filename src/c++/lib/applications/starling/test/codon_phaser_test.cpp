@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE( just_one_snp )
     for (auto& phased_variant : next->the_sites)
     {
         BOOST_CHECK(!phased_variant->filters.any());
-        BOOST_CHECK(!phased_variant->allele.is_phased_region);
+        BOOST_CHECK(!phased_variant->isPhasedRegion);
     }
     BOOST_CHECK_EQUAL(next->the_sites.size(), 1);
 }
@@ -248,7 +248,7 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
     for (auto& site : sink.the_sites)
     {
         BOOST_CHECK(! site->is_het(sampleIndex) || site->filters.test(GERMLINE_VARIANT_VCF_FILTERS::PhasingConflict));
-        BOOST_CHECK(!site->allele.is_phased_region);
+        BOOST_CHECK(!site->isPhasedRegion);
     }
 }
 

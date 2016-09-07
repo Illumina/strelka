@@ -157,25 +157,3 @@ struct GermlineSiteAlleleInfo : public GermlineVariantAlleleInfo
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineSiteAlleleInfo& allele);
-
-
-/// restrict to the case where variant is site/SNV and calling model is diploid
-struct GermlineDiploidSiteAlleleInfo : public GermlineSiteAlleleInfo
-{
-    typedef GermlineSiteAlleleInfo base_t;
-
-    explicit
-    GermlineDiploidSiteAlleleInfo()
-    {
-        clear();
-    }
-
-    void
-    clear()
-    {
-        base_t::clear();
-        is_phased_region=false;
-    }
-
-    bool is_phased_region;
-};

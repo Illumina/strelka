@@ -1063,7 +1063,8 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     VariantScoringFeatureKeeper evsFeatures;
     VariantScoringFeatureKeeper evsDevelopmentFeatures;
 
-    GermlineDiploidSiteAlleleInfo allele;
+    GermlineSiteAlleleInfo allele;
+    bool isPhasedRegion = false;
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteLocusInfo& si);
