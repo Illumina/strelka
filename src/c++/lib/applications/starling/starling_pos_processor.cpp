@@ -200,6 +200,25 @@ updateSiteSampleInfo(
     good_pi.get_known_counts(siteSampleInfo.fwd_counts, opt.used_allele_count_min_qscore, true);
     good_pi.get_known_counts(siteSampleInfo.rev_counts, opt.used_allele_count_min_qscore, false);
 
+    // MQ is computed/reported whether EVS features are needed or not, it is also used by EVS
+    const auto& pi(cpi.rawPileup());
+    siteSampleInfo.mapqTracker = pi.mapqTracker;
+
+    /// add EVS feature info
+    const auto& sampleInfo(locus.getSample(sampleIndex));
+    if (locus.isForcedOutput or sampleInfo.isVariant())
+    {
+        // calculate empirical scoring metrics
+        if (opt.is_compute_germline_scoring_metrics())
+        {
+            siteSampleInfo.ReadPosRankSum = pi.get_read_pos_ranksum();
+            siteSampleInfo.MQRankSum = pi.get_mq_ranksum();
+            siteSampleInfo.BaseQRankSum = pi.get_baseq_ranksum();
+            siteSampleInfo.rawPos = pi.get_raw_pos();
+            siteSampleInfo.avgBaseQ = pi.get_raw_baseQ();
+        }
+    }
+
     locus.setSiteSampleInfo(sampleIndex, siteSampleInfo);
 }
 
@@ -403,19 +422,6 @@ process_pos_snp_digt(
         if (_opt.is_compute_hapscore)
         {
             locusPtr->hapscore=get_hapscore(pi.hap_set);
-        }
-
-        // calculate empirical scoring metrics
-        if (_opt.is_compute_germline_scoring_metrics())
-        {
-            locusPtr->mapqRMS = pi.mapqTracker.getRMS();
-            locusPtr->mapqZeroCount = pi.mapqTracker.zeroCount;
-            locusPtr->mapqCount = pi.mapqTracker.count;
-            locusPtr->ReadPosRankSum = pi.get_read_pos_ranksum();
-            locusPtr->MQRankSum = pi.get_mq_ranksum();
-            locusPtr->BaseQRankSum = pi.get_baseq_ranksum();
-            locusPtr->rawPos = pi.get_raw_pos();
-            locusPtr->avgBaseQ = pi.get_raw_baseQ();
         }
 
         // hpol filter

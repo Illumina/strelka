@@ -106,7 +106,7 @@ classify_site(
         {
             /// TODO STREL-125 fix for multi-sample:
             auto& sampleInfo(locus.getSample(sampleIndex));
-            if (not locus.isVariantLocus())
+            if (not sampleInfo.isVariant())
             {
                 // revert to hard-filters for this sample:
                 default_classify_site(sampleIndex, allSampleLocusDepth, locus, locus.allele);

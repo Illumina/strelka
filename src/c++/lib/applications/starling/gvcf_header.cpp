@@ -148,11 +148,11 @@ finish_gvcf_header(
     os << "##INFO=<ID=RU,Number=A,Type=String,Description=\"Smallest repeating sequence unit extended or contracted in the indel allele relative to the reference. RUs are not reported if longer than 20 bases.\">\n";
     os << "##INFO=<ID=REFREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in reference.\">\n";
     os << "##INFO=<ID=IDREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in indel allele.\">\n";
+    os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS of mapping quality\">\n";
 
 #ifdef SUPPORT_LEGACY_EVS_TRAINING_SCRIPTS
     if (opt.isReportEVSFeatures)
     {
-        os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS of mapping quality\">\n";
         os << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
         os << "##INFO=<ID=MQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref mapping qualities\">\n";
         os << "##INFO=<ID=BaseQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref base-call qualities\">\n";

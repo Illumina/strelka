@@ -772,6 +772,12 @@ struct GermlineSiteSampleInfo
         n_used_calls = 0;
         n_unused_calls = 0;
         is_zero_ploidy = false;
+        mapqTracker.clear();
+        ReadPosRankSum = 0;
+        BaseQRankSum = 0;
+        MQRankSum = 0;
+        avgBaseQ = 0;
+        rawPos = 0;
 
         modified_gt=MODIFIED_SITE_GT::NONE;
         max_gt=0;
@@ -785,6 +791,15 @@ struct GermlineSiteSampleInfo
 
     /// set to true when the site is overlapped by a hom deletion:
     bool is_zero_ploidy = false;
+
+    MapqTracker mapqTracker;
+
+    //only meaningful for het calls
+    double ReadPosRankSum = 0;  // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
+    double BaseQRankSum = 0;    // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
+    double MQRankSum = 0;       // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
+    double avgBaseQ = 0;
+    double rawPos = 0;
 
     /// TODO STREL-125 temporary
     std::array<unsigned,N_BASE> fwd_counts;
@@ -1052,16 +1067,6 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
 
     std::string phased_ref, phased_alt, phased_AD, phased_ADF, phased_ADR;
     double hapscore = 0;
-    double mapqRMS = 0;
-    unsigned mapqZeroCount = 0;
-    unsigned mapqCount = 0;
-
-    //only meaningful for het calls
-    double ReadPosRankSum = 0;  // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
-    double BaseQRankSum = 0;    // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
-    double MQRankSum = 0;       // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
-    double avgBaseQ = 0;
-    double rawPos = 0;
 
     /// production and development features used in the empirical scoring model:
     VariantScoringFeatureKeeper evsFeatures;

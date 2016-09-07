@@ -216,7 +216,8 @@ computeEmpiricalScoringFeatures(
     const unsigned r0 = siteSampleInfo.alleleObservationCounts(refBaseId);
     const unsigned r1 = siteSampleInfo.alleleObservationCounts(altBase);
 
-    const double mapqZeroFraction(safeFrac(locus.mapqZeroCount, locus.mapqCount));
+    ;
+    const double mapqZeroFraction(siteSampleInfo.mapqTracker.getZeroFrac());
 
     const double locusUsedDepthFraction(filteredLocusDepth * locusDepthFactor);
 
@@ -233,11 +234,11 @@ computeEmpiricalScoringFeatures(
         features.set(RNA_SNV_SCORING_FEATURES::F_GQ, (sampleInfo.genotypeQualityPolymorphic * chromDepthFactor));
         features.set(RNA_SNV_SCORING_FEATURES::F_GQX, (sampleInfo.gqx * chromDepthFactor));
 
-        features.set(RNA_SNV_SCORING_FEATURES::I_AvgBaseQ, (locus.avgBaseQ));
-        features.set(RNA_SNV_SCORING_FEATURES::I_AvgPos, (locus.rawPos));
+        features.set(RNA_SNV_SCORING_FEATURES::I_AvgBaseQ, (siteSampleInfo.avgBaseQ));
+        features.set(RNA_SNV_SCORING_FEATURES::I_AvgPos, (siteSampleInfo.rawPos));
 
-        features.set(RNA_SNV_SCORING_FEATURES::I_BaseQRankSum, (locus.BaseQRankSum));
-        features.set(RNA_SNV_SCORING_FEATURES::I_ReadPosRankSum, (locus.ReadPosRankSum));
+        features.set(RNA_SNV_SCORING_FEATURES::I_BaseQRankSum, (siteSampleInfo.BaseQRankSum));
+        features.set(RNA_SNV_SCORING_FEATURES::I_ReadPosRankSum, (siteSampleInfo.ReadPosRankSum));
 
         features.set(RNA_SNV_SCORING_FEATURES::I_SNVHPOL, (locus.hpol));
         features.set(RNA_SNV_SCORING_FEATURES::I_SNVSB, (locus.allele.strandBias));
@@ -251,8 +252,8 @@ computeEmpiricalScoringFeatures(
         //
         if (isComputeDevelopmentFeatures)
         {
-            developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::I_MQ, (locus.mapqRMS));
-            developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::I_MQRankSum, (locus.MQRankSum));
+            developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::I_MQ, (siteSampleInfo.mapqTracker.getRMS()));
+            developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::I_MQRankSum, (siteSampleInfo.MQRankSum));
 
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction, mapqZeroFraction);
 
@@ -285,11 +286,11 @@ computeEmpiricalScoringFeatures(
             features.set(GERMLINE_SNV_SCORING_FEATURES::GENO, genotype);
         }
 
-        features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQ, (locus.mapqRMS));
+        features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQ, (siteSampleInfo.mapqTracker.getRMS()));
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVHPOL, (locus.hpol));
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVSB, (locus.allele.strandBias));
-        features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQRankSum, (locus.MQRankSum));
-        features.set(GERMLINE_SNV_SCORING_FEATURES::I_ReadPosRankSum, (locus.ReadPosRankSum));
+        features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQRankSum, (siteSampleInfo.MQRankSum));
+        features.set(GERMLINE_SNV_SCORING_FEATURES::I_ReadPosRankSum, (siteSampleInfo.ReadPosRankSum));
 
         // how surprising is the depth relative to expect? This is the only value will be modified for exome/targeted runs
         /// TODO: convert this to pvalue based on Poisson distro?
@@ -312,7 +313,7 @@ computeEmpiricalScoringFeatures(
         {
 
             // BaseQRankSum
-            developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::I_BaseQRankSum, (BaseQRankSum));
+            developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::I_BaseQRankSum, (siteSampleInfo.BaseQRankSum));
 
             // allele bias metrics
             {
@@ -326,10 +327,10 @@ computeEmpiricalScoringFeatures(
             }
 
             //The average baseQ of the position of alt allele
-            developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::I_RawBaseQ, (locus.avgBaseQ));
+            developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::I_RawBaseQ, (siteSampleInfo.avgBaseQ));
 
             //the average position value within a read of alt allele
-            developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::I_RawPos, (locus.rawPos));
+            developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::I_RawPos, (siteSampleInfo.rawPos));
 
             // hom unrelable are the read mappings near this locus?
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction, mapqZeroFraction);

@@ -358,7 +358,7 @@ write_site_record(
     const auto& siteAlleles(locus.getSiteAlleles());
     const unsigned altAlleleCount(siteAlleles.size());
     const bool isAltAlleles(altAlleleCount > 0);
-
+    const unsigned sampleCount(locus.getSampleCount());
 
     const uint8_t refBaseId(base_to_id(locus.ref));
 
@@ -424,23 +424,21 @@ write_site_record(
             os << "HaplotypeScore=" << locus.hapscore;
         }
 
+        // compute global MQ over all samples
+        MapqTracker mapqTracker;
+        {
+            for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+            {
+                const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
+                mapqTracker.merge(siteSampleInfo.mapqTracker);
+            }
+        }
+        os << ';';
+        os << "MQ=" << mapqTracker.getRMS();
+
         if (_opt.isReportEVSFeatures)
         {
 #ifdef SUPPORT_LEGACY_EVS_TRAINING_SCRIPTS
-            os << ';';
-            os << "MQ=" << locus.mapqRMS;
-            os << ';';
-            os << "MQ0=" << locus.mapqZeroCount;
-            os << ';';
-            os << "MQRankSum=" << locus.MQRankSum;
-            os << ';';
-            os << "BaseQRankSum=" << locus.BaseQRankSum;
-            os << ';';
-            os << "ReadPosRankSum=" << locus.ReadPosRankSum;
-            os << ';';
-            os << "AvgBaseQ=" << locus.avgBaseQ;
-            os << ';';
-            os << "AvgPos=" << locus.rawPos;
             // if you uncomment the following, make sure you also uncomment the matching INFO header entry in gvcf_header.cpp
             //                os << ';';
             //                os << "MapQ0Count=" << si.mapq_zero;
@@ -486,7 +484,6 @@ write_site_record(
     }
 
     //SAMPLE
-    const unsigned sampleCount(locus.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         const auto& sampleInfo(locus.getSample(sampleIndex));
@@ -610,6 +607,7 @@ write_site_record(
 {
     const auto refBaseId = base_to_id(locus.ref);
 
+    const unsigned sampleCount(locus.getSampleCount());
     const auto& siteAlleles(locus.getSiteAlleles());
 
     /// TODO STREL-125 tmp transitional structures:
@@ -658,6 +656,19 @@ write_site_record(
             info << ';';
         }
         info << "SNVHPOL=" << locus.hpol;
+
+        // compute global MQ over all samples
+        MapqTracker mapqTracker;
+        {
+            for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+            {
+                const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
+                mapqTracker.merge(siteSampleInfo.mapqTracker);
+            }
+        }
+        info << ';';
+        info << "MQ=" << mapqTracker.getRMS();
+
     }
 
     os << (info.str().empty() ? "." : info.str()) << "\t";
@@ -674,7 +685,6 @@ write_site_record(
     os << "FT:VF";
 
     //SAMPLE
-    const unsigned sampleCount(locus.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         const auto& sampleInfo(locus.getSample(sampleIndex));
@@ -822,6 +832,8 @@ write_indel_record(
 {
     std::ostream& os(*_osptr);
 
+    const unsigned sampleCount(locus.getSampleCount());
+
     // create VCF specific transformation of the alt allele list
     const auto& indelAlleles(locus.getIndelAlleles());
     OrthogonalAlleleSetLocusReportInfo locusReportInfo;
@@ -901,6 +913,18 @@ write_indel_record(
         }
     }
 
+    // compute global MQ over all samples
+    MapqTracker mapqTracker;
+    {
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        {
+            const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
+            mapqTracker.merge(indelSampleInfo.mapqTracker);
+        }
+    }
+    os << ';';
+    os << "MQ=" << mapqTracker.getRMS();
+
     const GermlineDiploidIndelLocusInfo* diploidLocusPtr(dynamic_cast<const GermlineDiploidIndelLocusInfo*>(&locus));
     if (diploidLocusPtr != nullptr)
     {
@@ -927,7 +951,6 @@ write_indel_record(
         os << "GT:GQ:GQX:DPI:AD:ADF:ADR:FT:PL";
 
         //SAMPLE
-        const unsigned sampleCount(locus.getSampleCount());
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
             const auto& sampleInfo(locus.getSample(sampleIndex));
@@ -976,7 +999,6 @@ write_indel_record(
         os << "GT:GQ:GQX:DPI:AD:ADF:ADR:FT:VF";
 
         //SAMPLE
-        const unsigned sampleCount(locus.getSampleCount());
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
             const auto& sampleInfo(locus.getSample(sampleIndex));
