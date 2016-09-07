@@ -793,6 +793,9 @@ struct GermlineSiteSampleInfo
     /// TODO STREL-125 temporary
     MODIFIED_SITE_GT::index_t modified_gt = MODIFIED_SITE_GT::NONE;
     unsigned max_gt = 0;
+
+    /// TODO STREL-125 temporary
+    diploid_genotype dgt;
 };
 
 
@@ -968,7 +971,7 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         else
         {
             const unsigned print_gt(siteSampleInfo.max_gt);
-            return DIGT::get_vcf_gt(print_gt,dgt.ref_gt);
+            return DIGT::get_vcf_gt(print_gt, base_to_id(ref));
         }
     }
 
@@ -1000,7 +1003,8 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         unsigned print_gt(siteSample.max_gt);
         const uint8_t a0(DIGT::get_allele(print_gt,0));
         const uint8_t a1(DIGT::get_allele(print_gt,1));
-        return ((a0!=a1) && (dgt.ref_gt != a0) && (dgt.ref_gt != a1));
+        const uint8_t refBaseId(base_to_id(ref));
+        return ((a0!=a1) && (refBaseId != a0) && (refBaseId != a1));
     }
 
     /// TODO STREL-125 extend to multi-sample
@@ -1008,7 +1012,8 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     is_nonref(const unsigned sampleIndex) const override
     {
         const auto& siteSample(getSiteSample(sampleIndex));
-        return (siteSample.max_gt != dgt.ref_gt);
+        const uint8_t refBaseId(base_to_id(ref));
+        return (siteSample.max_gt != refBaseId);
     }
 
     /// test whether GQX should be written for this locus/sample
@@ -1046,7 +1051,6 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     }
 
     std::string phased_ref, phased_alt, phased_AD, phased_ADF, phased_ADR;
-    diploid_genotype dgt;
     double hapscore = 0;
     double mapqRMS = 0;
     unsigned mapqZeroCount = 0;

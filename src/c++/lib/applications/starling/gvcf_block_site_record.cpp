@@ -159,7 +159,7 @@ testCanSiteJoinSampleBlock(
     if (gt != locus.get_gt(sampleIndex)) return false;
 
     // ploidy must match
-    if (ploidy != locus.dgt.ploidy) return false;
+    if (ploidy != inputSampleInfo.getPloidy().getPloidy()) return false;
 
     // test blocking values:
     if (! is_new_value_blockable(inputSampleInfo.gqx,
@@ -187,7 +187,7 @@ joinSiteToSampleBlock(
     if (count == 0)
     {
         gt = locus.get_gt(sampleIndex);
-        ploidy = locus.dgt.ploidy;
+        ploidy = inputSampleInfo.getPloidy().getPloidy();
         isBlockGqxDefined = is_gqx;
     }
 

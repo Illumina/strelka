@@ -83,7 +83,7 @@ classify_site(
 {
     /// locus must have at least one variant
     /// TODO STREL-125 fix for multi-sample
-    const bool isVariantUsableInEVSModel(locus.dgt.is_snp());
+    const bool isVariantUsableInEVSModel(locus.isVariantLocus());
 
     const unsigned sampleCount(locus.getSampleCount());
     if (isVariantUsableInEVSModel && _isReportEVSFeatures)

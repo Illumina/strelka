@@ -59,15 +59,10 @@ starling_pile_caller(starling_options& opt,
 void
 starling_pile_caller::
 call(
-    const unsigned pos,
+    const unsigned /*pos*/,
     const snp_pos_info& pi)
 {
     static PileupCleaner pileupCleaner(_opt);
-    const bool is_forced(true);
-    const unsigned sampleCount(1);
-
-    std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(_dopt_ptr->gvcf, sampleCount, pos,pi.get_ref_base(), is_forced));
-
     // recreate data cache:
     CleanedPileup cpi;
 
@@ -79,8 +74,9 @@ call(
 //    const snp_pos_info& good_pi(cpi.cleanedPileup());
     const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
+    diploid_genotype dgt;
     _dopt_ptr->pdcaller().position_snp_call_pprob_digt(
-        _opt,good_epi,si->dgt, _opt.is_all_sites());
+        _opt,good_epi, dgt, _opt.is_all_sites());
 
-    _os << si->dgt;
+    _os << dgt;
 }

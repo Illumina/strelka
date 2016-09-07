@@ -334,7 +334,9 @@ modify_indel_overlap_site(
     assert(offset>=0);
 
     // limit qual and gq values to those of the indel, and modify site ploidy:
-    siteLocus.dgt.genome.snp_qphred = std::min(siteLocus.dgt.genome.snp_qphred, indelLocus.anyVariantAlleleQuality);
+    siteLocus.anyVariantAlleleQuality = std::min(siteLocus.anyVariantAlleleQuality, indelLocus.anyVariantAlleleQuality);
+
+    const uint8_t refBaseId(base_to_id(siteLocus.ref));
 
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
@@ -356,7 +358,7 @@ modify_indel_overlap_site(
             }
             else
             {
-                if (siteSampleInfo.max_gt == siteLocus.dgt.ref_gt)
+                if (siteSampleInfo.max_gt == refBaseId)
                 {
                     siteSampleInfo.modified_gt = MODIFIED_SITE_GT::ZERO;
                 }
@@ -368,11 +370,11 @@ modify_indel_overlap_site(
         }
         else if (ploidy == 0)
         {
-            if (siteSampleInfo.max_gt == siteLocus.dgt.ref_gt)
+            if (siteSampleInfo.max_gt == refBaseId)
             {
                 siteSampleInfo.modified_gt = MODIFIED_SITE_GT::UNKNOWN;
                 siteSampleInfo.is_zero_ploidy = true;
-                if (siteLocus.dgt.is_noploid())
+                if (sampleInfo.getPloidy().isNoploid())
                 {
                     sampleInfo.filters.unset(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
                 }

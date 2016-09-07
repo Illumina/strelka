@@ -245,9 +245,10 @@ get_visible_alt_order(
     const auto& siteSample(locus.getSiteSample(sampleIndex));
 
     // list max_gt alts first:
+    const uint8_t refBaseId(base_to_id(locus.ref));
     for (unsigned b(0); b<N_BASE; ++b)
     {
-        if (b==locus.dgt.ref_gt) continue;
+        if (b==refBaseId) continue;
         if (! DIGT::expect2(b, siteSample.max_gt)) continue;
         altOrder.push_back(b);
     }
@@ -394,7 +395,7 @@ write_site_record(
     // QUAL:
     if (locus.is_qual())
     {
-        os << locus.dgt.genome.snp_qphred;
+        os << locus.anyVariantAlleleQuality;
     }
     else
     {
@@ -407,7 +408,7 @@ write_site_record(
     os << '\t';
 
     // INFO:
-    if (locus.dgt.is_snp())
+    if (locus.isVariantLocus())
     {
         os << "SNVSB=";
         {
@@ -544,17 +545,17 @@ write_site_record(
                 const unsigned print_gt(siteSampleInfo.max_gt);
                 const uint8_t a0(DIGT::get_allele(print_gt, 0));
                 const uint8_t a1(DIGT::get_allele(print_gt, 1));
-                os << locus.dgt.phredLoghood[locus.dgt.ref_gt] << ','
-                   << locus.dgt.phredLoghood[DIGT::get_gt_with_alleles(locus.dgt.ref_gt, a0)] << ','
-                   << locus.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0, a0)] << ','
-                   << locus.dgt.phredLoghood[DIGT::get_gt_with_alleles(locus.dgt.ref_gt, a1)] << ','
-                   << locus.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0, a1)] << ','
-                   << locus.dgt.phredLoghood[DIGT::get_gt_with_alleles(a1, a1)];
+                os << siteSampleInfo.dgt.phredLoghood[refBaseId] << ','
+                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(refBaseId, a0)] << ','
+                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0, a0)] << ','
+                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(refBaseId, a1)] << ','
+                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0, a1)] << ','
+                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(a1, a1)];
             }
-            else if (locus.dgt.is_haploid() || (siteSampleInfo.modified_gt == MODIFIED_SITE_GT::ONE))
+            else if (sampleInfo.getPloidy().isHaploid() || (siteSampleInfo.modified_gt == MODIFIED_SITE_GT::ONE))
             {
-                os << locus.dgt.phredLoghood[locus.dgt.ref_gt] << ','
-                   << locus.dgt.phredLoghood[siteSampleInfo.max_gt];
+                os << siteSampleInfo.dgt.phredLoghood[refBaseId] << ','
+                   << siteSampleInfo.dgt.phredLoghood[siteSampleInfo.max_gt];
             }
             else
             {
@@ -562,13 +563,13 @@ write_site_record(
                 const uint8_t a0(DIGT::get_allele(print_gt, 0));
                 const uint8_t a1(DIGT::get_allele(print_gt, 1));
                 uint8_t alt(a0);
-                if (locus.dgt.ref_gt == a0)
+                if (refBaseId == a0)
                 {
                     alt = a1;
                 }
-                os << locus.dgt.phredLoghood[locus.dgt.ref_gt] << ','
-                   << locus.dgt.phredLoghood[DIGT::get_gt_with_alleles(locus.dgt.ref_gt, alt)] << ','
-                   << locus.dgt.phredLoghood[DIGT::get_gt_with_alleles(alt, alt)];
+                os << siteSampleInfo.dgt.phredLoghood[refBaseId] << ','
+                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(refBaseId, alt)] << ','
+                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(alt, alt)];
             }
         }
     }

@@ -58,7 +58,8 @@ add_site_modifiers(
     LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
     auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
 
-    allele.strandBias=locus.dgt.strand_bias;
+    /// TODO STREL-125 find a way to restore strand bias feature
+    // allele.strandBias=locus.dgt.strand_bias;
 
     if     (locus.isRefUnknown())
     {
@@ -66,23 +67,23 @@ add_site_modifiers(
         sampleInfo.genotypeQualityPolymorphic=0;
         siteSampleInfo.max_gt=0;
     }
-    else if (locus.dgt.genome.max_gt != locus.dgt.poly.max_gt)
+    else if (siteSampleInfo.dgt.genome.max_gt != siteSampleInfo.dgt.poly.max_gt)
     {
         sampleInfo.gqx=0;
-        sampleInfo.genotypeQualityPolymorphic=locus.dgt.poly.max_gt_qphred;
-        siteSampleInfo.max_gt=locus.dgt.poly.max_gt;
+        sampleInfo.genotypeQualityPolymorphic=siteSampleInfo.dgt.poly.max_gt_qphred;
+        siteSampleInfo.max_gt=siteSampleInfo.dgt.poly.max_gt;
     }
     else
     {
-        if (locus.dgt.genome.max_gt_qphred<locus.dgt.poly.max_gt_qphred)
+        if (siteSampleInfo.dgt.genome.max_gt_qphred<siteSampleInfo.dgt.poly.max_gt_qphred)
         {
-            set_site_gt(locus.dgt.genome, sampleInfo, siteSampleInfo);
+            set_site_gt(siteSampleInfo.dgt.genome, sampleInfo, siteSampleInfo);
         }
         else
         {
-            set_site_gt(locus.dgt.poly, sampleInfo, siteSampleInfo);
+            set_site_gt(siteSampleInfo.dgt.poly, sampleInfo, siteSampleInfo);
         }
-        sampleInfo.genotypeQualityPolymorphic=locus.dgt.poly.max_gt_qphred;
+        sampleInfo.genotypeQualityPolymorphic=siteSampleInfo.dgt.poly.max_gt_qphred;
     }
 
     model.classify_site(locus);
@@ -97,15 +98,18 @@ process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr)
     /// TODO STREL-125 generalize to N samples
     static const unsigned sampleIndex(0);
 
+    const uint8_t refBaseId(base_to_id(locusPtr->ref));
+
     if (dynamic_cast<GermlineDiploidSiteLocusInfo*>(locusPtr.get()) != nullptr)
     {
         auto diploidLocusPtr(downcast<GermlineDiploidSiteLocusInfo>(std::move(locusPtr)));
+        const auto& sampleInfo(diploidLocusPtr->getSample(sampleIndex));
         auto& siteSampleInfo(diploidLocusPtr->getSiteSample(sampleIndex));
 
         add_site_modifiers(*diploidLocusPtr, _model);
-        if (diploidLocusPtr->dgt.is_haploid())
+        if (sampleInfo.getPloidy().isHaploid())
         {
-            if (siteSampleInfo.max_gt == diploidLocusPtr->dgt.ref_gt)
+            if (siteSampleInfo.max_gt == refBaseId)
             {
                 siteSampleInfo.modified_gt=MODIFIED_SITE_GT::ZERO;
             }
@@ -114,7 +118,7 @@ process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr)
                 siteSampleInfo.modified_gt=MODIFIED_SITE_GT::ONE;
             }
         }
-        else if (diploidLocusPtr->dgt.is_noploid())
+        else if (sampleInfo.getPloidy().isNoploid())
         {
             if (! diploidLocusPtr->is_print_unknowngt(sampleIndex))
             {

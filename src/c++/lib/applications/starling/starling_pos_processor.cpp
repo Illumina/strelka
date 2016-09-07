@@ -349,10 +349,6 @@ process_pos_snp_digt(
     const CleanedPileup& cpi(tmpSif.cpi);
     const snp_pos_info& pi(cpi.rawPileup());
 
-    _pileupCleaner.CleanPileupErrorProb(tmpSif.cpi);
-
-    const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
-
     /// TODO currently using old "4-allele" genotyping system and then reducing down to number
     /// of called alleles, transition this to work more like current indel model, where up to
     /// 4 alleles are nominated as candidates and genotyping is based on the candidate alleles
@@ -401,12 +397,6 @@ process_pos_snp_digt(
 
     // add sample-independent info:
     locusPtr->anyVariantAlleleQuality = ln_error_prob_to_qphred(homRefLogProb);
-
-    // check whether we're in a haploid region:
-    locusPtr->dgt.ploidy=(get_ploidy(pos, tmpSampleIndex));
-
-    _dopt.pdcaller().position_snp_call_pprob_digt(
-        _opt,good_epi,locusPtr->dgt, _opt.is_all_sites());
 
     if (isForcedOutput or locusPtr->isVariantLocus())
     {

@@ -376,7 +376,7 @@ create_phased_record()
                 min_gq_idx1 = blockPosOffset;
                 is_min_gq_idx1 = true;
             }
-            min_qual = std::min(si->dgt.genome.snp_qphred,min_qual);
+            min_qual = std::min(si->anyVariantAlleleQuality,min_qual);
             min_EVS = std::min(sampleInfo.empiricalVariantScore,min_EVS);
         }
     }
@@ -404,10 +404,11 @@ create_phased_record()
     int min_gq(maxInt);
     {
         const auto& minsi0(*(_buffer.at(min_gq_idx0)));
+        const auto& siteSampleInfo0(minsi0.getSiteSample(sampleIndex));
         min_gq = minsi0.getSample(sampleIndex).genotypeQualityPolymorphic;
         max_gt = minsi0.getSiteSample(sampleIndex).max_gt;
-        pls = minsi0.dgt.phredLoghood;
-        ref_gt = minsi0.dgt.ref_gt;
+        pls = siteSampleInfo0.dgt.phredLoghood;
+        ref_gt = base_to_id(minsi0.ref);
 
         if (! is_ref && is_min_gq_idx1)
         {
@@ -452,13 +453,16 @@ create_phased_record()
 #endif
 
             // construct new fake approximated PL distribution:
-            const auto& pls0(minsi0.dgt.phredLoghood);
-            const auto& pls1(minsi1.dgt.phredLoghood);
+            const auto& pls0(siteSampleInfo0.dgt.phredLoghood);
+            const auto& pls1(siteSampleInfo1.dgt.phredLoghood);
 
-            pls[ref_gt] = pls0[minsi0.dgt.ref_gt] + pls1[minsi1.dgt.ref_gt];  // 0/0
-            pls[DIGT::get_gt_with_alleles(ref_gt,a0)] = pls0[DIGT::get_gt_with_alleles(minsi0.dgt.ref_gt,a0)] + pls1[DIGT::get_gt_with_alleles(minsi1.dgt.ref_gt,b0)];  // 0/1
+            const uint8_t ref0(base_to_id(minsi0.ref));
+            const uint8_t ref1(base_to_id(minsi1.ref));
+
+            pls[ref_gt] = pls0[ref0] + pls1[ref1];  // 0/0
+            pls[DIGT::get_gt_with_alleles(ref_gt,a0)] = pls0[DIGT::get_gt_with_alleles(ref0,a0)] + pls1[DIGT::get_gt_with_alleles(ref1,b0)];  // 0/1
             pls[DIGT::get_gt_with_alleles(a0,a0)] = pls0[DIGT::get_gt_with_alleles(a0,a0)] + pls1[DIGT::get_gt_with_alleles(b0,b0)];  // 1/1
-            pls[DIGT::get_gt_with_alleles(ref_gt,a1)] = pls0[DIGT::get_gt_with_alleles(minsi0.dgt.ref_gt,a1)] + pls1[DIGT::get_gt_with_alleles(minsi1.dgt.ref_gt,b1)];  // 0/2
+            pls[DIGT::get_gt_with_alleles(ref_gt,a1)] = pls0[DIGT::get_gt_with_alleles(ref0,a1)] + pls1[DIGT::get_gt_with_alleles(ref1,b1)];  // 0/2
             pls[max_gt] = 0;  // 1/2
             pls[DIGT::get_gt_with_alleles(a1,a1)] = pls0[DIGT::get_gt_with_alleles(a1,a1)] + pls1[DIGT::get_gt_with_alleles(b1,b1)];  // 2/2
         }
@@ -471,12 +475,12 @@ create_phased_record()
 
     locusPtr->phased_ref = this->reference;
     siteSampleInfo.max_gt = max_gt;
-    locusPtr->dgt.ref_gt = ref_gt;
+    siteSampleInfo.dgt.ref_gt = ref_gt;
 
     // set various quality fields conservatively
     sampleInfo.genotypeQualityPolymorphic = min_gq;
-    locusPtr->dgt.genome.snp_qphred  = min_qual;
-    locusPtr->dgt.phredLoghood       = pls;
+    locusPtr->anyVariantAlleleQuality  = min_qual;
+    siteSampleInfo.dgt.phredLoghood       = pls;
     sampleInfo.gqx               = std::min(min_gq,min_qual);
     sampleInfo.empiricalVariantScore  = min_EVS;
 

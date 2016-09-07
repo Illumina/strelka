@@ -201,9 +201,10 @@ computeEmpiricalScoringFeatures(
 
     // get the alt base id (choose second in case of an alt het....)
     unsigned altBase(N_BASE);
+    const uint8_t refBaseId(base_to_id(locus.ref));
     for (unsigned b(0); b < N_BASE; ++b)
     {
-        if (b == locus.dgt.ref_gt) continue;
+        if (b == refBaseId) continue;
         if (DIGT::expect2(b, siteSampleInfo.max_gt))
         {
             altBase = b;
@@ -212,7 +213,7 @@ computeEmpiricalScoringFeatures(
     assert(altBase != N_BASE);
 
     /// TODO STREL-125 generalize to multi-alt
-    const unsigned r0 = siteSampleInfo.alleleObservationCounts(locus.dgt.ref_gt);
+    const unsigned r0 = siteSampleInfo.alleleObservationCounts(refBaseId);
     const unsigned r1 = siteSampleInfo.alleleObservationCounts(altBase);
 
     const double mapqZeroFraction(safeFrac(locus.mapqZeroCount, locus.mapqCount));
@@ -226,7 +227,7 @@ computeEmpiricalScoringFeatures(
         if (locus.is_het(sampleIndex) or locus.is_hetalt(sampleIndex)) genotype = 1.0;
         features.set(RNA_SNV_SCORING_FEATURES::GT, (genotype));
 
-        features.set(RNA_SNV_SCORING_FEATURES::QUAL, (locus.dgt.genome.snp_qphred * chromDepthFactor));
+        features.set(RNA_SNV_SCORING_FEATURES::QUAL, (locus.anyVariantAlleleQuality * chromDepthFactor));
         features.set(RNA_SNV_SCORING_FEATURES::F_DP, (siteSampleInfo.n_used_calls * chromDepthFactor));
         features.set(RNA_SNV_SCORING_FEATURES::F_DPF, (siteSampleInfo.n_unused_calls * chromDepthFactor));
         features.set(RNA_SNV_SCORING_FEATURES::F_GQ, (sampleInfo.genotypeQualityPolymorphic * chromDepthFactor));
@@ -258,7 +259,7 @@ computeEmpiricalScoringFeatures(
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_DP_NORM, locusUsedDepthFraction);
 
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM,
-                                          (locus.dgt.genome.snp_qphred * filteredLocusDepthFactor));
+                                          (locus.anyVariantAlleleQuality * filteredLocusDepthFactor));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
                                           (sampleInfo.gqx * filteredLocusDepthFactor));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
@@ -270,7 +271,7 @@ computeEmpiricalScoringFeatures(
                                           (r1 * filteredLocusDepthFactor));
 
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT,
-                                          (locus.dgt.genome.snp_qphred));
+                                          (locus.anyVariantAlleleQuality));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (sampleInfo.gqx));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (sampleInfo.genotypeQualityPolymorphic));
         }
@@ -336,7 +337,7 @@ computeEmpiricalScoringFeatures(
             // renormalized features intended to replace the corresponding production feature
             //
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM,
-                                          (locus.dgt.genome.snp_qphred * filteredLocusDepthFactor));
+                                          (locus.anyVariantAlleleQuality * filteredLocusDepthFactor));
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
                                           (sampleInfo.gqx * filteredLocusDepthFactor));
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
@@ -346,7 +347,7 @@ computeEmpiricalScoringFeatures(
                                           (r0 * filteredLocusDepthFactor));
 
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT,
-                                          (locus.dgt.genome.snp_qphred));
+                                          (locus.anyVariantAlleleQuality));
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (sampleInfo.genotypeQualityPolymorphic));
 
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD1_NORM,
