@@ -433,24 +433,15 @@ add_alignment_indels_to_sppr(
                 if (sppr.is_active_region_detector_enabled() && !isLowMapQuality)
                 {
                     pos_t softClipStartPos(ref_head_pos);
+
+                    // for leading/trailing soft-clip, place the segment at the end/start position
                     if (is_begin_edge)
-                        softClipStartPos -= ps.length;
-                    for (unsigned j(0); j < ps.length; ++j)
-                    {
-                        const pos_t refPos(softClipStartPos + static_cast<pos_t>(j));
-                        pos_t readPos = read_offset + j;
+                        --softClipStartPos;
 
-                        char base_char = read_seq.get_char(readPos);
-
-                        if (ref.get_base(refPos) != base_char)
-                        {
-                            active_region_detector.insertSoftClipMismatch(id, refPos, base_char);
-                        }
-                        else
-                        {
-                            active_region_detector.insertSoftClipMatch(id, refPos);
-                        }
-                    }
+                    const pos_t refPos(softClipStartPos);
+                    std::string segmentSeq;
+                    bam_seq_to_str(read_seq, read_offset, read_offset+ps.length, segmentSeq);
+                    active_region_detector.insertSoftClipSegment(id, refPos, segmentSeq);
                 }
             }
         }

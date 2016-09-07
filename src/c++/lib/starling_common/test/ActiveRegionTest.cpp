@@ -34,7 +34,7 @@ struct TestIndelBuffer
 {
     explicit
     TestIndelBuffer(
-        const reference_contig_segment& ref)
+            const reference_contig_segment& ref)
     {
         // fake starling options
         _opt.bam_seq_name = "chr1";

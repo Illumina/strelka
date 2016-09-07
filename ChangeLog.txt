@@ -1,3 +1,4 @@
+- STREL-154 adjust active window size depending on neighboring sequences
 - STREL-188 haplotype generation includes soft-clipped reads
 v2.6.0
 - STREL-163 Update germline EVS model training with ambiguous call handling

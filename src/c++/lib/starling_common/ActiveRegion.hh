@@ -50,10 +50,15 @@ class ActiveRegion
 {
 public:
     // maximum read depth
-    static const unsigned MaxDepth = 1000;
+    // TODO: dynamically calculate maximum depth
+    static const unsigned MaxDepth = 1000u;
+
+    // if haplotype depth is at least HighDepth, low depth filter is not applied
+    static const unsigned HighDepth = 20u;
 
     // minimum haplotype count to consider
-    static const unsigned MinHaplotypeCount = 3;
+    static const unsigned MinHaplotypeCount = 3u;
+    static const unsigned MaxSNVHpolSize = 4u;
 
     // minimum haplotype frequency to relax MMDF
     const float HaplotypeFrequencyThreshold = 0.4;
@@ -61,31 +66,32 @@ public:
     const char missingPrefix = '.';
 
     /// Creates an active region object
-    /// \param start start position
-    /// \param end end position
-    /// \param refSeq reference sequence corresponding to this active region
+    /// \param posRange position range of the active region
+    /// \param ref reference
     /// \param aligner aligner for aligning haplotypes to the reference
     /// \param alignIdToAlignInfo map from align id to (sampleId, indelAlignType)
     /// \return active region object
-    ActiveRegion(pos_t start, pos_t end, const std::string& refSeq, const GlobalAligner<int>& aligner, const std::vector<AlignInfo>& alignIdToAlignInfo):
-        _start(start), _end(end), _refSeq(refSeq),
+    ActiveRegion(pos_range& posRange, const reference_contig_segment& ref, const GlobalAligner<int>& aligner, const std::vector<AlignInfo>& alignIdToAlignInfo):
+        _posRange(posRange), _ref(ref),
         _aligner(aligner),
         _alignIdToAlignInfo(alignIdToAlignInfo),
         _alignIdToHaplotype(),
         _alignIdReachingEnd()
-    {}
-
-    /// \return start position of the active region
-    pos_t getStart() const
     {
-        return _start;
+        _ref.get_substring(_posRange.begin_pos, _posRange.size(), _refSeq);
+    }
+
+    /// \return begin position of the active region
+    pos_t getBeginPosition() const
+    {
+        return _posRange.begin_pos;
     }
 
     /// \param pos reference position
     /// \return true if pos belongs to this active region; false otherwise
     bool contains(pos_t pos) const
     {
-        return pos >= _start && pos <= _end;
+        return _posRange.is_pos_intersect(pos);
     }
 
     /// Insert haplotype base of the alignment into the position
@@ -100,20 +106,29 @@ public:
     /// \param polySites
     void processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites) const;
 
+    /// Mark a read soft-clipped
+    /// \param alignId align id
+    void setSoftClipped(const align_id_t alignId)
+    {
+        _alignIdSoftClipped.insert(alignId);
+    }
+
 private:
-    pos_t _start;
-    pos_t _end;
-    const std::string& _refSeq;
+    pos_range _posRange;
+    const reference_contig_segment& _ref;
+    std::string _refSeq;
     const GlobalAligner<int> _aligner;
     const std::vector<AlignInfo>&  _alignIdToAlignInfo;
 
     std::map<align_id_t, std::string> _alignIdToHaplotype;
     std::set<align_id_t> _alignIdReachingEnd;
+    std::set<align_id_t> _alignIdSoftClipped;
 
     void convertToPrimitiveAlleles(
         const std::string& haploptypeSeq,
         const std::vector<align_id_t>& alignIdList,
-        const bool relaxMMDF,
+        const unsigned totalReadCount,
+        const bool isTopTwo,
         IndelBuffer& indelBuffer,
         RangeSet& polySites) const;
 };

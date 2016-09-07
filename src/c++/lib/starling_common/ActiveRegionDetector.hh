@@ -40,16 +40,20 @@ class ActiveRegionDetector
 public:
 
     // maximum buffer size in bases (must be larger than the maximum read size + max indel size
-    static const unsigned MaxBufferSize = 1000;
+    static const unsigned MaxBufferSize = 1000u;
 
     // maximum read depth
     static const unsigned MaxDepth = ActiveRegion::MaxDepth;
 
-    // variant count to add for a single indel
+    // minimum read depth
+    static const unsigned MinDepth = ActiveRegion::MinHaplotypeCount;
+
+    // variant count to add for a single mismatch or indel
+    static const int MismatchWeight = 1;
     static const int IndelWeight = 4;
 
     // maximum distance between two variants belonging to the same active region
-    static const int MaxDistanceBetweenTwoVariants = 14;
+    static const int MaxDistanceBetweenTwoVariants = 14u;
 
     // alignment scores, same as bwa default values
     static const int ScoreMatch = 1;
@@ -57,6 +61,10 @@ public:
     static const int ScoreOpen = -5;
     static const int ScoreExtend = -1;
     static const int ScoreOffEdge = -100;
+
+    // for expansion of active regions
+    const unsigned MaxRepeatUnitLength = 3u;
+    const pos_t MaxRepeatSpan = 20u;
 
     // minimum alternative allele fraction to call a position as a candidate variant
     const float MinAlternativeAlleleFraction = 0.2;
@@ -83,6 +91,7 @@ public:
         _minNumVariantsPerPosition(minNumVariantsPerPosition),
         _minNumVariantsPerRegion(minNumVariantsPerRegion),
         _variantCounter(MaxBufferSize),
+        _depth(MaxBufferSize),
         _positionToAlignIds(MaxBufferSize),
         _alignIdToAlignInfo(MaxDepth),
         _variantInfo(MaxDepth, std::vector<VariantType>(MaxBufferSize, VariantType())),
@@ -105,16 +114,11 @@ public:
     /// \param baseChar read base char
     void insertMismatch(const align_id_t alignId, const pos_t pos, const char baseChar);
 
-    /// insert match in a soft clipped region
+    /// insert soft-clipped segment
     /// \param alignId align id
     /// \param pos reference position
-    void insertSoftClipMatch(const align_id_t alignId, const pos_t pos);
-
-    /// insert mismatch in a soft clipped region
-    /// \param alignId align id
-    /// \param pos reference position
-    /// \param baseChar read base char
-    void insertSoftClipMismatch(const align_id_t alignId, const pos_t pos, const char baseChar);
+    /// \param baseChar soft-clipped segment sequence
+    void insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string& segmentSeq);
 
     /// insert indel
     /// \param sampleId sample id
@@ -151,6 +155,7 @@ private:
     {
         MATCH,
         MISMATCH,
+        SOFT_CLIP,
         DELETE,
         INSERT,
         MISMATCH_INSERT
@@ -170,6 +175,7 @@ private:
 
     std::list<ActiveRegion> _activeRegions;
     std::vector<unsigned> _variantCounter;
+    std::vector<unsigned> _depth;
 
     // for haplotypes
     std::vector<std::vector<align_id_t>> _positionToAlignIds;
@@ -187,19 +193,26 @@ private:
     // aligner to be used in active regions
     GlobalAligner<int> _aligner;
 
+    // expand the active region to cover repeats
+    void getExpandedRange(const pos_range& origActiveRegion, pos_range& newActiveRegion);
+
     bool isCandidateVariant(const pos_t pos) const;
 
     inline void resetCounter(const pos_t pos)
     {
-        _variantCounter[pos % MaxBufferSize] = 0;
+        int index = pos % MaxBufferSize;
+        _variantCounter[index] = 0;
+        _depth[index] = 0;
     }
 
-    inline void addCount(const pos_t pos, unsigned count = 1)
+    inline void addVariantCount(const pos_t pos, unsigned count = 1)
     {
-        _variantCounter[pos % MaxBufferSize] += count;
+        int index = pos % MaxBufferSize;
+        _variantCounter[index] += count;
+        ++_depth[index];
     }
 
-    inline unsigned getCount(const pos_t pos) const
+    inline unsigned getVariantCount(const pos_t pos) const
     {
         return _variantCounter[pos % MaxBufferSize];
     }
@@ -211,10 +224,11 @@ private:
             _positionToAlignIds[index].push_back(alignId);
     }
 
-    inline int getDepth(const pos_t pos) const
+    inline unsigned getDepth(const pos_t pos) const
     {
         int index = pos % MaxBufferSize;
-        return (int)_positionToAlignIds[index].size();
+//        return (unsigned)_positionToAlignIds[index].size();
+        return _depth[index];
     }
 
     inline const std::vector<align_id_t>& getPositionToAlignIds(const pos_t pos) const
@@ -226,7 +240,9 @@ private:
     void setMismatch(const align_id_t id, const pos_t pos, char baseChar);
     void setDelete(const align_id_t id, const pos_t pos);
     void setInsert(const align_id_t id, const pos_t pos, const std::string& insertSeq);
-    void setHaplotypeBase(const align_id_t id, const pos_t pos, std::string& base) const;
+    void setSoftClipSegment(const align_id_t id, const pos_t pos, const std::string& segmentSeq);
+
+    bool setHaplotypeBase(const align_id_t id, const pos_t pos, std::string& base) const;
 
     inline void clearPos(pos_t pos)
     {
