@@ -240,6 +240,7 @@ copmuteSampleDiploidSiteGenotype(
 }
 
 
+
 static
 void
 updateSnvLocusWithSampleInfo(
@@ -247,13 +248,18 @@ updateSnvLocusWithSampleInfo(
     const starling_deriv_options& dopt,
     starling_pos_processor::sample_info& sif,
     const PileupCleaner& pileupCleaner,
-    const unsigned ploidy,
+    const unsigned callerPloidy,
+    const unsigned groupLocusPloidy,
     const unsigned sampleIndex,
     GermlineDiploidSiteLocusInfo& locus,
     double& homRefLogProb)
 {
     auto& sampleInfo(locus.getSample(sampleIndex));
-    sampleInfo.setPloidy(ploidy);
+    sampleInfo.setPloidy(callerPloidy);
+    if (callerPloidy != groupLocusPloidy)
+    {
+        sampleInfo.setPloidyConflict();
+    }
 
     const CleanedPileup& cpi(sif.cpi);
     //const snp_pos_info& pi(cpi.rawPileup());
@@ -263,20 +269,39 @@ updateSnvLocusWithSampleInfo(
     const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
     diploid_genotype dgt;
-    dgt.ploidy=ploidy;
+    dgt.ploidy=callerPloidy;
     dopt.pdcaller().position_snp_call_pprob_digt(
         opt, good_epi, dgt, opt.is_all_sites());
-
-    /// TODO indexes need to be converted here:
-
-    sampleInfo.genotypeQualityPolymorphic = dgt.poly.max_gt_qphred;
-    sampleInfo.maxGenotypeIndexPolymorphic = dgt.poly.max_gt;
 
     sampleInfo.genotypeQuality = dgt.genome.max_gt_qphred;
     sampleInfo.maxGenotypeIndex = dgt.genome.max_gt;
 
+    if     (locus.isRefUnknown())
+    {
+        sampleInfo.genotypeQualityPolymorphic=0;
+        sampleInfo.maxGenotypeIndexPolymorphic=0;
+        sampleInfo.gqx=0;
+    }
+    else
+    {
+        sampleInfo.genotypeQualityPolymorphic = dgt.poly.max_gt_qphred;
+        sampleInfo.maxGenotypeIndexPolymorphic = dgt.poly.max_gt;
+
+        if (sampleInfo.maxGenotypeIndex != sampleInfo.maxGenotypeIndexPolymorphic)
+        {
+            sampleInfo.gqx = 0;
+        }
+        else
+        {
+            sampleInfo.gqx = std::min(sampleInfo.genotypeQuality, sampleInfo.genotypeQualityPolymorphic);
+        }
+    }
+
     // update homref prob for QUAL
     homRefLogProb += std::log(dgt.genome.ref_pprob);
+
+    /// TODO STREL-125 find a way to restore strand bias feature
+    // allele.strandBias=dgt.strand_bias;
 
     updateSiteSampleInfo(opt, sampleIndex, cpi, locus);
 }
@@ -404,9 +429,16 @@ process_pos_snp_digt(
     double homRefLogProb(0);
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
-        const unsigned ploidy(get_ploidy(pos, sampleIndex));
-        updateSnvLocusWithSampleInfo(_opt, _dopt, sample(sampleIndex), _pileupCleaner, ploidy, sampleIndex,
-                                     *locusPtr, homRefLogProb);
+        // groupLocusPloidy of 0 is treated as a special case, if this happens the
+        // entire calling method reverts to a ploidy of 2 for the sample, but the
+        // locus ploidy is passed into the gVCF writer as 0. The gVCF writer can
+        // decide what to do with this information from there.
+        //
+        const unsigned groupLocusPloidy(get_ploidy(pos, sampleIndex));
+        const unsigned callerPloidy(groupLocusPloidy==0 ? 2 : groupLocusPloidy);
+        updateSnvLocusWithSampleInfo(
+            _opt, _dopt, sample(sampleIndex), _pileupCleaner, callerPloidy, groupLocusPloidy,
+            sampleIndex, *locusPtr, homRefLogProb);
     }
 
     // add sample-independent info:

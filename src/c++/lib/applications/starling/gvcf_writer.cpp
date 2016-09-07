@@ -89,8 +89,6 @@ gvcf_writer(
     {
         _blockPerSample.emplace_back(_opt.gvcf);
     }
-
-    variant_prefilter_stage::add_site_modifiers(_empty_site, cm);
 }
 
 

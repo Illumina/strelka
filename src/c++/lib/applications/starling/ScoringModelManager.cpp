@@ -109,7 +109,7 @@ classify_site(
             if (not sampleInfo.isVariant())
             {
                 // revert to hard-filters for this sample:
-                default_classify_site(sampleIndex, allSampleLocusDepth, locus, locus.allele);
+                default_classify_site(sampleIndex, allSampleLocusDepth, locus);
                 continue;
             }
 
@@ -136,7 +136,7 @@ classify_site(
     else
     {
         // don't know what to do with this site, throw it to the old default filters
-        default_classify_site_locus(locus, locus.allele);
+        default_classify_site_locus(locus);
     }
 }
 
@@ -220,8 +220,7 @@ ScoringModelManager::
 default_classify_site(
     const unsigned sampleIndex,
     const unsigned allSampleLocusDepth,
-    GermlineSiteLocusInfo& locus,
-    const GermlineVariantAlleleInfo& allele) const
+    GermlineSiteLocusInfo& locus) const
 {
     LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
 
@@ -248,7 +247,9 @@ default_classify_site(
         if (_opt.is_max_snv_sb)
         {
             /// TODO STREL-125 solve strand bias for multi-alt/multi-sample:
+#if 0
             if (allele.strandBias>_opt.max_snv_sb) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
+#endif
         }
         if (_opt.is_max_snv_hpol)
         {
@@ -262,14 +263,13 @@ default_classify_site(
 void
 ScoringModelManager::
 default_classify_site_locus(
-    GermlineSiteLocusInfo& locus,
-    const GermlineVariantAlleleInfo& allele) const
+    GermlineSiteLocusInfo& locus) const
 {
     const unsigned sampleCount(locus.getSampleCount());
     const unsigned allSampleLocusDepth(locus.getTotalReadDepth());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        default_classify_site(sampleIndex, allSampleLocusDepth, locus, allele);
+        default_classify_site(sampleIndex, allSampleLocusDepth, locus);
     }
 }
 

@@ -22,7 +22,9 @@
  *  Created on: Jun 4, 2015
  *      Author: jduddy
  */
+
 #pragma once
+
 #include "variant_pipe_stage_base.hh"
 
 struct ScoringModelManager;
@@ -32,11 +34,6 @@ struct variant_prefilter_stage : public variant_pipe_stage_base
     variant_prefilter_stage(const ScoringModelManager& model, std::shared_ptr<variant_pipe_stage_base> destination);
     void process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr) override;
     void process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr) override;
-
-    static void
-    add_site_modifiers(
-        GermlineDiploidSiteLocusInfo& locus,
-        const ScoringModelManager& model);
 
 private:
     const ScoringModelManager& _model;

@@ -29,65 +29,7 @@
 variant_prefilter_stage::variant_prefilter_stage(const ScoringModelManager& model, std::shared_ptr<variant_pipe_stage_base> destination)
     : variant_pipe_stage_base(destination)
     , _model(model)
-{
-}
-
-static
-void
-set_site_gt(
-    const diploid_genotype::result_set& rs,
-    LocusSampleInfo& sampleInfo,
-    GermlineSiteSampleInfo& siteSampleInfo)
-{
-    siteSampleInfo.max_gt=rs.max_gt;
-    sampleInfo.gqx=rs.max_gt_qphred;
-}
-
-
-void
-variant_prefilter_stage::
-add_site_modifiers(
-    GermlineDiploidSiteLocusInfo& locus,
-    const ScoringModelManager& model)
-{
-    auto& allele(locus.allele);
-    allele.clear();
-
-    /// TODO STREL-125 generalize to multi-sample
-    const unsigned sampleIndex(0);
-    LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
-    auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
-
-    /// TODO STREL-125 find a way to restore strand bias feature
-    // allele.strandBias=locus.dgt.strand_bias;
-
-    if     (locus.isRefUnknown())
-    {
-        sampleInfo.gqx=0;
-        sampleInfo.genotypeQualityPolymorphic=0;
-        siteSampleInfo.max_gt=0;
-    }
-    else if (siteSampleInfo.dgt.genome.max_gt != siteSampleInfo.dgt.poly.max_gt)
-    {
-        sampleInfo.gqx=0;
-        sampleInfo.genotypeQualityPolymorphic=siteSampleInfo.dgt.poly.max_gt_qphred;
-        siteSampleInfo.max_gt=siteSampleInfo.dgt.poly.max_gt;
-    }
-    else
-    {
-        if (siteSampleInfo.dgt.genome.max_gt_qphred<siteSampleInfo.dgt.poly.max_gt_qphred)
-        {
-            set_site_gt(siteSampleInfo.dgt.genome, sampleInfo, siteSampleInfo);
-        }
-        else
-        {
-            set_site_gt(siteSampleInfo.dgt.poly, sampleInfo, siteSampleInfo);
-        }
-        sampleInfo.genotypeQualityPolymorphic=siteSampleInfo.dgt.poly.max_gt_qphred;
-    }
-
-    model.classify_site(locus);
-}
+{}
 
 
 
@@ -95,48 +37,28 @@ void
 variant_prefilter_stage::
 process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr)
 {
-    /// TODO STREL-125 generalize to N samples
-    static const unsigned sampleIndex(0);
-
-    const uint8_t refBaseId(base_to_id(locusPtr->ref));
-
-    if (dynamic_cast<GermlineDiploidSiteLocusInfo*>(locusPtr.get()) != nullptr)
+    // add filter for all sites in 'no-ploid' regions:
+    const unsigned sampleCount(locusPtr->getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
-        auto diploidLocusPtr(downcast<GermlineDiploidSiteLocusInfo>(std::move(locusPtr)));
-        const auto& sampleInfo(diploidLocusPtr->getSample(sampleIndex));
-        auto& siteSampleInfo(diploidLocusPtr->getSiteSample(sampleIndex));
-
-        add_site_modifiers(*diploidLocusPtr, _model);
-        if (sampleInfo.getPloidy().isHaploid())
+        LocusSampleInfo& sampleInfo(locusPtr->getSample(sampleIndex));
+        if (sampleInfo.isPloidyConflict())
         {
-            if (siteSampleInfo.max_gt == refBaseId)
-            {
-                siteSampleInfo.modified_gt=MODIFIED_SITE_GT::ZERO;
-            }
-            else
-            {
-                siteSampleInfo.modified_gt=MODIFIED_SITE_GT::ONE;
-            }
+            sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
         }
-        else if (sampleInfo.getPloidy().isNoploid())
-        {
-            if (! diploidLocusPtr->is_print_unknowngt(sampleIndex))
-            {
-                diploidLocusPtr->filters.set(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
-            }
-        }
+    }
 
-        _sink->process(std::move(diploidLocusPtr));
+    // apply filtration/EVS model:
+    if (dynamic_cast<GermlineContinuousSiteLocusInfo*>(locusPtr.get()) != nullptr)
+    {
+        _model.default_classify_site_locus(*locusPtr);
     }
     else
     {
-        for (auto& altAllele : locusPtr->getSiteAlleles())
-        {
-            _model.default_classify_site_locus(*locusPtr, altAllele);
-        }
-
-        _sink->process(std::move(locusPtr));
+        _model.classify_site(dynamic_cast<GermlineDiploidSiteLocusInfo&>(*locusPtr));
     }
+
+    _sink->process(std::move(locusPtr));
 }
 
 
