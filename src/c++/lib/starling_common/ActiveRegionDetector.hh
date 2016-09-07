@@ -48,7 +48,7 @@ public:
     // minimum read depth
     static const unsigned MinDepth = ActiveRegion::MinHaplotypeCount;
 
-    // variant count to add for a single indel
+    // variant count to add for a single mismatch or indel
     static const int MismatchWeight = 1;
     static const int IndelWeight = 4;
 
@@ -64,7 +64,7 @@ public:
 
     // for expansion of active regions
     const unsigned MaxRepeatUnitLength = 3u;
-    const unsigned MaxRepeatSpan = 20u;
+    const pos_t MaxRepeatSpan = 20u;
 
     // minimum alternative allele fraction to call a position as a candidate variant
     const float MinAlternativeAlleleFraction = 0.2;
@@ -193,8 +193,8 @@ private:
     // aligner to be used in active regions
     GlobalAligner<int> _aligner;
 
-    // expand [origStart, newStart] to cover repeats
-    void getExpandedRange(const pos_t origStart, const pos_t origEnd, pos_t& newStart, pos_t& newEnd);
+    // expand the active region to cover repeats
+    void getExpandedRange(const pos_range& origActiveRegion, pos_range& newActiveRegion);
 
     bool isCandidateVariant(const pos_t pos) const;
 

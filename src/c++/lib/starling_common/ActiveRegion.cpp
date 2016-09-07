@@ -31,11 +31,11 @@ void ActiveRegion::insertHaplotypeBase(align_id_t alignId, pos_t pos, const std:
     {
         // first occurrence of this alignment
         _alignIdToHaplotype[alignId] = std::string();
-        for (int i=_start; i<pos; ++i)
+        for (int i=_posRange.begin_pos; i<pos; ++i)
             _alignIdToHaplotype[alignId] += missingPrefix;
     }
     _alignIdToHaplotype[alignId] += base;
-    if (pos == _end)
+    if (pos == (_posRange.end_pos-1))
         _alignIdReachingEnd.insert(alignId);
 }
 
@@ -193,7 +193,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
     _aligner.align(haploptypeSeq.begin(),haploptypeSeq.end(),_refSeq.begin(),_refSeq.end(),result);
     const ALIGNPATH::path_t& alignPath = result.align.apath;
 
-    pos_t referencePos = _start;
+    pos_t referencePos = _posRange.begin_pos;
     pos_t haplotypePosOffset = 0;
     if (result.align.beginPos > 0)
     {

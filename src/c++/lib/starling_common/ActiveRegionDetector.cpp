@@ -86,7 +86,7 @@ ActiveRegionDetector::updateStartPosition(const pos_t pos)
 {
     if (_activeRegions.empty()) return;
 
-    if (_activeRegions.front().getStart() == pos)
+    if (_activeRegions.front().getBeginPosition() == pos)
     {
         _activeRegions.pop_front();
     }
@@ -127,17 +127,17 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
         // this position doesn't extend the existing active region
         if (_numVariants >= _minNumVariantsPerRegion)
         {
-            pos_t origStart = _activeRegionStartPos;
-            pos_t origEnd = _prevVariantPos;
-            pos_t start, end;
+            pos_t origBeginPos = _activeRegionStartPos;
+            pos_t origEndPos = _prevVariantPos + 1;
+            pos_range newActiveRegion;
 
             // expand active region to include repeats
-            getExpandedRange(origStart, origEnd, start, end);
+            getExpandedRange(pos_range(origBeginPos, origEndPos), newActiveRegion);
 
-            _activeRegions.emplace_back(start, end, _ref, _aligner, _alignIdToAlignInfo);
+            _activeRegions.emplace_back(newActiveRegion, _ref, _aligner, _alignIdToAlignInfo);
             auto& activeRegion(_activeRegions.back());
             // add haplotype bases
-            for (pos_t activeRegionPos(start); activeRegionPos<=end; ++activeRegionPos)
+            for (pos_t activeRegionPos(newActiveRegion.begin_pos); activeRegionPos<newActiveRegion.end_pos; ++activeRegionPos)
             {
                 for (const align_id_t alignId : getPositionToAlignIds(activeRegionPos))
                 {
@@ -169,14 +169,14 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
     clearPos(posToClear);
 }
 
-void ActiveRegionDetector::getExpandedRange(const pos_t origStart, const pos_t origEnd, pos_t& newStart, pos_t& newEnd)
+void ActiveRegionDetector::getExpandedRange(const pos_range& origActiveRegion, pos_range& newActiveRegion)
 {
     // calculate newStart
-    newStart = origStart;
-    unsigned deltaPos(0);
+    pos_t origStart = origActiveRegion.begin_pos;
+    pos_t deltaPos(0);
     for (unsigned repeatUnitLength(1); repeatUnitLength<=MaxRepeatUnitLength; ++repeatUnitLength)
     {
-        unsigned repeatSpan = repeatUnitLength;
+        pos_t repeatSpan = repeatUnitLength;
         for (pos_t pos(origStart-repeatUnitLength); pos >= _ref.get_offset(); --pos)
         {
             char baseChar = _ref.get_base(pos);
@@ -190,19 +190,22 @@ void ActiveRegionDetector::getExpandedRange(const pos_t origStart, const pos_t o
             deltaPos = std::max(deltaPos, repeatSpan);
     }
     deltaPos = std::min(deltaPos, MaxRepeatSpan);
-    pos_t minStart(std::max(origStart - deltaPos, 0u));
-    for (newStart = origStart; newStart > minStart; --newStart)
+    pos_t minStart(std::max(origStart - deltaPos, (pos_t)0u));
+    pos_t newBeginPos;
+    for (newBeginPos = origStart; newBeginPos > minStart; --newBeginPos)
     {
-        if (getDepth(newStart-1) < MinDepth)
+        if (getDepth(newBeginPos-1) < MinDepth)
             break;
     }
+    newActiveRegion.set_begin_pos(newBeginPos);
 
     // calculate newEnd
+    pos_t origEnd = origActiveRegion.end_pos;
     deltaPos = 0;
     for (unsigned repeatUnitLength(1); repeatUnitLength<=MaxRepeatUnitLength; ++repeatUnitLength)
     {
-        unsigned repeatSpan = repeatUnitLength;
-        for (pos_t pos(origEnd+repeatUnitLength); pos < _ref.end(); ++pos)
+        pos_t repeatSpan = repeatUnitLength;
+        for (pos_t pos(origEnd+repeatUnitLength-1); pos < _ref.end(); ++pos)
         {
             char baseChar = _ref.get_base(pos);
             char baseCharToCompare = _ref.get_base(pos-repeatUnitLength);
@@ -216,12 +219,14 @@ void ActiveRegionDetector::getExpandedRange(const pos_t origStart, const pos_t o
     }
     deltaPos = std::min(deltaPos, MaxRepeatSpan);
 
-    pos_t maxEnd(std::min(origEnd + deltaPos, _ref.end()-1u));
-    for (newEnd = origEnd; newEnd < maxEnd; ++newEnd)
+    pos_t maxEnd(std::min(origEnd + deltaPos, _ref.end()));
+    pos_t newEndPos;
+    for (newEndPos = origEnd; newEndPos < maxEnd; ++newEndPos)
     {
-        if (getDepth(newEnd+1) < MinDepth)
+        if (getDepth(newEndPos) < MinDepth)
             break;
     }
+    newActiveRegion.set_end_pos(newEndPos);
 }
 
 void ActiveRegionDetector::setMatch(const align_id_t id, const pos_t pos)
@@ -284,7 +289,8 @@ bool ActiveRegionDetector::setHaplotypeBase(const align_id_t id, const pos_t pos
         base = _snvBuffer[idIndex][posIndex] + _insertSeqBuffer[idIndex][posIndex];
     }
 
-    return variant == SOFT_CLIP;
+    bool isSoftClipped = (variant == SOFT_CLIP);
+    return isSoftClipped;
 }
 
 bool

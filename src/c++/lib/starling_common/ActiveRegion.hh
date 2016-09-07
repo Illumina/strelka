@@ -63,39 +63,32 @@ public:
     const char missingPrefix = '.';
 
     /// Creates an active region object
-    /// \param start start position
-    /// \param end end position
+    /// \param posRange position range of the active region
     /// \param ref reference
     /// \param aligner aligner for aligning haplotypes to the reference
     /// \param alignIdToAlignInfo map from align id to (sampleId, indelAlignType)
     /// \return active region object
-    ActiveRegion(pos_t start, pos_t end, const reference_contig_segment& ref, const GlobalAligner<int>& aligner, const std::vector<AlignInfo>& alignIdToAlignInfo):
-        _start(start), _end(end), _ref(ref),
+    ActiveRegion(pos_range& posRange, const reference_contig_segment& ref, const GlobalAligner<int>& aligner, const std::vector<AlignInfo>& alignIdToAlignInfo):
+        _posRange(posRange), _ref(ref),
         _aligner(aligner),
         _alignIdToAlignInfo(alignIdToAlignInfo),
         _alignIdToHaplotype(),
         _alignIdReachingEnd()
     {
-        _ref.get_substring(start, getLength(), _refSeq);
+        _ref.get_substring(_posRange.begin_pos, _posRange.size(), _refSeq);
     }
 
-    /// \return start position of the active region
-    pos_t getStart() const
+    /// \return begin position of the active region
+    pos_t getBeginPosition() const
     {
-        return _start;
-    }
-
-    /// \return length of the active region
-    unsigned getLength() const
-    {
-        return _end - _start + 1;
+        return _posRange.begin_pos;
     }
 
     /// \param pos reference position
     /// \return true if pos belongs to this active region; false otherwise
     bool contains(pos_t pos) const
     {
-        return pos >= _start && pos <= _end;
+        return _posRange.is_pos_intersect(pos);
     }
 
     /// Insert haplotype base of the alignment into the position
@@ -118,8 +111,7 @@ public:
     }
 
 private:
-    pos_t _start;
-    pos_t _end;
+    pos_range _posRange;
     const reference_contig_segment& _ref;
     std::string _refSeq;
     const GlobalAligner<int> _aligner;
