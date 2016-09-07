@@ -360,20 +360,12 @@ process_pos_snp_digt(
     const unsigned sampleCount(getSampleCount());
     const bool isForcedOutput(is_forced_output_pos(pos));
 
-    /// end multi-sample generalization:
-    assert(sampleCount == 1);
-    const unsigned tmpSampleIndex(0);
-    sample_info& tmpSif(sample(tmpSampleIndex));
-
-    const CleanedPileup& cpi(tmpSif.cpi);
-    const snp_pos_info& pi(cpi.rawPileup());
-
     /// TODO currently using old "4-allele" genotyping system and then reducing down to number
     /// of called alleles, transition this to work more like current indel model, where up to
     /// 4 alleles are nominated as candidates and genotyping is based on the candidate alleles
     /// only.
 
-
+    // -----------------------------------------------
     // prep data for site locus creation:
     //
 
@@ -398,6 +390,9 @@ process_pos_snp_digt(
     std::vector<uint8_t> altAlleles;
     getSiteAltAlleles(refBaseId, allDgt, altAlleles);
 
+    // -----------------------------------------------
+    // create site locus object:
+    //
     std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, pos, id_to_base(refBaseId), isForcedOutput));
 
     // add all candidate alternate alleles:
@@ -419,11 +414,6 @@ process_pos_snp_digt(
 
     if (isForcedOutput or locusPtr->isVariantLocus())
     {
-        if (_opt.is_compute_hapscore)
-        {
-            locusPtr->hapscore=get_hapscore(pi.hap_set);
-        }
-
         // hpol filter
         locusPtr->hpol = get_snp_hpol_size(pos,_ref);
     }

@@ -141,7 +141,7 @@ struct blt_options
     bool is_max_input_depth = false;
     unsigned max_input_depth = 0;
 
-    bool is_compute_hapscore = false;
+    //bool is_compute_hapscore = false;
     bool isReportEVSFeatures = false;
     bool is_compute_somatic_scoring_metrics = false;
 

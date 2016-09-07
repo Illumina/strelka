@@ -418,11 +418,6 @@ write_site_record(
         }
         os << ';';
         os << "SNVHPOL=" << locus.hpol;
-        if (_opt.is_compute_hapscore)
-        {
-            os << ';';
-            os << "HaplotypeScore=" << locus.hapscore;
-        }
 
         // compute global MQ over all samples
         MapqTracker mapqTracker;

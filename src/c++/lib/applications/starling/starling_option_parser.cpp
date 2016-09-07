@@ -63,8 +63,6 @@ get_starling_option_parser(
      "Indels are filtered if they lengthen or contract a homopolymer or dinucleotide with reference repeat length greater than this value. A negative value disables the filter")
     ("gvcf-min-blockable-nonref", po::value(&opt.gvcf.block_max_nonref)->default_value(opt.gvcf.block_max_nonref),
      "A site cannot be joined into a non-variant block if it contains more than this fraction of non-reference alleles")
-    ("gvcf-include-hapscore", po::value(&opt.is_compute_hapscore)->zero_tokens(),
-     "Include haplotype score at SNV positions in gVCF output.")
 
     ("gvcf-block-percent-tol", po::value(&opt.gvcf.block_percent_tol)->default_value(opt.gvcf.block_percent_tol),
      "Non-variant blocks are chosen to constrain sample values to range [x,y], y <= max(x+3,x*(100+block-percent-tol)/100)")

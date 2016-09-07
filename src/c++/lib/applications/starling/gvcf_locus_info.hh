@@ -1066,7 +1066,6 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     }
 
     std::string phased_ref, phased_alt, phased_AD, phased_ADF, phased_ADR;
-    double hapscore = 0;
 
     /// production and development features used in the empirical scoring model:
     VariantScoringFeatureKeeper evsFeatures;
