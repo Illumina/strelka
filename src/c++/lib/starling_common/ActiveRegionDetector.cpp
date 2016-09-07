@@ -171,7 +171,9 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
 
 void ActiveRegionDetector::getExpandedRange(const pos_range& origActiveRegion, pos_range& newActiveRegion)
 {
-    // calculate newStart
+    // if origStart is within repeat region, move the start position outside of the repeat region
+    // e.g. In TACGACGAC|GAC if origStart points C before |, the start position is moved to T
+    // note that bases after origStart are ignored. For example, in TACGAC|GAC, the start position doesn't move.
     pos_t origStart = origActiveRegion.begin_pos;
     pos_t deltaPos(0);
     for (unsigned repeatUnitLength(1); repeatUnitLength<=MaxRepeatUnitLength; ++repeatUnitLength)

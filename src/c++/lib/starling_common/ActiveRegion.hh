@@ -50,7 +50,10 @@ class ActiveRegion
 {
 public:
     // maximum read depth
+    // TODO: dynamically calculate maximum depth
     static const unsigned MaxDepth = 1000u;
+
+    // if haplotype depth is at least HighDepth, low depth filter is not applied
     static const unsigned HighDepth = 20u;
 
     // minimum haplotype count to consider
