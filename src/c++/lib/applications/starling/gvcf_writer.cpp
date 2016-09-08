@@ -243,12 +243,11 @@ get_visible_alt_order(
     const auto& siteSample(locus.getSiteSample(sampleIndex));
 
     // list max_gt alts first:
-    const uint8_t refBaseId(base_to_id(locus.ref));
-    for (unsigned b(0); b<N_BASE; ++b)
+    for (uint8_t baseIndex(0); baseIndex<N_BASE; ++baseIndex)
     {
-        if (b==refBaseId) continue;
-        if (! DIGT::expect2(b, siteSample.max_gt)) continue;
-        altOrder.push_back(b);
+        if (baseIndex==locus.refBaseIndex) continue;
+        if (! DIGT::expect2(baseIndex, siteSample.max_gt)) continue;
+        altOrder.push_back(baseIndex);
     }
 
 #if 0
@@ -358,8 +357,6 @@ write_site_record(
     const bool isAltAlleles(altAlleleCount > 0);
     const unsigned sampleCount(locus.getSampleCount());
 
-    const uint8_t refBaseId(base_to_id(locus.ref));
-
     os << _chrom << '\t'  // CHROM
        << (locus.pos+1) << '\t'  // POS
        << ".\t";           // ID
@@ -370,7 +367,7 @@ write_site_record(
     }
     else
     {
-        os  << locus.ref << '\t'; // REF
+        os  << id_to_base(locus.refBaseIndex) << '\t'; // REF
     }
 
     // ALT
@@ -509,11 +506,11 @@ write_site_record(
             else
             {
                 os << ':';
-                print_site_ad(refBaseId, siteSampleInfo, altOrder, os);
+                print_site_ad(locus.refBaseIndex, siteSampleInfo, altOrder, os);
                 os << ':';
-                print_site_ad_strand(refBaseId, siteSampleInfo, altOrder, true, os);
+                print_site_ad_strand(locus.refBaseIndex, siteSampleInfo, altOrder, true, os);
                 os << ':';
-                print_site_ad_strand(refBaseId, siteSampleInfo, altOrder, false, os);
+                print_site_ad_strand(locus.refBaseIndex, siteSampleInfo, altOrder, false, os);
             }
         }
 
@@ -530,16 +527,16 @@ write_site_record(
                 const unsigned print_gt(siteSampleInfo.max_gt);
                 const uint8_t a0(DIGT::get_allele(print_gt, 0));
                 const uint8_t a1(DIGT::get_allele(print_gt, 1));
-                os << siteSampleInfo.dgt.phredLoghood[refBaseId] << ','
-                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(refBaseId, a0)] << ','
+                os << siteSampleInfo.dgt.phredLoghood[locus.refBaseIndex] << ','
+                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(locus.refBaseIndex, a0)] << ','
                    << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0, a0)] << ','
-                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(refBaseId, a1)] << ','
+                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(locus.refBaseIndex, a1)] << ','
                    << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0, a1)] << ','
                    << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(a1, a1)];
             }
             else if (sampleInfo.getPloidy().isHaploid() || (siteSampleInfo.modified_gt == MODIFIED_SITE_GT::ONE))
             {
-                os << siteSampleInfo.dgt.phredLoghood[refBaseId] << ','
+                os << siteSampleInfo.dgt.phredLoghood[locus.refBaseIndex] << ','
                    << siteSampleInfo.dgt.phredLoghood[siteSampleInfo.max_gt];
             }
             else
@@ -548,12 +545,12 @@ write_site_record(
                 const uint8_t a0(DIGT::get_allele(print_gt, 0));
                 const uint8_t a1(DIGT::get_allele(print_gt, 1));
                 uint8_t alt(a0);
-                if (refBaseId == a0)
+                if (locus.refBaseIndex == a0)
                 {
                     alt = a1;
                 }
-                os << siteSampleInfo.dgt.phredLoghood[refBaseId] << ','
-                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(refBaseId, alt)] << ','
+                os << siteSampleInfo.dgt.phredLoghood[locus.refBaseIndex] << ','
+                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(locus.refBaseIndex, alt)] << ','
                    << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(alt, alt)];
             }
         }
@@ -593,8 +590,6 @@ gvcf_writer::
 write_site_record(
     const GermlineContinuousSiteLocusInfo& locus) const
 {
-    const auto refBaseId = base_to_id(locus.ref);
-
     const unsigned sampleCount(locus.getSampleCount());
     const auto& siteAlleles(locus.getSiteAlleles());
     const bool isAltAlleles(not siteAlleles.empty());
@@ -603,7 +598,7 @@ write_site_record(
     std::vector<uint8_t> altOrder;
     for (const auto& allele : siteAlleles)
     {
-        assert(allele.baseIndex != refBaseId);
+        assert(allele.baseIndex != locus.refBaseIndex);
         altOrder.push_back(allele.baseIndex);
     }
 
@@ -613,7 +608,7 @@ write_site_record(
        << (locus.pos+1) << '\t'  // POS
        << ".\t";           // ID
 
-    os  << locus.ref << '\t'; // REF
+    os  << id_to_base(locus.refBaseIndex) << '\t'; // REF
 
     // ALT
     writeSiteVcfAltField(locus.getSiteAlleles(), os);
@@ -694,11 +689,11 @@ write_site_record(
         if (isAltAlleles)
         {
             os << ':';
-            print_site_ad(refBaseId, siteSampleInfo, altOrder, os);
+            print_site_ad(locus.refBaseIndex, siteSampleInfo, altOrder, os);
             os << ':';
-            print_site_ad_strand(refBaseId, siteSampleInfo, altOrder, true, os);
+            print_site_ad_strand(locus.refBaseIndex, siteSampleInfo, altOrder, true, os);
             os << ':';
-            print_site_ad_strand(refBaseId, siteSampleInfo, altOrder, false, os);
+            print_site_ad_strand(locus.refBaseIndex, siteSampleInfo, altOrder, false, os);
         }
 
         // FT
@@ -728,7 +723,7 @@ write_site_record(
        << (locus.pos+1) << '\t'  // POS
        << ".\t";           // ID
 
-    os  << locus.ref << '\t'; // REF
+    os  << id_to_base(locus.refBaseIndex) << '\t'; // REF
 
     // ALT
     os << '.';

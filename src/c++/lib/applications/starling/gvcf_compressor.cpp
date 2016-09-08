@@ -47,7 +47,7 @@ is_site_compressable(
 
     if (locus.isVariantLocus()) return false;
 
-    if (locus.ref != 'N')
+    if (locus.refBaseIndex != BASE_ID::ANY)
     {
         const unsigned sampleCount(locus.getSampleCount());
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
@@ -55,7 +55,7 @@ is_site_compressable(
             const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
             if (siteSampleInfo.isUsedReadCoverage())
             {
-                const double reffrac(static_cast<double>(siteSampleInfo.alleleObservationCounts(base_to_id(locus.ref))) /
+                const double reffrac(static_cast<double>(siteSampleInfo.alleleObservationCounts(locus.refBaseIndex)) /
                                      static_cast<double>(siteSampleInfo.n_used_calls));
                 if ((reffrac + _opt.block_max_nonref) <= 1) return false;
             }

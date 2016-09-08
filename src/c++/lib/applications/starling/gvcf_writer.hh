@@ -127,7 +127,7 @@ private:
     get_empty_site(const pos_t pos)
     {
         _empty_site.pos = pos;
-        _empty_site.ref = _ref.get_base(pos);
+        _empty_site.refBaseIndex = base_to_id(_ref.get_base(pos));
         _empty_site.isSiteUnphasable = true;
         return _empty_site;
     }

@@ -206,19 +206,18 @@ computeEmpiricalScoringFeatures(
 
     // get the alt base id (choose second in case of an alt het....)
     unsigned altBase(N_BASE);
-    const uint8_t refBaseId(base_to_id(locus.ref));
-    for (unsigned b(0); b < N_BASE; ++b)
+    for (uint8_t baseIndex(0); baseIndex < N_BASE; ++baseIndex)
     {
-        if (b == refBaseId) continue;
-        if (DIGT::expect2(b, siteSampleInfo.max_gt))
+        if (baseIndex == locus.refBaseIndex) continue;
+        if (DIGT::expect2(baseIndex, siteSampleInfo.max_gt))
         {
-            altBase = b;
+            altBase = baseIndex;
         }
     }
     assert(altBase != N_BASE);
 
     /// TODO STREL-125 generalize to multi-alt
-    const unsigned r0 = siteSampleInfo.alleleObservationCounts(refBaseId);
+    const unsigned r0 = siteSampleInfo.alleleObservationCounts(locus.refBaseIndex);
     const unsigned r1 = siteSampleInfo.alleleObservationCounts(altBase);
 
     const double mapqZeroFraction(siteSampleInfo.mapqTracker.getZeroFrac());

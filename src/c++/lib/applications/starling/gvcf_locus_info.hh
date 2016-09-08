@@ -840,12 +840,12 @@ struct GermlineSiteLocusInfo : public LocusInfo
     GermlineSiteLocusInfo(
         const unsigned sampleCount,
         const pos_t initPos,
-        const char init_ref,
+        const uint8_t initRefBaseIndex,
         const bool initIsForcedOutput = false)
       : base_t(sampleCount, initPos),
+        refBaseIndex(initRefBaseIndex),
         _siteSampleInfo(sampleCount)
     {
-        ref=(init_ref);
         isForcedOutput = initIsForcedOutput;
     }
 
@@ -859,7 +859,7 @@ struct GermlineSiteLocusInfo : public LocusInfo
     bool
     isRefUnknown() const
     {
-        return (ref == 'N');
+        return (refBaseIndex == BASE_ID::ANY);
     }
 
 
@@ -939,7 +939,7 @@ struct GermlineSiteLocusInfo : public LocusInfo
     clear()
     {
         base_t::clear();
-        ref = 'N';
+        refBaseIndex = BASE_ID::ANY;
         hpol = 0;
         isSiteUnphasable = false;
         isForcedOutput = false;
@@ -951,7 +951,7 @@ struct GermlineSiteLocusInfo : public LocusInfo
         }
     }
 
-    char ref = 'N';
+    uint8_t refBaseIndex = BASE_ID::ANY;
 
     unsigned hpol = 0;
 
@@ -973,9 +973,9 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         const gvcf_deriv_options& gvcfDerivedOptions,
         const unsigned sampleCount,
         const pos_t init_pos,
-        const char init_ref,
+        const uint8_t initRefBaseIndex,
         const bool is_forced_output = false)
-        : GermlineSiteLocusInfo(sampleCount, init_pos, init_ref, is_forced_output),
+        : GermlineSiteLocusInfo(sampleCount, init_pos, initRefBaseIndex, is_forced_output),
           evsFeatures(gvcfDerivedOptions.snvFeatureSet),
           evsDevelopmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
     {}
@@ -987,27 +987,6 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
           evsFeatures(gvcfDerivedOptions.snvFeatureSet),
           evsDevelopmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
     {}
-
-#if 0
-    const char*
-    get_gt(const unsigned sampleIndex) const
-    {
-        const auto& siteSampleInfo(getSiteSample(sampleIndex));
-        if       (siteSampleInfo.modified_gt != MODIFIED_SITE_GT::NONE)
-        {
-            return MODIFIED_SITE_GT::get_label(siteSampleInfo.modified_gt);
-        }
-        else if (is_print_unknowngt(sampleIndex))
-        {
-            return ".";
-        }
-        else
-        {
-            const unsigned print_gt(siteSampleInfo.max_gt);
-            return DIGT::get_vcf_gt(print_gt, base_to_id(ref));
-        }
-    }
-#endif
 
     /// \param allSampleChromDepth expected depth summed over all samples
     static
@@ -1037,8 +1016,7 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         unsigned print_gt(siteSample.max_gt);
         const uint8_t a0(DIGT::get_allele(print_gt,0));
         const uint8_t a1(DIGT::get_allele(print_gt,1));
-        const uint8_t refBaseId(base_to_id(ref));
-        return ((a0!=a1) && (refBaseId != a0) && (refBaseId != a1));
+        return ((a0!=a1) && (refBaseIndex != a0) && (refBaseIndex != a1));
     }
 
     /// TODO STREL-125 extend to multi-sample
@@ -1046,19 +1024,8 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     is_nonref(const unsigned sampleIndex) const override
     {
         const auto& siteSample(getSiteSample(sampleIndex));
-        const uint8_t refBaseId(base_to_id(ref));
-        return (siteSample.max_gt != refBaseId);
+        return (siteSample.max_gt != refBaseIndex);
     }
-
-    /// test whether GT should be written for this locus/sample
-#if 0
-    bool
-    is_print_unknowngt(const unsigned sampleIndex) const
-    {
-        const auto& siteSample(getSiteSample(sampleIndex));
-        return (isRefUnknown() or (not siteSample.isUsedReadCoverage()));
-    }
-#endif
 
     /// test whether known QUAL value should be written for this locus
     bool
@@ -1127,21 +1094,20 @@ struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
     GermlineContinuousSiteLocusInfo(
         const unsigned sampleCount,
         const pos_t init_pos,
-        const char init_ref,
+        const uint8_t initRefBaseIndex,
         const bool is_forced_output = false)
-        : base_t(sampleCount, init_pos, init_ref, is_forced_output),
+        : base_t(sampleCount, init_pos, initRefBaseIndex, is_forced_output),
           _continuousSiteSampleInfo(sampleCount)
     {}
 
     bool is_nonref(const unsigned /*sampleIndex*/) const override
     {
-        auto ref_id = base_to_id(ref);
         const auto& altAlleles(getSiteAlleles());
         return altAlleles.end() !=
                std::find_if(altAlleles.begin(), altAlleles.end(),
                             [&](const GermlineSiteAlleleInfo& allele)
         {
-            return allele.baseIndex != ref_id;
+            return allele.baseIndex != refBaseIndex;
         });
     }
 

@@ -408,7 +408,7 @@ create_phased_record()
         min_gq = minsi0.getSample(sampleIndex).genotypeQualityPolymorphic;
         max_gt = minsi0.getSiteSample(sampleIndex).max_gt;
         pls = siteSampleInfo0.dgt.phredLoghood;
-        ref_gt = base_to_id(minsi0.ref);
+        ref_gt = minsi0.refBaseIndex;
 
         if (! is_ref && is_min_gq_idx1)
         {
@@ -456,8 +456,8 @@ create_phased_record()
             const auto& pls0(siteSampleInfo0.dgt.phredLoghood);
             const auto& pls1(siteSampleInfo1.dgt.phredLoghood);
 
-            const uint8_t ref0(base_to_id(minsi0.ref));
-            const uint8_t ref1(base_to_id(minsi1.ref));
+            const uint8_t ref0(minsi0.refBaseIndex);
+            const uint8_t ref1(minsi1.refBaseIndex);
 
             pls[ref_gt] = pls0[ref0] + pls1[ref1];  // 0/0
             pls[DIGT::get_gt_with_alleles(ref_gt,a0)] = pls0[DIGT::get_gt_with_alleles(ref0,a0)] + pls1[DIGT::get_gt_with_alleles(ref1,b0)];  // 0/1
@@ -644,7 +644,7 @@ write_out_buffer(std::ostream& os) const
 {
     for (const auto& val : _buffer)
     {
-        os << *val << " ref " << val->ref << "\n";
+        os << *val << " ref " << id_to_base(val->refBaseIndex) << "\n";
     }
 }
 

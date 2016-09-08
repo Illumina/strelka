@@ -106,10 +106,11 @@ getTestSink(
 
     for (int i = 0; read1Seq[i]; i++)
     {
+        const char ref(rcs.get_base(read_pos + i));
     //    const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
         std::unique_ptr<GermlineDiploidSiteLocusInfo> si(
-            new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, read_pos + i, rcs.get_base(read_pos + i)));
-        if (si->ref != read1Seq[i] || si->ref != read2Seq[i])
+            new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, read_pos + i, base_to_id(ref)));
+        if (ref != read1Seq[i] || ref != read2Seq[i])
         {
             si->anyVariantAlleleQuality = 60;
         }
@@ -228,14 +229,15 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
 
     for (int i = 0; r1[i]; i++)
     {
+        const char ref(rcs.get_base(read_pos + i));
         //const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, read_pos + i, rcs.get_base(read_pos + i)));
+        std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, read_pos + i, base_to_id(ref)));
         auto& sampleInfo(si->getSample(sampleIndex));
         auto& siteSampleInfo(si->getSiteSample(sampleIndex));
         sampleInfo.genotypeQualityPolymorphic = si->anyVariantAlleleQuality = sampleInfo.empiricalVariantScore = 40;
 
         siteSampleInfo.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        if (si->ref != r1[i] || si->ref != r2[i])
+        if (ref != r1[i] || ref != r2[i])
         {
             si->anyVariantAlleleQuality = 60;
         }

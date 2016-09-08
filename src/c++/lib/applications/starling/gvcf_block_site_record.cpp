@@ -137,7 +137,7 @@ joinSiteToSampleBlock(
     if (count == 0)
     {
         pos = locus.pos;
-        ref = locus.ref;
+        refBaseIndex = locus.refBaseIndex;
 
         filters = locus.filters;
         blockSampleInfo.filters = inputSampleInfo.filters;

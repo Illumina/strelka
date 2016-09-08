@@ -55,7 +55,6 @@ struct gvcf_block_site_record : public GermlineSiteLocusInfo
         block_dpu.reset();
         block_dpf.reset();
         pos=-1;
-        ref=(char)0;
         isBlockGqxDefined = _isNonRef=false;
     }
 

@@ -336,8 +336,6 @@ modify_indel_overlap_site(
     // limit qual and gq values to those of the indel, and modify site ploidy:
     siteLocus.anyVariantAlleleQuality = std::min(siteLocus.anyVariantAlleleQuality, indelLocus.anyVariantAlleleQuality);
 
-    const uint8_t refBaseId(base_to_id(siteLocus.ref));
-
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         const auto& indelSampleInfo(indelLocus.getSample(sampleIndex));
@@ -358,7 +356,7 @@ modify_indel_overlap_site(
             }
             else
             {
-                if (siteSampleInfo.max_gt == refBaseId)
+                if (siteSampleInfo.max_gt == siteLocus.refBaseIndex)
                 {
                     siteSampleInfo.modified_gt = MODIFIED_SITE_GT::ZERO;
                 }
@@ -370,7 +368,7 @@ modify_indel_overlap_site(
         }
         else if (indelInducedSitePloidy == 0)
         {
-            if (siteSampleInfo.max_gt == refBaseId)
+            if (siteSampleInfo.max_gt == siteLocus.refBaseIndex)
             {
                 siteSampleInfo.modified_gt = MODIFIED_SITE_GT::UNKNOWN;
                 siteSampleInfo.isOverlappingHomAltDeletion = true;

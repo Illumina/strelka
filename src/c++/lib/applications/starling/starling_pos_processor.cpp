@@ -253,7 +253,7 @@ translateBaseIndexToAlleleIndex(
 {
     const auto& siteAlleles(locus.getSiteAlleles());
     uint8_t alleleIndex(0);
-    if (base_to_id(locus.ref) == baseIndex)
+    if (locus.refBaseIndex == baseIndex)
     {
         return alleleIndex;
     }
@@ -334,7 +334,7 @@ updateSnvLocusWithSampleInfo(
     sampleInfo.genotypeQuality = dgt.genome.max_gt_qphred;
     translateDigtToVcfGenotype(callerPloidy, dgt.genome.max_gt, locus, sampleInfo.maxGenotypeIndex);
 
-    if     (locus.isRefUnknown())
+    if     (locus.isRefUnknown() || (cpi.n_used_calls()==0))
     {
         sampleInfo.genotypeQualityPolymorphic=0;
         sampleInfo.maxGenotypeIndexPolymorphic.setGenotypeFromAlleleIndices();
@@ -525,7 +525,7 @@ process_pos_snp_digt(
     // -----------------------------------------------
     // create site locus object:
     //
-    std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, pos, id_to_base(refBaseIndex), isForcedOutput));
+    std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, pos, refBaseIndex, isForcedOutput));
 
     // add all candidate alternate alleles:
     for (const auto baseId : altAlleles)
@@ -599,12 +599,11 @@ updateContinuousSnvLocusWithSampleInfo(
     starling_pos_processor::sample_info& sif,
     const PileupCleaner& pileupCleaner,
     const unsigned sampleIndex,
-    const unsigned baseId, ///< TODO STREL-125 TMP!!!!!!
+    const unsigned baseIndex, ///< TODO STREL-125 TMP!!!!!!
     std::vector<StrandBiasCounts>& strandBiasCounts,
     GermlineContinuousSiteLocusInfo& locus)
 {
-    const uint8_t refBaseId = base_to_id(locus.ref);
-    const bool isRefAllele(refBaseId == baseId);
+    const bool isRefAllele(locus.refBaseIndex == baseIndex);
 
     auto& siteAlleles(locus.getSiteAlleles());
     const auto alleleCount(siteAlleles.size());
@@ -612,7 +611,7 @@ updateContinuousSnvLocusWithSampleInfo(
     const CleanedPileup& cpi(sif.cpi);
 
     updateSiteSampleInfo(opt, sampleIndex, cpi, locus);
-    updateContinuousSiteSampleInfo(sampleIndex, baseId, locus);
+    updateContinuousSiteSampleInfo(sampleIndex, baseIndex, locus);
 
 
     //const snp_pos_info& pi(cpi.rawPileup());
@@ -748,7 +747,7 @@ process_pos_snp_continuous(const pos_t pos)
     {
         const bool isRefAllele(baseId == refBaseId);
         std::unique_ptr<GermlineContinuousSiteLocusInfo> locusPtr(new GermlineContinuousSiteLocusInfo(
-            sampleCount, pos, pi.get_ref_base(), isForcedOutput));
+            sampleCount, pos, base_to_id(pi.get_ref_base()), isForcedOutput));
 
         // setup alt allele first:
         if (not isRefAllele)
