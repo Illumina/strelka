@@ -263,24 +263,6 @@ get_visible_alt_order(
 
 
 
-static
-void
-print_site_ad(
-    const uint8_t refBaseId,
-    const GermlineSiteSampleInfo& siteSampleInfo,
-    const std::vector<uint8_t>& altOrder,
-    std::ostream& os)
-{
-    os << siteSampleInfo.alleleObservationCounts(refBaseId);
-
-    for (const auto& b : altOrder)
-    {
-        os << ',' << siteSampleInfo.alleleObservationCounts(b);
-    }
-}
-
-
-
 /// extend the locus filter set such that any sample filter applied to all samples is added to the locus filters
 static
 GermlineFilterKeeper
@@ -309,25 +291,6 @@ getExtendedLocusFilters(const LocusInfo& locus)
 
 static
 void
-print_site_ad_strand(
-    const uint8_t refBaseId,
-    const GermlineSiteSampleInfo& siteSampleInfo,
-    const std::vector<uint8_t>& altOrder,
-    const bool is_fwd_strand,
-    std::ostream& os)
-{
-    os << siteSampleInfo.alleleObservationCountsByStrand(is_fwd_strand, refBaseId);
-
-    for (const auto& b : altOrder)
-    {
-        os << ',' << siteSampleInfo.alleleObservationCountsByStrand(is_fwd_strand,b);
-    }
-}
-
-
-
-static
-void
 writeSiteVcfAltField(
     const std::vector<GermlineSiteAlleleInfo>& siteAlleles,
     std::ostream& os)
@@ -346,6 +309,43 @@ writeSiteVcfAltField(
         }
     }
 
+}
+
+
+
+/// print sample AD/ADF/ADR
+static
+void
+printSampleAD(
+    const LocusSupportingReadStats& counts,
+    const unsigned expectedAltAlleleCount,
+    std::ostream& os)
+{
+    // verify locus and sample allele counts are in sync:
+    assert(counts.getAltCount() == expectedAltAlleleCount);
+    const unsigned fullAlleleCount(expectedAltAlleleCount+1);
+
+    // AD
+    os << ':';
+    for (unsigned alleleIndex(0); alleleIndex < fullAlleleCount; ++alleleIndex)
+    {
+        if (alleleIndex>0) os << ',';
+        os << (counts.getCounts(true).confidentAlleleCount(alleleIndex) + counts.getCounts(false).confidentAlleleCount(alleleIndex));
+    }
+
+    // ADF/ADR
+    for (unsigned strandIndex(0); strandIndex<2; ++strandIndex)
+    {
+        const bool isFwdStrand(strandIndex==0);
+        const auto& strandCounts(counts.getCounts(isFwdStrand));
+
+        os << ':';
+        for (unsigned alleleIndex(0); alleleIndex < fullAlleleCount; ++alleleIndex)
+        {
+            if (alleleIndex>0) os << ',';
+            os << strandCounts.confidentAlleleCount(alleleIndex);
+        }
+    }
 }
 
 
@@ -493,6 +493,8 @@ write_site_record(
 
         if (isAltAlleles)
         {
+            printSampleAD(sampleInfo.supportCounts, altAlleleCount, os);
+#if 0
             if (locus.isPhasedRegion)
             {
                 os << ':' << locus.phased_AD
@@ -508,6 +510,7 @@ write_site_record(
                 os << ':';
                 print_site_ad_strand(locus.refBaseIndex, siteSampleInfo, altOrder, false, os);
             }
+#endif
         }
 
         // FT
@@ -544,9 +547,11 @@ gvcf_writer::
 write_site_record(
     const GermlineContinuousSiteLocusInfo& locus) const
 {
-    const unsigned sampleCount(locus.getSampleCount());
     const auto& siteAlleles(locus.getSiteAlleles());
-    const bool isAltAlleles(not siteAlleles.empty());
+    const unsigned altAlleleCount(siteAlleles.size());
+    const bool isAltAlleles(altAlleleCount > 0);
+
+    const unsigned sampleCount(locus.getSampleCount());
 
     /// TODO STREL-125 tmp transitional structures:
     std::vector<uint8_t> altOrder;
@@ -642,12 +647,15 @@ write_site_record(
 
         if (isAltAlleles)
         {
+            printSampleAD(sampleInfo.supportCounts, altAlleleCount, os);
+#if 0
             os << ':';
             print_site_ad(locus.refBaseIndex, siteSampleInfo, altOrder, os);
             os << ':';
             print_site_ad_strand(locus.refBaseIndex, siteSampleInfo, altOrder, true, os);
             os << ':';
             print_site_ad_strand(locus.refBaseIndex, siteSampleInfo, altOrder, false, os);
+#endif
         }
 
         // FT
@@ -726,43 +734,6 @@ write_site_record(
     os << locus.block_dpu.min() << ':'
        << locus.block_dpf.min();
     os << '\n';
-}
-
-
-
-/// print sample AD/ADF/ADR
-static
-void
-printSampleAD(
-    const LocusSupportingReadStats& counts,
-    const unsigned expectedAltAlleleCount,
-    std::ostream& os)
-{
-    // verify locus and sample allele counts are in sync:
-    assert(counts.getAltCount() == expectedAltAlleleCount);
-    const unsigned fullAlleleCount(expectedAltAlleleCount+1);
-
-    // AD
-    os << ':';
-    for (unsigned alleleIndex(0); alleleIndex < fullAlleleCount; ++alleleIndex)
-    {
-       if (alleleIndex>0) os << ',';
-        os << (counts.getCounts(true).confidentAlleleCount(alleleIndex) + counts.getCounts(false).confidentAlleleCount(alleleIndex));
-    }
-
-    // ADF/ADR
-    for (unsigned strandIndex(0); strandIndex<2; ++strandIndex)
-    {
-        const bool isFwdStrand(strandIndex==0);
-        const auto& strandCounts(counts.getCounts(isFwdStrand));
-
-        os << ':';
-        for (unsigned alleleIndex(0); alleleIndex < fullAlleleCount; ++alleleIndex)
-        {
-            if (alleleIndex>0) os << ',';
-            os << strandCounts.confidentAlleleCount(alleleIndex);
-        }
-    }
 }
 
 

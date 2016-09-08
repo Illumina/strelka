@@ -379,7 +379,7 @@ struct VcfGenotypeUtil
 
 inline
 void
-setGentypeFromGenotypeIndex(
+setVcfGenotypeFromGenotypeIndex(
     const int genotypePloidy,
     const unsigned genotypeIndex,
     VcfGenotype& vcfGt)

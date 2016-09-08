@@ -350,11 +350,11 @@ updateSnvLocusWithSampleInfo(
 
     // set PL values:
     const auto& siteAlleles(locus.getSiteAlleles());
-    const uint8_t nonRefAlleleCount(siteAlleles.size());
-    const bool isAltAlleles(nonRefAlleleCount>0);
+    const uint8_t altAlleleCount(siteAlleles.size());
+    const uint8_t fullAlleleCount(altAlleleCount+1);
+    const bool isAltAlleles(altAlleleCount>0);
     if (isAltAlleles)
     {
-        const uint8_t fullAlleleCount(nonRefAlleleCount+1);
 
         // number of PL fields required:
         //const unsigned genotypeCount(VcfGenotypeUtil::getGenotypeCount(callerPloidy, fullAlleleCount));
@@ -387,6 +387,33 @@ updateSnvLocusWithSampleInfo(
         else
         {
             assert(false and "Unexpected ploidy");
+        }
+    }
+
+    // update AD counts:
+    {
+        uint8_t baseIndexToAlleleIndex[N_BASE];
+        {
+            std::fill(std::begin(baseIndexToAlleleIndex), std::end(baseIndexToAlleleIndex), fullAlleleCount);
+            unsigned alleleIndex(0);
+            baseIndexToAlleleIndex[locus.refBaseIndex] = alleleIndex;
+            for (const auto& allele : siteAlleles)
+            {
+                alleleIndex++;
+                baseIndexToAlleleIndex[allele.baseIndex] = alleleIndex;
+            }
+        }
+
+        sampleInfo.supportCounts.setAltCount(altAlleleCount);
+
+        const snp_pos_info& good_pi(cpi.cleanedPileup());
+        for (const auto& call : good_pi.calls)
+        {
+            if (call.base_id==BASE_ID::ANY) continue;
+            if (call.get_qscore()<opt.used_allele_count_min_qscore) continue;
+            const uint8_t alleleIndex(baseIndexToAlleleIndex[call.base_id]);
+            if (alleleIndex==fullAlleleCount) continue;
+            sampleInfo.supportCounts.getCounts(call.is_fwd_strand).incrementAlleleCount(alleleIndex);
         }
     }
 
@@ -1146,7 +1173,7 @@ updateIndelLocusWithSampleInfo(
 
     sampleInfo.genotypeQualityPolymorphic = error_prob_to_qphred(prob_comp(std::begin(genotypePosterior), std::end(genotypePosterior), maxGenotypeIndex));
 
-    setGentypeFromGenotypeIndex(callerPloidy, maxGenotypeIndex, sampleInfo.maxGenotypeIndexPolymorphic);
+    setVcfGenotypeFromGenotypeIndex(callerPloidy, maxGenotypeIndex, sampleInfo.maxGenotypeIndexPolymorphic);
 
     // get genome posterior
     if (callerPloidy == 1)
@@ -1183,7 +1210,7 @@ updateIndelLocusWithSampleInfo(
 
     sampleInfo.genotypeQuality = error_prob_to_qphred(prob_comp(std::begin(genotypePosterior), std::end(genotypePosterior), maxGenotypeIndex));
 
-    setGentypeFromGenotypeIndex(callerPloidy, maxGenotypeIndex, sampleInfo.maxGenotypeIndex);
+    setVcfGenotypeFromGenotypeIndex(callerPloidy, maxGenotypeIndex, sampleInfo.maxGenotypeIndex);
 
     // set GQX
     sampleInfo.setGqx();
