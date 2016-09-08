@@ -348,6 +348,48 @@ updateSnvLocusWithSampleInfo(
         sampleInfo.setGqx();
     }
 
+    // set PL values:
+    const auto& siteAlleles(locus.getSiteAlleles());
+    const uint8_t nonRefAlleleCount(siteAlleles.size());
+    const bool isAltAlleles(nonRefAlleleCount>0);
+    if (isAltAlleles)
+    {
+        const uint8_t fullAlleleCount(nonRefAlleleCount+1);
+
+        // number of PL fields required:
+        //const unsigned genotypeCount(VcfGenotypeUtil::getGenotypeCount(callerPloidy, fullAlleleCount));
+        sampleInfo.genotypePhredLoghood.setPloidy(callerPloidy);
+
+        if (callerPloidy == 1)
+        {
+            for (unsigned allele0Index(0); allele0Index<=fullAlleleCount; ++allele0Index)
+            {
+                const uint8_t base0Index(siteAlleles[allele0Index].baseIndex);
+                DIGT::get_gt_with_alleles(base0Index,base0Index);
+                sampleInfo.genotypePhredLoghood.getGenotypeLikelihood(allele0Index) =
+                    dgt.phredLoghood[base0Index];
+            }
+        }
+        else if(callerPloidy == 2)
+        {
+            for (unsigned allele1Index(0); allele1Index < fullAlleleCount; ++allele1Index)
+            {
+                for (unsigned allele0Index(0); allele0Index <= allele1Index; ++allele0Index)
+                {
+                    const uint8_t base0Index(siteAlleles[allele0Index].baseIndex);
+                    const uint8_t base1Index(siteAlleles[allele1Index].baseIndex);
+                    const unsigned digtGenotypeIndex(DIGT::get_gt_with_alleles(base0Index,base1Index));
+                    sampleInfo.genotypePhredLoghood.getGenotypeLikelihood(allele0Index,allele1Index) =
+                        dgt.phredLoghood[digtGenotypeIndex];
+                }
+            }
+        }
+        else
+        {
+            assert(false and "Unexpected ploidy");
+        }
+    }
+
     // update homref prob for QUAL
     homRefLogProb += std::log(dgt.genome.ref_pprob);
 

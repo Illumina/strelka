@@ -265,24 +265,6 @@ get_visible_alt_order(
 
 static
 void
-print_vcf_alt(
-    const std::vector<uint8_t>& altOrder,
-    std::ostream& os)
-{
-    bool is_print(false);
-    for (const auto& b : altOrder)
-    {
-        if (is_print) os << ',';
-        os << id_to_base(b);
-        is_print=true;
-    }
-    if (! is_print) os << '.';
-}
-
-
-
-static
-void
 print_site_ad(
     const uint8_t refBaseId,
     const GermlineSiteSampleInfo& siteSampleInfo,
@@ -344,6 +326,30 @@ print_site_ad_strand(
 
 
 
+static
+void
+writeSiteVcfAltField(
+    const std::vector<GermlineSiteAlleleInfo>& siteAlleles,
+    std::ostream& os)
+{
+    if (siteAlleles.empty())
+    {
+        os << '.';
+    }
+    else
+    {
+        const unsigned altAlleleCount(siteAlleles.size());
+        for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; altAlleleIndex++)
+        {
+            if (altAlleleIndex != 0) os <<',';
+            os << id_to_base(siteAlleles[altAlleleIndex].baseIndex);
+        }
+    }
+
+}
+
+
+
 //writes out a SNP or block record
 void
 gvcf_writer::
@@ -371,21 +377,11 @@ write_site_record(
     }
 
     // ALT
-    std::vector<uint8_t> altOrder;
-    if (not isAltAlleles)
-    {
-        os << '.';
-    }
-    else if (locus.isPhasedRegion)
-    {
-        os << locus.phased_alt;
-    }
-    else
-    {
-        get_visible_alt_order(locus,altOrder);
-        print_vcf_alt(altOrder,os);
-    }
+    writeSiteVcfAltField(locus.getSiteAlleles(), os);
     os << '\t';
+
+    std::vector<uint8_t> altOrder;
+    get_visible_alt_order(locus,altOrder);
 
     // QUAL:
     if (locus.is_qual())
@@ -518,69 +514,27 @@ write_site_record(
         os << ':';
         sampleInfo.filters.write(os);
 
+        // PL
         if (isAltAlleles)
         {
-            // print PL values
-            os << ':';
-            if (locus.is_hetalt(sampleIndex))
+            os << ":";
+            bool isFirst(true);
+            for (const auto pls : sampleInfo.genotypePhredLoghood)
             {
-                const unsigned print_gt(siteSampleInfo.max_gt);
-                const uint8_t a0(DIGT::get_allele(print_gt, 0));
-                const uint8_t a1(DIGT::get_allele(print_gt, 1));
-                os << siteSampleInfo.dgt.phredLoghood[locus.refBaseIndex] << ','
-                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(locus.refBaseIndex, a0)] << ','
-                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0, a0)] << ','
-                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(locus.refBaseIndex, a1)] << ','
-                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0, a1)] << ','
-                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(a1, a1)];
-            }
-            else if (sampleInfo.getPloidy().isHaploid() || (siteSampleInfo.modified_gt == MODIFIED_SITE_GT::ONE))
-            {
-                os << siteSampleInfo.dgt.phredLoghood[locus.refBaseIndex] << ','
-                   << siteSampleInfo.dgt.phredLoghood[siteSampleInfo.max_gt];
-            }
-            else
-            {
-                const unsigned print_gt(siteSampleInfo.max_gt);
-                const uint8_t a0(DIGT::get_allele(print_gt, 0));
-                const uint8_t a1(DIGT::get_allele(print_gt, 1));
-                uint8_t alt(a0);
-                if (locus.refBaseIndex == a0)
+                if (isFirst)
                 {
-                    alt = a1;
+                    isFirst = false;
                 }
-                os << siteSampleInfo.dgt.phredLoghood[locus.refBaseIndex] << ','
-                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(locus.refBaseIndex, alt)] << ','
-                   << siteSampleInfo.dgt.phredLoghood[DIGT::get_gt_with_alleles(alt, alt)];
+                else
+                {
+                    os << ',';
+                }
+                os << std::min(pls, maxPL);
             }
         }
     }
 
     os << '\n';
-}
-
-
-
-static
-void
-writeSiteVcfAltField(
-    const std::vector<GermlineSiteAlleleInfo>& siteAlleles,
-    std::ostream& os)
-{
-    if (siteAlleles.empty())
-    {
-        os << '.';
-    }
-    else
-    {
-        const unsigned altAlleleCount(siteAlleles.size());
-        for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; altAlleleIndex++)
-        {
-            if (altAlleleIndex != 0) os <<',';
-            os << id_to_base(siteAlleles[altAlleleIndex].baseIndex);
-        }
-    }
-
 }
 
 

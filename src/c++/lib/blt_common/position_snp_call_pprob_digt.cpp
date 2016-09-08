@@ -508,7 +508,7 @@ position_snp_call_pprob_digt(
         }
         for (unsigned gt(0); gt<gtcount; ++gt)
         {
-            dgt.phredLoghood[gt] = std::min(dgt.maxQ,ln_error_prob_to_qphred(lhood[gt]-lhood[maxIndex]));
+            dgt.phredLoghood[gt] = ln_error_prob_to_qphred(lhood[gt]-lhood[maxIndex]);
         }
     }
 
