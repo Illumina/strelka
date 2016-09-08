@@ -580,7 +580,7 @@ writeSiteVcfAltField(
         for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; altAlleleIndex++)
         {
             if (altAlleleIndex != 0) os <<',';
-            os << id_to_base(siteAlleles[altAlleleIndex].baseId);
+            os << id_to_base(siteAlleles[altAlleleIndex].baseIndex);
         }
     }
 
@@ -603,8 +603,8 @@ write_site_record(
     std::vector<uint8_t> altOrder;
     for (const auto& allele : siteAlleles)
     {
-        assert(allele.baseId != refBaseId);
-        altOrder.push_back(allele.baseId);
+        assert(allele.baseIndex != refBaseId);
+        altOrder.push_back(allele.baseIndex);
     }
 
     std::ostream& os(*_osptr);

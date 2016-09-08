@@ -87,7 +87,7 @@ operator<<(
     const GermlineSiteAlleleInfo& allele)
 {
     os << static_cast<GermlineVariantAlleleInfo>(allele) << '\n';
-    os << "base: " << id_to_base(allele.baseId);
+    os << "base: " << id_to_base(allele.baseIndex);
     return os;
 }
 

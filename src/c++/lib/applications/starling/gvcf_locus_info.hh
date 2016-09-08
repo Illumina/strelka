@@ -1141,7 +1141,7 @@ struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
                std::find_if(altAlleles.begin(), altAlleles.end(),
                             [&](const GermlineSiteAlleleInfo& allele)
         {
-            return allele.baseId != ref_id;
+            return allele.baseIndex != ref_id;
         });
     }
 

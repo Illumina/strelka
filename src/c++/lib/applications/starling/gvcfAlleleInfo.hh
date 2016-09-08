@@ -143,17 +143,17 @@ struct GermlineSiteAlleleInfo : public GermlineVariantAlleleInfo
 
     explicit
     GermlineSiteAlleleInfo(const BASE_ID::index_t initBaseId = BASE_ID::ANY)
-        : baseId(initBaseId)
+        : baseIndex(initBaseId)
     {}
 
     void
     clear()
     {
         base_t::clear();
-        baseId = BASE_ID::ANY;
+        baseIndex = BASE_ID::ANY;
     }
 
-    BASE_ID::index_t baseId = BASE_ID::ANY;
+    BASE_ID::index_t baseIndex = BASE_ID::ANY;
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineSiteAlleleInfo& allele);

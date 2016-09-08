@@ -226,7 +226,7 @@ updateSiteSampleInfo(
 
 static
 void
-copmuteSampleDiploidSiteGenotype(
+computeSampleDiploidSiteGenotype(
     const starling_base_options& opt,
     const starling_deriv_options& dopt,
     const starling_pos_processor::sample_info& sif,
@@ -241,15 +241,82 @@ copmuteSampleDiploidSiteGenotype(
 
 
 
+/// translate a base index into the an allele index for the locus
+///
+/// site loci contain alleles in vcf print order of REF, ALT0, ALT1, etc...
+/// this translates the base into the loci's allele index order
+static
+uint8_t
+translateBaseIndexToAlleleIndex(
+    const uint8_t baseIndex,
+    const GermlineSiteLocusInfo& locus)
+{
+    const auto& siteAlleles(locus.getSiteAlleles());
+    uint8_t alleleIndex(0);
+    if (base_to_id(locus.ref) == baseIndex)
+    {
+        return alleleIndex;
+    }
+    alleleIndex++;
+
+    for (const auto& allele : siteAlleles)
+    {
+        if (allele.baseIndex == baseIndex)
+        {
+            return alleleIndex;
+        }
+        alleleIndex++;
+    }
+
+    {
+        using namespace illumina::common;
+        std::ostringstream oss;
+        oss << "ERROR: Can't find allele " << id_to_base(baseIndex) << " expected to be present in site locus\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
+
+    return alleleIndex;
+}
+
+
+
+/// translate older starling "4-allele" genotype index to current VcfGenotype associated
+/// with the specified site locus
+static
+void
+translateDigtToVcfGenotype(
+    const int ploidy,
+    const unsigned digtIndex,
+    const GermlineSiteLocusInfo& locus,
+    VcfGenotype& vcfGt)
+{
+    if (ploidy == 1)
+    {
+        const uint8_t allele0Index(translateBaseIndexToAlleleIndex(DIGT::get_allele(digtIndex, 0), locus));
+        vcfGt.setGenotypeFromAlleleIndices(allele0Index);
+    }
+    else if (ploidy == 2)
+    {
+        const uint8_t allele0Index(translateBaseIndexToAlleleIndex(DIGT::get_allele(digtIndex, 0), locus));
+        const uint8_t allele1Index(translateBaseIndexToAlleleIndex(DIGT::get_allele(digtIndex, 1), locus));
+        vcfGt.setGenotypeFromAlleleIndices(allele0Index, allele1Index);
+    }
+    else
+    {
+        assert(false and "Unexpected ploidy");
+    }
+}
+
+
+
 static
 void
 updateSnvLocusWithSampleInfo(
     const starling_base_options& opt,
-    const starling_deriv_options& dopt,
-    starling_pos_processor::sample_info& sif,
-    const PileupCleaner& pileupCleaner,
+    const starling_pos_processor::sample_info& sif,
     const unsigned callerPloidy,
     const unsigned groupLocusPloidy,
+    const diploid_genotype& dgt,
     const unsigned sampleIndex,
     GermlineDiploidSiteLocusInfo& locus,
     double& homRefLogProb)
@@ -262,19 +329,10 @@ updateSnvLocusWithSampleInfo(
     }
 
     const CleanedPileup& cpi(sif.cpi);
-    //const snp_pos_info& pi(cpi.rawPileup());
-
-    pileupCleaner.CleanPileupErrorProb(sif.cpi);
-
-    const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
-
-    diploid_genotype dgt;
-    dgt.ploidy=callerPloidy;
-    dopt.pdcaller().position_snp_call_pprob_digt(
-        opt, good_epi, dgt, opt.is_all_sites());
+    //const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
     sampleInfo.genotypeQuality = dgt.genome.max_gt_qphred;
-    //sampleInfo.maxGenotypeIndex = dgt.genome.max_gt;
+    translateDigtToVcfGenotype(callerPloidy, dgt.genome.max_gt, locus, sampleInfo.maxGenotypeIndex);
 
     if     (locus.isRefUnknown())
     {
@@ -285,7 +343,7 @@ updateSnvLocusWithSampleInfo(
     else
     {
         sampleInfo.genotypeQualityPolymorphic = dgt.poly.max_gt_qphred;
-        //sampleInfo.maxGenotypeIndexPolymorphic = dgt.poly.max_gt;
+        translateDigtToVcfGenotype(callerPloidy, dgt.poly.max_gt, locus, sampleInfo.maxGenotypeIndexPolymorphic);
 
         sampleInfo.setGqx();
     }
@@ -304,7 +362,7 @@ updateSnvLocusWithSampleInfo(
 void
 starling_pos_processor::
 getSiteAltAlleles(
-    const uint8_t refBaseId,
+    const uint8_t refBaseIndex,
     const std::vector<diploid_genotype>& allDgt,
     std::vector<uint8_t>& altAlleles) const
 {
@@ -324,9 +382,9 @@ getSiteAltAlleles(
         static const double minAlleleFraction(0.10);
         unsigned minCount(0);
         {
-            for (unsigned baseId(0); baseId < N_BASE; ++baseId)
+            for (unsigned baseIndex(0); baseIndex < N_BASE; ++baseIndex)
             {
-                minCount += sampleBaseCounts[baseId];
+                minCount += sampleBaseCounts[baseIndex];
             }
             minCount *= minAlleleFraction;
             minCount = std::max(1u, minCount);
@@ -335,36 +393,78 @@ getSiteAltAlleles(
         const auto ploidy(allDgt[sampleIndex].ploidy);
         for (int ploidyIndex(0); ploidyIndex < ploidy; ++ploidyIndex)
         {
-            unsigned maxBaseId(0);
-            for (unsigned baseId(1); baseId < N_BASE; ++baseId)
+            unsigned maxBaseIndex(0);
+            for (unsigned baseIndex(1); baseIndex < N_BASE; ++baseIndex)
             {
-                if (sampleBaseCounts[baseId] > sampleBaseCounts[maxBaseId])
+                if (sampleBaseCounts[baseIndex] > sampleBaseCounts[maxBaseIndex])
                 {
-                    maxBaseId = baseId;
+                    maxBaseIndex = baseIndex;
                 }
             }
-            if (sampleBaseCounts[maxBaseId] >= minCount)
+            if (sampleBaseCounts[maxBaseIndex] >= minCount)
             {
-                alleleRank[maxBaseId] += (2 - ploidyIndex);
+                alleleRank[maxBaseIndex] += (2 - ploidyIndex);
             }
-            sampleBaseCounts[maxBaseId] = 0;
+            sampleBaseCounts[maxBaseIndex] = 0;
         }
     }
 
+    // translate rank score into order altAllele list:
+    bool isBaseAdded[N_BASE];
+    for (unsigned baseIndex(0); baseIndex < N_BASE; ++baseIndex)
+    {
+        isBaseAdded[baseIndex] = (baseIndex == refBaseIndex);
+    }
     while (true)
     {
-        unsigned maxBaseId(0);
-        for (unsigned baseId(1); baseId < N_BASE; ++baseId)
+        unsigned maxBaseIndex(0);
+        for (unsigned baseIndex(1); baseIndex < N_BASE; ++baseIndex)
         {
-            if (alleleRank[baseId] > alleleRank[maxBaseId])
+            if (alleleRank[baseIndex] > alleleRank[maxBaseIndex])
             {
-                maxBaseId = baseId;
+                maxBaseIndex = baseIndex;
             }
         }
-        if (alleleRank[maxBaseId] == 0) break;
-        alleleRank[maxBaseId] = 0;
-        if (maxBaseId == refBaseId) continue;
-        altAlleles.push_back(maxBaseId);
+        if (alleleRank[maxBaseIndex] == 0) break;
+        alleleRank[maxBaseIndex] = 0;
+        if (maxBaseIndex == refBaseIndex) continue;
+        altAlleles.push_back(maxBaseIndex);
+        isBaseAdded[maxBaseIndex] = true;
+    }
+
+    // go through most likely genotypes and add any remaining bases in essentially random order
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+    {
+        const auto& dgt(allDgt[sampleIndex]);
+        const int ploidy(dgt.ploidy);
+
+        auto checkGtChrom = [&](const unsigned genotypeIndex, const unsigned chromIndex)
+        {
+            const uint8_t baseIndex(DIGT::get_allele(genotypeIndex, chromIndex));
+            if (isBaseAdded[baseIndex]) return;
+            altAlleles.push_back(baseIndex);
+            isBaseAdded[baseIndex] = true;
+        };
+
+        auto checkGt = [&](const unsigned genotypeIndex)
+        {
+            if (ploidy == 1)
+            {
+                checkGtChrom(genotypeIndex, 0);
+            }
+            else if (ploidy == 2)
+            {
+                checkGtChrom(genotypeIndex, 0);
+                checkGtChrom(genotypeIndex, 1);
+            }
+            else
+            {
+                assert(false and "Unexpected ploidy");
+            }
+        };
+
+        checkGt(dgt.poly.max_gt);
+        checkGt(dgt.genome.max_gt);
     }
 }
 
@@ -393,25 +493,39 @@ process_pos_snp_digt(
         _pileupCleaner.CleanPileupErrorProb(sample(sampleIndex).cpi);
     }
 
-    // prep step 2) compute diploid genotype object using older "4-allele" model:
+    // prep step 2) setup ploidy arrays:
+    std::vector<int> groupLocusPloidy;
+    std::vector<int> callerPloidy;
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+    {
+        // groupLocusPloidy of 0 is treated as a special case, if this happens the
+        // entire calling method reverts to a ploidy of 2 for the sample, but the
+        // locus ploidy is passed into the gVCF writer as 0. The gVCF writer can
+        // decide what to do with this information from there.
+        //
+        const int ploidy(get_ploidy(pos, sampleIndex));
+        groupLocusPloidy.push_back(ploidy);
+        callerPloidy.push_back((ploidy == 0) ? 2 : ploidy);
+    }
+
+    // prep step 3) compute diploid genotype object using older "4-allele" model:
     std::vector<diploid_genotype> allDgt(sampleCount);
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
-        const unsigned ploidy(get_ploidy(pos, sampleIndex));
-        copmuteSampleDiploidSiteGenotype(
-            _opt, _dopt, sample(sampleIndex), ploidy, allDgt[sampleIndex]);
+        computeSampleDiploidSiteGenotype(
+            _opt, _dopt, sample(sampleIndex), callerPloidy[sampleIndex], allDgt[sampleIndex]);
     }
 
-    // prep step 3) rank each allele in each sample, allowing up to ploidy alleles.
+    // prep step 4) rank each allele in each sample, allowing up to ploidy alleles.
     //              approximate an aggregate rank over all samples:
-    const uint8_t refBaseId(base_to_id(_ref.get_base(pos)));
+    const uint8_t refBaseIndex(base_to_id(_ref.get_base(pos)));
     std::vector<uint8_t> altAlleles;
-    getSiteAltAlleles(refBaseId, allDgt, altAlleles);
+    getSiteAltAlleles(refBaseIndex, allDgt, altAlleles);
 
     // -----------------------------------------------
     // create site locus object:
     //
-    std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, pos, id_to_base(refBaseId), isForcedOutput));
+    std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, pos, id_to_base(refBaseIndex), isForcedOutput));
 
     // add all candidate alternate alleles:
     for (const auto baseId : altAlleles)
@@ -422,16 +536,9 @@ process_pos_snp_digt(
     double homRefLogProb(0);
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
-        // groupLocusPloidy of 0 is treated as a special case, if this happens the
-        // entire calling method reverts to a ploidy of 2 for the sample, but the
-        // locus ploidy is passed into the gVCF writer as 0. The gVCF writer can
-        // decide what to do with this information from there.
-        //
-        const unsigned groupLocusPloidy(get_ploidy(pos, sampleIndex));
-        const unsigned callerPloidy(groupLocusPloidy==0 ? 2 : groupLocusPloidy);
         updateSnvLocusWithSampleInfo(
-            _opt, _dopt, sample(sampleIndex), _pileupCleaner, callerPloidy, groupLocusPloidy,
-            sampleIndex, *locusPtr, homRefLogProb);
+            _opt, sample(sampleIndex), callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex],
+            allDgt[sampleIndex], sampleIndex, *locusPtr, homRefLogProb);
     }
 
     // add sample-independent info:
@@ -557,12 +664,12 @@ updateContinuousSnvLocusWithSampleInfo(
             {
                 if (bc.is_fwd_strand)
                 {
-                    if (bc.base_id == allele.baseId)
+                    if (bc.base_id == allele.baseIndex)
                         sbcounts.fwdAlt++;
                     else
                         sbcounts.fwdOther++;
                 }
-                else if (bc.base_id == allele.baseId)
+                else if (bc.base_id == allele.baseIndex)
                     sbcounts.revAlt++;
                 else
                     sbcounts.revOther++;

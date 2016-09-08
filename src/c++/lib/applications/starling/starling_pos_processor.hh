@@ -91,7 +91,7 @@ private:
 
     void
     getSiteAltAlleles(
-        const uint8_t refBaseId,
+        const uint8_t refBaseIndex,
         const std::vector<diploid_genotype>& allDgt,
         std::vector<uint8_t>& altAlleles) const;
 
