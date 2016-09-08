@@ -172,6 +172,76 @@ operator<<(std::ostream& os,
 
 
 
+/// code variant as expected in the EVS model
+static
+unsigned
+getEVSGenotypeCode(
+    const bool isDiploid,
+    const uint8_t allele0Index,
+    const uint8_t allele1Index)
+{
+    enum {HET, HOM, HETALT};
+
+    if (isDiploid)
+    {
+        if (allele0Index == allele1Index)
+        {
+            return HOM;
+        }
+        else
+        {
+            if ((allele0Index > 0) and (allele1Index > 0))
+            {
+                return HETALT;
+            }
+            else
+            {
+                return HET;
+            }
+        }
+    }
+    else
+    {
+        return HOM;
+    }
+}
+
+
+
+static
+void
+getAlleleBiasFeatures(
+    const LocusSupportingReadStats& counts,
+    const bool isDiploid,
+    const uint8_t allele0Index,
+    const uint8_t allele1Index,
+    double& ABlower,
+    double& AB)
+{
+    // alleleBiasLower cdf of binomial prob of seeing no more than the number of 'allele A' reads out of A reads + B reads, given p=0.5
+    // alleleBiasUpper cdf of binomial prob of seeing no more than the number of 'allele B' reads out of A reads + B reads, given p=0.5
+    double alleleBiasLower(0);
+    double alleleBiasUpper(0);
+
+    if (isDiploid and (allele0Index != allele1Index))
+    {
+        const auto& fwdCounts(counts.getCounts(true));
+        const auto& revCounts(counts.getCounts(false));
+
+        const double r0(fwdCounts.confidentAlleleCount(allele0Index) + revCounts.confidentAlleleCount(allele0Index));
+        const double r1(fwdCounts.confidentAlleleCount(allele1Index) + revCounts.confidentAlleleCount(allele1Index));
+        alleleBiasLower = cdf(boost::math::binomial(r0 + r1, 0.5), r0);
+        alleleBiasUpper = cdf(boost::math::binomial(r0 + r1, 0.5), r1);
+    }
+
+    // fudge to avoid log(0) in extreme cases
+    static const double fudge(1.e-30);
+    ABlower = -std::log(alleleBiasLower + fudge);
+    AB =-std::log(std::min(1., 2. * std::min(alleleBiasLower, alleleBiasUpper)) + fudge);
+}
+
+
+
 void
 GermlineDiploidSiteLocusInfo::
 computeEmpiricalScoringFeatures(
@@ -199,26 +269,51 @@ computeEmpiricalScoringFeatures(
     const double filteredLocusDepthFactor(safeFrac(1, filteredLocusDepth));
     const double locusDepthFactor(safeFrac(1, locusDepth));
 
-    // TODO STREL-125 generalize to multiple ALTs
     const auto& siteAlleles(locus.getSiteAlleles());
     assert(not siteAlleles.empty());
-    const auto& firstAltAllele(siteAlleles.front());
 
-    // get the alt base id (choose second in case of an alt het....)
-    unsigned altBase(N_BASE);
-    for (uint8_t baseIndex(0); baseIndex < N_BASE; ++baseIndex)
+    uint8_t allele0Index(0);
+    uint8_t allele1Index(0);
+    unsigned primaryAltAlleleIndex(0);
+
+    const auto& maxGt(sampleInfo.max_gt());
+    const SamplePloidyState ploidy(maxGt.getPloidy());
+
+    if (ploidy.isDiploid())
     {
-        if (baseIndex == locus.refBaseIndex) continue;
-        if (DIGT::expect2(baseIndex, siteSampleInfo.max_gt))
+        allele0Index = maxGt.getAllele0Index();
+        allele1Index = maxGt.getAllele1Index();
+        if (allele0Index>0)
         {
-            altBase = baseIndex;
+            primaryAltAlleleIndex = (allele0Index - 1);
+        }
+        else if (allele1Index>0)
+        {
+            primaryAltAlleleIndex = (allele1Index - 1);
         }
     }
-    assert(altBase != N_BASE);
+    else if (ploidy.isHaploid())
+    {
+        allele0Index = maxGt.getAllele0Index();
+        if (allele0Index>0)
+        {
+            primaryAltAlleleIndex = allele0Index-1;
+        }
+    }
+    else
+    {
+        assert(false and "Unexpected ploidy");
+    }
 
-    /// TODO STREL-125 generalize to multi-alt
-    const unsigned r0 = siteSampleInfo.alleleObservationCounts(locus.refBaseIndex);
-    const unsigned r1 = siteSampleInfo.alleleObservationCounts(altBase);
+    ///TODO STREL-125 generalize to multiple alts:
+    const auto& primaryAltAllele(siteAlleles[primaryAltAlleleIndex]);
+
+    const unsigned confidentRefCount(
+        sampleInfo.supportCounts.getCounts(true).confidentRefAlleleCount() +
+        sampleInfo.supportCounts.getCounts(false).confidentRefAlleleCount());
+    const unsigned confidentPrimaryAltCount(
+        sampleInfo.supportCounts.getCounts(true).confidentAltAlleleCount(primaryAltAlleleIndex) +
+        sampleInfo.supportCounts.getCounts(false).confidentAltAlleleCount(primaryAltAlleleIndex));
 
     const double mapqZeroFraction(siteSampleInfo.mapqTracker.getZeroFrac());
 
@@ -227,9 +322,8 @@ computeEmpiricalScoringFeatures(
 
     if (isRNA)
     {
-        double genotype(2.0);
-        if (locus.is_het(sampleIndex) or locus.is_hetalt(sampleIndex)) genotype = 1.0;
-        features.set(RNA_SNV_SCORING_FEATURES::GT, (genotype));
+        features.set(RNA_SNV_SCORING_FEATURES::GT,
+                     getEVSGenotypeCode(ploidy.isDiploid(), allele0Index, allele1Index));
 
         features.set(RNA_SNV_SCORING_FEATURES::QUAL, (locus.anyVariantAlleleQuality * chromDepthFactor));
         features.set(RNA_SNV_SCORING_FEATURES::F_DP, (siteSampleInfo.n_used_calls * chromDepthFactor));
@@ -244,12 +338,13 @@ computeEmpiricalScoringFeatures(
         features.set(RNA_SNV_SCORING_FEATURES::I_ReadPosRankSum, (siteSampleInfo.ReadPosRankSum));
 
         features.set(RNA_SNV_SCORING_FEATURES::I_SNVHPOL, (locus.hpol));
-        features.set(RNA_SNV_SCORING_FEATURES::I_SNVSB, (firstAltAllele.strandBias));
+        features.set(RNA_SNV_SCORING_FEATURES::I_SNVSB, (primaryAltAllele.strandBias));
 
-        features.set(RNA_SNV_SCORING_FEATURES::AD0, (r0 * chromDepthFactor));
-        features.set(RNA_SNV_SCORING_FEATURES::AD1, (r1 * chromDepthFactor));
+        features.set(RNA_SNV_SCORING_FEATURES::AD0, (confidentRefCount * chromDepthFactor));
+        features.set(RNA_SNV_SCORING_FEATURES::AD1, (confidentPrimaryAltCount * chromDepthFactor));
 
-        features.set(RNA_SNV_SCORING_FEATURES::ADR, safeFrac(r0, (r0 + r1)));
+        /// TODO STREL-125 generalize this to multi-alts:
+        features.set(RNA_SNV_SCORING_FEATURES::ADR, safeFrac(confidentRefCount, (confidentRefCount + confidentPrimaryAltCount)));
 
         // compute any experimental features not currently used in production
         //
@@ -270,9 +365,9 @@ computeEmpiricalScoringFeatures(
                                           (sampleInfo.genotypeQualityPolymorphic * filteredLocusDepthFactor));
 
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
-                                          (r0 * filteredLocusDepthFactor));
+                                          (confidentRefCount * filteredLocusDepthFactor));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::AD1_NORM,
-                                          (r1 * filteredLocusDepthFactor));
+                                          (confidentPrimaryAltCount * filteredLocusDepthFactor));
 
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT,
                                           (locus.anyVariantAlleleQuality));
@@ -282,16 +377,12 @@ computeEmpiricalScoringFeatures(
     }
     else
     {
-        {
-            double genotype(0);
-            if (locus.is_hetalt(sampleIndex)) genotype = 2;
-            else if (not locus.is_het(sampleIndex)) genotype = 1;
-            features.set(GERMLINE_SNV_SCORING_FEATURES::GENO, genotype);
-        }
+        features.set(GERMLINE_SNV_SCORING_FEATURES::GENO,
+                     getEVSGenotypeCode(ploidy.isDiploid(), allele0Index, allele1Index));
 
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQ, (siteSampleInfo.mapqTracker.getRMS()));
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVHPOL, (locus.hpol));
-        features.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVSB, (firstAltAllele.strandBias));
+        features.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVSB, (primaryAltAllele.strandBias));
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQRankSum, (siteSampleInfo.MQRankSum));
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_ReadPosRankSum, (siteSampleInfo.ReadPosRankSum));
 
@@ -320,13 +411,13 @@ computeEmpiricalScoringFeatures(
 
             // allele bias metrics
             {
-                const double allelebiaslower = cdf(boost::math::binomial(r0 + r1, 0.5), r0);
-                const double allelebiasupper = cdf(boost::math::binomial(r0 + r1, 0.5), r1);
+                double ABlower, AB;
+                getAlleleBiasFeatures(
+                    sampleInfo.supportCounts, ploidy.isDiploid(), allele0Index, allele1Index,
+                    ABlower, AB);
 
-                // +1e-30 to avoid log(0) in extreme cases
-                developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::ABlower, (-log(allelebiaslower + 1.e-30)));
-                developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AB,
-                                              (-log(std::min(1., 2. * std::min(allelebiaslower, allelebiasupper)) + 1.e-30)));
+                developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::ABlower, ABlower);
+                developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AB, AB);
             }
 
             //The average baseQ of the position of alt allele
@@ -348,14 +439,14 @@ computeEmpiricalScoringFeatures(
                                           (sampleInfo.genotypeQualityPolymorphic * filteredLocusDepthFactor));
 
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
-                                          (r0 * filteredLocusDepthFactor));
+                                          (confidentRefCount * filteredLocusDepthFactor));
 
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT,
                                           (locus.anyVariantAlleleQuality));
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (sampleInfo.genotypeQualityPolymorphic));
 
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD1_NORM,
-                                       (r1 * filteredLocusDepthFactor));
+                                       (confidentPrimaryAltCount * filteredLocusDepthFactor));
         }
     }
 }
@@ -434,25 +525,11 @@ computeEmpiricalScoringFeatures(
         sampleInfo.supportCounts.getCounts(true).confidentAltAlleleCount(primaryAltAlleleIndex) +
         sampleInfo.supportCounts.getCounts(false).confidentAltAlleleCount(primaryAltAlleleIndex));
 
-    // cdf of binomial prob of seeing no more than the number of 'allele A' reads out of A reads + B reads, given p=0.5
-    // cdf of binomial prob of seeing no more than the number of 'allele B' reads out of A reads + B reads, given p=0.5
-    double allelebiaslower = 0;
-    double allelebiasupper = 0;
-    if (ploidy.isDiploid())
-    {
-        const auto& fwdCounts(sampleInfo.supportCounts.getCounts(true));
-        const auto& revCounts(sampleInfo.supportCounts.getCounts(false));
+    // allele bias metrics
+    double ABlower, AB;
+    getAlleleBiasFeatures(sampleInfo.supportCounts, ploidy.isDiploid(), allele0Index, allele1Index, ABlower, AB);
 
-        if (allele0Index != allele1Index)
-        {
-            const double r0(fwdCounts.confidentAlleleCount(allele0Index) + revCounts.confidentAlleleCount(allele0Index));
-            const double r1(fwdCounts.confidentAlleleCount(allele1Index) + revCounts.confidentAlleleCount(allele1Index));
-            allelebiaslower = cdf(boost::math::binomial(r0 + r1, 0.5), r0);
-            allelebiasupper = cdf(boost::math::binomial(r0 + r1, 0.5), r1);
-        }
-    }
-
-    if (isRNA)
+        if (isRNA)
     {
         features.set(RNA_INDEL_SCORING_FEATURES::QUAL, (locus.anyVariantAlleleQuality * allSampleChromDepthFactor));
         features.set(RNA_INDEL_SCORING_FEATURES::F_GQX, (sampleInfo.gqx * allSampleChromDepthFactor));
@@ -465,11 +542,8 @@ computeEmpiricalScoringFeatures(
                      (confidentPrimaryAltCount * allSampleChromDepthFactor));
         features.set(RNA_INDEL_SCORING_FEATURES::F_DPI, (indelSampleInfo.tier1Depth * allSampleChromDepthFactor));
 
-        // +1e-30 to avoid log(0) in extreme cases
-        features.set(RNA_INDEL_SCORING_FEATURES::ABlower, (-std::log(allelebiaslower + 1.e-30)));
-        features.set(RNA_INDEL_SCORING_FEATURES::AB,
-                     (-std::log(std::min(1., 2. * std::min(allelebiaslower, allelebiasupper)) + 1.e-30)));
-
+        developmentFeatures.set(RNA_INDEL_SCORING_FEATURES::ABlower, ABlower);
+        developmentFeatures.set(RNA_INDEL_SCORING_FEATURES::AB, AB);
 
         // compute any experimental features not currently used in production
         if (isComputeDevelopmentFeatures)
@@ -507,33 +581,13 @@ computeEmpiricalScoringFeatures(
     }
     else
     {
-        // code genotype as expected in the RF model:
-        {
-            // HET
-            double genotype(0);
-            if (ploidy.isDiploid())
-            {
-                // HOM
-                if (allele0Index == allele1Index)
-                {
-                    genotype = 1;
-                }
-                else
-                {
-                    // HETALT
-                    if ((allele0Index>0) and (allele1Index>0)) genotype = 2;
-                }
-            }
-            features.set(GERMLINE_INDEL_SCORING_FEATURES::GENO, genotype);
-        }
-
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::GENO,
+                     getEVSGenotypeCode(ploidy.isDiploid(), allele0Index, allele1Index));
         features.set(GERMLINE_INDEL_SCORING_FEATURES::IDREP1, (primaryAltAllele.indelReportInfo.indel_repeat_count));
         features.set(GERMLINE_INDEL_SCORING_FEATURES::RULEN1, (primaryAltAllele.indelReportInfo.repeat_unit.length()));
 
-        // +1e-30 to avoid log(0) in extreme cases
-        features.set(GERMLINE_INDEL_SCORING_FEATURES::ABlower, (-std::log(allelebiaslower + 1.e-30)));
-        features.set(GERMLINE_INDEL_SCORING_FEATURES::AB,
-                     (-std::log(std::min(1., 2. * std::min(allelebiaslower, allelebiasupper)) + 1.e-30)));
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::ABlower, ABlower);
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::AB, AB);
 
         // how unreliable are the read mappings near this locus?
         features.set(GERMLINE_INDEL_SCORING_FEATURES::F_MQ,
