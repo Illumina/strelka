@@ -71,6 +71,8 @@ is_new_value_blockable(const int new_val,
     return check_block_tolerance(ss2,frac_tol,abs_tol);
 }
 
+
+
 bool
 gvcf_block_site_record::
 testCanSiteJoinSampleBlockShared(
@@ -108,6 +110,12 @@ testCanSiteJoinSampleBlockShared(
     if (blockSiteSampleInfo.isAnyReadCoverage() != inputSiteSampleInfo.isAnyReadCoverage()) return false;
     if (blockSiteSampleInfo.isUsedReadCoverage() != inputSiteSampleInfo.isUsedReadCoverage()) return false;
 
+    // genotype must match
+    if (not (blockSampleInfo.maxGenotypeIndexPolymorphic == inputSampleInfo.max_gt())) return false;
+
+    // ploidy must match
+    if (not (blockSampleInfo.getPloidy().getPloidy() == inputSampleInfo.getPloidy().getPloidy())) return false;
+
     return true;
 }
 
@@ -115,7 +123,7 @@ testCanSiteJoinSampleBlockShared(
 
 void
 gvcf_block_site_record::
-joinSiteToSampleBlockShared(
+joinSiteToSampleBlock(
     const GermlineSiteLocusInfo& locus,
     const unsigned sampleIndex)
 {
@@ -125,6 +133,7 @@ joinSiteToSampleBlockShared(
     static const unsigned blockSampleIndex(0);
     LocusSampleInfo& blockSampleInfo(getSample(blockSampleIndex));
 
+    const bool is_gqx(locus.is_gqx(sampleIndex));
     if (count == 0)
     {
         pos = locus.pos;
@@ -134,10 +143,17 @@ joinSiteToSampleBlockShared(
         blockSampleInfo.filters = inputSampleInfo.filters;
         setNonRef(locus.is_nonref(sampleIndex));
         setSiteSampleInfo(blockSampleIndex, inputSiteSampleInfo);
+        blockSampleInfo.maxGenotypeIndexPolymorphic = inputSampleInfo.max_gt();
+        blockSampleInfo.setPloidy(inputSampleInfo.getPloidy().getPloidy());
+        isBlockGqxDefined = is_gqx;
     }
 
     block_dpu.add(inputSiteSampleInfo.n_used_calls);
     block_dpf.add(inputSiteSampleInfo.n_unused_calls);
+    if (is_gqx)
+    {
+        block_gqx.add(inputSampleInfo.gqx);
+    }
 
     count += 1;
 }
@@ -156,11 +172,6 @@ testCanSiteJoinSampleBlock(
 
     const LocusSampleInfo& inputSampleInfo(locus.getSample(sampleIndex));
 
-    if (gt != locus.get_gt(sampleIndex)) return false;
-
-    // ploidy must match
-    if (ploidy != inputSampleInfo.getPloidy().getPloidy()) return false;
-
     // test blocking values:
     if (! is_new_value_blockable(inputSampleInfo.gqx,
                                  block_gqx,frac_tol,abs_tol,
@@ -171,32 +182,6 @@ testCanSiteJoinSampleBlock(
     }
 
     return true;
-}
-
-
-
-void
-gvcf_block_site_record::
-joinSiteToSampleBlock(
-    const GermlineDiploidSiteLocusInfo& locus,
-    const unsigned sampleIndex)
-{
-    const LocusSampleInfo& inputSampleInfo(locus.getSample(sampleIndex));
-
-    const bool is_gqx(locus.is_gqx(sampleIndex));
-    if (count == 0)
-    {
-        gt = locus.get_gt(sampleIndex);
-        ploidy = inputSampleInfo.getPloidy().getPloidy();
-        isBlockGqxDefined = is_gqx;
-    }
-
-    if (is_gqx)
-    {
-        block_gqx.add(inputSampleInfo.gqx);
-    }
-
-    joinSiteToSampleBlockShared(locus, sampleIndex);
 }
 
 
@@ -213,10 +198,6 @@ testCanSiteJoinSampleBlock(
 
     const LocusSampleInfo& inputSampleInfo(locus.getSample(sampleIndex));
 
-    std::ostringstream oss;
-    VcfGenotypeUtil::writeGenotype(inputSampleInfo.getPloidy().getPloidy(),inputSampleInfo.max_gt(),oss);
-    if (gt != oss.str()) return false;
-
     if (isBlockGqxDefined)
     {
         // test blocking values:
@@ -230,30 +211,4 @@ testCanSiteJoinSampleBlock(
     }
 
     return true;
-}
-
-
-
-void
-gvcf_block_site_record::
-joinSiteToSampleBlock(
-    const GermlineContinuousSiteLocusInfo& locus,
-    const unsigned sampleIndex)
-{
-    const LocusSampleInfo& inputSampleInfo(locus.getSample(sampleIndex));
-
-    if (count == 0)
-    {
-        std::ostringstream oss;
-        VcfGenotypeUtil::writeGenotype(inputSampleInfo.getPloidy().getPloidy(),inputSampleInfo.max_gt(),oss);
-        gt = oss.str();
-
-        // GQX is always defined in continuous call mode:
-        isBlockGqxDefined = true;
-        ploidy = -1;
-    }
-
-    block_gqx.add(inputSampleInfo.gqx);
-
-    joinSiteToSampleBlockShared(locus, sampleIndex);
 }

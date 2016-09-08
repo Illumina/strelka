@@ -125,6 +125,135 @@ parse_gt(
      const bool is_allow_bad_end_char=false);
 
 
+/// a general-purpose genotype object, capable of expressing any valid GT in the VCF standard (of ploidy 2 or less)
+struct VcfGenotype
+{
+    VcfGenotype()
+    {
+        setGenotypeFromAlleleIndices();
+    }
+
+    explicit
+    VcfGenotype(const unsigned allele0Index)
+    {
+        setGenotypeFromAlleleIndices(allele0Index);
+    }
+
+    VcfGenotype(
+        const unsigned allele0Index,
+        const unsigned allele1Index,
+        const bool isPhased = false)
+    {
+        setGenotypeFromAlleleIndices(allele0Index, allele1Index, isPhased);
+    }
+
+    void
+    setGenotypeFromAlleleIndices()
+    {
+        _ploidy=0;
+    }
+
+    void
+    setGenotypeFromAlleleIndices(
+        const unsigned allele0Index)
+    {
+        _ploidy=1;
+        _allele0Index = allele0Index;
+    }
+
+    void
+    setGenotypeFromAlleleIndices(
+        const unsigned allele0Index,
+        const unsigned allele1Index,
+        const bool isPhased = false)
+    {
+        _ploidy=2;
+        _allele0Index = allele0Index;
+        _allele1Index = allele1Index;
+        _isPhased = isPhased;
+
+        if (not _isPhased)
+        {
+            if (_allele0Index > _allele1Index)
+            {
+                std::swap(_allele0Index,_allele1Index);
+            }
+        }
+    }
+
+    bool
+    isUnknown() const
+    {
+        return ((_ploidy < 1) || (_ploidy > 2));
+    }
+
+    bool
+    isPhased() const
+    {
+        return _isPhased;
+    }
+
+    uint8_t
+    getAllele0Index() const
+    {
+        assert(_ploidy >= 1);
+        return _allele0Index;
+    }
+
+    uint8_t
+    getAllele1Index() const
+    {
+        assert(_ploidy >= 2);
+        return _allele1Index;
+    }
+
+    int
+    getPloidy() const
+    {
+        return _ploidy;
+    }
+
+    bool
+    isVariant() const
+    {
+        return ((_allele0Index != 0) || (_allele1Index != 0));
+    }
+
+    void
+    clear()
+    {
+        _ploidy = 2;
+        _allele0Index = 0;
+        _allele1Index = 0;
+
+        _isPhased = false;
+    }
+
+    bool
+    operator==(const VcfGenotype& rhs) const
+    {
+        return
+            ((_ploidy == rhs._ploidy) and
+             (_allele0Index == rhs._allele0Index) and
+             (_allele1Index == rhs._allele1Index) and
+             (_isPhased == rhs._isPhased));
+    }
+
+private:
+    /// these first four values are private because they must change in sync:
+    int _ploidy = 2;
+    uint8_t _allele0Index = 0;
+    uint8_t _allele1Index = 0;
+
+    bool _isPhased = false;
+};
+
+
+
+std::ostream&
+operator<<(std::ostream& os, const VcfGenotype& vcfGt);
+
+
 struct VcfGenotypeUtil
 {
     static
@@ -239,4 +368,36 @@ struct VcfGenotypeUtil
         const uint8_t allele0Index,
         const uint8_t allele1Index,
         std::ostream& os);
+
+    static
+    void
+    writeGenotype(
+        const VcfGenotype& vcfGt,
+        std::ostream& os);
 };
+
+
+inline
+void
+setGentypeFromGenotypeIndex(
+    const int genotypePloidy,
+    const unsigned genotypeIndex,
+    VcfGenotype& vcfGt)
+{
+    if (genotypePloidy == 1)
+    {
+        uint8_t allele0Index;
+        VcfGenotypeUtil::getAlleleIndices(genotypeIndex, allele0Index);
+        vcfGt.setGenotypeFromAlleleIndices(allele0Index);
+    }
+    else if (genotypePloidy == 2)
+    {
+        uint8_t allele0Index, allele1Index;
+        VcfGenotypeUtil::getAlleleIndices(genotypeIndex, allele0Index, allele1Index);
+        vcfGt.setGenotypeFromAlleleIndices(allele0Index, allele1Index);
+    }
+    else
+    {
+        assert(false and "Unexpected ploidy");
+    }
+}

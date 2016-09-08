@@ -31,6 +31,12 @@
 
 struct SamplePloidyState
 {
+    explicit
+    SamplePloidyState(const int ploidy = 2)
+    {
+        setPloidy(ploidy);
+    }
+
     void
     setPloidy(const int ploidy)
     {

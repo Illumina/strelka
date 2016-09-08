@@ -50,18 +50,13 @@ struct gvcf_block_site_record : public GermlineSiteLocusInfo
     reset()
     {
         base_t::clear();
-
-        allele.clear();
-
         count=0;
         block_gqx.reset();
         block_dpu.reset();
         block_dpf.reset();
         pos=-1;
         ref=(char)0;
-        gt = ".";
         isBlockGqxDefined = _isNonRef=false;
-        ploidy = 0;
     }
 
     /// determine if the given site could be joined to this block:
@@ -69,12 +64,6 @@ struct gvcf_block_site_record : public GermlineSiteLocusInfo
     testCanSiteJoinSampleBlock(
         const GermlineDiploidSiteLocusInfo& locus,
         const unsigned sampleIndex) const;
-
-    /// add site to the current block
-    void
-    joinSiteToSampleBlock(
-        const GermlineDiploidSiteLocusInfo& locus,
-        const unsigned sampleIndex);
 
     /// determine if the given site could be joined to this block:
     bool
@@ -85,13 +74,8 @@ struct gvcf_block_site_record : public GermlineSiteLocusInfo
     /// add site to the current block
     void
     joinSiteToSampleBlock(
-        const GermlineContinuousSiteLocusInfo& locus,
+        const GermlineSiteLocusInfo& locus,
         const unsigned sampleIndex);
-
-    const char* get_gt() const
-    {
-        return gt.c_str();
-    }
 
     bool is_nonref(const unsigned /*sampleIndex*/) const override
     {
@@ -108,12 +92,6 @@ private:
         const GermlineSiteLocusInfo& locus,
         const unsigned sampleIndex) const;
 
-    /// reduce diploid/continuous site duplication by putting common join logic here
-    void
-    joinSiteToSampleBlockShared(
-        const GermlineSiteLocusInfo& locus,
-        const unsigned sampleIndex);
-
     void
     setNonRef(const bool isNonRef)
     {
@@ -121,13 +99,9 @@ private:
     }
 
 public:
-    GermlineVariantAlleleInfo allele;
-
     const double frac_tol;
     const int abs_tol;
     int count;
-    int ploidy;
-    std::string gt;
     stream_stat block_gqx;
     stream_stat block_dpu;
     stream_stat block_dpf;

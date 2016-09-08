@@ -346,10 +346,10 @@ modify_indel_overlap_site(
 
         sampleInfo.gqx = std::min(sampleInfo.gqx, indelSampleInfo.gqx);
 
-        const unsigned ploidy(indelLocus.getSitePloidy(sampleIndex, offset));
+        const unsigned indelInducedSitePloidy(indelLocus.getSitePloidy(sampleIndex, offset));
 
         // change ploidy:
-        if (ploidy == 1)
+        if (indelInducedSitePloidy == 1)
         {
             /// TODO STREL-125 change site GT to per-sample:
             if (DIGT::is_het(siteSampleInfo.max_gt))
@@ -368,12 +368,12 @@ modify_indel_overlap_site(
                 }
             }
         }
-        else if (ploidy == 0)
+        else if (indelInducedSitePloidy == 0)
         {
             if (siteSampleInfo.max_gt == refBaseId)
             {
                 siteSampleInfo.modified_gt = MODIFIED_SITE_GT::UNKNOWN;
-                siteSampleInfo.is_zero_ploidy = true;
+                siteSampleInfo.isOverlappingHomAltDeletion = true;
                 if (sampleInfo.getPloidy().isNoploid())
                 {
                     sampleInfo.filters.unset(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
@@ -384,7 +384,7 @@ modify_indel_overlap_site(
                 sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
             }
         }
-        else if (ploidy != 2)
+        else if (indelInducedSitePloidy != 2)
         {
             assert(false && "Unexpected ploidy value");
         }

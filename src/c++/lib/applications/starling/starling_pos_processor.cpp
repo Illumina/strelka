@@ -274,27 +274,20 @@ updateSnvLocusWithSampleInfo(
         opt, good_epi, dgt, opt.is_all_sites());
 
     sampleInfo.genotypeQuality = dgt.genome.max_gt_qphred;
-    sampleInfo.maxGenotypeIndex = dgt.genome.max_gt;
+    //sampleInfo.maxGenotypeIndex = dgt.genome.max_gt;
 
     if     (locus.isRefUnknown())
     {
         sampleInfo.genotypeQualityPolymorphic=0;
-        sampleInfo.maxGenotypeIndexPolymorphic=0;
+        sampleInfo.maxGenotypeIndexPolymorphic.setGenotypeFromAlleleIndices();
         sampleInfo.gqx=0;
     }
     else
     {
         sampleInfo.genotypeQualityPolymorphic = dgt.poly.max_gt_qphred;
-        sampleInfo.maxGenotypeIndexPolymorphic = dgt.poly.max_gt;
+        //sampleInfo.maxGenotypeIndexPolymorphic = dgt.poly.max_gt;
 
-        if (sampleInfo.maxGenotypeIndex != sampleInfo.maxGenotypeIndexPolymorphic)
-        {
-            sampleInfo.gqx = 0;
-        }
-        else
-        {
-            sampleInfo.gqx = std::min(sampleInfo.genotypeQuality, sampleInfo.genotypeQualityPolymorphic);
-        }
+        sampleInfo.setGqx();
     }
 
     // update homref prob for QUAL
@@ -530,11 +523,11 @@ updateContinuousSnvLocusWithSampleInfo(
 
         {
             // use diploid gt codes as a convenient way to summarize the continuous variant calls:
-            static const unsigned homrefGtIndex(VcfGenotypeUtil::getGenotypeIndex(0, 0));
-            static const unsigned hetGtIndex(VcfGenotypeUtil::getGenotypeIndex(0, 1));
-            static const unsigned homGtIndex(VcfGenotypeUtil::getGenotypeIndex(1, 1));
+            static const VcfGenotype homrefGtIndex(0, 0);
+            static const VcfGenotype hetGtIndex(0, 1);
+            static const VcfGenotype homGtIndex(1, 1);
 
-            auto getGtIndex = [&]() -> unsigned {
+            auto getGtIndex = [&]() -> VcfGenotype {
                 if (isRefAllele)
                     return homrefGtIndex;
                 else if (alleleFrequency >= (1. - opt.min_het_vf))
@@ -780,19 +773,15 @@ updateIndelSampleInfo(
     };
 
     std::fill(sitePloidy.begin(), sitePloidy.end(), callerPloidy);
+    const auto& maxGt(sampleInfo.max_gt());
     if (callerPloidy == 2)
     {
-        uint8_t allele0Index, allele1Index;
-        VcfGenotypeUtil::getAlleleIndices(sampleInfo.maxGenotypeIndexPolymorphic, allele0Index,
-                                          allele1Index);
-        updateSitePloidyForAlleleIndex(allele0Index);
-        updateSitePloidyForAlleleIndex(allele1Index);
+        updateSitePloidyForAlleleIndex(maxGt.getAllele0Index());
+        updateSitePloidyForAlleleIndex(maxGt.getAllele0Index());
     }
     else if (callerPloidy == 1)
     {
-        uint8_t allele0Index;
-        VcfGenotypeUtil::getAlleleIndices(sampleInfo.maxGenotypeIndexPolymorphic, allele0Index);
-        updateSitePloidyForAlleleIndex(allele0Index);
+        updateSitePloidyForAlleleIndex(maxGt.getAllele0Index());
     }
     else
     {
@@ -1004,10 +993,12 @@ updateIndelLocusWithSampleInfo(
         assert(false and "Unexpected ploidy value");
     }
 
-    normalize_ln_distro(std::begin(genotypePosterior), std::end(genotypePosterior), sampleInfo.maxGenotypeIndexPolymorphic);
+    unsigned maxGenotypeIndex(0);
+    normalize_ln_distro(std::begin(genotypePosterior), std::end(genotypePosterior), maxGenotypeIndex);
 
-    sampleInfo.genotypeQualityPolymorphic = error_prob_to_qphred(prob_comp(std::begin(genotypePosterior), std::end(genotypePosterior), sampleInfo.maxGenotypeIndexPolymorphic));
+    sampleInfo.genotypeQualityPolymorphic = error_prob_to_qphred(prob_comp(std::begin(genotypePosterior), std::end(genotypePosterior), maxGenotypeIndex));
 
+    setGentypeFromGenotypeIndex(callerPloidy, maxGenotypeIndex, sampleInfo.maxGenotypeIndexPolymorphic);
 
     // get genome posterior
     if (callerPloidy == 1)
@@ -1040,20 +1031,14 @@ updateIndelLocusWithSampleInfo(
         assert(false and "Unexpected ploidy value");
     }
 
-    normalize_ln_distro(std::begin(genotypePosterior), std::end(genotypePosterior), sampleInfo.maxGenotypeIndex);
+    normalize_ln_distro(std::begin(genotypePosterior), std::end(genotypePosterior), maxGenotypeIndex);
 
-    sampleInfo.genotypeQuality = error_prob_to_qphred(prob_comp(std::begin(genotypePosterior), std::end(genotypePosterior), sampleInfo.maxGenotypeIndex));
+    sampleInfo.genotypeQuality = error_prob_to_qphred(prob_comp(std::begin(genotypePosterior), std::end(genotypePosterior), maxGenotypeIndex));
+
+    setGentypeFromGenotypeIndex(callerPloidy, maxGenotypeIndex, sampleInfo.maxGenotypeIndex);
 
     // set GQX
-    // maxGenotypeIndex != maxGenotypeIndexPolymorphic indicates we're in a boundary zone between variant and hom-ref call
-    if (sampleInfo.maxGenotypeIndex != sampleInfo.maxGenotypeIndexPolymorphic)
-    {
-        sampleInfo.gqx = 0;
-    }
-    else
-    {
-        sampleInfo.gqx = std::min(sampleInfo.genotypeQuality, sampleInfo.genotypeQualityPolymorphic);
-    }
+    sampleInfo.setGqx();
 
     // update homref prob for QUAL
     homRefLogProb += std::log(genotypePosterior[AG_GENOTYPE::HOMREF]);
@@ -1349,8 +1334,8 @@ updateContinuousIndelLocusWithSampleInfo(
             (unsigned) opt.min_qscore, 40);
 
     // use diploid gt codes as a convenient way to summarize the continuous variant calls:
-    static const unsigned hetGtIndex(VcfGenotypeUtil::getGenotypeIndex(0,1));
-    static const unsigned homGtIndex(VcfGenotypeUtil::getGenotypeIndex(1,1));
+    static const VcfGenotype hetGtIndex(0,1);
+    static const VcfGenotype homGtIndex(1,1);
 
     const bool isHetLike(indelSampleInfo.alleleFrequency() < (1 - opt.min_het_vf));
 

@@ -392,14 +392,17 @@ computeEmpiricalScoringFeatures(
     const double locusDepthFactor(safeFrac(1,locusDepth));
     const double confidentDepthFactor(safeFrac(1,confidentDepth));
 
-    const auto& ploidy(sampleInfo.getPloidy());
     uint8_t allele0Index(0);
     uint8_t allele1Index(0);
     unsigned primaryAltAlleleIndex(0);
 
+    const auto& maxGt(sampleInfo.max_gt());
+    const SamplePloidyState ploidy(maxGt.getPloidy());
+
     if (ploidy.isDiploid())
     {
-        VcfGenotypeUtil::getAlleleIndices(sampleInfo.max_gt(), allele0Index, allele1Index);
+        allele0Index = maxGt.getAllele0Index();
+        allele1Index = maxGt.getAllele1Index();
         if (allele0Index>0)
         {
             primaryAltAlleleIndex = (allele0Index - 1);
@@ -411,11 +414,15 @@ computeEmpiricalScoringFeatures(
     }
     else if (ploidy.isHaploid())
     {
-        VcfGenotypeUtil::getAlleleIndices(sampleInfo.max_gt(), allele0Index);
+        allele0Index = maxGt.getAllele0Index();
         if (allele0Index>0)
         {
             primaryAltAlleleIndex = allele0Index-1;
         }
+    }
+    else
+    {
+        assert(false and "Unexpected ploidy");
     }
 
     ///TODO STREL-125 generalize to multiple alts:

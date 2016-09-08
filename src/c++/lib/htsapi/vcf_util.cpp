@@ -164,6 +164,14 @@ parse_gt(const char* gt,
 }
 
 
+std::ostream&
+operator<<(std::ostream& os, const VcfGenotype& vcfGt)
+{
+    VcfGenotypeUtil::writeGenotype(vcfGt, os);
+    return os;
+}
+
+
 
 void
 VcfGenotypeUtil::
@@ -185,3 +193,31 @@ writeGenotype(
 {
     os << static_cast<int>(allele0Index) << '/' << static_cast<int>(allele1Index);
 }
+
+
+
+void
+VcfGenotypeUtil::
+writeGenotype(
+    const VcfGenotype& vcfGt,
+    std::ostream& os)
+{
+    if (vcfGt.isUnknown())
+    {
+        os << '.';
+    }
+    else
+    {
+        if (vcfGt.getPloidy() > 0)
+        {
+            os << static_cast<int>(vcfGt.getAllele0Index());
+        }
+        if (vcfGt.getPloidy() > 1)
+        {
+            os << (vcfGt.isPhased() ? '|' : '/');
+            os << static_cast<int>(vcfGt.getAllele1Index());
+        }
+        assert (vcfGt.getPloidy() <= 2);
+    }
+}
+

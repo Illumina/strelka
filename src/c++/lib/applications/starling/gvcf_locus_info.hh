@@ -287,9 +287,9 @@ struct LocusSampleInfo
     clear()
     {
         genotypeQualityPolymorphic = 0;
-        maxGenotypeIndexPolymorphic = 0;
+        maxGenotypeIndexPolymorphic.clear();
         genotypeQuality = 0;
-        maxGenotypeIndex = 0;
+        maxGenotypeIndex.clear();
         gqx = 0;
         empiricalVariantScore = -1;
         genotypePhredLoghood.clear();
@@ -324,7 +324,8 @@ struct LocusSampleInfo
         _isPloidyConflict=true;
     }
 
-    unsigned max_gt() const
+    const VcfGenotype&
+    max_gt() const
     {
         return maxGenotypeIndexPolymorphic;
     }
@@ -334,7 +335,23 @@ struct LocusSampleInfo
     bool
     isVariant() const
     {
-        return (max_gt() != 0);
+        return (max_gt().isVariant());
+    }
+
+    /// sets gqx given that other relevant values have been setup:
+    void
+    setGqx()
+    {
+        // maxGenotypeIndex != maxGenotypeIndexPolymorphic indicates we're in a boundary zone
+        // between variant and hom-ref call
+        if (not (maxGenotypeIndex == maxGenotypeIndexPolymorphic))
+        {
+            gqx = 0;
+        }
+        else
+        {
+            gqx = std::min(genotypeQuality, genotypeQualityPolymorphic);
+        }
     }
 
     //--------------------------------------------
@@ -344,10 +361,10 @@ struct LocusSampleInfo
     int genotypeQualityPolymorphic=0;
 
     /// VCF GT
-    unsigned maxGenotypeIndexPolymorphic=0;
+    VcfGenotype maxGenotypeIndexPolymorphic;
 
     int genotypeQuality=0;
-    unsigned maxGenotypeIndex=0;
+    VcfGenotype maxGenotypeIndex;
 
     /// VCF GQX
     int gqx=0;
@@ -771,7 +788,7 @@ struct GermlineSiteSampleInfo
         spanningDeletionReadCount = 0;
         n_used_calls = 0;
         n_unused_calls = 0;
-        is_zero_ploidy = false;
+        isOverlappingHomAltDeletion = false;
         mapqTracker.clear();
         ReadPosRankSum = 0;
         BaseQRankSum = 0;
@@ -790,7 +807,7 @@ struct GermlineSiteSampleInfo
     unsigned n_unused_calls = 0;
 
     /// set to true when the site is overlapped by a hom deletion:
-    bool is_zero_ploidy = false;
+    bool isOverlappingHomAltDeletion = false;
 
     MapqTracker mapqTracker;
 
@@ -913,7 +930,7 @@ struct GermlineSiteLocusInfo : public LocusInfo
         if (isRefUnknown()) return false;
 
         const auto& siteSample(getSiteSample(sampleIndex));
-        return (siteSample.isUsedReadCoverage() and (not siteSample.is_zero_ploidy));
+        return (siteSample.isUsedReadCoverage() and (not siteSample.isOverlappingHomAltDeletion));
     }
 
     virtual bool is_nonref(const unsigned sampleIndex) const = 0;
@@ -971,6 +988,7 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
           evsDevelopmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
     {}
 
+#if 0
     const char*
     get_gt(const unsigned sampleIndex) const
     {
@@ -989,6 +1007,7 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
             return DIGT::get_vcf_gt(print_gt, base_to_id(ref));
         }
     }
+#endif
 
     /// \param allSampleChromDepth expected depth summed over all samples
     static
@@ -1031,13 +1050,15 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         return (siteSample.max_gt != refBaseId);
     }
 
-    /// test whether GQX should be written for this locus/sample
+    /// test whether GT should be written for this locus/sample
+#if 0
     bool
     is_print_unknowngt(const unsigned sampleIndex) const
     {
         const auto& siteSample(getSiteSample(sampleIndex));
         return (isRefUnknown() or (not siteSample.isUsedReadCoverage()));
     }
+#endif
 
     /// test whether known QUAL value should be written for this locus
     bool
@@ -1050,7 +1071,7 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         for (unsigned sampleIndex(0); sampleIndex< sampleCount; ++sampleIndex)
         {
             const auto& siteSample(getSiteSample(sampleIndex));
-            if (siteSample.isUsedReadCoverage() and (not siteSample.is_zero_ploidy) and is_nonref(sampleIndex))
+            if (siteSample.isUsedReadCoverage() and (not siteSample.isOverlappingHomAltDeletion) and is_nonref(sampleIndex))
             {
                 return true;
             }

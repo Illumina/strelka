@@ -479,7 +479,7 @@ write_site_record(
 
         os << '\t';
 
-        os << locus.get_gt(sampleIndex) << ':';
+        os << sampleInfo.max_gt() << ':';
         if (locus.isVariantLocus())
         {
             os << sampleInfo.genotypeQualityPolymorphic << ':';
@@ -682,7 +682,7 @@ write_site_record(
 
         os << '\t';
 
-        VcfGenotypeUtil::writeGenotype(sampleInfo.getPloidy().getPloidy(),sampleInfo.max_gt(),os);
+        VcfGenotypeUtil::writeGenotype(sampleInfo.max_gt(),os);
 
         //SAMPLE
         os << ':' << sampleInfo.genotypeQualityPolymorphic
@@ -739,7 +739,7 @@ write_site_record(
     os << '\t';
 
     // FILTER:
-    locus.filters.write(os);
+    getExtendedLocusFilters(locus).write(os);
     os << '\t';
 
     // INFO:
@@ -760,7 +760,10 @@ write_site_record(
     os << '\t';
 
     //SAMPLE
-    os << locus.get_gt() << ':';
+    // there should be exactly one sample:
+    assert(1 == locus.getSampleCount());
+    const auto& sampleInfo(locus.getSample(0));
+    os << sampleInfo.max_gt() << ':';
     if (locus.isBlockGqxDefined)
     {
         os << locus.block_gqx.min();
@@ -948,7 +951,7 @@ write_indel_record(
 
             os << '\t';
 
-            VcfGenotypeUtil::writeGenotype(sampleInfo.getPloidy().getPloidy(),sampleInfo.max_gt(),os);
+            os << sampleInfo.max_gt();
             os << ':' << sampleInfo.genotypeQualityPolymorphic;
 
             os << ':' << ((sampleInfo.empiricalVariantScore >= 0) ? sampleInfo.empiricalVariantScore : sampleInfo.gqx);
@@ -997,9 +1000,7 @@ write_indel_record(
             os << '\t';
 
             //SAMPLE
-            // print GTs using a fake ploidy of 2, real ploidy is continuous...
-            static const int printGTPloidy(2);
-            VcfGenotypeUtil::writeGenotype(printGTPloidy,sampleInfo.max_gt(),os);
+            os << sampleInfo.max_gt();
             os << ':' << sampleInfo.genotypeQualityPolymorphic;
 
             os << ':' << sampleInfo.gqx;
