@@ -52,12 +52,17 @@ is_site_compressable(
         const unsigned sampleCount(locus.getSampleCount());
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
-            const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
-            if (siteSampleInfo.isUsedReadCoverage())
+            const auto& sampleInfo(locus.getSample(sampleIndex));
+            const unsigned confidentTotalCount(
+                sampleInfo.supportCounts.getCounts(true).totalConfidentCounts() +
+                sampleInfo.supportCounts.getCounts(false).totalConfidentCounts());
+            if (confidentTotalCount > 0)
             {
-                const double reffrac(static_cast<double>(siteSampleInfo.alleleObservationCounts(locus.refBaseIndex)) /
-                                     static_cast<double>(siteSampleInfo.n_used_calls));
-                if ((reffrac + _opt.block_max_nonref) <= 1) return false;
+                const unsigned confidentRefCount(
+                    sampleInfo.supportCounts.getCounts(true).confidentRefAlleleCount() +
+                    sampleInfo.supportCounts.getCounts(false).confidentRefAlleleCount());
+                const double refFrac(safeFrac(confidentRefCount,confidentTotalCount));
+                if ((refFrac + _opt.block_max_nonref) <= 1) return false;
             }
         }
     }

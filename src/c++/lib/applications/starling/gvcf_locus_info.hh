@@ -756,20 +756,6 @@ struct GermlineSiteSampleInfo
         return n_used_calls + n_unused_calls;
     }
 
-    unsigned
-    alleleObservationCounts(const int base_id) const
-    {
-        return (fwd_counts[base_id]+rev_counts[base_id]);
-    }
-
-    unsigned
-    alleleObservationCountsByStrand(
-        const bool is_fwd_strand,
-        const int base_id) const
-    {
-        return (is_fwd_strand ? fwd_counts[base_id] : rev_counts[base_id]);
-    }
-
     bool
     isUsedReadCoverage() const
     {
@@ -817,10 +803,6 @@ struct GermlineSiteSampleInfo
     double MQRankSum = 0;       // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
     double avgBaseQ = 0;
     double rawPos = 0;
-
-    /// TODO STREL-125 temporary
-    std::array<unsigned,N_BASE> fwd_counts;
-    std::array<unsigned,N_BASE> rev_counts;
 
     /// TODO STREL-125 temporary
     MODIFIED_SITE_GT::index_t modified_gt = MODIFIED_SITE_GT::NONE;
