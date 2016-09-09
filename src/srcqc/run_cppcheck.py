@@ -23,7 +23,7 @@
 
 import os
 import sys
-
+import subprocess
 
 
 def which(searchFile) :
@@ -38,6 +38,24 @@ def which(searchFile) :
 
     return None
 
+
+def check_version(executable, versionRequired):
+
+    proc=subprocess.Popen(["cppcheck","--version"],stdout=subprocess.PIPE)
+
+    lines = proc.stdout.readlines()
+    if len(lines) == 0 : return False
+    version = lines[0].split()[1]
+
+    versionReqNums = versionRequired.split('.')
+    versionNums = version.split('.')
+    for ix in xrange(len(versionNums)):
+        if int(versionNums[ix]) < int(versionReqNums[ix]) :
+            return True
+        if int(versionNums[ix]) > int(versionReqNums[ix]) :
+            return False
+
+    return False
 
 
 def usage() :
@@ -59,15 +77,18 @@ def usage() :
 
 def main() :
 
-    import subprocess
-
     if len(sys.argv) != 2 :
         usage()
 
     srcRoot=sys.argv[1]
 
     cppcheck_path = which("cppcheck")
-    if cppcheck_path is None : sys.exit(0)
+    if cppcheck_path is None :
+        sys.exit(0)
+
+    is_old_version = check_version("cppcheck", "1.69")
+    if is_old_version :
+        sys.exit(0)
 
     # need to trace real path out of any symlinks so that cppcheck can find its runtime config info:
     cppcheck_path = os.path.realpath(cppcheck_path)
@@ -83,9 +104,9 @@ def main() :
     # manipulate the warning messages so that they look like gcc errors -- this enables IDE parsing of error location:
     checkCmd.append("--template={file}:{line}:1: error: {severity}:{message}")
 
-    suppressList=["unusedFunction", "unmatchedSuppression", "missingInclude","purgedConfiguration"]
+    suppressList=["unusedFunction", "unmatchedSuppression", "missingInclude", "purgedConfiguration"]
 
-    # extra suppressions only used in starka, these are likely removable:
+    # extra suppressions only used in strelka, these are likely removable:
     extraSuppressList=["uninitMemberVar","unsignedLessThanZero","obsoleteFunctionsasctime"]
     suppressList.extend(extraSuppressList)
 
