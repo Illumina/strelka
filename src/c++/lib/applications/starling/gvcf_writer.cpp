@@ -223,40 +223,6 @@ add_site_internal(
 
 
 
-
-static
-void
-get_visible_alt_order(
-    const GermlineDiploidSiteLocusInfo& locus,
-    std::vector<uint8_t>& altOrder)
-{
-    altOrder.clear();
-
-    /// TODO STREL-125 generalize to samples
-    static const unsigned sampleIndex(0);
-    const auto& siteSample(locus.getSiteSample(sampleIndex));
-
-    // list max_gt alts first:
-    for (uint8_t baseIndex(0); baseIndex<N_BASE; ++baseIndex)
-    {
-        if (baseIndex==locus.refBaseIndex) continue;
-        if (! DIGT::expect2(baseIndex, siteSample.max_gt)) continue;
-        altOrder.push_back(baseIndex);
-    }
-
-#if 0
-    // include other alts based on known count:
-    for (unsigned b(0); b<N_BASE; ++b)
-    {
-        if (b==si.dgt.ref_gt) continue;
-        if (DIGT::expect2(b,si.smod.max_gt)) continue;
-        if (si.known_counts[b] > 0) altOrder.push_back(b);
-    }
-#endif
-}
-
-
-
 /// extend the locus filter set such that any sample filter applied to all samples is added to the locus filters
 static
 GermlineFilterKeeper
@@ -367,11 +333,8 @@ write_site_record(
     writeSiteVcfAltField(locus.getSiteAlleles(), os);
     os << '\t';
 
-    std::vector<uint8_t> altOrder;
-    get_visible_alt_order(locus, altOrder);
-
     // QUAL:
-    if (locus.is_qual())
+    if (locus.isQual())
     {
         os << locus.anyVariantAlleleQuality;
     }
@@ -497,23 +460,6 @@ write_site_record(
         if (isAltAlleles)
         {
             printSampleAD(sampleInfo.supportCounts, altAlleleCount, os);
-#if 0
-            if (locus.isPhasedRegion)
-            {
-                os << ':' << locus.phased_AD
-                   << ':' << locus.phased_ADF
-                   << ':' << locus.phased_ADR;
-            }
-            else
-            {
-                os << ':';
-                print_site_ad(locus.refBaseIndex, siteSampleInfo, altOrder, os);
-                os << ':';
-                print_site_ad_strand(locus.refBaseIndex, siteSampleInfo, altOrder, true, os);
-                os << ':';
-                print_site_ad_strand(locus.refBaseIndex, siteSampleInfo, altOrder, false, os);
-            }
-#endif
         }
 
         // FT
@@ -569,14 +515,6 @@ write_site_record(
     const bool isAltAlleles(altAlleleCount > 0);
 
     const unsigned sampleCount(locus.getSampleCount());
-
-    /// TODO STREL-125 tmp transitional structures:
-    std::vector<uint8_t> altOrder;
-    for (const auto& allele : siteAlleles)
-    {
-        assert(allele.baseIndex != locus.refBaseIndex);
-        altOrder.push_back(allele.baseIndex);
-    }
 
     std::ostream& os(*_osptr);
 
@@ -665,14 +603,6 @@ write_site_record(
         if (isAltAlleles)
         {
             printSampleAD(sampleInfo.supportCounts, altAlleleCount, os);
-#if 0
-            os << ':';
-            print_site_ad(locus.refBaseIndex, siteSampleInfo, altOrder, os);
-            os << ':';
-            print_site_ad_strand(locus.refBaseIndex, siteSampleInfo, altOrder, true, os);
-            os << ':';
-            print_site_ad_strand(locus.refBaseIndex, siteSampleInfo, altOrder, false, os);
-#endif
         }
 
         // FT

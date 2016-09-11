@@ -55,7 +55,7 @@ struct gvcf_block_site_record : public GermlineSiteLocusInfo
         block_dpu.reset();
         block_dpf.reset();
         pos=-1;
-        isBlockGqxDefined = _isNonRef=false;
+        isBlockGqxDefined = false;
     }
 
     /// determine if the given site could be joined to this block:
@@ -76,11 +76,6 @@ struct gvcf_block_site_record : public GermlineSiteLocusInfo
         const GermlineSiteLocusInfo& locus,
         const unsigned sampleIndex);
 
-    bool is_nonref(const unsigned /*sampleIndex*/) const override
-    {
-        return _isNonRef;
-    }
-
 private:
 
     /// reduce diploid/continuous site logical duplication by putting common tests here
@@ -90,12 +85,6 @@ private:
     testCanSiteJoinSampleBlockShared(
         const GermlineSiteLocusInfo& locus,
         const unsigned sampleIndex) const;
-
-    void
-    setNonRef(const bool isNonRef)
-    {
-        _isNonRef = isNonRef;
-    }
 
 public:
     const double frac_tol;
@@ -107,7 +96,4 @@ public:
 
     bool isBlockGqxDefined;
     //stream_stat _blockMQ;
-
-private:
-    bool _isNonRef;
 };

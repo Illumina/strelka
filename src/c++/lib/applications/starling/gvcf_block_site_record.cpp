@@ -93,7 +93,7 @@ testCanSiteJoinSampleBlockShared(
     if (not (filters == locus.filters)) return false;
     if (not (blockSampleInfo.filters == inputSampleInfo.filters)) return false;
 
-    if (is_nonref(blockSampleIndex) || locus.is_nonref(sampleIndex)) return false;
+    if (blockSampleInfo.isVariant() or inputSampleInfo.isVariant()) return false;
 
     if (! is_new_value_blockable(
         inputSiteSampleInfo.n_used_calls, block_dpu, frac_tol, abs_tol))
@@ -141,7 +141,7 @@ joinSiteToSampleBlock(
 
         filters = locus.filters;
         blockSampleInfo.filters = inputSampleInfo.filters;
-        setNonRef(locus.is_nonref(sampleIndex));
+        blockSampleInfo.max_gt() = inputSampleInfo.max_gt();
         setSiteSampleInfo(blockSampleIndex, inputSiteSampleInfo);
         blockSampleInfo.maxGenotypeIndexPolymorphic = inputSampleInfo.max_gt();
         blockSampleInfo.setPloidy(inputSampleInfo.getPloidy().getPloidy());

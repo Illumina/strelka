@@ -29,7 +29,7 @@
 #include "starling_common/pos_basecall_buffer.hh"
 
 
-
+#if 0
 static void
 insert_read(
     const char* read,
@@ -109,3 +109,4 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+#endif

@@ -764,9 +764,6 @@ struct GermlineSiteSampleInfo
         MQRankSum = 0;
         avgBaseQ = 0;
         rawPos = 0;
-
-        modified_gt=MODIFIED_SITE_GT::NONE;
-        max_gt=0;
     }
 
     /// count of reads which have a most likely alignment containing a deletion at the site in question
@@ -786,13 +783,6 @@ struct GermlineSiteSampleInfo
     double MQRankSum = 0;       // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
     double avgBaseQ = 0;
     double rawPos = 0;
-
-    /// TODO STREL-125 temporary
-    MODIFIED_SITE_GT::index_t modified_gt = MODIFIED_SITE_GT::NONE;
-    unsigned max_gt = 0;
-
-    /// TODO STREL-125 temporary
-    diploid_genotype dgt;
 };
 
 
@@ -898,8 +888,6 @@ struct GermlineSiteLocusInfo : public LocusInfo
         return (siteSample.isUsedReadCoverage() and (not siteSample.isOverlappingHomAltDeletion));
     }
 
-    virtual bool is_nonref(const unsigned sampleIndex) const = 0;
-
     void
     clear()
     {
@@ -964,27 +952,9 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         VariantScoringFeatureKeeper& features,
         VariantScoringFeatureKeeper& developmentFeatures);
 
-    bool
-    is_hetalt(const unsigned sampleIndex) const
-    {
-        const auto& siteSample(getSiteSample(sampleIndex));
-        unsigned print_gt(siteSample.max_gt);
-        const uint8_t a0(DIGT::get_allele(print_gt,0));
-        const uint8_t a1(DIGT::get_allele(print_gt,1));
-        return ((a0!=a1) && (refBaseIndex != a0) && (refBaseIndex != a1));
-    }
-
-    /// TODO STREL-125 extend to multi-sample
-    bool
-    is_nonref(const unsigned sampleIndex) const override
-    {
-        const auto& siteSample(getSiteSample(sampleIndex));
-        return (siteSample.max_gt != refBaseIndex);
-    }
-
     /// test whether known QUAL value should be written for this locus
     bool
-    is_qual() const
+    isQual() const
     {
         if (isRefUnknown()) return false;
 
@@ -992,8 +962,9 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         const unsigned sampleCount(getSampleCount());
         for (unsigned sampleIndex(0); sampleIndex< sampleCount; ++sampleIndex)
         {
+            const auto& sampleInfo(getSample(sampleIndex));
             const auto& siteSample(getSiteSample(sampleIndex));
-            if (siteSample.isUsedReadCoverage() and (not siteSample.isOverlappingHomAltDeletion) and is_nonref(sampleIndex))
+            if (siteSample.isUsedReadCoverage() and (not siteSample.isOverlappingHomAltDeletion) and sampleInfo.isVariant())
             {
                 return true;
             }
@@ -1050,17 +1021,6 @@ struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
         : base_t(sampleCount, init_pos, initRefBaseIndex, is_forced_output),
           _continuousSiteSampleInfo(sampleCount)
     {}
-
-    bool is_nonref(const unsigned /*sampleIndex*/) const override
-    {
-        const auto& altAlleles(getSiteAlleles());
-        return altAlleles.end() !=
-               std::find_if(altAlleles.begin(), altAlleles.end(),
-                            [&](const GermlineSiteAlleleInfo& allele)
-        {
-            return allele.baseIndex != refBaseIndex;
-        });
-    }
 
     void
     clear()
