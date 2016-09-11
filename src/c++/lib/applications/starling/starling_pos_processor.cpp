@@ -377,6 +377,10 @@ updateSnvLocusWithSampleInfo(
     const bool isAltAlleles(altAlleleCount>0);
     if (isAltAlleles)
     {
+        auto alleleIndexToBaseIndex = [&](const uint8_t alleleIndex) {
+            if (alleleIndex == 0) return locus.refBaseIndex;
+            return static_cast<uint8_t>(siteAlleles[alleleIndex - 1].baseIndex);
+        };
 
         // number of PL fields required:
         //const unsigned genotypeCount(VcfGenotypeUtil::getGenotypeCount(callerPloidy, fullAlleleCount));
@@ -386,7 +390,7 @@ updateSnvLocusWithSampleInfo(
         {
             for (unsigned allele0Index(0); allele0Index<=fullAlleleCount; ++allele0Index)
             {
-                const uint8_t base0Index(siteAlleles[allele0Index].baseIndex);
+                const uint8_t base0Index(alleleIndexToBaseIndex(allele0Index));
                 DIGT::get_gt_with_alleles(base0Index,base0Index);
                 sampleInfo.genotypePhredLoghood.getGenotypeLikelihood(allele0Index) =
                     dgt.phredLoghood[base0Index];
@@ -398,8 +402,8 @@ updateSnvLocusWithSampleInfo(
             {
                 for (unsigned allele0Index(0); allele0Index <= allele1Index; ++allele0Index)
                 {
-                    const uint8_t base0Index(siteAlleles[allele0Index].baseIndex);
-                    const uint8_t base1Index(siteAlleles[allele1Index].baseIndex);
+                    const uint8_t base0Index(alleleIndexToBaseIndex(allele0Index));
+                    const uint8_t base1Index(alleleIndexToBaseIndex(allele1Index));
                     const unsigned digtGenotypeIndex(DIGT::get_gt_with_alleles(base0Index,base1Index));
                     sampleInfo.genotypePhredLoghood.getGenotypeLikelihood(allele0Index,allele1Index) =
                         dgt.phredLoghood[digtGenotypeIndex];
