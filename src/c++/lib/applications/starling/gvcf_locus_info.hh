@@ -829,13 +829,6 @@ struct GermlineSiteLocusInfo : public LocusInfo
         _siteSampleInfo[sampleIndex] = siteSampleInfo;
     }
 
-    /// TODO STREL-125 TMP ONLY - we shouldn't need any non-const access after codon phaser is cleaned up
-    GermlineSiteSampleInfo&
-    getSiteSample(const unsigned sampleIndex)
-    {
-        return _siteSampleInfo[sampleIndex];
-    }
-
     const GermlineSiteSampleInfo&
     getSiteSample(const unsigned sampleIndex) const
     {

@@ -81,8 +81,6 @@ ScoringModelManager::
 classify_site(
     GermlineDiploidSiteLocusInfo& locus) const
 {
-    /// locus must have at least one variant
-    /// TODO STREL-125 fix for multi-sample
     const bool isVariantUsableInEVSModel(locus.isVariantLocus());
 
     const unsigned sampleCount(locus.getSampleCount());
@@ -104,7 +102,6 @@ classify_site(
         const unsigned allSampleLocusDepth(locus.getTotalReadDepth());
         for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
-            /// TODO STREL-125 fix for multi-sample:
             auto& sampleInfo(locus.getSample(sampleIndex));
             if (not sampleInfo.isVariant())
             {
@@ -144,7 +141,7 @@ classify_site(
 
 void
 ScoringModelManager::
-classify_indel_impl(
+classify_indel(
     GermlineDiploidIndelLocusInfo& locus) const
 {
     /// locus must have at least one variant and no breakpoints
@@ -201,16 +198,6 @@ classify_indel_impl(
     {
         default_classify_indel_locus(locus);
     }
-}
-
-
-
-void
-ScoringModelManager::
-classify_indel(
-    GermlineDiploidIndelLocusInfo& locus) const
-{
-    classify_indel_impl(locus);
 }
 
 

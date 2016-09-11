@@ -90,9 +90,6 @@ struct ScoringModelManager
     }
 
 private:
-    void
-    classify_indel_impl(GermlineDiploidIndelLocusInfo& locus) const;
-
     double
     snvEVSThreshold() const
     {
