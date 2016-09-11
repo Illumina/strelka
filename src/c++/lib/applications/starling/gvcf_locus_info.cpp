@@ -142,7 +142,6 @@ operator<<(
         const auto& indelSampleInfo(ii.getIndelSample(sampleIndex));
         os << "IndelSample" << sampleIndex << "\n";
         os << indelSampleInfo.legacyReportInfo << "\n";
-        os << "sp size: " << indelSampleInfo.sitePloidy.size() << "\n";
     }
 
     return os;

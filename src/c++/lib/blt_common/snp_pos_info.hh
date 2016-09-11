@@ -156,6 +156,8 @@ struct snp_pos_info
         baseq_ranksum.clear();
         read_pos_ranksum.clear();
         altReadPos.clear();
+
+        spanningIndelPloidyModification = 0;
     }
 
     template <typename T>
@@ -294,6 +296,8 @@ public:
         uint16_t readPosLength;
     };
     std::vector<ReadPosInfo> altReadPos;
+
+    int spanningIndelPloidyModification = 0;
 };
 
 std::ostream& operator<<(std::ostream& os,const snp_pos_info& pci);

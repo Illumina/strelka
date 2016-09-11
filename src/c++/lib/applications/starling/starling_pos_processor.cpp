@@ -198,11 +198,16 @@ updateSiteSampleInfo(
     const starling_base_options& opt,
     const unsigned sampleIndex,
     const CleanedPileup& cpi,
+    const bool isOverlappingHomAltDeletion,
     GermlineSiteLocusInfo& locus)
 {
     const snp_pos_info& good_pi(cpi.cleanedPileup());
 
     GermlineSiteSampleInfo siteSampleInfo;
+
+    // note - these two values related to overlapping deletions come from diff sources, one is based on the
+    // most likely genotype of overlapping indels, and the other is counts of overlapping reads.
+    siteSampleInfo.isOverlappingHomAltDeletion = isOverlappingHomAltDeletion;
 
     siteSampleInfo.spanningDeletionReadCount = good_pi.spanningDeletionReadCount;
 
@@ -332,7 +337,15 @@ updateSnvLocusWithSampleInfo(
 {
     auto& sampleInfo(locus.getSample(sampleIndex));
     sampleInfo.setPloidy(callerPloidy);
-    if (callerPloidy != groupLocusPloidy)
+
+    bool isOverlappingHomAltDeletion(false);
+    if (groupLocusPloidy == 0)
+    {
+        const int locusPloidyAdjustment(sif.cpi.rawPileup().spanningIndelPloidyModification);
+        isOverlappingHomAltDeletion=(locusPloidyAdjustment > 0);
+    }
+
+    if ((not isOverlappingHomAltDeletion) and (callerPloidy != groupLocusPloidy))
     {
         sampleInfo.setPloidyConflict();
     }
@@ -432,7 +445,7 @@ updateSnvLocusWithSampleInfo(
     /// TODO STREL-125 find a way to restore strand bias feature
     // allele.strandBias=dgt.strand_bias;
 
-    updateSiteSampleInfo(opt, sampleIndex, cpi, locus);
+    updateSiteSampleInfo(opt, sampleIndex, cpi, isOverlappingHomAltDeletion, locus);
 }
 
 
@@ -575,9 +588,12 @@ process_pos_snp_digt(
         // locus ploidy is passed into the gVCF writer as 0. The gVCF writer can
         // decide what to do with this information from there.
         //
-        const int ploidy(get_ploidy(pos, sampleIndex));
+        const int regionPloidy(get_ploidy(pos, sampleIndex));
+        const int locusPloidyAdjustment(sample(sampleIndex).cpi.rawPileup().spanningIndelPloidyModification);
+        const int ploidy = std::max(0, regionPloidy+locusPloidyAdjustment);
         groupLocusPloidy.push_back(ploidy);
         callerPloidy.push_back((ploidy == 0) ? 2 : ploidy);
+
     }
 
     // prep step 3) compute diploid genotype object using older "4-allele" model:
@@ -716,7 +732,8 @@ updateContinuousSnvLocusWithSampleInfo(
         }
     }
 
-    updateSiteSampleInfo(opt, sampleIndex, cpi, locus);
+    static const bool isOverlappingHomAltDeletion(false);
+    updateSiteSampleInfo(opt, sampleIndex, cpi, isOverlappingHomAltDeletion, locus);
 
     static const unsigned variantAlleleIndex(1);
     updateContinuousSiteSampleInfo(sampleIndex, variantAlleleIndex, locus);
@@ -931,13 +948,16 @@ addIndelAllelesToLocus(
 
 
 /// setup indelSampleInfo assuming that corresponding sampleInfo has already been initialized
+///
+/// \param basecallBuffer[inout] read previous base depth and mqpq values from basecallbuffer, and also
+///                              set ploidy modifications on any bases which the indel overlaps
 void
 updateIndelSampleInfo(
     const starling_base_options& opt,
     const starling_deriv_options& dopt,
-    const pos_basecall_buffer& basecallBuffer,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     const unsigned sampleIndex,
+    pos_basecall_buffer& basecallBuffer,
     GermlineIndelLocusInfo& locus)
 {
     GermlineIndelSampleInfo indelSampleInfo;
@@ -945,31 +965,26 @@ updateIndelSampleInfo(
     const LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
     const unsigned callerPloidy(sampleInfo.getPloidy().getPloidy());
 
-    // set sitePloidy:
+    // set site ploidy modifications:
     const auto& range(locus.range());
-
-    auto& sitePloidy(indelSampleInfo.sitePloidy);
-    sitePloidy.resize(range.size());
-
     auto updateSitePloidyForAlleleIndex = [&](const uint8_t alleleIndex) {
         if (alleleIndex == 0) return;
 
         const IndelKey& indelKey2(locus.getIndelAlleles()[alleleIndex - 1].indelKey);
 
-        pos_t leadingOffset(indelKey2.pos - range.begin_pos());
-        pos_t trailingOffset(indelKey2.right_pos() - range.begin_pos());
-        for (pos_t locusOffset(leadingOffset); locusOffset < trailingOffset; ++locusOffset)
+        const pos_t beginPos(indelKey2.pos), endPos(indelKey2.right_pos());
+        for (pos_t pos(beginPos); pos < endPos; ++pos)
         {
-            sitePloidy[locusOffset] -= 1;
+            basecallBuffer.decrementSpanningIndelPloidy(pos);
+
         }
     };
 
-    std::fill(sitePloidy.begin(), sitePloidy.end(), callerPloidy);
     const auto& maxGt(sampleInfo.max_gt());
     if (callerPloidy == 2)
     {
         updateSitePloidyForAlleleIndex(maxGt.getAllele0Index());
-        updateSitePloidyForAlleleIndex(maxGt.getAllele0Index());
+        updateSitePloidyForAlleleIndex(maxGt.getAllele1Index());
     }
     else if (callerPloidy == 1)
     {
@@ -977,7 +992,7 @@ updateIndelSampleInfo(
     }
     else
     {
-        assert(false);
+        assert(false and "Unexpected ploidy value");
     }
 
     {
@@ -1094,6 +1109,7 @@ getPriorIndex(
 ///
 /// \param contrastGroup these are alleles meant to be grouped together into an "other" category, such as that reported
 ///                      as the <*> allele in VCF
+/// \param basecallBuffer[inout] see updateIndelSampleInfo
 static
 void
 updateIndelLocusWithSampleInfo(
@@ -1102,10 +1118,11 @@ updateIndelLocusWithSampleInfo(
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     const unsigned topAlleleIndexInSample,
     const OrthogonalVariantAlleleCandidateGroup& contrastGroup,
-    const starling_pos_processor::sample_info& sif,
+    const starling_sample_options& sample_opt,
     const unsigned callerPloidy,
     const unsigned groupLocusPloidy,
     const unsigned sampleIndex,
+    pos_basecall_buffer& basecallBuffer,
     GermlineIndelLocusInfo& locus,
     double& homRefLogProb)
 {
@@ -1119,7 +1136,7 @@ updateIndelLocusWithSampleInfo(
     // score all possible genotypes from topVariantAlleleGroup for this sample
     std::vector<double> genotypeLogLhood;
     getVariantAlleleGroupGenotypeLhoodsForSample(
-        opt, dopt, sif.sample_opt, callerPloidy, sampleIndex, alleleGroup, contrastGroup,
+        opt, dopt, sample_opt, callerPloidy, sampleIndex, alleleGroup, contrastGroup,
         genotypeLogLhood, sampleInfo.supportCounts);
 
     // set phredLoghood:
@@ -1236,7 +1253,7 @@ updateIndelLocusWithSampleInfo(
     homRefLogProb += std::log(genotypePosterior[AG_GENOTYPE::HOMREF]);
 
     // set indelSampleInfo
-    updateIndelSampleInfo(opt, dopt, sif.bc_buff, alleleGroup, sampleIndex, locus);
+    updateIndelSampleInfo(opt, dopt, alleleGroup, sampleIndex, basecallBuffer, locus);
 }
 
 
@@ -1393,9 +1410,10 @@ process_pos_indel_digt(const pos_t pos)
         double homRefLogProb(0);
         for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
+            auto& sif(sample(sampleIndex));
             updateIndelLocusWithSampleInfo(
-                _opt, _dopt, topVariantAlleleGroup, topVariantAlleleIndexPerSample[sampleIndex], emptyGroup, sample(sampleIndex),
-                callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex, *locusPtr, homRefLogProb);
+                _opt, _dopt, topVariantAlleleGroup, topVariantAlleleIndexPerSample[sampleIndex], emptyGroup, sif.sample_opt,
+                callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex, sif.bc_buff, *locusPtr, homRefLogProb);
         }
 
         // add sample-independent info:
@@ -1473,9 +1491,11 @@ process_pos_indel_digt(const pos_t pos)
             double homRefLogProb(0);
             for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
             {
+                auto& sif(sample(sampleIndex));
                 updateIndelLocusWithSampleInfo(
-                    _opt, _dopt, fakeForcedOutputAlleleGroup, fakeTopVariantAlleleIndexPerSample, topVariantAlleleGroup, sample(sampleIndex),
-                    callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex, *locusPtr, homRefLogProb);
+                    _opt, _dopt, fakeForcedOutputAlleleGroup, fakeTopVariantAlleleIndexPerSample, topVariantAlleleGroup,
+                    sif.sample_opt, callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex,
+                    sif.bc_buff, *locusPtr, homRefLogProb);
             }
 
             // add sample-independent info:

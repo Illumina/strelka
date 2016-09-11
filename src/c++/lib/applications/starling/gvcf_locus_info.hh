@@ -508,9 +508,6 @@ struct GermlineIndelSampleInfo
         return mapqTracker.count;
     }
 
-    /// the expected ploidy of sites spanning the indel locus assuming the ML GT is true
-    std::vector<uint8_t> sitePloidy;
-
     /// the depth of the pileup at the position preceding the locus
     unsigned tier1Depth = 0;
 
@@ -564,7 +561,6 @@ struct GermlineIndelLocusInfo : public LocusInfo
         // ensure that no alleles are added once we start adding samples...
         assert(getAltAlleleCount()>0);
         _isLockAlleles = true;
-        assert(indelSampleInfo.sitePloidy.size() == _range.size());
         assert(sampleIndex < _indelSampleInfo.size());
         _indelSampleInfo[sampleIndex] = indelSampleInfo;
     }
@@ -600,21 +596,6 @@ struct GermlineIndelLocusInfo : public LocusInfo
     getIndelAlleles() const
     {
         return _indelAlleleInfo;
-    }
-
-    /// get the ploidy of a site spanned by the maxGT indels at this locus in specified sample:
-    unsigned
-    getSitePloidy(
-        const unsigned sampleIndex,
-        const unsigned offset) const
-    {
-        if (offset>=_range.size())
-        {
-            getOffsetError(offset);
-        }
-        const GermlineIndelSampleInfo& indelSampleInfo(getIndelSample(sampleIndex));
-        assert(_range.size() == indelSampleInfo.sitePloidy.size());
-        return indelSampleInfo.sitePloidy[offset];
     }
 
     bool
@@ -657,11 +638,6 @@ struct GermlineIndelLocusInfo : public LocusInfo
     {
         const unsigned sampleCount(getSampleCount());
         assert (sampleCount == _indelSampleInfo.size());
-        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-        {
-            const GermlineIndelSampleInfo& indelSampleInfo(getIndelSample(sampleIndex));
-            assert(_range.size() == indelSampleInfo.sitePloidy.size());
-        }
     }
 
 private:

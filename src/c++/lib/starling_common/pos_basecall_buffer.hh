@@ -133,6 +133,12 @@ struct pos_basecall_buffer
         _pdata.getRef(pos).hap_set.emplace_back(read_seq,qual,offset);
     }
 
+    void
+    decrementSpanningIndelPloidy(const pos_t pos)
+    {
+        _pdata.getRef(pos).spanningIndelPloidyModification -= 1;
+    }
+
     const snp_pos_info&
     get_pos(const pos_t pos) const
     {

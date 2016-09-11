@@ -340,55 +340,11 @@ modify_indel_overlap_site(
     {
         const auto& indelSampleInfo(indelLocus.getSample(sampleIndex));
         auto& sampleInfo(siteLocus.getSample(sampleIndex));
-        auto& siteSampleInfo(siteLocus.getSiteSample(sampleIndex));
 
         sampleInfo.gqx = std::min(sampleInfo.gqx, indelSampleInfo.gqx);
-
-        const unsigned indelInducedSitePloidy(indelLocus.getSitePloidy(sampleIndex, offset));
-
-        // change ploidy:
-        if (indelInducedSitePloidy == 1)
-        {
-            /// TODO STREL-125 change site GT to per-sample:
-            if (DIGT::is_het(siteSampleInfo.max_gt))
-            {
-                sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
-            }
-            else
-            {
-                if (siteSampleInfo.max_gt == siteLocus.refBaseIndex)
-                {
-                    siteSampleInfo.modified_gt = MODIFIED_SITE_GT::ZERO;
-                }
-                else
-                {
-                    siteSampleInfo.modified_gt = MODIFIED_SITE_GT::ONE;
-                }
-            }
-        }
-        else if (indelInducedSitePloidy == 0)
-        {
-            if (siteSampleInfo.max_gt == siteLocus.refBaseIndex)
-            {
-                siteSampleInfo.modified_gt = MODIFIED_SITE_GT::UNKNOWN;
-                siteSampleInfo.isOverlappingHomAltDeletion = true;
-                if (sampleInfo.getPloidy().isNoploid())
-                {
-                    sampleInfo.filters.unset(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
-                }
-            }
-            else
-            {
-                sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
-            }
-        }
-        else if (indelInducedSitePloidy != 2)
-        {
-            assert(false && "Unexpected ploidy value");
-        }
     }
 
-    // after all those changes we need to rerun the site filters:
+    // after these changes we need to rerun the site filters:
     siteLocus.clearEVSFeatures();
     model.classify_site(siteLocus);
 }
