@@ -24,7 +24,7 @@
 #include "codon_phaser.hh"
 
 
-
+#if 0
 static void insert_read(const char* read, pos_t position,
                         pos_basecall_buffer& bc_buff)
 {
@@ -260,9 +260,9 @@ BOOST_AUTO_TEST_CASE( low_depth_doesnt_phase )
 }
 
 
-
 // TODO: write tests for:
 // allele imbalanced phasing
 // nonsense phasing (i.e. the called SNPs are not in the top most common alleles)
 
 BOOST_AUTO_TEST_SUITE_END()
+#endif

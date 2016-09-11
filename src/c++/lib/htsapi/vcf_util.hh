@@ -181,6 +181,15 @@ struct VcfGenotype
         }
     }
 
+    void
+    setPhased(
+        const bool isFlip = false)
+    {
+        _isPhased = true;
+        if (not isFlip) return;
+        std::swap(_allele0Index,_allele1Index);
+    }
+
     bool
     isUnknown() const
     {
@@ -191,6 +200,16 @@ struct VcfGenotype
     isPhased() const
     {
         return _isPhased;
+    }
+
+    bool
+    isHet() const
+    {
+        if (getPloidy() != 2)
+        {
+            return false;
+        }
+        return (getAllele0Index() != getAllele1Index());
     }
 
     uint8_t

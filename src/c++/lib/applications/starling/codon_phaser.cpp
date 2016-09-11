@@ -32,6 +32,7 @@
 //#define DEBUG_CODON
 
 
+
 #ifdef DEBUG_CODON
 #include "blt_util/log.hh"
 #endif
@@ -39,178 +40,181 @@
 
 void
 Codon_phaser::
-process(std::unique_ptr<GermlineSiteLocusInfo> site)
+process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr)
 {
-    /// TODO STREL-125 multi-sample
-    static const unsigned sampleIndex(0);
-    std::unique_ptr<GermlineDiploidSiteLocusInfo> si(downcast<GermlineDiploidSiteLocusInfo>(std::move(site)));
-    if (opt.isUseCodonPhaser && (is_phasable_site(*si, sampleIndex) || is_in_block()))
+    if (_opt.isUseCodonPhaser)
     {
-        auto emptyBuffer = add_site(std::move(si));
-        if ((!is_in_block()) || emptyBuffer)
+        // make one pass through to determine if this site will be buffered
+        bool isBufferSite(false);
+        const unsigned sampleCount(_sampleBlocks.size());
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        {
+            auto& block(_sampleBlocks[sampleIndex]);
+            if (is_phasable_locus(*locusPtr, sampleIndex))
+            {
+                // extending block with het call, update block_end position
+                isBufferSite=true;
+                if (! block.is_in_block())
+                {
+                    block.start = locusPtr->pos;
+                }
+                block.end = locusPtr->pos;
+                block.het_count++;
+
+            }
+            else if (block.is_in_block())
+            {
+                if ((locusPtr->pos - block.end + 1) < _opt.phasing_window)
+                {
+                    // extending block with non-het call based on the phasing range
+                    isBufferSite = true;
+                }
+                else
+                {
+                    // past phasing window, no phasing oppurtunity in this sample:
+                    block.clear();
+                }
+            }
+        }
+
+        if (isBufferSite)
+        {
+            _buffer.push_back(std::move(locusPtr));
+            for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+            {
+                auto& block(_sampleBlocks[sampleIndex]);
+                if (block.het_count == 2)
+                {
+                    phaseRecords(sampleIndex);
+                    block.start = block.end;
+                    block.het_count = 1;
+                }
+            }
+            return;
+        }
+        else
         {
             output_buffer();
         }
-        return;
     }
-    _sink->process(std::move(si));
+    _sink->process(std::move(locusPtr));
 }
 
 
 
-void Codon_phaser::flush_impl()
+void
+Codon_phaser::
+process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr)
 {
-    if (opt.isUseCodonPhaser)
+    // the Codon phaser can't work across indels, so flush any in-progress phasing
+    if (_opt.isUseCodonPhaser)
     {
-        if (het_count>1)
-        {
-            make_record();
-        }
+        output_buffer();
+    }
+    _sink->process(std::move(locusPtr));
+}
+
+
+
+void
+Codon_phaser::
+flush_impl()
+{
+    if (_opt.isUseCodonPhaser)
+    {
         output_buffer();
     }
 }
 
-// the Codon phaser can't work across indels, so flush any in-progress phasing
-void Codon_phaser::process(std::unique_ptr<GermlineIndelLocusInfo> ii)
-{
-    if (opt.isUseCodonPhaser && is_in_block())
-    {
-        if (het_count>1)
-        {
-            make_record();
-        }
-        output_buffer();
-    }
-    _sink->process(std::move(ii));
-}
 
-void Codon_phaser::output_buffer()
+void
+Codon_phaser::
+output_buffer()
 {
-    for (auto& si : _buffer)
+    if (not isBuffer()) return;
+
+    for (auto& siteLocus : _buffer)
     {
-        _sink->process(std::move(si));
+        _sink->process(std::move(siteLocus));
     }
-    clear();
+
+    for (auto& sampleBlock : _sampleBlocks)
+    {
+        sampleBlock.clear();
+    }
+    _buffer.clear();
 }
 
 
-// Add a SNP site to the phasing buffer
+
 bool
 Codon_phaser::
-add_site(
-    std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr)
+evaluatePhasingConsistency(
+    const BlockReadObservations& blockObs,
+    const std::array<std::pair<std::string,allele_observations>, 2>& max_alleles)
 {
+    // some ad hoc metrics to measure consistency with diploid model
+    const int allele_sum = max_alleles[0].second.count() + max_alleles[1].second.count();
+    const float max_allele_frac = (static_cast<float>(allele_sum))/blockObs.total_reads;
+    const float relative_allele_frac = static_cast<float>(max_alleles[1].second.count())/max_alleles[0].second.count();
+
 #ifdef DEBUG_CODON
-    log_os << __FUNCTION__ << ": input si " << *si << "\n";
+    log_os << "max alleles sum " << allele_sum << "\n";
+    log_os << "max alleles frac " << max_allele_frac << "\n";
+    log_os << "relative_allele_frac " << relative_allele_frac << "\n";
 #endif
 
-    /// TODO STREL-125 not generalized to multi-sample, try to replace this rather than fix
-    static const unsigned sampleIndex(0);
-
-    // case: extending block with het call, update block_end position
-    if (is_phasable_site(*locusPtr, sampleIndex))
+    if (max_allele_frac<0.8)
     {
-        if (! is_in_block())
-        {
-            block_start = locusPtr->pos;
 #ifdef DEBUG_CODON
-            log_os << __FUNCTION__ << ": phasable & starting block @ " << block_start << "\n";
+        log_os << __FUNCTION__ << "; non-diploid\n";
 #endif
-        }
-#ifdef DEBUG_CODON
-        else
-        {
-            log_os << __FUNCTION__ << ": phasable & continuing block to " << si->pos << "\n";
-        }
-#endif
-        block_end = locusPtr->pos;
-        het_count++;
-        _buffer.push_back(std::move(locusPtr));
+        // non-diploid?
         return false;
     }
 
-    //case: we get a record that is explicitly set a unphaseable
-    if (locusPtr->isSiteUnphasable)
+    if (relative_allele_frac<0.5)
     {
+        // allele imbalance?
 #ifdef DEBUG_CODON
-        log_os << __FUNCTION__ << ": I shouldn't phase this record " << *si << "\n";
+        log_os << __FUNCTION__ << "; allele imbalance\n";
 #endif
-        _buffer.push_back(std::move(locusPtr));
-
-        return true;
-    }
-
-    // case: extending block with none-het call based on the phasing range
-    if (is_in_block() && (locusPtr->pos-block_end+1)<this->opt.phasing_window)
-    {
-#ifdef DEBUG_CODON
-        log_os << __FUNCTION__ << ": notphasable & continuing block to " << si->pos << "\n";
-#endif
-        _buffer.push_back(std::move(locusPtr));
-
         return false;
     }
-    _buffer.push_back(std::move(locusPtr));
 
+    // sanity check that we have one het on each end of the block:
+    if (max_alleles[0].second.count() == 0) return false;
+    if (max_alleles[1].second.count() == 0) return false;
 
-    // case: setup the phased record and write out
-    if (het_count>1)
-    {
-//        log_os << "!!!het count " << het_count << "\n";
-#ifdef DEBUG_CODON
-//        this->write_out_buffer();
-#endif
-        make_record();
-    }
+    assert(! max_alleles[0].first.empty());
+    assert(max_alleles[0].first.size() == max_alleles[1].first.size());
+    if (max_alleles[0].first.front() == max_alleles[1].first.front()) return false;
+    if (max_alleles[0].first.back() == max_alleles[1].first.back()) return false;
+
     return true;
 }
 
-void
-Codon_phaser::construct_reference()
+
+struct PhaseEditInfo
 {
-    reference = "";
-    auto start = _buffer.front()->pos;
-    auto end = _buffer.back()->pos;
-    auto len = std::min(get_block_length(), (unsigned)(end-start+1));
-
-    ref.get_substring(start, len, reference);
-
-#ifdef DEBUG_CODON
-    log_os << __FUNCTION__ << ": reference " << reference << "\n";
-#endif
-}
-
-static bool is_genotype_represented(int genotype, unsigned offset, const std::string& allele1, const std::string& allele2)
-{
-    const char* gt = DIGT::label(genotype);
-    for (int i = 0; i < 2; i++)
-    {
-        char base = gt[i];
-        if ( (allele1.length() <= offset || allele1[offset] != base) &&
-             (allele2.length() <= offset || allele2[offset] != base))
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
+    unsigned index;
+    bool isFlip;
+};
 
 
 void
 Codon_phaser::
-create_phased_record()
+create_phased_record(
+    const unsigned sampleIndex,
+    const BlockReadObservations& blockObs)
 {
-    /// not generalized to multi-sample, try to replace this rather than fix
-    static const unsigned sampleCount(1);
-    static const unsigned sampleIndex(0);
-
+    const auto& block(_sampleBlocks[sampleIndex]);
 
     // sanity check do we have all record we expect or are there un-accounted no-calls
-    if (this->get_block_length()>this->_buffer.size())
+    if (block.get_length() > _buffer.size())
         return;
 
-    if (total_reads<10)
+    if (blockObs.total_reads<10)
     {
         // some initial minimum conditions, look for at least 10 spanning reads support
         return;
@@ -219,7 +223,7 @@ create_phased_record()
     assert(_buffer.size()>0);
 
     /// TODO STREL-125 TMP:
-    assert(_buffer[0]->getSampleCount() == sampleCount);
+    assert(_buffer[0]->getSampleCount() == _sampleBlocks.size());
 
     //Decide if we accept the novel alleles, very hacky criteria for now
     //at least 80% of the reads have to support a diploid model
@@ -236,7 +240,7 @@ create_phased_record()
     //> chr8  70364287    .   A   G   11  PhasingConflict SNVSB=-2.5;SNVHPOL=2    GT:GQ:GQX:DP:DPF:AD 0/1:44:18:16:3:14,2
     //static constexpr unsigned alleleCount(2);
     std::array<std::pair<std::string,allele_observations>, 2> max_alleles;
-    for (const auto& obs : observations)
+    for (const auto& obs : blockObs.observations)
     {
 #ifdef DEBUG_CODON
         log_os << "obs:" << obs.first << "(" << obs.second.count() << ")\n";
@@ -256,252 +260,114 @@ create_phased_record()
 #ifdef DEBUG_CODON
     log_os << "max_1 " << max_alleles[0].first << "=" << max_alleles[0].second.count() << "\n";
     log_os << "max_2 " << max_alleles[1].first << "=" << max_alleles[1].second.count() << "\n";
-#endif
-
-    // some ad hoc metrics to measure consistency with diploid model
-    const int allele_sum = max_alleles[0].second.count() + max_alleles[1].second.count();
-    const float max_allele_frac = (static_cast<float>(allele_sum))/this->total_reads;
-    const float relative_allele_frac = static_cast<float>(max_alleles[1].second.count())/max_alleles[0].second.count();
-
-#ifdef DEBUG_CODON
-    log_os << "max alleles sum " << allele_sum << "\n";
-    log_os << "max alleles frac " << max_allele_frac << "\n";
-    log_os << "relative_allele_frac " << relative_allele_frac << "\n";
-#endif
-
-    bool phasing_inconsistent(false);
-    if (max_allele_frac<0.8)
-    {
-        // non-diploid?
-        phasing_inconsistent = true;
-#ifdef DEBUG_CODON
-        log_os << __FUNCTION__ << "; non-diploid\n";
-#endif
-    }
-
-    if (relative_allele_frac<0.5)
-    {
-        // allele imbalance?
-        phasing_inconsistent = true;
-#ifdef DEBUG_CODON
-        log_os << __FUNCTION__ << "; allele imbalance\n";
-#endif
-    }
-
-    // sanity check that we have one het on each end of the block:
-    if (! phasing_inconsistent)
-    {
-        if (max_alleles[0].second.count() == 0) phasing_inconsistent=true;
-        if (max_alleles[1].second.count() == 0) phasing_inconsistent=true;
-
-        if (! phasing_inconsistent)
-        {
-            assert(! max_alleles[0].first.empty());
-            assert(max_alleles[0].first.size() == max_alleles[1].first.size());
-            if (max_alleles[0].first.front() == max_alleles[1].first.front()) phasing_inconsistent=true;
-            if (max_alleles[0].first.back() == max_alleles[1].first.back()) phasing_inconsistent=true;
-        }
-
-#ifdef DEBUG_CODON
-        if (phasing_inconsistent) log_os << __FUNCTION__ << "; non-sane\n";
-#endif
-    }
-
-    std::stringstream AD, ADF, ADR, alt;
-    if (!phasing_inconsistent)
-    {
-        AD << observations[reference].count();
-        ADF << observations[reference].fwd;
-        ADR << observations[reference].rev;
-        for (const auto& val : max_alleles)
-        {
-            if (val.first==reference) continue;
-            if (! alt.str().empty()) alt << ',';
-            alt << val.first;
-            AD << ',' << val.second.count();
-            ADF << ',' << val.second.fwd;
-            ADR << ',' << val.second.rev;
-        }
-    }
-
-#ifdef DEBUG_CODON
     log_os << "buffer size " << _buffer.size() << "\n";
-    log_os << "block length " << get_block_length() << "\n";
+    log_os << "block length " << block.get_length() << "\n";
 #endif
 
-    // set GQ and GQX
-    static const int maxInt(std::numeric_limits<int>::max());
-    int min_qual(maxInt), min_EVS(maxInt);
-    std::vector<unsigned> pls;
-    unsigned ref_gt(0);
-    unsigned max_gt(0);
-    bool is_min_gq_idx0(false);
-    bool is_min_gq_idx1(false);
-    unsigned min_gq_idx0(0);
-    unsigned min_gq_idx1(0);
-    if (!phasing_inconsistent)
+    // where does this block start in the buffer:
+    const int blockStartOffset(block.start - bufferStartPos());
+    assert(blockStartOffset >= 0);
+    const unsigned blockLength(block.get_length());
+
+    bool isPhasingConsistent(evaluatePhasingConsistency(blockObs, max_alleles));
+
+    // edit info:
+    std::vector<PhaseEditInfo> phaseEditInfo;
+    pos_t phaseSetId(-1);
+
+    if (isPhasingConsistent)
     {
-        for (unsigned blockPosOffset(0); blockPosOffset<this->get_block_length(); blockPosOffset++)
+        const std::string& phasedHap0(max_alleles[0].first);
+        const std::string& phasedHap1(max_alleles[1].first);
+
+        bool isMatchedAtBlockStart(true);
+
+        for (unsigned blockIndex(0); blockIndex < blockLength; blockIndex++)
         {
-            const auto& si(_buffer.at(blockPosOffset));
-            const auto& sampleInfo(si->getSample(sampleIndex));
-            const auto& siteSampleInfo(si->getSiteSample(sampleIndex));
+            const GermlineSiteLocusInfo& siteLocus(*_buffer.at(blockStartOffset + blockIndex));
+            if (!is_phasable_locus(siteLocus, sampleIndex)) continue;
 
-            if (! is_phasable_site(*si, sampleIndex)) continue;
-            // It is possible for a weak hetalt call and a strong het call to be phased into a het
-            // call, particularly at a site that is triallelic with one ref allele. In that case, it is
-            // important to skip those calls' contribution to the resultant statistics. This logic causes
-            // us to skip over these variants.
-            if (!is_genotype_represented(siteSampleInfo.max_gt, unsigned(si->pos - _buffer[0]->pos),
-                                         max_alleles[0].first, max_alleles[1].first))
+            const auto& sampleInfo(siteLocus.getSample(sampleIndex));
+            const auto& maxGt(sampleInfo.max_gt());
+
+            const uint8_t allele0Index(maxGt.getAllele0Index());
+            const uint8_t allele1Index(maxGt.getAllele1Index());
+
+            const auto& siteAlleles(siteLocus.getSiteAlleles());
+
+            auto alleleIndexToBaseIndex = [&](const uint8_t alleleIndex) {
+                if (alleleIndex == 0) return siteLocus.refBaseIndex;
+                return static_cast<uint8_t>(siteAlleles[allele1Index - 1].baseIndex);
+            };
+
+            const uint8_t base0Index(alleleIndexToBaseIndex(allele0Index));
+            const uint8_t base1Index(alleleIndexToBaseIndex(allele1Index));
+
+            const uint8_t phasedBase0Index(base_to_id(phasedHap0[blockIndex]));
+            const uint8_t phasedBase1Index(base_to_id(phasedHap1[blockIndex]));
+
+            bool isMatched(true);
+            if ((base0Index == phasedBase0Index) and (base1Index == phasedBase1Index))
             {
-#ifdef DEBUG_CODON
-                log_os << "Variant at offset i lacks support in phased alleles - failing phasing\n"
-#endif
-                       // TODO: This is a blunt instrument. Refine this solution to select the minimum set of
-                       // ALTs that support the buffered variants
-                       phasing_inconsistent = true;
-                continue;
+                isMatched = true;
+            }
+            else if ((base0Index == phasedBase1Index) and (base1Index == phasedBase0Index))
+            {
+                isMatched = false;
+            }
+            else
+            {
+                isPhasingConsistent = false;
+                break;
             }
 
-            if ((! is_min_gq_idx0) || (sampleInfo.genotypeQualityPolymorphic < _buffer.at(min_gq_idx0)->getSample(sampleIndex).genotypeQualityPolymorphic))
+            bool isFlip(false);
+            if (phaseSetId == -1)
             {
-                min_gq_idx1 = min_gq_idx0;
-                if (is_min_gq_idx0) is_min_gq_idx1 = true;
-                min_gq_idx0 = blockPosOffset;
-                is_min_gq_idx0 = true;
+                if (sampleInfo.phaseSetId != -1)
+                {
+                    phaseSetId = sampleInfo.phaseSetId;
+                }
+                else
+                {
+                    phaseSetId = (siteLocus.pos + 1);
+                }
+
+                isMatchedAtBlockStart = isMatched;
             }
-            if ((blockPosOffset != min_gq_idx0) && ( (! is_min_gq_idx1) || (sampleInfo.genotypeQualityPolymorphic < _buffer.at(min_gq_idx1)->getSample(sampleIndex).genotypeQualityPolymorphic)))
+            else
             {
-                min_gq_idx1 = blockPosOffset;
-                is_min_gq_idx1 = true;
+                isFlip = (isMatched != isMatchedAtBlockStart);
             }
-            min_qual = std::min(si->anyVariantAlleleQuality,min_qual);
-            min_EVS = std::min(sampleInfo.empiricalVariantScore,min_EVS);
-        }
-    }
-    if (!is_min_gq_idx0)
-    {
-#ifdef DEBUG_CODON
-        log_os << __FUNCTION__ << "; no variants left\n";
-#endif
-        phasing_inconsistent = true;
-    }
-
-
-    if (phasing_inconsistent)
-    {
-        for (auto& val : _buffer)
-        {
-            if (! is_phasable_site(*val, sampleIndex)) continue;
-            val->filters.set(GERMLINE_VARIANT_VCF_FILTERS::PhasingConflict);
-        }
-        return;
-    }
-
-    const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
-
-    int min_gq(maxInt);
-    {
-        const auto& minsi0(*(_buffer.at(min_gq_idx0)));
-        const auto& siteSampleInfo0(minsi0.getSiteSample(sampleIndex));
-        min_gq = minsi0.getSample(sampleIndex).genotypeQualityPolymorphic;
-        max_gt = minsi0.getSiteSample(sampleIndex).max_gt;
-        pls = siteSampleInfo0.dgt.phredLoghood;
-        ref_gt = minsi0.refBaseIndex;
-
-        if (! is_ref && is_min_gq_idx1)
-        {
-            //
-            // hetalt case
-            //
-#ifdef DEBUG_CODON
-            log_os << "min0 " << min_gq_idx0 << "\n";
-            log_os << "min1 " << min_gq_idx1 << "\n";
-#endif
-
-            // create fake ref_gt value for hetalt case:
-            const uint8_t ax(DIGT::get_allele(max_gt,0));
-            const uint8_t ay(DIGT::get_allele(max_gt,1));
-
-            // phase a0/a1 to match max_allele order;
-            const bool is_swap(max_alleles[1].first[min_gq_idx0] == id_to_base(ax));
-            const uint8_t a0(is_swap ? ay : ax);
-            const uint8_t a1(is_swap ? ax : ay);
-
-            ref_gt = 0;
-            for (; true; ref_gt++)
-            {
-                assert(ref_gt < N_BASE);
-                if ((ref_gt != a0) && (ref_gt != a1)) break;
-            }
-
-            // hetalt site:
-            const auto& minsi1(*(_buffer.at(min_gq_idx1)));
-            const auto& siteSampleInfo1(minsi1.getSiteSample(sampleIndex));
-            const uint8_t bx(DIGT::get_allele(siteSampleInfo1.max_gt,0));
-            const uint8_t by(DIGT::get_allele(siteSampleInfo1.max_gt,1));
-
-            // phase b0/b1 to match max_allele order;
-            const bool is_swap2(max_alleles[1].first[min_gq_idx1] == id_to_base(bx));
-            const uint8_t b0(is_swap2 ? by : bx);
-            const uint8_t b1(is_swap2 ? bx : by);
-
-#ifdef DEBUG_CODON
-            log_os << "ref/a0/a1/b0/b1 " << ref_gt << " " << (int)a0 << " " << (int)a1 << " " << (int)b0 << " " << (int)b1 << "\n";
-            log_os << "ref0/ref1 " << minsi0.dgt.ref_gt << " " << minsi1.dgt.ref_gt << "\n";
-#endif
-
-            // construct new fake approximated PL distribution:
-            const auto& pls0(siteSampleInfo0.dgt.phredLoghood);
-            const auto& pls1(siteSampleInfo1.dgt.phredLoghood);
-
-            const uint8_t ref0(minsi0.refBaseIndex);
-            const uint8_t ref1(minsi1.refBaseIndex);
-
-            pls[ref_gt] = pls0[ref0] + pls1[ref1];  // 0/0
-            pls[DIGT::get_gt_with_alleles(ref_gt,a0)] = pls0[DIGT::get_gt_with_alleles(ref0,a0)] + pls1[DIGT::get_gt_with_alleles(ref1,b0)];  // 0/1
-            pls[DIGT::get_gt_with_alleles(a0,a0)] = pls0[DIGT::get_gt_with_alleles(a0,a0)] + pls1[DIGT::get_gt_with_alleles(b0,b0)];  // 1/1
-            pls[DIGT::get_gt_with_alleles(ref_gt,a1)] = pls0[DIGT::get_gt_with_alleles(ref0,a1)] + pls1[DIGT::get_gt_with_alleles(ref1,b1)];  // 0/2
-            pls[max_gt] = 0;  // 1/2
-            pls[DIGT::get_gt_with_alleles(a1,a1)] = pls0[DIGT::get_gt_with_alleles(a1,a1)] + pls1[DIGT::get_gt_with_alleles(b1,b1)];  // 2/2
+            phaseEditInfo.push_back(PhaseEditInfo({blockIndex, isFlip}));
         }
     }
 
-    // we have a phased record, modify site buffer to reflect the changes
-    auto& locusPtr = this->_buffer.at(0);
-    LocusSampleInfo& sampleInfo(locusPtr->getSample(sampleIndex));
-    GermlineSiteSampleInfo& siteSampleInfo(locusPtr->getSiteSample(sampleIndex));
-
-    locusPtr->phased_ref = this->reference;
-    siteSampleInfo.max_gt = max_gt;
-    siteSampleInfo.dgt.ref_gt = ref_gt;
-
-    // set various quality fields conservatively
-    sampleInfo.genotypeQualityPolymorphic = min_gq;
-    locusPtr->anyVariantAlleleQuality  = min_qual;
-    siteSampleInfo.dgt.phredLoghood       = pls;
-    sampleInfo.gqx               = std::min(min_gq,min_qual);
-    sampleInfo.empiricalVariantScore  = min_EVS;
-
-    locusPtr->phased_alt = alt.str();
-    locusPtr->phased_AD  = AD.str();
-    locusPtr->phased_ADF  = ADF.str();
-    locusPtr->phased_ADR  = ADR.str();
-
-    locusPtr->isPhasedRegion = true;
-    const int reads_ignored = (this->total_reads-allele_sum);
-    siteSampleInfo.n_used_calls = this->total_reads - reads_ignored;
-    siteSampleInfo.n_unused_calls = this->total_reads_unused + reads_ignored; // second term mark all alleles that we didnt use as unused reads
-
-    // case we want to report the phased record clean out buffer and push on the phased record only
-#ifdef DEBUG_CODON
-    log_os << "buffer size " << _buffer.size() << "\n";
-    this->write_out_buffer();
+    if (isPhasingConsistent)
+    {
+        // if everything went wellgo back through one more time and make all edits:
+        for (const auto& editInfo : phaseEditInfo)
+        {
+            LocusInfo& locus(*_buffer.at(blockStartOffset + editInfo.index));
+            auto& sampleInfo(locus.getSample(sampleIndex));
+            sampleInfo.phaseSetId = phaseSetId;
+            sampleInfo.max_gt().setPhased(editInfo.isFlip);
+        }
+    }
+    else
+    {
+        // should a phasing conflict filter be provided, or should be just leave the
+        // variants unphased/unfiltered? Choosing the latter option here.
+#if 0
+        for (unsigned blockIndex(0); blockIndex < blockLength; blockIndex++)
+        {
+            GermlineSiteLocusInfo& siteLocus(*_buffer.at(blockStartOffset + blockIndex));
+            if (! is_phasable_site(siteLocus, sampleIndex)) continue;
+            auto& sampleInfo(siteLocus.getSample(sampleIndex));
+            sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::PhasingConflict);
+        }
 #endif
-
-    // erase buffer sites which are now combined in the buffer[0] record
-    _buffer.erase(_buffer.begin()+1,_buffer.begin()+this->get_block_length());
+    }
 }
 
 
@@ -509,22 +375,27 @@ create_phased_record()
 // makes the phased VCF record from the buffered sites list
 void
 Codon_phaser::
-make_record()
+phaseRecords(const unsigned sampleIndex)
 {
-    this->construct_reference();
-    this->collect_pileup_evidence();
-    this->create_phased_record();
+    BlockReadObservations blockObs;
+    collect_pileup_evidence(sampleIndex, blockObs);
+    create_phased_record(sampleIndex, blockObs);
 }
 
 
 
 void
 Codon_phaser::
-collect_pileup_evidence()
+collect_pileup_evidence(
+    const unsigned sampleIndex,
+    BlockReadObservations& blockObs)
 {
+    const auto& block(_sampleBlocks[sampleIndex]);
+    const pos_basecall_buffer& bc_buff(_basecallBuffers[sampleIndex]);
+
     // build quick pileup index over phase range:
     std::vector<const snp_pos_info*> spi;
-    for (int blockPos(block_start); blockPos<=block_end; ++blockPos)
+    for (int blockPos(block.start); blockPos<=block.end; ++blockPos)
     {
         const snp_pos_info& pi(bc_buff.get_pos(blockPos));
         spi.push_back(&pi);
@@ -609,53 +480,14 @@ collect_pileup_evidence()
 
         if (is_fwd_strand)
         {
-            observations[result.second].fwd++;
+            blockObs.observations[result.second].fwd++;
         }
         else
         {
-            observations[result.second].rev++;
+            blockObs.observations[result.second].rev++;
         }
-        total_reads++;
+        blockObs.total_reads++;
     }
 
-    total_reads_unused=n_calls-total_reads;
-}
-
-
-
-void
-Codon_phaser::clear()
-{
-    _buffer.clear();
-    observations.clear();
-    block_start = -1;
-    block_end   = -1;
-    het_count                   = 0;
-    total_reads                 = 0;
-    total_reads_unused          = 0;
-    reference                   = "";
-}
-
-
-
-void
-Codon_phaser::
-write_out_buffer(std::ostream& os) const
-{
-    for (const auto& val : _buffer)
-    {
-        os << *val << " ref " << id_to_base(val->refBaseIndex) << "\n";
-    }
-}
-
-void
-Codon_phaser::
-write_out_alleles(std::ostream& os) const
-{
-    for (const auto& val : observations)
-    {
-        if (val.first == this->reference) continue;
-        os << val.first << "=" << val.second.count() << " ";
-    }
-    os << "\n";
+    blockObs.total_reads_unused=n_calls-blockObs.total_reads;
 }

@@ -45,7 +45,7 @@ public:
         const RegionTracker& nocompress_regions,
         const std::vector<std::string>& sampleNames,
         std::ostream* os,
-        const pos_basecall_buffer& bc_buff);
+        const std::vector<std::reference_wrapper<const pos_basecall_buffer>>& basecallBuffers);
 
     ~gvcf_aggregator();
 
@@ -53,7 +53,7 @@ public:
     /// preserved until the block is completed
     bool is_phasing_block() const
     {
-        return _codon_phaser && _codon_phaser->is_in_block();
+        return (_codon_phaser && _codon_phaser->isBuffer());
     }
 
     void add_site(std::unique_ptr<GermlineSiteLocusInfo> si);

@@ -204,14 +204,8 @@ add_site_internal(
     GermlineDiploidSiteLocusInfo& locus)
 {
     filter_site_by_last_indel_overlap(locus);
-    if (locus.isPhasedRegion)
-    {
-        _head_pos=locus.pos+locus.phased_ref.length();
-    }
-    else
-    {
-        _head_pos=locus.pos+1;
-    }
+    _head_pos=locus.pos+1;
+
     // write_site
     queue_site_record(locus);
 }
@@ -364,24 +358,17 @@ write_site_record(
     const unsigned sampleCount(locus.getSampleCount());
 
     os << _chrom << '\t'  // CHROM
-       << (locus.pos+1) << '\t'  // POS
+       << (locus.pos + 1) << '\t'  // POS
        << ".\t";           // ID
 
-    if (locus.isPhasedRegion)
-    {
-        os  << locus.phased_ref << '\t'; // REF
-    }
-    else
-    {
-        os  << id_to_base(locus.refBaseIndex) << '\t'; // REF
-    }
+    os << id_to_base(locus.refBaseIndex) << '\t'; // REF
 
     // ALT
     writeSiteVcfAltField(locus.getSiteAlleles(), os);
     os << '\t';
 
     std::vector<uint8_t> altOrder;
-    get_visible_alt_order(locus,altOrder);
+    get_visible_alt_order(locus, altOrder);
 
     // QUAL:
     if (locus.is_qual())
@@ -430,7 +417,7 @@ write_site_record(
         if (_opt.isReportEVSFeatures)
         {
             // EVS features may not be computed for certain records, so check first:
-            if (! locus.evsFeatures.empty())
+            if (!locus.evsFeatures.empty())
             {
                 const StreamScoper ss(os);
                 os << std::setprecision(5);
@@ -462,6 +449,22 @@ write_site_record(
     if (isAltAlleles)
     {
         os << ":PL";
+    }
+
+    bool isAnyPhased(false);
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+    {
+        const auto& sampleInfo(locus.getSample(sampleIndex));
+        if (sampleInfo.phaseSetId >= 0)
+        {
+            isAnyPhased = true;
+            break;
+        }
+    }
+
+    if (isAnyPhased)
+    {
+        os << ":PS";
     }
 
     //SAMPLE
@@ -533,6 +536,20 @@ write_site_record(
                     os << ',';
                 }
                 os << std::min(pls, maxPL);
+            }
+        }
+
+        // PS
+        if (isAnyPhased)
+        {
+            os << ':';
+            if (sampleInfo.phaseSetId < 0)
+            {
+                os << '.';
+            }
+            else
+            {
+                os << sampleInfo.phaseSetId;
             }
         }
     }

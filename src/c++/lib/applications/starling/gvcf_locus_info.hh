@@ -295,6 +295,7 @@ struct LocusSampleInfo
         genotypePhredLoghood.clear();
         filters.clear();
         supportCounts.clear();
+        phaseSetId = -1;
         _ploidy.reset();
         _isPloidyConflict = false;
     }
@@ -322,6 +323,12 @@ struct LocusSampleInfo
     setPloidyConflict()
     {
         _isPloidyConflict=true;
+    }
+
+    VcfGenotype&
+    max_gt()
+    {
+        return maxGenotypeIndexPolymorphic;
     }
 
     const VcfGenotype&
@@ -381,6 +388,9 @@ struct LocusSampleInfo
 
     /// VCF AD/ADF/ADR counts
     LocusSupportingReadStats supportCounts;
+
+    /// if non-negative, use this to provide a PS tag to acompany a phased max_gt() value.
+    pos_t phaseSetId = -1;
 
 private:
     SamplePloidyState _ploidy;
@@ -923,7 +933,6 @@ struct GermlineSiteLocusInfo : public LocusInfo
         base_t::clear();
         refBaseIndex = BASE_ID::ANY;
         hpol = 0;
-        isSiteUnphasable = false;
         isForcedOutput = false;
         _siteAlleleInfo.clear();
 
@@ -937,7 +946,6 @@ struct GermlineSiteLocusInfo : public LocusInfo
 
     unsigned hpol = 0;
 
-    bool isSiteUnphasable = false;        // Set to true if the site should never be included in a phasing block
     bool isForcedOutput = false;
 
 private:
@@ -984,14 +992,6 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         VariantScoringFeatureKeeper& developmentFeatures);
 
     bool
-    is_het(const unsigned sampleIndex) const
-    {
-        const auto& siteSample(getSiteSample(sampleIndex));
-        unsigned print_gt(siteSample.max_gt);
-        return DIGT::is_het(print_gt);
-    }
-
-    bool
     is_hetalt(const unsigned sampleIndex) const
     {
         const auto& siteSample(getSiteSample(sampleIndex));
@@ -1035,13 +1035,9 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         evsDevelopmentFeatures.clear();
     }
 
-    std::string phased_ref, phased_alt, phased_AD, phased_ADF, phased_ADR;
-
     /// production and development features used in the empirical scoring model:
     VariantScoringFeatureKeeper evsFeatures;
     VariantScoringFeatureKeeper evsDevelopmentFeatures;
-
-    bool isPhasedRegion = false;
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteLocusInfo& si);

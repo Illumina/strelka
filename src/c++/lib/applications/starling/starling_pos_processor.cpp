@@ -47,17 +47,24 @@ starling_pos_processor(
       _dopt(dopt),
       _streams(streams)
 {
-    static const unsigned sampleId(0);
-
-    assert(_streams.getSampleNames().size() == getSampleCount());
+    const unsigned sampleCount(getSampleCount());
+    assert(_streams.getSampleNames().size() == sampleCount);
 
     // setup gvcf aggregator
     if (_opt.gvcf.is_gvcf_output())
     {
+        // this is hacky, but needed for the codon phaser, which we hope to eliminate ASAP, so
+        // this should be temporary:
+        std::vector<std::reference_wrapper<const pos_basecall_buffer>> basecallBuffers;
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        {
+            basecallBuffers.emplace_back(sample(sampleIndex).bc_buff);
+        }
+
         _gvcfer.reset(new gvcf_aggregator(
                           _opt,_dopt,ref,_nocompress_regions,
                           _streams.getSampleNames(), _streams.gvcf_osptr(),
-                          sample(sampleId).bc_buff));
+                          basecallBuffers));
     }
 
     // setup indel buffer:
@@ -86,7 +93,6 @@ starling_pos_processor(
 
         getIndelBuffer().setMaxCandidateDepth(maxIndelCandidateDepthSumOverNormalSamples);
 
-        const unsigned sampleCount(getSampleCount());
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
             sample_info& sif(sample(sampleIndex));

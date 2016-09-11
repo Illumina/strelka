@@ -128,7 +128,6 @@ private:
     {
         _empty_site.pos = pos;
         _empty_site.refBaseIndex = base_to_id(_ref.get_base(pos));
-        _empty_site.isSiteUnphasable = true;
         return _empty_site;
     }
 
