@@ -133,7 +133,7 @@ operator<<(
     os << "AltAlleleCount: " << altAlleles.size() << "\n";
     for (unsigned altAlleleIndex(0); altAlleleIndex<altAlleles.size(); ++altAlleleIndex)
     {
-        os << "AltAllele" << altAlleleIndex << " " << altAlleles[altAlleleIndex].indelKey;
+        os << "AltAllele index/info: " << altAlleleIndex << " " << altAlleles[altAlleleIndex];
     }
     os << "range: " << ii.range() << "\n";
     const unsigned sampleCount(ii.getSampleCount());
@@ -633,18 +633,5 @@ computeEmpiricalScoringFeatures(
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (locus.anyVariantAlleleQuality));
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (sampleInfo.genotypeQualityPolymorphic));
         }
-    }
-}
-
-
-
-void
-GermlineDiploidIndelLocusInfo::
-dump(std::ostream& os) const
-{
-    os << "Alleles:\n";
-    for (const auto& allele : getIndelAlleles())
-    {
-        os << allele << "\n";
     }
 }

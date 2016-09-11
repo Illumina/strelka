@@ -31,18 +31,6 @@
 
 
 
-indel_overlapper::indel_overlapper(const ScoringModelManager& model, const reference_contig_segment& ref, std::shared_ptr<variant_pipe_stage_base> destination)
-    : variant_pipe_stage_base(destination)
-    , _CM(model)
-    , _ref(ref)
-    , _indel_end_pos(0)
-{
-    // this component doesn't make any sense without a destination:
-    assert(destination);
-}
-
-
-
 void
 indel_overlapper::
 process(std::unique_ptr<GermlineSiteLocusInfo> siteLocusPtr)
@@ -72,26 +60,24 @@ void
 indel_overlapper::
 process(std::unique_ptr<GermlineIndelLocusInfo> indelLocusPtr)
 {
-    auto ii(downcast<GermlineDiploidIndelLocusInfo>(std::move(indelLocusPtr)));
-
-    const bool isNonVariantLocus(not ii->isVariantLocus());
+    const bool isNonVariantLocus(not indelLocusPtr->isVariantLocus());
 
     // don't handle homozygous reference calls unless genotyping is forced
-    if (isNonVariantLocus and (not ii->isAnyForcedOutputAtLocus())) return;
+    if (isNonVariantLocus and (not indelLocusPtr->isAnyForcedOutputAtLocus())) return;
 
-    if (ii->pos>_indel_end_pos)
+    if (indelLocusPtr->pos>_indel_end_pos)
     {
         process_overlaps();
     }
 
     if (isNonVariantLocus)
     {
-        _nonvariant_indel_buffer.push_back(std::move(ii));
+        _nonvariant_indel_buffer.push_back(std::move(indelLocusPtr));
     }
     else
     {
-        _indel_end_pos=std::max(_indel_end_pos, ii->end());
-        _indel_buffer.push_back(std::move(ii));
+        _indel_end_pos=std::max(_indel_end_pos, indelLocusPtr->end());
+        _indel_buffer.push_back(std::move(indelLocusPtr));
     }
 }
 
@@ -111,11 +97,15 @@ dump(std::ostream& os) const
         os << *site << "\n";
     }
 
-    os << "buffered indels:\n";
+    os << "buffered variant indels:\n";
     for (const auto& indel : _indel_buffer)
     {
-        indel->dump(os);
-        os << "\n";
+        os << *indel << "\n";
+    }
+    os << "buffered nonvariant indels:\n";
+    for (const auto& indel : _nonvariant_indel_buffer)
+    {
+        os << *indel << "\n";
     }
 }
 
@@ -155,8 +145,8 @@ enum index_t
 static
 VARQUEUE::index_t
 nextVariantType(
-    const std::vector<std::unique_ptr<GermlineDiploidIndelLocusInfo>>& indel_buffer,
-    const std::vector<std::unique_ptr<GermlineDiploidIndelLocusInfo>>& nonvariant_indel_buffer,
+    const std::vector<std::unique_ptr<GermlineIndelLocusInfo>>& indel_buffer,
+    const std::vector<std::unique_ptr<GermlineIndelLocusInfo>>& nonvariant_indel_buffer,
     const std::vector<std::unique_ptr<GermlineDiploidSiteLocusInfo>>& site_buffer,
     const unsigned indel_index,
     const unsigned nonvariant_indel_index,
@@ -281,7 +271,7 @@ void indel_overlapper::process_overlaps_impl()
 void
 indel_overlapper::
 modify_overlapping_site(
-    const GermlineDiploidIndelLocusInfo& indelLocus,
+    const GermlineIndelLocusInfo& indelLocus,
     GermlineDiploidSiteLocusInfo& siteLocus,
     const ScoringModelManager& model)
 {
@@ -300,7 +290,7 @@ modify_overlapping_site(
 void
 indel_overlapper::
 modify_indel_overlap_site(
-    const GermlineDiploidIndelLocusInfo& indelLocus,
+    const GermlineIndelLocusInfo& indelLocus,
     GermlineDiploidSiteLocusInfo& siteLocus,
     const ScoringModelManager& model)
 {
@@ -353,7 +343,7 @@ modify_indel_overlap_site(
 
 void
 indel_overlapper::
-modify_indel_conflict_site(GermlineDiploidSiteLocusInfo& siteLocus)
+modify_indel_conflict_site(GermlineSiteLocusInfo& siteLocus)
 {
     siteLocus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
 }

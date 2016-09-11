@@ -679,9 +679,6 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
         VariantScoringFeatureKeeper& features,
         VariantScoringFeatureKeeper& developmentFeatures);
 
-    void
-    dump(std::ostream& os) const;
-
     /// production and development features used in the empirical scoring model:
     VariantScoringFeatureKeeper evsFeatures;
     VariantScoringFeatureKeeper evsDevelopmentFeatures;

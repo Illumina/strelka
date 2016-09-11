@@ -37,7 +37,15 @@ struct indel_overlapper : public variant_pipe_stage_base
     indel_overlapper(
         const ScoringModelManager& model,
         const reference_contig_segment& ref,
-        std::shared_ptr<variant_pipe_stage_base> destination);
+        std::shared_ptr<variant_pipe_stage_base> destination)
+        : variant_pipe_stage_base(destination)
+        , _CM(model)
+        , _ref(ref)
+        , _indel_end_pos(0)
+    {
+        // this component doesn't make any sense without a destination:
+        assert(destination);
+    }
 
     void process(std::unique_ptr<GermlineSiteLocusInfo> siteLocusPtr) override;
     void process(std::unique_ptr<GermlineIndelLocusInfo> indelLocusPtr) override;
@@ -45,7 +53,7 @@ struct indel_overlapper : public variant_pipe_stage_base
     static
     void
     modify_overlapping_site(
-        const GermlineDiploidIndelLocusInfo& indelLocus,
+        const GermlineIndelLocusInfo& indelLocus,
         GermlineDiploidSiteLocusInfo& siteLocus,
         const ScoringModelManager& model);
 
@@ -56,15 +64,15 @@ private:
         process_overlaps();
     }
 
-    static void modify_indel_conflict_site(GermlineDiploidSiteLocusInfo& siteLocus);
+    static void modify_indel_conflict_site(GermlineSiteLocusInfo& siteLocus);
     static void modify_indel_overlap_site(
-        const GermlineDiploidIndelLocusInfo& indelLocus,
+        const GermlineIndelLocusInfo& indelLocus,
         GermlineDiploidSiteLocusInfo& siteLocus,
         const ScoringModelManager& model);
 
     void process_overlaps();
     void process_overlaps_impl();
-    void modify_single_indel_record(GermlineDiploidIndelLocusInfo& indelLocus);
+    void modify_single_indel_record(GermlineIndelLocusInfo& indelLocus);
 
 
     void modify_conflict_indel_record();
@@ -75,8 +83,8 @@ private:
     const reference_contig_segment& _ref;
     pos_t _indel_end_pos;
 
-    std::vector<std::unique_ptr<GermlineDiploidIndelLocusInfo>> _indel_buffer;
-    std::vector<std::unique_ptr<GermlineDiploidIndelLocusInfo>> _nonvariant_indel_buffer;
+    std::vector<std::unique_ptr<GermlineIndelLocusInfo>> _indel_buffer;
+    std::vector<std::unique_ptr<GermlineIndelLocusInfo>> _nonvariant_indel_buffer;
     std::vector<std::unique_ptr<GermlineDiploidSiteLocusInfo>> _site_buffer;
 };
 
