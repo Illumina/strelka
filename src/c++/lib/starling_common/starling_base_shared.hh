@@ -173,8 +173,16 @@ struct starling_base_options : public blt_options
     // vcfs can be input to specify candidate indels:
     std::vector<std::string> input_candidate_indel_vcf;
 
+    // these are like input_candidate_indel_vcf files, but indel normalization
+    // errors will be suppressed:
+    std::vector<std::string> input_candidate_indel_vcf_no_error;
+
     // positions/indels in vcf must be written in output:
     std::vector<std::string> force_output_vcf;
+
+    // these are like force_output_vcf, but indel normalization errors will
+    // be suppressed:
+    std::vector<std::string> force_output_vcf_no_error;
 
     // Indicates that an upstream oligo is present on reads, which can be used to increase confidence for indels near the edge of the read
     unsigned upstream_oligo_size = 0;

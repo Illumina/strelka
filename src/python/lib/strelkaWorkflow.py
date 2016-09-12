@@ -153,7 +153,11 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
             segCmd.extend([arg, val])
 
     addListCmdOption(self.params.indelCandidatesList, '--candidate-indel-input-vcf')
+    addListCmdOption(self.params.indelCandidatesNoErrorList,
+                     '--candidate-indel-input-vcf-no-error')
     addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
+    addListCmdOption(self.params.forcedGTNoErrorList, '--force-output-no-error')
+
     addListCmdOption(self.params.noiseVcfList, '--noise-vcf')
 
     segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.id)])

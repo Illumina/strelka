@@ -108,8 +108,13 @@ get_starling_base_option_parser(
     ("candidate-indel-input-vcf",
      po::value(&opt.input_candidate_indel_vcf)->multitoken(),
      "Add candidate indels from the specified vcf file. Option can be provided multiple times to combine evidence from multiple vcf files.  Variants must be normalized.")
+    ("candidate-indel-input-vcf-no-error",
+     po::value(&opt.input_candidate_indel_vcf_no_error)->multitoken(),
+     "Add candidate indels from the specified vcf file, while suppressing normalization errors. Option can be provided multiple times to combine evidence from multiple vcf files.")
     ("force-output-vcf", po::value(&opt.force_output_vcf)->multitoken(),
      "Force each site or indel in the vcf file to be written to the snv or indel output, even if no variant is found. Any indels submitted will also be treated as candidate indels. Option can be provided multiple times to combine multiple vcf files. Variants must be normalized.")
+    ("force-output-vcf-no-error", po::value(&opt.force_output_vcf_no_error)->multitoken(),
+     "Force each site or indel in the vcf file to be written to the snv or indel output, even if no variant is found, while ignoring indel normalization errors. Any indels submitted will also be treated as candidate indels. Option can be provided multiple times to combine multiple vcf files.")
     ("upstream-oligo-size", po::value(&opt.upstream_oligo_size),
      "Treat reads as if they have an upstream oligo anchor for purposes of meeting minimum breakpoint overlap in support of an indel.")
     ;
