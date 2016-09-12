@@ -84,12 +84,17 @@ def runIndelModel(self,taskPrefix="",dependencies=None) :
 
     return nextStepWait
 
-
-class TempSegmentFiles :
+class TempSegmentFilesPerSample :
     def __init__(self) :
         self.gvcf = []
+
+
+class TempSegmentFiles :
+    def __init__(self, sampleCount) :
+        self.variants = []
         self.bamRealign = []
         self.stats = []
+        self.sample = [TempSegmentFilesPerSample]*sampleCount
 
 
 # we need extra quoting for files with spaces in this workflow because command is stringified below to enable gVCF pipe:
@@ -97,25 +102,28 @@ def quote(instr):
     return "\"%s\"" % (instr)
 
 
+def gvcfSampleLabel(sampleIndex) :
+    return "gVCF.S%i" % (sampleIndex+1)
+
 
 def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
-    isFirstSegment = (len(segFiles.gvcf) == 0)
+    isFirstSegment = (len(segFiles.variants) == 0)
 
     segStr = str(gseg.id)
 
-    segCmd = [ quote(self.params.starlingBin) ]
+    segCmd = [ self.params.starlingBin ]
 
     segCmd.extend(["-min-mapping-quality",self.params.minMapq])
     segCmd.extend(["-bam-seq-name", gseg.chromLabel] )
     segCmd.extend(["-report-range-begin", str(gseg.beginPos) ])
     segCmd.extend(["-report-range-end", str(gseg.endPos) ])
-    segCmd.extend(["-samtools-reference", quote(self.params.referenceFasta) ])
+    segCmd.extend(["-samtools-reference", self.params.referenceFasta ])
     segCmd.extend(["-max-window-mismatch", "2", "20" ])
     segCmd.extend(["-genome-size", str(self.params.knownSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
 
-    segCmd.extend(["--gvcf-file","-"])
+    segCmd.extend(["--gvcf-output-prefix", self.paths.getTmpSegmentGvcfPrefix(segStr)])
     segCmd.extend(['--gvcf-min-gqx','15'])
     segCmd.extend(['--gvcf-max-snv-strand-bias','10'])
     segCmd.extend(['-min-qscore','17'])
@@ -123,14 +131,17 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
     segCmd.extend(['-min-vexp', '0.25'])
     segCmd.extend(['--do-short-range-phasing'])
+
+    # TODO STREL-125 git rid of this workaround:
     # currently short-range phasing is not enabled with continuous variant calling. This ensures
     # the header value for the relevant phasing filters is still emitted
     if len(self.params.callContinuousVf) > 0 :
         segCmd.extend(["--gvcf-include-header", "Phasing"])
-    segCmd.extend(["--report-file", quote(self.paths.getTmpSegmentReportPath(gseg.id))])
+
+    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.id)])
 
     segFiles.stats.append(self.paths.getTmpRunStatsPath(segStr))
-    segCmd.extend(["--stats-file", quote(segFiles.stats[-1])])
+    segCmd.extend(["--stats-file", segFiles.stats[-1]])
 
     # RNA-Seq het calls are considered over a wider frequency range:
     if self.params.isRNA:
@@ -140,14 +151,14 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     # Empirical Variant Scoring(EVS):
     if self.params.isEVS :
         if self.params.germlineSnvScoringModelFile is not None :
-            segCmd.extend(['--snv-scoring-model-file', quote(self.params.germlineSnvScoringModelFile)])
+            segCmd.extend(['--snv-scoring-model-file', self.params.germlineSnvScoringModelFile])
         if self.params.germlineIndelScoringModelFile is not None :
-            segCmd.extend(['--indel-scoring-model-file', quote(self.params.germlineIndelScoringModelFile)])
+            segCmd.extend(['--indel-scoring-model-file', self.params.germlineIndelScoringModelFile])
 
     if self.params.indelErrorModelName is not None :
         segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
     if self.params.inputIndelErrorModelsFile is not None :
-        segCmd.extend(['--indel-error-models-file', quote(self.params.inputIndelErrorModelsFile)])
+        segCmd.extend(['--indel-error-models-file', self.params.inputIndelErrorModelsFile])
 
     if self.params.isReportEVSFeatures :
         segCmd.append("--report-evs-features")
@@ -161,10 +172,11 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         segCmd.extend(["--gvcf-include-header", "VF"])
 
     if self.params.isHighDepthFilter :
-        segCmd.extend(["--chrom-depth-file", quote(self.paths.getChromDepth())])
+        segCmd.extend(["--chrom-depth-file", self.paths.getChromDepth()])
 
+    # TODO STREL-125 come up with new solution for outbams
     if self.params.isWriteRealignedBam :
-        segCmd.extend(["-realigned-read-file", quote(self.paths.getTmpUnsortRealignBamPath(segStr))])
+        segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(segStr)])
 
     def addListCmdOption(optList,arg) :
         if optList is None : return
@@ -175,13 +187,13 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
 
     if self.params.noCompressBed is not None :
-        segCmd.extend(['--nocompress-bed', quote(self.params.noCompressBed)])
+        segCmd.extend(['--nocompress-bed', self.params.noCompressBed])
 
     if self.params.targetRegionsBed is not None :
-        segCmd.extend(['--targeted-regions-bed', quote(self.params.targetRegionsBed)])
+        segCmd.extend(['--targeted-regions-bed', self.params.targetRegionsBed])
 
     if self.params.ploidyBed is not None :
-        segCmd.extend(['--ploidy-region-bed', quote(self.params.ploidyBed)])
+        segCmd.extend(['--ploidy-region-bed', self.params.ploidyBed])
 
     if self.params.callContinuousVf is not None and gseg.chromLabel in self.params.callContinuousVf :
         segCmd.append('--call-continuous-vf')
@@ -190,26 +202,41 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         for arg in self.params.extraStarlingArguments.strip().split() :
             segCmd.append(arg)
 
-     # gvcf is written to stdout so we need shell features:
-    segCmd = " ".join(segCmd)
+    segTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gseg.id)
+    self.addTask(segTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
 
-    # swap parent pyflow command-line into vcf header
-    if isFirstSegment :
-        def getHeaderFixCmd() :
-            cmd  = "\"%s\" -E \"%s\"" % (sys.executable, self.params.vcfCmdlineSwapper)
-            cmd += ' "' + " ".join(self.params.configCommandLine) + '"'
-            return cmd
-
-        segCmd += " | " + getHeaderFixCmd()
-
-    segFiles.gvcf.append(self.paths.getTmpSegmentGvcfPath(segStr))
-    segCmd += " | \"%s\" -c >| \"%s\"" % (self.params.bgzip9Bin, segFiles.gvcf[-1])
-
+    # clean up and compress genome segment files:
     nextStepWait = set()
 
-    setTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gseg.id)
-    self.addTask(setTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
-    nextStepWait.add(setTaskLabel)
+    def compressRawVcf(rawVcfFilename, label) :
+        """
+        process each raw vcf file with header modifications and bgzip compression
+        """
+
+        compressCmd = "cat "+quote(rawVcfFilename)
+
+        if isFirstSegment :
+            def getHeaderFixCmd() :
+                cmd  = "\"%s\" -E \"%s\"" % (sys.executable, self.params.vcfCmdlineSwapper)
+                cmd += ' "' + " ".join(self.params.configCommandLine) + '"'
+                return cmd
+            compressCmd += " | " + getHeaderFixCmd()
+
+        compressCmd += " | \"%s\" -c >| \"%s\"" % (self.params.bgzip9Bin, quote(rawVcfFilename +".gz"))
+        compressCmd += " && rm -f " + quote(rawVcfFilename)
+
+        compressTaskLabel=preJoin(taskPrefix,"compressGenomeSegment_"+gseg.id+"_"+label)
+        self.addTask(compressTaskLabel, compressCmd, dependencies=segTaskLabel, memMb=self.params.callMemMb)
+        nextStepWait.add(compressTaskLabel)
+
+    segFiles.variants.append(self.paths.getTmpSegmentVariantsPath(segStr))
+    compressRawVcf(segFiles.variants[-1], "variants")
+
+    sampleCount = len(self.params.bamList)
+    for sampleIndex in range(sampleCount) :
+        segFiles.sample[sampleIndex].gvcf.append(self.paths.getTmpSegmentGvcfPath(segStr, sampleIndex))
+        compressRawVcf(segFiles.sample[sampleIndex].gvcf[-1], gvcfSampleLabel(sampleIndex))
+
 
     if self.params.isWriteRealignedBam :
         def sortRealignBam(sortList) :
@@ -222,7 +249,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
             sortCmd="\"%s\" sort \"%s\" \"%s\" && rm -f \"%s\"" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
 
             sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+gseg.id)
-            self.addTask(sortTaskLabel,sortCmd,dependencies=setTaskLabel,memMb=self.params.callMemMb)
+            self.addTask(sortTaskLabel,sortCmd,dependencies=segTaskLabel,memMb=self.params.callMemMb)
             nextStepWait.add(sortTaskLabel)
 
         sortRealignBam(segFiles.bamRealign)
@@ -241,7 +268,9 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     segmentTasks = set()
 
-    segFiles = TempSegmentFiles()
+    sampleCount = len(self.params.bamList)
+
+    segFiles = TempSegmentFiles(sampleCount)
     for gseg in getNextGenomeSegment(self.params) :
 
         segmentTasks |= callGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
@@ -254,8 +283,16 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     finishTasks = set()
 
-    # merge gVCF
-    finishTasks.add(self.concatIndexVcf(taskPrefix, completeSegmentsTask, segFiles.gvcf, self.paths.getGvcfOutputPath(),"gVCF"))
+    # merge various VCF outputs
+    finishTasks.add(self.concatIndexVcf(taskPrefix, completeSegmentsTask, segFiles.variants,
+                                        self.paths.getVariantsOutputPath(), "variants"))
+    for sampleIndex in range(sampleCount) :
+        concatTask = self.concatIndexVcf(taskPrefix, completeSegmentsTask, segFiles.sample[sampleIndex].gvcf,
+                                         self.paths.getGvcfOutputPath(sampleIndex), gvcfSampleLabel(sampleIndex))
+        finishTasks.add(concatTask)
+        if sampleIndex == 0 :
+            linkCmd=["ln","-s", self.paths.getGvcfOutputPath(sampleIndex), self.paths.getGvcfLegacyPath()]
+            self.addTask(preJoin(taskPrefix, "addLegacyOutputLink"), linkCmd, dependencies=concatTask, isForceLocal=True)
 
     # merge segment stats:
     finishTasks.add(self.mergeRunStats(taskPrefix,completeSegmentsTask, segFiles.stats))
@@ -317,8 +354,14 @@ class PathInfo(SharedPathInfo):
     def getIndelSegmentDir(self) :
         return os.path.join(self.params.workDir, "indelSegment.tmpdir")
 
-    def getTmpSegmentGvcfPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "genome.%s.vcf.gz" % (segStr))
+    def getTmpSegmentGvcfPrefix(self, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "segment.%s." % (segStr))
+
+    def getTmpSegmentVariantsPath(self, segStr) :
+        return self.getTmpSegmentGvcfPrefix(segStr) + "variants.vcf"
+
+    def getTmpSegmentGvcfPath(self, segStr, sampleIndex) :
+        return self.getTmpSegmentGvcfPrefix(segStr) + "genome.S%i.vcf" % (sampleIndex+1)
 
     def getTmpUnsortRealignBamPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "%s.unsorted.realigned.bam" % (segStr))
@@ -326,7 +369,13 @@ class PathInfo(SharedPathInfo):
     def getTmpRealignBamPath(self, segStr,) :
         return os.path.join( self.getTmpSegmentDir(), "%s.realigned.bam" % (segStr))
 
-    def getGvcfOutputPath(self) :
+    def getVariantsOutputPath(self) :
+        return os.path.join( self.params.variantsDir, "variants.vcf.gz")
+
+    def getGvcfOutputPath(self, sampleIndex) :
+        return os.path.join( self.params.variantsDir, "genome.S%i.vcf.gz" % (sampleIndex+1))
+
+    def getGvcfLegacyPath(self) :
         return os.path.join( self.params.variantsDir, "genome.vcf.gz")
 
     def getRealignedBamPath(self) :
