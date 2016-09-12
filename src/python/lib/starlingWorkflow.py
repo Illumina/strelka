@@ -213,6 +213,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         process each raw vcf file with header modifications and bgzip compression
         """
 
+        compressedVariantsPath = rawVcfFilename +".gz"
         compressCmd = "cat "+quote(rawVcfFilename)
 
         if isFirstSegment :
@@ -222,20 +223,23 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
                 return cmd
             compressCmd += " | " + getHeaderFixCmd()
 
-        compressCmd += " | \"%s\" -c >| \"%s\"" % (self.params.bgzip9Bin, quote(rawVcfFilename +".gz"))
+        compressCmd += " | \"%s\" -c >| \"%s\"" % (self.params.bgzip9Bin, quote(compressedVariantsPath))
         compressCmd += " && rm -f " + quote(rawVcfFilename)
 
         compressTaskLabel=preJoin(taskPrefix,"compressGenomeSegment_"+gseg.id+"_"+label)
         self.addTask(compressTaskLabel, compressCmd, dependencies=segTaskLabel, memMb=self.params.callMemMb)
         nextStepWait.add(compressTaskLabel)
+        return compressedVariantsPath
 
-    segFiles.variants.append(self.paths.getTmpSegmentVariantsPath(segStr))
-    compressRawVcf(segFiles.variants[-1], "variants")
+    rawVariantsPath = self.paths.getTmpSegmentVariantsPath(segStr)
+    compressedVariantsPath = compressRawVcf(rawVariantsPath, "variants")
+    segFiles.variants.append(compressedVariantsPath)
 
     sampleCount = len(self.params.bamList)
     for sampleIndex in range(sampleCount) :
-        segFiles.sample[sampleIndex].gvcf.append(self.paths.getTmpSegmentGvcfPath(segStr, sampleIndex))
-        compressRawVcf(segFiles.sample[sampleIndex].gvcf[-1], gvcfSampleLabel(sampleIndex))
+        rawVariantsPath = self.paths.getTmpSegmentGvcfPath(segStr, sampleIndex)
+        compressedVariantsPath = compressRawVcf(rawVariantsPath, gvcfSampleLabel(sampleIndex))
+        segFiles.sample[sampleIndex].gvcf.append(compressedVariantsPath)
 
 
     if self.params.isWriteRealignedBam :
