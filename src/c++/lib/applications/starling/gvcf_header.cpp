@@ -129,7 +129,7 @@ finish_gvcf_header(
     const starling_options& opt,
     const gvcf_deriv_options& dopt,
     const cdmap_t& chrom_depth,
-    const std::string& sample_name,
+    const std::vector<std::string>& sampleNames,
     std::ostream& os)
 {
     //INFO:
@@ -206,5 +206,10 @@ finish_gvcf_header(
         os << "\n";
     }
 
-    os << vcf_col_label() << "\tFORMAT\t" << sample_name << "\n";
+    os << vcf_col_label() << "\tFORMAT";
+    for (const auto& sampleName : sampleNames)
+    {
+        os << '\t' << sampleName;
+    }
+    os << '\n';
 }

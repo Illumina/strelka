@@ -45,8 +45,8 @@ get_starling_option_parser(
 
     po::options_description gvcf_opt("gVCF options");
     gvcf_opt.add_options()
-    ("gvcf-file", po::value(&opt.gvcf.out_file),
-     "gVCF output file-name, if not supplied output will be written to stdout.")
+    ("gvcf-output-prefix", po::value(&opt.gvcf.outputPrefix),
+     "Turn on gvcf output mode and use the supplied prefix for all variant output files.")
     ("chrom-depth-file", po::value(&opt.gvcf.chrom_depth_file),
      "If provided, the mean depth for each chromosome will be read from file, and these values will be used for high depth filtration. File should contain one line per chromosome, where each line begins with: \"chrom_name<TAB>depth\" (default: no chrom depth filtration)")
     ("gvcf-max-depth-factor", po::value(&opt.gvcf.max_depth_factor)->default_value(opt.gvcf.max_depth_factor),

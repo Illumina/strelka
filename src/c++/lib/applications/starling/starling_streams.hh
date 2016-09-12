@@ -37,10 +37,17 @@ struct starling_streams : public starling_streams_base
         const std::vector<std::reference_wrapper<const bam_hdr_t>>& bamHeaders,
         const unsigned sampleCount);
 
-    std::ostream*
-    gvcf_osptr() const
+    std::ostream&
+    gvcfSampleStream(const unsigned sampleIndex) const
     {
-        return _gvcf_osptr;
+        assert(sampleIndex < getSampleCount());
+        return *(_gvcfSampleStreamPtr[sampleIndex]);
+    }
+
+    std::ostream&
+    gvcfVariantsStream() const
+    {
+        return *(_gvcfVariantsStreamPtr);
     }
 
     const std::vector<std::string>&
@@ -56,10 +63,10 @@ private:
         const starling_options& opt,
         const prog_info& pinfo,
         const std::string& filename,
-        const bam_hdr_t& header,
-        std::unique_ptr<std::ostream>& os_ptr_auto);
+        const char* label,
+        const bam_hdr_t& header);
 
-    std::ostream* _gvcf_osptr;
-    std::unique_ptr<std::ostream> _gvcf_osptr_auto;
+    std::unique_ptr<std::ostream> _gvcfVariantsStreamPtr;
+    std::vector<std::unique_ptr<std::ostream>> _gvcfSampleStreamPtr;
     std::vector<std::string> _sampleNames;
 };

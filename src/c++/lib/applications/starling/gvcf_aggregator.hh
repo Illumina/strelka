@@ -25,10 +25,10 @@
 #include "gvcf_block_site_record.hh"
 #include "gvcf_locus_info.hh"
 #include "gvcf_compressor.hh"
+#include "ScoringModelManager.hh"
+#include "starling_streams.hh"
 
 #include <iosfwd>
-
-#include "ScoringModelManager.hh"
 
 
 ///
@@ -41,10 +41,9 @@ public:
     gvcf_aggregator(
         const starling_options& opt,
         const starling_deriv_options& dopt,
+        const starling_streams& streams,
         const reference_contig_segment& ref,
         const RegionTracker& nocompress_regions,
-        const std::vector<std::string>& sampleNames,
-        std::ostream* os,
         const std::vector<std::reference_wrapper<const pos_basecall_buffer>>& basecallBuffers);
 
     ~gvcf_aggregator();

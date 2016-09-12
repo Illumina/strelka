@@ -36,28 +36,22 @@ initialize_gvcf_file(
     const starling_options& opt,
     const prog_info& pinfo,
     const std::string& filename,
-    const bam_hdr_t& header,
-    std::unique_ptr<std::ostream>& os_ptr_auto)
+    const char* label,
+    const bam_hdr_t& header)
 {
-    std::ostream* osptr(&std::cout);
-    if (filename != "-")
-    {
-        std::ofstream* fos_ptr(new std::ofstream);
-        open_ofstream(pinfo,filename,"gvcf",*fos_ptr);
-        os_ptr_auto.reset(fos_ptr);
-        osptr=os_ptr_auto.get();
-    }
-    std::ostream& os(*osptr);
+    std::ofstream* fosPtr(new std::ofstream);
+    open_ofstream(pinfo, filename, label, *fosPtr);
 
-    if (! opt.gvcf.is_skip_header)
+    if (not opt.gvcf.is_skip_header)
     {
+        std::ostream& os(*fosPtr);
         const char* const cmdline(opt.cmdline.c_str());
 
         write_vcf_audit(opt,pinfo,cmdline,header,os);
 
-        os << "##content=" << pinfo.name() << " small-variant calls\n";
+        os << "##content=" << pinfo.name() << " germline small-variant calls\n";
     }
-    return osptr;
+    return fosPtr;
 }
 
 
@@ -70,7 +64,6 @@ starling_streams(
     const unsigned sampleCount)
     : base_t(opt, pinfo, sampleCount)
 {
-    _gvcf_osptr = nullptr;
     for (const bam_hdr_t& bamHeader : bamHeaders)
     {
         _sampleNames.push_back(get_bam_header_sample_name(bamHeader));
@@ -81,7 +74,16 @@ starling_streams(
 
     if (opt.gvcf.is_gvcf_output())
     {
-        _gvcf_osptr = initialize_gvcf_file(opt,pinfo,opt.gvcf.out_file, referenceHeader,_gvcf_osptr_auto);
+        const std::string gvcfVariantsPath(opt.gvcf.outputPrefix+"variants.vcf");
+        _gvcfVariantsStreamPtr.reset(initialize_gvcf_file(opt, pinfo, gvcfVariantsPath, "variants", referenceHeader));
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        {
+            std::ostringstream sampleTag;
+            sampleTag << "S" << (sampleIndex+1);
+            const std::string gvcfSamplePath(opt.gvcf.outputPrefix+"genome." + sampleTag.str() + ".vcf");
+            _gvcfSampleStreamPtr[sampleIndex].reset(
+                initialize_gvcf_file(opt, pinfo, gvcfSamplePath, sampleTag.str().c_str(), referenceHeader));
+        }
     }
 
     if (opt.is_realigned_read_file())

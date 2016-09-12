@@ -42,7 +42,7 @@ struct gvcf_options
     bool
     is_gvcf_output() const
     {
-        return (!out_file.empty());
+        return (not outputPrefix.empty());
     }
 
     bool
@@ -79,7 +79,8 @@ struct gvcf_options
     bool is_block_compression = true;
 
     double block_max_nonref = .2; // what percentage of non-ref bases can a site have and still be included in a non-variant block
-    std::string out_file;
+
+    std::string outputPrefix;
 
     /// file specifying regions that are not compressed in the gvcf:
     std::string nocompress_region_bedfile;

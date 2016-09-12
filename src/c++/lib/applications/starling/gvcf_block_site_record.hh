@@ -61,14 +61,8 @@ struct gvcf_block_site_record : public GermlineSiteLocusInfo
     /// determine if the given site could be joined to this block:
     bool
     testCanSiteJoinSampleBlock(
-        const GermlineDiploidSiteLocusInfo& locus,
+        const GermlineSiteLocusInfo& locus,
         const unsigned sampleIndex) const;
-
-    /// determine if the given site could be joined to this block:
-    bool
-    testCanSiteJoinSampleBlock(
-        const GermlineContinuousSiteLocusInfo& locus,
-        const unsigned samleIndex) const;
 
     /// add site to the current block
     void

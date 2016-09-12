@@ -27,6 +27,7 @@
 #include "gvcf_block_site_record.hh"
 #include "gvcf_compressor.hh"
 #include "starling_shared.hh"
+#include "starling_streams.hh"
 #include "variant_pipe_stage_base.hh"
 
 #include "blt_util/RegionTracker.hh"
@@ -44,10 +45,9 @@ struct gvcf_writer : public variant_pipe_stage_base
     gvcf_writer(
         const starling_options& opt,
         const starling_deriv_options& dopt,
+        const starling_streams& streams,
         const reference_contig_segment& ref,
         const RegionTracker& nocompress_regions,
-        const std::vector<std::string>& sampleNames,
-        std::ostream* os,
         const ScoringModelManager& cm);
 
     void process(std::unique_ptr<GermlineSiteLocusInfo>) override;
@@ -59,10 +59,11 @@ private:
     {
         return _blockPerSample.size();
     }
+
     void flush_impl() override;
 
-    void add_site_internal(GermlineDiploidSiteLocusInfo& locus);
-    void add_site_internal(GermlineContinuousSiteLocusInfo& locus);
+    /// Add sites to queue for writing to gVCF
+    void add_site_internal(GermlineSiteLocusInfo& locus);
 
     /// write out compressed non-variant block for one sample
     ///
@@ -88,37 +89,42 @@ private:
         }
     }
 
-    // queue site record for writing, after
-    // possibly joining it into a compressed non-variant block
-    //
-    template<class TSiteInfo>
-    void queue_site_record(const TSiteInfo& si)
-    {
-        //test for basic blocking criteria
-        if (! _gvcf_comp.is_site_compressable(si))
-        {
-            writeAllNonVariantBlockRecords();
-            write_site_record(si);
-            return;
-        }
+    /// queue site record for writing, after
+    /// possibly joining it into a compressed non-variant block
+    ///
+    void
+    queue_site_record(
+        const GermlineSiteLocusInfo& locus);
 
-        const unsigned sampleCount(getSampleCount());
-        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-        {
-            gvcf_block_site_record& block(_blockPerSample[sampleIndex]);
-            if (! block.testCanSiteJoinSampleBlock(si, sampleIndex))
-            {
-                writeSampleNonVariantBlockRecord(sampleIndex);
-            }
-            block.joinSiteToSampleBlock(si, sampleIndex);
-        }
-    }
+    /// write site record out to a single VCF stream
+    void
+    write_site_record_instance(
+        const GermlineSiteLocusInfo& locus,
+        std::ostream& os,
+        const int targetSampleIndex = -1) const;
 
-    void write_site_record(const GermlineDiploidSiteLocusInfo& locus) const;
-    void write_site_record(const GermlineContinuousSiteLocusInfo& locus) const;
-    void write_site_record(const gvcf_block_site_record& locus) const;
+    /// write site record out to all VCF streams
+    void
+    write_site_record(
+        const GermlineSiteLocusInfo& locus) const;
 
-    void write_indel_record(const GermlineIndelLocusInfo& locus) const;
+    /// special write function for gvcf compressed non-reference site blocks
+    void
+    write_site_record(
+        const gvcf_block_site_record& locus,
+        std::ostream& os) const;
+
+    /// write indel record out to a single VCF stream
+    void
+    write_indel_record_instance(
+        const GermlineIndelLocusInfo& locus,
+        std::ostream& os,
+        const int targetSampleIndex = -1) const;
+
+    /// write indel record out to all VCF streams
+    void
+    write_indel_record(
+        const GermlineIndelLocusInfo& locus) const;
 
     /// fill in missing sites
     void skip_to_pos(const pos_t target_pos);
@@ -132,17 +138,18 @@ private:
     }
 
     const starling_options& _opt;
-    const known_pos_range _report_range;
+    const starling_streams& _streams;
     const reference_contig_segment& _ref;
-    std::ostream* _osptr;
+    const known_pos_range _report_range;
     const char* _chrom;
     const gvcf_deriv_options _dopt;
     std::vector<gvcf_block_site_record> _blockPerSample;
     pos_t _head_pos;
     GermlineDiploidSiteLocusInfo _empty_site;
 
-    std::unique_ptr<GermlineDiploidIndelLocusInfo> _last_indel;
+    std::unique_ptr<GermlineIndelLocusInfo> _last_indel;
 
+    /// TODO STREL-125 why can't we get rid of this? Indel overlapper should already be doing the same thing!
     void filter_site_by_last_indel_overlap(GermlineDiploidSiteLocusInfo& locus);
 
     gvcf_compressor _gvcf_comp;

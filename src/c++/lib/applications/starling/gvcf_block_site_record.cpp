@@ -163,7 +163,7 @@ joinSiteToSampleBlock(
 bool
 gvcf_block_site_record::
 testCanSiteJoinSampleBlock(
-    const GermlineDiploidSiteLocusInfo& locus,
+    const GermlineSiteLocusInfo& locus,
     const unsigned sampleIndex) const
 {
     if (count==0) return true;
@@ -179,35 +179,6 @@ testCanSiteJoinSampleBlock(
                                  isBlockGqxDefined))
     {
         return false;
-    }
-
-    return true;
-}
-
-
-
-bool
-gvcf_block_site_record::
-testCanSiteJoinSampleBlock(
-    const GermlineContinuousSiteLocusInfo& locus,
-    const unsigned sampleIndex) const
-{
-    if (count==0) return true;
-
-    if(not testCanSiteJoinSampleBlockShared(locus,sampleIndex)) return false;
-
-    const LocusSampleInfo& inputSampleInfo(locus.getSample(sampleIndex));
-
-    if (isBlockGqxDefined)
-    {
-        // test blocking values:
-        if (! is_new_value_blockable(inputSampleInfo.gqx,
-                                     block_gqx,frac_tol,abs_tol,
-                                     true,
-                                     true))
-        {
-            return false;
-        }
     }
 
     return true;

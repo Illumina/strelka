@@ -34,8 +34,6 @@ struct starling_options : public starling_base_options
 {
     starling_options()
     {
-        // set command-line defaults for starling only:
-        gvcf.out_file = "-";
         bsnp_ssd_no_mismatch = 0.35;
         bsnp_ssd_one_mismatch = 0.6;
         max_win_mismatch = 2;

@@ -31,17 +31,16 @@ gvcf_aggregator::
 gvcf_aggregator(
     const starling_options& opt,
     const starling_deriv_options& dopt,
+    const starling_streams& streams,
     const reference_contig_segment& ref,
     const RegionTracker& nocompress_regions,
-    const std::vector<std::string>& sampleNames,
-    std::ostream* osptr,
     const std::vector<std::reference_wrapper<const pos_basecall_buffer>>& basecallBuffers)
     : _scoringModels(opt, dopt.gvcf)
 {
     if (! opt.gvcf.is_gvcf_output())
         throw std::invalid_argument("gvcf_aggregator cannot be constructed with nothing to do.");
 
-    std::shared_ptr<variant_pipe_stage_base> nextPipeStage(new gvcf_writer(opt, dopt, ref, nocompress_regions, sampleNames, osptr, _scoringModels));
+    std::shared_ptr<variant_pipe_stage_base> nextPipeStage(new gvcf_writer(opt, dopt, streams, ref, nocompress_regions, _scoringModels));
     if (opt.is_ploidy_prior)
     {
         std::shared_ptr<variant_pipe_stage_base> overlapper(new indel_overlapper(_scoringModels, ref, nextPipeStage));

@@ -871,6 +871,26 @@ struct GermlineSiteLocusInfo : public LocusInfo
         return allSampleLocusDepth;
     }
 
+    /// test whether known QUAL value should be written for this locus
+    bool
+    isQual() const
+    {
+        if (isRefUnknown()) return false;
+
+        // test for at least one non-empty sample:
+        const unsigned sampleCount(getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex< sampleCount; ++sampleIndex)
+        {
+            const auto& sampleInfo(getSample(sampleIndex));
+            const auto& siteSample(getSiteSample(sampleIndex));
+            if (siteSample.isUsedReadCoverage() and (not siteSample.isOverlappingHomAltDeletion) and sampleInfo.isVariant())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /// test whether known GQX value should be written for this locus/sample
     bool
     is_gqx(const unsigned sampleIndex) const
@@ -944,26 +964,6 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         const double allSampleChromDepth,
         VariantScoringFeatureKeeper& features,
         VariantScoringFeatureKeeper& developmentFeatures);
-
-    /// test whether known QUAL value should be written for this locus
-    bool
-    isQual() const
-    {
-        if (isRefUnknown()) return false;
-
-        // test for at least one non-empty sample:
-        const unsigned sampleCount(getSampleCount());
-        for (unsigned sampleIndex(0); sampleIndex< sampleCount; ++sampleIndex)
-        {
-            const auto& sampleInfo(getSample(sampleIndex));
-            const auto& siteSample(getSiteSample(sampleIndex));
-            if (siteSample.isUsedReadCoverage() and (not siteSample.isOverlappingHomAltDeletion) and sampleInfo.isVariant())
-            {
-                return true;
-            }
-        }
-        return false;
-    }
 
     void
     clearEVSFeatures()
