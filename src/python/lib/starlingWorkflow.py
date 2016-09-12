@@ -295,8 +295,12 @@ def callGenome(self,taskPrefix="",dependencies=None):
                                          self.paths.getGvcfOutputPath(sampleIndex), gvcfSampleLabel(sampleIndex))
         finishTasks.add(concatTask)
         if sampleIndex == 0 :
-            linkCmd=["ln","-s", self.paths.getGvcfOutputPath(sampleIndex), self.paths.getGvcfLegacyPath()]
-            self.addTask(preJoin(taskPrefix, "addLegacyOutputLink"), linkCmd, dependencies=concatTask, isForceLocal=True)
+            outputPath = self.paths.getGvcfOutputPath(sampleIndex)
+            outputDirname=os.path.dirname(outputPath)
+            outputBasename=os.path.basename(outputPath)
+            linkCmd=["ln","-s", outputBasename, self.paths.getGvcfLegacyFilename()]
+            self.addTask(preJoin(taskPrefix, "addLegacyOutputLink"), linkCmd, dependencies=concatTask,
+                         isForceLocal=True, cwd=outputDirname)
 
     # merge segment stats:
     finishTasks.add(self.mergeRunStats(taskPrefix,completeSegmentsTask, segFiles.stats))
@@ -379,8 +383,8 @@ class PathInfo(SharedPathInfo):
     def getGvcfOutputPath(self, sampleIndex) :
         return os.path.join( self.params.variantsDir, "genome.S%i.vcf.gz" % (sampleIndex+1))
 
-    def getGvcfLegacyPath(self) :
-        return os.path.join( self.params.variantsDir, "genome.vcf.gz")
+    def getGvcfLegacyFilename(self) :
+        return "genome.vcf.gz"
 
     def getRealignedBamPath(self) :
         return os.path.join( self.params.realignedDir, 'realigned.bam')
