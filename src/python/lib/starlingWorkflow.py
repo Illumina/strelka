@@ -94,7 +94,7 @@ class TempSegmentFiles :
         self.variants = []
         self.bamRealign = []
         self.stats = []
-        self.sample = [TempSegmentFilesPerSample]*sampleCount
+        self.sample = [TempSegmentFilesPerSample() for _ in range(sampleCount)]
 
 
 # we need extra quoting for files with spaces in this workflow because command is stringified below to enable gVCF pipe:
@@ -103,7 +103,7 @@ def quote(instr):
 
 
 def gvcfSampleLabel(sampleIndex) :
-    return "gVCF.S%i" % (sampleIndex+1)
+    return "gVCF_S%i" % (sampleIndex+1)
 
 
 def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
@@ -314,11 +314,11 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
 
 
-"""
-A separate call workflow is setup so that we can delay the workflow execution until
-the ref count file exists
-"""
 class CallWorkflow(StarkaCallWorkflow) :
+    """
+    A separate call workflow is setup so that we can delay the workflow execution until
+    the ref count file exists
+    """
 
     def __init__(self,params,paths) :
         super(CallWorkflow,self).__init__(params)
@@ -379,7 +379,7 @@ class PathInfo(SharedPathInfo):
         return os.path.join( self.params.variantsDir, "genome.vcf.gz")
 
     def getRealignedBamPath(self) :
-        return os.path.join( self.params.realignedDir, 'realigned.bam');
+        return os.path.join( self.params.realignedDir, 'realigned.bam')
 
 
 
@@ -418,7 +418,6 @@ class StarlingWorkflow(StarkaWorkflow) :
         return msg
 
 
-
     def workflow(self) :
         self.flowLog("Initiating Starling workflow version: %s" % (__version__))
         self.setCallMemMb()
@@ -428,4 +427,3 @@ class StarlingWorkflow(StarkaWorkflow) :
         if self.params.isHighDepthFilter :
             callPreReqs |= starlingRunDepthFromAlignments(self)
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)
-

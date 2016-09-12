@@ -81,7 +81,7 @@ starling_streams(
             std::ostringstream sampleTag;
             sampleTag << "S" << (sampleIndex+1);
             const std::string gvcfSamplePath(opt.gvcf.outputPrefix+"genome." + sampleTag.str() + ".vcf");
-            _gvcfSampleStreamPtr[sampleIndex].reset(
+            _gvcfSampleStreamPtr.emplace_back(
                 initialize_gvcf_file(opt, pinfo, gvcfSamplePath, sampleTag.str().c_str(), referenceHeader));
         }
     }
