@@ -161,3 +161,4 @@ is_nonsom_maker_t()
 
 const is_nonsom_maker_t is_nonsom;
 }
+
