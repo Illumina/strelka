@@ -44,7 +44,7 @@ gvcf_aggregator(
     if (opt.is_ploidy_prior)
     {
         std::shared_ptr<variant_pipe_stage_base> overlapper(new indel_overlapper(_scoringModels, ref, nextPipeStage));
-        _codon_phaser.reset(new Codon_phaser(opt, ref, basecallBuffers, overlapper));
+        _codon_phaser.reset(new Codon_phaser(opt, basecallBuffers, overlapper));
         nextPipeStage = _codon_phaser;
     }
     std::shared_ptr<variant_pipe_stage_base> targeted_region_processor(

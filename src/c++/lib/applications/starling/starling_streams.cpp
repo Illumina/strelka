@@ -93,7 +93,7 @@ starling_streams(
         {
             std::ostringstream rfile;
             rfile << opt.realignedReadFilenamePrefix << ".S" << alignFileIndex << ".bam";
-            _realign_bam_ptr[alignFileIndex] = std::move(initialize_realign_bam(rfile.str(), bamHeaders[alignFileIndex]));
+            _realign_bam_ptr[alignFileIndex] = initialize_realign_bam(rfile.str(), bamHeaders[alignFileIndex]);
         }
     }
 }

@@ -97,12 +97,12 @@ strelka_streams(
         using namespace STRELKA_SAMPLE_TYPE;
         if (opt.is_realigned_read_file())
         {
-            _realign_bam_ptr[NORMAL] = std::move(initialize_realign_bam(opt.realignedReadFilenamePrefix,header));
+            _realign_bam_ptr[NORMAL] = initialize_realign_bam(opt.realignedReadFilenamePrefix,header);
         }
 
         if (opt.is_tumor_realigned_read())
         {
-            _realign_bam_ptr[TUMOR] = std::move(initialize_realign_bam(opt.tumor_realigned_read_filename,header));
+            _realign_bam_ptr[TUMOR] = initialize_realign_bam(opt.tumor_realigned_read_filename,header);
         }
     }
 

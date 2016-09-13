@@ -51,12 +51,10 @@ struct Codon_phaser : public variant_pipe_stage_base
 {
     Codon_phaser(
         const starling_options& opt,
-        const reference_contig_segment& ref,
         const std::vector<std::reference_wrapper<const pos_basecall_buffer>>& initBasecallBuffers,
         std::shared_ptr<variant_pipe_stage_base> destination)
         : variant_pipe_stage_base(destination),
           _opt(opt),
-          _ref(ref),
           _basecallBuffers(initBasecallBuffers),
           _sampleBlocks(initBasecallBuffers.size())
     {}
@@ -170,7 +168,6 @@ private:
     };
 
     const starling_options& _opt;
-    const reference_contig_segment& _ref;
 
     /// pass along the relevant pileup buffer
     const std::vector<std::reference_wrapper<const pos_basecall_buffer>> _basecallBuffers;

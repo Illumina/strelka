@@ -273,13 +273,11 @@ translateBaseIndexToAlleleIndex(
 
     for (const auto& allele : siteAlleles)
     {
-        if (allele.baseIndex == baseIndex)
-        {
-            return alleleIndex;
-        }
+        if (allele.baseIndex == baseIndex) break;
         alleleIndex++;
     }
 
+    if (alleleIndex > siteAlleles.size())
     {
         using namespace illumina::common;
         std::ostringstream oss;
@@ -797,6 +795,7 @@ updateContinuousSnvLocusWithSampleInfo(
 
 
 
+static
 void
 updateContinuousSnvLocusInfo(
     const starling_options& opt,
@@ -929,6 +928,7 @@ process_pos_indel(const pos_t pos)
 
 
 
+static
 void
 addIndelAllelesToLocus(
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
@@ -954,6 +954,7 @@ addIndelAllelesToLocus(
 ///
 /// \param basecallBuffer[inout] read previous base depth and mqpq values from basecallbuffer, and also
 ///                              set ploidy modifications on any bases which the indel overlaps
+static
 void
 updateIndelSampleInfo(
     const starling_base_options& opt,
