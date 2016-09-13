@@ -148,7 +148,7 @@ next(
             if (_isRequireNormalized)
             {
                 std::ostringstream ess;
-                ess << "ERROR: " << oss;
+                ess << "ERROR: " << oss.str();
                 ess << "Please normalize variants in this VCF with a tool such as vt, then resubmit\n";
                 BOOST_THROW_EXCEPTION(illumina::common::LogicException(ess.str()));
             }
@@ -156,7 +156,6 @@ next(
             {
                 log_os << "WARNING: " << oss.str();
                 log_os << "Unnormalized variants may cause local degradations in Strelka variant calling\n";
-
             }
         }
 

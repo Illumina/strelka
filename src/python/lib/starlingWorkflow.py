@@ -175,7 +175,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     addListCmdOption(self.params.indelCandidatesNoErrorList,
                      '--candidate-indel-input-vcf-no-error')
     addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
-    addListCmdOption(self.params.forcedGTNoErrorList, '--force-output-no-error')
+    addListCmdOption(self.params.forcedGTNoErrorList, '--force-output-vcf-no-error')
 
     if self.params.noCompressBed is not None :
         segCmd.extend(['--nocompress-bed', quote(self.params.noCompressBed)])

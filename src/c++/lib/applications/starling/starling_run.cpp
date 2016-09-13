@@ -88,9 +88,14 @@ starling_run(
 
     starling_pos_processor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;
+    bool noRequireNormalized(false);
 
     registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, readHeader, streamData);
+    registerVcfList(opt.input_candidate_indel_vcf_no_error, INPUT_TYPE::CANDIDATE_INDELS, readHeader,
+                    streamData, noRequireNormalized);
     registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, readHeader, streamData);
+    registerVcfList(opt.force_output_vcf_no_error, INPUT_TYPE::FORCED_GT_VARIANTS, readHeader,
+                    streamData, noRequireNormalized);
 
     if (! opt.ploidy_region_bedfile.empty())
     {

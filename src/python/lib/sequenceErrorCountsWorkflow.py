@@ -96,7 +96,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     addListCmdOption(self.params.indelCandidatesList, '--candidate-indel-input-vcf')
     addListCmdOption(self.params.indelCandidatesNoErrorList, '--candidate-indel-input-vcf-no-error')
     addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
-    addListCmdOption(self.params.forcedGTNoErrorList, '--force-output-no-error')
+    addListCmdOption(self.params.forcedGTNoErrorList, '--force-output-vcf-no-error')
 
     addListCmdOption(self.params.excludedRegions,"--excluded-regions-bed-file")
     if self.params.knownVariants is not None :
