@@ -679,6 +679,13 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
         VariantScoringFeatureKeeper& features,
         VariantScoringFeatureKeeper& developmentFeatures);
 
+    void
+    clearEVSFeatures()
+    {
+        evsFeatures.clear();
+        evsDevelopmentFeatures.clear();
+    }
+
     /// production and development features used in the empirical scoring model:
     VariantScoringFeatureKeeper evsFeatures;
     VariantScoringFeatureKeeper evsDevelopmentFeatures;

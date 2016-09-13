@@ -114,6 +114,7 @@ classify_site(
             const bool isUniformDepthExpected(_dopt.is_max_depth());
             if (not _isReportEVSFeatures)
             {
+                locus.clearEVSFeatures();
                 GermlineDiploidSiteLocusInfo::computeEmpiricalScoringFeatures(
                     locus, sampleIndex, _isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures,
                     _dopt.norm_depth, locus.evsFeatures, locus.evsDevelopmentFeatures);
@@ -178,6 +179,7 @@ classify_indel(
             const bool isUniformDepthExpected(_dopt.is_max_depth());
             if (not _isReportEVSFeatures)
             {
+                locus.clearEVSFeatures();
                 GermlineDiploidIndelLocusInfo::computeEmpiricalScoringFeatures(
                     locus, sampleIndex, _isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures,
                     _dopt.norm_depth, locus.evsFeatures, locus.evsDevelopmentFeatures);
