@@ -978,7 +978,7 @@ insert_pos_spandel_count(const pos_t pos,
 
 void
 starling_pos_processor_base::
-update_ranksum_and_mapq_count(
+update_ranksums(
     const pos_t pos,
     const unsigned sample_no,
     const uint8_t call_id,
@@ -988,9 +988,7 @@ update_ranksum_and_mapq_count(
     const bool is_submapped)
 {
     // assume pos is already valid:
-
     auto& bcbuff(sample(sample_no).bc_buff);
-    bcbuff.insert_mapq_count(pos,mapq);
     bcbuff.update_ranksums(_ref.get_base(pos),pos,call_id,qscore,mapq,cycle,is_submapped);
 }
 
@@ -1003,15 +1001,11 @@ update_somatic_features(
     const bool is_tier1,
     const uint8_t call_id,
     const bool is_call_filter,
-    const uint8_t mapq,
     const uint16_t readPos,
     const uint16_t readLength)
 {
     // assume pos is already valid:
-
     auto& bcbuff(sample(sample_no).bc_buff);
-    bcbuff.insert_mapq_count(pos,mapq);
-
     if (is_tier1 && (sample_no != 0) && (! is_call_filter))
     {
         bcbuff.update_read_pos_ranksum(_ref.get_base(pos),pos,call_id,readPos);
@@ -1429,14 +1423,18 @@ pileup_read_segment(
                     }
                 }
 
+                // always update MAPQ (even when we don't want EVS metrics)
+                sample(sampleIndex).bc_buff.insert_mapq_count(ref_pos,mapq);
+
                 // update extended feature metrics (including submapped reads):
                 if (_opt.is_compute_germline_scoring_metrics())
                 {
-                    update_ranksum_and_mapq_count(ref_pos,sampleIndex,call_id,qscore,mapq,align_strand_read_pos,is_submapped);
+                    update_ranksums(ref_pos, sampleIndex, call_id, qscore, mapq, align_strand_read_pos, is_submapped);
                 }
                 else if (_opt.is_compute_somatic_scoring_metrics)
                 {
-                    update_somatic_features(ref_pos,sampleIndex,is_tier1,call_id,current_call_filter,mapq,read_pos,read_size);
+                    update_somatic_features(ref_pos, sampleIndex, is_tier1, call_id, current_call_filter, read_pos,
+                                            read_size);
                 }
 
                 if (is_submapped)
@@ -1462,10 +1460,7 @@ pileup_read_segment(
                                                    isFirstBaseCallFromMatchSeg,
                                                    isLastBaseCallFromMatchSeg);
 
-                    insert_pos_basecall(ref_pos,
-                                        sampleIndex,
-                                        is_tier1,
-                                        bc);
+                    insert_pos_basecall(ref_pos, sampleIndex, is_tier1, bc);
                 }
                 catch (...)
                 {

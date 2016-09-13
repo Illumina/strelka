@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <iosfwd>
+
 #include <cmath>
 #include <cstdint>
 
@@ -75,3 +77,6 @@ struct MapqTracker
     unsigned zeroCount = 0;
     double sumSquare = 0;
 };
+
+std::ostream&
+operator<<(std::ostream& os, const MapqTracker& mapq);

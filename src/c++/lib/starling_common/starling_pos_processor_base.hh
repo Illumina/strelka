@@ -375,7 +375,7 @@ private:
                              const unsigned sample_no);
 
     void
-    update_ranksum_and_mapq_count(
+    update_ranksums(
         const pos_t pos,
         const unsigned sample_no,
         const uint8_t call_id,
@@ -391,7 +391,6 @@ private:
         const bool is_teir1,
         const uint8_t call_id,
         const bool is_call_filter,
-        const uint8_t mapq,
         const uint16_t readPos,
         const uint16_t readLength);
 

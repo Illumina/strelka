@@ -406,8 +406,7 @@ write_site_record_instance(
             }
         }
         os << ';';
-        os << "MQ=" << mapqTracker.getRMS();
-
+        os << "MQ=" << std::lround(mapqTracker.getRMS());
     }
 
     const GermlineDiploidSiteLocusInfo* diploidLocusPtr(dynamic_cast<const GermlineDiploidSiteLocusInfo*>(&locus));
@@ -785,7 +784,7 @@ write_indel_record_instance(
         }
     }
     os << ';';
-    os << "MQ=" << mapqTracker.getRMS();
+    os << "MQ=" << std::lround(mapqTracker.getRMS());
 
     const GermlineDiploidIndelLocusInfo* diploidLocusPtr(dynamic_cast<const GermlineDiploidIndelLocusInfo*>(&locus));
     if (diploidLocusPtr != nullptr)

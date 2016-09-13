@@ -148,7 +148,7 @@ finish_gvcf_header(
     os << "##INFO=<ID=RU,Number=A,Type=String,Description=\"Smallest repeating sequence unit extended or contracted in the indel allele relative to the reference. RUs are not reported if longer than 20 bases.\">\n";
     os << "##INFO=<ID=REFREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in reference.\">\n";
     os << "##INFO=<ID=IDREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in indel allele.\">\n";
-    os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS of mapping quality\">\n";
+    os << "##INFO=<ID=MQ,Number=1,Type=Integer,Description=\"RMS of mapping quality\">\n";
 
 #if 0
     os << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
