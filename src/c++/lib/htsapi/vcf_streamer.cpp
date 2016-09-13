@@ -139,15 +139,24 @@ next(
         }
         if (! _vcfrec.is_valid()) continue;
         if (is_indel_only && (! _vcfrec.is_indel())) continue;
-        if ( _isRequireNormalized)
+        if (! _vcfrec.is_normalized())
         {
-            if (! _vcfrec.is_normalized())
+            std::ostringstream oss;
+            oss << "Input VCF has an unnormalized variant:\n";
+            report_state(oss);
+
+            if (_isRequireNormalized)
             {
-                std::ostringstream oss;
-                oss << "ERROR: Input VCF has an unnormalized variant:\n";
-                report_state(oss);
-                oss << "Please normalize variants in this VCF with a tool such as vt, then resubmit\n";
-                BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+                std::ostringstream ess;
+                ess << "ERROR: " << oss;
+                ess << "Please normalize variants in this VCF with a tool such as vt, then resubmit\n";
+                BOOST_THROW_EXCEPTION(illumina::common::LogicException(ess.str()));
+            }
+            else
+            {
+                log_os << "WARNING: " << oss.str();
+                log_os << "Unnormalized variants may cause local degradations in Strelka variant calling\n";
+
             }
         }
 
