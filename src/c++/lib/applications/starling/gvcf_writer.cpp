@@ -560,7 +560,7 @@ write_site_record_instance(
         {
             os << ":AD:ADF:ADR";
         }
-        os << "FT:VF";
+        os << ":FT:VF";
 
         //SAMPLE
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
