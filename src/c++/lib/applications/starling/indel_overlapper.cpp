@@ -88,21 +88,19 @@ indel_overlapper::
 dump(std::ostream& os) const
 {
     os << "indel_overlapper:"
-       << " nSites: " << _site_buffer.size()
-       << " nIndels: " << _indel_buffer.size()
        << " indel_end_pos: " << _indel_end_pos << "\n";
-    os << "buffered sites:\n";
+    os << "buffered sites: (" << _site_buffer.size() << ")\n";
     for (const auto& site : _site_buffer)
     {
         os << *site << "\n";
     }
 
-    os << "buffered variant indels:\n";
+    os << "buffered variant indels: (" << _indel_buffer.size() << ")\n";
     for (const auto& indel : _indel_buffer)
     {
         os << *indel << "\n";
     }
-    os << "buffered nonvariant indels:\n";
+    os << "buffered nonvariant indels: (" << _nonvariant_indel_buffer.size() << ")\n";
     for (const auto& indel : _nonvariant_indel_buffer)
     {
         os << *indel << "\n";

@@ -105,6 +105,7 @@ struct VariantScoringFeatureKeeper
         const unsigned featureIndex,
         const double featureValue)
     {
+        assert(featureIndex < _featureSet.size());
         if (test(featureIndex))
         {
             using namespace illumina::common;
@@ -122,9 +123,16 @@ struct VariantScoringFeatureKeeper
     double
     get(const unsigned featureIndex) const
     {
+        assert(featureIndex < _featureSet.size());
         if (! test(featureIndex))
         {
-            assert(false && "Requesting undefined feature");
+            using namespace illumina::common;
+
+            std::ostringstream oss;
+            oss << "ERROR: attempted to retrieve scoring feature before it was set."
+                << " Feature: '" << _featureSet.getFeatureLabel(featureIndex) << "'"
+                << " from set: '" << _featureSet.getName() << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
         return _featureVal[featureIndex];
     }

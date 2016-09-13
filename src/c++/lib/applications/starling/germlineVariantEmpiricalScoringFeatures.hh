@@ -282,7 +282,6 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         F_GQX_NORM,
         F_GQ_NORM,
         AD0_NORM,
-        AD2_NORM,
         QUAL_EXACT,
         F_GQ_EXACT,
         SIZE
@@ -313,8 +312,6 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "F_GQ_NORM";
         case AD0_NORM:
             return "AD0_NORM";
-        case AD2_NORM:
-            return "AD2_NORM";
         case QUAL_EXACT:
             return "QUAL_EXACT";
         case F_GQ_EXACT:
