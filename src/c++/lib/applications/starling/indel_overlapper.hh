@@ -35,13 +35,13 @@ struct ScoringModelManager;
 struct indel_overlapper : public variant_pipe_stage_base
 {
     indel_overlapper(
-        const ScoringModelManager& model,
+        const ScoringModelManager& scoringModels,
         const reference_contig_segment& ref,
         std::shared_ptr<variant_pipe_stage_base> destination)
         : variant_pipe_stage_base(destination)
-        , _CM(model)
+        , _scoringModels(scoringModels)
         , _ref(ref)
-        , _indel_end_pos(0)
+        , _indel_end_pos(-1)
     {
         // this component doesn't make any sense without a destination:
         assert(destination);
@@ -79,7 +79,15 @@ private:
 
     void dump(std::ostream& os) const;
 
-    const ScoringModelManager& _CM;
+    void
+    clearBuffers()
+    {
+        _indel_buffer.clear();
+        _nonvariant_indel_buffer.clear();
+        _site_buffer.clear();
+    }
+
+    const ScoringModelManager& _scoringModels;
     const reference_contig_segment& _ref;
     pos_t _indel_end_pos;
 

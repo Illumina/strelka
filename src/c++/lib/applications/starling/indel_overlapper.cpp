@@ -83,28 +83,46 @@ process(std::unique_ptr<GermlineIndelLocusInfo> indelLocusPtr)
 
 
 
+template <typename T>
+void
+dumpLocusBuffer(
+    const char* locusTypeLabel,
+    const std::vector<std::unique_ptr<T>>& locusBuffer,
+    std::ostream& os)
+{
+    // dump function may need to deal with data structure in an intermediate state when certain site
+    // and indel pointers are already released (principally if called while building an exception
+    // report)
+    //
+    const unsigned locusCount(locusBuffer.size());
+    os << locusTypeLabel << " count: (" << locusCount << ")\n";
+    for (unsigned locusIndex(0); locusIndex < locusCount; ++locusIndex)
+    {
+        os << locusTypeLabel << locusIndex << " ";
+        const auto& locus(locusBuffer[locusIndex]);
+        if (locus)
+        {
+            os << *locus;
+        }
+        else
+        {
+            os << "ALREADY RELEASED";
+        }
+        os << '\n';
+    }
+}
+
+
+
 void
 indel_overlapper::
 dump(std::ostream& os) const
 {
     os << "indel_overlapper:"
        << " indel_end_pos: " << _indel_end_pos << "\n";
-    os << "buffered sites: (" << _site_buffer.size() << ")\n";
-    for (const auto& site : _site_buffer)
-    {
-        os << *site << "\n";
-    }
-
-    os << "buffered variant indels: (" << _indel_buffer.size() << ")\n";
-    for (const auto& indel : _indel_buffer)
-    {
-        os << *indel << "\n";
-    }
-    os << "buffered nonvariant indels: (" << _nonvariant_indel_buffer.size() << ")\n";
-    for (const auto& indel : _nonvariant_indel_buffer)
-    {
-        os << *indel << "\n";
-    }
+    dumpLocusBuffer("Site", _site_buffer, os);
+    dumpLocusBuffer("VariantIndel", _indel_buffer, os);
+    dumpLocusBuffer("NonVariantIndel", _nonvariant_indel_buffer, os);
 }
 
 
@@ -121,6 +139,11 @@ process_overlaps()
     {
         log_os << "ERROR: exception caught in process_overlaps()\n";
         dump(log_os);
+
+        // need to clear buffer in case indel_overlapper is in an unstable state, otherwise the flush()
+        // call into indel_buffer could trigger another exception/segfault:
+        clearBuffers();
+
         throw;
     }
 }
@@ -189,7 +212,9 @@ nextVariantType(
 
 
 
-void indel_overlapper::process_overlaps_impl()
+void
+indel_overlapper::
+process_overlaps_impl()
 {
 #ifdef DEBUG_GVCF
     log_os << "CHIRP: " << __FUNCTION__ << " START\n";
@@ -204,16 +229,22 @@ void indel_overlapper::process_overlaps_impl()
     {
         // mark the whole region as conflicting
         modify_conflict_indel_record();
-        is_conflict=true;
+        is_conflict = true;
     }
 
     // process sites to be consistent with overlapping indels:
-    for (auto& si : _site_buffer)
+    //
+
+    // check that if anything is in the site buffer, we have at least one variant indel:
+    // (this guards the _indel_buffer.front() access below)
+    assert(_site_buffer.empty() || (not _indel_buffer.empty()));
+
+    for (auto& siteLocusPtr : _site_buffer)
     {
 #ifdef DEBUG_GVCF
         log_os << "CHIRP: indel overlapping site: " << si->pos << "\n";
 #endif
-        modify_overlapping_site(*_indel_buffer[0], *si, _CM);
+        modify_overlapping_site(*(_indel_buffer.front()), *siteLocusPtr, _scoringModels);
     }
 
     unsigned indel_index(0);
@@ -259,9 +290,7 @@ void indel_overlapper::process_overlaps_impl()
         }
     }
 
-    _indel_buffer.clear();
-    _nonvariant_indel_buffer.clear();
-    _site_buffer.clear();
+    clearBuffers();
 }
 
 
@@ -358,9 +387,9 @@ modify_conflict_indel_record()
 
     assert(_indel_buffer.size()>1);
 
-    for (auto& ii : _indel_buffer)
+    for (auto& indelLocusPtr : _indel_buffer)
     {
-        ii->filters.set(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
+        indelLocusPtr->filters.set(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
     }
 }
 
