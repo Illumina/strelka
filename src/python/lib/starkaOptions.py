@@ -182,7 +182,7 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         if (options.regionStrList is None) or (len(options.regionStrList) == 0) :
             options.genomeRegionList = None
         else :
-            options.genomeRegionList = [parseGenomeRegion(r) for r in options.regionStrList]
+            options.genomeRegionList = [parseGenomeRegion(rr) for r in options.regionStrList for rr in r.split("+")]
 
 
     def validateOptionExistence(self,options) :
