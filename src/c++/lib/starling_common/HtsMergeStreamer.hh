@@ -110,9 +110,10 @@ struct HtsMergeStreamer
     const vcf_streamer&
     registerVcf(
         const char* vcfFilename,
-        const unsigned index = 0)
+        const unsigned index = 0,
+        const bool requireNormalized = true)
     {
-        return registerHtsType(vcfFilename,index,_data._vcf);
+        return registerVcfType(vcfFilename,index,_data._vcf,requireNormalized);
     }
 
     const bed_streamer&
@@ -269,6 +270,23 @@ private:
         _order.emplace_back(htsType, index, htsTypeIndex);
         queueItem(orderIndex);
         return *(htsStreamerVec.back());
+    }
+
+    const vcf_streamer&
+    registerVcfType(
+        const char* vcfFilename,
+        const unsigned index,
+        std::vector<std::unique_ptr<vcf_streamer>>& vcfStreamerVec,
+        const bool requireNormalized)
+    {
+        static const HTS_TYPE::index_t htsType = HTS_TYPE::getStreamType<vcf_streamer>();
+        assert(! _isStreamBegin);
+        const unsigned vcfIndex(vcfStreamerVec.size());
+        const unsigned orderIndex(_order.size());
+        vcfStreamerVec.emplace_back(new vcf_streamer(vcfFilename, getRegionPtr(), requireNormalized));
+        _order.emplace_back(htsType, index, vcfIndex);
+        queueItem(orderIndex);
+        return *(vcfStreamerVec.back());
     }
 
     const OrderData&

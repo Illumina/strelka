@@ -32,4 +32,5 @@ registerVcfList(
     const std::vector<std::string>& vcfFilenames,
     const unsigned typeIndex,
     const bam_hdr_t& header,
-    HtsMergeStreamer& streamData);
+    HtsMergeStreamer& streamData,
+    const bool requireNormalized = true);
