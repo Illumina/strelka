@@ -1156,7 +1156,6 @@ updateIndelLocusWithSampleInfo(
         samplePL.resize(gtCount);
         for (unsigned gtIndex(0); gtIndex<gtCount; ++gtIndex)
         {
-            // don't enforce maxQ at this point, b/c we're going to possibly select down from this list:
             samplePL[gtIndex] = ln_error_prob_to_qphred(genotypeLogLhood[gtIndex]-genotypeLogLhood[maxGtIndex]);
         }
     }

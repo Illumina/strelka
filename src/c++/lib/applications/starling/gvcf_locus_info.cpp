@@ -80,6 +80,15 @@ operator<<(
     lsi.filters.write(os);
     os << "\n";
     os << "supportCounts: " << lsi.supportCounts;
+    os << "PL: ";
+    bool isFirst(true);
+    for (const auto pl : lsi.genotypePhredLoghood)
+    {
+        if (not isFirst) os << ':';
+        os << pl;
+        isFirst = false;
+    }
+    os << '\n';
     return os;
 }
 
