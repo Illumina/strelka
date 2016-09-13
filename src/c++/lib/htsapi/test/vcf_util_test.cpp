@@ -37,11 +37,23 @@ testGtToAllele(
 }
 
 
+static
+void
+testAlleleToGt(
+    const unsigned expectedGenotypeIndex,
+    const unsigned allele0Index,
+    const unsigned allele1Index)
+{
+    const unsigned genotypeIndex = VcfGenotypeUtil::getGenotypeIndex(allele0Index, allele1Index);
+    BOOST_REQUIRE_EQUAL(genotypeIndex, expectedGenotypeIndex);
+}
+
+
 
 BOOST_AUTO_TEST_SUITE( test_vcf_util )
 
 
-BOOST_AUTO_TEST_CASE( vcf_genotype_test )
+BOOST_AUTO_TEST_CASE( vcf_genotype_to_allele_test )
 {
     testGtToAllele(0, 0, 0);
     testGtToAllele(1, 0, 1);
@@ -50,6 +62,17 @@ BOOST_AUTO_TEST_CASE( vcf_genotype_test )
     testGtToAllele(4, 1, 2);
     testGtToAllele(5, 2, 2);
     testGtToAllele(6, 0, 3);
+}
+
+BOOST_AUTO_TEST_CASE( vcf_allele_to_genotype_test )
+{
+    testAlleleToGt(0, 0, 0);
+    testAlleleToGt(1, 0, 1);
+    testAlleleToGt(2, 1, 1);
+    testAlleleToGt(3, 0, 2);
+    testAlleleToGt(4, 1, 2);
+    testAlleleToGt(5, 2, 2);
+    testAlleleToGt(6, 0, 3);
 }
 
 
