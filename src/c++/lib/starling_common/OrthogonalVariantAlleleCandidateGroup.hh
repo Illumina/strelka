@@ -24,6 +24,7 @@
 #include "starling_common/IndelBuffer.hh"
 #include "blt_util/known_pos_range2.hh"
 
+#include <iosfwd>
 #include <vector>
 
 
@@ -86,3 +87,6 @@ struct OrthogonalVariantAlleleCandidateGroup
 
     std::vector<AlleleIter_t> alleles;
 };
+
+std::ostream& operator<<(
+    std::ostream& os, const OrthogonalVariantAlleleCandidateGroup& group);

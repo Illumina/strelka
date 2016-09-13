@@ -21,6 +21,8 @@
 
 #include "OrthogonalVariantAlleleCandidateGroup.hh"
 
+#include <iostream>
+
 
 
 known_pos_range
@@ -45,4 +47,19 @@ getReferenceRange() const
         }
     }
     return pr;
+}
+
+
+
+std::ostream&
+operator<<(
+    std::ostream& os, const OrthogonalVariantAlleleCandidateGroup& group)
+{
+    const unsigned altAlleleCount(group.size());
+    os << "orthogonalAlleleGroup size: " << altAlleleCount << "  keys: \n";
+    for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
+    {
+        os << group.key(altAlleleIndex) << "\n";
+    }
+    return os;
 }
