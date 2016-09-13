@@ -48,7 +48,7 @@ struct gvcf_writer : public variant_pipe_stage_base
         const starling_streams& streams,
         const reference_contig_segment& ref,
         const RegionTracker& nocompress_regions,
-        const ScoringModelManager& cm);
+        const ScoringModelManager& scoringModels);
 
     void process(std::unique_ptr<GermlineSiteLocusInfo>) override;
     void process(std::unique_ptr<GermlineIndelLocusInfo>) override;
@@ -153,7 +153,7 @@ private:
     void filter_site_by_last_indel_overlap(GermlineDiploidSiteLocusInfo& locus);
 
     gvcf_compressor _gvcf_comp;
-    const ScoringModelManager& _CM;
+    const ScoringModelManager& _scoringModels;
 
     /// print output limits:
     const unsigned maxPL = 999;

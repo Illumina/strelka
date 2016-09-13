@@ -31,7 +31,10 @@ struct ScoringModelManager;
 
 struct variant_prefilter_stage : public variant_pipe_stage_base
 {
-    variant_prefilter_stage(const ScoringModelManager& model, std::shared_ptr<variant_pipe_stage_base> destination);
+    variant_prefilter_stage(
+        const ScoringModelManager& model,
+        std::shared_ptr<variant_pipe_stage_base> destination);
+
     void process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr) override;
     void process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr) override;
 

@@ -54,7 +54,7 @@ gvcf_writer(
     const starling_streams& streams,
     const reference_contig_segment& ref,
     const RegionTracker& nocompress_regions,
-    const ScoringModelManager& cm)
+    const ScoringModelManager& scoringModels)
     : _opt(opt)
     , _streams(streams)
     , _ref(ref)
@@ -64,7 +64,7 @@ gvcf_writer(
     , _head_pos(dopt.report_range.begin_pos)
     , _empty_site(_dopt, streams.getSampleCount())
     , _gvcf_comp(opt.gvcf,nocompress_regions)
-    , _CM(cm)
+    , _scoringModels(scoringModels)
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
@@ -91,6 +91,9 @@ gvcf_writer(
     {
         _blockPerSample.emplace_back(_opt.gvcf);
     }
+
+    // add appropriate filters to empty_site, as if it had gone through the standard pipeline:
+    _scoringModels.classify_site(_empty_site);
 }
 
 
@@ -100,9 +103,10 @@ gvcf_writer::
 writeSampleNonVariantBlockRecord(
     const unsigned sampleIndex)
 {
-    std::ostream& os(_streams.gvcfSampleStream(sampleIndex));
     auto& block(_blockPerSample[sampleIndex]);
     if (block.count<=0) return;
+
+    std::ostream& os(_streams.gvcfSampleStream(sampleIndex));
     write_site_record(block, os);
     block.reset();
 }
@@ -122,7 +126,7 @@ filter_site_by_last_indel_overlap(
         }
         else
         {
-            indel_overlapper::modify_overlapping_site(*_last_indel, locus, _CM);
+            indel_overlapper::modify_overlapping_site(*_last_indel, locus, _scoringModels);
         }
     }
 }
@@ -320,7 +324,8 @@ printSampleAD(
     }
 
     // ADF/ADR
-    for (unsigned strandIndex(0); strandIndex<2; ++strandIndex)
+    static const unsigned strandCount(2);
+    for (unsigned strandIndex(0); strandIndex < strandCount; ++strandIndex)
     {
         const bool isFwdStrand(strandIndex==0);
         const auto& strandCounts(counts.getCounts(isFwdStrand));
@@ -357,8 +362,6 @@ write_site_record_instance(
     // ALT
     writeSiteVcfAltField(locus.getSiteAlleles(), os);
     os << '\t';
-
-    ////////////////////
 
     // QUAL:
     if (locus.isQual())
