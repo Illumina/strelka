@@ -737,8 +737,9 @@ updateContinuousSnvLocusWithSampleInfo(
     static const bool isOverlappingHomAltDeletion(false);
     updateSiteSampleInfo(opt, sampleIndex, cpi, isOverlappingHomAltDeletion, locus);
 
-    static const unsigned variantAlleleIndex(1);
-    updateContinuousSiteSampleInfo(sampleIndex, variantAlleleIndex, locus);
+    static const uint8_t variantAlleleIndex(1);
+    const uint8_t updateAlleleIndex(isRefAllele ? 0 : variantAlleleIndex);
+    updateContinuousSiteSampleInfo(sampleIndex, updateAlleleIndex, locus);
 
     {
         const auto& continuousSiteSampleInfo(locus.getContinuousSiteSample(sampleIndex));

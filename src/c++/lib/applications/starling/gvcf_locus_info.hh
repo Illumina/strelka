@@ -1031,8 +1031,6 @@ struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
         const unsigned sampleIndex,
         const GermlineContinuousSiteSampleInfo& siteSampleInfo)
     {
-        // ensure that no alleles are added once we start adding samples...
-        assert(getAltAlleleCount()>0);
         _isLockAlleles = true;
         assert(sampleIndex < _continuousSiteSampleInfo.size());
         _continuousSiteSampleInfo[sampleIndex] = siteSampleInfo;
