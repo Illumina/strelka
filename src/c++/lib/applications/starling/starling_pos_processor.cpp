@@ -384,7 +384,7 @@ updateSnvLocusWithSampleInfo(
 
         if (callerPloidy == 1)
         {
-            for (unsigned allele0Index(0); allele0Index<=fullAlleleCount; ++allele0Index)
+            for (unsigned allele0Index(0); allele0Index<fullAlleleCount; ++allele0Index)
             {
                 const uint8_t base0Index(alleleIndexToBaseIndex(allele0Index));
                 DIGT::get_gt_with_alleles(base0Index,base0Index);
@@ -1180,7 +1180,7 @@ updateIndelLocusWithSampleInfo(
     {
         static const bool isHaploid(true);
         const double* genotypeLogPrior(genotypePriors.getNAllelePolymorphic(isHaploid));
-        for (unsigned allele0Index(0); allele0Index<=fullAlleleCount; ++allele0Index)
+        for (unsigned allele0Index(0); allele0Index<fullAlleleCount; ++allele0Index)
         {
             const unsigned genotypeIndex(VcfGenotypeUtil::getGenotypeIndex(allele0Index));
             const unsigned priorIndex(getPriorIndex(topAlleleIndexInSample, allele0Index));
@@ -1218,7 +1218,7 @@ updateIndelLocusWithSampleInfo(
     {
         static const bool isHaploid(true);
         const double* genotypeLogPrior(genotypePriors.getNAllele(isHaploid));
-        for (unsigned allele0Index(0); allele0Index<=fullAlleleCount; ++allele0Index)
+        for (unsigned allele0Index(0); allele0Index<fullAlleleCount; ++allele0Index)
         {
             const unsigned genotypeIndex(VcfGenotypeUtil::getGenotypeIndex(allele0Index));
             const unsigned priorIndex(getPriorIndex(topAlleleIndexInSample, allele0Index));

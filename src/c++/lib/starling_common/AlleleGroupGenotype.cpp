@@ -60,7 +60,7 @@ updateGenotypeLogLhoodFromAlleleLogLhood(
 
     if (callerPloidy == 1)
     {
-        for (unsigned allele0Index(0); allele0Index<=fullAlleleCount; ++allele0Index)
+        for (unsigned allele0Index(0); allele0Index<fullAlleleCount; ++allele0Index)
         {
             const unsigned genotypeIndex(VcfGenotypeUtil::getGenotypeIndex(allele0Index));
             genotypeLogLhood[genotypeIndex] += integrate_out_sites(dopt, readScore.nsite, alleleLogLhood[allele0Index],
