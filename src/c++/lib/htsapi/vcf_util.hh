@@ -197,7 +197,7 @@ struct VcfGenotype
     }
 
     bool
-    isPhased() const
+    getIsPhased() const
     {
         return _isPhased;
     }

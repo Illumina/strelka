@@ -133,7 +133,7 @@ joinSiteToSampleBlock(
     static const unsigned blockSampleIndex(0);
     LocusSampleInfo& blockSampleInfo(getSample(blockSampleIndex));
 
-    const bool is_gqx(locus.is_gqx(sampleIndex));
+    const bool inputIsGqx(locus.is_gqx(sampleIndex));
     if (count == 0)
     {
         pos = locus.pos;
@@ -145,12 +145,12 @@ joinSiteToSampleBlock(
         setSiteSampleInfo(blockSampleIndex, inputSiteSampleInfo);
         blockSampleInfo.maxGenotypeIndexPolymorphic = inputSampleInfo.max_gt();
         blockSampleInfo.setPloidy(inputSampleInfo.getPloidy().getPloidy());
-        isBlockGqxDefined = is_gqx;
+        isBlockGqxDefined = inputIsGqx;
     }
 
     block_dpu.add(inputSiteSampleInfo.n_used_calls);
     block_dpf.add(inputSiteSampleInfo.n_unused_calls);
-    if (is_gqx)
+    if (inputIsGqx)
     {
         block_gqx.add(inputSampleInfo.gqx);
     }

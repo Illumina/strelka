@@ -214,7 +214,7 @@ writeGenotype(
         }
         if (vcfGt.getPloidy() > 1)
         {
-            os << (vcfGt.isPhased() ? '|' : '/');
+            os << (vcfGt.getIsPhased() ? '|' : '/');
             os << static_cast<int>(vcfGt.getAllele1Index());
         }
         assert (vcfGt.getPloidy() <= 2);
