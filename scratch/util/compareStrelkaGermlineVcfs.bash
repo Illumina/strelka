@@ -32,7 +32,7 @@ scriptName=$(basename $0)
 #
 optionalUngzip() {
     infile=$1
-    if file -b $infile | grep -q gzip; then
+    if file --dereference -b $infile | grep -q gzip; then
         gzip -dc $infile
     else
         cat $infile
@@ -121,3 +121,4 @@ file1=$1
 file2=$2
 
 diff -U 0 <(stripVcf $file1) <(stripVcf $file2)
+
