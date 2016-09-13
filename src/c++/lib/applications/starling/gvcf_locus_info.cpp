@@ -75,7 +75,7 @@ operator<<(
     os << "LocusSampleInfo ploidy: " << lsi.getPloidy()
        << " maxGt: " << lsi.maxGenotypeIndexPolymorphic
        << " gq: " << lsi.genotypeQualityPolymorphic
-       << " gqs: " << lsi.gqx
+       << " gqx: " << lsi.gqx
        << " filters: ";
     lsi.filters.write(os);
     os << "\n";

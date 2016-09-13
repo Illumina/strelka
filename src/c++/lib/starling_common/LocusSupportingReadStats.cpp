@@ -33,23 +33,27 @@ operator<<(
     std::ostream& os,
     const LocusSupportingReadStats& lsrs)
 {
-    const unsigned ac(lsrs.getAltCount());
-    os << "altCount: " << ac << "\n";
+    const unsigned altAlleleCount(lsrs.getAltCount());
+    const unsigned fullAlleleCount(altAlleleCount+1);
+    os << "altAlleleCount: " << altAlleleCount << "\n";
 
-    const auto& fwd(lsrs.getCounts(true));
-    os << "FWD: ";
-    for (unsigned alleleIndex(0); alleleIndex<ac; ++alleleIndex)
+    auto dumpStrandCounts = [&](const bool isFwdStrand)
     {
-        os << fwd.confidentAlleleCount(alleleIndex) << ",";
-    }
-    os << fwd.nonConfidentCount << "\n";
+        const auto& counts(lsrs.getCounts(isFwdStrand));
+        os << "AD: ";
+        for (unsigned alleleIndex(0); alleleIndex < fullAlleleCount; ++alleleIndex)
+        {
+            if (alleleIndex>0) os << ',';
+            os << counts.confidentAlleleCount(alleleIndex);
+        }
+        os << " uncertain: " << counts.nonConfidentCount << "\n";
+    };
 
-    const auto& rev(lsrs.getCounts(false));
-    os << "REV: ";
-    for (unsigned alleleIndex(0); alleleIndex<ac; ++alleleIndex)
-    {
-        os << rev.confidentAlleleCount(alleleIndex) << ",";
-    }
-    os << rev.nonConfidentCount << "\n";
+    os << "FwdStrand: ";
+    dumpStrandCounts(true);
+
+    os << "RevStrand: ";
+    dumpStrandCounts(false);
+
     return os;
 }
