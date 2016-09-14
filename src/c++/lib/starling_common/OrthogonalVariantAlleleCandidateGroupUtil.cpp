@@ -263,6 +263,8 @@ selectTopOrthogonalAllelesInAllSamples(
 {
     assert(sampleCount == callerPloidy.size());
 
+    topAlleleGroup.clear();
+
     // this structure is used to create an approximate allele rank over all samples
     std::map<IndelKey,unsigned> topVariantAlleleKeyScore;
 

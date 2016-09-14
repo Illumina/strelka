@@ -1163,7 +1163,8 @@ updateIndelLocusWithSampleInfo(
     //------------------------------------------------
     // compute posteriors/qualities:
 
-    // get patternRepeatCount, if more than one alt allele then base this off of the most likely allele per sample
+    // get patternRepeatCount
+    // if more than one alt allele then base this off of the most likely allele per sample
     const IndelData& allele0Data(alleleGroup.data(topAlleleIndexInSample));
     const AlleleReportInfo& indelReportInfo(allele0Data.getReportInfo());
     const unsigned patternRepeatCount=std::max(1u,indelReportInfo.ref_repeat_count);
@@ -1179,7 +1180,7 @@ updateIndelLocusWithSampleInfo(
     {
         static const bool isHaploid(true);
         const double* genotypeLogPrior(genotypePriors.getNAllelePolymorphic(isHaploid));
-        for (unsigned allele0Index(0); allele0Index<fullAlleleCount; ++allele0Index)
+        for (unsigned allele0Index(0); allele0Index < fullAlleleCount; ++allele0Index)
         {
             const unsigned genotypeIndex(VcfGenotypeUtil::getGenotypeIndex(allele0Index));
             const unsigned priorIndex(getPriorIndex(topAlleleIndexInSample, allele0Index));
@@ -1217,7 +1218,7 @@ updateIndelLocusWithSampleInfo(
     {
         static const bool isHaploid(true);
         const double* genotypeLogPrior(genotypePriors.getNAllele(isHaploid));
-        for (unsigned allele0Index(0); allele0Index<fullAlleleCount; ++allele0Index)
+        for (unsigned allele0Index(0); allele0Index < fullAlleleCount; ++allele0Index)
         {
             const unsigned genotypeIndex(VcfGenotypeUtil::getGenotypeIndex(allele0Index));
             const unsigned priorIndex(getPriorIndex(topAlleleIndexInSample, allele0Index));
