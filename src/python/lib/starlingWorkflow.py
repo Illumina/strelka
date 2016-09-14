@@ -298,7 +298,9 @@ def callGenome(self,taskPrefix="",dependencies=None):
             outputPath = self.paths.getGvcfOutputPath(sampleIndex)
             outputDirname=os.path.dirname(outputPath)
             outputBasename=os.path.basename(outputPath)
-            linkCmd=["ln","-s", outputBasename, self.paths.getGvcfLegacyFilename()]
+            def linkLegacy(extension) :
+                return "ln -s " + quote(outputBasename + extension) + " " + quote(self.paths.getGvcfLegacyFilename() + extension)
+            linkCmd = linkLegacy("") + " && " + linkLegacy(".tbi")
             self.addTask(preJoin(taskPrefix, "addLegacyOutputLink"), linkCmd, dependencies=concatTask,
                          isForceLocal=True, cwd=outputDirname)
 
