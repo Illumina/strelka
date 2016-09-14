@@ -558,8 +558,7 @@ insert_read(
     /// TODO this should never happen, investigate/fix turn this into an assertion
     if (! _stageman.is_new_pos_value_valid(al.pos,STAGE::HEAD))
     {
-        log_os << "WARNING: skipping alignment for read: " << read_key(br)
-               << " which falls outside of the read buffer\n";
+        log_os << "WARNING: skipping alignment for read outside of buffer range: " << br << "\n";
         return retval;
     }
 
