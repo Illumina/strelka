@@ -373,7 +373,8 @@ updateSnvLocusWithSampleInfo(
     const bool isAltAlleles(altAlleleCount>0);
     if (isAltAlleles)
     {
-        auto alleleIndexToBaseIndex = [&](const uint8_t alleleIndex) {
+        auto alleleIndexToBaseIndex = [&](const uint8_t alleleIndex)
+        {
             if (alleleIndex == 0) return locus.refBaseIndex;
             return static_cast<uint8_t>(siteAlleles[alleleIndex - 1].baseIndex);
         };
@@ -387,7 +388,6 @@ updateSnvLocusWithSampleInfo(
             for (unsigned allele0Index(0); allele0Index<fullAlleleCount; ++allele0Index)
             {
                 const uint8_t base0Index(alleleIndexToBaseIndex(allele0Index));
-                DIGT::get_gt_with_alleles(base0Index,base0Index);
                 sampleInfo.genotypePhredLoghood.getGenotypeLikelihood(allele0Index) =
                     dgt.phredLoghood[base0Index];
             }

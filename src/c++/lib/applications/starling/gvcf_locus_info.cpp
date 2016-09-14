@@ -159,22 +159,35 @@ operator<<(
 
 
 std::ostream&
-operator<<(std::ostream& os,
-           const GermlineSiteLocusInfo& si)
+operator<<(
+    std::ostream& os,
+    const GermlineSiteLocusInfo& si)
 {
     os << "GermlineSiteLocusInfo ";
     os << static_cast<const LocusInfo&>(si);
+
+    os << "ref: " << id_to_base(si.refBaseIndex) << "\n";
+
+    const auto& altAlleles(si.getSiteAlleles());
+    os << "AltAlleleCount: " << altAlleles.size() << "\n";
+    for (unsigned altAlleleIndex(0); altAlleleIndex<altAlleles.size(); ++altAlleleIndex)
+    {
+        os << "AltAllele index/info: " << altAlleleIndex << " " << altAlleles[altAlleleIndex] << "\n";
+    }
+
     return os;
 }
 
 
 
 std::ostream&
-operator<<(std::ostream& os,
-           const GermlineDiploidSiteLocusInfo& si)
+operator<<(
+    std::ostream& os,
+    const GermlineDiploidSiteLocusInfo& si)
 {
     os << "GermlineDiploidSiteLocusInfo ";
     os << static_cast<const GermlineSiteLocusInfo&>(si);
+
     return os;
 }
 
