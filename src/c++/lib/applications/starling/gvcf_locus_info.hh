@@ -85,7 +85,7 @@ get_label(const unsigned idx)
     case SiteConflict:
         return "SiteConflict";
     case PloidyConflict:
-        return "PLOIDY_CONFLICT";
+        return "PloidyConflict";
     case OffTarget:
         return "OffTarget";
     default:
