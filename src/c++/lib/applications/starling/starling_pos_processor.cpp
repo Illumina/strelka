@@ -349,101 +349,106 @@ updateSnvLocusWithSampleInfo(
     const CleanedPileup& cpi(sif.cpi);
     //const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
-    sampleInfo.genotypeQuality = dgt.genome.max_gt_qphred;
-    translateDigtToVcfGenotype(callerPloidy, dgt.genome.max_gt, locus, sampleInfo.maxGenotypeIndex);
-
     if     (locus.isRefUnknown() || (cpi.n_used_calls()==0))
     {
+        sampleInfo.genotypeQuality = 0;
+        sampleInfo.maxGenotypeIndex.setGenotypeFromAlleleIndices();
+
         sampleInfo.genotypeQualityPolymorphic=0;
         sampleInfo.maxGenotypeIndexPolymorphic.setGenotypeFromAlleleIndices();
         sampleInfo.gqx=0;
     }
     else
     {
+        sampleInfo.genotypeQuality = dgt.genome.max_gt_qphred;
+        translateDigtToVcfGenotype(callerPloidy, dgt.genome.max_gt, locus, sampleInfo.maxGenotypeIndex);
+
         sampleInfo.genotypeQualityPolymorphic = dgt.poly.max_gt_qphred;
         translateDigtToVcfGenotype(callerPloidy, dgt.poly.max_gt, locus, sampleInfo.maxGenotypeIndexPolymorphic);
 
         sampleInfo.setGqx();
     }
 
-    // set PL values:
-    const auto& siteAlleles(locus.getSiteAlleles());
-    const uint8_t altAlleleCount(siteAlleles.size());
-    const uint8_t fullAlleleCount(altAlleleCount+1);
-    const bool isAltAlleles(altAlleleCount>0);
-    if (isAltAlleles)
+    if (not locus.isRefUnknown())
     {
-        auto alleleIndexToBaseIndex = [&](const uint8_t alleleIndex)
+        // set PL values:
+        const auto& siteAlleles(locus.getSiteAlleles());
+        const uint8_t altAlleleCount(siteAlleles.size());
+        const uint8_t fullAlleleCount(altAlleleCount + 1);
+        const bool isAltAlleles(altAlleleCount > 0);
+        if (isAltAlleles)
         {
-            if (alleleIndex == 0) return locus.refBaseIndex;
-            return static_cast<uint8_t>(siteAlleles[alleleIndex - 1].baseIndex);
-        };
+            auto alleleIndexToBaseIndex = [&](const uint8_t alleleIndex) {
+                if (alleleIndex == 0) return locus.refBaseIndex;
+                return static_cast<uint8_t>(siteAlleles[alleleIndex - 1].baseIndex);
+            };
 
-        // number of PL fields required:
-        //const unsigned genotypeCount(VcfGenotypeUtil::getGenotypeCount(callerPloidy, fullAlleleCount));
-        sampleInfo.genotypePhredLoghood.setPloidy(callerPloidy);
+            // number of PL fields required:
+            //const unsigned genotypeCount(VcfGenotypeUtil::getGenotypeCount(callerPloidy, fullAlleleCount));
+            sampleInfo.genotypePhredLoghood.setPloidy(callerPloidy);
 
-        if (callerPloidy == 1)
-        {
-            for (unsigned allele0Index(0); allele0Index<fullAlleleCount; ++allele0Index)
+            if (callerPloidy == 1)
             {
-                const uint8_t base0Index(alleleIndexToBaseIndex(allele0Index));
-                sampleInfo.genotypePhredLoghood.getGenotypeLikelihood(allele0Index) =
-                    dgt.phredLoghood[base0Index];
-            }
-        }
-        else if(callerPloidy == 2)
-        {
-            for (unsigned allele1Index(0); allele1Index < fullAlleleCount; ++allele1Index)
-            {
-                for (unsigned allele0Index(0); allele0Index <= allele1Index; ++allele0Index)
+                for (unsigned allele0Index(0); allele0Index < fullAlleleCount; ++allele0Index)
                 {
                     const uint8_t base0Index(alleleIndexToBaseIndex(allele0Index));
-                    const uint8_t base1Index(alleleIndexToBaseIndex(allele1Index));
-                    const unsigned digtGenotypeIndex(DIGT::get_gt_with_alleles(base0Index,base1Index));
-                    sampleInfo.genotypePhredLoghood.getGenotypeLikelihood(allele0Index,allele1Index) =
-                        dgt.phredLoghood[digtGenotypeIndex];
+                    sampleInfo.genotypePhredLoghood.getGenotypeLikelihood(allele0Index) =
+                        dgt.phredLoghood[base0Index];
                 }
             }
-        }
-        else
-        {
-            assert(false and "Unexpected ploidy");
-        }
-    }
-
-    // update AD counts:
-    {
-        uint8_t baseIndexToAlleleIndex[N_BASE];
-        {
-            std::fill(std::begin(baseIndexToAlleleIndex), std::end(baseIndexToAlleleIndex), fullAlleleCount);
-            unsigned alleleIndex(0);
-            baseIndexToAlleleIndex[locus.refBaseIndex] = alleleIndex;
-            for (const auto& allele : siteAlleles)
+            else if (callerPloidy == 2)
             {
-                alleleIndex++;
-                baseIndexToAlleleIndex[allele.baseIndex] = alleleIndex;
+                for (unsigned allele1Index(0); allele1Index < fullAlleleCount; ++allele1Index)
+                {
+                    for (unsigned allele0Index(0); allele0Index <= allele1Index; ++allele0Index)
+                    {
+                        const uint8_t base0Index(alleleIndexToBaseIndex(allele0Index));
+                        const uint8_t base1Index(alleleIndexToBaseIndex(allele1Index));
+                        const unsigned digtGenotypeIndex(DIGT::get_gt_with_alleles(base0Index, base1Index));
+                        sampleInfo.genotypePhredLoghood.getGenotypeLikelihood(allele0Index, allele1Index) =
+                            dgt.phredLoghood[digtGenotypeIndex];
+                    }
+                }
+            }
+            else
+            {
+                assert(false and "Unexpected ploidy");
             }
         }
 
-        sampleInfo.supportCounts.setAltCount(altAlleleCount);
-
-        const snp_pos_info& good_pi(cpi.cleanedPileup());
-        for (const auto& call : good_pi.calls)
+        // update AD counts:
         {
-            if (call.base_id==BASE_ID::ANY) continue;
-            if (call.get_qscore()<opt.used_allele_count_min_qscore) continue;
-            const uint8_t alleleIndex(baseIndexToAlleleIndex[call.base_id]);
-            if (alleleIndex==fullAlleleCount) continue;
-            sampleInfo.supportCounts.getCounts(call.is_fwd_strand).incrementAlleleCount(alleleIndex);
+            uint8_t baseIndexToAlleleIndex[N_BASE];
+            {
+                std::fill(std::begin(baseIndexToAlleleIndex), std::end(baseIndexToAlleleIndex), fullAlleleCount);
+                unsigned alleleIndex(0);
+                baseIndexToAlleleIndex[locus.refBaseIndex] = alleleIndex;
+                for (const auto& allele : siteAlleles)
+                {
+                    alleleIndex++;
+                    baseIndexToAlleleIndex[allele.baseIndex] = alleleIndex;
+                }
+            }
+
+            sampleInfo.supportCounts.setAltCount(altAlleleCount);
+
+            const snp_pos_info& good_pi(cpi.cleanedPileup());
+            for (const auto& call : good_pi.calls)
+            {
+                if (call.base_id == BASE_ID::ANY) continue;
+                if (call.get_qscore() < opt.used_allele_count_min_qscore) continue;
+                const uint8_t alleleIndex(baseIndexToAlleleIndex[call.base_id]);
+                if (alleleIndex == fullAlleleCount) continue;
+                sampleInfo.supportCounts.getCounts(call.is_fwd_strand).incrementAlleleCount(alleleIndex);
+            }
         }
+
+        // update homref prob for QUAL
+        homRefLogProb += std::log(dgt.genome.ref_pprob);
+
+        /// TODO STREL-125 find a way to restore strand bias feature
+        // allele.strandBias=dgt.strand_bias;
     }
-
-    // update homref prob for QUAL
-    homRefLogProb += std::log(dgt.genome.ref_pprob);
-
-    /// TODO STREL-125 find a way to restore strand bias feature
-    // allele.strandBias=dgt.strand_bias;
 
     updateSiteSampleInfo(opt, sampleIndex, cpi, isOverlappingHomAltDeletion, locus);
 }
@@ -608,7 +613,10 @@ process_pos_snp_digt(
     //              approximate an aggregate rank over all samples:
     const uint8_t refBaseIndex(base_to_id(_ref.get_base(pos)));
     std::vector<uint8_t> altAlleles;
-    getSiteAltAlleles(refBaseIndex, allDgt, altAlleles);
+    if (refBaseIndex != BASE_ID::ANY)
+    {
+        getSiteAltAlleles(refBaseIndex, allDgt, altAlleles);
+    }
 
     // -----------------------------------------------
     // create site locus object:
