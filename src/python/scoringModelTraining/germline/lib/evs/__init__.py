@@ -99,5 +99,3 @@ class EVSModel(object):
 
 
 import strelka_rf   # noqa
-import strelka_rf_indel   # noqa
-import strelka_lr
