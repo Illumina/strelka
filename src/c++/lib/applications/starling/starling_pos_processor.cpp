@@ -1373,7 +1373,7 @@ process_pos_indel_digt(const pos_t pos)
     }
 
     // track top alt allele within each sample -- this is used as a temporary crutch to transfer the previous prior
-    // calcualation from single to multi-sample, and should be removed when a matured prior scheme is put in place
+    // calculation from single to multi-sample, and should be removed when a mature prior scheme is put in place
     std::vector<unsigned> topVariantAlleleIndexPerSample(sampleCount);
 
     // rank input alleles to pick the top N, N=ploidy, per sample, and aggregate/rank these
@@ -1387,7 +1387,7 @@ process_pos_indel_digt(const pos_t pos)
     // alleles at other positions and re-rank, re-select the top alleles again:
     if (not topVariantAlleleGroup.empty())
     {
-        addAllelesAtOtherPositions(sampleCount, callerPloidy, pos, get_largest_total_indel_ref_span_per_read(),
+        addAllelesAtOtherPositions(_ref, sampleCount, callerPloidy, pos, get_largest_total_indel_ref_span_per_read(),
                                    getIndelBuffer(), topVariantAlleleGroup, topVariantAlleleIndexPerSample);
     }
 

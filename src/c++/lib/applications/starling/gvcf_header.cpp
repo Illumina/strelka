@@ -48,7 +48,7 @@ add_gvcf_filters(
 
     using namespace GERMLINE_VARIANT_VCF_FILTERS;
     write_vcf_filter(os,get_label(IndelConflict),"Locus is in region with conflicting indel calls");
-    write_vcf_filter(os,get_label(SiteConflict),"Site genotype conflicts with proximal indel call. This is typically a heterozygous SNV call made inside of a heterozygous deletion");
+    write_vcf_filter(os,get_label(SiteConflict),"Site is filtered due to an overlapping indel call filter.");
 
     if (opt.is_min_gqx)
     {

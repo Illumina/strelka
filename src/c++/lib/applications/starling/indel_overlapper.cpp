@@ -330,7 +330,7 @@ modify_indel_overlap_site(
     // this interacts poorly with empirical scoring)
 
     // apply at both locus level and sample level:
-    if (! indelLocus.filters.none())
+    if (not indelLocus.filters.none())
     {
         siteLocus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
     }
@@ -341,7 +341,7 @@ modify_indel_overlap_site(
         const auto& indelSampleInfo(indelLocus.getSample(sampleIndex));
         auto& siteSampleInfo(siteLocus.getSample(sampleIndex));
 
-        if (! indelSampleInfo.filters.none())
+        if (not indelSampleInfo.filters.none())
         {
             siteSampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
         }

@@ -345,8 +345,84 @@ selectTopOrthogonalAllelesInAllSamples(
 
 
 
+/// helper for reference_contig_segment
+static
+void
+append_ref_subseq(
+    const reference_contig_segment& ref,
+    const pos_t start_pos,
+    const pos_t end_pos,
+    std::string& out_seq)
+{
+    for (pos_t p(start_pos); p<end_pos; ++p)
+    {
+        out_seq += ref.get_base(p);
+    }
+}
+
+
+
+/// get the equiv of VCF ALT sequences for each member of an allele group as if these alleles were reported in
+/// a single locus record, then mark any repeated alts for filtration
+///
+/// \return true if any repeats are found
+static
+bool
+getAlleleGroupAltRepeats(
+    const reference_contig_segment& ref,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    std::vector<bool>& isRepeatAlt)
+{
+    bool isFirst(true);
+    known_pos_range2 alleleSetRange;
+    const unsigned alleleSize(alleleGroup.size());
+    for (unsigned alleleIndex(0); alleleIndex < alleleSize; alleleIndex++)
+    {
+        const IndelKey& indelKey(alleleGroup.key(alleleIndex));
+        assert(not indelKey.is_breakpoint());
+
+        if (isFirst)
+        {
+            alleleSetRange.set_range(indelKey.pos, indelKey.right_pos());
+            isFirst = false;
+        }
+        else
+        {
+            alleleSetRange.merge_range(known_pos_range2(indelKey.pos, indelKey.right_pos()));
+        }
+    }
+
+    bool isAnyRepeats(false);
+    isRepeatAlt.resize(alleleSize);
+    std::set<std::string> alts;
+    for (unsigned alleleIndex(0); alleleIndex < alleleSize; alleleIndex++)
+    {
+        const IndelKey& indelKey(alleleGroup.key(alleleIndex));
+
+        std::string alt;
+        append_ref_subseq(ref, alleleSetRange.begin_pos(), indelKey.pos, alt);
+        alt += indelKey.insert_seq();
+        append_ref_subseq(ref, indelKey.right_pos(), alleleSetRange.end_pos(), alt);
+
+        isRepeatAlt[alleleIndex] = (alts.count(alt)!=0);
+        if (not isRepeatAlt[alleleIndex])
+        {
+            alts.insert(alt);
+        }
+        else
+        {
+            isAnyRepeats = true;
+        }
+    }
+
+    return isAnyRepeats;
+}
+
+
+
 bool
 addAllelesAtOtherPositions(
+    const reference_contig_segment& ref,
     const unsigned sampleCount,
     const std::vector<unsigned>& callerPloidy,
     const pos_t pos,
@@ -505,6 +581,30 @@ addAllelesAtOtherPositions(
     //
     selectTopOrthogonalAllelesInAllSamples(
         sampleCount, callerPloidy, extendedVariantAlleleGroup, alleleGroup, topVariantAlleleIndexPerSample);
+
+    const unsigned alleleSize(alleleGroup.size());
+    if (alleleSize > 1)
+    {
+        // check for the rare condition that two alleles would resolve to identical
+        // REF/ALT(s) (typically this means that a proximal SNV has not been joined
+        // to the candidate indel allele
+        //
+        // TODO should we print a warning here?
+        std::vector<bool> isRepeatAlt;
+        if (getAlleleGroupAltRepeats(ref, alleleGroup, isRepeatAlt))
+        {
+            OrthogonalVariantAlleleCandidateGroup filteredAlleleGroupCopy;
+            for (unsigned alleleIndex(0); alleleIndex < alleleSize; alleleIndex++)
+            {
+                if (isRepeatAlt[alleleIndex]) continue;
+                filteredAlleleGroupCopy.alleles.push_back(alleleGroup.iter(alleleIndex));
+            }
+
+            // filtration of some alleles requires that we rerank and recompute top-per-sample:
+            selectTopOrthogonalAllelesInAllSamples(
+                sampleCount, callerPloidy, filteredAlleleGroupCopy, alleleGroup, topVariantAlleleIndexPerSample);
+        }
+    }
 
     return isEveryAltOrthogonal;
 }

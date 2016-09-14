@@ -125,6 +125,7 @@ selectTopOrthogonalAllelesInAllSamples(
 ///
 bool
 addAllelesAtOtherPositions(
+    const reference_contig_segment& ref,
     const unsigned sampleCount,
     const std::vector<unsigned>& callerPloidy,
     const pos_t pos,
