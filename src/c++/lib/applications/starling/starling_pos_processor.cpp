@@ -338,7 +338,7 @@ updateSnvLocusWithSampleInfo(
     if (groupLocusPloidy == 0)
     {
         const int locusPloidyAdjustment(sif.cpi.rawPileup().spanningIndelPloidyModification);
-        isOverlappingHomAltDeletion=(locusPloidyAdjustment > 0);
+        isOverlappingHomAltDeletion=(locusPloidyAdjustment < 0);
     }
 
     if ((not isOverlappingHomAltDeletion) and (callerPloidy != groupLocusPloidy))
