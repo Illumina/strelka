@@ -341,15 +341,19 @@ updateSnvLocusWithSampleInfo(
         isOverlappingHomAltDeletion=(locusPloidyAdjustment < 0);
     }
 
-    if ((not isOverlappingHomAltDeletion) and (callerPloidy != groupLocusPloidy))
+    const CleanedPileup& cpi(sif.cpi);
+
+    if (cpi.n_used_calls() != 0)
     {
-        sampleInfo.setPloidyConflict();
+        // the principle of this filter is that there's supposed to be no coverage here
+        // we make an exception for sites inside of homalt deletions, maybe we shouldn't?
+        if ((groupLocusPloidy == 0) and (not isOverlappingHomAltDeletion))
+        {
+            sampleInfo.setPloidyConflict();
+        }
     }
 
-    const CleanedPileup& cpi(sif.cpi);
-    //const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
-
-    if     (locus.isRefUnknown() || (cpi.n_used_calls()==0))
+    if     (locus.isRefUnknown() or (cpi.n_used_calls() == 0))
     {
         sampleInfo.genotypeQuality = 0;
         sampleInfo.maxGenotypeIndex.setGenotypeFromAlleleIndices();
