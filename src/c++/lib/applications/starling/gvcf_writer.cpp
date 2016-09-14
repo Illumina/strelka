@@ -31,6 +31,7 @@
 #include "variant_prefilter_stage.hh"
 
 #include "blt_util/io_util.hh"
+#include "blt_util/log.hh"
 
 #include <iomanip>
 #include <iostream>
@@ -163,14 +164,41 @@ skip_to_pos(
 
 
 
+template <typename T>
+void
+safeLocusDump(
+    const std::unique_ptr<T>& locusPtr)
+{
+    if (locusPtr)
+    {
+        log_os << *locusPtr;
+    }
+    else
+    {
+        log_os << "ALREADY RELEASED";
+    }
+    log_os << "\n";
+
+}
+
+
 void
 gvcf_writer::
 process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr)
 {
-    assert(locusPtr->getSampleCount() == getSampleCount());
+    try
+    {
+        assert(locusPtr->getSampleCount() == getSampleCount());
 
-    skip_to_pos(locusPtr->pos);
-    add_site_internal(*locusPtr);
+        skip_to_pos(locusPtr->pos);
+        add_site_internal(*locusPtr);
+    }
+    catch (...)
+    {
+        log_os << "ERROR: Exception caught in gvcf_writer while processing site:\n";
+        safeLocusDump(locusPtr);
+        throw;
+    }
 }
 
 
@@ -179,15 +207,24 @@ void
 gvcf_writer::
 process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr)
 {
-    skip_to_pos(locusPtr->pos);
-
-    // flush any non-variant block before starting:
-    writeAllNonVariantBlockRecords();
-
-    write_indel_record(*locusPtr);
-    if (dynamic_cast<GermlineDiploidIndelLocusInfo*>(locusPtr.get()) != nullptr)
+    try
     {
-        _last_indel = std::move(locusPtr);
+        skip_to_pos(locusPtr->pos);
+
+        // flush any non-variant block before starting:
+        writeAllNonVariantBlockRecords();
+
+        write_indel_record(*locusPtr);
+        if (dynamic_cast<GermlineDiploidIndelLocusInfo*>(locusPtr.get()) != nullptr)
+        {
+            _last_indel = std::move(locusPtr);
+        }
+    }
+    catch (...)
+    {
+        log_os << "ERROR: Exception caught in gvcf_writer while processing indel:\n";
+        safeLocusDump(locusPtr);
+        throw;
     }
 }
 
