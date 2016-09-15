@@ -1274,6 +1274,36 @@ updateIndelLocusWithSampleInfo(
 
 
 
+/// determine if an allele group is reportable
+///
+/// \return true if at least one allele is at pos, and no alleles are less than pos.
+///             this criteria is designed to make sure each allele group is reported exactly once
+static
+bool
+isAlleleGroupReportable(
+    const pos_t pos,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup)
+{
+    bool isAnyAlleleAtPos(false);
+    const unsigned alleleGroupSize(alleleGroup.size());
+    for (unsigned alleleIndex(0); alleleIndex < alleleGroupSize; ++alleleIndex)
+    {
+        const pos_t indelPos(alleleGroup.key(alleleIndex).pos);
+        if (indelPos < pos)
+        {
+            return false;
+        }
+        else if(indelPos == pos)
+        {
+            isAnyAlleleAtPos = true;
+        }
+    }
+
+    return isAnyAlleleAtPos;
+}
+
+
+
 void
 starling_pos_processor::
 process_pos_indel_digt(const pos_t pos)
@@ -1391,27 +1421,13 @@ process_pos_indel_digt(const pos_t pos)
                                    getIndelBuffer(), topVariantAlleleGroup, topVariantAlleleIndexPerSample);
     }
 
-    // genotype and report topVariantAlleleGroup
-    //
-
     // overlapping allele groups are reported only once, when grouped together from the left-most position
-    bool isReportableLocus(true);
     bool isReportedLocus(false);
+    if (isAlleleGroupReportable(pos,topVariantAlleleGroup))
     {
-        const unsigned alleleGroupSize(topVariantAlleleGroup.size());
-        for (unsigned genotypeAlleleIndex(0); genotypeAlleleIndex < alleleGroupSize; ++genotypeAlleleIndex)
-        {
-            const IndelKey& indelKey(topVariantAlleleGroup.key(genotypeAlleleIndex));
-            if (indelKey.pos < pos)
-            {
-                isReportableLocus=false;
-                break;
-            }
-        }
-    }
+        // genotype and report topVariantAlleleGroup
+        //
 
-    if (isReportableLocus)
-    {
         // parameter inputs if/when we wrap this as a function:
         static const bool isForcedOutput(false);
         static OrthogonalVariantAlleleCandidateGroup emptyGroup;
