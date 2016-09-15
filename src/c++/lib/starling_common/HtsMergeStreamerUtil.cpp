@@ -25,17 +25,18 @@
 #include "HtsMergeStreamerUtil.hh"
 
 
-
 void
 registerVcfList(
     const std::vector<std::string>& vcfFilenames,
     const unsigned typeIndex,
     const bam_hdr_t& header,
-    HtsMergeStreamer& streamData)
+    HtsMergeStreamer& streamData,
+    const bool requireNormalized)
 {
     for (const std::string& vcfFilename : vcfFilenames)
     {
-        const vcf_streamer& vcfStream(streamData.registerVcf(vcfFilename.c_str(), typeIndex));
+        const vcf_streamer& vcfStream(streamData.registerVcf(vcfFilename.c_str(), typeIndex,
+                                      requireNormalized));
         vcfStream.validateBamHeaderChromSync(header);
     }
 }

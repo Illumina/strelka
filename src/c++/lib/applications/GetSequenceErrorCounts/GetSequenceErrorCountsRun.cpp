@@ -135,7 +135,9 @@ getSequenceErrorCountsRun(
     SequenceErrorCountsPosProcessor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;
 
-    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, readHeader, streamData);
+    static const bool noRequireNormalized(false);
+    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, readHeader,
+                    streamData, noRequireNormalized);
     registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, readHeader, streamData);
 
     if (! opt.knownVariantsFile.empty())
