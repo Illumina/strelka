@@ -47,7 +47,7 @@ add_gvcf_filters(
     const gvcf_options& opt(sopt.gvcf);
 
     using namespace GERMLINE_VARIANT_VCF_FILTERS;
-    write_vcf_filter(os,get_label(IndelConflict),"Locus is in region with conflicting indel calls");
+    write_vcf_filter(os,get_label(IndelConflict),"Indel genotypes from two or more loci conflict in at least one sample");
     write_vcf_filter(os,get_label(SiteConflict),"Site is filtered due to an overlapping indel call filter.");
 
     if (opt.is_min_gqx)

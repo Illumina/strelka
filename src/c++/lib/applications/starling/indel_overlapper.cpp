@@ -36,6 +36,10 @@ indel_overlapper::
 process(std::unique_ptr<GermlineSiteLocusInfo> siteLocusPtr)
 {
     std::unique_ptr<GermlineDiploidSiteLocusInfo> si(downcast<GermlineDiploidSiteLocusInfo>(std::move(siteLocusPtr)));
+#ifdef DEBUG_GVCF
+    log_os << "CHIRP: " << __FUNCTION__ << " SITE START\n";
+    log_os << "CHIRP: " << __FUNCTION__ << " pos/indel_endPos: " << si->pos << "/" << _indel_end_pos << "\n";
+#endif
 
     // resolve any current or previous indels before queuing site:
     if (si->pos>=_indel_end_pos)
@@ -64,6 +68,11 @@ process(std::unique_ptr<GermlineIndelLocusInfo> indelLocusPtr)
 
     // don't handle homozygous reference calls unless genotyping is forced
     if (isNonVariantLocus and (not indelLocusPtr->isAnyForcedOutputAtLocus())) return;
+
+#ifdef DEBUG_GVCF
+    log_os << "CHIRP: " << __FUNCTION__ << " INDEL START\n";
+    log_os << "CHIRP: " << __FUNCTION__ << " pos/indel_endPos: " << indelLocusPtr->pos << "/" << _indel_end_pos << "\n";
+#endif
 
     if (indelLocusPtr->pos>_indel_end_pos)
     {
@@ -242,7 +251,7 @@ process_overlaps_impl()
     for (auto& siteLocusPtr : _site_buffer)
     {
 #ifdef DEBUG_GVCF
-        log_os << "CHIRP: indel overlapping site: " << si->pos << "\n";
+        log_os << "CHIRP: indel overlapping site: " << siteLocusPtr->pos << "\n";
 #endif
         modify_overlapping_site(*(_indel_buffer.front()), *siteLocusPtr, _scoringModels);
     }
@@ -322,7 +331,7 @@ modify_indel_overlap_site(
     const ScoringModelManager& model)
 {
 #ifdef DEBUG_GVCF
-    log_os << "CHIRP: indel_overlap_site smod before: " << si.smod << "\n";
+    log_os << "CHIRP: indel_overlap_site before: " << siteLocus << "\n";
 #endif
 
     // if overlapping indel has any filters, mark as site conflict
