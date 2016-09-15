@@ -1,3 +1,4 @@
+- STREL-216 relax normalization requirement for indel candidates to a warning
 - STREL-154 adjust active window size depending on neighboring sequences
 - STREL-188 haplotype generation includes soft-clipped reads
 v2.6.0

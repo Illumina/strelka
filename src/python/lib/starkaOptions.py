@@ -51,29 +51,21 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         group.add_option("--referenceFasta",type="string",metavar="FILE",
                          help="samtools-indexed reference fasta file [required]")
         group.add_option("--indelCandidates", type="string", dest="indelCandidatesList", metavar="FILE", action="append",
-                         help="Specify a vcf describing indel candidates. Candidates are always evaluated but only output"
-                              " if a variant genotype is likely."
-                              " File must be tabix indexed and normalized."
-                              " Option may be specified more than once, multiple inputs will be merged."
-                              " SNVs in the indel candidates file will be ignored."
-                              " (default: None)")
-        group.add_option("--indelCandidatesNoError", type="string", dest="indelCandidatesNoErrorList", metavar="FILE", action="append",
-                         help="Similar to --indelCandidates, however, if a non-normalized variant is preent"
-                              " in the VCF, Strelka will provide a warning in the log file and continue"
-                              " rather than exit with an error.  PLEASE NOTE: Strelka cannot guarantee"
-                              " that non-normalized variants will be called consistently."
+                         help="Specify a VCF of candidate indel alleles. These alleles are always"
+                              " evaluated but only reported in the output when they are inferred to exist in the sample."
+                              " The VCF must be tabix indexed."
+                              " All indel alleles must be left-shifted/normalized, any unnormalized alleles will be ignored."
+                              " This option may be specified more than once, multiple input VCFs will be merged."
                               " (default: None)")
         group.add_option("--forcedGT", type="string", dest="forcedGTList", metavar="FILE", action="append",
-                         help="Specify a vcf describing variants which must be genotyped and output even if a variant genotype is unlikely."
-                              " File must be tabix indexed and normalized."
-                              " Option may be specified more than once, multiple inputs will be merged."
-                              " Note that for SNVs, a site will be forced (or for gVCF, excluded from block compression), but the ALT value is ignored."
-                              " (default: None)")
-        group.add_option("--forcedGTNoError", type="string", dest="forcedGTNoErrorList", metavar="FILE", action="append",
-                         help="Similar to --forcedGT, however, if a non-normalized variant is preent"
-                              " in the VCF, Strelka will provide a warning in the log file and continue"
-                              " rather than exit with an error.  PLEASE NOTE: Strelka cannot guarantee"
-                              " that non-normalized variants will be called consistently."
+                         help="Specify a VCF of candidate alleles. These alleles are always"
+                              " evaluated and reported even if they are unlikely to exist in the sample."
+                              " The VCF must be tabix indexed."
+                              " All indel alleles must be left-shifted/normalized, any unnormalized allele will trigger a"
+                              " a runtime error."
+                              " This option may be specified more than once, multiple input VCFs will be merged."
+                              " Note that for any SNVs provided in the VCF, the SNV site will be reported (and for gVCF,"
+                              " excluded from block compression), but the specific SNV alleles are ignored."
                               " (default: None)")
         group.add_option("--exome", dest="isExome", action="store_true",
                          help="Set options for WES input: turn off depth filters")

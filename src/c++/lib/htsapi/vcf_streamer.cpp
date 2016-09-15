@@ -142,20 +142,21 @@ next(
         if (! _vcfrec.is_normalized())
         {
             std::ostringstream oss;
-            oss << "Input VCF has an unnormalized variant:\n";
+            oss << "Input VCF record contains an unnormalized indel allele:\n";
             report_state(oss);
 
             if (_isRequireNormalized)
             {
                 std::ostringstream ess;
                 ess << "ERROR: " << oss.str();
-                ess << "Please normalize variants in this VCF with a tool such as vt, then resubmit\n";
+                ess << "Please normalize all indel alleles in this VCF with a tool such as vt, then resubmit\n";
                 BOOST_THROW_EXCEPTION(illumina::common::LogicException(ess.str()));
             }
             else
             {
                 log_os << "WARNING: " << oss.str();
-                log_os << "Unnormalized variants may cause local degradations in Strelka variant calling\n";
+                log_os << "All alleles in thie VCF record have been skipped.\n";
+                continue;
             }
         }
 

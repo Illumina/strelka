@@ -125,14 +125,9 @@ pedicure_run(
     pedicure_pos_processor sppr(opt,dopt,ref,streams);
     starling_read_counts brc;
 
-    bool noRequireNormalized(false);
-
-    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, header, streamData);
-    registerVcfList(opt.input_candidate_indel_vcf_no_error, INPUT_TYPE::CANDIDATE_INDELS, header,
-                    streamData, noRequireNormalized);
+    static const bool noRequireNormalized(false);
+    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, header, streamData, noRequireNormalized);
     registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, header, streamData);
-    registerVcfList(opt.force_output_vcf_no_error, INPUT_TYPE::FORCED_GT_VARIANTS, header,
-                    streamData, noRequireNormalized);
 
     while (streamData.next())
     {
