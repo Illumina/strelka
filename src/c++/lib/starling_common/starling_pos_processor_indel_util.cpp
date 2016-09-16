@@ -428,6 +428,22 @@ add_alignment_indels_to_sppr(
                                         is_pinned_indel);
                 }
             }
+            else if (ps.type == SOFT_CLIP)
+            {
+                if (sppr.is_active_region_detector_enabled() && !isLowMapQuality)
+                {
+                    pos_t softClipStartPos(ref_head_pos);
+
+                    // for leading/trailing soft-clip, place the segment at the end/start position
+                    if (is_begin_edge)
+                        --softClipStartPos;
+
+                    const pos_t refPos(softClipStartPos);
+                    std::string segmentSeq;
+                    bam_seq_to_str(read_seq, read_offset, read_offset+ps.length, segmentSeq);
+                    active_region_detector.insertSoftClipSegment(id, refPos, segmentSeq);
+                }
+            }
         }
         else if (is_swap_start)
         {

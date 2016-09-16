@@ -243,7 +243,10 @@ struct GenotypePriorSet;
 
 /// data deterministically derived from the input options:
 ///
-struct starling_base_deriv_options : public blt_deriv_options
+/// Note that non-copyable status is in here b/c of all the unique ptrs below,
+/// if needed workaround by usual c++ methods (shared_ptr, move ctor, etc..)
+///
+struct starling_base_deriv_options : public blt_deriv_options, private boost::noncopyable
 {
     typedef blt_deriv_options base_t;
 

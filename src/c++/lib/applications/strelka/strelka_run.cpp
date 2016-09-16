@@ -102,8 +102,10 @@ strelka_run(
     strelka_pos_processor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;
 
-    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, tumorReadHeader, streamData);
+    static const bool noRequireNormalized(false);
+    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, tumorReadHeader, streamData, noRequireNormalized);
     registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, tumorReadHeader, streamData);
+
     registerVcfList(opt.noise_vcf, INPUT_TYPE::NOISE_VARIANTS, tumorReadHeader, streamData);
 
     while (streamData.next())

@@ -22,7 +22,6 @@
 /// \author Sangtae Kim
 ///
 
-#include <applications/starling/starling_shared.hh>
 #include <starling_common/IndelBuffer.hh>
 #include <starling_common/ActiveRegionDetector.hh>
 #include "boost/test/unit_test.hpp"
@@ -31,33 +30,48 @@ BOOST_AUTO_TEST_SUITE( test_activeRegion )
 
 typedef std::unique_ptr<IndelBuffer> IndelBufferPtr;
 
-static IndelBufferPtr getIndelBufferPtr(const reference_contig_segment& ref)
+struct TestIndelBuffer
 {
-    // fake starling options
-    starling_options opt;
-    opt.bam_seq_name = "chr1";
-    opt.is_user_genome_size = true;
-    opt.user_genome_size = ref.seq().size();
+    explicit
+    TestIndelBuffer(
+            const reference_contig_segment& ref)
+    {
+        // fake starling options
+        _opt.bam_seq_name = "chr1";
+        _opt.is_user_genome_size = true;
+        _opt.user_genome_size = ref.seq().size();
 
-    starling_deriv_options dopt(opt,ref);
+        const double maxDepth = 100.0;
+        _doptPtr.reset(new starling_base_deriv_options(_opt,ref));
 
-    const double maxDepth = 100.0;
-    auto indelBufferPtr = IndelBufferPtr(new IndelBuffer(opt, dopt, ref));
-    indelBufferPtr->registerSample(depth_buffer(), depth_buffer(), maxDepth);
+        _IndelBufferPtr.reset(new IndelBuffer(_opt, *_doptPtr, ref));
+        _IndelBufferPtr->registerSample(depth_buffer(), depth_buffer(), maxDepth);
+        _IndelBufferPtr->finalizeSamples();
 
-    return indelBufferPtr;
-}
+    }
+
+    IndelBuffer&
+    getIndelBuffer()
+    {
+        return *_IndelBufferPtr;
+    }
+
+private:
+    starling_base_options _opt;
+    std::unique_ptr<starling_base_deriv_options> _doptPtr;
+    std::unique_ptr<IndelBuffer> _IndelBufferPtr;
+};
+
 
 // checks whether positions with consistent mismatches are marked as polymorphic sites
 BOOST_AUTO_TEST_CASE( test_relaxMMDF )
 {
     reference_contig_segment ref;
-    ref.seq() = "TCTTT";
-
-    auto indelBuffer = *getIndelBufferPtr(ref);
+    ref.seq() = "TCTGT";
+    TestIndelBuffer testBuffer(ref);
 
     const unsigned maxIndelSize = 50;
-    auto detector = ActiveRegionDetector(ref, indelBuffer, maxIndelSize);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize);
 
     const int depth = 50;
 
@@ -112,12 +126,12 @@ BOOST_AUTO_TEST_CASE( test_relaxMMDF )
 BOOST_AUTO_TEST_CASE( test_indelCandidacy )
 {
     reference_contig_segment ref;
-    ref.seq() = "TCTTT";
+    ref.seq() = "TCTCT";
 
-    auto indelBuffer = *getIndelBufferPtr(ref);
+    TestIndelBuffer testBuffer(ref);
 
     const unsigned maxIndelSize = 50;
-    auto detector = ActiveRegionDetector(ref, indelBuffer, maxIndelSize);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize);
 
     const int sampleId = 0;
     const int depth = 50;
@@ -155,35 +169,39 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
     }
     detector.updateEndPosition(refLength-1, true);
 
-    const auto itr(indelBuffer.getIndelIter(indelKey));
+    const auto itr(testBuffer.getIndelBuffer().getIndelIter(indelKey));
     BOOST_REQUIRE_EQUAL(itr->second.isConfirmedInActiveRegion, true);
 }
 
+
 BOOST_AUTO_TEST_CASE( test_jumpingPositions )
 {
+    const pos_t startPositions[] = {100, 7000};
+    const pos_t snvOffsets[] = {40, 42};
+
+    std::string refSeq(10000, 'A');
+    for (auto startPosition : startPositions)
+    {
+        for (auto snvOffset : snvOffsets)
+        {
+            // to avoid hpol filter
+            refSeq[startPosition+snvOffset - 1] = 'T';
+            refSeq[startPosition+snvOffset + 1] = 'T';
+        }
+    }
+
     reference_contig_segment ref;
-    ref.seq() = std::string(10000, 'A');
+    ref.seq() = refSeq;
 
-    // fake starling options
-    starling_options opt;
-    opt.bam_seq_name = "chr1";
-    opt.is_user_genome_size = true;
-    opt.user_genome_size = ref.seq().size();
-
-    starling_deriv_options dopt(opt,ref);
-
-    const double maxDepth = 100.0;
-    auto indelBuffer = IndelBuffer(opt, dopt, ref);
-    indelBuffer.registerSample(depth_buffer(), depth_buffer(), maxDepth);
+    TestIndelBuffer testBuffer(ref);
 
     const unsigned maxIndelSize = 50;
-    auto detector = ActiveRegionDetector(ref, indelBuffer, maxIndelSize);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize);
 
     // fake reading reads
     const int depth = 50;
     const unsigned readLength = 100;
 
-    const pos_t startPositions[] = {100, 7000};
 
     for (auto startPosition : startPositions)
     {
@@ -193,7 +211,7 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
             for (pos_t pos(startPosition); pos<endPosition; ++pos)
             {
                 // SNVs at startPosition+10 and startPosition+12
-                auto isSnvPosition = (pos == startPosition+10) || (pos == startPosition+12);
+                auto isSnvPosition = (pos == startPosition+snvOffsets[0]) || (pos == startPosition+snvOffsets[1]);
                 if ((alignId % 2) && isSnvPosition)
                 {
                     detector.insertMismatch(alignId, pos, 'G');
@@ -212,8 +230,8 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
         }
 
         // check if polySites are correctly set
-        BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(startPosition+10), true);
-        BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(startPosition+12), true);
+        BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(startPosition+snvOffsets[0]), true);
+        BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(startPosition+snvOffsets[1]), true);
     }
 }
 

@@ -8,42 +8,43 @@
 #
 
 set -o nounset
+set -o xtrace
 
 
 boost_name=boost_1_56_0
-subset_name=${boost_name}_subset
+output_name=${boost_name}_subset
 
 
 tar -xjf $boost_name.tar.bz2
-mv $boost_name $subset_name
+mv $boost_name $output_name
 
 for ddir in doc more status; do
-    rm -rf $subset_name/$ddir
+    rm -rf $output_name/$ddir
 done
 
 # remove unused headers for larger sub-libraries:
 for f in asio geometry gil graph polygon python signals signals2; do
-    rm -rf $subset_name/boost/$f*
+    rm -rf $output_name/boost/$f*
 done
 
 # remove unused libs:
 (
-cd  $subset_name/libs
+cd  $output_name/libs
 ls | grep -v -e "^\(detail\|serialization\|timer\|chrono\|filesystem\|program_options\|system\|test\|wave\)$"  | xargs rm -rf
 )
 
 # remove unused tools:
 (
-cd  $subset_name/tools
+cd  $output_name/tools
 ls | grep -v -e "^\(build\|inspect\)$"  | xargs rm -rf
 )
 
 # remove docs:
 (
-cd $subset_name
+cd $output_name
 find . -name doc -type d -print | xargs rm -rf
 )
 
 # tarball up:
 
-tar -c $subset_name -f - | bzip2 -c -9 >| $subset_name.tar.bz2
+tar -c $output_name -f - | bzip2 -c -9 >| $output_name.tar.bz2

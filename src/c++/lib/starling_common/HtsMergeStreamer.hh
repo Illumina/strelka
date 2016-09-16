@@ -78,6 +78,17 @@ template <> inline index_t getStreamType<bed_streamer>()
 {
     return BED;
 }
+
+template <typename T>
+T* htsTypeFactory(const char* name, const char* region, const bool /*unused*/)
+{
+    return new T(name, region);
+}
+template <>
+inline vcf_streamer* htsTypeFactory(const char* name, const char* region, const bool isRequreNormalized)
+{
+    return new vcf_streamer(name, region, isRequreNormalized);
+}
 }
 
 
@@ -110,9 +121,10 @@ struct HtsMergeStreamer
     const vcf_streamer&
     registerVcf(
         const char* vcfFilename,
-        const unsigned index = 0)
+        const unsigned index = 0,
+        const bool isRequireNormalized = true)
     {
-        return registerHtsType(vcfFilename,index,_data._vcf);
+        return registerHtsType(vcfFilename,index,_data._vcf, isRequireNormalized);
     }
 
     const bed_streamer&
@@ -259,13 +271,14 @@ private:
     registerHtsType(
         const char* htsFilename,
         const unsigned index,
-        std::vector<std::unique_ptr<T>>& htsStreamerVec)
+        std::vector<std::unique_ptr<T>>& htsStreamerVec,
+        const bool isRequireNormalized = false)
     {
         static const HTS_TYPE::index_t htsType(HTS_TYPE::getStreamType<T>());
         assert(! _isStreamBegin);
         const unsigned htsTypeIndex(htsStreamerVec.size());
         const unsigned orderIndex(_order.size());
-        htsStreamerVec.emplace_back(new T(htsFilename, getRegionPtr()));
+        htsStreamerVec.emplace_back(HTS_TYPE::htsTypeFactory<T>(htsFilename, getRegionPtr(), isRequireNormalized));
         _order.emplace_back(htsType, index, htsTypeIndex);
         queueItem(orderIndex);
         return *(htsStreamerVec.back());

@@ -17,6 +17,8 @@ Strelka Developer Guide
     * [Source formatting](#source-formatting)
     * [Error handling](#error-handling)
     * [Unit tests](#unit-tests)
+  * [IDE support](#ide-support)
+    * [Clion](#clion)
 [] (END automated TOC section, any edits will be overwritten on next source refresh)
 
 # Scope
@@ -222,3 +224,15 @@ self.flowLog("Initiating Starling workflow version: %s" % (__version__)
 * Unit tests are already enabled for every library "test" subdirectory, additional tests in these directories will be automatically detected
   * Example [blt_util unit tests directory](../../src/c++/lib/blt_util/test)
 
+
+## IDE support
+
+Strelka includes little support for any specific IDE except as made available by cmake generators, and the maintenance of a partial windows build capability for Visual Studio users. IDE-specific configuration files maintained in the project are described below.
+
+### Clion
+
+A subset of code formatting settings which can be imported into Clion are available in the configuration file
+
+`${STRELKA_REPO_PATH}/scratch/ideConfiguration/CLion/referenceCodeStyleSettings.xml`
+
+..note that the automated `asytle` formatting settings still define the project defaults, the above configuration simply provides a starting point for CLion which is closer to the project's formatting norms.

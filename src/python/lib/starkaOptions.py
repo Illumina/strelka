@@ -51,17 +51,21 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         group.add_option("--referenceFasta",type="string",metavar="FILE",
                          help="samtools-indexed reference fasta file [required]")
         group.add_option("--indelCandidates", type="string", dest="indelCandidatesList", metavar="FILE", action="append",
-                         help="Specify a vcf describing indel candidates. Candidates are always evaluated but only output"
-                              " if a variant genotype is likely."
-                              " File must be tabix indexed."
-                              " Option may be specified more than once, multiple inputs will be merged."
-                              " SNVs in the indel candidates file will be ignored."
+                         help="Specify a VCF of candidate indel alleles. These alleles are always"
+                              " evaluated but only reported in the output when they are inferred to exist in the sample."
+                              " The VCF must be tabix indexed."
+                              " All indel alleles must be left-shifted/normalized, any unnormalized alleles will be ignored."
+                              " This option may be specified more than once, multiple input VCFs will be merged."
                               " (default: None)")
         group.add_option("--forcedGT", type="string", dest="forcedGTList", metavar="FILE", action="append",
-                         help="Specify a vcf describing variants which must be genotyped and output even if a variant genotype is unlikely."
-                              " File must be tabix indexed."
-                              " Option may be specified more than once, multiple inputs will be merged."
-                              " Note that for SNVs, a site will be forced (or for gVCF, excluded from block compression), but the ALT value is ignored."
+                         help="Specify a VCF of candidate alleles. These alleles are always"
+                              " evaluated and reported even if they are unlikely to exist in the sample."
+                              " The VCF must be tabix indexed."
+                              " All indel alleles must be left-shifted/normalized, any unnormalized allele will trigger a"
+                              " a runtime error."
+                              " This option may be specified more than once, multiple input VCFs will be merged."
+                              " Note that for any SNVs provided in the VCF, the SNV site will be reported (and for gVCF,"
+                              " excluded from block compression), but the specific SNV alleles are ignored."
                               " (default: None)")
         group.add_option("--exome", dest="isExome", action="store_true",
                          help="Set options for WES input: turn off depth filters")
@@ -182,7 +186,7 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         if (options.regionStrList is None) or (len(options.regionStrList) == 0) :
             options.genomeRegionList = None
         else :
-            options.genomeRegionList = [parseGenomeRegion(r) for r in options.regionStrList]
+            options.genomeRegionList = [parseGenomeRegion(rr) for r in options.regionStrList for rr in r.split("+")]
 
 
     def validateOptionExistence(self,options) :
