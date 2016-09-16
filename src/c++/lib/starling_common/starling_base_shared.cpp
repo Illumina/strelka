@@ -46,6 +46,7 @@ starling_base_deriv_options(
     , variant_window_last_stage(0)
     , countCache(opt.indel_candidate_signal_test_alpha)
     , logIndelErrorRateFactor(std::log(opt.indelErrorRateFactor))
+    , logIndelRefErrorFactor(std::log(opt.indelRefErrorFactor))
     , _indelErrorModel(new IndelErrorModel(opt.indel_error_model_name,opt.indel_error_models_filename))
     , _incaller(new indel_digt_caller(opt.bindel_diploid_theta))
     , _indelGenotypePriors(new GenotypePriorSet(opt.bindel_diploid_theta, opt.indelHighRepeatTheta, opt.indelHighRepeatCount))
