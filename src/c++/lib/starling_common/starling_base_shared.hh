@@ -208,6 +208,11 @@ struct starling_base_options : public blt_options
     bool isIndelErrorRateFactor = false;
     double indelErrorRateFactor = 1.;
 
+    // scalar multiple modifying the likelihood of observing a ref->alt indel
+    // error relative to the baseline indel error rate
+    bool isIndelRefErrorFactor = false;
+    double indelRefErrorFactor = 1.;
+
     // when P(read | allele) is >= this value the read counts as "supporting"
     // the given allele
     // WARNING: this value impacts several count-based EVS metrics
@@ -308,8 +313,9 @@ public:
 
     const min_count_binom_gte_cache countCache;
 
-    // cache the log of options->indelErrroRateFactor
+    // cache the log of options->indelErrorRateFactor and opt->indelRefErrorFactor
     const double logIndelErrorRateFactor;
+    const double logIndelRefErrorFactor;
 
 private:
     std::unique_ptr<IndelErrorModel> _indelErrorModel;

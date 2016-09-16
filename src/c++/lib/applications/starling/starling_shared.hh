@@ -47,6 +47,11 @@ struct starling_options : public starling_base_options
         isIndelErrorRateFactor = true;
         indelErrorRateFactor = 100.;
 
+        /// In practice, we find that increasing the indel -> ref error rate relative to baseline improves performance
+        /// Its use cases are similar to those of indelErrorRateFactor
+        isIndelRefErrorFactor = true;
+        indelRefErrorFactor = 2.;
+
         // turn on short haplotying
         is_short_haplotyping_enabled = true;
     }

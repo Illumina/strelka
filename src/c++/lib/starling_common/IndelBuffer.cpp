@@ -219,8 +219,14 @@ isCandidateIndelImplTest(
         double scaledIndelToRefErrorProb = indelData.errorRates.indelToRefErrorProb.getValue();
         if (_opt.isIndelErrorRateFactor)
         {
+
             scaleIndelErrorRate(_dopt.logIndelErrorRateFactor, scaledRefToIndelErrorProb);
             scaleIndelErrorRate(_dopt.logIndelErrorRateFactor, scaledIndelToRefErrorProb);
+        }
+
+        if (_opt.isIndelRefErrorFactor)
+        {
+            scaleIndelErrorRate(_dopt.logIndelRefErrorFactor, scaledIndelToRefErrorProb);
         }
 
         indelData.errorRates.scaledRefToIndelErrorProb.updateValue(scaledRefToIndelErrorProb);
