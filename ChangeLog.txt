@@ -1,5 +1,6 @@
 - STREL-218 Tune indel parameters for improved het/hom ratio
 - STREL-216 relax normalization requirement for indel candidates to a warning
+- STREL-198 Update germline EVS using mixed training data (variety of platforms/chemistries/depths) 
 - STREL-154 adjust active window size depending on neighboring sequences
 - STREL-188 haplotype generation includes soft-clipped reads
 v2.6.0
@@ -26,7 +27,7 @@ v2.5.0
 - STREL-54 fix realignment tree pruning
 - STREL-33 add method docs for the new somatic scoring model
 - STREL-49 Liquid tumor EVS cut-off retuning
-- PED-42 Filtering model for SNV and Indels, De novo filter tunning, Better indel overlap handeling
+- PED-42 Filtering model for SNV and Indels, De novo filter tuning, Better indel overlap handling
 - STREL-18 add new indel error estimator
 - STREL-46 fix ALT matches REF error in somatic SNV output
 - STREL-43 add new hts file stream merger
