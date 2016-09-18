@@ -21,6 +21,7 @@
 #pragma once
 
 #include "OrthogonalVariantAlleleCandidateGroup.hh"
+#include "blt_util/RegionTracker.hh"
 
 
 /// find all readIds for which a likelihood has been computed for at least one allele in this group
@@ -130,6 +131,7 @@ addAllelesAtOtherPositions(
     const std::vector<unsigned>& callerPloidy,
     const pos_t pos,
     const pos_t largest_total_indel_ref_span_per_read,
+    const RegionTracker& excludedIndelRegions,
     const IndelBuffer& indelBuffer,
     OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     std::vector<unsigned>& topVariantAlleleIndexPerSample);

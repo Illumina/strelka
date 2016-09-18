@@ -928,6 +928,10 @@ void
 starling_pos_processor::
 process_pos_indel(const pos_t pos)
 {
+    // clean up excluded regions well behind the currrent call position:
+    const pos_t minIndelBufferPos(pos - get_largest_total_indel_ref_span_per_read());
+    _variantIndelOutputRegions.removeToPos(minIndelBufferPos);
+
     if (_opt.is_bsnp_diploid())
     {
         process_pos_indel_digt(pos);
@@ -1274,6 +1278,7 @@ updateIndelLocusWithSampleInfo(
 
 
 
+#if 0
 /// determine if an allele group is reportable
 ///
 /// \return true if at least one allele is at pos, and no alleles are less than pos.
@@ -1301,6 +1306,7 @@ isAlleleGroupReportable(
 
     return isAnyAlleleAtPos;
 }
+#endif
 
 
 
@@ -1386,29 +1392,32 @@ process_pos_indel_digt(const pos_t pos)
         callerPloidy[sampleIndex] = ((groupLocusPloidy[sampleIndex] == 0) ? 2 : groupLocusPloidy[sampleIndex]);
     }
 
-    // track top alt allele within each sample -- this is used as a temporary crutch to transfer the previous prior
-    // calculation from single to multi-sample, and should be removed when a mature prior scheme is put in place
-    std::vector<unsigned> topVariantAlleleIndexPerSample(sampleCount);
-
-    // rank input alleles to pick the top N, N=ploidy, per sample, and aggregate/rank these
-    // over all samples
-    OrthogonalVariantAlleleCandidateGroup topVariantAlleleGroup;
-    selectTopOrthogonalAllelesInAllSamples(
-        sampleCount, callerPloidy, orthogonalVariantAlleles, topVariantAlleleGroup, topVariantAlleleIndexPerSample);
-
-    // At this point topVariantAlleleGroup represents the best alleles which
-    // start at the current position (over all samples). Now we add conflicting
-    // alleles at other positions and re-rank, re-select the top alleles again:
-    if (not topVariantAlleleGroup.empty())
-    {
-        addAllelesAtOtherPositions(_ref, sampleCount, callerPloidy, pos, get_largest_total_indel_ref_span_per_read(),
-                                   getIndelBuffer(), topVariantAlleleGroup, topVariantAlleleIndexPerSample);
-    }
-
-    // overlapping allele groups are reported only once, when grouped together from the left-most position
     bool isReportedLocus(false);
-    if (isAlleleGroupReportable(pos,topVariantAlleleGroup))
+    OrthogonalVariantAlleleCandidateGroup topVariantAlleleGroup;
+
+    // now check to see if we can call variant alleles at this position, we may have already found this positions alleles while
+    // analyzing a locus positioned downstream. If so, skip ahead to handle the forced output alleles only:
+    if (not _variantIndelOutputRegions.isIntersectRegion(pos))
     {
+        // track top alt allele within each sample -- this is used as a temporary crutch to transfer the previous prior
+        // calculation from single to multi-sample, and should be removed when a mature prior scheme is put in place
+        std::vector<unsigned> topVariantAlleleIndexPerSample(sampleCount);
+
+        // rank input alleles to pick the top N, N=ploidy, per sample, and aggregate/rank these
+        // over all samples
+        selectTopOrthogonalAllelesInAllSamples(
+            sampleCount, callerPloidy, orthogonalVariantAlleles, topVariantAlleleGroup, topVariantAlleleIndexPerSample);
+
+        // At this point topVariantAlleleGroup represents the best alleles which
+        // start at the current position (over all samples). Now we add conflicting
+        // alleles at other positions and re-rank, re-select the top alleles again:
+        if (not topVariantAlleleGroup.empty())
+        {
+            addAllelesAtOtherPositions(_ref, sampleCount, callerPloidy, pos,
+                                       get_largest_total_indel_ref_span_per_read(), _variantIndelOutputRegions,
+                                       getIndelBuffer(), topVariantAlleleGroup, topVariantAlleleIndexPerSample);
+        }
+
         // genotype and report topVariantAlleleGroup
         //
 
@@ -1417,7 +1426,8 @@ process_pos_indel_digt(const pos_t pos)
         static OrthogonalVariantAlleleCandidateGroup emptyGroup;
 
         // setup new indel locus:
-        std::unique_ptr<GermlineIndelLocusInfo> locusPtr(new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount));
+        std::unique_ptr<GermlineIndelLocusInfo> locusPtr(
+            new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount));
 
         // cycle through variant alleles and add them to locus (the locus interface requires that this is done first):
         addIndelAllelesToLocus(topVariantAlleleGroup, isForcedOutput, *locusPtr);
@@ -1428,8 +1438,10 @@ process_pos_indel_digt(const pos_t pos)
         {
             auto& sif(sample(sampleIndex));
             updateIndelLocusWithSampleInfo(
-                _opt, _dopt, topVariantAlleleGroup, topVariantAlleleIndexPerSample[sampleIndex], emptyGroup, sif.sample_opt,
-                callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex, sif.bc_buff, *locusPtr, homRefLogProb);
+                _opt, _dopt, topVariantAlleleGroup, topVariantAlleleIndexPerSample[sampleIndex], emptyGroup,
+                sif.sample_opt,
+                callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex, sif.bc_buff, *locusPtr,
+                homRefLogProb);
         }
 
         // add sample-independent info:
@@ -1438,9 +1450,19 @@ process_pos_indel_digt(const pos_t pos)
         if (isForcedOutput or locusPtr->isVariantLocus())
         {
             // finished! send this locus down the pipe:
+
+            // set interference range of any overlapping indel loci, which should almost always be copies of the same
+            // locus.
+            //
+            // expand the end range of the locus by one to represent adjcent indel interference, for instance a
+            // 1D at position 10 should block any indel at position 11
+            auto locusRegion(locusPtr->range());
+            locusRegion.set_end_pos(locusRegion.end_pos() + 1);
+            _variantIndelOutputRegions.addRegion(locusRegion);
+            isReportedLocus = true;
+
             _gvcfer->add_indel(std::move(locusPtr));
 
-            isReportedLocus = true;
         }
     }
 

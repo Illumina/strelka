@@ -84,4 +84,7 @@ private:
 
     RegionTracker _excludedRegions;
     RecordTracker _knownVariants;
+
+    /// placeholder object to match germline caller's interface, currently unused
+    RegionTracker _variantIndelOutputRegions;
 };

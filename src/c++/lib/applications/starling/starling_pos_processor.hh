@@ -106,6 +106,10 @@ private:
 
     RegionTracker _nocompress_regions;
 
+    /// mark the region which includes all alleles considered as part of a reported indel locus
+    /// this prevents the same variant indel from being reported more than once
+    RegionTracker _variantIndelOutputRegions;
+
     /// track forced output alleles which are reported as part of a variant so that they aren't reported twice:
     std::set<IndelKey> _forcedAllelesAlreadyOutput;
 };

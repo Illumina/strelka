@@ -427,6 +427,7 @@ addAllelesAtOtherPositions(
     const std::vector<unsigned>& callerPloidy,
     const pos_t pos,
     const pos_t largest_total_indel_ref_span_per_read,
+    const RegionTracker& excludedIndelRegions,
     const IndelBuffer& indelBuffer,
     OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     std::vector<unsigned>& topVariantAlleleIndexPerSample)
@@ -480,6 +481,12 @@ addAllelesAtOtherPositions(
                     isEveryAltOrthogonal = false;
                     continue;
                 }
+            }
+
+            // check special excluded region object (intersection is intended to be very rare)
+            if (excludedIndelRegions.isIntersectRegion(known_pos_range2(altAlleleKey.pos, altAlleleKey.right_pos())))
+            {
+                continue;
             }
 
             // made it! add allele to the set we move forward with:
