@@ -1,3 +1,4 @@
+- STREL-158 support multi-sample in standard germline analysis
 - STREL-218 Tune indel parameters for improved het/hom ratio
 - STREL-216 relax normalization requirement for indel candidates to a warning
 - STREL-198 Update germline EVS using mixed training data (variety of platforms/chemistries/depths) 
