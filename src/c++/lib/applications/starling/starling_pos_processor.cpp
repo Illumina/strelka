@@ -353,7 +353,7 @@ updateSnvLocusWithSampleInfo(
         }
     }
 
-    if     (locus.isRefUnknown() or (cpi.n_used_calls() == 0))
+    if     (locus.isRefUnknown() or (cpi.n_used_calls() == 0) or isOverlappingHomAltDeletion)
     {
         sampleInfo.genotypeQuality = 0;
         sampleInfo.maxGenotypeIndex.setGenotypeFromAlleleIndices();
@@ -602,7 +602,6 @@ process_pos_snp_digt(
         const int ploidy = std::max(0, regionPloidy+locusPloidyAdjustment);
         groupLocusPloidy.push_back(ploidy);
         callerPloidy.push_back((ploidy == 0) ? 2 : ploidy);
-
     }
 
     // prep step 3) compute diploid genotype object using older "4-allele" model:
