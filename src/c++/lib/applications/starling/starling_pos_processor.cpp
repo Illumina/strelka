@@ -1386,22 +1386,6 @@ process_pos_indel_digt(const pos_t pos)
         callerPloidy[sampleIndex] = ((groupLocusPloidy[sampleIndex] == 0) ? 2 : groupLocusPloidy[sampleIndex]);
     }
 
-    // track all forced output alleles in a separate group (even if they go into topVariant group)
-    // to ensure that these are output even if not included in the most likely genotype for any sample
-    //
-    OrthogonalVariantAlleleCandidateGroup forcedOutputAlleleGroup;
-    {
-        const unsigned orthogonalVariantAlleleCount(orthogonalVariantAlleles.size());
-        for (unsigned alleleIndex(0); alleleIndex < orthogonalVariantAlleleCount; alleleIndex++)
-        {
-            const IndelData& indelData(orthogonalVariantAlleles.data(alleleIndex));
-            if (indelData.isForcedOutput)
-            {
-                forcedOutputAlleleGroup.addVariantAllele(orthogonalVariantAlleles.iter(alleleIndex));
-            }
-        }
-    }
-
     // track top alt allele within each sample -- this is used as a temporary crutch to transfer the previous prior
     // calculation from single to multi-sample, and should be removed when a mature prior scheme is put in place
     std::vector<unsigned> topVariantAlleleIndexPerSample(sampleCount);
@@ -1486,16 +1470,19 @@ process_pos_indel_digt(const pos_t pos)
     // score and report any remaining forced output alleles
     //
     {
-        // trim the forced output allele set to take out any alleles already called as variants:
-        if (not forcedOutputAlleleGroup.empty())
+        // track all forced output alleles in a separate group (even if they go into topVariant group)
+        // to ensure that these are output even if not included in the most likely genotype for any sample
+        //
+        OrthogonalVariantAlleleCandidateGroup forcedOutputAlleleGroup;
         {
-            const unsigned forcedCount(forcedOutputAlleleGroup.size());
-            for (unsigned forcedIndex(0); forcedIndex < forcedCount; ++forcedIndex)
+            const unsigned orthogonalVariantAlleleCount(orthogonalVariantAlleles.size());
+            for (unsigned alleleIndex(0); alleleIndex < orthogonalVariantAlleleCount; alleleIndex++)
             {
-                const unsigned reverseForcedIndex(forcedCount-(forcedIndex+1));
-                if (_forcedAllelesAlreadyOutput.count(forcedOutputAlleleGroup.key(reverseForcedIndex)) > 0)
+                const IndelKey& indelKey(orthogonalVariantAlleles.key(alleleIndex));
+                const IndelData& indelData(orthogonalVariantAlleles.data(alleleIndex));
+                if (indelData.isForcedOutput and (_forcedAllelesAlreadyOutput.count(indelKey) == 0))
                 {
-                    forcedOutputAlleleGroup.alleles.erase(forcedOutputAlleleGroup.alleles.begin() + reverseForcedIndex);
+                    forcedOutputAlleleGroup.addVariantAllele(orthogonalVariantAlleles.iter(alleleIndex));
                 }
             }
         }
