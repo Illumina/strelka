@@ -42,17 +42,17 @@ process(std::unique_ptr<GermlineSiteLocusInfo> siteLocusPtr)
 #endif
 
     // resolve any current or previous indels before queuing site:
-    if (si->pos>=_indel_end_pos)
-    {
-        process_overlaps();
-    }
-    else
+    if (_indel_range.is_pos_intersect(si->pos))
     {
         _site_buffer.push_back(std::move(si));
         return;
     }
 
-    assert(si->pos>=_indel_end_pos);
+    if (si->pos >= _indel_range.end_pos())
+    {
+        process_overlaps();
+    }
+
     assert(_nonvariant_indel_buffer.empty());
 
     _sink->process(std::move(si));
@@ -74,7 +74,7 @@ process(std::unique_ptr<GermlineIndelLocusInfo> indelLocusPtr)
     log_os << "CHIRP: " << __FUNCTION__ << " pos/indel_endPos: " << indelLocusPtr->pos << "/" << _indel_end_pos << "\n";
 #endif
 
-    if (indelLocusPtr->pos>_indel_end_pos)
+    if (indelLocusPtr->pos > _indel_range.end_pos())
     {
         process_overlaps();
     }
@@ -85,7 +85,14 @@ process(std::unique_ptr<GermlineIndelLocusInfo> indelLocusPtr)
     }
     else
     {
-        _indel_end_pos=std::max(_indel_end_pos, indelLocusPtr->end());
+        if (_indel_buffer.empty())
+        {
+            _indel_range = known_pos_range2(indelLocusPtr->range());
+        }
+        else
+        {
+            _indel_range.merge_range(indelLocusPtr->range());
+        }
         _indel_buffer.push_back(std::move(indelLocusPtr));
     }
 }
@@ -128,7 +135,7 @@ indel_overlapper::
 dump(std::ostream& os) const
 {
     os << "indel_overlapper:"
-       << " indel_end_pos: " << _indel_end_pos << "\n";
+       << " indel_range: " << _indel_range << "\n";
     dumpLocusBuffer("Site", _site_buffer, os);
     dumpLocusBuffer("VariantIndel", _indel_buffer, os);
     dumpLocusBuffer("NonVariantIndel", _nonvariant_indel_buffer, os);
@@ -401,5 +408,3 @@ modify_conflict_indel_record()
         indelLocusPtr->filters.set(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
     }
 }
-
-

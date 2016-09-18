@@ -41,7 +41,7 @@ struct indel_overlapper : public variant_pipe_stage_base
         : variant_pipe_stage_base(destination)
         , _scoringModels(scoringModels)
         , _ref(ref)
-        , _indel_end_pos(-1)
+        , _indel_range(-1, -1)
     {
         // this component doesn't make any sense without a destination:
         assert(destination);
@@ -89,7 +89,7 @@ private:
 
     const ScoringModelManager& _scoringModels;
     const reference_contig_segment& _ref;
-    pos_t _indel_end_pos;
+    known_pos_range2 _indel_range;
 
     std::vector<std::unique_ptr<GermlineIndelLocusInfo>> _indel_buffer;
     std::vector<std::unique_ptr<GermlineIndelLocusInfo>> _nonvariant_indel_buffer;
