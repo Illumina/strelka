@@ -520,8 +520,8 @@ computeEmpiricalScoringFeatures(
         if (isComputeDevelopmentFeatures)
         {
 
-          // BaseQRankSum
-          smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::I_BaseQRankSum, (BaseQRankSum));
+            // BaseQRankSum
+            smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::I_BaseQRankSum, (BaseQRankSum));
 
             // allele bias metrics
             {

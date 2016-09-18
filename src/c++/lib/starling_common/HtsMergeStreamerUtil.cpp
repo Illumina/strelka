@@ -36,7 +36,7 @@ registerVcfList(
     for (const std::string& vcfFilename : vcfFilenames)
     {
         const vcf_streamer& vcfStream(streamData.registerVcf(vcfFilename.c_str(), typeIndex,
-                                      requireNormalized));
+                                                             requireNormalized));
         vcfStream.validateBamHeaderChromSync(header);
     }
 }

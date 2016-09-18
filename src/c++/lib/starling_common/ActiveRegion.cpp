@@ -137,7 +137,7 @@ void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySit
 }
 
 // adoptation of get_snp_hpol_size in blt_common
-static unsigned getHomoPolymerSize(const std::string &haplotype, const pos_t pos)
+static unsigned getHomoPolymerSize(const std::string& haplotype, const pos_t pos)
 {
     // count upstream repeats:
     bool isUpRepeat(false);
