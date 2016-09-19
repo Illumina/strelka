@@ -84,15 +84,6 @@ add_gvcf_filters(
         write_vcf_filter(os,get_label(HighRefRep),oss.str().c_str());
     }
 
-    // Inconsistent phasing, meaning we cannot confidently identify haplotypes in windows
-    if (sopt.isUseCodonPhaser ||
-        (opt.include_headers.end() != std::find(opt.include_headers.begin(), opt.include_headers.end(), "Phasing")))
-    {
-        std::ostringstream oss;
-        oss << "Locus read evidence displays unbalanced phasing patterns";
-        write_vcf_filter(os,get_label(PhasingConflict),oss.str().c_str());
-    }
-
     if (! chrom_depth.empty())
     {
         std::ostringstream oss;
@@ -185,6 +176,11 @@ finish_gvcf_header(
 
     os << "##FORMAT=<ID=DPI,Number=1,Type=Integer,Description=\"Read depth associated with indel, taken from the site preceding the indel.\">\n";
     os << "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification.\">\n";
+
+    if (opt.isUseCodonPhaser)
+    {
+        os << "##INFO=<ID=PS,Number=1,Type=Integer,Description=\"Phase set identifier\">\n";
+    }
 
     // FILTER:
 

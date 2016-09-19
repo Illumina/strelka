@@ -132,12 +132,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-min-vexp', '0.25'])
     segCmd.extend(['--do-short-range-phasing'])
 
-    # TODO STREL-125 git rid of this workaround:
-    # currently short-range phasing is not enabled with continuous variant calling. This ensures
-    # the header value for the relevant phasing filters is still emitted
-    if len(self.params.callContinuousVf) > 0 :
-        segCmd.extend(["--gvcf-include-header", "Phasing"])
-
     segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.id)])
 
     segFiles.stats.append(self.paths.getTmpRunStatsPath(segStr))
