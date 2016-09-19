@@ -1453,9 +1453,12 @@ process_pos_indel_digt(const pos_t pos)
             // set interference range of any overlapping indel loci, which should almost always be copies of the same
             // locus.
             //
+            // expand begin range of the locus to extend back to at least the current site
+            //
             // expand the end range of the locus by one to represent adjcent indel interference, for instance a
             // 1D at position 10 should block any indel at position 11
             auto locusRegion(locusPtr->range());
+            locusRegion.set_begin_pos(std::min(locusRegion.begin_pos(), pos));
             locusRegion.set_end_pos(locusRegion.end_pos() + 1);
             _variantIndelOutputRegions.addRegion(locusRegion);
             isReportedLocus = true;

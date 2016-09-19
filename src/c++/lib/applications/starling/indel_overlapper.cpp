@@ -38,7 +38,7 @@ process(std::unique_ptr<GermlineSiteLocusInfo> siteLocusPtr)
     std::unique_ptr<GermlineDiploidSiteLocusInfo> si(downcast<GermlineDiploidSiteLocusInfo>(std::move(siteLocusPtr)));
 #ifdef DEBUG_GVCF
     log_os << "CHIRP: " << __FUNCTION__ << " SITE START\n";
-    log_os << "CHIRP: " << __FUNCTION__ << " pos/indel_endPos: " << si->pos << "/" << _indel_end_pos << "\n";
+    log_os << "CHIRP: " << __FUNCTION__ << " pos/indel_range: " << si->pos << "/" << _indel_range << "\n";
 #endif
 
     // resolve any current or previous indels before queuing site:
@@ -71,7 +71,7 @@ process(std::unique_ptr<GermlineIndelLocusInfo> indelLocusPtr)
 
 #ifdef DEBUG_GVCF
     log_os << "CHIRP: " << __FUNCTION__ << " INDEL START\n";
-    log_os << "CHIRP: " << __FUNCTION__ << " pos/indel_endPos: " << indelLocusPtr->pos << "/" << _indel_end_pos << "\n";
+    log_os << "CHIRP: " << __FUNCTION__ << " pos/indel_range: " << indelLocusPtr->pos << "/" << _indel_range << "\n";
 #endif
 
     if (indelLocusPtr->pos > _indel_range.end_pos())
@@ -234,6 +234,7 @@ process_overlaps_impl()
 {
 #ifdef DEBUG_GVCF
     log_os << "CHIRP: " << __FUNCTION__ << " START\n";
+    dump(log_os);
 #endif
 
     if (_indel_buffer.empty() && _nonvariant_indel_buffer.empty()) return;
