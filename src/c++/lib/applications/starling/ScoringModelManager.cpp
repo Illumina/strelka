@@ -241,10 +241,8 @@ default_classify_site(
     {
         if (_opt.is_max_snv_sb)
         {
-            /// TODO STREL-125 solve strand bias for multi-alt/multi-sample:
-#if 0
-            if (allele.strandBias>_opt.max_snv_sb) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
-#endif
+            const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
+            if (siteSampleInfo.strandBias>_opt.max_snv_sb) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
         }
         if (_opt.is_max_snv_hpol)
         {

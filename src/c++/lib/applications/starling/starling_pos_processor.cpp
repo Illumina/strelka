@@ -197,6 +197,7 @@ updateSiteSampleInfo(
     const unsigned sampleIndex,
     const CleanedPileup& cpi,
     const bool isOverlappingHomAltDeletion,
+    const double strandBias,
     GermlineSiteLocusInfo& locus)
 {
     const snp_pos_info& good_pi(cpi.cleanedPileup());
@@ -229,6 +230,8 @@ updateSiteSampleInfo(
             siteSampleInfo.rawPos = pi.get_raw_pos();
             siteSampleInfo.avgBaseQ = pi.get_raw_baseQ();
         }
+
+        siteSampleInfo.strandBias = strandBias;
     }
 
     locus.setSiteSampleInfo(sampleIndex, siteSampleInfo);
@@ -454,7 +457,7 @@ updateSnvLocusWithSampleInfo(
         // allele.strandBias=dgt.strand_bias;
     }
 
-    updateSiteSampleInfo(opt, sampleIndex, cpi, isOverlappingHomAltDeletion, locus);
+    updateSiteSampleInfo(opt, sampleIndex, cpi, isOverlappingHomAltDeletion, dgt.strand_bias, locus);
 }
 
 
@@ -682,6 +685,15 @@ updateContinuousSiteSampleInfo(
 /// strand bias values summed over all samples
 struct StrandBiasCounts
 {
+    void
+    merge(const StrandBiasCounts& rhs)
+    {
+        fwdAlt += rhs.fwdAlt;
+        revAlt += rhs.revAlt;
+        fwdOther += rhs.fwdOther;
+        revOther += rhs.revOther;
+    }
+
     unsigned fwdAlt = 0;
     unsigned revAlt = 0;
     unsigned fwdOther = 0;
@@ -696,13 +708,12 @@ updateContinuousSnvLocusWithSampleInfo(
     const starling_base_options& opt,
     starling_pos_processor::sample_info& sif,
     const unsigned sampleIndex,
-    const unsigned baseIndex, ///< TODO STREL-125 TMP!!!!!!
     std::vector<StrandBiasCounts>& strandBiasCounts,
     GermlineContinuousSiteLocusInfo& locus)
 {
-    const bool isRefAllele(locus.refBaseIndex == baseIndex);
-
     const auto& siteAlleles(locus.getSiteAlleles());
+    const bool isRefAllele(siteAlleles.empty());
+
     const uint8_t altAlleleCount(siteAlleles.size());
     const uint8_t fullAlleleCount(altAlleleCount+1);
 
@@ -743,8 +754,47 @@ updateContinuousSnvLocusWithSampleInfo(
         }
     }
 
+    // update sample strand bias and locus-level strand bias intermediates:
+    double strandBias(0.);
+    if (not isRefAllele)
+    {
+        // get "primaryAltAllele" for the purpose of computing strand bias, for now this is fixed
+        // to the first alt:
+        unsigned primaryAltAlleleIndex(0);
+        for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
+        {
+            StrandBiasCounts sampleStrandBias;
+            const auto& allele(siteAlleles[altAlleleIndex]);
+
+            for (const base_call& bc : good_pi.calls)
+            {
+                if (bc.is_fwd_strand)
+                {
+                    if (bc.base_id == allele.baseIndex)
+                        sampleStrandBias.fwdAlt++;
+                    else
+                        sampleStrandBias.fwdOther++;
+                }
+                else if (bc.base_id == allele.baseIndex)
+                    sampleStrandBias.revAlt++;
+                else
+                    sampleStrandBias.revOther++;
+            }
+
+            if (altAlleleIndex == primaryAltAlleleIndex)
+            {
+                strandBias = starling_continuous_variant_caller::strand_bias(
+                    sampleStrandBias.fwdAlt, sampleStrandBias.revAlt, sampleStrandBias.fwdOther, sampleStrandBias.revOther,
+                    opt.noise_floor);
+            }
+
+            auto& sbcounts(strandBiasCounts[altAlleleIndex]);
+            sbcounts.merge(sampleStrandBias);
+        }
+    }
+
     static const bool isOverlappingHomAltDeletion(false);
-    updateSiteSampleInfo(opt, sampleIndex, cpi, isOverlappingHomAltDeletion, locus);
+    updateSiteSampleInfo(opt, sampleIndex, cpi, isOverlappingHomAltDeletion, strandBias, locus);
 
     static const uint8_t variantAlleleIndex(1);
     const uint8_t updateAlleleIndex(isRefAllele ? 0 : variantAlleleIndex);
@@ -780,27 +830,6 @@ updateContinuousSnvLocusWithSampleInfo(
                 continuousSiteSampleInfo.continuousTotalDepth,
                 (unsigned) opt.min_qscore, 40);
 
-        // update strand bias intermediates:
-        for (unsigned alleleIndex(0); alleleIndex < altAlleleCount; ++alleleIndex)
-        {
-            const auto& allele(siteAlleles[alleleIndex]);
-            auto& sbcounts(strandBiasCounts[alleleIndex]);
-
-            for (const base_call& bc : good_pi.calls)
-            {
-                if (bc.is_fwd_strand)
-                {
-                    if (bc.base_id == allele.baseIndex)
-                        sbcounts.fwdAlt++;
-                    else
-                        sbcounts.fwdOther++;
-                }
-                else if (bc.base_id == allele.baseIndex)
-                    sbcounts.revAlt++;
-                else
-                    sbcounts.revOther++;
-            }
-        }
     }
 }
 
@@ -823,7 +852,7 @@ updateContinuousSnvLocusInfo(
     // set sample-independent info:
     locus.hpol = get_snp_hpol_size(pos, ref);
 
-    // update strand bias for each allele:
+    // update locus-level strand bias for each allele:
     for (unsigned alleleIndex(0); alleleIndex < alleleCount; ++alleleIndex)
     {
         auto& allele(siteAlleles[alleleIndex]);
@@ -879,7 +908,7 @@ process_pos_snp_continuous(const pos_t pos)
         for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
             updateContinuousSnvLocusWithSampleInfo(
-                _opt, sample(sampleIndex), sampleIndex, baseIndex, strandBiasCounts, *locusPtr);
+                _opt, sample(sampleIndex), sampleIndex, strandBiasCounts, *locusPtr);
         }
 
         // determine if this locus (in continuous case locus TEMPORARILY means "allele") is printable:

@@ -326,9 +326,6 @@ computeEmpiricalScoringFeatures(
         assert(false and "Unexpected ploidy");
     }
 
-    ///TODO STREL-125 generalize to multiple alts:
-    const auto& primaryAltAllele(siteAlleles[primaryAltAlleleIndex]);
-
     const unsigned confidentRefCount(
         sampleInfo.supportCounts.getCounts(true).confidentRefAlleleCount() +
         sampleInfo.supportCounts.getCounts(false).confidentRefAlleleCount());
@@ -359,7 +356,7 @@ computeEmpiricalScoringFeatures(
         features.set(RNA_SNV_SCORING_FEATURES::I_ReadPosRankSum, (siteSampleInfo.ReadPosRankSum));
 
         features.set(RNA_SNV_SCORING_FEATURES::I_SNVHPOL, (locus.hpol));
-        features.set(RNA_SNV_SCORING_FEATURES::I_SNVSB, (primaryAltAllele.strandBias));
+        features.set(RNA_SNV_SCORING_FEATURES::I_SNVSB, (siteSampleInfo.strandBias));
 
         features.set(RNA_SNV_SCORING_FEATURES::AD0, (confidentRefCount * chromDepthFactor));
         features.set(RNA_SNV_SCORING_FEATURES::AD1, (confidentPrimaryAltCount * chromDepthFactor));
@@ -403,7 +400,7 @@ computeEmpiricalScoringFeatures(
 
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQ, (siteSampleInfo.mapqTracker.getRMS()));
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVHPOL, (locus.hpol));
-        features.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVSB, (primaryAltAllele.strandBias));
+        features.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVSB, (siteSampleInfo.strandBias));
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQRankSum, (siteSampleInfo.MQRankSum));
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_ReadPosRankSum, (siteSampleInfo.ReadPosRankSum));
 

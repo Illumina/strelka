@@ -771,6 +771,7 @@ struct GermlineSiteSampleInfo
         MQRankSum = 0;
         avgBaseQ = 0;
         rawPos = 0;
+        strandBias = 0;
     }
 
     /// count of reads which have a most likely alignment containing a deletion at the site in question
@@ -790,6 +791,9 @@ struct GermlineSiteSampleInfo
     double MQRankSum = 0;       // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
     double avgBaseQ = 0;
     double rawPos = 0;
+
+    // per sample SNV bias metric:
+    double strandBias = 0;
 };
 
 

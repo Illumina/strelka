@@ -422,18 +422,6 @@ write_site_record_instance(
     }
     else
     {
-        {
-            assert(isAltAlleles);
-
-            /// TODO STREL-125 generalize to multiple alts
-            const auto& allele(siteAlleles.front());
-            os << "SNVSB=";
-            {
-                const StreamScoper ss(os);
-                os << std::fixed << std::setprecision(1) << allele.strandBias;
-            }
-        }
-        os << ';';
         os << "SNVHPOL=" << locus.hpol;
 
         // compute global MQ over all samples
@@ -482,6 +470,10 @@ write_site_record_instance(
         if (isAltAlleles)
         {
             os << ":AD:ADF:ADR";
+        }
+        if (isAltAlleles)
+        {
+            os << ":SB";
         }
         os << ":FT";
         if (isAltAlleles)
@@ -537,12 +529,21 @@ write_site_record_instance(
             os << siteSampleInfo.n_used_calls << ':'
                << siteSampleInfo.n_unused_calls;
 
+            // AD/ADF/ADR
             if (isAltAlleles)
             {
                 printSampleAD(sampleInfo.supportCounts, altAlleleCount, os);
             }
 
-            // FT
+            // SB
+            if (isAltAlleles)
+            {
+                os << ":";
+                const StreamScoper ss(os);
+                os << std::fixed << std::setprecision(1) << siteSampleInfo.strandBias;
+            }
+
+                // FT
             os << ':';
             sampleInfo.filters.write(os);
 
@@ -600,6 +601,10 @@ write_site_record_instance(
         {
             os << ":AD:ADF:ADR";
         }
+        if (isAltAlleles)
+        {
+            os << ":SB";
+        }
         os << ":FT:VF";
 
         //SAMPLE
@@ -624,9 +629,18 @@ write_site_record_instance(
             // DP:DPF
             os << ':' << siteSampleInfo.n_used_calls << ':' << siteSampleInfo.n_unused_calls;
 
+            // AD/ADF/ADR
             if (isAltAlleles)
             {
                 printSampleAD(sampleInfo.supportCounts, altAlleleCount, os);
+            }
+
+            // SB
+            if (isAltAlleles)
+            {
+                const StreamScoper ss(os);
+                os << ':';
+                os << std::fixed << std::setprecision(1) << siteSampleInfo.strandBias;
             }
 
             // FT
@@ -639,6 +653,7 @@ write_site_record_instance(
                 const StreamScoper ss(os);
                 os << ':' << std::fixed << std::setprecision(3) << continuousSiteSampleInfo.getContinuousAlleleFrequency();
             }
+
         }
     }
 

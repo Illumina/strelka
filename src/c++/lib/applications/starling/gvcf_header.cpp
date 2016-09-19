@@ -67,7 +67,7 @@ add_gvcf_filters(
     if (opt.is_max_snv_sb)
     {
         std::ostringstream oss;
-        oss << "SNV strand bias value (SNVSB) exceeds " << opt.max_snv_sb;
+        oss << "Sample SNV strand bias value (SB) exceeds " << opt.max_snv_sb;
         write_vcf_filter(os,get_label(HighSNVSB),oss.str().c_str());
     }
     if (opt.is_max_snv_hpol)
@@ -131,7 +131,6 @@ finish_gvcf_header(
         os << "##INFO=<ID=" << dopt.block_label << ",Number=0,Type=Flag,Description=\"Non-variant site block. All sites in a block are constrained to be non-variant, have the same filter value, and have all sample values in range [x,y], y <= max(x+" << opt.gvcf.block_abs_tol << ",(x*" << std::setprecision(2) << static_cast<double>(100+opt.gvcf.block_percent_tol)/100. << ")). All printed site block sample values are the minimum observed in the region spanned by the block\">\n";
     }
 
-    os << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"SNV site strand bias\">\n";
     os << "##INFO=<ID=SNVHPOL,Number=1,Type=Integer,Description=\"SNV contextual homopolymer length\">\n";
 
     // indel specific:
@@ -181,6 +180,8 @@ finish_gvcf_header(
     {
         os << "##INFO=<ID=PS,Number=1,Type=Integer,Description=\"Phase set identifier\">\n";
     }
+
+    os << "##INFO=<ID=SB,Number=1,Type=Float,Description=\"Sample site strand bias\">\n";
 
     // FILTER:
 
