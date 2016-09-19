@@ -88,13 +88,16 @@ classify_site(
     {
         assert(sampleCount == 1);
         const unsigned sampleIndex(0);
-
-        // when reporting is turned on, we need to compute EVS features
-        // for any usable variant regardless of EVS model type:
-        const bool isUniformDepthExpected(_dopt.is_max_depth());
-        GermlineDiploidSiteLocusInfo::computeEmpiricalScoringFeatures(
-            locus, sampleIndex, _isRNA, isUniformDepthExpected, _isReportEVSFeatures,
-            _dopt.norm_depth, locus.evsFeatures, locus.evsDevelopmentFeatures);
+        const auto& sampleInfo(locus.getSample(sampleIndex));
+        if (sampleInfo.isVariant())
+        {
+            // when reporting is turned on, we need to compute EVS features
+            // for any usable variant regardless of EVS model type:
+            const bool isUniformDepthExpected(_dopt.is_max_depth());
+            GermlineDiploidSiteLocusInfo::computeEmpiricalScoringFeatures(
+                locus, sampleIndex, _isRNA, isUniformDepthExpected, _isReportEVSFeatures,
+                _dopt.norm_depth, locus.evsFeatures, locus.evsDevelopmentFeatures);
+        }
     }
 
     if (isVariantUsableInEVSModel && isEVSSiteModel())
@@ -153,13 +156,16 @@ classify_indel(
     {
         assert(sampleCount == 1);
         const unsigned sampleIndex(0);
-
-        // when reporting is turned on, we need to compute EVS features
-        // for any usable variant regardless of EVS model type:
-        const bool isUniformDepthExpected(_dopt.is_max_depth());
-        GermlineDiploidIndelLocusInfo::computeEmpiricalScoringFeatures(
-            locus, sampleIndex, _isRNA, isUniformDepthExpected,_isReportEVSFeatures,
-            _dopt.norm_depth, locus.evsFeatures, locus.evsDevelopmentFeatures);
+        const auto& sampleInfo(locus.getSample(sampleIndex));
+        if (sampleInfo.isVariant())
+        {
+            // when reporting is turned on, we need to compute EVS features
+            // for any usable variant regardless of EVS model type:
+            const bool isUniformDepthExpected(_dopt.is_max_depth());
+            GermlineDiploidIndelLocusInfo::computeEmpiricalScoringFeatures(
+                locus, sampleIndex, _isRNA, isUniformDepthExpected, _isReportEVSFeatures,
+                _dopt.norm_depth, locus.evsFeatures, locus.evsDevelopmentFeatures);
+        }
     }
 
     if (isVariantUsableInEVSModel && isEVSIndelModel())
