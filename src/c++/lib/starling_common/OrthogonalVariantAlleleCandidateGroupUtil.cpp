@@ -25,6 +25,14 @@
 
 #include <vector>
 
+
+#ifdef DEBUG_INDEL_OVERLAP
+#include "blt_util/log.hh"
+
+#include <iostream>
+#endif
+
+
 // turn this on to use reads which support some, but not all, of an
 // overlapping allele group;
 // #define USE_GERMLINE_SUPPORTING_READ_UNION
@@ -497,6 +505,9 @@ addAllelesAtOtherPositions(
 
     if (newAltAlleleGroup.empty()) return isEveryAltOrthogonal;
 
+#ifdef DEBUG_INDEL_OVERLAP
+    log_os << "ZEBRA pos/extended-region-candidate-alleles: " << pos << " " << newAltAlleleGroup << "\n";
+#endif
 
     const unsigned newAltAlleleCount(newAltAlleleGroup.size());
     if (newAltAlleleCount > 1)
@@ -575,6 +586,10 @@ addAllelesAtOtherPositions(
                 newAltAlleleGroup.alleles.push_back(rankedNewAltAlleleIter);
             }
         }
+
+#ifdef DEBUG_INDEL_OVERLAP
+    log_os << "ZEBRA pos/ranked-extended-region-candidate-alleles: " << pos << " " << newAltAlleleGroup << "\n";
+#endif
     }
 
     // put all qualifying alts back together with variants to form an extended allele set:
@@ -584,10 +599,18 @@ addAllelesAtOtherPositions(
         extendedVariantAlleleGroup.alleles.push_back(newAltAlleleIter);
     }
 
+#ifdef DEBUG_INDEL_OVERLAP
+    log_os << "ZEBRA pos/all-region-candidate-alleles: " << pos << " " << extendedVariantAlleleGroup << "\n";
+#endif
+
     // rerank and reselect top N alleles, N=callerPloidy per sample, over all samples
     //
     selectTopOrthogonalAllelesInAllSamples(
         sampleCount, callerPloidy, extendedVariantAlleleGroup, alleleGroup, topVariantAlleleIndexPerSample);
+
+#ifdef DEBUG_INDEL_OVERLAP
+    log_os << "ZEBRA pos/ranked-all-region-candidate-alleles: " << pos << " " << alleleGroup << "\n";
+#endif
 
     const unsigned alleleSize(alleleGroup.size());
     if (alleleSize > 1)

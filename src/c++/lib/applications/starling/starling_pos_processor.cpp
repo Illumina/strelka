@@ -1365,6 +1365,10 @@ process_pos_indel_digt(const pos_t pos)
 
     if (orthogonalVariantAlleles.empty()) return;
 
+#ifdef DEBUG_INDEL_OVERLAP
+    log_os << "ZEBRA pos/pos-alleles: " << pos << " " << orthogonalVariantAlleles << "\n";
+#endif
+
     // determine ploidy for this locus in each sample
     //
     std::vector<unsigned> groupLocusPloidy(sampleCount);
@@ -1407,6 +1411,10 @@ process_pos_indel_digt(const pos_t pos)
         selectTopOrthogonalAllelesInAllSamples(
             sampleCount, callerPloidy, orthogonalVariantAlleles, topVariantAlleleGroup, topVariantAlleleIndexPerSample);
 
+#ifdef DEBUG_INDEL_OVERLAP
+    log_os << "ZEBRA pos/ranked-pos-alleles: " << pos << " " << topVariantAlleleGroup << "\n";
+#endif
+
         // At this point topVariantAlleleGroup represents the best alleles which
         // start at the current position (over all samples). Now we add conflicting
         // alleles at other positions and re-rank, re-select the top alleles again:
@@ -1416,6 +1424,10 @@ process_pos_indel_digt(const pos_t pos)
                                        get_largest_total_indel_ref_span_per_read(), _variantIndelOutputRegions,
                                        getIndelBuffer(), topVariantAlleleGroup, topVariantAlleleIndexPerSample);
         }
+
+#ifdef DEBUG_INDEL_OVERLAP
+    log_os << "ZEBRA pos/ranked-region-alleles: " << pos << " " << topVariantAlleleGroup << "\n";
+#endif
 
         // genotype and report topVariantAlleleGroup
         //

@@ -24,6 +24,9 @@
 #include "blt_util/RegionTracker.hh"
 
 
+//#define DEBUG_INDEL_OVERLAP
+
+
 /// find all readIds for which a likelihood has been computed for at least one allele in this group
 ///
 void
