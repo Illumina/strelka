@@ -61,7 +61,8 @@ BOOST_AUTO_TEST_CASE( filters_snps_before_and_after_range )
         return site;
     };
 
-    auto testOffTarget = [&]() {
+    auto testOffTarget = [&]()
+    {
         return next->the_sites.back()->filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget);
     };
 
@@ -100,7 +101,8 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
         return indel;
     };
 
-    auto testOffTarget = [&]() {
+    auto testOffTarget = [&]()
+    {
         return next->the_indels.back()->filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget);
     };
 

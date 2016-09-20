@@ -29,17 +29,17 @@
 
 namespace AG_GENOTYPE
 {
-    /// genotype enum generalized to handle-multi sample as follows:
-    enum index_t
-    {
-        HOMREF,
-        HET0, ///< ref + most likely alt
-        HOM0, ///< most likely alt
-        HET1, ///< ref + any other alt
-        HOM1, ///< any other alt
-        HET01, ///< most likely alt + any other alt
-        SIZE
-    };
+/// genotype enum generalized to handle-multi sample as follows:
+enum index_t
+{
+    HOMREF,
+    HET0, ///< ref + most likely alt
+    HOM0, ///< most likely alt
+    HET1, ///< ref + any other alt
+    HOM1, ///< any other alt
+    HET01, ///< most likely alt + any other alt
+    SIZE
+};
 }
 
 

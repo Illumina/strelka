@@ -295,7 +295,8 @@ create_phased_record(
 
             const auto& siteAlleles(siteLocus.getSiteAlleles());
 
-            auto alleleIndexToBaseIndex = [&](const uint8_t alleleIndex) {
+            auto alleleIndexToBaseIndex = [&](const uint8_t alleleIndex)
+            {
                 if (alleleIndex == 0) return siteLocus.refBaseIndex;
                 return static_cast<uint8_t>(siteAlleles[alleleIndex - 1].baseIndex);
             };

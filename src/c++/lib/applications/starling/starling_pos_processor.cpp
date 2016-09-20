@@ -385,7 +385,8 @@ updateSnvLocusWithSampleInfo(
         const bool isAltAlleles(altAlleleCount > 0);
         if (isAltAlleles)
         {
-            auto alleleIndexToBaseIndex = [&](const uint8_t alleleIndex) {
+            auto alleleIndexToBaseIndex = [&](const uint8_t alleleIndex)
+            {
                 if (alleleIndex == 0) return locus.refBaseIndex;
                 return static_cast<uint8_t>(siteAlleles[alleleIndex - 1].baseIndex);
             };
@@ -784,8 +785,8 @@ updateContinuousSnvLocusWithSampleInfo(
             if (altAlleleIndex == primaryAltAlleleIndex)
             {
                 strandBias = starling_continuous_variant_caller::strand_bias(
-                    sampleStrandBias.fwdAlt, sampleStrandBias.revAlt, sampleStrandBias.fwdOther, sampleStrandBias.revOther,
-                    opt.noise_floor);
+                                 sampleStrandBias.fwdAlt, sampleStrandBias.revAlt, sampleStrandBias.fwdOther, sampleStrandBias.revOther,
+                                 opt.noise_floor);
             }
 
             auto& sbcounts(strandBiasCounts[altAlleleIndex]);
@@ -810,7 +811,8 @@ updateContinuousSnvLocusWithSampleInfo(
             static const VcfGenotype hetGtIndex(0, 1);
             static const VcfGenotype homGtIndex(1, 1);
 
-            auto getGtIndex = [&]() -> VcfGenotype {
+            auto getGtIndex = [&]() -> VcfGenotype
+            {
                 if (isRefAllele)
                     return homrefGtIndex;
                 else if (alleleFrequency >= (1. - opt.min_het_vf))
@@ -825,10 +827,10 @@ updateContinuousSnvLocusWithSampleInfo(
         }
 
         sampleInfo.gqx = sampleInfo.genotypeQualityPolymorphic =
-            starling_continuous_variant_caller::poisson_qscore(
-                continuousSiteSampleInfo.continuousAlleleDepth,
-                continuousSiteSampleInfo.continuousTotalDepth,
-                (unsigned) opt.min_qscore, 40);
+                             starling_continuous_variant_caller::poisson_qscore(
+                                 continuousSiteSampleInfo.continuousAlleleDepth,
+                                 continuousSiteSampleInfo.continuousTotalDepth,
+                                 (unsigned) opt.min_qscore, 40);
 
     }
 }
@@ -858,7 +860,7 @@ updateContinuousSnvLocusInfo(
         auto& allele(siteAlleles[alleleIndex]);
         const auto& sbcounts(strandBiasCounts[alleleIndex]);
         allele.strandBias = starling_continuous_variant_caller::strand_bias(
-            sbcounts.fwdAlt, sbcounts.revAlt, sbcounts.fwdOther, sbcounts.revOther, opt.noise_floor);
+                                sbcounts.fwdAlt, sbcounts.revAlt, sbcounts.fwdOther, sbcounts.revOther, opt.noise_floor);
     }
 
     // get the qual score:
@@ -892,7 +894,7 @@ process_pos_snp_continuous(const pos_t pos)
     {
         const bool isRefAllele(baseIndex == refBaseIndex);
         std::unique_ptr<GermlineContinuousSiteLocusInfo> locusPtr(new GermlineContinuousSiteLocusInfo(
-            sampleCount, pos, refBaseIndex, isForcedOutput));
+                                                                      sampleCount, pos, refBaseIndex, isForcedOutput));
 
         // setup alt allele first:
         if (not isRefAllele)
@@ -1011,7 +1013,8 @@ updateIndelSampleInfo(
 
     // set site ploidy modifications:
     const auto& range(locus.range());
-    auto updateSitePloidyForAlleleIndex = [&](const uint8_t alleleIndex) {
+    auto updateSitePloidyForAlleleIndex = [&](const uint8_t alleleIndex)
+    {
         if (alleleIndex == 0) return;
 
         const IndelKey& indelKey2(locus.getIndelAlleles()[alleleIndex - 1].indelKey);
@@ -1227,7 +1230,7 @@ updateIndelLocusWithSampleInfo(
             genotypePosterior[genotypeIndex] = genotypeLogLhood[genotypeIndex] + genotypeLogPrior[priorIndex];
         }
     }
-    else if(callerPloidy == 2)
+    else if (callerPloidy == 2)
     {
         static const bool isHaploid(false);
         const double* genotypeLogPrior(genotypePriors.getNAllelePolymorphic(isHaploid));
@@ -1265,7 +1268,7 @@ updateIndelLocusWithSampleInfo(
             genotypePosterior[genotypeIndex] = genotypeLogLhood[genotypeIndex] + genotypeLogPrior[priorIndex];
         }
     }
-    else if(callerPloidy == 2)
+    else if (callerPloidy == 2)
     {
         static const bool isHaploid(false);
         const double* genotypeLogPrior(genotypePriors.getNAllele(isHaploid));
@@ -1276,7 +1279,7 @@ updateIndelLocusWithSampleInfo(
                 const unsigned genotypeIndex(VcfGenotypeUtil::getGenotypeIndex(allele0Index, allele1Index));
                 const unsigned priorIndex(getPriorIndex(topAlleleIndexInSample, allele0Index, allele1Index));
                 genotypePosterior[genotypeIndex] = genotypeLogLhood[genotypeIndex] + genotypeLogPrior[priorIndex];
-           }
+            }
         }
     }
     else
@@ -1429,7 +1432,7 @@ process_pos_indel_digt(const pos_t pos)
             sampleCount, callerPloidy, orthogonalVariantAlleles, topVariantAlleleGroup, topVariantAlleleIndexPerSample);
 
 #ifdef DEBUG_INDEL_OVERLAP
-    log_os << "ZEBRA pos/ranked-pos-alleles: " << pos << " " << topVariantAlleleGroup << "\n";
+        log_os << "ZEBRA pos/ranked-pos-alleles: " << pos << " " << topVariantAlleleGroup << "\n";
 #endif
 
         // At this point topVariantAlleleGroup represents the best alleles which
@@ -1443,7 +1446,7 @@ process_pos_indel_digt(const pos_t pos)
         }
 
 #ifdef DEBUG_INDEL_OVERLAP
-    log_os << "ZEBRA pos/ranked-region-alleles: " << pos << " " << topVariantAlleleGroup << "\n";
+        log_os << "ZEBRA pos/ranked-region-alleles: " << pos << " " << topVariantAlleleGroup << "\n";
 #endif
 
         if (isAlleleGroupReportable(pos, topVariantAlleleGroup))
@@ -1607,10 +1610,10 @@ updateContinuousIndelLocusWithSampleInfo(
     locus.setIndelSampleInfo(sampleIndex, indelSampleInfo);
 
     sampleInfo.gqx = sampleInfo.genotypeQualityPolymorphic =
-        starling_continuous_variant_caller::poisson_qscore(
-            indelSampleInfo.legacyReportInfo.n_confident_indel_reads,
-            indelSampleInfo.legacyReportInfo.total_confident_reads(),
-            (unsigned) opt.min_qscore, 40);
+                         starling_continuous_variant_caller::poisson_qscore(
+                             indelSampleInfo.legacyReportInfo.n_confident_indel_reads,
+                             indelSampleInfo.legacyReportInfo.total_confident_reads(),
+                             (unsigned) opt.min_qscore, 40);
 
     // use diploid gt codes as a convenient way to summarize the continuous variant calls:
     static const VcfGenotype hetGtIndex(0,1);
@@ -1682,7 +1685,7 @@ process_pos_indel_continuous(const pos_t pos)
             {
                 auto& sampleInfo(locusPtr->getSample(sampleIndex));
                 anyVariantAlleleQuality = std::max(anyVariantAlleleQuality,
-                                                         sampleInfo.genotypeQualityPolymorphic);
+                                                   sampleInfo.genotypeQualityPolymorphic);
             }
             locusPtr->anyVariantAlleleQuality = anyVariantAlleleQuality;
         }

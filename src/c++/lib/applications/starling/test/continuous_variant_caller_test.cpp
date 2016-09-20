@@ -178,9 +178,10 @@ BOOST_AUTO_TEST_CASE( gt_forced_output_calculated_correctly )
 
     starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, BASE_ID::C, true, locus);
     auto C = std::find_if(locus.altAlleles.begin(), locus.altAlleles.end(),
-                          [&](const GermlineSiteAlleleInfo& call) {
-                              return call.base == BASE_ID::C;
-                          });
+                          [&](const GermlineSiteAlleleInfo& call)
+    {
+        return call.base == BASE_ID::C;
+    });
     BOOST_REQUIRE(C != locus.altAlleles.end());
     // below min het vf GT should be 0/0 (STAR-66)
     BOOST_REQUIRE(0 == strcmp(locus.get_gt(*C), "0/0"));
@@ -188,24 +189,26 @@ BOOST_AUTO_TEST_CASE( gt_forced_output_calculated_correctly )
     locus.altAlleles.clear();
     starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, BASE_ID::A, true, locus);
     auto A = std::find_if(locus.altAlleles.begin(), locus.altAlleles.end(),
-                          [&](const GermlineSiteAlleleInfo& call) {
-                              return call.base == BASE_ID::A;
-                          });
+                          [&](const GermlineSiteAlleleInfo& call)
+    {
+        return call.base == BASE_ID::A;
+    });
     BOOST_REQUIRE(A != locus.altAlleles.end());
     BOOST_REQUIRE_EQUAL(93, A->_alleleDepth);
-   // BOOST_REQUIRE_EQUAL(40, A->gqx);
+    // BOOST_REQUIRE_EQUAL(40, A->gqx);
     BOOST_REQUIRE_EQUAL(100, A->_totalDepth);
     BOOST_REQUIRE(0 == strcmp(locus.get_gt(*A), "0/0"));
 
     locus.altAlleles.clear();
     starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, BASE_ID::T, true, locus);
     auto T = std::find_if(locus.altAlleles.begin(), locus.altAlleles.end(),
-                          [&](const GermlineSiteAlleleInfo& call) {
-                              return call.base == BASE_ID::T;
-                          });
+                          [&](const GermlineSiteAlleleInfo& call)
+    {
+        return call.base == BASE_ID::T;
+    });
     BOOST_REQUIRE(T != locus.altAlleles.end());
     BOOST_REQUIRE_EQUAL(5, T->_alleleDepth);
-   // BOOST_REQUIRE_EQUAL(13, T->gqx);
+    // BOOST_REQUIRE_EQUAL(13, T->gqx);
     BOOST_REQUIRE_EQUAL(100, T->_totalDepth);
     BOOST_REQUIRE(0 == strcmp(locus.get_gt(*T), "0/1"));
 
@@ -214,9 +217,10 @@ BOOST_AUTO_TEST_CASE( gt_forced_output_calculated_correctly )
     locus.altAlleles.clear();
     starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, BASE_ID::G, true, locus);
     auto G = std::find_if(locus.altAlleles.begin(), locus.altAlleles.end(),
-                          [&](const GermlineSiteAlleleInfo& call) {
-                              return call.base == BASE_ID::G;
-                          });
+                          [&](const GermlineSiteAlleleInfo& call)
+    {
+        return call.base == BASE_ID::G;
+    });
     BOOST_REQUIRE(G != locus.altAlleles.end());
     BOOST_REQUIRE_EQUAL(0, G->_alleleDepth);
     BOOST_REQUIRE_EQUAL(100, G->_totalDepth);

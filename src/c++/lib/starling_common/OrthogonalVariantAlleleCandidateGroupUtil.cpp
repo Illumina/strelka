@@ -581,7 +581,7 @@ addAllelesAtOtherPositions(
         }
 
 #ifdef DEBUG_INDEL_OVERLAP
-    log_os << "ZEBRA pos/ranked-extended-region-candidate-alleles: " << pos << " " << newAltAlleleGroup << "\n";
+        log_os << "ZEBRA pos/ranked-extended-region-candidate-alleles: " << pos << " " << newAltAlleleGroup << "\n";
 #endif
     }
 

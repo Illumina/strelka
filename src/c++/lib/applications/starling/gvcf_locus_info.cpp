@@ -376,19 +376,19 @@ computeEmpiricalScoringFeatures(
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_DP_NORM, locusUsedDepthFraction);
 
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM,
-                                          (locus.anyVariantAlleleQuality * filteredLocusDepthFactor));
+                                    (locus.anyVariantAlleleQuality * filteredLocusDepthFactor));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
-                                          (sampleInfo.gqx * filteredLocusDepthFactor));
+                                    (sampleInfo.gqx * filteredLocusDepthFactor));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
-                                          (sampleInfo.genotypeQualityPolymorphic * filteredLocusDepthFactor));
+                                    (sampleInfo.genotypeQualityPolymorphic * filteredLocusDepthFactor));
 
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
-                                          (confidentRefCount * filteredLocusDepthFactor));
+                                    (confidentRefCount * filteredLocusDepthFactor));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::AD1_NORM,
-                                          (confidentPrimaryAltCount * filteredLocusDepthFactor));
+                                    (confidentPrimaryAltCount * filteredLocusDepthFactor));
 
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT,
-                                          (locus.anyVariantAlleleQuality));
+                                    (locus.anyVariantAlleleQuality));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (sampleInfo.gqx));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (sampleInfo.genotypeQualityPolymorphic));
         }
@@ -450,21 +450,21 @@ computeEmpiricalScoringFeatures(
             // renormalized features intended to replace the corresponding production feature
             //
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM,
-                                          (locus.anyVariantAlleleQuality * filteredLocusDepthFactor));
+                                    (locus.anyVariantAlleleQuality * filteredLocusDepthFactor));
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
-                                          (sampleInfo.gqx * filteredLocusDepthFactor));
+                                    (sampleInfo.gqx * filteredLocusDepthFactor));
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
-                                          (sampleInfo.genotypeQualityPolymorphic * filteredLocusDepthFactor));
+                                    (sampleInfo.genotypeQualityPolymorphic * filteredLocusDepthFactor));
 
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
-                                          (confidentRefCount * filteredLocusDepthFactor));
+                                    (confidentRefCount * filteredLocusDepthFactor));
 
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT,
-                                          (locus.anyVariantAlleleQuality));
+                                    (locus.anyVariantAlleleQuality));
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (sampleInfo.genotypeQualityPolymorphic));
 
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD1_NORM,
-                                       (confidentPrimaryAltCount * filteredLocusDepthFactor));
+                                    (confidentPrimaryAltCount * filteredLocusDepthFactor));
         }
     }
 }
@@ -547,7 +547,7 @@ computeEmpiricalScoringFeatures(
     double ABlower, AB;
     getAlleleBiasFeatures(sampleInfo.supportCounts, ploidy.isDiploid(), allele0Index, allele1Index, ABlower, AB);
 
-        if (isRNA)
+    if (isRNA)
     {
         features.set(RNA_INDEL_SCORING_FEATURES::QUAL, (locus.anyVariantAlleleQuality * allSampleChromDepthFactor));
         features.set(RNA_INDEL_SCORING_FEATURES::F_GQX, (sampleInfo.gqx * allSampleChromDepthFactor));

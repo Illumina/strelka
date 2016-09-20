@@ -96,12 +96,12 @@ testCanSiteJoinSampleBlockShared(
     if (blockSampleInfo.isVariant() or inputSampleInfo.isVariant()) return false;
 
     if (! is_new_value_blockable(
-        inputSiteSampleInfo.n_used_calls, block_dpu, frac_tol, abs_tol))
+            inputSiteSampleInfo.n_used_calls, block_dpu, frac_tol, abs_tol))
     {
         return false;
     }
     if (! is_new_value_blockable(
-        inputSiteSampleInfo.n_unused_calls, block_dpf, frac_tol, abs_tol))
+            inputSiteSampleInfo.n_unused_calls, block_dpf, frac_tol, abs_tol))
     {
         return false;
     }

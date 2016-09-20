@@ -407,8 +407,8 @@ struct LocusInfo : public PolymorphicObject
     LocusInfo(
         const unsigned sampleCount,
         const pos_t initPos = 0)
-      : pos(initPos),
-        _sampleInfo(sampleCount)
+        : pos(initPos),
+          _sampleInfo(sampleCount)
     {}
 
     unsigned
@@ -808,9 +808,9 @@ struct GermlineSiteLocusInfo : public LocusInfo
         const pos_t initPos,
         const uint8_t initRefBaseIndex,
         const bool initIsForcedOutput = false)
-      : base_t(sampleCount, initPos),
-        refBaseIndex(initRefBaseIndex),
-        _siteSampleInfo(sampleCount)
+        : base_t(sampleCount, initPos),
+          refBaseIndex(initRefBaseIndex),
+          _siteSampleInfo(sampleCount)
     {
         isForcedOutput = initIsForcedOutput;
     }

@@ -36,7 +36,7 @@
 
 
 /// register a set of alignment files to the hts streamer and verify consistency conditions.
-std::vector<std::reference_wrapper<const bam_hdr_t>>
+std::vector<std::reference_wrapper<const bam_hdr_t> >
 registerAlignments(
     const starling_base_options& opt,
     const AlignmentFileOptions& alignFileOpt,

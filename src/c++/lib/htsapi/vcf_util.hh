@@ -121,8 +121,8 @@ get_format_string_nocopy(const char* const* word,
 void
 parse_gt(
     const char* gt,
-     std::vector<int>& gti,
-     const bool is_allow_bad_end_char=false);
+    std::vector<int>& gti,
+    const bool is_allow_bad_end_char=false);
 
 
 /// a general-purpose genotype object, capable of expressing any valid GT in the VCF standard (of ploidy 2 or less)

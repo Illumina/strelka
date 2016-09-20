@@ -543,7 +543,7 @@ write_site_record_instance(
                 os << std::fixed << std::setprecision(1) << siteSampleInfo.strandBias;
             }
 
-                // FT
+            // FT
             os << ':';
             sampleInfo.filters.write(os);
 

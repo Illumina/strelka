@@ -154,7 +154,7 @@ initializeAuxInfo(
     }
 
     if (opt.isIndelRefErrorFactor)
-    {   
+    {
         scaleIndelErrorRate(dopt.logIndelRefErrorFactor, scaledIndelToRefErrorProb);
     }
 

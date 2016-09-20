@@ -67,7 +67,7 @@ updateGenotypeLogLhoodFromAlleleLogLhood(
                                                                    isTier2Pass);
         }
     }
-    else if(callerPloidy == 2)
+    else if (callerPloidy == 2)
     {
         for (unsigned allele1Index(0); allele1Index < fullAlleleCount; ++allele1Index)
         {

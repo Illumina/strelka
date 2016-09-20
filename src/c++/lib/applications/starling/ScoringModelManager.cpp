@@ -125,8 +125,8 @@ classify_site(
 
             static const int maxEmpiricalVariantScore(60);
             sampleInfo.empiricalVariantScore = std::min(
-                error_prob_to_qphred(_snvScoringModelPtr->scoreVariant(locus.evsFeatures.getAll())),
-                maxEmpiricalVariantScore);
+                                                   error_prob_to_qphred(_snvScoringModelPtr->scoreVariant(locus.evsFeatures.getAll())),
+                                                   maxEmpiricalVariantScore);
 
             if (sampleInfo.empiricalVariantScore < snvEVSThreshold())
             {
@@ -193,8 +193,8 @@ classify_indel(
 
             static const int maxEmpiricalVariantScore(60);
             sampleInfo.empiricalVariantScore = std::min(
-                error_prob_to_qphred(_indelScoringModelPtr->scoreVariant(locus.evsFeatures.getAll())),
-                maxEmpiricalVariantScore);
+                                                   error_prob_to_qphred(_indelScoringModelPtr->scoreVariant(locus.evsFeatures.getAll())),
+                                                   maxEmpiricalVariantScore);
 
             if (sampleInfo.empiricalVariantScore < indelEVSThreshold())
             {

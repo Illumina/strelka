@@ -107,7 +107,7 @@ getTestSink(
     for (int i = 0; read1Seq[i]; i++)
     {
         const char ref(rcs.get_base(read_pos + i));
-    //    const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
+        //    const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
         std::unique_ptr<GermlineDiploidSiteLocusInfo> si(
             new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, read_pos + i, base_to_id(ref)));
         if (ref != read1Seq[i] || ref != read2Seq[i])

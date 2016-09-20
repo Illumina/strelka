@@ -470,8 +470,8 @@ process_pos_error_counts(
         {
             std::vector<unsigned> topVariantAlleleIndexPerSample;
             const bool isEveryAltIncluded = addAllelesAtOtherPositions(
-                _ref, sampleCount, callerPloidy, pos, get_largest_total_indel_ref_span_per_read(),
-                getIndelBuffer(), orthogonalVariantAlleles, topVariantAlleleIndexPerSample);
+                                                _ref, sampleCount, callerPloidy, pos, get_largest_total_indel_ref_span_per_read(),
+                                                getIndelBuffer(), orthogonalVariantAlleles, topVariantAlleleIndexPerSample);
 
             if (not isEveryAltIncluded) return;
         }
