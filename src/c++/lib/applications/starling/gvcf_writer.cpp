@@ -550,19 +550,28 @@ write_site_record_instance(
             // PL
             if (isAltAlleles)
             {
-                os << ":";
-                bool isFirst(true);
-                for (const auto pls : sampleInfo.genotypePhredLoghood)
+                const bool isUnknonwnGT(sampleInfo.max_gt().isUnknown());
+
+                os << ':';
+                if (isUnknonwnGT)
                 {
-                    if (isFirst)
+                    os << '.';
+                }
+                else
+                {
+                    bool isFirst(true);
+                    for (const auto pls : sampleInfo.genotypePhredLoghood)
                     {
-                        isFirst = false;
+                        if (isFirst)
+                        {
+                            isFirst = false;
+                        }
+                        else
+                        {
+                            os << ',';
+                        }
+                        os << std::min(pls, maxPL);
                     }
-                    else
-                    {
-                        os << ',';
-                    }
-                    os << std::min(pls, maxPL);
                 }
             }
 

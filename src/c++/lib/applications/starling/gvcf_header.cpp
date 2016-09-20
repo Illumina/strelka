@@ -178,10 +178,10 @@ finish_gvcf_header(
 
     if (opt.isUseCodonPhaser)
     {
-        os << "##INFO=<ID=PS,Number=1,Type=Integer,Description=\"Phase set identifier\">\n";
+        os << "##FORMAT=<ID=PS,Number=1,Type=Integer,Description=\"Phase set identifier\">\n";
     }
 
-    os << "##INFO=<ID=SB,Number=1,Type=Float,Description=\"Sample site strand bias\">\n";
+    os << "##FORMAT=<ID=SB,Number=1,Type=Float,Description=\"Sample site strand bias\">\n";
 
     // FILTER:
 
