@@ -1,16 +1,9 @@
 Strelka Small Variant Caller
 ============================
 
-Strelka calls small variants from mapped sequencing reads.
-The Strelka distribution includes a suite of small variant
-analysis workflows addressing the following cases:
-
-1. Somatic variant discovery from tumor and matched normal sample pairs.
-2. Germline variant discovery
-3. De-novo variant discovery in small pedigrees
-
-Strelka accepts input read mappings from BAM or CRAM files and
-reports all small variant predictions in VCF 4.1 format. Germline variant reporting
+Strelka calls small variants from mapped sequencing reads. It is optimized for rapid clinical analysis of germline variation in small cohorts and somatic
+variation in tumor/normal sample pairs. Strelka accepts input read mappings from BAM or CRAM
+files and input alleles from VCF and reports all small variant predictions in VCF 4.1 format. Germline variant reporting
 uses the [gVCF conventions][gvcfPage] to represent both variant and reference
 call confidence. See the [user guide] [UserGuide] for a full description of capabilities and limitations.
 

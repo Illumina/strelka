@@ -10,22 +10,29 @@ Strelka User Guide
   * [Known Limitations](#known-limitations)
 * [Input requirements](#input-requirements)
 * [Outputs](#outputs)
-  * [Somatic variant predictions](#somatic-variant-predictions)
+  * [Variant prediction](#variant-prediction)
+    * [Germline](#germline)
+    * [Somatic](#somatic)
+  * [Statistics](#statistics)
 * [Run configuration and Execution](#run-configuration-and-execution)
   * [Configuration](#configuration)
+    * [Germline](#germline-1)
+    * [Somatic](#somatic-1)
     * [Advanced configuration options](#advanced-configuration-options)
   * [Execution](#execution)
     * [Advanced execution options](#advanced-execution-options)
   * [Extended use cases](#extended-use-cases)
     * [Exome/Targeted](#exometargeted)
+    * [RNA-Seq](#rna-seq)
+    * [Heteroplasmic/pooled calling](#heteroplasmicpooled-calling)
     * [Somatic callability](#somatic-callability)
 * [Special Topics](#special-topics)
 [] (END automated TOC section, any edits will be overwritten on next source refresh)
 
 ## Introduction
 
-Strelka calls somatic SNVs and small indels from short sequencing reads corresponding to
-a tumor and matched normal sample. It is designed to handle impurity in the tumor sample.
+Strelka calls small variants from mapped sequencing reads. It is optimized for rapid clinical analysis of germline variation in small cohorts and somatic
+variation in tumor/normal sample pairs.
 
 ## Installation
 
@@ -33,16 +40,44 @@ Please see the [Strelka installation instructions](installation.md)
 
 ## Method Overview
 
-The strelka somatic variant calling algorithm fully is described in
-[Strelka: Accurate somatic small-variant calling from sequenced tumor-normal sample pairs.][3]
+The strelka workflow comprises of a number of common sequence analysis
+steps followed by application-specific variant modeling and empirical rescoring
+methods specific to the analysis of germline or somatic variation.
 
-In summary strelka scans through the tumor and normal sample alignments, discovering SNV
-and indel candidates. Each candidate variant is evaluated as potentially germline, somatic or
-sequencer artifact, with a quality score reflecting the final probability of being somatic.
+In all cases a preliminary step is run to estimate various genomic or regional
+statistics from the input alignments, including the sequence depth distribution
+and sequence error patterns. This is followed by a division of genome into segments
+for parallel proccesing, where within each chunk the input samples are jointly analyzed
+to indentify candidate alleles, realign all input reads, analyze reads to make model
+specific variant inferences, then compute properties of each variant used to apply filters
+or empirically recalibrate confidence that each variant represents a germline or somatic
+variant in the input sample(s). Finally, all parallel segment results are joined to produce
+Strelka's final variant output.
 
 ## Capabilities
 
-xxxx
+Strelka is capable of detecting SNVs and indels up to a predefined maximum size, currently
+defaulting to 50 or less. Indels are detected from several sources, including alignments
+inserted into read alignments by the mapper, candidate indel VCFs provided as input from an
+SV caler (such as Manta), or underspecific conditions the indel may be detected from the
+assembly of an
+
+All methods are optimized for WGS of DNA, but are routinely tested for WES and amplicon inputs.
+RNA-Seq germline analysis is still in development and not fully supported. It
+can be configured with the `--rna` flag. This will adjust filtration
+levels, heterozygous allele ratio expectations and empirical scoring
+
+Strelka includes a short-range read-backed phasing capability for germline calls to facilitate
+the correct anotation of codon changes induced by proximal SNVs.
+
+While Strelka is capable of performing joint germline analysis on a family scale (10s of samples),
+it is not optimized for population analysis and may become unstable or fail to leverage
+population variant constraints to improve calls at higher sample counts.
+
+Strelka's somatic calling capability is known to provide good results down to about 5-10% tumor purity given
+sufficent normal and tumor sequencing depth. Strelka also accounts for minor contamination of the normal
+sample with tumor cells (up to 10%) to better support liquid and late-stage solid tumor analysis.
+
 
 ### Known Limitations
 
@@ -54,7 +89,8 @@ one half the tumor depth or ~30x, whichever is higher.
 ## Input requirements
 
 The sequencing reads provided as input to Strelka are expected to be from a
-paired-end sequencing assay.
+paired-end sequencing assay. Any non-paired reads in the input are ignored
+by default during variant calling.
 
 Strelka requires input sequencing reads to be mapped by an external tool and
 provided as input in BAM or CRAM format.
@@ -69,19 +105,51 @@ The following limitations apply to the BAM/CRAM alignment records which can be u
 
 ## Outputs
 
-### Somatic variant predictions
+### Variant prediction
 
-The primary strelka outputs are a set of [VCF 4.1][1] files, found in
-`${STRELKA_ANALYSIS_PATH}/results/variants`. Currently there are at least two vcf files
-created for any run. These files are:
+Primary variant inferences are provided as a series of [VCF 4.1][1] files in
+`${STRELKA_ANALYSIS_PATH}/results/variants`.
+
+#### Germline
+
+Germline analysis is reported to the following variant files:
+
+* __variants.vcf.gz__
+    * This describes all potential variant loci across all samples. Note this file includes non-variant loci if they have a non-trivial level of variant evidence or contain
+      one or more alleles for which genotyping has been forced.
+* __genome.S${N}.vcf.gz__
+    * This is the genome VCF output for sample ${N}, which includes both variant records and compressed non-variant blocks. The sample index, ${N} is 1-indexed and corresponds to the input order of alignment files on the configuration command-line.
+
+##### Germline VCF Sample Names
+
+Sample names printed into the VCF output are extracted from each input
+alignment file from the first read group ('@RG') record found in the
+header. Any spaces found in the name will be replaced with
+underscores. If no sample name is found a default SAMPLE1, SAMPLE2,
+etc.. label will be used instead.
+
+
+#### Somatic
+
+Somatic analysis provides somatic variants in the following two files:
 
 * __somatic.snvs.vcf.gz__
-    * snvs
+    * All somatic SNVs inferred in the tumor sample.
 * __somatic.indels.vcf.gz__
-    * indels
+    * All somatic indels inferred in the tumor sample.
 
 The somatic variant caller can also optionally produce a callability track,
 see the [somatic callability](#somatic-callability) section below for details.
+
+### Statistics
+
+Additional secondary output is provided in ${STRELKA_ANALYSIS_PATH}/results/stats
+
+* __genomeCallStats.tsv__
+    * This file provides runtime information accumulated for each genome segment, excluding auxiliary steps such as BAM indexing and vcf merging.
+
+* __genomeCallStats.xml__
+    * xml data backing the genomeCallStats.tsv report
 
 ## Run configuration and Execution
 
@@ -95,11 +163,40 @@ without changing the final result of the workflow.
 
 ### Configuration
 
-The workflow is configured with the script: `${STRELKA_INSTALL_PATH}/bin/configureStrelkaWorkflow.py`
-. Running this script with no arguments will display all standard configuration
+All workflows are configured with a set of workflow scripts following the pattern: `${STRELKA_INSTALL_PATH}/bin/configure${type}Workflow.py`
+. Running any of these scripts with no arguments will display all standard configuration
 options to specify input alignment files, the reference sequence and the output run folder.
 Note that all input alignment and reference sequence files must contain the same chromosome names
-in the same order. Strelka's default settings assume a whole genome DNA-Seq analysis.
+in the same order. In all workflows, Strelka's default settings assume a whole genome DNA-Seq analysis,
+but there are configuration options for exome/targeted analysis, in addition to RNA-Seq options for the
+germline workflow.
+
+On completion, the configuration script will create the workflow run script `${STRELKA_ANALYSIS_PATH}/runWorkflow.py`. This can be used to run the workflow in various
+parallel compute modes per the instructions in the [Execution] section below.
+
+#### Germline
+
+Germline analysis is configured with the script: `${STRELKA_INSTALL_PATH}/bin/configureStarlingWorkflow.py`
+
+Single Diploid Sample Analysis -- Example Configuration:
+
+    ${STRELKA_INSTALL_PATH}/bin/configureStarlingWorkflow.py \
+    --bam NA12878.bam \
+    --referenceFasta hg19.fa \
+    --runDir ${STRELKA_ANALYSIS_PATH}
+
+Joint Diploid Sample Analysis -- Example Configuration:
+
+    ${STRELKA_INSTALL_PATH}/bin/configureStarlingWorkflow.py \
+    --bam NA12878.cram \
+    --bam NA12891.cram \
+    --bam NA12892.cram \
+    --referenceFasta hg19.fa \
+    --runDir ${STRELKA_ANALYSIS_PATH}
+
+#### Somatic
+
+Somatic analysis is configured with the script: `${STRELKA_INSTALL_PATH}/bin/configureStrelkaWorkflow.py`
 
 Example Configuration:
 
@@ -110,16 +207,20 @@ Example Configuration:
     --referenceFasta hg19.fa \
     --runDir ${STRELKA_ANALYSIS_PATH}
 
-On completion, the configuration script will create the workflow run script `${STRELKA_ANALYSIS_PATH}/runWorkflow.py`
-. This can be used to run the workflow in various parallel compute modes per the
-instructions in the [Execution] section below.
-
 #### Advanced configuration options
 
-* Advanced options are listed in: `${STRELKA_INSTALL_PATH}/bin/configureStrelkaWorkflow.py -- allHelp`
+There are two sources of advanced configuration options:
+
+* Advanced options listed in: `${STRELKA_INSTALL_PATH}/bin/configure${type}Workflow.py --allHelp`
     * These options are indented primarily for workflow development and
-      debugging, but could be useful for runtime optimization in some specialized
-      cases.
+  debugging, but could be useful for runtime optimization in some specialized
+  cases.
+* Options listed in the file: `${STRELKA_INSTALL_PATH}/bin/configure${type}Workflow.py.ini`
+    * These parameters are not expected to change frequently. Changing the file
+  listed above will re-configure all runs of the corresponding workflow from this installation.
+  To change parameters for a single run, copy the `ini` file to another location,
+  change the desired parameter values and supply the new file using the configuration
+  script's `--config FILE` option.
 
 ### Execution
 
@@ -128,7 +229,7 @@ The configuration step creates a new workflow run script in the requested run di
 `${STRELKA_ANALYSIS_PATH}/runWorkflow.py`
 
 This script is used to control parallel execution of the workflow via the [pyFlow][2]
-task engine. It can be used to parallelize structural variant analysis via one
+task engine. It can be used to parallelize small variant analysis via one
 of two modes:
 
 1. Parallelized across multiple cores on a single node.
@@ -168,13 +269,33 @@ analyses. At present this flag disables all high depth filters, which
 are designed to exclude pericentromeric reference compressions in the
 WGS case but cannot be applied correctly to a targeted analysis.
 
+For germline analysis, this mode also disables the empirical variant scoring (EVS)
+model, falling back to a set of simple threshold based filters instead. The somatic EVS model
+remains in use for exome and targeted data.
+
+#### RNA-Seq
+
+The germline workflow can be configured with the '--rna' flag. This will provide
+experimental settings for RNA-Seq variant calling. At present this flag
+disables all high depth filters which are designed to exclude
+pericentromeric reference compressions in the WGS case but cannot be
+applied correctly to RNA-Seq analysis. In addition the expected allele frequency
+of heterozgous variants is expanded to account for allele specific expresion and
+a custom RNA-Seq empirical scoring model is used.
+
+#### Heteroplasmic/pooled calling
+
+The germline workflow can be configured with the '--callContinuousVf ${CHROM}' argument. This will
+change variant calling to treat ${CHROM} as a pooled sample: variants will be called with continuous
+frequencies and scored using a simple poisson noise model.
+
 #### Somatic callability
 
 The somatic variant caller can be configured with the option `--outputCallableRegions`, which
 will extend the somatic SNV quality model calculation to be applied as a test of
 somatic SNV callability at all positions in the genome.
 
-The outcome of this callibility calculation will be summarized in a BED-formatted callability track
+The outcome of this callability calculation will be summarized in a BED-formatted callability track
 found in:`${STRELKA_ANALYSIS_PATH}/results/regions/somatic.callable.regions.bed.gz`. This BED track
 contains regions which are determined to be callable, indicating that there is sufficient evidence to
 either call a somatic SNV or assert the absence of a somatic SNV with a variant frequency of 10% or greater.
