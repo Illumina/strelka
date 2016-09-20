@@ -72,6 +72,7 @@ process(std::unique_ptr<GermlineIndelLocusInfo> indelLocusPtr)
 #ifdef DEBUG_GVCF
     log_os << "CHIRP: " << __FUNCTION__ << " INDEL START\n";
     log_os << "CHIRP: " << __FUNCTION__ << " pos/indel_range: " << indelLocusPtr->pos << "/" << _indel_range << "\n";
+    log_os << "CHIRP: " << __FUNCTION__ << " isVariant/isForcedOutput: " << isVariantLocus << "/" << isForcedOutputLocus << "\n";
 #endif
 
     if (indelLocusPtr->pos > _indel_range.end_pos())
@@ -93,7 +94,9 @@ process(std::unique_ptr<GermlineIndelLocusInfo> indelLocusPtr)
     }
     else
     {
-        if (_indel_range.is_pos_intersect(indelLocusPtr->pos))
+        // below is similar to normal test of pos intersecting with indel_range, except that
+        // indel_range's 'end' is extended by one position:
+        if ((indelLocusPtr->pos >= _indel_range.begin_pos()) && (indelLocusPtr->pos <= _indel_range.end_pos()))
         {
             _nonvariant_indel_buffer.push_back(std::move(indelLocusPtr));
         }
