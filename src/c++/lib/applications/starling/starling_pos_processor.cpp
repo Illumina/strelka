@@ -956,10 +956,6 @@ void
 starling_pos_processor::
 process_pos_indel(const pos_t pos)
 {
-    // clean up excluded regions well behind the currrent call position:
-    const pos_t minIndelBufferPos(pos - get_largest_total_indel_ref_span_per_read());
-    _variantIndelOutputRegions.removeToPos(minIndelBufferPos);
-
     if (_opt.is_bsnp_diploid())
     {
         process_pos_indel_digt(pos);
@@ -1306,18 +1302,15 @@ updateIndelLocusWithSampleInfo(
 
 
 
-#if 0
 /// determine if an allele group is reportable
 ///
-/// \return true if at least one allele is at pos, and no alleles are less than pos.
-///             this criteria is designed to make sure each allele group is reported exactly once
+/// \return true if no alleles are less than pos.
 static
 bool
 isAlleleGroupReportable(
     const pos_t pos,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup)
 {
-    bool isAnyAlleleAtPos(false);
     const unsigned alleleGroupSize(alleleGroup.size());
     for (unsigned alleleIndex(0); alleleIndex < alleleGroupSize; ++alleleIndex)
     {
@@ -1326,15 +1319,10 @@ isAlleleGroupReportable(
         {
             return false;
         }
-        else if(indelPos == pos)
-        {
-            isAnyAlleleAtPos = true;
-        }
     }
 
-    return isAnyAlleleAtPos;
+    return true;
 }
-#endif
 
 
 
@@ -1429,7 +1417,7 @@ process_pos_indel_digt(const pos_t pos)
 
     // now check to see if we can call variant alleles at this position, we may have already found this positions alleles while
     // analyzing a locus positioned downstream. If so, skip ahead to handle the forced output alleles only:
-    if (not _variantIndelOutputRegions.isIntersectRegion(pos))
+    if (_variantLocusAlreadyOutputToPos <= pos)
     {
         // track top alt allele within each sample -- this is used as a temporary crutch to transfer the previous prior
         // calculation from single to multi-sample, and should be removed when a mature prior scheme is put in place
@@ -1450,7 +1438,7 @@ process_pos_indel_digt(const pos_t pos)
         if (not topVariantAlleleGroup.empty())
         {
             addAllelesAtOtherPositions(_ref, sampleCount, callerPloidy, pos,
-                                       get_largest_total_indel_ref_span_per_read(), _variantIndelOutputRegions,
+                                       get_largest_total_indel_ref_span_per_read(),
                                        getIndelBuffer(), topVariantAlleleGroup, topVariantAlleleIndexPerSample);
         }
 
@@ -1458,54 +1446,49 @@ process_pos_indel_digt(const pos_t pos)
     log_os << "ZEBRA pos/ranked-region-alleles: " << pos << " " << topVariantAlleleGroup << "\n";
 #endif
 
-        // genotype and report topVariantAlleleGroup
-        //
-
-        // parameter inputs if/when we wrap this as a function:
-        static const bool isForcedOutput(false);
-        static OrthogonalVariantAlleleCandidateGroup emptyGroup;
-
-        // setup new indel locus:
-        std::unique_ptr<GermlineIndelLocusInfo> locusPtr(
-            new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount));
-
-        // cycle through variant alleles and add them to locus (the locus interface requires that this is done first):
-        addIndelAllelesToLocus(topVariantAlleleGroup, isForcedOutput, *locusPtr);
-
-        // add sample-dependent info:
-        double homRefLogProb(0);
-        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        if (isAlleleGroupReportable(pos, topVariantAlleleGroup))
         {
-            auto& sif(sample(sampleIndex));
-            updateIndelLocusWithSampleInfo(
-                _opt, _dopt, topVariantAlleleGroup, topVariantAlleleIndexPerSample[sampleIndex], emptyGroup,
-                sif.sample_opt,
-                callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex, sif.bc_buff, *locusPtr,
-                homRefLogProb);
-        }
-
-        // add sample-independent info:
-        locusPtr->anyVariantAlleleQuality = ln_error_prob_to_qphred(homRefLogProb);
-
-        if (isForcedOutput or locusPtr->isVariantLocus())
-        {
-            // finished! send this locus down the pipe:
-
-            // set interference range of any overlapping indel loci, which should almost always be copies of the same
-            // locus.
+            // genotype and report topVariantAlleleGroup
             //
-            // expand begin range of the locus to extend back to at least the current site
-            //
-            // expand the end range of the locus by one to represent adjcent indel interference, for instance a
-            // 1D at position 10 should block any indel at position 11
-            auto locusRegion(locusPtr->range());
-            locusRegion.set_begin_pos(std::min(locusRegion.begin_pos(), pos));
-            locusRegion.set_end_pos(locusRegion.end_pos() + 1);
-            _variantIndelOutputRegions.addRegion(locusRegion);
-            isReportedLocus = true;
 
-            _gvcfer->add_indel(std::move(locusPtr));
+            // parameter inputs if/when we wrap this as a function:
+            static const bool isForcedOutput(false);
+            static OrthogonalVariantAlleleCandidateGroup emptyGroup;
 
+            // setup new indel locus:
+            std::unique_ptr<GermlineIndelLocusInfo> locusPtr(
+                new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount));
+
+            // cycle through variant alleles and add them to locus (the locus interface requires that this is done first):
+            addIndelAllelesToLocus(topVariantAlleleGroup, isForcedOutput, *locusPtr);
+
+            // add sample-dependent info:
+            double homRefLogProb(0);
+            for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+            {
+                auto& sif(sample(sampleIndex));
+                updateIndelLocusWithSampleInfo(
+                    _opt, _dopt, topVariantAlleleGroup, topVariantAlleleIndexPerSample[sampleIndex], emptyGroup,
+                    sif.sample_opt,
+                    callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex, sif.bc_buff, *locusPtr,
+                    homRefLogProb);
+            }
+
+            // add sample-independent info:
+            locusPtr->anyVariantAlleleQuality = ln_error_prob_to_qphred(homRefLogProb);
+
+            if (isForcedOutput or locusPtr->isVariantLocus())
+            {
+                // finished! send this locus down the pipe:
+
+                // expand the end range of the locus by one to represent adjcent indel interference, for instance a
+                // 1D at position 10 should block any indel at position 11
+                _variantLocusAlreadyOutputToPos = (locusPtr->range().end_pos() + 1);
+                isReportedLocus = true;
+
+                _gvcfer->add_indel(std::move(locusPtr));
+
+            }
         }
     }
 

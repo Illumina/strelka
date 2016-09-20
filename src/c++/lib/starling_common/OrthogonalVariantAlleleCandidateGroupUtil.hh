@@ -134,7 +134,6 @@ addAllelesAtOtherPositions(
     const std::vector<unsigned>& callerPloidy,
     const pos_t pos,
     const pos_t largest_total_indel_ref_span_per_read,
-    const RegionTracker& excludedIndelRegions,
     const IndelBuffer& indelBuffer,
     OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     std::vector<unsigned>& topVariantAlleleIndexPerSample);
