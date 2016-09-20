@@ -63,6 +63,12 @@ po::options_description
 get_starling_base_option_parser(
     starling_base_options& opt)
 {
+    po::options_description region_opt("region options");
+    region_opt.add_options()
+    ("region", po::value<regions_t>(),
+        "samtools formatted region, eg. 'chr1:20-30'. May be supplied more than once but regions must not overlap. At least one entry required.")
+    ;
+
     po::options_description geno_opt("genotyping options");
     geno_opt.add_options()
     ("snp-theta", po::value(&opt.bsnp_diploid_theta)->default_value(opt.bsnp_diploid_theta),
@@ -127,7 +133,7 @@ get_starling_base_option_parser(
 
     po::options_description new_opt("Shared small-variant options");
 
-    new_opt.add(geno_opt);
+    new_opt.add(region_opt).add(geno_opt);
     new_opt.add(realign_opt).add(indel_opt).add(ploidy_opt);
     new_opt.add(input_opt).add(other_opt);
 
@@ -286,6 +292,12 @@ finalize_starling_base_options(
     const po::variables_map& vm,
     starling_base_options& opt)
 {
+    // set analysis regions:
+    if (vm.count("region"))
+    {
+        opt.regions=(boost::any_cast<regions_t>(vm["region"].value()));
+    }
+
     // max_theta for indels is actually 2./3., but because we don't
     // allow non-reference hets, we stick with the lower value
     // used for snps:

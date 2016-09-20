@@ -40,6 +40,8 @@
 enum { STRELKA_MAX_READ_SIZE = 25000 };
 
 
+typedef std::vector<std::string> regions_t;
+
 
 struct starling_base_options : public blt_options
 {
@@ -66,6 +68,9 @@ struct starling_base_options : public blt_options
     {
         return (not realignedReadFilenamePrefix.empty());
     }
+
+    // list of chromosome regions to be analyzed
+    regions_t regions;
 
     //
     double bindel_diploid_theta = 0.0001;
