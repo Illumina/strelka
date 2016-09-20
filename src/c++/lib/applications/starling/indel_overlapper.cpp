@@ -41,15 +41,14 @@ process(std::unique_ptr<GermlineSiteLocusInfo> siteLocusPtr)
     log_os << "CHIRP: " << __FUNCTION__ << " pos/indel_range: " << si->pos << "/" << _indel_range << "\n";
 #endif
 
-    // resolve any current or previous indels before queuing site:
     if (_indel_range.is_pos_intersect(si->pos))
     {
         _site_buffer.push_back(std::move(si));
         return;
     }
-
-    if (si->pos >= _indel_range.end_pos())
+    else if (si->pos >= _indel_range.end_pos())
     {
+        // resolve any current or previous indels before queuing site:
         process_overlaps();
     }
 
@@ -64,10 +63,11 @@ void
 indel_overlapper::
 process(std::unique_ptr<GermlineIndelLocusInfo> indelLocusPtr)
 {
-    const bool isNonVariantLocus(not indelLocusPtr->isVariantLocus());
+    const bool isVariantLocus(indelLocusPtr->isVariantLocus());
+    const bool isForcedOutputLocus(indelLocusPtr->isAnyForcedOutputAtLocus());
 
-    // don't handle homozygous reference calls unless genotyping is forced
-    if (isNonVariantLocus and (not indelLocusPtr->isAnyForcedOutputAtLocus())) return;
+    // only handle variant or forced calls
+    if (not (isVariantLocus or isForcedOutputLocus)) return;
 
 #ifdef DEBUG_GVCF
     log_os << "CHIRP: " << __FUNCTION__ << " INDEL START\n";
@@ -79,11 +79,7 @@ process(std::unique_ptr<GermlineIndelLocusInfo> indelLocusPtr)
         process_overlaps();
     }
 
-    if (isNonVariantLocus)
-    {
-        _nonvariant_indel_buffer.push_back(std::move(indelLocusPtr));
-    }
-    else
+    if (isVariantLocus)
     {
         if (_indel_buffer.empty())
         {
@@ -94,6 +90,17 @@ process(std::unique_ptr<GermlineIndelLocusInfo> indelLocusPtr)
             _indel_range.merge_range(indelLocusPtr->range());
         }
         _indel_buffer.push_back(std::move(indelLocusPtr));
+    }
+    else
+    {
+        if (_indel_range.is_pos_intersect(indelLocusPtr->pos))
+        {
+            _nonvariant_indel_buffer.push_back(std::move(indelLocusPtr));
+        }
+        else
+        {
+            _sink->process(std::move(indelLocusPtr));
+        }
     }
 }
 
