@@ -254,6 +254,13 @@ process_overlaps_impl()
     // process conflicting loci (these should be rare)
     if (_indel_buffer.size() > 1)
     {
+        // sort the indel buffer by pos:
+        std::stable_sort(std::begin(_indel_buffer), std::end(_indel_buffer),
+                         [](const indel_ptr_t& lhs, const indel_ptr_t& rhs) -> bool
+        {
+            return (lhs->range().begin_pos() < rhs->range().begin_pos());
+        });
+
         // mark the whole region as conflicting
         modify_conflict_indel_record();
         is_conflict = true;

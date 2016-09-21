@@ -91,8 +91,10 @@ private:
     const reference_contig_segment& _ref;
     known_pos_range2 _indel_range;
 
-    std::vector<std::unique_ptr<GermlineIndelLocusInfo>> _indel_buffer;
-    std::vector<std::unique_ptr<GermlineIndelLocusInfo>> _nonvariant_indel_buffer;
+    typedef std::unique_ptr<GermlineIndelLocusInfo> indel_ptr_t;
+
+    std::vector<indel_ptr_t> _indel_buffer;
+    std::vector<indel_ptr_t> _nonvariant_indel_buffer;
     std::vector<std::unique_ptr<GermlineDiploidSiteLocusInfo>> _site_buffer;
 };
 
