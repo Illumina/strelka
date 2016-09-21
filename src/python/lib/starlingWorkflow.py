@@ -217,7 +217,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
                 return cmd
             compressCmd += " | " + getHeaderFixCmd()
 
-        compressCmd += " | \"%s\" -c >| \"%s\"" % (self.params.bgzip9Bin, quote(compressedVariantsPath))
+        compressCmd += " | \"%s\" -c >| \"%s\"" % (self.params.bgzip9Bin, compressedVariantsPath)
 
         compressTaskLabel=preJoin(taskPrefix,"compressGenomeSegment_"+gseg.id+"_"+label)
         self.addTask(compressTaskLabel, compressCmd, dependencies=segTaskLabel, memMb=self.params.callMemMb)
