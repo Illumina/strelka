@@ -310,6 +310,7 @@ This is still an experimental feature, which will considerably increase runtime 
 
 The following items provide an in-depth focus on a special topic or procedure
 
+* [Training Procedure for Germline Empirical Score](trainingGermlineEmpiricalScore.md)
 * [Training Procedure for Somatic Empirical Score](trainingSomaticEmpiricalScore.md)
 
 
