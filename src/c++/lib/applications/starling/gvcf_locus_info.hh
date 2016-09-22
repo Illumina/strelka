@@ -734,12 +734,22 @@ get_label(const unsigned idx)
 
 struct GermlineSiteSampleInfo
 {
-    /// get the count of reads crossing the site at any teir or mapq value, including MAPQ0 reads
+    /// get the count of reads crossing the site at any mapq level
     ///
     /// TODO get a more exact definition of requrements for read to be counted here... soft-clip, overlapping frags, basecallQual = 0 , etc...
     /// TODO how does this relate to AD?
     unsigned
     getTotalReadDepth() const
+    {
+        return mapqTracker.count;
+    }
+
+    /// get the count of all reads crossing the site that passed mapping filters
+    ///
+    /// TODO get a more exact definition of requrements for read to be counted here... soft-clip, overlapping frags, basecallQual = 0 , etc...
+    /// TODO how does this relate to AD?
+    unsigned
+    getMappedReadDepth() const
     {
         return n_used_calls + n_unused_calls;
     }

@@ -280,15 +280,16 @@ computeEmpiricalScoringFeatures(
 
     // filtered locus depth/total locus depth/confidentDepth for this sample:
     const double filteredLocusDepth(siteSampleInfo.n_used_calls);
-    const double locusDepth(siteSampleInfo.getTotalReadDepth());
+    const double totalLocusDepth(siteSampleInfo.getTotalReadDepth());
 
-    // total locus depth summed over all samples (compatible with chromDepth, which is computed over all samples):
+    // total locus depth summed over all samples and MAPQ values
+    // (this makes it comparable to chromDepth, which is computed over all samples/MAPQ):
     /// TODO account for local copy number in both total locus depth and expected (chrom) depth
-    const double allSampleLocusDepth(locus.getTotalReadDepth());
+    const double allSampleTotalLocusDepth(locus.getTotalReadDepth());
 
-    const double chromDepthFactor(safeFrac(1, allSampleChromDepth));
+    const double allSampleChromDepthFactor(safeFrac(1, allSampleChromDepth));
     const double filteredLocusDepthFactor(safeFrac(1, filteredLocusDepth));
-    const double locusDepthFactor(safeFrac(1, locusDepth));
+    const double totalLocusDepthFactor(safeFrac(1, totalLocusDepth));
 
     const auto& siteAlleles(locus.getSiteAlleles());
     assert(not siteAlleles.empty());
@@ -335,7 +336,7 @@ computeEmpiricalScoringFeatures(
 
     const double mapqZeroFraction(siteSampleInfo.mapqTracker.getZeroFrac());
 
-    const double locusUsedDepthFraction(filteredLocusDepth * locusDepthFactor);
+    const double locusUsedDepthFraction(filteredLocusDepth * totalLocusDepthFactor);
 
 
     if (isRNA)
@@ -343,11 +344,11 @@ computeEmpiricalScoringFeatures(
         features.set(RNA_SNV_SCORING_FEATURES::GT,
                      getEVSGenotypeCode(ploidy.isDiploid(), allele0Index, allele1Index));
 
-        features.set(RNA_SNV_SCORING_FEATURES::QUAL, (locus.anyVariantAlleleQuality * chromDepthFactor));
-        features.set(RNA_SNV_SCORING_FEATURES::F_DP, (siteSampleInfo.n_used_calls * chromDepthFactor));
-        features.set(RNA_SNV_SCORING_FEATURES::F_DPF, (siteSampleInfo.n_unused_calls * chromDepthFactor));
-        features.set(RNA_SNV_SCORING_FEATURES::F_GQ, (sampleInfo.genotypeQualityPolymorphic * chromDepthFactor));
-        features.set(RNA_SNV_SCORING_FEATURES::F_GQX, (sampleInfo.gqx * chromDepthFactor));
+        features.set(RNA_SNV_SCORING_FEATURES::QUAL, (locus.anyVariantAlleleQuality * allSampleChromDepthFactor));
+        features.set(RNA_SNV_SCORING_FEATURES::F_DP, (siteSampleInfo.n_used_calls * allSampleChromDepthFactor));
+        features.set(RNA_SNV_SCORING_FEATURES::F_DPF, (siteSampleInfo.n_unused_calls * allSampleChromDepthFactor));
+        features.set(RNA_SNV_SCORING_FEATURES::F_GQ, (sampleInfo.genotypeQualityPolymorphic * allSampleChromDepthFactor));
+        features.set(RNA_SNV_SCORING_FEATURES::F_GQX, (sampleInfo.gqx * allSampleChromDepthFactor));
 
         features.set(RNA_SNV_SCORING_FEATURES::I_AvgBaseQ, (siteSampleInfo.avgBaseQ));
         features.set(RNA_SNV_SCORING_FEATURES::I_AvgPos, (siteSampleInfo.rawPos));
@@ -358,8 +359,8 @@ computeEmpiricalScoringFeatures(
         features.set(RNA_SNV_SCORING_FEATURES::I_SNVHPOL, (locus.hpol));
         features.set(RNA_SNV_SCORING_FEATURES::I_SNVSB, (siteSampleInfo.strandBias));
 
-        features.set(RNA_SNV_SCORING_FEATURES::AD0, (confidentRefCount * chromDepthFactor));
-        features.set(RNA_SNV_SCORING_FEATURES::AD1, (confidentPrimaryAltCount * chromDepthFactor));
+        features.set(RNA_SNV_SCORING_FEATURES::AD0, (confidentRefCount * allSampleChromDepthFactor));
+        features.set(RNA_SNV_SCORING_FEATURES::AD1, (confidentPrimaryAltCount * allSampleChromDepthFactor));
 
         /// TODO STREL-125 generalize this to multi-alts:
         features.set(RNA_SNV_SCORING_FEATURES::ADR, safeFrac(confidentRefCount, (confidentRefCount + confidentPrimaryAltCount)));
@@ -404,12 +405,12 @@ computeEmpiricalScoringFeatures(
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQRankSum, (siteSampleInfo.MQRankSum));
         features.set(GERMLINE_SNV_SCORING_FEATURES::I_ReadPosRankSum, (siteSampleInfo.ReadPosRankSum));
 
-        // how surprising is the depth relative to expect? This is the only value will be modified for exome/targeted runs
+        // how surprising is the depth relative to expect? This is the only EVS feature modified for exome/targeted runs
         /// TODO: convert this to pvalue based on Poisson distro?
         double relativeLocusDepth(1.);
         if (isUniformDepthExpected)
         {
-            relativeLocusDepth = (allSampleLocusDepth * chromDepthFactor);
+            relativeLocusDepth = (allSampleTotalLocusDepth * allSampleChromDepthFactor);
         }
 
         features.set(GERMLINE_SNV_SCORING_FEATURES::TDP_NORM, relativeLocusDepth);
@@ -444,7 +445,7 @@ computeEmpiricalScoringFeatures(
             //the average position value within a read of alt allele
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::I_RawPos, (siteSampleInfo.rawPos));
 
-            // hom unrelable are the read mappings near this locus?
+            // hom unreliable are the read mappings near this locus?
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction, mapqZeroFraction);
 
             // renormalized features intended to replace the corresponding production feature
@@ -611,7 +612,7 @@ computeEmpiricalScoringFeatures(
         features.set(GERMLINE_INDEL_SCORING_FEATURES::F_MQ,
                      (indelSampleInfo.mapqTracker.getRMS()));
 
-        // how surprising is the depth relative to expect? This is the only value will be modified for exome/targeted runs
+        // how surprising is the depth relative to expect? This is the only EVS feature modified for exome/targeted runs
         //
         /// TODO: convert this to pvalue based on Poisson distro?
         double relativeLocusDepth(1.);
