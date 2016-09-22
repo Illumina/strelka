@@ -150,7 +150,7 @@ skip_to_pos(
         // filters are being applied to the overlapping positions
         if (_last_indel) continue;
 
-        if (_gvcf_comp.is_range_compressable(known_pos_range2(si.pos,target_pos)))
+        if (_gvcf_comp.is_range_compressible(known_pos_range2(si.pos, target_pos)))
         {
             const int deltapos(target_pos - _head_pos);
             for (auto& block : _blockPerSample)
@@ -269,7 +269,7 @@ queue_site_record(
     const GermlineSiteLocusInfo& locus)
 {
     //test for basic blocking criteria
-    if (! _gvcf_comp.is_site_compressable(locus))
+    if (!_gvcf_comp.is_site_compressible(locus))
     {
         writeAllNonVariantBlockRecords();
         write_site_record(locus);

@@ -40,13 +40,13 @@ struct gvcf_compressor
     /// determine if a site should be added to current block
     /// or if the block should be written out
     bool
-    is_site_compressable(
+    is_site_compressible(
         const GermlineSiteLocusInfo& locus) const;
 
     /// determine if a range of positions could be excluded
     /// (in the absence of variant signal)
     bool
-    is_range_compressable(
+    is_range_compressible(
         const known_pos_range2 range) const;
 
 private:

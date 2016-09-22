@@ -39,7 +39,7 @@ gvcf_compressor(
 
 bool
 gvcf_compressor::
-is_site_compressable(
+is_site_compressible(
     const GermlineSiteLocusInfo& locus) const
 {
     if (locus.isForcedOutput) return false;
@@ -75,7 +75,7 @@ is_site_compressable(
 
 bool
 gvcf_compressor::
-is_range_compressable(
+is_range_compressible(
     const known_pos_range2 range) const
 {
     if (! _opt.is_block_compression) return false;
