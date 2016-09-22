@@ -48,6 +48,10 @@ if (NOT CMAKE_CXX_COMPILER_ID)
     message(FATAL_ERROR "CMAKE failed to detect c++ compiler id for CMAKE_CXX_COMPILER: '${CMAKE_CXX_COMPILER}'")
 endif ()
 
+if (NOT (CMAKE_C_COMPILER_ID AND (${CMAKE_CXX_COMPILER_ID} STREQUAL ${CMAKE_CXX_COMPILER_ID})))
+    message(FATAL_ERROR "CMAKE detected different C++ and C compiler types, which could lead to link errors in certain cases. Please set CC and CXX to the C and C++ front ends of the same compiler installation.")
+endif ()
+
 # Support for static linking
 # Note that this implies that all libraries must be found with the
 # exact file name (libXXX.a or libXXX.so)
