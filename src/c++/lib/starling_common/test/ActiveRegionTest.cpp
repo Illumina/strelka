@@ -74,6 +74,7 @@ BOOST_AUTO_TEST_CASE( test_relaxMMDF )
     ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize);
 
     const int depth = 50;
+    const int sampleId = 0;
 
     const auto snvPos = std::set<pos_t>({0, 2, 3});
 
@@ -83,6 +84,7 @@ BOOST_AUTO_TEST_CASE( test_relaxMMDF )
     // fake reading reads
     for (int alignId=0; alignId < depth; ++alignId)
     {
+        detector.setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ);
         for (pos_t pos(0); pos<refLength-1; ++pos)
         {
             // alternative allele frequency 0.5
@@ -144,6 +146,7 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
     // fake reading reads
     for (int alignId=0; alignId < depth; ++alignId)
     {
+        detector.setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ);
         for (pos_t pos(0); pos<refLength-1; ++pos)
         {
             detector.insertMatch(alignId, pos);
@@ -200,6 +203,7 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
 
     // fake reading reads
     const int depth = 50;
+    const int sampleId = 0;
     const unsigned readLength = 100;
 
 
@@ -208,6 +212,7 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
         pos_t endPosition = startPosition + readLength;
         for (int alignId=0; alignId < depth; ++alignId)
         {
+            detector.setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ);
             for (pos_t pos(startPosition); pos<endPosition; ++pos)
             {
                 // SNVs at startPosition+10 and startPosition+12

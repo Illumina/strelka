@@ -39,14 +39,26 @@ void ActiveRegion::insertHaplotypeBase(align_id_t alignId, pos_t pos, const std:
         _alignIdReachingEnd.insert(alignId);
 }
 
-// decompose haplotypes into primitive alleles
 void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites) const
+{
+    for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
+    {
+        // separately process haplotypes per sample
+        processHaplotypes(indelBuffer, polySites, sampleId);
+    }
+}
+
+void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId) const
 {
     std::map<std::string, std::vector<align_id_t>> haplotypeToAlignIdSet;
     std::vector<std::pair<std::string, align_id_t>> softClippedReads;
     for (const auto& entry : _alignIdToHaplotype)
     {
         align_id_t alignId = entry.first;
+        unsigned currentSampleId = _alignIdToAlignInfo[alignId % MaxDepth].sampleId;
+
+        if (currentSampleId != sampleId) continue;
+
         const std::string& haplotype(entry.second);
 
         // ignore if the read does not cover the start of the active region

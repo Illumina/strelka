@@ -26,7 +26,7 @@
 
 void ActiveRegionDetector::insertMatch(const align_id_t alignId, const pos_t pos)
 {
-    ++_depth[pos % MaxBufferSize];
+    addVariantCount(getSampleId(alignId), pos, 0);
     setMatch(alignId, pos);
     addAlignIdToPos(alignId, pos);
 }
@@ -41,7 +41,7 @@ void ActiveRegionDetector::insertSoftClipSegment(const align_id_t alignId, const
 void
 ActiveRegionDetector::insertMismatch(const align_id_t alignId, const pos_t pos, const char baseChar)
 {
-    addVariantCount(pos, MismatchWeight);
+    addVariantCount(getSampleId(alignId), pos, MismatchWeight);
     setMismatch(alignId, pos, baseChar);
     addAlignIdToPos(alignId, pos);
 }
@@ -53,12 +53,13 @@ ActiveRegionDetector::insertIndel(const unsigned sampleId, const IndelObservatio
 
     auto alignId = indelObservation.data.id;
     auto indelKey = indelObservation.key;
+
     if (!indelObservation.data.is_low_map_quality)
     {
         if (indelKey.isPrimitiveInsertionAllele())
         {
-            addVariantCount(pos - 1, IndelWeight);
-            addVariantCount(pos, IndelWeight);
+            addVariantCount(sampleId, pos - 1, IndelWeight);
+            addVariantCount(sampleId, pos, IndelWeight);
             setInsert(alignId, pos - 1, indelObservation.key.insert_seq());
             addAlignIdToPos(alignId, pos - 1);
         }
@@ -67,11 +68,11 @@ ActiveRegionDetector::insertIndel(const unsigned sampleId, const IndelObservatio
             unsigned length = indelObservation.key.deletionLength;
             for (unsigned i(0); i<length; ++i)
             {
-                addVariantCount(pos + i, IndelWeight);
+                addVariantCount(sampleId, pos + i, IndelWeight);
                 setDelete(alignId, pos + i);
                 addAlignIdToPos(alignId, pos + i);
             }
-            addVariantCount(pos - 1, IndelWeight);
+            addVariantCount(sampleId, pos - 1, IndelWeight);
         }
         else
         {
@@ -134,7 +135,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
             // expand active region to include repeats
             getExpandedRange(pos_range(origBeginPos, origEndPos), newActiveRegion);
 
-            _activeRegions.emplace_back(newActiveRegion, _ref, _aligner, _alignIdToAlignInfo);
+            _activeRegions.emplace_back(newActiveRegion, _ref, _sampleCount, _aligner, _alignIdToAlignInfo);
             auto& activeRegion(_activeRegions.back());
             // add haplotype bases
             for (pos_t activeRegionPos(newActiveRegion.begin_pos); activeRegionPos<newActiveRegion.end_pos; ++activeRegionPos)
@@ -196,8 +197,16 @@ void ActiveRegionDetector::getExpandedRange(const pos_range& origActiveRegion, p
     pos_t newBeginPos;
     for (newBeginPos = origStart; newBeginPos > minStart; --newBeginPos)
     {
-        if (getDepth(newBeginPos-1) < MinDepth)
-            break;
+        bool isLowDepth = false;
+        for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
+        {
+            if (getDepth(sampleId, newBeginPos-1) < MinDepth)
+            {
+                isLowDepth = true;
+                break;
+            }
+        }
+        if (isLowDepth) break;
     }
     newActiveRegion.set_begin_pos(newBeginPos);
 
@@ -225,8 +234,16 @@ void ActiveRegionDetector::getExpandedRange(const pos_range& origActiveRegion, p
     pos_t newEndPos;
     for (newEndPos = origEnd; newEndPos < maxEnd; ++newEndPos)
     {
-        if (getDepth(newEndPos) < MinDepth)
-            break;
+        bool isLowDepth = false;
+        for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
+        {
+            if (getDepth(sampleId, newBeginPos-1) < MinDepth)
+            {
+                isLowDepth = true;
+                break;
+            }
+        }
+        if (isLowDepth) break;
     }
     newActiveRegion.set_end_pos(newEndPos);
 }
@@ -298,8 +315,14 @@ bool ActiveRegionDetector::setHaplotypeBase(const align_id_t id, const pos_t pos
 bool
 ActiveRegionDetector::isCandidateVariant(const pos_t pos) const
 {
-    auto count = getVariantCount(pos);
-    return count >= _minNumVariantsPerPosition && count >= (MinAlternativeAlleleFraction*getDepth(pos));
+    for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
+    {
+        auto count = getVariantCount(sampleId, pos);
+        if (count >= _minNumVariantsPerPositionPerSample
+            && count >= (MinAlternativeAlleleFraction*getDepth(sampleId, pos)))
+            return true;
+    }
+    return false;
 }
 
 bool ActiveRegionDetector::isPolymorphicSite(const pos_t pos) const

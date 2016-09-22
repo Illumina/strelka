@@ -282,7 +282,7 @@ starling_pos_processor_base(
     , _sample(sampleCount)
     , _pileupCleaner(opt)
     , _indelBuffer(opt,dopt,ref)
-    , _active_region_detector(ref, _indelBuffer, opt.max_indel_size)
+    , _active_region_detector(ref, _indelBuffer, opt.max_indel_size, sampleCount)
 {
     assert(sampleCount != 0);
 

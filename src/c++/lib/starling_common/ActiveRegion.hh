@@ -71,12 +71,14 @@ public:
     /// \param aligner aligner for aligning haplotypes to the reference
     /// \param alignIdToAlignInfo map from align id to (sampleId, indelAlignType)
     /// \return active region object
-    ActiveRegion(pos_range& posRange, const reference_contig_segment& ref, const GlobalAligner<int>& aligner, const std::vector<AlignInfo>& alignIdToAlignInfo):
-        _posRange(posRange), _ref(ref),
+    ActiveRegion(pos_range& posRange,
+                 const reference_contig_segment& ref,
+                 const unsigned sampleCount,
+                 const GlobalAligner<int>& aligner,
+                 const std::vector<AlignInfo>& alignIdToAlignInfo):
+        _posRange(posRange), _ref(ref), _sampleCount(sampleCount),
         _aligner(aligner),
-        _alignIdToAlignInfo(alignIdToAlignInfo),
-        _alignIdToHaplotype(),
-        _alignIdReachingEnd()
+        _alignIdToAlignInfo(alignIdToAlignInfo)
     {
         _ref.get_substring(_posRange.begin_pos, _posRange.size(), _refSeq);
     }
@@ -116,6 +118,7 @@ public:
 private:
     pos_range _posRange;
     const reference_contig_segment& _ref;
+    const unsigned _sampleCount;
     std::string _refSeq;
     const GlobalAligner<int> _aligner;
     const std::vector<AlignInfo>&  _alignIdToAlignInfo;
@@ -123,6 +126,8 @@ private:
     std::map<align_id_t, std::string> _alignIdToHaplotype;
     std::set<align_id_t> _alignIdReachingEnd;
     std::set<align_id_t> _alignIdSoftClipped;
+
+    void processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId) const;
 
     void convertToPrimitiveAlleles(
         const std::string& haploptypeSeq,
