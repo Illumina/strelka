@@ -550,7 +550,7 @@ std::ostream& operator<<(std::ostream& os,const diploid_genotype& dgt)
     os << " Q(snp): " << ge.snp_qphred
        << " max_gt: " << DIGT::label(ge.max_gt)
        << " Q(max_gt): "  << ge.max_gt_qphred
-       << " max_gt|poly_site: " << po.max_gt
+       << " max_gt|poly_site: " << DIGT::label(po.max_gt)
        << " Q(max_gt|poly_site): " << po.max_gt_qphred;
 
     return os;

@@ -443,19 +443,17 @@ struct LocusInfo : public PolymorphicObject
         return _sampleInfo[sampleIndex];
     }
 
-    /// non-forced locus printing criteria
-    // (for diploid indels at least)
+    /// locus is variant if any sample has an ALT in its most likely GT
+    ///
+    /// previous designs used QUAL>0, consider using both?
     bool
     isVariantLocus() const
     {
-        return (anyVariantAlleleQuality != 0);
-#if 0
         for (const auto& sample : _sampleInfo)
         {
             if (sample.isVariant()) return true;
         }
         return false;
-#endif
     }
 
 protected:

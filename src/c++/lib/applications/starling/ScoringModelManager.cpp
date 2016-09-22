@@ -239,14 +239,18 @@ default_classify_site(
     }
     if (locus.isVariantLocus())
     {
-        if (_opt.is_max_snv_sb)
-        {
-            const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
-            if (siteSampleInfo.strandBias>_opt.max_snv_sb) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
-        }
         if (_opt.is_max_snv_hpol)
         {
             if (static_cast<int>(locus.hpol)>_opt.max_snv_hpol) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighSNVHPOL);
+        }
+        if (sampleInfo.isVariant())
+        {
+            if (_opt.is_max_snv_sb)
+            {
+                const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
+                if (siteSampleInfo.strandBias > _opt.max_snv_sb)
+                    sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
+            }
         }
     }
 }

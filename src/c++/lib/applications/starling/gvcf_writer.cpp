@@ -36,6 +36,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <blt_common/ref_context.hh>
 
 
 
@@ -416,14 +417,20 @@ write_site_record_instance(
     os << '\t';
 
     // INFO:
-    if (not locus.isVariantLocus())
+    // SNVHPOL
     {
-        os << '.';
+        unsigned hpol(locus.hpol);
+        if (not locus.isVariantLocus())
+        {
+            // we never computed this upfront for non-variants (b/c not running EVS and saves time)
+            hpol = get_snp_hpol_size(locus.pos, _ref);
+        }
+        os << "SNVHPOL=" << hpol;
     }
-    else
-    {
-        os << "SNVHPOL=" << locus.hpol;
+    os << ';';
 
+    // MQ
+    {
         // compute global MQ over all samples
         MapqTracker mapqTracker;
         {
@@ -433,7 +440,6 @@ write_site_record_instance(
                 mapqTracker.merge(siteSampleInfo.mapqTracker);
             }
         }
-        os << ';';
         os << "MQ=" << std::lround(mapqTracker.getRMS());
     }
 
@@ -461,12 +467,7 @@ write_site_record_instance(
         os << '\t';
 
         //FORMAT
-        os << "GT";
-        if (locus.isVariantLocus())
-        {
-            os << ":GQ";
-        }
-        os << ":GQX:DP:DPF";
+        os << "GT:GQ:GQX:DP:DPF";
         if (isAltAlleles)
         {
             os << ":AD:ADF:ADR";
@@ -511,18 +512,14 @@ write_site_record_instance(
             os << '\t';
 
             os << sampleInfo.max_gt() << ':';
-            if (locus.isVariantLocus())
-            {
-                os << sampleInfo.genotypeQualityPolymorphic << ':';
-            }
-
             if (locus.is_gqx(sampleIndex))
             {
+                os << sampleInfo.genotypeQualityPolymorphic << ':';
                 os << ((sampleInfo.empiricalVariantScore >= 0) ? sampleInfo.empiricalVariantScore : sampleInfo.gqx);
             }
             else
             {
-                os << '.';
+                os << ".:.";
             }
             os << ':';
             //print DP:DPF

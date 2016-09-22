@@ -647,7 +647,7 @@ process_pos_snp_digt(
     // add sample-independent info:
     locusPtr->anyVariantAlleleQuality = ln_error_prob_to_qphred(homRefLogProb);
 
-    if (isForcedOutput or locusPtr->isVariantLocus())
+    if (locusPtr->isVariantLocus())
     {
         // hpol filter
         locusPtr->hpol = get_snp_hpol_size(pos,_ref);
