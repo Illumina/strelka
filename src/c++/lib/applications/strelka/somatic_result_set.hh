@@ -28,6 +28,8 @@
 #include "boost/utility.hpp"
 #include "SiteNoise.hh"
 
+#include <iosfwd>
+
 struct result_set
 {
     unsigned ntype;
@@ -35,6 +37,9 @@ struct result_set
     int qphred = 0;
     int from_ntype_qphred = 0;
 };
+
+std::ostream&
+operator<<(std::ostream& os, const result_set& rs);
 
 struct snv_result_set : result_set
 {
@@ -47,16 +52,6 @@ struct snv_result_set : result_set
 struct indel_result_set : result_set
 {
     bool is_overlap;
-};
-
-struct somatic_result_set
-{
-    typedef bool tier_t;
-
-    tier_t tier = 0;
-    tier_t from_ntype_tier = 0;
-    result_set rs = result_set();
-    bool is_forced_output = false;
 };
 
 struct somatic_snv_genotype_grid
@@ -106,4 +101,3 @@ struct somatic_indel_call
     indel_result_set rs;
     bool is_forced_output = false;
 };
-

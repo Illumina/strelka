@@ -297,7 +297,6 @@ process_pos_indel_somatic(const pos_t pos)
             // STARKA-248 filter invalid indel. TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
             if (siInfo.vcf_indel_seq == siInfo.vcf_ref_seq) continue;
 
-            somatic_indel_call sindel;
             static const bool is_use_alt_indel(true);
             _dopt.sicaller_grid().get_somatic_indel(_opt,_dopt,
                                                     normal_sif.sample_opt,
@@ -306,8 +305,9 @@ process_pos_indel_somatic(const pos_t pos)
                                                     is_use_alt_indel,
                                                     siInfo.sindel);
 
-            if (sindel.is_output())
+            if (siInfo.sindel.is_output())
             {
+                std::cerr << "WALLY: is_output!\n";
                 siInfo.indelReportInfo = indelData.getReportInfo();
 
                 // get sample specific info:
