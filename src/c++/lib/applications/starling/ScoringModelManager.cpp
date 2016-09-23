@@ -128,6 +128,13 @@ classify_site(
                                                    error_prob_to_qphred(_snvScoringModelPtr->scoreVariant(locus.evsFeatures.getAll())),
                                                    maxEmpiricalVariantScore);
 
+            // monkey-hack:
+            /// TODO TEMPORARY!!!!
+            if ((not locus.isQual()) or locus.anyVariantAlleleQuality==0)
+            {
+                sampleInfo.empiricalVariantScore = 0;
+            }
+
             if (sampleInfo.empiricalVariantScore < snvEVSThreshold())
             {
                 sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
@@ -196,10 +203,18 @@ classify_indel(
                                                    error_prob_to_qphred(_indelScoringModelPtr->scoreVariant(locus.evsFeatures.getAll())),
                                                    maxEmpiricalVariantScore);
 
+            // monkey-hack:
+            /// TODO TEMPORARY!!!!
+            if (locus.anyVariantAlleleQuality==0)
+            {
+                sampleInfo.empiricalVariantScore=0;
+            }
+
             if (sampleInfo.empiricalVariantScore < indelEVSThreshold())
             {
                 sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
             }
+
         }
     }
     else
