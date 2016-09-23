@@ -71,7 +71,8 @@ BOOST_AUTO_TEST_CASE( test_relaxMMDF )
     TestIndelBuffer testBuffer(ref);
 
     const unsigned maxIndelSize = 50;
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize);
+    const unsigned sampleCount = 1;
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
 
     const int depth = 50;
     const int sampleId = 0;
@@ -114,12 +115,12 @@ BOOST_AUTO_TEST_CASE( test_relaxMMDF )
         if (snvPos.find(pos) != snvPos.end())
         {
             // SNV
-            BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(pos), true);
+            BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, pos), true);
         }
         else
         {
             // No SNV
-            BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(pos), false);
+            BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, pos), false);
         }
     }
 }
@@ -133,7 +134,8 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
     TestIndelBuffer testBuffer(ref);
 
     const unsigned maxIndelSize = 50;
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize);
+    const unsigned sampleCount = 1;
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
 
     const int sampleId = 0;
     const int depth = 50;
@@ -199,7 +201,8 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
     TestIndelBuffer testBuffer(ref);
 
     const unsigned maxIndelSize = 50;
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize);
+    const unsigned sampleCount = 1;
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
 
     // fake reading reads
     const int depth = 50;
@@ -235,8 +238,75 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
         }
 
         // check if polySites are correctly set
-        BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(startPosition+snvOffsets[0]), true);
-        BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(startPosition+snvOffsets[1]), true);
+        BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, startPosition+snvOffsets[0]), true);
+        BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, startPosition+snvOffsets[1]), true);
+    }
+}
+
+BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
+{
+    reference_contig_segment ref;
+    ref.seq() = "TCTGT";
+    TestIndelBuffer testBuffer(ref);
+
+    const unsigned maxIndelSize = 50;
+    const int sampleCount = 3;
+    const int depth = 50;
+
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
+
+    const auto snvPos = std::set<pos_t>({0, 2, 3});
+
+
+    pos_t refLength = (pos_t)ref.seq().length();
+
+    // fake reading reads
+    for (int alignId=0; alignId < depth*sampleCount; ++alignId)
+    {
+        unsigned sampleId = alignId % sampleCount;
+        detector.setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ);
+        for (pos_t pos(0); pos<refLength-1; ++pos)
+        {
+            // only sample 1 has mismatches
+            // alternative allele frequency 0.5
+            if (sampleId != 1 or ((alignId/sampleCount) % 2)
+                or (snvPos.find(pos) == snvPos.end()))
+            {
+                // No SNV
+                detector.insertMatch(alignId, pos);
+            }
+            else
+            {
+                // SNV position
+                detector.insertMismatch(alignId, pos, 'A');
+            }
+        }
+    }
+
+    for (pos_t pos(0); pos<refLength-1; ++pos)
+    {
+        detector.updateEndPosition(pos, false);
+    }
+    detector.updateEndPosition(refLength-1, true);
+
+
+    // check if polySites are correctly set
+
+    for (unsigned sampleId(0); sampleId<sampleCount; ++sampleId)
+    {
+        for (pos_t pos(0); pos<refLength-1; ++pos)
+        {
+            if ((sampleId == 1) and (snvPos.find(pos) != snvPos.end()))
+            {
+                // SNV
+                BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, pos), true);
+            }
+            else
+            {
+                // No SNV
+                BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, pos), false);
+            }
+        }
     }
 }
 

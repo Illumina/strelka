@@ -131,6 +131,7 @@ void
 create_mismatch_filter_map(const blt_options& client_opt,
                            const alignment& al,
                            const bam_seq_base& ref_seq,
+                           const unsigned sampleIndex,
                            const bam_seq_base& read_seq,
                            const unsigned read_begin,
                            const unsigned read_end,
@@ -183,7 +184,7 @@ create_mismatch_filter_map(const blt_options& client_opt,
                 if (read_seq.get_char(read_pos) != ref_seq.get_char(ref_pos))
                 {
                     rmi[read_pos].is_mismatch=true;
-                    if (!activeRegionDetector.isPolymorphicSite(ref_pos))
+                    if (!activeRegionDetector.isPolymorphicSite(sampleIndex, ref_pos))
                         dd.inc(read_pos,1);
                 }
             }

@@ -34,7 +34,7 @@
 #include <map>
 #include <set>
 
-typedef RangeMap<pos_t,unsigned char> RangeSet;
+typedef std::vector<RangeMap<pos_t,unsigned char>> RangeSet;
 
 /// AlignInfo object to store sample id and indel align type
 struct AlignInfo
@@ -130,6 +130,7 @@ private:
     void processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId) const;
 
     void convertToPrimitiveAlleles(
+        const unsigned sampleId,
         const std::string& haploptypeSeq,
         const std::vector<align_id_t>& alignIdList,
         const unsigned totalReadCount,

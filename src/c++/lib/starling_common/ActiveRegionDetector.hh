@@ -82,7 +82,7 @@ public:
         const reference_contig_segment& ref,
         IndelBuffer& indelBuffer,
         unsigned maxDeletionSize,
-        unsigned sampleCount = 1,
+        unsigned sampleCount,
         unsigned maxDetectionWindowSize = 30,
         unsigned minNumVariantsPerPosition = 9,
         unsigned minNumVariantsPerRegion = 2) :
@@ -99,6 +99,7 @@ public:
         _alignIdToAlignInfo(MaxDepth),
         _variantInfo(MaxDepth, std::vector<VariantType>(MaxBufferSize, VariantType())),
         _insertSeqBuffer(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string())),
+        _polySites(sampleCount),
         _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
     {
         _numVariants = 0;
@@ -154,9 +155,10 @@ public:
     }
 
     /// Checks if mismatches occur consistently at position pos
+    /// \param sampleId sample id
     /// \param pos reference position
     /// \return true if pos is a polymorphic site; false otherwise.
-    bool isPolymorphicSite(const pos_t pos) const;
+    bool isPolymorphicSite(const unsigned sampleId, const pos_t pos) const;
 
 private:
     enum VariantType

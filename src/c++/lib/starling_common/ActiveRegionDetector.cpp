@@ -92,7 +92,8 @@ ActiveRegionDetector::updateStartPosition(const pos_t pos)
         _activeRegions.pop_front();
     }
 
-    _polySites.eraseTo(pos);
+    for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
+        _polySites[sampleId].eraseTo(pos);
 }
 
 void
@@ -325,7 +326,7 @@ ActiveRegionDetector::isCandidateVariant(const pos_t pos) const
     return false;
 }
 
-bool ActiveRegionDetector::isPolymorphicSite(const pos_t pos) const
+bool ActiveRegionDetector::isPolymorphicSite(const unsigned sampleId, const pos_t pos) const
 {
-    return _polySites.isKeyPresent(pos);
+    return _polySites[sampleId].isKeyPresent(pos);
 }
