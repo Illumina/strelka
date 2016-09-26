@@ -82,6 +82,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.append("-filter-unanchored")
     segCmd.extend(["-min-mapping-quality",str(self.params.minTier1Mapq)])
     segCmd.extend(["-min-qscore","0"])
+    segCmd.extend(["--region", gseg.chromLabel + ":" + str(gseg.beginPos) + "-" + str(gseg.endPos)])
     segCmd.extend(["-report-range-begin", str(gseg.beginPos) ])
     segCmd.extend(["-report-range-end", str(gseg.endPos) ])
     segCmd.extend(["-samtools-reference", self.params.referenceFasta ])

@@ -298,6 +298,21 @@ finalize_starling_base_options(
         opt.regions=(boost::any_cast<regions_t>(vm["region"].value()));
     }
 
+    // validate regions:
+    {
+        if (opt.regions.empty())
+        {
+            pinfo.usage("Need at least one samtools formatted region");
+        }
+        for (const auto& region : opt.regions)
+        {
+            if (region.empty())
+            {
+                pinfo.usage("Empty region argument");
+            }
+        }
+    }
+
     // max_theta for indels is actually 2./3., but because we don't
     // allow non-reference hets, we stick with the lower value
     // used for snps:
