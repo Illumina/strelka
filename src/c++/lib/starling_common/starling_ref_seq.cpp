@@ -23,51 +23,9 @@
 /// \author Chris Saunders
 ///
 
-#include "blt_util/log.hh"
-#include "blt_util/seq_util.hh"
 #include "starling_common/starling_ref_seq.hh"
 
-extern "C" {
-#include "htslib/faidx.h"
-}
-
-#include <cassert>
-#include <cstdlib>
-
-#include <iostream>
-#include <sstream>
-
-
-static
-void
-get_samtools_ref_seq(const char* ref_file,
-                     const char* chr_name,
-                     std::string& ref_seq,
-                     const pos_range& pr)
-{
-    faidx_t* fai(fai_load(ref_file));
-    std::ostringstream fa_region_oss;
-    fa_region_oss << chr_name;
-    if (pr.is_end_pos)
-    {
-        const pos_t begin(1+(pr.is_begin_pos ? pr.begin_pos : 0));
-        fa_region_oss << ':' << begin << '-' << pr.end_pos;
-    }
-    else if (pr.is_begin_pos)
-    {
-        fa_region_oss << ':' << pr.begin_pos+1;
-    }
-    int len; // throwaway...
-    char* ref_tmp(fai_fetch(fai,fa_region_oss.str().c_str(), &len));
-    if (NULL == ref_tmp)
-    {
-        log_os << "ERROR: Can't find sequence region '" << fa_region_oss.str() << "' in reference file: '" << ref_file << "'\n";
-        exit(EXIT_FAILURE);
-    }
-    ref_seq.assign(ref_tmp);
-    free(ref_tmp);
-    fai_destroy(fai);
-}
+#include "htsapi/samtools_fasta_util.hh"
 
 
 
@@ -100,6 +58,7 @@ get_starling_ref_seq(const starling_base_options& opt,
     ref.set_offset(ref_range.begin_pos);
 
     assert(! opt.bam_seq_name.empty());
-    get_samtools_ref_seq(opt.referenceFilename.c_str(), opt.bam_seq_name.c_str(), ref.seq(), ref_range);
-    standardize_ref_seq(opt.referenceFilename.c_str(), opt.bam_seq_name.c_str(), ref.seq(), ref_range.begin_pos);
+
+    // note: the ref function below takes closed-closed endpoints, so we subtract one from endPos
+    get_standardized_region_seq(opt.referenceFilename, opt.bam_seq_name, ref_range.begin_pos, ref_range.end_pos-1, ref.seq());
 }

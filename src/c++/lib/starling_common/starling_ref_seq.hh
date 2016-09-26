@@ -32,4 +32,3 @@
 void
 get_starling_ref_seq(const starling_base_options& opt,
                      reference_contig_segment& ref);
-
