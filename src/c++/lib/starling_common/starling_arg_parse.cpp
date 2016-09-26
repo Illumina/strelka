@@ -126,12 +126,6 @@ legacy_starling_arg_parse(
             bool is_bam_seq_name(! opt.bam_seq_name.empty());
             set_filename_arg(i,ad,is_bam_seq_name,opt.bam_seq_name);
         }
-        else if (ad.argstr[i]=="-samtools-reference")
-        {
-            set_filename_arg(i,ad,opt.is_samtools_ref_set,opt.samtools_ref_seq_file);
-//        } else if (ad.argstr[i]=="-indel-error-rate") {
-//            set_xrange_arg(i,ad,opt.is_simple_indel_error,opt.simple_indel_error,true);
-        }
         else if (ad.argstr[i]=="-indel-nonsite-match-prob")
         {
             set_xrange_arg(i,ad,is_inmp,opt.indel_nonsite_match_prob,true);

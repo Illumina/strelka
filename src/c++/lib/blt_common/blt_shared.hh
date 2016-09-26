@@ -61,12 +61,6 @@ struct blt_options
         assert(! (is_compute_germline_scoring_metrics() && is_compute_somatic_scoring_metrics));
     }
 
-    bool
-    is_ref_set() const
-    {
-        return (is_samtools_ref_set);
-    }
-
     virtual
     bool
     is_compute_germline_scoring_metrics() const
@@ -109,9 +103,6 @@ struct blt_options
     bool is_print_evidence = false;
     bool is_print_all_site_evidence = false;
     pos_range user_report_range;   // requested report range
-
-    bool is_samtools_ref_set = false;
-    std::string samtools_ref_seq_file;
 
     bool is_include_singleton = false;
     bool is_include_anomalous = false;

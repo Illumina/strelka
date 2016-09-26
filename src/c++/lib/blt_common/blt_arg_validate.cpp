@@ -110,11 +110,7 @@ validate_blt_opt(
 
     if (opt.is_report_range_ref)
     {
-        if       (! opt.is_ref_set())
-        {
-            pinfo.usage("a reference must be specified when using -report-range-reference flag");
-        }
-        else if (rr.is_begin_pos)
+        if (rr.is_begin_pos)
         {
             pinfo.usage("-report-range-begin cannot be combined with -report-range-reference flag");
         }

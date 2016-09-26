@@ -22,11 +22,138 @@
 ///
 
 #include "starling_common/starling_streams_base.hh"
+#include "blt_util/digt.hh"
+#include "htsapi/vcf_util.hh"
 
 #include <cassert>
+#include <ctime>
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
+
+
+
+static
+void
+open_ofstream(const prog_info& pinfo,
+              const std::string& filename,
+              const char* label,
+              std::ofstream& fos)
+{
+    fos.open(filename.c_str());
+    if (!fos)
+    {
+        std::ostringstream oss;
+        oss << label << " file can't be opened: " << filename;
+        pinfo.usage(oss.str().c_str());
+    }
+}
+
+
+
+static
+void
+write_audit(const blt_options& opt,
+            const prog_info& pinfo,
+            const char* const cmdline,
+            std::ostream& os,
+            const char* const prefix = 0)
+{
+    if (opt.is_write_variable_metadata)
+    {
+        if (prefix) os << prefix;
+        os << "CMDLINE " << cmdline << "\n";
+    }
+    if (prefix) os << prefix;
+    os << "PROGRAM_VERSION " << pinfo.version() << "\n";
+    if (opt.is_write_variable_metadata)
+    {
+        if (prefix) os << prefix;
+        const time_t result(time(0));
+        os << "START_TIME " << asctime(localtime(&result));
+    }
+}
+
+
+
+static
+void
+write_vcf_audit(
+    const starling_base_options& opt,
+    const prog_info& pinfo,
+    const char* const cmdline,
+    const bam_hdr_t& header,
+    std::ostream& os)
+{
+    const time_t t(time(NULL));
+
+    os << "##fileformat=VCFv4.1\n";
+    os << "##fileDate=" << vcf_fileDate << "\n";
+    os << "##source=" << pinfo.name() << "\n";
+    os << "##source_version=" << pinfo.version() << "\n";
+    os << "##startTime=" << asctime(localtime(&t));
+    os << "##cmdline=" << cmdline << "\n";
+    if (not opt.referenceFilename.empty())
+    {
+        os << "##reference=file://" << opt.referenceFilename << "\n";
+    }
+    for (int32_t i(0); i<header.n_targets; ++i)
+    {
+        os << "##contig=<ID=" << header.target_name[i]
+           << ",length=" << header.target_len[i] << ">\n";
+    }
+}
+
+
+
+static
+void
+write_file_audit(const blt_options& opt,
+                 const prog_info& pinfo,
+                 const char* const cmdline,
+                 std::ostream& os)
+{
+    write_audit(opt,pinfo,cmdline,os,"#$ ");
+    os << "#\n";
+}
+
+
+
+void
+starling_streams_base::
+write_file_audit(const blt_options& opt,
+                 const prog_info& pinfo,
+                 const char* const cmdline,
+                 std::ostream& os)
+{
+    ::write_file_audit(opt,pinfo,cmdline,os);
+}
+
+
+
+void
+starling_streams_base::
+write_vcf_audit(const starling_base_options& opt,
+                const prog_info& pinfo,
+                const char* const cmdline,
+                const bam_hdr_t& header,
+                std::ostream& os)
+{
+    ::write_vcf_audit(opt,pinfo,cmdline,header,os);
+}
+
+
+
+void
+starling_streams_base::
+open_ofstream(const prog_info& pinfo,
+              const std::string& filename,
+              const char* label,
+              std::ofstream& fos)
+{
+    ::open_ofstream(pinfo,filename,label,fos);
+}
 
 
 
@@ -75,11 +202,22 @@ starling_streams_base(
     const starling_base_options& opt,
     const prog_info& pinfo,
     const unsigned sampleCount)
-    : base_t(opt,pinfo),
-      _realign_bam_ptr(sampleCount),
+    : _realign_bam_ptr(sampleCount),
       _sampleCount(sampleCount)
 {
     assert(_sampleCount > 0);
+
+    const char* const cmdline(opt.cmdline.c_str());
+
+    if (! opt.report_filename.empty())
+    {
+        std::ofstream* fosptr(new std::ofstream);
+        _report_osptr.reset(fosptr);
+        std::ofstream& fos(*fosptr);
+        open_ofstream(pinfo,opt.report_filename,"report",fos);
+
+        write_audit(opt,pinfo,cmdline,fos);
+    }
 
     if (opt.is_write_candidate_indels())
     {

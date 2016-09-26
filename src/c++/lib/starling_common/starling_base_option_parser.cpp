@@ -63,10 +63,12 @@ po::options_description
 get_starling_base_option_parser(
     starling_base_options& opt)
 {
-    po::options_description region_opt("region options");
-    region_opt.add_options()
+    po::options_description core_opt("core options");
+    core_opt.add_options()
+    ("ref", po::value(&opt.referenceFilename),
+     "fasta reference sequence, samtools index file must be present (required)")
     ("region", po::value<regions_t>(),
-        "samtools formatted region, eg. 'chr1:20-30'. May be supplied more than once but regions must not overlap. At least one entry required.")
+    "samtools formatted region, eg. 'chr1:20-30'. May be supplied more than once but regions must not overlap. At least one entry required.")
     ;
 
     po::options_description geno_opt("genotyping options");
@@ -133,7 +135,7 @@ get_starling_base_option_parser(
 
     po::options_description new_opt("Shared small-variant options");
 
-    new_opt.add(region_opt).add(geno_opt);
+    new_opt.add(core_opt).add(geno_opt);
     new_opt.add(realign_opt).add(indel_opt).add(ploidy_opt);
     new_opt.add(input_opt).add(other_opt);
 
@@ -149,8 +151,6 @@ write_starling_legacy_options(
 {
     os <<
        " -bam-seq-name name - Analyze reads aligned to chromosome 'name' in the reads file (required)\n"
-       " -samtools-reference file\n"
-       "                    - Get the reference sequence from the multi-sequence fasta 'file' following samtools reference conventions (single-seq or samtools reference required)\n"
        "\n"
        " -bsnp-diploid-het-bias x\n"
        "                    - Set bias term for the heterozygous state in the bsnp model, such that\n"
@@ -242,26 +242,6 @@ finalize_legacy_starling_options(
         pinfo.usage("must specify -bam-seq-name");
     }
 
-    if (! opt.is_ref_set())
-    {
-        pinfo.usage("must specify samtools-reference");
-    }
-
-    // canonicalize the reference sequence path:
-    if (opt.is_samtools_ref_set)
-    {
-        if (! compat_realpath(opt.samtools_ref_seq_file))
-        {
-            std::ostringstream oss;
-            oss << "can't resolve samtools reference path: " << opt.samtools_ref_seq_file << "\n";
-            pinfo.usage(oss.str().c_str());
-        }
-    }
-    else
-    {
-        assert(false && "must specify samtools reference");
-    }
-
     if (! opt.is_user_genome_size)
     {
         // this requirement is not what we want, but it's the only way to make things reliable for now:
@@ -292,6 +272,21 @@ finalize_starling_base_options(
     const po::variables_map& vm,
     starling_base_options& opt)
 {
+    // check for and sanitize the reference fasta sequence
+    if (opt.referenceFilename.empty())
+    {
+        pinfo.usage("Must specify a fasta reference file");
+    }
+
+    // canonicalize the reference sequence path:
+    /// TODO: replace this with the same thing from boost?
+    if (! compat_realpath(opt.referenceFilename))
+    {
+        std::ostringstream oss;
+        oss << "can't resolve reference path: " << opt.referenceFilename << "\n";
+        pinfo.usage(oss.str().c_str());
+    }
+
     // set analysis regions:
     if (vm.count("region"))
     {

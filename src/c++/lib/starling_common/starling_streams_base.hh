@@ -24,18 +24,20 @@
 
 #pragma once
 
-#include "blt_common/blt_streams.hh"
+#include "blt_util/prog_info.hh"
+#include "htsapi/bam_util.hh"
 #include "htsapi/bam_dumper.hh"
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_types.hh"
 
+#include <iosfwd>
+#include <memory>
+#include <string>
 #include <vector>
 
 
-struct starling_streams_base : public blt_streams
+struct starling_streams_base
 {
-    typedef blt_streams base_t;
-
     starling_streams_base(
         const starling_base_options& opt,
         const prog_info& pinfo,
@@ -45,6 +47,12 @@ struct starling_streams_base : public blt_streams
     realign_bam_ptr(const unsigned sampleIndex) const
     {
         return _realign_bam_ptr[sampleIndex].get();
+    }
+
+    std::ostream*
+    report_osptr() const
+    {
+        return _report_osptr.get();
     }
 
     std::ostream*
@@ -72,8 +80,36 @@ protected:
         const prog_info& pinfo,
         const std::string& filename);
 
+    static
+    void
+    open_ofstream(const prog_info& pinfo,
+                  const std::string& filename,
+                  const char* label,
+                  std::ofstream& fos);
+
+    /// write first few meta-data lines for a legacy blt/starling
+    /// variant output file:
+    ///
+    static
+    void
+    write_file_audit(const blt_options& opt,
+                     const prog_info& pinfo,
+                     const char* const cmdline,
+                     std::ostream& os);
+
+    /// write the first few meta-data lines for a vcf file:
+    ///
+    static
+    void
+    write_vcf_audit(const starling_base_options& opt,
+                    const prog_info& pinfo,
+                    const char* const cmdline,
+                    const bam_hdr_t& header,
+                    std::ostream& os);
+
     std::vector<std::unique_ptr<bam_dumper>> _realign_bam_ptr;
 private:
+    std::unique_ptr<std::ostream> _report_osptr;
     std::unique_ptr<std::ostream> _candidate_indel_osptr;
     unsigned _sampleCount;
 };

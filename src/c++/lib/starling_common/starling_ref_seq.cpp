@@ -75,7 +75,7 @@ void
 get_starling_ref_seq(const starling_base_options& opt,
                      reference_contig_segment& ref)
 {
-    assert(opt.is_ref_set());
+    assert(not opt.referenceFilename.empty());
 
     // make a temp copy of report_range here to determine how much we
     // pull from ref_seq:
@@ -99,19 +99,7 @@ get_starling_ref_seq(const starling_base_options& opt,
 
     ref.set_offset(ref_range.begin_pos);
 
-    const char* filename(NULL);
-    const char* chrom_name(NULL);
-
-    if (opt.is_samtools_ref_set)
-    {
-        assert(! opt.bam_seq_name.empty());
-        filename=opt.samtools_ref_seq_file.c_str();
-        chrom_name=opt.bam_seq_name.c_str();
-        get_samtools_ref_seq(filename,chrom_name,ref.seq(),ref_range);
-    }
-    else
-    {
-        assert(0);
-    }
-    standardize_ref_seq(filename,chrom_name,ref.seq(),ref_range.begin_pos);
+    assert(! opt.bam_seq_name.empty());
+    get_samtools_ref_seq(opt.referenceFilename.c_str(), opt.bam_seq_name.c_str(), ref.seq(), ref_range);
+    standardize_ref_seq(opt.referenceFilename.c_str(), opt.bam_seq_name.c_str(), ref.seq(), ref_range.begin_pos);
 }

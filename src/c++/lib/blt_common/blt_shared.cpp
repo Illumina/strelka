@@ -65,8 +65,6 @@ set_report_range(const blt_options& opt,
         report_range.begin_pos -= 1;
     }
 
-    if (! opt.is_ref_set()) return;
-
     if (report_range.is_begin_pos)
     {
         if (report_range.begin_pos>=ref_end)
@@ -97,16 +95,13 @@ set_report_range(const blt_options& opt,
 static
 pos_range
 get_report_range_limit(const pos_range& report_range,
-                       const bool is_ref_set,
                        const pos_t ref_end)
 {
     pos_range rrl;
 
     rrl.set_begin_pos((report_range.is_begin_pos ? report_range.begin_pos : 0));
-    rrl.is_end_pos = (report_range.is_end_pos || is_ref_set);
-    rrl.end_pos = (report_range.is_end_pos ?
-                   report_range.end_pos :
-                   (is_ref_set ? ref_end : 0));
+    rrl.is_end_pos = true;
+    rrl.end_pos = ref_end;
     return rrl;
 }
 
@@ -121,7 +116,6 @@ blt_deriv_options(
     set_report_range(opt,ref_end,report_range);
 
     report_range_limit=get_report_range_limit(report_range,
-                                              opt.is_ref_set(),
                                               ref_end);
 }
 

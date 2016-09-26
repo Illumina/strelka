@@ -1727,9 +1727,6 @@ write_counts(const pos_range& output_report_range) const
     report_stream_stat(sif.ss,"ALLSITES_COVERAGE",output_report_range,report_os);
     report_stream_stat(sif.used_ss,"ALLSITES_COVERAGE_USED",output_report_range,report_os);
 
-    if (_opt.is_ref_set())
-    {
-        report_stream_stat(sif.ssn,"NO_REF_N_COVERAGE",output_report_range,report_os);
-        report_stream_stat(sif.used_ssn,"NO_REF_N_COVERAGE_USED",output_report_range,report_os);
-    }
+    report_stream_stat(sif.ssn,"NO_REF_N_COVERAGE",output_report_range,report_os);
+    report_stream_stat(sif.used_ssn,"NO_REF_N_COVERAGE_USED",output_report_range,report_os);
 }
