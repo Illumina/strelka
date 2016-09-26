@@ -64,18 +64,17 @@ private:
 
 
 // checks whether positions with consistent mismatches are marked as polymorphic sites
-BOOST_AUTO_TEST_CASE( test_relaxMMDF )
+BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
 {
     reference_contig_segment ref;
     ref.seq() = "TCTGT";
     TestIndelBuffer testBuffer(ref);
 
     const unsigned maxIndelSize = 50;
-    const unsigned sampleCount = 1;
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
-
+    const int sampleCount = 3;
     const int depth = 50;
-    const int sampleId = 0;
+
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
 
     const auto snvPos = std::set<pos_t>({0, 2, 3});
 
@@ -83,13 +82,16 @@ BOOST_AUTO_TEST_CASE( test_relaxMMDF )
     pos_t refLength = (pos_t)ref.seq().length();
 
     // fake reading reads
-    for (int alignId=0; alignId < depth; ++alignId)
+    for (int alignId=0; alignId < depth*sampleCount; ++alignId)
     {
+        unsigned sampleId = alignId % sampleCount;
         detector.setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ);
         for (pos_t pos(0); pos<refLength-1; ++pos)
         {
+            // only sample 1 has mismatches
             // alternative allele frequency 0.5
-            if ((alignId % 2) || (snvPos.find(pos) == snvPos.end()))
+            if (sampleId != 1 or ((alignId/sampleCount) % 2)
+                or (snvPos.find(pos) == snvPos.end()))
             {
                 // No SNV
                 detector.insertMatch(alignId, pos);
@@ -110,23 +112,80 @@ BOOST_AUTO_TEST_CASE( test_relaxMMDF )
 
 
     // check if polySites are correctly set
-    for (pos_t pos(0); pos<refLength-1; ++pos)
+
+    for (unsigned sampleId(0); sampleId<sampleCount; ++sampleId)
     {
-        if (snvPos.find(pos) != snvPos.end())
+        for (pos_t pos(0); pos<refLength-1; ++pos)
         {
-            // SNV
-            BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, pos), true);
-        }
-        else
-        {
-            // No SNV
-            BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, pos), false);
+            if ((sampleId == 1) and (snvPos.find(pos) != snvPos.end()))
+            {
+                // SNV
+                BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, pos), true);
+            }
+            else
+            {
+                // No SNV
+                BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, pos), false);
+            }
         }
     }
 }
 
 // Checks whether an indel is correctly confirmed in active regions
 BOOST_AUTO_TEST_CASE( test_indelCandidacy )
+{
+    reference_contig_segment ref;
+    ref.seq() = "TCTCT";
+
+    TestIndelBuffer testBuffer(ref);
+
+    const unsigned maxIndelSize = 50;
+    const unsigned sampleCount = 1;
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
+
+    const int sampleId = 0;
+    const int depth = 50;
+
+    const pos_t indelPos = 2;
+    auto indelKey = IndelKey(indelPos, INDEL::INDEL, 0, "AG");
+
+    pos_t refLength = (pos_t)ref.seq().length();
+
+    // fake reading reads
+    for (int alignId=0; alignId < depth; ++alignId)
+    {
+        detector.setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ);
+        for (pos_t pos(0); pos<refLength-1; ++pos)
+        {
+            detector.insertMatch(alignId, pos);
+
+            if (pos == indelPos && (alignId % 2))
+            {
+                IndelObservation indelObservation;
+
+                IndelObservationData indelObservationData;
+                indelObservation.key = indelKey;
+                indelObservationData.id = alignId;
+                indelObservationData.iat = INDEL_ALIGN_TYPE::GENOME_TIER1_READ;
+                indelObservation.data = indelObservationData;
+
+                detector.insertIndel(sampleId, indelObservation);
+            }
+        }
+    }
+
+    for (pos_t pos(0); pos<refLength-1; ++pos)
+    {
+        detector.updateEndPosition(pos, false);
+    }
+    detector.updateEndPosition(refLength-1, true);
+
+    const auto itr(testBuffer.getIndelBuffer().getIndelIter(indelKey));
+    BOOST_REQUIRE_EQUAL(itr->second.isConfirmedInActiveRegion, true);
+}
+
+// Checks whether an indel is correctly confirmed in active regions
+BOOST_AUTO_TEST_CASE( test_indelCandidacy_multi )
 {
     reference_contig_segment ref;
     ref.seq() = "TCTCT";
@@ -243,71 +302,5 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
     }
 }
 
-BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
-{
-    reference_contig_segment ref;
-    ref.seq() = "TCTGT";
-    TestIndelBuffer testBuffer(ref);
-
-    const unsigned maxIndelSize = 50;
-    const int sampleCount = 3;
-    const int depth = 50;
-
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
-
-    const auto snvPos = std::set<pos_t>({0, 2, 3});
-
-
-    pos_t refLength = (pos_t)ref.seq().length();
-
-    // fake reading reads
-    for (int alignId=0; alignId < depth*sampleCount; ++alignId)
-    {
-        unsigned sampleId = alignId % sampleCount;
-        detector.setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ);
-        for (pos_t pos(0); pos<refLength-1; ++pos)
-        {
-            // only sample 1 has mismatches
-            // alternative allele frequency 0.5
-            if (sampleId != 1 or ((alignId/sampleCount) % 2)
-                or (snvPos.find(pos) == snvPos.end()))
-            {
-                // No SNV
-                detector.insertMatch(alignId, pos);
-            }
-            else
-            {
-                // SNV position
-                detector.insertMismatch(alignId, pos, 'A');
-            }
-        }
-    }
-
-    for (pos_t pos(0); pos<refLength-1; ++pos)
-    {
-        detector.updateEndPosition(pos, false);
-    }
-    detector.updateEndPosition(refLength-1, true);
-
-
-    // check if polySites are correctly set
-
-    for (unsigned sampleId(0); sampleId<sampleCount; ++sampleId)
-    {
-        for (pos_t pos(0); pos<refLength-1; ++pos)
-        {
-            if ((sampleId == 1) and (snvPos.find(pos) != snvPos.end()))
-            {
-                // SNV
-                BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, pos), true);
-            }
-            else
-            {
-                // No SNV
-                BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, pos), false);
-            }
-        }
-    }
-}
 
 BOOST_AUTO_TEST_SUITE_END()

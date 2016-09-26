@@ -129,7 +129,8 @@ void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySit
         }
     }
 
-//    std::cout << '>' << _start+1 << '\t' << _end+1 << '\t' << _refSeq << '\t' << totalCount << std::endl;
+//    std::cout << "***Sample " << sampleId << std::endl;
+//    std::cout << '>' << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << _refSeq << '\t' << totalCount << std::endl;
     for (const auto& entry : haplotypeToAlignIdSet)
     {
         const std::string& haplotype(entry.first);
