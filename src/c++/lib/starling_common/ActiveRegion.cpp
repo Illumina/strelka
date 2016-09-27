@@ -39,14 +39,26 @@ void ActiveRegion::insertHaplotypeBase(align_id_t alignId, pos_t pos, const std:
         _alignIdReachingEnd.insert(alignId);
 }
 
-// decompose haplotypes into primitive alleles
 void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites) const
+{
+    for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
+    {
+        // separately process haplotypes per sample
+        processHaplotypes(indelBuffer, polySites, sampleId);
+    }
+}
+
+void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId) const
 {
     std::map<std::string, std::vector<align_id_t>> haplotypeToAlignIdSet;
     std::vector<std::pair<std::string, align_id_t>> softClippedReads;
     for (const auto& entry : _alignIdToHaplotype)
     {
         align_id_t alignId = entry.first;
+        unsigned currentSampleId = _alignIdToAlignInfo[alignId % MaxDepth].sampleId;
+
+        if (currentSampleId != sampleId) continue;
+
         const std::string& haplotype(entry.second);
 
         // ignore if the read does not cover the start of the active region
@@ -117,7 +129,8 @@ void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySit
         }
     }
 
-//    std::cout << '>' << _start+1 << '\t' << _end+1 << '\t' << _refSeq << '\t' << totalCount << std::endl;
+//    std::cout << "***Sample " << sampleId << std::endl;
+//    std::cout << '>' << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << _refSeq << '\t' << totalCount << std::endl;
     for (const auto& entry : haplotypeToAlignIdSet)
     {
         const std::string& haplotype(entry.first);
@@ -130,7 +143,7 @@ void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySit
 //            std::cout << haplotype << '\t' << count << std::endl;
         if (count >= thirdLargestCount and haplotype != _refSeq)
         {
-            convertToPrimitiveAlleles(haplotype, alignIdList, totalCount, count >= secondLargestCount,
+            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, totalCount, count >= secondLargestCount,
                                       indelBuffer, polySites);
         }
     }
@@ -182,6 +195,7 @@ static unsigned getHomoPolymerSize(const std::string& haplotype, const pos_t pos
 }
 
 void ActiveRegion::convertToPrimitiveAlleles(
+    const unsigned sampleId,
     const std::string& haploptypeSeq,
     const std::vector<align_id_t>& alignIdList,
     const unsigned totalReadCount,
@@ -287,6 +301,6 @@ void ActiveRegion::convertToPrimitiveAlleles(
         if (!isIndelExist and isLongHpol) continue;
 
         // register MMDF relax site
-        polySites.getRef(mismatchPositions[i]) = 1;
+        polySites[sampleId].getRef(mismatchPositions[i]) = 1;
     }
 }

@@ -73,6 +73,7 @@ public:
     /// \param ref reference segment
     /// \param indelBuffer indel buffer
     /// \param maxDeletionSize maximum deletion size
+    /// \param sampleCount sample count
     /// \param maxDetectionWindowSize maximum active region size
     /// \param minNumVariantsPerPosition minimum number of variants per position to make the position as a candidate variant pos
     /// \param minNumVariantsPerRegion minimum number of variants per region to create an active region
@@ -81,21 +82,24 @@ public:
         const reference_contig_segment& ref,
         IndelBuffer& indelBuffer,
         unsigned maxDeletionSize,
+        unsigned sampleCount,
         unsigned maxDetectionWindowSize = 30,
         unsigned minNumVariantsPerPosition = 9,
         unsigned minNumVariantsPerRegion = 2) :
         _ref(ref),
         _indelBuffer(indelBuffer),
         _maxDeletionSize(maxDeletionSize),
+        _sampleCount(sampleCount),
         _maxDetectionWindowSize(maxDetectionWindowSize),
-        _minNumVariantsPerPosition(minNumVariantsPerPosition),
+        _minNumVariantsPerPositionPerSample(minNumVariantsPerPosition),
         _minNumVariantsPerRegion(minNumVariantsPerRegion),
-        _variantCounter(MaxBufferSize),
-        _depth(MaxBufferSize),
+        _variantCounter(sampleCount, std::vector<unsigned>(MaxBufferSize)),
+        _depth(sampleCount, std::vector<unsigned>(MaxBufferSize)),
         _positionToAlignIds(MaxBufferSize),
         _alignIdToAlignInfo(MaxDepth),
         _variantInfo(MaxDepth, std::vector<VariantType>(MaxBufferSize, VariantType())),
         _insertSeqBuffer(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string())),
+        _polySites(sampleCount),
         _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
     {
         _numVariants = 0;
@@ -145,10 +149,16 @@ public:
         alignInfo.indelAlignType = indelAlignType;
     }
 
+    inline unsigned getSampleId(const align_id_t alignId)
+    {
+        return _alignIdToAlignInfo[alignId % MaxDepth].sampleId;
+    }
+
     /// Checks if mismatches occur consistently at position pos
+    /// \param sampleId sample id
     /// \param pos reference position
     /// \return true if pos is a polymorphic site; false otherwise.
-    bool isPolymorphicSite(const pos_t pos) const;
+    bool isPolymorphicSite(const unsigned sampleId, const pos_t pos) const;
 
 private:
     enum VariantType
@@ -164,18 +174,20 @@ private:
     const reference_contig_segment& _ref;
     IndelBuffer& _indelBuffer;
 
-    unsigned _maxDeletionSize;
-    unsigned _maxDetectionWindowSize;
-    unsigned _minNumVariantsPerPosition;
-    unsigned _minNumVariantsPerRegion;
+    const unsigned _maxDeletionSize;
+    const unsigned _sampleCount;
+    const unsigned _maxDetectionWindowSize;
+
+    const unsigned _minNumVariantsPerPositionPerSample;
+    const unsigned _minNumVariantsPerRegion;
 
     pos_t _activeRegionStartPos;
     pos_t _prevVariantPos;
     unsigned _numVariants;
 
     std::list<ActiveRegion> _activeRegions;
-    std::vector<unsigned> _variantCounter;
-    std::vector<unsigned> _depth;
+    std::vector<std::vector<unsigned>> _variantCounter;
+    std::vector<std::vector<unsigned>> _depth;
 
     // for haplotypes
     std::vector<std::vector<align_id_t>> _positionToAlignIds;
@@ -201,20 +213,24 @@ private:
     inline void resetCounter(const pos_t pos)
     {
         int index = pos % MaxBufferSize;
-        _variantCounter[index] = 0;
-        _depth[index] = 0;
+
+        for (unsigned sampleId=0; sampleId<_sampleCount; ++sampleId)
+        {
+            _variantCounter[sampleId][index] = 0;
+            _depth[sampleId][index] = 0;
+        }
     }
 
-    inline void addVariantCount(const pos_t pos, unsigned count = 1)
+    inline void addVariantCount(const unsigned sampleId, const pos_t pos, unsigned count)
     {
         int index = pos % MaxBufferSize;
-        _variantCounter[index] += count;
-        ++_depth[index];
+        _variantCounter[sampleId][index] += count;
+        ++_depth[sampleId][index];
     }
 
-    inline unsigned getVariantCount(const pos_t pos) const
+    inline unsigned getVariantCount(const unsigned sampleId, const pos_t pos) const
     {
-        return _variantCounter[pos % MaxBufferSize];
+        return _variantCounter[sampleId][pos % MaxBufferSize];
     }
 
     inline void addAlignIdToPos(const align_id_t alignId, const pos_t pos)
@@ -224,11 +240,10 @@ private:
             _positionToAlignIds[index].push_back(alignId);
     }
 
-    inline unsigned getDepth(const pos_t pos) const
+    inline unsigned getDepth(const unsigned sampleId, const pos_t pos) const
     {
         int index = pos % MaxBufferSize;
-//        return (unsigned)_positionToAlignIds[index].size();
-        return _depth[index];
+        return _depth[sampleId][index];
     }
 
     inline const std::vector<align_id_t>& getPositionToAlignIds(const pos_t pos) const
