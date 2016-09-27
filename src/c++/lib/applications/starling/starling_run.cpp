@@ -209,6 +209,25 @@ starling_run(
                     sppr.insert_forced_output_pos(vcfRecord.pos-1);
                 }
             }
+            else if     (INPUT_TYPE::PLOIDY_REGION == currentIndex)
+            {
+                const unsigned sampleIndex(0);
+                known_pos_range2 ploidyRange(0,1); //(bedRecord.begin,bedRecord.end);
+                const unsigned ploidy(2); //parsePloidyFromBedStrict(bedRecord.line));
+                if ((ploidy == 0) || (ploidy == 1))
+                {
+                    const bool retval(sppr.insert_ploidy_region(sampleIndex, ploidyRange, ploidy));
+                    if (! retval)
+                    {
+                        using namespace illumina::common;
+
+                        std::ostringstream oss;
+                        const auto& sampleName(client_io.getSampleNames()[sampleIndex]);
+                        oss << "ERROR: ploidy vcf SAMPLE:CN values conflict. Conflict detected in sample '" << sampleName << "' on file line: '" << vcfRecord.line << "'\n";
+                        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                    }
+                }
+            }
             else
             {
                 assert(false && "Unexpected hts index");
@@ -217,24 +236,7 @@ starling_run(
         else if (HTS_TYPE::BED == currentHtsType)
         {
             const bed_record& bedRecord(streamData.getCurrentBed());
-            if     (INPUT_TYPE::PLOIDY_REGION == currentIndex)
-            {
-                known_pos_range2 ploidyRange(bedRecord.begin,bedRecord.end);
-                const unsigned ploidy(parsePloidyFromBedStrict(bedRecord.line));
-                if ((ploidy == 0) || (ploidy == 1))
-                {
-                    const bool retval(sppr.insert_ploidy_region(ploidyRange,ploidy));
-                    if (! retval)
-                    {
-                        using namespace illumina::common;
-
-                        std::ostringstream oss;
-                        oss << "ERROR: ploidy bedfile record conflicts with prior record. Bedfile line: '" << bedRecord.line << "'\n";
-                        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-                    }
-                }
-            }
-            else if (INPUT_TYPE::NOCOMPRESS_REGION == currentIndex)
+            if (INPUT_TYPE::NOCOMPRESS_REGION == currentIndex)
             {
                 known_pos_range2 range(bedRecord.begin,bedRecord.end);
                 sppr.insert_nocompress_region(range);

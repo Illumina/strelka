@@ -145,10 +145,11 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     void
     insert_forced_output_pos(const pos_t pos);
 
-    /// specify ploidy of region (only 0 or 1 is used now)
+    /// specify ploidy of region for one sample (only 0 or 1 are used for ploidy now)
     /// \returns false if this conflicts with an existing region
     bool
     insert_ploidy_region(
+        const unsigned sampleIndex,
         const known_pos_range2& range,
         const unsigned ploidy);
 
@@ -313,6 +314,9 @@ public:
 
         // keep a single copy of this struct to reuse for every site to lower alloc costs:
         CleanedPileup cpi;
+
+        /// track expected ploidy within this sample:
+        RegionPayloadTracker<unsigned> ploidyRegions;
     };
 
     sample_info&
@@ -560,10 +564,9 @@ protected:
     unsigned
     get_ploidy(
         const pos_t pos,
-        const unsigned /*sampleIndex*/) const
+        const unsigned sampleIndex) const
     {
-        ///TODO STREL-125 complete sample dependent ploidy logic
-        const auto val(_ploidy_regions.isIntersectRegion(pos));
+        const auto val(sample(sampleIndex).ploidyRegions.isIntersectRegion(pos));
         return (val ? *val : 2u);
     }
 
@@ -600,8 +603,6 @@ protected:
     std::set<pos_t> _forced_output_pos;
 
     PileupCleaner _pileupCleaner;
-
-    RegionPayloadTracker<unsigned> _ploidy_regions;
 
 private:
     IndelBuffer _indelBuffer;

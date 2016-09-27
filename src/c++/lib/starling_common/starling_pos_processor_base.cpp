@@ -500,12 +500,13 @@ insert_forced_output_pos(const pos_t pos)
 bool
 starling_pos_processor_base::
 insert_ploidy_region(
+    const unsigned sampleIndex,
     const known_pos_range2& range,
     const unsigned ploidy)
 {
     assert(ploidy==0 || ploidy==1);
     _stageman.validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
-    return _ploidy_regions.addRegion(range,ploidy);
+    return sample(sampleIndex).ploidyRegions.addRegion(range,ploidy);
 }
 
 
@@ -908,7 +909,10 @@ process_pos(const int stage_no,
     else if (stage_no==STAGE::CLEAR_SITE_ANNOTATION)
     {
         _forced_output_pos.erase(pos);
-        _ploidy_regions.removeToPos(pos);
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        {
+            sample(sampleIndex).ploidyRegions.removeToPos(pos);
+        }
         clear_pos_annotation(pos);
     }
     else if (stage_no==STAGE::CLEAR_READ_BUFFER)
