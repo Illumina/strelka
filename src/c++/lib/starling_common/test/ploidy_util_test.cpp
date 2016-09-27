@@ -18,26 +18,29 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
+#include "boost/test/unit_test.hpp"
 
-#pragma once
-
-#include "blt_util/known_pos_range2.hh"
-
-#include "boost/optional.hpp"
+#include "ploidy_util.hh"
 
 
-boost::optional<unsigned>
-parsePloidyFromBed(const char* line);
+BOOST_AUTO_TEST_SUITE( ploidy_util_test )
 
-unsigned
-parsePloidyFromBedStrict(const char* line);
 
-void
-parsePloidyFromVcf(
-    const unsigned expectedSampleCount,
-    const char* line,
-    known_pos_range2& range,
-    std::vector<unsigned>& ploidy);
+BOOST_AUTO_TEST_CASE( test_vcf_ploidy_parse )
+{
+    static const unsigned expectedSampleCount(3);
+    static const char* testVcfRecord = "X\t20\t.\t.\t.\t.\t.\tGRANDMA=COOKIES;END=100;MQ=60\tGT:GQ:CN:FT\t.:.:1:.\t.:.:0:.\t.:.:.:.";
+
+    known_pos_range2 range;
+    std::vector<unsigned> ploidy;
+    parsePloidyFromVcf(expectedSampleCount, testVcfRecord, range, ploidy);
+
+    BOOST_REQUIRE_EQUAL(range, known_pos_range2(19,100));
+    BOOST_REQUIRE_EQUAL(ploidy.size(), 3u);
+    BOOST_REQUIRE_EQUAL(ploidy[0], 1u);
+    BOOST_REQUIRE_EQUAL(ploidy[1], 0u);
+    BOOST_REQUIRE_EQUAL(ploidy[2], 2u);
+}
+
+
+BOOST_AUTO_TEST_SUITE_END()

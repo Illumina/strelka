@@ -100,7 +100,7 @@ get_starling_base_option_parser(
     po::options_description ploidy_opt("ploidy-options");
     ploidy_opt.add_options()
     ("ploidy-region-vcf", po::value(&opt.ploidy_region_vcf),
-     "Specify vcf file describing ploidy of regions. Regions are specified by POS and INFO:END using SAMPLE:CN to indicate the per-sample region ploidy. Any CN value besides 1 and 0 are ignored at present. (must be bgzip compressed and tabix indexed)")
+     "Specify vcf file describing ploidy of regions. Regions are specified by POS and INFO/END using FORMAT/CN to indicate the per-sample region ploidy. Any CN value besides 1 and 0 are ignored at present. (must be bgzip compressed and tabix indexed)")
     ;
 
     po::options_description input_opt("input-options");

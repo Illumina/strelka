@@ -230,18 +230,18 @@ haploid (given ploidy of 1) or are expected to be absent (given ploidy of 0). In
 as absent -- all variants will be called under the default (diploid) model, but filtered with the `PloidyConflict` label.
 
 Ploidy is provided to the call using the `--ploidy` configuration option and supplying the copy number
-information for all input samples in VCF format using the `SAMPLE:CN` tag. An example ploidy input file is:
+information for all input samples in VCF format using the `FORMAT/CN` tag. An example ploidy input file is:
 
-    ##fileformat=VCFv4.1 
-    ##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the variant described in this record"> 
-    ##FORMAT=<ID=CN,Number=1,Type=Integer,Description="Copy number genotype for imprecise events"> 
-    #CHROM  POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  NA12882 NA12878 NA12877 
-    chrX    0   .   N   <CNV>   .   PASS    END=10001   CN  1   2   1 
-    chrX    2781479 .   N   <CNV>   .   PASS    END=155701383   CN  1   2   1 
-    chrX    156030895   .   N   <CNV>   .   PASS    END=156040895   CN  1   2   1 
+    ##fileformat=VCFv4.1
+    ##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the variant described in this record">
+    ##FORMAT=<ID=CN,Number=1,Type=Integer,Description="Copy number genotype for imprecise events">
+    #CHROM  POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  NA12882 NA12878 NA12877
+    chrX    0   .   N   <CNV>   .   PASS    END=10001   CN  1   2   1
+    chrX    2781479 .   N   <CNV>   .   PASS    END=155701383   CN  1   2   1
+    chrX    156030895   .   N   <CNV>   .   PASS    END=156040895   CN  1   2   1
     chrY    0   .   N   <CNV>   .   PASS    END=57227415    CN  1   0   1
 
-Strelka does not read any fields besides `CHROM`, `POS`, `INFO:END` and `SAMPLE:CN`, so a ploidy specific record could be further simplified if desired, e.g:
+Strelka does not read any fields besides `CHROM`, `POS`, `INFO/END` and `FORMAT/CN`, so a ploidy specific record could be further simplified if desired, e.g:
 
     chrY    0   .   .   .   .   .    END=57227415    CN  1   0   1
 

@@ -23,7 +23,11 @@
 ///
 
 #include "ploidy_util.hh"
+#include "blt_util/parse_util.hh"
 #include "common/Exceptions.hh"
+#include "htsapi/vcf_util.hh"
+
+#include "boost/algorithm/string.hpp"
 
 #include <sstream>
 
@@ -72,4 +76,102 @@ parsePloidyFromBedStrict(const char* line)
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
     return *ploidy;
+}
+
+
+
+void
+parsePloidyFromVcf(
+    const unsigned expectedSampleCount,
+    const char* line,
+    known_pos_range2& range,
+    std::vector<unsigned>& ploidy)
+{
+    using namespace illumina::common;
+
+    std::vector<std::string> fields;
+    boost::split(fields, line, boost::is_any_of("\t"));
+
+    const unsigned minFieldCount(VCFID::FORMAT+expectedSampleCount);
+    if (fields.size() <= minFieldCount)
+    {
+        std::ostringstream oss;
+        oss << "ERROR: can't find expected number of fields (" << minFieldCount << ") in vcf ploidy record: '" << line << "'\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
+
+    // set range:
+    {
+        range.set_begin_pos(illumina::blt_util::parse_int_str(fields[VCFID::POS]) - 1);
+
+        static const std::string endPrefix("END=");
+
+        std::vector<std::string> infoFields;
+        boost::split(infoFields, fields[VCFID::INFO], boost::is_any_of(";"));
+        bool isEndFound(false);
+        for (const auto& kv : infoFields)
+        {
+            if (boost::starts_with(kv, endPrefix))
+            {
+                range.set_end_pos(illumina::blt_util::parse_int_rvalue(kv.c_str() + endPrefix.size()));
+                isEndFound=true;
+                break;
+            }
+        }
+
+        if (not isEndFound)
+        {
+            std::ostringstream oss;
+            oss << "ERROR: can't find INFO/END value in vcf ploidy record: '" << line << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
+    }
+
+    // set ploidy:
+    ploidy.clear();
+    {
+        unsigned cnIndex(0);
+        {
+            std::vector<std::string> formatFields;
+            boost::split(formatFields, fields[VCFID::FORMAT], boost::is_any_of(":"));
+            bool isCNFound(false);
+            for (const auto& tag : formatFields)
+            {
+                if (tag == "CN")
+                {
+                    isCNFound=true;
+                    break;
+                }
+                cnIndex++;
+            }
+
+            if (not isCNFound)
+            {
+                std::ostringstream oss;
+                oss << "ERROR: can't find FORMAT/CN entry in vcf ploidy record: '" << line << "'\n";
+                BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+            }
+        }
+
+        for (unsigned sampleIndex(0); sampleIndex<expectedSampleCount; ++sampleIndex)
+        {
+            std::vector<std::string> sampleFields;
+            boost::split(sampleFields, fields[VCFID::SAMPLE + sampleIndex], boost::is_any_of(":"));
+
+            unsigned cn(2);
+            if (sampleFields[cnIndex].size()==1)
+            {
+                const char c(sampleFields[cnIndex][0]);
+                if (c == '1')
+                {
+                    cn = 1;
+                }
+                else if(c == '0')
+                {
+                    cn = 0;
+                }
+            }
+            ploidy.push_back(cn);
+        }
+    }
 }

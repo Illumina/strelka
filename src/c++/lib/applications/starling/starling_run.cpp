@@ -22,12 +22,12 @@
 /// \author Chris Saunders
 ///
 
-#include <blt_util/id_map.hh>
 #include "starling_run.hh"
 #include "starling_pos_processor.hh"
 #include "starling_streams.hh"
 
 #include "appstats/RunStatsManager.hh"
+#include "blt_util/id_map.hh"
 #include "blt_util/log.hh"
 #include "common/Exceptions.hh"
 #include "starling_common/HtsMergeStreamerUtil.hh"
@@ -62,7 +62,7 @@ void
 mapVcfSampleIndices(
     const vcf_streamer& vcfStream,
     const std::vector<std::string>& sampleNames,
-    std::vector<unsigned> sampleIndexToPloidyVcfSampleIndex)
+    std::vector<unsigned>& sampleIndexToPloidyVcfSampleIndex)
 {
     using namespace illumina::common;
 
@@ -82,6 +82,7 @@ mapVcfSampleIndices(
         vcfSampleSet.insert_key(vcfSampleName);
     }
 
+    sampleIndexToPloidyVcfSampleIndex.clear();
     for (const auto& sampleName : sampleNames)
     {
         const auto maybeId(vcfSampleSet.get_optional_id(sampleName));
@@ -139,6 +140,7 @@ starling_run(
     registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader, streamData, noRequireNormalized);
     registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
 
+    unsigned ploidyVcfSampleCount(0);
     std::vector<unsigned> sampleIndexToPloidyVcfSampleIndex;
     if (! opt.ploidy_region_vcf.empty())
     {
@@ -147,6 +149,7 @@ starling_run(
 
         const std::vector<std::string>& sampleNames();
         mapVcfSampleIndices(vcfStream, client_io.getSampleNames(), sampleIndexToPloidyVcfSampleIndex);
+        ploidyVcfSampleCount = vcfStream.getSampleCount();
     }
 
     if (! opt.gvcf.nocompress_region_bedfile.empty())
@@ -209,22 +212,28 @@ starling_run(
                     sppr.insert_forced_output_pos(vcfRecord.pos-1);
                 }
             }
-            else if     (INPUT_TYPE::PLOIDY_REGION == currentIndex)
+            else if (INPUT_TYPE::PLOIDY_REGION == currentIndex)
             {
-                const unsigned sampleIndex(0);
-                known_pos_range2 ploidyRange(0,1); //(bedRecord.begin,bedRecord.end);
-                const unsigned ploidy(2); //parsePloidyFromBedStrict(bedRecord.line));
-                if ((ploidy == 0) || (ploidy == 1))
-                {
-                    const bool retval(sppr.insert_ploidy_region(sampleIndex, ploidyRange, ploidy));
-                    if (! retval)
-                    {
-                        using namespace illumina::common;
+                std::vector<unsigned> samplePloidy;
+                known_pos_range2 ploidyRange;
+                parsePloidyFromVcf(ploidyVcfSampleCount, vcfRecord.line, ploidyRange, samplePloidy);
 
-                        std::ostringstream oss;
-                        const auto& sampleName(client_io.getSampleNames()[sampleIndex]);
-                        oss << "ERROR: ploidy vcf SAMPLE:CN values conflict. Conflict detected in sample '" << sampleName << "' on file line: '" << vcfRecord.line << "'\n";
-                        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+                {
+                    const unsigned ploidy(samplePloidy[sampleIndexToPloidyVcfSampleIndex[sampleIndex]]);
+                    if ((ploidy == 0) || (ploidy == 1))
+                    {
+                        const bool retval(sppr.insert_ploidy_region(sampleIndex, ploidyRange, ploidy));
+                        if (!retval)
+                        {
+                            using namespace illumina::common;
+
+                            std::ostringstream oss;
+                            const auto& sampleName(client_io.getSampleNames()[sampleIndex]);
+                            oss << "ERROR: ploidy vcf FORMAT/CN values conflict. Conflict detected in sample '"
+                                << sampleName << "' on file line: '" << vcfRecord.line << "'\n";
+                            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                        }
                     }
                 }
             }
