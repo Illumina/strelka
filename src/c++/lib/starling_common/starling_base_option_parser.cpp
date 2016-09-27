@@ -90,17 +90,17 @@ get_starling_base_option_parser(
      "Minimum open-ended breakpoint sequence length required to become a breakpoint candidate")
     ("candidate-indel-input-vcf",
      po::value(&opt.input_candidate_indel_vcf)->multitoken(),
-     "Add candidate indels from the specified vcf file. Option can be provided multiple times to combine evidence from multiple vcf files. Variants will be ignored if not correctly normalized.")
+     "Add candidate indels from the specified vcf file. Option can be provided multiple times to combine evidence from multiple vcf files. Variants will be ignored if not correctly normalized. (must be bgzip compressed and tabix indexed)")
     ("force-output-vcf", po::value(&opt.force_output_vcf)->multitoken(),
-     "Force each site or indel in the vcf file to be written to the snv or indel output, even if no variant is found. Any indels submitted will also be treated as candidate indels. Option can be provided multiple times to combine multiple vcf files. Unnormalized variants will trigger a runtime error.")
+     "Force each site or indel in the vcf file to be written to the snv or indel output, even if no variant is found. Any indels submitted will also be treated as candidate indels. Option can be provided multiple times to combine multiple vcf files. Unnormalized variants will trigger a runtime error. (must be bgzip compressed and tabix indexed)")
     ("upstream-oligo-size", po::value(&opt.upstream_oligo_size),
      "Treat reads as if they have an upstream oligo anchor for purposes of meeting minimum breakpoint overlap in support of an indel.")
     ;
 
     po::options_description ploidy_opt("ploidy-options");
     ploidy_opt.add_options()
-    ("ploidy-region-bed", po::value(&opt.ploidy_region_bedfile),
-     "Specify bed file describing ploidy of regions. Ploidy value is read from the 5th 'score' field. Any value besides 1 and 0 are ignored at present. (must be bgzip compressed and tabix indexed)")
+    ("ploidy-region-vcf", po::value(&opt.ploidy_region_vcf),
+     "Specify vcf file describing ploidy of regions. Regions are specified by POS and INFO:END using SAMPLE:CN to indicate the per-sample region ploidy. Any CN value besides 1 and 0 are ignored at present. (must be bgzip compressed and tabix indexed)")
     ;
 
     po::options_description input_opt("input-options");

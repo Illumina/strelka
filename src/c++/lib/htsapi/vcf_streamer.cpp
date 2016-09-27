@@ -41,8 +41,8 @@
 
 
 
-// return true only if all chromosomes in the bcf/vcf exist in the
-// bam header
+/// return true only if all chromosomes in the bcf/vcf exist in the
+/// bam header
 static
 void
 check_bam_bcf_header_compatability(
@@ -95,6 +95,7 @@ vcf_streamer(
         log_os << "ERROR: Failed to load header for VCF file: '" << filename << "'\n";
         exit(EXIT_FAILURE);
     }
+    _sampleCount = bcf_hdr_nsamples(_hdr);
 }
 
 

@@ -178,7 +178,7 @@ struct starling_base_options : public blt_options
     unsigned upstream_oligo_size = 0;
 
     /// file specifying haploid and deleted regions as 1/0 in bed col 4
-    std::string ploidy_region_bedfile;
+    std::string ploidy_region_vcf;
 
     /// Stores runtime stats
     std::string segmentStatsFilename;

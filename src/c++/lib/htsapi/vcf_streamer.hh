@@ -27,6 +27,8 @@
 #include "hts_streamer.hh"
 #include "vcf_record.hh"
 
+#include <cassert>
+
 
 struct vcf_streamer : public hts_streamer
 {
@@ -60,8 +62,24 @@ struct vcf_streamer : public hts_streamer
     validateBamHeaderChromSync(
         const bam_hdr_t& header) const;
 
+    unsigned
+    getSampleCount() const
+    {
+        assert(nullptr != _hdr);
+        return _sampleCount;
+    }
+
+    const char*
+    getSampleName(const unsigned sampleIndex) const
+    {
+        assert(nullptr != _hdr);
+        assert(sampleIndex < _sampleCount);
+        return _hdr->samples[sampleIndex];
+    }
+
 private:
     bcf_hdr_t* _hdr;
+    unsigned _sampleCount;
     vcf_record _vcfrec;
     bool _isRequireNormalized;
 };

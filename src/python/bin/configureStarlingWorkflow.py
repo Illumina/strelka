@@ -52,9 +52,10 @@ You must specify a BAM or CRAM file for the sample.
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--bam", type="string",dest="bamList",metavar="FILE", action="append",
                          help="Sample BAM or CRAM file. May be specified more than once, multiple inputs will be treated as each BAM file representing a different sample. [required] (no default)")
-        group.add_option("--ploidy", type="string", dest="ploidyBed", metavar="FILE",
-                         help="Provide ploidy bed file. The bed records should provide either 1 or 0 in the 5th 'score' column to "
-                         "indicate haploid or deleted status respectively. File must be tabix indexed. (no default)")
+        group.add_option("--ploidy", type="string", dest="ploidyFilename", metavar="FILE",
+                         help="Provide ploidy file in VCF. The VCF should include one sample column per input sample labeled with the same sample names found in the input BAM/CRAM RG header sections."
+                              " Ploidy should be provided in records using the SAMPLE::CN field, over regions specified by POS and INFO:END. Any value besides 1 or 0 will be treated as 2."
+                              " File must be tabix indexed. (no default)")
         group.add_option("--noCompress", type="string", dest="noCompressBed", metavar="FILE",
                          help="Provide bed file of regions where gVCF block compress is disallowed. File must be tabix indexed. (no default)")
         group.add_option("--targetRegions", type="string", dest="targetRegionsBed", metavar="FILE",
@@ -100,7 +101,7 @@ You must specify a BAM or CRAM file for the sample.
             if tabixFile is None : return None
             return os.path.abspath(tabixFile)
 
-        options.ploidyBed = checkFixTabixIndexedFileOption(options.ploidyBed,"ploidy bed")
+        options.ploidyFilename = checkFixTabixIndexedFileOption(options.ploidyFilename,"ploidy file")
         options.noCompressBed = checkFixTabixIndexedFileOption(options.noCompressBed,"no-compress bed")
         options.targetRegionsBed = checkFixTabixIndexedFileOption(options.targetRegionsBed,"targeted-regions bed")
 

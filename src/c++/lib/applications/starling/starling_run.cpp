@@ -22,6 +22,7 @@
 /// \author Chris Saunders
 ///
 
+#include <blt_util/id_map.hh>
 #include "starling_run.hh"
 #include "starling_pos_processor.hh"
 #include "starling_streams.hh"
@@ -46,6 +47,57 @@ enum index_t
     NOCOMPRESS_REGION
 };
 }
+
+
+
+/// (1) validate sample count/sample name match to input alignment files
+/// (2) construct a sample index translation map
+///
+/// \param[out] sampleIndexToPloidyVcfSampleIndex translate from the primary sample index order
+///                 (derived from input alignment file order) to the VCF sample index (index in VCF sample columns)
+///
+/// TODO better place to move this fn?
+static
+void
+mapVcfSampleIndices(
+    const vcf_streamer& vcfStream,
+    const std::vector<std::string>& sampleNames,
+    std::vector<unsigned> sampleIndexToPloidyVcfSampleIndex)
+{
+    using namespace illumina::common;
+
+    id_set<std::string> vcfSampleSet;
+    const unsigned vcfSampleCount(vcfStream.getSampleCount());
+    for (unsigned vcfSampleIndex(0); vcfSampleIndex < vcfSampleCount; ++vcfSampleIndex)
+    {
+        const std::string vcfSampleName(vcfStream.getSampleName(vcfSampleIndex));
+
+        if (vcfSampleSet.test_key(vcfSampleName))
+        {
+            std::ostringstream oss;
+            oss << "ERROR: repeated entry for sample name '" << vcfSampleName << "' in ploidy VCF file: '" << vcfStream.name() << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
+
+        vcfSampleSet.insert_key(vcfSampleName);
+    }
+
+    for (const auto& sampleName : sampleNames)
+    {
+        const auto maybeId(vcfSampleSet.get_optional_id(sampleName));
+        if (not maybeId)
+        {
+            std::ostringstream oss;
+            oss << "ERROR: no entry for sample name '" << sampleName << "' in ploidy VCF file: '" << vcfStream.name() << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
+        else
+        {
+            sampleIndexToPloidyVcfSampleIndex.push_back(*maybeId);
+        }
+    }
+}
+
 
 
 void
@@ -87,9 +139,14 @@ starling_run(
     registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader, streamData, noRequireNormalized);
     registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
 
-    if (! opt.ploidy_region_bedfile.empty())
+    std::vector<unsigned> sampleIndexToPloidyVcfSampleIndex;
+    if (! opt.ploidy_region_vcf.empty())
     {
-        streamData.registerBed(opt.ploidy_region_bedfile.c_str(), INPUT_TYPE::PLOIDY_REGION);
+        const vcf_streamer& vcfStream(streamData.registerVcf(opt.ploidy_region_vcf.c_str(), INPUT_TYPE::PLOIDY_REGION));
+        vcfStream.validateBamHeaderChromSync(referenceHeader);
+
+        const std::vector<std::string>& sampleNames();
+        mapVcfSampleIndices(vcfStream, client_io.getSampleNames(), sampleIndexToPloidyVcfSampleIndex);
     }
 
     if (! opt.gvcf.nocompress_region_bedfile.empty())

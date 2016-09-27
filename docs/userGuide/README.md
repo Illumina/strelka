@@ -222,6 +222,34 @@ There are two sources of advanced configuration options:
   change the desired parameter values and supply the new file using the configuration
   script's `--config FILE` option.
 
+##### Advanced configuration options for germline calling
+
+###### Ploidy
+Strelka includes an option to specify regions of a diploid genome which should be treated as
+haploid (given ploidy of 1) or are expected to be absent (given ploidy of 0). In any region specified
+as absent -- all variants will be called under the default (diploid) model, but filtered with the `PloidyConflict` label.
+
+Ploidy is provided to the call using the `--ploidy` configuration option and supplying the copy number
+information for all input samples in VCF format using the `SAMPLE:CN` tag. An example ploidy input file is:
+
+    ##fileformat=VCFv4.1 
+    ##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the variant described in this record"> 
+    ##FORMAT=<ID=CN,Number=1,Type=Integer,Description="Copy number genotype for imprecise events"> 
+    #CHROM  POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  NA12882 NA12878 NA12877 
+    chrX    0   .   N   <CNV>   .   PASS    END=10001   CN  1   2   1 
+    chrX    2781479 .   N   <CNV>   .   PASS    END=155701383   CN  1   2   1 
+    chrX    156030895   .   N   <CNV>   .   PASS    END=156040895   CN  1   2   1 
+    chrY    0   .   N   <CNV>   .   PASS    END=57227415    CN  1   0   1
+
+Strelka does not read any fields besides `CHROM`, `POS`, `INFO:END` and `SAMPLE:CN`, so a ploidy specific record could be further simplified if desired, e.g:
+
+    chrY    0   .   .   .   .   .    END=57227415    CN  1   0   1
+
+...would be a valid input record for this option.
+
+Note this feature is primarily intended to deliniate the sex chromosome copy number but could be used to call small variants in the context of CNV calls as well.
+
+
 ### Execution
 
 The configuration step creates a new workflow run script in the requested run directory:
