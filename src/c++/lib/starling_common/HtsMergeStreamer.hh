@@ -118,6 +118,14 @@ struct HtsMergeStreamer
         return registerHtsType(bamFilename,index,_data._bam);
     }
 
+    const bed_streamer&
+    registerBed(
+        const char* bedFilename,
+        const unsigned index = 0)
+    {
+        return registerHtsType(bedFilename,index,_data._bed);
+    }
+
     const vcf_streamer&
     registerVcf(
         const char* vcfFilename,
@@ -125,14 +133,6 @@ struct HtsMergeStreamer
         const bool isRequireNormalized = true)
     {
         return registerHtsType(vcfFilename,index,_data._vcf, isRequireNormalized);
-    }
-
-    const bed_streamer&
-    registerBed(
-        const char* bedFilename,
-        const unsigned index = 0)
-    {
-        return registerHtsType(bedFilename,index,_data._bed);
     }
 
 
@@ -169,22 +169,28 @@ struct HtsMergeStreamer
         return *(getCurrentBamStreamer().get_record_ptr());
     }
 
-    const vcf_record&
-    getCurrentVcf() const
-    {
-        return *(getHtsStreamer(getCurrent().order, _data._vcf).get_record_ptr());
-    }
-
     const bed_record&
     getCurrentBed() const
     {
         return *(getHtsStreamer(getCurrent().order, _data._bed).get_record_ptr());
     }
 
+    const vcf_record&
+    getCurrentVcf() const
+    {
+        return *(getCurrentVcfStreamer().get_record_ptr());
+    }
+
     const bam_streamer&
     getCurrentBamStreamer() const
     {
         return getHtsStreamer(getCurrent().order, _data._bam);
+    }
+
+    const vcf_streamer&
+    getCurrentVcfStreamer() const
+    {
+        return getHtsStreamer(getCurrent().order, _data._vcf);
     }
 
 private:

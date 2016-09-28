@@ -41,11 +41,9 @@ struct vcf_streamer : public hts_streamer
 
     ~vcf_streamer();
 
-    // advance to next vcf record
-    //
-    // is_indel_only - if set, skip all records except indels
-    //
-    bool next(const bool is_indel_only=false);
+    /// advance to next (normalized) vcf record
+    ///
+    bool next();
 
     const vcf_record*
     get_record_ptr() const

@@ -109,11 +109,11 @@ parsePloidyFromVcf(
         std::vector<std::string> infoFields;
         boost::split(infoFields, fields[VCFID::INFO], boost::is_any_of(";"));
         bool isEndFound(false);
-        for (const auto& kv : infoFields)
+        for (const auto& infoKeyValuePair : infoFields)
         {
-            if (boost::starts_with(kv, endPrefix))
+            if (boost::starts_with(infoKeyValuePair, endPrefix))
             {
-                range.set_end_pos(illumina::blt_util::parse_int_rvalue(kv.c_str() + endPrefix.size()));
+                range.set_end_pos(illumina::blt_util::parse_int_rvalue(infoKeyValuePair.c_str() + endPrefix.size()));
                 isEndFound=true;
                 break;
             }
@@ -135,9 +135,9 @@ parsePloidyFromVcf(
             std::vector<std::string> formatFields;
             boost::split(formatFields, fields[VCFID::FORMAT], boost::is_any_of(":"));
             bool isCNFound(false);
-            for (const auto& tag : formatFields)
+            for (const auto& formatTag : formatFields)
             {
-                if (tag == "CN")
+                if (formatTag == "CN")
                 {
                     isCNFound=true;
                     break;

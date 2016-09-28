@@ -106,6 +106,8 @@ starling_run(
     const prog_info& pinfo,
     const starling_options& opt)
 {
+    using namespace illumina::common;
+
     opt.validate();
 
     RunStatsManager segmentStatMan(opt.segmentStatsFilename);
@@ -198,6 +200,11 @@ starling_run(
                 {
                     process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
                 }
+                else
+                {
+                    log_os << "WARNING: candidate indel vcf variant record cannot be categorized as indel:\n";
+                    streamData.getCurrentVcfStreamer().report_state(log_os);
+                }
             }
             else if (INPUT_TYPE::FORCED_GT_VARIANTS == currentIndex)     // process forced genotype tests from vcf file(s)
             {
@@ -205,18 +212,34 @@ starling_run(
                 {
                     static const unsigned sample_no(0);
                     static const bool is_forced_output(true);
-                    process_candidate_indel(opt.max_indel_size, vcfRecord,sppr,sample_no,is_forced_output);
+                    process_candidate_indel(opt.max_indel_size, vcfRecord, sppr, sample_no, is_forced_output);
                 }
                 else if (vcfRecord.is_snv())
                 {
-                    sppr.insert_forced_output_pos(vcfRecord.pos-1);
+                    sppr.insert_forced_output_pos(vcfRecord.pos - 1);
+                }
+                else
+                {
+                    std::ostringstream oss;
+                    oss << "ERROR: forcedGT vcf variant record cannot be categorized as SNV or indel:\n";
+                    streamData.getCurrentVcfStreamer().report_state(oss);
+                    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
                 }
             }
             else if (INPUT_TYPE::PLOIDY_REGION == currentIndex)
             {
                 std::vector<unsigned> samplePloidy;
                 known_pos_range2 ploidyRange;
-                parsePloidyFromVcf(ploidyVcfSampleCount, vcfRecord.line, ploidyRange, samplePloidy);
+                try
+                {
+                    parsePloidyFromVcf(ploidyVcfSampleCount, vcfRecord.line, ploidyRange, samplePloidy);
+                }
+                catch(...)
+                {
+                    log_os << "ERROR: Exception caught while parsing vcf ploidy record\n";
+                    streamData.getCurrentVcfStreamer().report_state(log_os);
+                    throw;
+                }
 
                 for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
                 {
@@ -226,12 +249,11 @@ starling_run(
                         const bool retval(sppr.insert_ploidy_region(sampleIndex, ploidyRange, ploidy));
                         if (!retval)
                         {
-                            using namespace illumina::common;
-
                             std::ostringstream oss;
                             const auto& sampleName(client_io.getSampleNames()[sampleIndex]);
                             oss << "ERROR: ploidy vcf FORMAT/CN values conflict. Conflict detected in sample '"
-                                << sampleName << "' on file line: '" << vcfRecord.line << "'\n";
+                                << sampleName << "' at:\n";
+                            streamData.getCurrentVcfStreamer().report_state(oss);
                             BOOST_THROW_EXCEPTION(LogicException(oss.str()));
                         }
                     }
@@ -257,8 +279,7 @@ starling_run(
         }
         else
         {
-            log_os << "ERROR: invalid input condition.\n";
-            exit(EXIT_FAILURE);
+            assert(false && "Invalid input condition");
         }
     }
 

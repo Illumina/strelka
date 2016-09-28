@@ -28,6 +28,7 @@
 
 #include "appstats/RunStatsManager.hh"
 #include "blt_util/log.hh"
+#include "common/Exceptions.hh"
 #include "starling_common/HtsMergeStreamerUtil.hh"
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
@@ -54,6 +55,8 @@ strelka_run(
     const prog_info& pinfo,
     const strelka_options& opt)
 {
+    using namespace illumina::common;
+
     opt.validate();
 
     RunStatsManager segmentStatMan(opt.segmentStatsFilename);
@@ -131,6 +134,11 @@ strelka_run(
                 {
                     process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
                 }
+                else
+                {
+                    log_os << "WARNING: candidate indel vcf variant record cannot be categorized as indel:\n";
+                    streamData.getCurrentVcfStreamer().report_state(log_os);
+                }
             }
             else if (INPUT_TYPE::FORCED_GT_VARIANTS == currentIndex)     // process forced genotype tests from vcf file(s)
             {
@@ -143,6 +151,13 @@ strelka_run(
                 else if (vcfRecord.is_snv())
                 {
                     sppr.insert_forced_output_pos(vcfRecord.pos-1);
+                }
+                else
+                {
+                    std::ostringstream oss;
+                    oss << "ERROR: forcedGT vcf variant record cannot be categorized as SNV or indel:\n";
+                    streamData.getCurrentVcfStreamer().report_state(oss);
+                    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
                 }
             }
             else if (INPUT_TYPE::NOISE_VARIANTS == currentIndex)
