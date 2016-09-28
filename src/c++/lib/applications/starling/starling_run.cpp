@@ -28,6 +28,7 @@
 
 #include "appstats/RunStatsManager.hh"
 #include "blt_util/log.hh"
+#include "common/Exceptions.hh"
 #include "starling_common/HtsMergeStreamerUtil.hh"
 #include "starling_common/ploidy_util.hh"
 #include "starling_common/starling_ref_seq.hh"

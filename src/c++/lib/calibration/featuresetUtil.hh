@@ -24,7 +24,6 @@
 #include "calibration/VariantScoringModelBase.hh"
 #include "calibration/VariantScoringModelMetadata.hh"
 #include "blt_util/PolymorphicObject.hh"
-#include "common/Exceptions.hh"
 
 #include "boost/dynamic_bitset.hpp"
 
@@ -108,13 +107,7 @@ struct VariantScoringFeatureKeeper
         assert(featureIndex < _featureSet.size());
         if (test(featureIndex))
         {
-            using namespace illumina::common;
-
-            std::ostringstream oss;
-            oss << "ERROR: attempted to set scoring feature twice."
-                << " Feature: '" << _featureSet.getFeatureLabel(featureIndex) << "'"
-                << " from set: '" << _featureSet.getName() << "'\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+            featureError(featureIndex, "attempted to set scoring feature twice");
         }
         _featureVal[featureIndex] = featureValue;
         _isFeatureSet.set(featureIndex);
@@ -126,13 +119,7 @@ struct VariantScoringFeatureKeeper
         assert(featureIndex < _featureSet.size());
         if (! test(featureIndex))
         {
-            using namespace illumina::common;
-
-            std::ostringstream oss;
-            oss << "ERROR: attempted to retrieve scoring feature before it was set."
-                << " Feature: '" << _featureSet.getFeatureLabel(featureIndex) << "'"
-                << " from set: '" << _featureSet.getName() << "'\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+            featureError(featureIndex, "attempted to retrieve scoring feature before it was set");
         }
         return _featureVal[featureIndex];
     }
@@ -193,6 +180,12 @@ struct VariantScoringFeatureKeeper
     }
 
 private:
+
+    void
+    featureError(
+        const unsigned featureIndex,
+        const char* msg) const;
+
     const FeatureSet& _featureSet;
     boost::dynamic_bitset<> _isFeatureSet;
     VariantScoringModelBase::featureInput_t _featureVal;

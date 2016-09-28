@@ -25,6 +25,7 @@
 #include "blt_util/log.hh"
 #include "blt_util/prob_util.hh"
 #include "blt_util/sort_util.hh"
+#include "common/Exceptions.hh"
 #include "starling_common/AlleleGroupGenotype.hh"
 #include "starling_common/AlleleReportInfoUtil.hh"
 #include "starling_common/indel_util.hh"

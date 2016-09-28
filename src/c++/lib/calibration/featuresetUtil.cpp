@@ -78,3 +78,22 @@ writeExtendedFeatureSet(
     printFeatureSet(primaryFeatureSet);
     printFeatureSet(developmentFeatureSet);
 }
+
+
+
+void
+VariantScoringFeatureKeeper::
+featureError(
+    const unsigned featureIndex,
+    const char* msg) const
+{
+    using namespace illumina::common;
+
+    assert(msg);
+
+    std::ostringstream oss;
+    oss << "ERROR: " << msg << "."
+        << " Feature: '" << _featureSet.getFeatureLabel(featureIndex) << "'"
+        << " from set: '" << _featureSet.getName() << "'\n";
+    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+}
