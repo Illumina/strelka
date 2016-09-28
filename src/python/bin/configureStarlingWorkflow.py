@@ -54,7 +54,7 @@ You must specify a BAM or CRAM file for the sample.
                          help="Sample BAM or CRAM file. May be specified more than once, multiple inputs will be treated as each BAM file representing a different sample. [required] (no default)")
         group.add_option("--ploidy", type="string", dest="ploidyFilename", metavar="FILE",
                          help="Provide ploidy file in VCF. The VCF should include one sample column per input sample labeled with the same sample names found in the input BAM/CRAM RG header sections."
-                              " Ploidy should be provided in records using the FORMAT/CN field, over regions specified by POS and INFO/END. Any value besides 1 or 0 will be treated as 2."
+                              " Ploidy should be provided in records using the FORMAT/CN field, which are interpreted to span the range [POS+1, INFO/END]. Any CN value besides 1 or 0 will be treated as 2."
                               " File must be tabix indexed. (no default)")
         group.add_option("--noCompress", type="string", dest="noCompressBed", metavar="FILE",
                          help="Provide bed file of regions where gVCF block compress is disallowed. File must be tabix indexed. (no default)")

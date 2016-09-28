@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_SUITE( ploidy_util_test )
 BOOST_AUTO_TEST_CASE( test_vcf_ploidy_parse )
 {
     static const unsigned expectedSampleCount(3);
-    static const char* testVcfRecord = "X\t20\t.\t.\t.\t.\t.\tGRANDMA=COOKIES;END=100;MQ=60\tGT:GQ:CN:FT\t.:.:1:.\t.:.:0:.\t.:.:.:.";
+    static const char* testVcfRecord = "X\t19\t.\t.\t<CNV>\t.\t.\tGRANDMA=COOKIES;END=100;MQ=60\tGT:GQ:CN:FT\t.:.:1:.\t.:.:0:.\t.:.:.:.";
 
     known_pos_range2 range;
     std::vector<unsigned> ploidy;

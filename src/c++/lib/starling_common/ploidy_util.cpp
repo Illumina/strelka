@@ -88,6 +88,7 @@ parsePloidyFromVcf(
     std::vector<unsigned>& ploidy)
 {
     using namespace illumina::common;
+    std::ostringstream oss;
 
     std::vector<std::string> fields;
     boost::split(fields, line, boost::is_any_of("\t"));
@@ -95,14 +96,19 @@ parsePloidyFromVcf(
     const unsigned minFieldCount(VCFID::FORMAT+expectedSampleCount);
     if (fields.size() <= minFieldCount)
     {
-        std::ostringstream oss;
         oss << "ERROR: can't find expected number of fields (" << minFieldCount << ") in vcf ploidy record: '" << line << "'\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
+
+    if (fields[VCFID::ALT] != "<CNV>")
+    {
+        oss << "ERROR: expecting ALT value of '<CNV>' in vcf ploidy record: '" << line << "'\n";
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 
     // set range:
     {
-        range.set_begin_pos(illumina::blt_util::parse_int_str(fields[VCFID::POS]) - 1);
+        range.set_begin_pos(illumina::blt_util::parse_int_str(fields[VCFID::POS]));
 
         static const std::string endPrefix("END=");
 
@@ -121,7 +127,6 @@ parsePloidyFromVcf(
 
         if (not isEndFound)
         {
-            std::ostringstream oss;
             oss << "ERROR: can't find INFO/END value in vcf ploidy record: '" << line << "'\n";
             BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
@@ -147,7 +152,6 @@ parsePloidyFromVcf(
 
             if (not isCNFound)
             {
-                std::ostringstream oss;
                 oss << "ERROR: can't find FORMAT/CN entry in vcf ploidy record: '" << line << "'\n";
                 BOOST_THROW_EXCEPTION(LogicException(oss.str()));
             }
