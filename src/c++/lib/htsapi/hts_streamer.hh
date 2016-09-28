@@ -34,6 +34,11 @@
 
 struct hts_streamer : private boost::noncopyable
 {
+    /// \param[in] filename (required)
+    /// \param[in] region (may be nullptr)
+    ///
+    /// note that region must be set before iteration will produce any output
+    /// (ie. there is no "whole genome iteration" enabled if no region is provided)
     hts_streamer(
         const char* filename,
         const char* region);
@@ -56,6 +61,7 @@ struct hts_streamer : private boost::noncopyable
         const char* region);
 
 protected:
+    /// load index if it hasn't been set already
     void
     _load_index();
 

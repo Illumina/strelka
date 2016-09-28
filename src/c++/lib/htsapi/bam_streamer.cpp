@@ -76,7 +76,6 @@ bam_streamer(
     if (nullptr == region)
     {
         // read the whole BAM file:
-
         if (_hdr->n_targets)
         {
             // parse any contig name so that header->hash is created
@@ -84,11 +83,12 @@ bam_streamer(
             // exists
             target_name_to_id("fake_name");
         }
-        return;
     }
-
-    // read a specific region of the bam file:
-    set_new_region(region);
+    else
+    {
+        // read a specific region of the bam file:
+        set_new_region(region);
+    }
 }
 
 
@@ -174,12 +174,12 @@ void
 bam_streamer::
 set_new_region(const char* region)
 {
-    int32_t ref,beg,end;
-    parse_bam_region_from_hdr(_hdr, region, ref, beg, end);
+    int32_t referenceContigId, beginPos, endPos;
+    parse_bam_region_from_hdr(_hdr, region, referenceContigId, beginPos, endPos);
 
     try
     {
-        set_new_region(ref,beg,end);
+        set_new_region(referenceContigId,beginPos,endPos);
         _region=region;
     }
     catch (const std::exception& /*e*/)
@@ -194,7 +194,10 @@ set_new_region(const char* region)
 
 void
 bam_streamer::
-set_new_region(const int ref, const int beg, const int end)
+set_new_region(
+    int referenceContigId,
+    int beginPos,
+    int endPos)
 {
     if (nullptr != _hitr) hts_itr_destroy(_hitr);
 
@@ -203,15 +206,15 @@ set_new_region(const int ref, const int beg, const int end)
     if (ref < 0)
     {
         std::ostringstream oss;
-        oss << "Invalid region (contig index: " << ref << ") specified for BAM/CRAM file: " << name();
+        oss << "Invalid region (contig index: " << referenceContigId << ") specified for BAM/CRAM file: " << name();
         throw blt_exception(oss.str().c_str());
     }
 
-    _hitr = sam_itr_queryi(_hidx,ref,beg,end);
+    _hitr = sam_itr_queryi(_hidx,referenceContigId,beginPos,endPos);
     if (_hitr == nullptr)
     {
         std::ostringstream oss;
-        oss << "Failed to fetch region: #" << ref << ":" << beg << "-" << end << " specified for BAM/CRAM file: " << name();
+        oss << "Failed to fetch region: #" << referenceContigId << ":" << beginPos << "-" << endPos << " specified for BAM/CRAM file: " << name();
         throw blt_exception(oss.str().c_str());
     }
     _is_region = true;
