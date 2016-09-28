@@ -113,6 +113,20 @@ starling_run(
     RunStatsManager segmentStatMan(opt.segmentStatsFilename);
 
     reference_contig_segment ref;
+
+    /// TODO STREL-228 add test that regions do not intersect, and chromes are synced with ref and BAM input, and that regioncount >0
+    const unsigned regionCount(opt.regions.size());
+    for (unsigned regionIndex(0); regionIndex<regionCount; ++regionIndex)
+    {
+    /// tmp working area:
+    {
+        const bam_hdr_t& header(bamStreams[0]->get_header());
+        const bam_header_info bamHeader(header);
+
+        int32_t tid(0), beginPos(0), endPos(0);
+        parse_bam_region(bamHeader,region.c_str(),tid,beginPos,endPos);
+    }
+
     get_starling_ref_seq(opt,ref);
 
     const starling_deriv_options dopt(opt,ref);
@@ -284,5 +298,6 @@ starling_run(
     }
 
     sppr.reset();
+    }
 }
 
