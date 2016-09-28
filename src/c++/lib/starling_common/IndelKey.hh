@@ -158,6 +158,15 @@ struct IndelKey
     void
     validate() const;
 
+    /// returns the global null IndelKey, any IndelKey object comparing equal to this is null
+    static
+    const IndelKey&
+    noIndel()
+    {
+        static const IndelKey _noIndel;
+        return _noIndel;
+    }
+
 //    bool
 //    isOrthogonal(IndelKey other) const;
 

@@ -289,6 +289,7 @@ selectTopOrthogonalAllelesInAllSamples(
         selectTopOrthogonalAllelesInSample(sampleIndex, inputAlleleGroup, sampleCallerPloidy,
                                            topAlleleGroupInSample);
 
+        // set topAlleleGroup and topVariantAlleleKeyScore
         const unsigned topAllelesInSampleCount(topAlleleGroupInSample.size());
         for (unsigned alleleIndex(0); alleleIndex < topAllelesInSampleCount; alleleIndex++)
         {
@@ -301,11 +302,17 @@ selectTopOrthogonalAllelesInAllSamples(
                 topAlleleGroup.addVariantAllele(topAlleleGroupInSample.iter(alleleIndex));
             }
             indelKeyIter->second += (sampleCallerPloidy-alleleIndex);
+        }
 
-            if (alleleIndex == 0)
-            {
-                topVariantAllelePerSample.push_back(indelKey);
-            }
+        // set topVariantAllelePerSample:
+        if (topAllelesInSampleCount>0)
+        {
+            const IndelKey& indelKey(topAlleleGroupInSample.key(0));
+            topVariantAllelePerSample.push_back(indelKey);
+        }
+        else
+        {
+            topVariantAllelePerSample.push_back(IndelKey::noIndel());
         }
     }
 
@@ -341,10 +348,14 @@ selectTopOrthogonalAllelesInAllSamples(
             const IndelKey& indelKey(topAlleleGroup.key(alleleIndex));
             indelIndex[indelKey] = alleleIndex;
         }
+
         topVariantAlleleIndexPerSample.resize(sampleCount);
+        std::fill(std::begin(topVariantAlleleIndexPerSample), std::end(topVariantAlleleIndexPerSample), 0);
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
-            const auto indelIter(indelIndex.find(topVariantAllelePerSample[sampleIndex]));
+            const auto& topIndelKey(topVariantAllelePerSample[sampleIndex]);
+            if (topIndelKey == IndelKey::noIndel()) continue;
+            const auto indelIter(indelIndex.find(topIndelKey));
             assert(indelIter != indelIndex.end());
             topVariantAlleleIndexPerSample[sampleIndex] = indelIter->second;
         }
