@@ -57,7 +57,7 @@ struct blt_options
     void
     validate() const
     {
-        // this should never be true, TODO: can we move this into a state enum so it *can't* be true:
+        // this should never be true once the object is fully constructed, TODO: can we move this into a state enum so it *can't* be true:
         assert(! (is_compute_germline_scoring_metrics() && is_compute_somatic_scoring_metrics));
     }
 
