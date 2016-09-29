@@ -45,7 +45,7 @@ def cleanLocals(locals_dict) :
 
 
 
-class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
+class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--referenceFasta",type="string",metavar="FILE",
@@ -124,9 +124,9 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         vcfCmdlineSwapper=joinFile(libexecDir,"vcfCmdlineSwapper.py")
 
         # TODO: these aren't shared and should go into child classes:
-        starlingBin=joinFile(libexecDir,exeFile("starling2"))
-        strelkaBin=joinFile(libexecDir,exeFile("strelka2"))
-        pedicureBin=joinFile(libexecDir,exeFile("pedicure"))
+        strelkaGermlineBin=joinFile(libexecDir,exeFile("starling2"))
+        strelkaSomaticBin=joinFile(libexecDir,exeFile("strelka2"))
+        strelkaPedigreeBin=joinFile(libexecDir,exeFile("pedicure"))
         statsMergeBin=joinFile(libexecDir,exeFile("MergeRunStats"))
 
         # default memory request per process-type
@@ -194,5 +194,3 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         assertOptionExists(options.runDir,"run directory")
 
         assertOptionExists(options.referenceFasta,"reference fasta file")
-
-

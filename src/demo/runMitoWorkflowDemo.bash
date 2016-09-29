@@ -19,31 +19,34 @@
 #
 
 #
-# Execute small somatic variant calling demonstration/verification run
+# Execute small continuous/somatic variant demonstration/verification run
 #
 
 set -o nounset
 set -o pipefail
 
 scriptDir=$(dirname $0)
-shareDir=$scriptDir/../share
-demoDir=$shareDir/demo/strelka
+demoDir=$scriptDir/../share/demo/strelka
 dataDir=$demoDir/data
-expectedDir=$demoDir/expectedResults
+expectedDir=$demoDir/expectedResultsMito
 
-analysisDir=./strelkaDemoAnalysis
+analysisDir=./starlingMitoDemoAnalysis
 
-configScript=$scriptDir/configureStrelkaWorkflow.py
+configScript=$scriptDir/configureStarlingWorkflow.py
+
+demoConfigFile=$demoDir/starlingDemoConfig.ini
+
 
 
 if [ ! -e $configScript ]; then
     cat<<END 1>&2
 
-ERROR: Strelka workflow must be installed prior to running demo.
+ERROR: Starling workflow must be installed prior to running demo.
 
 END
     exit 2
 fi
+
 
 #
 # Step 1: configure demo
@@ -59,15 +62,14 @@ END
 fi
 
 cmd="$configScript \
---tumorBam='$dataDir/NA12891_dupmark_chr20_region.bam' \
---normalBam='$dataDir/NA12892_dupmark_chr20_region.bam' \
---referenceFasta='$dataDir/chr20_860k_only.fa' \
---callMemMb=1024 \
+--bam='$dataDir/NA12878_chrM_200-200.bam' \
+--referenceFasta='$dataDir/chrM_hg19.fa' \
 --exome \
+--callContinuousVf chrM \
 --runDir=$analysisDir"
 
 echo 1>&2
-echo "**** Starting demo configuration and run." 1>&2
+echo "**** Starting mitochondria demo configuration and run." 1>&2
 echo "**** Configuration cmd: '$cmd'" 1>&2
 echo 1>&2
 eval $cmd

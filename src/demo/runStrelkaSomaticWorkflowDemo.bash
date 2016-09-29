@@ -19,34 +19,31 @@
 #
 
 #
-# Execute small germline variant demonstration/verification run
+# Execute small somatic variant calling demonstration/verification run
 #
 
 set -o nounset
 set -o pipefail
 
 scriptDir=$(dirname $0)
-demoDir=$scriptDir/../share/demo/strelka
+shareDir=$scriptDir/../share
+demoDir=$shareDir/demo/strelka
 dataDir=$demoDir/data
 expectedDir=$demoDir/expectedResults
 
-analysisDir=./starlingDemoAnalysis
+analysisDir=./strelkaSomaticDemoAnalysis
 
-configScript=$scriptDir/configureStarlingWorkflow.py
-
-demoConfigFile=$demoDir/starlingDemoConfig.ini
-
+configScript=$scriptDir/configureStrelkaSomaticWorkflow.py
 
 
 if [ ! -e $configScript ]; then
     cat<<END 1>&2
 
-ERROR: Starling workflow must be installed prior to running demo.
+ERROR: Strelka must be installed prior to running demo.
 
 END
     exit 2
 fi
-
 
 #
 # Step 1: configure demo
@@ -62,8 +59,8 @@ END
 fi
 
 cmd="$configScript \
---bam='$dataDir/NA12891_dupmark_chr20_region.bam' \
---bam='$dataDir/NA12892_dupmark_chr20_region.bam' \
+--tumorBam='$dataDir/NA12891_dupmark_chr20_region.bam' \
+--normalBam='$dataDir/NA12892_dupmark_chr20_region.bam' \
 --referenceFasta='$dataDir/chr20_860k_only.fa' \
 --callMemMb=1024 \
 --exome \
@@ -117,37 +114,37 @@ fi
 #
 # Step 3: Compare results to expected calls
 #
-#resultsDir=$analysisDir/results/variants
-#echo 1>&2
-#echo "**** Starting comparison to expected results." 1>&2
-#echo "**** Expected results dir: $expectedDir" 1>&2
-#echo "**** Demo results dir: $resultsDir" 1>&2
-#echo 1>&2
+resultsDir=$analysisDir/results/variants
+echo 1>&2
+echo "**** Starting comparison to expected results." 1>&2
+echo "**** Expected results dir: $expectedDir" 1>&2
+echo "**** Demo results dir: $resultsDir" 1>&2
+echo 1>&2
 
 filterVariableMetadata() {
     awk '!/^##(fileDate|source_version|startTime|reference|cmdline)/'
 }
 
-#for f in $(ls $expectedDir); do
-#    efile=$expectedDir/$f
-#    rfile=$resultsDir/$f
-#    diff <(gzip -dc $efile | filterVariableMetadata) <(gzip -dc $rfile | filterVariableMetadata)
+for f in $(ls $expectedDir); do
+    efile=$expectedDir/$f
+    rfile=$resultsDir/$f
+    diff <(gzip -dc $efile | filterVariableMetadata) <(gzip -dc $rfile | filterVariableMetadata)
 
-#    if [ $? -ne 0 ]; then
-#        cat<<END 1>&2
-#
-#ERROR: Found difference between demo and expected results in file '$f'.
-#       Expected file: $efile
-#       Demo results file: $rfile
-#
-#END
-#        exit 1
-#    fi
-#done
+    if [ $? -ne 0 ]; then
+        cat<<END 1>&2
 
-#echo 1>&2
-#echo "**** No differences between expected and computed results." 1>&2
-#echo 1>&2
+ERROR: Found difference between demo and expected results in file '$f'.
+       Expected file: $efile
+       Demo results file: $rfile
+
+END
+        exit 1
+    fi
+done
+
+echo 1>&2
+echo "**** No differences between expected and computed results." 1>&2
+echo 1>&2
 
 echo 1>&2
 echo "**** Demo/verification successfully completed" 1>&2

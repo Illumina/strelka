@@ -1,3 +1,4 @@
+- STREL-227 shift away from legacy naming schemes
 - STREL-240 make active regions non-overlapping
 - STREL-239 fix haploid nonvariant indels in multi-sample analysis
 - STREL-238 add multi-sample ploidy specification using vcf

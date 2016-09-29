@@ -37,8 +37,8 @@ from configBuildTimeInfo import workflowVersion
 from configureUtil import safeSetBool, getIniSections, dumpIniSections
 from pyflow import WorkflowRunner
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, runDepthFromAlignments
-from starkaWorkflow import runCount, SharedPathInfo, \
-                           StarkaCallWorkflow, StarkaWorkflow
+from strelkaSharedWorkflow import runCount, SharedPathInfo, \
+                           StrelkaSharedCallWorkflow, StrelkaSharedWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, bamListCatCmd
 
@@ -47,7 +47,7 @@ __version__ = workflowVersion
 
 
 
-def starlingRunDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=None):
+def strelkaGermlineRunDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=None):
     bamList=[]
     if len(self.params.bamList) :
         bamList.append(self.params.bamList[0])
@@ -175,11 +175,11 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
 
 
-"""
-A separate call workflow is setup so that we can delay the workflow execution until
-the ref count file exists
-"""
-class CallWorkflow(StarkaCallWorkflow) :
+class CallWorkflow(StrelkaSharedCallWorkflow) :
+    """
+    A separate call workflow is setup so that we can delay the workflow execution until
+    the ref count file exists
+    """
 
     def __init__(self,params,paths) :
         super(CallWorkflow,self).__init__(params)
@@ -222,7 +222,8 @@ class PathInfo(SharedPathInfo):
         return os.path.join( self.params.debugDir, "strelkaObservedIndel.bed.gz")
 
 
-class SequenceErrorCountsWorkflow(StarkaWorkflow) :
+
+class SequenceErrorCountsWorkflow(StrelkaSharedWorkflow) :
     """
     sequence error counts workflow
     """
@@ -248,7 +249,6 @@ class SequenceErrorCountsWorkflow(StarkaWorkflow) :
         return msg
 
 
-
     def workflow(self) :
         self.flowLog("Initiating Strelka sequence error counts workflow version: %s" % (__version__))
         self.setCallMemMb()
@@ -256,6 +256,5 @@ class SequenceErrorCountsWorkflow(StarkaWorkflow) :
         callPreReqs = set()
         callPreReqs |= runCount(self)
         if self.params.isHighDepthFilter :
-            callPreReqs |= starlingRunDepthFromAlignments(self)
+            callPreReqs |= strelkaGermlineRunDepthFromAlignments(self)
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)
-

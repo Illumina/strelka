@@ -31,8 +31,8 @@ workflowDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_PYTHON_LIBDIR
 
 sys.path.append(workflowDir)
 
-from buildConfig import fullVersion
-from starkaOptions import StarkaWorkflowOptionsBase
+from configBuildTimeInfo import workflowVersion
+from strelkaSharedOptions import StrelkaSharedWorkflowOptionsBase
 from configureUtil import BamSetChecker, groomBamList, joinFile, OptParseException
 from makeRunScript import makeRunScript
 from snoiseWorkflow import snoiseWorkflow
@@ -40,28 +40,28 @@ from workflowUtil import ensureDir
 
 
 
-class snoiseWorkflowOptions(StarkaWorkflowOptionsBase) :
+class snoiseWorkflowOptions(StrelkaSharedWorkflowOptionsBase) :
 
     def workflowDescription(self) :
         return """Version: %s
 
-This script configures the Strelka noise estimation pipeline.
+This script configures Strelka noise estimation.
 You must specify a BAM or CRAM file.
-""" % (fullVersion)
+""" % (workflowVersion)
 
 
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--bam", type="string",dest="bamList",metavar="FILE", action="append",
                          help="Sample BAM or CRAM file. [required] (no default)")
 
-        StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
+        StrelkaSharedWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
 
 
     def getOptionDefaults(self) :
 
         self.configScriptDir=scriptDir
-        defaults=StarkaWorkflowOptionsBase.getOptionDefaults(self)
+        defaults=StrelkaSharedWorkflowOptionsBase.getOptionDefaults(self)
 
         libexecDir=defaults["libexecDir"]
 
@@ -77,14 +77,14 @@ You must specify a BAM or CRAM file.
 
     def validateAndSanitizeExistingOptions(self,options) :
 
-        StarkaWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
+        StrelkaSharedWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
         groomBamList(options.bamList,"input")
 
 
 
     def validateOptionExistence(self,options) :
 
-        StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
+        StrelkaSharedWorkflowOptionsBase.validateOptionExistence(self,options)
         bcheck = BamSetChecker()
         bcheck.appendBams(options.bamList,"Input")
         bcheck.check(options.samtoolsBin,
@@ -95,7 +95,7 @@ You must specify a BAM or CRAM file.
 def main() :
 
     primarySectionName="snoise"
-    options,iniSections=snoiseWorkflowOptions().getRunOptions(primarySectionName, version=fullVersion)
+    options,iniSections=snoiseWorkflowOptions().getRunOptions(primarySectionName, version=workflowVersion)
 
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:
@@ -120,4 +120,3 @@ To execute the workflow, run the following script and set appropriate options:
 
 if __name__ == "__main__" :
     main()
-

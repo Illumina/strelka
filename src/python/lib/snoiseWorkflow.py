@@ -37,7 +37,7 @@ sys.path.append(os.path.abspath(pyflowDir))
 from configBuildTimeInfo import workflowVersion
 from configureUtil import argToBool, getIniSections, dumpIniSections
 from pyflow import WorkflowRunner
-from starkaWorkflow import runCount, SharedPathInfo, StarkaWorkflow
+from strelkaSharedWorkflow import runCount, SharedPathInfo, StrelkaSharedWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, getFastaChromOrderSize, bamListCatCmd
 
@@ -146,11 +146,11 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
 
 
-"""
-A separate call workflow is setup so that we can delay the workflow execution until
-the ref count file exists
-"""
 class CallWorkflow(WorkflowRunner) :
+    """
+    A separate call workflow is setup so that we can delay the workflow execution until
+    the ref count file exists
+    """
 
     def __init__(self,params,paths) :
         self.params = params
@@ -197,7 +197,7 @@ class PathInfo(SharedPathInfo):
 
 
 
-class snoiseWorkflow(StarkaWorkflow) :
+class snoiseWorkflow(StrelkaSharedWorkflow) :
     """
     germline small variant calling workflow
     """

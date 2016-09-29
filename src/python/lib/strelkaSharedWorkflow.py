@@ -18,7 +18,7 @@
 #
 
 """
-Shared small varaint calling workflow components
+Shared small variant calling workflow components
 """
 
 import os.path
@@ -51,7 +51,7 @@ def runCount(self, taskPrefix="", dependencies=None) :
 
 
 
-class StarkaCallWorkflow(WorkflowRunner) :
+class StrelkaSharedCallWorkflow(WorkflowRunner) :
 
     def __init__(self,params) :
         self.params = params
@@ -150,7 +150,7 @@ class SharedPathInfo(object):
 
 
 
-class StarkaWorkflow(WorkflowRunner) :
+class StrelkaSharedWorkflow(WorkflowRunner) :
     """
     small variant calling workflow base
     """

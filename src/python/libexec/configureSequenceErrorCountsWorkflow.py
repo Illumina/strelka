@@ -31,15 +31,15 @@ workflowDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_PYTHON_LIBDIR
 sys.path.append(workflowDir)
 
 from configBuildTimeInfo import workflowVersion
-from starkaOptions import StarkaWorkflowOptionsBase
+from strelkaSharedOptions import StrelkaSharedWorkflowOptionsBase
 from configureUtil import BamSetChecker, groomBamList, joinFile, OptParseException, checkOptionalTabixIndexedFile
 from makeRunScript import makeRunScript
-from starlingWorkflow import StarlingWorkflow
+from sequenceErrorCountsWorkflow import SequenceErrorCountsWorkflow
 from workflowUtil import ensureDir, exeFile
 
 
 
-class SequenceErrorCountsWorkflowOptions(StarkaWorkflowOptionsBase) :
+class SequenceErrorCountsWorkflowOptions(StrelkaSharedWorkflowOptionsBase) :
 
     def workflowDescription(self) :
         return """Version: %s
@@ -65,13 +65,13 @@ This script configures the Strelka sequence error counts workflow.
                          help="Report all observed indels by location in a separate BED file in addition to the"
                          "summary counts")
 
-        StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
+        StrelkaSharedWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
 
     def getOptionDefaults(self) :
 
         self.configScriptDir=scriptDir
-        defaults=StarkaWorkflowOptionsBase.getOptionDefaults(self)
+        defaults=StrelkaSharedWorkflowOptionsBase.getOptionDefaults(self)
 
         libexecDir=defaults["libexecDir"]
 
@@ -90,7 +90,7 @@ This script configures the Strelka sequence error counts workflow.
 
     def validateAndSanitizeExistingOptions(self,options) :
 
-        StarkaWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
+        StrelkaSharedWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
         groomBamList(options.bamList,"input")
 
         def checkFixTabixIndexedFileOption(tabixFile,label):
@@ -111,7 +111,7 @@ This script configures the Strelka sequence error counts workflow.
 
     def validateOptionExistence(self,options) :
 
-        StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
+        StrelkaSharedWorkflowOptionsBase.validateOptionExistence(self,options)
 
         bcheck = BamSetChecker()
 
@@ -134,7 +134,7 @@ def main() :
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:
     #
-    StarlingWorkflow(options,iniSections)
+    SequenceErrorCountsWorkflow(options,iniSections)
 
     # generate runscript:
     #

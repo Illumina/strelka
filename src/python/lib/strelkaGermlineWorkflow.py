@@ -18,7 +18,7 @@
 #
 
 """
-Starling germline small variant calling workflow
+Strelka germline small variant calling workflow
 """
 
 
@@ -37,8 +37,8 @@ from configBuildTimeInfo import workflowVersion
 from configureUtil import safeSetBool, getIniSections, dumpIniSections, joinFile
 from pyflow import WorkflowRunner
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, runDepthFromAlignments
-from starkaWorkflow import runCount, SharedPathInfo, \
-                           StarkaCallWorkflow, StarkaWorkflow
+from strelkaSharedWorkflow import runCount, SharedPathInfo, \
+                           StrelkaSharedCallWorkflow, StrelkaSharedWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, bamListCatCmd
 
@@ -47,7 +47,7 @@ __version__ = workflowVersion
 
 
 
-def starlingRunDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=None):
+def strelkaGermlineRunDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=None):
     bamList=[]
     if len(self.params.bamList) :
         bamList = self.params.bamList
@@ -112,7 +112,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segStr = str(gseg.id)
 
-    segCmd = [ self.params.starlingBin ]
+    segCmd = [ self.params.strelkaGermlineBin ]
 
     segCmd.extend(["-min-mapping-quality",self.params.minMapq])
     segCmd.extend(["-bam-seq-name", gseg.chromLabel] )
@@ -192,8 +192,8 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if self.params.callContinuousVf is not None and gseg.chromLabel in self.params.callContinuousVf :
         segCmd.append('--call-continuous-vf')
 
-    if self.params.extraStarlingArguments is not None :
-        for arg in self.params.extraStarlingArguments.strip().split() :
+    if self.params.extraVariantCallerArguments is not None :
+        for arg in self.params.extraVariantCallerArguments.strip().split() :
             segCmd.append(arg)
 
     segTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gseg.id)
@@ -317,7 +317,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
 
 
-class CallWorkflow(StarkaCallWorkflow) :
+class CallWorkflow(StrelkaSharedCallWorkflow) :
     """
     A separate call workflow is setup so that we can delay the workflow execution until
     the ref count file exists
@@ -386,14 +386,14 @@ class PathInfo(SharedPathInfo):
 
 
 
-class StarlingWorkflow(StarkaWorkflow) :
+class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
     """
     germline small variant calling workflow
     """
 
     def __init__(self,params,iniSections) :
         global PathInfo
-        super(StarlingWorkflow,self).__init__(params,iniSections,PathInfo)
+        super(StrelkaGermlineWorkflow,self).__init__(params,iniSections,PathInfo)
 
         # format bam lists:
         if self.params.bamList is None : self.params.bamList = []
@@ -416,17 +416,17 @@ class StarlingWorkflow(StarkaWorkflow) :
     def getSuccessMessage(self) :
         "Message to be included in email for successful runs"
 
-        msg  = "Starling workflow successfully completed.\n\n"
+        msg  = "Strelka germline workflow successfully completed.\n\n"
         msg += "\tworkflow version: %s\n" % (__version__)
         return msg
 
 
     def workflow(self) :
-        self.flowLog("Initiating Starling workflow version: %s" % (__version__))
+        self.flowLog("Initiating Strelka germline workflow version: %s" % (__version__))
         self.setCallMemMb()
 
         callPreReqs = set()
         callPreReqs |= runCount(self)
         if self.params.isHighDepthFilter :
-            callPreReqs |= starlingRunDepthFromAlignments(self)
+            callPreReqs |= strelkaGermlineRunDepthFromAlignments(self)
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)

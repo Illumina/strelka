@@ -19,7 +19,7 @@
 #
 
 """
-This script configures the starling small variant calling workflow
+This script configures the strelka germline small variant calling workflow
 """
 
 import os,sys
@@ -31,21 +31,21 @@ workflowDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_PYTHON_LIBDIR
 sys.path.append(workflowDir)
 
 from configBuildTimeInfo import workflowVersion
-from starkaOptions import StarkaWorkflowOptionsBase
+from strelkaSharedOptions import StrelkaSharedWorkflowOptionsBase
 from configureUtil import BamSetChecker, groomBamList, joinFile, OptParseException, checkOptionalTabixIndexedFile
 from makeRunScript import makeRunScript
-from starlingWorkflow import StarlingWorkflow
+from strelkaGermlineWorkflow import StrelkaGermlineWorkflow
 from workflowUtil import ensureDir
 
 
 
-class StarlingWorkflowOptions(StarkaWorkflowOptionsBase) :
+class StrelkaGermlineWorkflowOptions(StrelkaSharedWorkflowOptionsBase) :
 
     def workflowDescription(self) :
         return """Version: %s
 
-This script configures the Strelka small variant calling pipeline for single germline samples.
-You must specify a BAM or CRAM file for the sample.
+This script configures Strelka germline small variant calling.
+You must specify an alignment file (BAM or CRAM) file at least one sample.
 """ % (workflowVersion)
 
 
@@ -66,13 +66,13 @@ You must specify a BAM or CRAM file for the sample.
         group.add_option("--rna", dest="isRNA", action="store_true",
                          help="Set options for RNA-Seq input.")
 
-        StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
+        StrelkaSharedWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
 
     def getOptionDefaults(self) :
 
         self.configScriptDir=scriptDir
-        defaults=StarkaWorkflowOptionsBase.getOptionDefaults(self)
+        defaults=StrelkaSharedWorkflowOptionsBase.getOptionDefaults(self)
 
         libexecDir=defaults["libexecDir"]
 
@@ -80,7 +80,7 @@ You must specify a BAM or CRAM file for the sample.
         assert os.path.isdir(configDir)
 
         defaults.update({
-            'runDir' : 'StarlingWorkflow',
+            'runDir' : 'StrelkaGermlineWorkflow',
             'bgzip9Bin' : joinFile(libexecDir,"bgzip9"),
             'configDir' : configDir,
             'germlineSnvScoringModelFile' : joinFile(configDir,'germlineVariantScoringModels.json'),
@@ -90,10 +90,9 @@ You must specify a BAM or CRAM file for the sample.
         return defaults
 
 
-
     def validateAndSanitizeExistingOptions(self,options) :
 
-        StarkaWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
+        StrelkaSharedWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
         groomBamList(options.bamList,"input")
 
         def checkFixTabixIndexedFileOption(tabixFile,label):
@@ -106,10 +105,9 @@ You must specify a BAM or CRAM file for the sample.
         options.targetRegionsBed = checkFixTabixIndexedFileOption(options.targetRegionsBed,"targeted-regions bed")
 
 
-
     def validateOptionExistence(self,options) :
 
-        StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
+        StrelkaSharedWorkflowOptionsBase.validateOptionExistence(self,options)
 
         def safeLen(x) :
             if x is None : return 0
@@ -127,20 +125,20 @@ You must specify a BAM or CRAM file for the sample.
 
 def main() :
 
-    primarySectionName="starling"
-    options,iniSections=StarlingWorkflowOptions().getRunOptions(primarySectionName, version=workflowVersion)
+    primarySectionName="StrelkaGermline"
+    options,iniSections=StrelkaGermlineWorkflowOptions().getRunOptions(primarySectionName, version=workflowVersion)
 
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:
     #
-    StarlingWorkflow(options,iniSections)
+    StrelkaGermlineWorkflow(options,iniSections)
 
     # generate runscript:
     #
     ensureDir(options.runDir)
     scriptFile=os.path.join(options.runDir,"runWorkflow.py")
 
-    makeRunScript(scriptFile,os.path.join(workflowDir,"starlingWorkflow.py"),"StarlingWorkflow",primarySectionName,iniSections)
+    makeRunScript(scriptFile,os.path.join(workflowDir,"strelkaGermlineWorkflow.py"),"StrelkaGermlineWorkflow",primarySectionName,iniSections)
 
     notefp=sys.stdout
     notefp.write("""
@@ -153,4 +151,3 @@ To execute the workflow, run the following script and set appropriate options:
 
 if __name__ == "__main__" :
     main()
-

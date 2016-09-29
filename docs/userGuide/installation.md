@@ -11,7 +11,7 @@ Strelka User Guide - Installation
     * [Linux](#linux)
     * [Windows](#windows)
 * [Linux Package Additions](#linux-package-additions)
-    * [Ubuntu 14.04](#ubuntu-1404)
+    * [Ubuntu 14.04 and 16.04](#ubuntu-1404-and-1604)
     * [Ubuntu 12.04](#ubuntu-1204)
     * [CentOS 7](#centos-7)
     * [CentOS 5 and 6](#centos-5-and-6)
@@ -50,8 +50,8 @@ are the current minimum versions enforced by the build system:
 Strelka is known to build and run on the following linux distributions
 (with additional packages as described below):
 
-- Ubuntu 12.04,14.04
-- CentOS 5,6,7
+- Ubuntu 12.04, 14.04, 16.04
+- CentOS 5, 6, 7
 
 ##### Windows
 
@@ -60,15 +60,15 @@ possible for Visual Studio users. See the the [strelka developer guide] [Develop
 
 ### Linux Package Additions
 
-##### Ubuntu 14.04
+##### Ubuntu 14.04 and 16.04
 
     apt-get update -qq
-    apt-get install -qq gcc g++ make zlib1g-dev python
+    apt-get install -qq bzip2 gcc g++ make python zlib1g-dev
 
 ##### Ubuntu 12.04
 
     apt-get update -qq
-    apt-get install -qq bzip2 gcc g++ make zlib1g-dev python python-software-properties
+    apt-get install -qq bzip2 gcc g++ make python python-software-properties zlib1g-dev
     # add gcc 4.8 from ubuntu ppa:
     add-apt-repository -y ppa:ubuntu-toolchain-r/test
     apt-get update -qq
@@ -80,7 +80,7 @@ possible for Visual Studio users. See the the [strelka developer guide] [Develop
 
 ##### CentOS 7
 
-    yum install -y tar bzip2 make gcc gcc-c++ zlib-devel
+    yum install -y tar bzip2 make gcc gcc-c++ libstdc++-static zlib-devel
 
 ##### CentOS 5 and 6
 
@@ -137,10 +137,11 @@ relative.
 
 To help verify a successful installation, Strelka includes several small demo
 data sets and test scripts. After completing the installation steps
-above, the demo can be run as follows:
+above, the somatic demo can be run as follows:
 
-    bash ${STRELKA_INSTALL_PATH}/bin/runStrelkaWorkflowDemo.bash
+    bash ${STRELKA_INSTALL_PATH}/bin/runStrelkaSomaticWorkflowDemo.bash
 
-This script creates a `StrelkaDemoAnalysis` directory under the current
-working directory, runs Strelka on a small demo dataset, and compares the
-somatic structural variant output to an expected result.
+This script creates a `StrelkaSomaticDemoAnalysis` directory under the current
+working directory, runs the Strelka somatic worklfow on a small demo dataset,
+and compares the somatic small variant output to an expected result. A similar
+script is provided for the germline analysis workflow.
