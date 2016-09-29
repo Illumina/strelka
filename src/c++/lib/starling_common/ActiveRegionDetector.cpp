@@ -101,6 +101,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
 {
     if (pos < _lastActiveRegionEnd)
     {
+        // this position was already covered by the previous active region
         _activeRegionStartPos = 0;
         _numVariants = 0;
         return;
