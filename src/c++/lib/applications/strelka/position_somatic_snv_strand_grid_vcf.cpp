@@ -373,7 +373,6 @@ write_vcf_somatic_snv_genotype_strand_grid(
             smod.isEVS = true;
             smod.EVS = varModel.scoreVariant(smod.features.getAll());
 
-            // TMP!! make this scheme compatible with STARKA-296;
             smod.EVS = error_prob_to_phred(smod.EVS);
 
             // TMP!!!! Empirically re-maps EVS value to get a better calibration
@@ -389,8 +388,8 @@ write_vcf_somatic_snv_genotype_strand_grid(
             // Temp hack to handle sample with large LOH, if REF is already het, set low score and filter by default
             if (rs.ntype != NTYPE::REF) smod.EVS=0;
 
-            if (smod.EVS < opt.sfilter.snvMinEVS)
-                smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::LowEVS);
+            if (smod.EVS < varModel.scoreFilterThreshold())
+                smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::LowEVSsnv);
         }
     }
 

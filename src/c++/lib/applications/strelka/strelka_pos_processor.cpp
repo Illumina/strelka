@@ -307,7 +307,6 @@ process_pos_indel_somatic(const pos_t pos)
 
             if (siInfo.sindel.is_output())
             {
-                std::cerr << "WALLY: is_output!\n";
                 siInfo.indelReportInfo = indelData.getReportInfo();
 
                 // get sample specific info:

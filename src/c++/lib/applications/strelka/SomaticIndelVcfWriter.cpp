@@ -129,17 +129,22 @@ writeSomaticIndelVcfGrid(
     {
         assert(dopt.somaticIndelScoringModel);
         const VariantScoringModelServer& varModel(*dopt.somaticIndelScoringModel);
-        smod.EVS = 1.0 - varModel.scoreVariant(smod.features.getAll());
+        smod.EVS = varModel.scoreVariant(smod.features.getAll());
+
+        static const int maxEmpiricalVariantScore(60);
+        smod.EVS = std::min(int(error_prob_to_phred(smod.EVS)),maxEmpiricalVariantScore);
+
         smod.isEVS = true;
 
         if (rs.ntype != NTYPE::REF)
         {
+        	smod.EVS = 1.0;
             smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::Nonref);
         }
 
         if (smod.EVS < varModel.scoreFilterThreshold())
         {
-            smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::LowEVS);
+            smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::LowEVSindel);
         }
     }
 
