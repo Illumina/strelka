@@ -184,59 +184,6 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
     BOOST_REQUIRE_EQUAL(itr->second.isConfirmedInActiveRegion, true);
 }
 
-// Checks whether an indel is correctly confirmed in active regions
-BOOST_AUTO_TEST_CASE( test_indelCandidacy_multi )
-{
-    reference_contig_segment ref;
-    ref.seq() = "TCTCT";
-
-    TestIndelBuffer testBuffer(ref);
-
-    const unsigned maxIndelSize = 50;
-    const unsigned sampleCount = 1;
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
-
-    const int sampleId = 0;
-    const int depth = 50;
-
-    const pos_t indelPos = 2;
-    auto indelKey = IndelKey(indelPos, INDEL::INDEL, 0, "AG");
-
-    pos_t refLength = (pos_t)ref.seq().length();
-
-    // fake reading reads
-    for (int alignId=0; alignId < depth; ++alignId)
-    {
-        detector.setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ);
-        for (pos_t pos(0); pos<refLength-1; ++pos)
-        {
-            detector.insertMatch(alignId, pos);
-
-            if (pos == indelPos && (alignId % 2))
-            {
-                IndelObservation indelObservation;
-
-                IndelObservationData indelObservationData;
-                indelObservation.key = indelKey;
-                indelObservationData.id = alignId;
-                indelObservationData.iat = INDEL_ALIGN_TYPE::GENOME_TIER1_READ;
-                indelObservation.data = indelObservationData;
-
-                detector.insertIndel(sampleId, indelObservation);
-            }
-        }
-    }
-
-    for (pos_t pos(0); pos<refLength-1; ++pos)
-    {
-        detector.updateEndPosition(pos, false);
-    }
-    detector.updateEndPosition(refLength-1, true);
-
-    const auto itr(testBuffer.getIndelBuffer().getIndelIter(indelKey));
-    BOOST_REQUIRE_EQUAL(itr->second.isConfirmedInActiveRegion, true);
-}
-
 
 BOOST_AUTO_TEST_CASE( test_jumpingPositions )
 {

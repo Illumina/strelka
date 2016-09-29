@@ -105,6 +105,7 @@ public:
         _numVariants = 0;
         _activeRegionStartPos = 0;
         _prevVariantPos = 0;
+        _lastActiveRegionEnd = 0;
     }
 
     /// insert match at position pos
@@ -183,6 +184,7 @@ private:
 
     pos_t _activeRegionStartPos;
     pos_t _prevVariantPos;
+    pos_t _lastActiveRegionEnd;
     unsigned _numVariants;
 
     std::list<ActiveRegion> _activeRegions;
