@@ -83,8 +83,8 @@ You must specify a BAM or CRAM file for the sample.
             'runDir' : 'StarlingWorkflow',
             'bgzip9Bin' : joinFile(libexecDir,"bgzip9"),
             'configDir' : configDir,
-            'germlineSnvScoringModelFile' : joinFile(configDir,'germlineVariantScoringModels.json'),
-            'germlineIndelScoringModelFile' : joinFile(configDir,'germlineVariantScoringModels.json'),
+            'germlineSnvScoringModelFile' : joinFile(configDir,'germlineSNVScoringModels.json'),
+            'germlineIndelScoringModelFile' : joinFile(configDir,'germlineIndelScoringModels.json'),
             'callContinuousVf' : []
             })
         return defaults
