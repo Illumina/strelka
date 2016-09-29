@@ -203,9 +203,9 @@ void ActiveRegionDetector::getExpandedRange(const pos_range& origActiveRegion, p
             deltaPos = std::max(deltaPos, repeatSpan);
     }
     deltaPos = std::min(deltaPos, MaxRepeatSpan);
-    pos_t minStart(std::max(origStart - deltaPos, (pos_t)0u));
+    pos_t minStart(std::max(origStart - deltaPos, _lastActiveRegionEnd));
     pos_t newBeginPos;
-    for (newBeginPos = origStart; newBeginPos > minStart and newBeginPos >= _lastActiveRegionEnd; --newBeginPos)
+    for (newBeginPos = origStart; newBeginPos > minStart; --newBeginPos)
     {
         bool isLowDepth = false;
         for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)

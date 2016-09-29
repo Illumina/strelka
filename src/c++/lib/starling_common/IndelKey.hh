@@ -49,7 +49,6 @@ struct IndelKey
         validate();
     }
 
-    static const IndelKey NoIndel;
     // default sort is based on left-most position of the indel (note
     // we consider breakpoints to have the same left and right
     // locations)
