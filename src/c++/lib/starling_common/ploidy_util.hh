@@ -28,6 +28,8 @@
 
 #include "boost/optional.hpp"
 
+#include <vector>
+
 
 boost::optional<unsigned>
 parsePloidyFromBed(const char* line);

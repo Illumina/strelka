@@ -74,9 +74,9 @@ write_vcf_filter(
     const char* desc);
 
 
-// look for 'key' in vcf FORMAT field, provide index of key or return
-// false
-//
+/// look for 'key' in vcf FORMAT field, provide index of key or return
+/// false
+///
 inline
 bool
 get_format_key_index(const char* format,
@@ -292,6 +292,7 @@ struct VcfGenotypeUtil
         else
         {
             assert(false and "unexpected ploidy");
+            return 0;
         }
     }
 
