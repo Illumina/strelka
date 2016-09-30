@@ -135,6 +135,12 @@ struct HtsMergeStreamer
         return registerHtsType(vcfFilename,index,_data._vcf, isRequireNormalized);
     }
 
+    /// resets the region over which all files scanned
+    ///
+    /// \param region[in] samtools-formated genomic region (nullptr not allowed)
+    void
+    resetRegion(const char* region);
+
 
     /// Advances to the next HTS record in the merged stream
     ///
@@ -336,6 +342,7 @@ private:
 
     bool _isStreamBegin = false;
     bool _isStreamEnd = false;
-    std::priority_queue<HtsRecordSortData> _streamQueue;
+    typedef std::priority_queue<HtsRecordSortData> queue_t;
+    queue_t _streamQueue;
 };
 

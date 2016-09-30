@@ -72,7 +72,7 @@ hts_streamer(
     // read only a region of HTS file:
     if (nullptr != region)
     {
-        set_region(region);
+        resetRegion(region);
     }
 }
 
@@ -91,7 +91,7 @@ hts_streamer::
 
 void
 hts_streamer::
-set_region(
+resetRegion(
     const char* region)
 {
     if (nullptr != _titr) tbx_itr_destroy(_titr);

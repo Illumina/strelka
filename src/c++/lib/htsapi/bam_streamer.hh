@@ -54,19 +54,19 @@ struct bam_streamer : public boost::noncopyable
 
     ~bam_streamer();
 
-    /// \brief set new or first region for indexed file
+    /// \brief set new region for indexed file
     ///
-    /// \param region htslib-style region string in format: "chromName:beginPos-endPos"
+    /// \param region htslib-style region string in format: "chromName:beginPos-endPos", cannot be nullptr
     void
-    set_new_region(const char* region);
+    resetRegion(const char* region);
 
-    /// \brief set new or first region for indexed file
+    /// \brief set new region for indexed file
     ///
     /// \param referenceContigId htslib zero-indexed contig id
     /// \param beginPos start position (zero-indexed, closed)
     /// \param endPos end position (zero-indexed, closed)
     void
-    set_new_region(
+    resetRegion(
         int referenceContigId,
         int beginPos,
         int endPos);

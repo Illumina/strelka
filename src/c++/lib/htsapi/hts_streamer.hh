@@ -57,7 +57,11 @@ struct hts_streamer : private boost::noncopyable
         return _record_no;
     }
 
-    void set_region(
+    /// \brief set new region for indexed file
+    ///
+    /// \param region htslib-style region string in format: "chromName:beginPos-endPos", cannot be nullptr
+    void
+    resetRegion(
         const char* region);
 
 protected:

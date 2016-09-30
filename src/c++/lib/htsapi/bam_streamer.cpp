@@ -87,7 +87,7 @@ bam_streamer(
     else
     {
         // read a specific region of the bam file:
-        set_new_region(region);
+        resetRegion(region);
     }
 }
 
@@ -172,14 +172,14 @@ _load_index()
 
 void
 bam_streamer::
-set_new_region(const char* region)
+resetRegion(const char* region)
 {
     int32_t referenceContigId, beginPos, endPos;
     parse_bam_region_from_hdr(_hdr, region, referenceContigId, beginPos, endPos);
 
     try
     {
-        set_new_region(referenceContigId,beginPos,endPos);
+        resetRegion(referenceContigId, beginPos, endPos);
         _region=region;
     }
     catch (const std::exception& /*e*/)
@@ -194,7 +194,7 @@ set_new_region(const char* region)
 
 void
 bam_streamer::
-set_new_region(
+resetRegion(
     int referenceContigId,
     int beginPos,
     int endPos)
@@ -203,7 +203,7 @@ set_new_region(
 
     _load_index();
 
-    if (ref < 0)
+    if (referenceContigId < 0)
     {
         std::ostringstream oss;
         oss << "Invalid region (contig index: " << referenceContigId << ") specified for BAM/CRAM file: " << name();
@@ -223,6 +223,7 @@ set_new_region(
     _is_record_set = false;
     _record_no = 0;
 }
+
 
 
 bool
