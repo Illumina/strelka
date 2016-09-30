@@ -19,7 +19,7 @@ corresponding script in the strelka workflow installation:
 This script will also check that the final vcfs produced match the
 expected result.
 
-This demonstation compares seqeunces from two normal (non-cancer)
+This demonstation compares sequences from two normal (non-cancer)
 samples -- using NA12892 as the "example normal" and NA12891 as the
 "example tumor". For each sample the included bam files contain
 sequences for only a small segment of chr20. The region has no
@@ -29,5 +29,4 @@ snv and indel calls.
 Note that this example uses default configurations, except that  the 
 `--exome` option has been selected, to indicate that this is not WGS
 data and therefore standard filters based on locus depth relative to
-average chromosome depth are not applied. 
-
+average chromosome depth are not applied.
