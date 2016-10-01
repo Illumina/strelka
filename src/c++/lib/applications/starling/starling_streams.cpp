@@ -58,17 +58,13 @@ initialize_gvcf_file(
 
 starling_streams::
 starling_streams(
-    const starling_options& opt,
-    const prog_info& pinfo,
-    const std::vector<std::reference_wrapper<const bam_hdr_t>>& bamHeaders,
-    const unsigned sampleCount)
-    : base_t(opt, pinfo, sampleCount)
+        const starling_options& opt,
+        const prog_info& pinfo,
+        const std::vector<std::reference_wrapper<const bam_hdr_t>>& bamHeaders,
+        const std::vector<std::string>& sampleNames)
+    : base_t(opt, pinfo, sampleNames.size()),
+      _sampleNames(sampleNames)
 {
-    for (const bam_hdr_t& bamHeader : bamHeaders)
-    {
-        _sampleNames.push_back(get_bam_header_sample_name(bamHeader));
-    }
-
     assert(not bamHeaders.empty());
     const bam_hdr_t& referenceHeader(bamHeaders.front());
 
@@ -76,6 +72,7 @@ starling_streams(
     {
         const std::string gvcfVariantsPath(opt.gvcf.outputPrefix+"variants.vcf");
         _gvcfVariantsStreamPtr.reset(initialize_gvcf_file(opt, pinfo, gvcfVariantsPath, "variants", referenceHeader));
+        const unsigned sampleCount(getSampleCount());
         for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
             std::ostringstream sampleTag;

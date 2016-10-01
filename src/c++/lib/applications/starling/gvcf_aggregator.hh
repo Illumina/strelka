@@ -31,7 +31,6 @@
 #include <iosfwd>
 
 
-///
 /// Assembles all site and indel call information into a consistent set, blocks output
 /// and writes to a VCF stream
 ///
@@ -66,4 +65,3 @@ private:
     std::shared_ptr<Codon_phaser> _codon_phaser;
     std::shared_ptr<variant_pipe_stage_base> _head;
 };
-

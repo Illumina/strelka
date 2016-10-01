@@ -30,6 +30,7 @@
 #include "blt_util/id_map.hh"
 #include "blt_util/log.hh"
 #include "common/Exceptions.hh"
+#include "htsapi/bam_header_util.hh"
 #include "starling_common/HtsMergeStreamerUtil.hh"
 #include "starling_common/ploidy_util.hh"
 #include "starling_common/starling_ref_seq.hh"
@@ -110,14 +111,69 @@ starling_run(
 
     opt.validate();
 
+    starling_read_counts brc;
+    reference_contig_segment ref;
     RunStatsManager segmentStatMan(opt.segmentStatsFilename);
 
-    reference_contig_segment ref;
+    const unsigned sampleCount(opt.alignFileOpt.alignmentFilename.size());
+
+    ////////////////////////////////////////
+    // setup streamData:
+    //
+    HtsMergeStreamer streamData;
+
+    // additional data structures required in the region loop below, which are filled in as a side effect of
+    // streamData initialization:
+    std::vector<std::reference_wrapper<const bam_hdr_t>> bamHeaders;
+    std::vector<std::string> sampleNames;
+    unsigned ploidyVcfSampleCount(0);
+    std::vector<unsigned> sampleIndexToPloidyVcfSampleIndex;
+
+    {
+        std::vector<unsigned> registrationIndices;
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        {
+            registrationIndices.push_back(sampleIndex);
+        }
+        bamHeaders = registerAlignments(opt, opt.alignFileOpt, registrationIndices, streamData);
+
+        assert(not bamHeaders.empty());
+        const bam_hdr_t& referenceHeader(bamHeaders.front());
+
+        static const bool noRequireNormalized(false);
+        registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader, streamData,
+                        noRequireNormalized);
+        registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
+
+        for (const bam_hdr_t& bamHeader : bamHeaders)
+        {
+            sampleNames.push_back(get_bam_header_sample_name(bamHeader));
+        }
+
+        if (!opt.ploidy_region_vcf.empty())
+        {
+
+            const vcf_streamer& vcfStream(streamData.registerVcf(opt.ploidy_region_vcf.c_str(), INPUT_TYPE::PLOIDY_REGION));
+            vcfStream.validateBamHeaderChromSync(referenceHeader);
+
+            mapVcfSampleIndices(vcfStream, sampleNames, sampleIndexToPloidyVcfSampleIndex);
+            ploidyVcfSampleCount = vcfStream.getSampleCount();
+        }
+
+        if (!opt.gvcf.nocompress_region_bedfile.empty())
+        {
+            streamData.registerBed(opt.gvcf.nocompress_region_bedfile.c_str(), INPUT_TYPE::NOCOMPRESS_REGION);
+        }
+    }
+
+    starling_streams client_io(opt, pinfo, bamHeaders, sampleNames);
+
 
     /// TODO STREL-228 add test that regions do not intersect, and chromes are synced with ref and BAM input, and that regioncount >0
     const unsigned regionCount(opt.regions.size());
     for (unsigned regionIndex(0); regionIndex<regionCount; ++regionIndex)
     {
+#if 0
     /// tmp working area:
     {
         const bam_hdr_t& header(bamStreams[0]->get_header());
@@ -126,52 +182,27 @@ starling_run(
         int32_t tid(0), beginPos(0), endPos(0);
         parse_bam_region(bamHeader,region.c_str(),tid,beginPos,endPos);
     }
+#endif
+
+    const std::string& region(opt.regions[regionIndex]);
 
     get_starling_ref_seq(opt,ref);
+
+    streamData.resetRegion(region.c_str());
 
     const starling_deriv_options dopt(opt,ref);
     const pos_range& rlimit(dopt.report_range_limit);
 
-    const std::string bam_region(get_starling_bam_region_string(opt,dopt));
+   // const std::string bam_region(get_starling_bam_region_string(opt,dopt));
 
-    HtsMergeStreamer streamData(bam_region.c_str());
 
-    const unsigned sampleCount(opt.alignFileOpt.alignmentFilename.size());
 
-    std::vector<unsigned> registrationIndices;
-    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
-    {
-        registrationIndices.push_back(sampleIndex);
-    }
-    const auto allHeaders(registerAlignments(opt, opt.alignFileOpt, registrationIndices, streamData));
-    starling_streams client_io(opt, pinfo, allHeaders, sampleCount);
 
     starling_pos_processor sppr(opt,dopt,ref,client_io);
-    starling_read_counts brc;
 
-    assert(not allHeaders.empty());
-    const bam_hdr_t& referenceHeader(allHeaders.front());
 
-    static const bool noRequireNormalized(false);
-    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader, streamData, noRequireNormalized);
-    registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
 
-    unsigned ploidyVcfSampleCount(0);
-    std::vector<unsigned> sampleIndexToPloidyVcfSampleIndex;
-    if (! opt.ploidy_region_vcf.empty())
-    {
-        const vcf_streamer& vcfStream(streamData.registerVcf(opt.ploidy_region_vcf.c_str(), INPUT_TYPE::PLOIDY_REGION));
-        vcfStream.validateBamHeaderChromSync(referenceHeader);
 
-        const std::vector<std::string>& sampleNames();
-        mapVcfSampleIndices(vcfStream, client_io.getSampleNames(), sampleIndexToPloidyVcfSampleIndex);
-        ploidyVcfSampleCount = vcfStream.getSampleCount();
-    }
-
-    if (! opt.gvcf.nocompress_region_bedfile.empty())
-    {
-        streamData.registerBed(opt.gvcf.nocompress_region_bedfile.c_str(), INPUT_TYPE::NOCOMPRESS_REGION);
-    }
 
     while (streamData.next())
     {
