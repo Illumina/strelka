@@ -25,10 +25,25 @@
 #pragma once
 
 #include "starling_common/starling_base_shared.hh"
+#include "blt_util/known_pos_range2.hh"
 
 #include <string>
 
 
 void
-get_starling_ref_seq(const starling_base_options& opt,
-                     reference_contig_segment& ref);
+get_starling_ref_seq(
+    const starling_base_options& opt,
+    reference_contig_segment& ref);
+
+void
+setRefSegment(
+    const starling_base_options& opt,
+    const std::string& chrom,
+    const known_pos_range2& range,
+    reference_contig_segment& ref);
+
+/// expand target range for analayis to include a leading/trailing buffer
+known_pos_range2
+getPaddedRange(
+    const starling_base_options& opt,
+    const known_pos_range2 range);

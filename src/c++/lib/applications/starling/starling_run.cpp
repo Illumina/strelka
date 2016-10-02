@@ -166,8 +166,11 @@ starling_run(
         }
     }
 
+
     starling_streams client_io(opt, pinfo, bamHeaders, sampleNames);
 
+    const bam_hdr_t& referenceHeader(bamHeaders.front());
+    const bam_header_info referenceHeaderInfo(referenceHeader);
 
     /// TODO STREL-228 add test that regions do not intersect, and chromes are synced with ref and BAM input, and that regioncount >0
     const unsigned regionCount(opt.regions.size());
@@ -184,11 +187,24 @@ starling_run(
     }
 #endif
 
-    const std::string& region(opt.regions[regionIndex]);
+        const std::string& region(opt.regions[regionIndex]);
 
-    get_starling_ref_seq(opt,ref);
+        std::string regionChrom;
+        known_pos_range2 regionRange;
+        known_pos_range2 paddedRegionRange;
+        {
+            int32_t regionBeginPos(0), regionEndPos(0);
+            parse_bam_region(region.c_str(), regionChrom, regionBeginPos, regionEndPos);
 
-    streamData.resetRegion(region.c_str());
+            // translate from samtools to strelka range:
+            regionRange.set_range(regionBeginPos, regionEndPos+1);
+
+            paddedRegionRange = getPaddedRange(opt, regionRange);
+        }
+
+        setRefSegment(opt, regionChrom, paddedRegionRange, ref);
+
+        streamData.resetRegion(region.c_str());
 
     const starling_deriv_options dopt(opt,ref);
     const pos_range& rlimit(dopt.report_range_limit);

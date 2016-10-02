@@ -62,3 +62,39 @@ get_starling_ref_seq(const starling_base_options& opt,
     // note: the ref function below takes closed-closed endpoints, so we subtract one from endPos
     get_standardized_region_seq(opt.referenceFilename, opt.bam_seq_name, ref_range.begin_pos, ref_range.end_pos-1, ref.seq());
 }
+
+
+
+void
+setRefSegment(
+    const starling_base_options& opt,
+    const std::string& chrom,
+    const known_pos_range2& range,
+    reference_contig_segment& ref)
+{
+    assert(! chrom.empty());
+
+    ref.set_offset(range.begin_pos());
+    // note: the ref function below takes closed-closed endpoints, so we subtract one from endPos
+    get_standardized_region_seq(opt.referenceFilename, chrom, range.begin_pos(), range.end_pos()-1, ref.seq());
+}
+
+
+
+known_pos_range2
+getPaddedRange(
+    const starling_base_options& opt,
+    const known_pos_range2 range)
+{
+    static const pos_t region_read_size_pad(512);
+    const pos_t pad_size(opt.max_indel_size+region_read_size_pad);
+
+    known_pos_range2 paddedRange(range);
+    paddedRange.expandBy(pad_size);
+    if (paddedRange.begin_pos() < 0)
+    {
+        paddedRange.set_begin_pos(0);
+    }
+
+    return paddedRange;
+}
