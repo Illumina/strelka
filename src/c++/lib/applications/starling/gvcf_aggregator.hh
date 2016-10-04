@@ -42,7 +42,8 @@ public:
         const starling_deriv_options& dopt,
         const starling_streams& streams,
         const reference_contig_segment& ref,
-        const RegionTracker& nocompress_regions,
+        const RegionTracker& nocompressRegions,
+        const RegionTracker& targetedRegions,
         const std::vector<std::reference_wrapper<const pos_basecall_buffer>>& basecallBuffers);
 
     ~gvcf_aggregator();

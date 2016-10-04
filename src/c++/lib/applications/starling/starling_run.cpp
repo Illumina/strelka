@@ -45,7 +45,8 @@ enum index_t
     CANDIDATE_INDELS,
     FORCED_GT_VARIANTS,
     PLOIDY_REGION,
-    NOCOMPRESS_REGION
+    NOCOMPRESS_REGION,
+    TARGETED_REGION
 };
 }
 
@@ -164,6 +165,12 @@ starling_run(
         {
             streamData.registerBed(opt.gvcf.nocompress_region_bedfile.c_str(), INPUT_TYPE::NOCOMPRESS_REGION);
         }
+
+        if (! opt.gvcf.targeted_regions_bedfile.empty())
+        {
+            streamData.registerBed(opt.gvcf.targeted_regions_bedfile.c_str(), INPUT_TYPE::TARGETED_REGION);
+        }
+
     }
 
 
@@ -320,6 +327,12 @@ starling_run(
             {
                 known_pos_range2 range(bedRecord.begin,bedRecord.end);
                 sppr.insert_nocompress_region(range);
+            }
+
+            if (INPUT_TYPE::TARGETED_REGION == currentIndex)
+            {
+                known_pos_range2 range(bedRecord.begin,bedRecord.end);
+                sppr.insert_targeted_region(range);
             }
             else
             {

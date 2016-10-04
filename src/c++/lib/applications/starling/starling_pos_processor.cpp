@@ -63,7 +63,7 @@ starling_pos_processor(
         }
 
         _gvcfer.reset(new gvcf_aggregator(
-                          _opt, _dopt, _streams, ref,_nocompress_regions, basecallBuffers));
+                          _opt, _dopt, _streams, ref, _nocompress_regions, _targeted_regions, basecallBuffers));
     }
 
     // setup indel buffer:
@@ -146,6 +146,18 @@ insert_nocompress_region(
 {
     _stageman.validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
     _nocompress_regions.addRegion(range);
+    _is_skip_process_pos=false;
+}
+
+
+
+void
+starling_pos_processor::
+insert_targeted_region(
+    const known_pos_range2& range)
+{
+    _stageman.validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
+    _targeted_regions.addRegion(range);
     _is_skip_process_pos=false;
 }
 
