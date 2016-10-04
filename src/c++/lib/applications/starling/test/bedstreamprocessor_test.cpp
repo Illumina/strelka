@@ -49,8 +49,8 @@ BOOST_AUTO_TEST_CASE( filters_snps_before_and_after_range )
     std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
     bed_stream_processor bsp(TEST_DATA_PATH "/bed_stream_test.bed.gz", "chr1", std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
     const gvcf_options gvcfOptions = gvcf_options();
-    const std::string& chromName = "dummy";
-    const gvcf_deriv_options gvcfDerivOptions(gvcfOptions, chromName, false);
+    //const std::string& chromName = "dummy";
+    const gvcf_deriv_options gvcfDerivOptions(gvcfOptions, false);
 
     const unsigned sampleCount(1);
 
@@ -85,8 +85,8 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
     std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
     bed_stream_processor bsp(TEST_DATA_PATH "/bed_stream_test.bed.gz", "chr1", std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
     const gvcf_options gvcfOptions = gvcf_options();
-    const std::string& chromName = "dummy";
-    const gvcf_deriv_options gvcfDerivOptions(gvcfOptions, chromName, false);
+    //const std::string& chromName = "dummy";
+    const gvcf_deriv_options gvcfDerivOptions(gvcfOptions, false);
     const unsigned sampleCount(1);
 
     auto getNewIndel = [&](const pos_t pos)

@@ -212,9 +212,9 @@ starling_run(
    // const std::string bam_region(get_starling_bam_region_string(opt,dopt));
 
 
-
-
     starling_pos_processor sppr(opt,dopt,ref,client_io);
+
+        sppr.resetChrom(regionChrom);
 
 
 

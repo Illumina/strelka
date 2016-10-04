@@ -59,6 +59,18 @@ public:
     void add_indel(std::unique_ptr<GermlineIndelLocusInfo> info);
     void reset();
 
+    void
+    resetChrom(const std::string& chrom)
+    {
+        _scoringModels.resetChrom(chrom);
+    }
+
+    double
+    getMaxDepth() const
+    {
+        return _scoringModels.getMaxDepth();
+    }
+
 private:
     ScoringModelManager _scoringModels;
 

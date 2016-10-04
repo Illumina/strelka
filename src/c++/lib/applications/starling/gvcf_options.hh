@@ -98,7 +98,6 @@ struct gvcf_deriv_options
 {
     gvcf_deriv_options(
         const gvcf_options& opt,
-        const std::string& bam_seq_name,
         const bool isRNA);
 
     bool
@@ -108,8 +107,6 @@ struct gvcf_deriv_options
     }
 
     std::string block_label;
-    double max_depth = 0;
-    double norm_depth = 0;
     cdmap_t chrom_depth;
 
     const FeatureSet& snvFeatureSet;

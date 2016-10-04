@@ -74,7 +74,7 @@ starling_pos_processor(
         {
             if (opt.max_candidate_indel_depth_factor > 0.)
             {
-                maxIndelCandidateDepthSumOverNormalSamples = (opt.max_candidate_indel_depth_factor * dopt.gvcf.max_depth);
+                maxIndelCandidateDepthSumOverNormalSamples = (opt.max_candidate_indel_depth_factor * _gvcfer->getMaxDepth());
             }
         }
 
@@ -100,6 +100,41 @@ starling_pos_processor(
 
         getIndelBuffer().finalizeSamples();
     }
+}
+
+
+
+void
+starling_pos_processor::
+resetChrom(const std::string& chrom)
+{
+    reset();
+
+    assert(_gvcfer);
+    _gvcfer->resetChrom(chrom);
+
+    double maxIndelCandidateDepthSumOverNormalSamples(-1.);
+    if (_dopt.gvcf.is_max_depth())
+    {
+        if (_opt.max_candidate_indel_depth_factor > 0.)
+        {
+            maxIndelCandidateDepthSumOverNormalSamples = (_opt.max_candidate_indel_depth_factor * _gvcfer->getMaxDepth());
+        }
+    }
+
+    if (_opt.max_candidate_indel_depth > 0.)
+    {
+        if (maxIndelCandidateDepthSumOverNormalSamples > 0.)
+        {
+            maxIndelCandidateDepthSumOverNormalSamples = std::min(maxIndelCandidateDepthSumOverNormalSamples,static_cast<double>(_opt.max_candidate_indel_depth));
+        }
+        else
+        {
+            maxIndelCandidateDepthSumOverNormalSamples = _opt.max_candidate_indel_depth;
+        }
+    }
+
+    getIndelBuffer().setMaxCandidateDepth(maxIndelCandidateDepthSumOverNormalSamples);
 }
 
 

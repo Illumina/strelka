@@ -76,6 +76,30 @@ ScoringModelManager(
 
 
 
+/// the current chromosome must be specified before handling any classifications:
+void
+ScoringModelManager::
+resetChrom(const std::string& chrom)
+{
+    _isChromSet = true;
+    if (_dopt.is_max_depth())
+    {
+        cdmap_t::const_iterator cdi(_dopt.chrom_depth.find(std::string(chrom)));
+        if (cdi == _dopt.chrom_depth.end())
+        {
+            std::ostringstream oss;
+            oss << "ERROR: Can't find chromosome: '" << chrom << "' in depth file: " << _opt.chrom_depth_file << "\n";
+            throw blt_exception(oss.str().c_str());
+        }
+        _normDepth = (cdi->second);
+        _maxDepth = (_normDepth * _opt.max_depth_factor);
+    }
+    assert(_normDepth >= 0.);
+    assert(_maxDepth >= 0.);
+}
+
+
+
 void
 ScoringModelManager::
 classify_site(
@@ -96,7 +120,7 @@ classify_site(
             const bool isUniformDepthExpected(_dopt.is_max_depth());
             GermlineDiploidSiteLocusInfo::computeEmpiricalScoringFeatures(
                 locus, sampleIndex, _isRNA, isUniformDepthExpected, _isReportEVSFeatures,
-                _dopt.norm_depth, locus.evsFeatures, locus.evsDevelopmentFeatures);
+                _normDepth, locus.evsFeatures, locus.evsDevelopmentFeatures);
         }
     }
 
@@ -120,7 +144,7 @@ classify_site(
                 locus.clearEVSFeatures();
                 GermlineDiploidSiteLocusInfo::computeEmpiricalScoringFeatures(
                     locus, sampleIndex, _isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures,
-                    _dopt.norm_depth, locus.evsFeatures, locus.evsDevelopmentFeatures);
+                    _normDepth, locus.evsFeatures, locus.evsDevelopmentFeatures);
             }
 
             static const int maxEmpiricalVariantScore(60);
@@ -164,7 +188,7 @@ classify_indel(
             const bool isUniformDepthExpected(_dopt.is_max_depth());
             GermlineDiploidIndelLocusInfo::computeEmpiricalScoringFeatures(
                 locus, sampleIndex, _isRNA, isUniformDepthExpected, _isReportEVSFeatures,
-                _dopt.norm_depth, locus.evsFeatures, locus.evsDevelopmentFeatures);
+                _normDepth, locus.evsFeatures, locus.evsDevelopmentFeatures);
         }
     }
 
@@ -188,7 +212,7 @@ classify_indel(
                 locus.clearEVSFeatures();
                 GermlineDiploidIndelLocusInfo::computeEmpiricalScoringFeatures(
                     locus, sampleIndex, _isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures,
-                    _dopt.norm_depth, locus.evsFeatures, locus.evsDevelopmentFeatures);
+                    _normDepth, locus.evsFeatures, locus.evsDevelopmentFeatures);
             }
 
             static const int maxEmpiricalVariantScore(60);
@@ -226,8 +250,10 @@ default_classify_site(
     }
     if (_dopt.is_max_depth())
     {
-        if (allSampleLocusDepth > _dopt.max_depth)
+        if (allSampleLocusDepth > _maxDepth)
+        {
             sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+        }
     }
 
     // high DPFratio filter
@@ -263,6 +289,8 @@ ScoringModelManager::
 default_classify_site_locus(
     GermlineSiteLocusInfo& locus) const
 {
+    assert(_isChromSet);
+
     const unsigned sampleCount(locus.getSampleCount());
     const unsigned allSampleLocusDepth(locus.getTotalReadDepth());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
@@ -289,8 +317,10 @@ default_classify_indel(
 
     if (_dopt.is_max_depth())
     {
-        if (allSampleLocusDepth > _dopt.max_depth)
+        if (allSampleLocusDepth > _maxDepth)
+        {
             sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+        }
     }
 
     if (_opt.is_max_ref_rep())
@@ -321,6 +351,8 @@ ScoringModelManager::
 default_classify_indel_locus(
     GermlineIndelLocusInfo& locus) const
 {
+    assert(_isChromSet);
+
     const unsigned sampleCount(locus.getSampleCount());
     const unsigned allSampleLocusDepth(locus.getTotalReadDepth());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)

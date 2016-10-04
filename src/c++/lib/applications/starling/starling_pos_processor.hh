@@ -43,6 +43,9 @@ struct starling_pos_processor : public starling_pos_processor_base
         const reference_contig_segment& ref,
         const starling_streams& streams);
 
+    void
+    resetChrom(const std::string& chrom);
+
     /// specify gvcf nocompress status of region
     void
     insert_nocompress_region(
