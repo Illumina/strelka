@@ -82,6 +82,7 @@ struct SomaticIndelVcfWriter
     /// add final information required
     void
     addIndelWindowData(
+        const std::string& chromName,
         const pos_t pos,
         const win_avg_set& wasNormal,
         const win_avg_set& wasTumor);

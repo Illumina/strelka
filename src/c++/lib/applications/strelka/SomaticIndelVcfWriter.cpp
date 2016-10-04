@@ -82,6 +82,7 @@ void
 writeSomaticIndelVcfGrid(
     const strelka_options& opt,
     const strelka_deriv_options& dopt,
+    const std::string& chromName,
     const pos_t pos,
     const SomaticIndelVcfInfo& siInfo,
     const win_avg_set& wasNormal,
@@ -147,7 +148,7 @@ writeSomaticIndelVcfGrid(
 
     static const char sep('\t');
     // CHROM
-    os << opt.bam_seq_name;
+    os << chromName;
 
     // POS+
     os << sep << output_pos;
@@ -264,14 +265,16 @@ cacheIndel(
 void
 SomaticIndelVcfWriter::
 addIndelWindowData(
+    const std::string& chromName,
     const pos_t pos,
     const win_avg_set& wasNormal,
     const win_avg_set& wasTumor)
 {
+    assert(not chromName.empty());
     assert(testPos(pos));
     for (const auto& indelInfo : _data[pos])
     {
-        writeSomaticIndelVcfGrid(_opt, _dopt, pos, indelInfo, wasNormal, wasTumor, *_osptr);
+        writeSomaticIndelVcfGrid(_opt, _dopt, chromName, pos, indelInfo, wasNormal, wasTumor, *_osptr);
     }
     _data.erase(pos);
 }

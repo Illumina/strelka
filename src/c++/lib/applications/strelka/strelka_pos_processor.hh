@@ -49,6 +49,12 @@ struct strelka_pos_processor : public starling_pos_processor_base
         const strelka_streams& streams);
 
     void
+    resetChrom(const std::string& chromName)
+    {
+        _chromName = chromName;
+    }
+
+    void
     insert_noise_pos(
         const pos_t pos,
         const SiteNoise& sn);
@@ -91,6 +97,8 @@ private:
     const strelka_options& _opt;
     const strelka_deriv_options& _dopt;
     const strelka_streams& _streams;
+
+    std::string _chromName;
 
     CleanedPileup _tier2_cpi[STRELKA_SAMPLE_TYPE::SIZE];
 

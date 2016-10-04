@@ -407,6 +407,6 @@ run_post_call_step(
     const win_avg_set& was_normal(sample(STRELKA_SAMPLE_TYPE::NORMAL).wav.get_win_avg_set(_indelRegionIndexNormal));
     const win_avg_set& was_tumor(sample(STRELKA_SAMPLE_TYPE::TUMOR).wav.get_win_avg_set(_indelRegionIndexTumor));
 
-    _indelWriter.addIndelWindowData(pos, was_normal, was_tumor);
+    _indelWriter.addIndelWindowData(_chromName, pos, was_normal, was_tumor);
 }
 
