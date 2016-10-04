@@ -49,7 +49,7 @@ struct strelka_pos_processor : public starling_pos_processor_base
         const strelka_streams& streams);
 
     void
-    resetChrom(const std::string& chromName);
+    resetChromBase(const std::string& chromName);
 
     void
     insert_noise_pos(
@@ -95,7 +95,6 @@ private:
     const strelka_deriv_options& _dopt;
     const strelka_streams& _streams;
 
-    std::string _chromName;
     double _normChromDepth = 0.;
     double _maxChromDepth = 0.;
 

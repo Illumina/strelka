@@ -147,7 +147,7 @@ process_pos_snp_denovo(const pos_t pos)
 
     if (_opt.is_denovo_callable())
     {
-        _icallProcessor.addToRegion(_chrom_name, output_pos,
+        _icallProcessor.addToRegion(_chromName, output_pos,
                                     sinfo, pileups[PEDICURE_TIERS::TIER1]);
     }
 
@@ -159,7 +159,7 @@ process_pos_snp_denovo(const pos_t pos)
     {
         std::stringstream bos;
 
-        bos << _chrom_name<< '\t'
+        bos << _chromName<< '\t'
             << output_pos << '\t'
             << ".";
         denovo_snv_call_vcf(
@@ -170,7 +170,7 @@ process_pos_snp_denovo(const pos_t pos)
             bos);
         bos << "\n";
 
-        aggregate_vcf(_chrom_name,output_pos,bos.str());
+        aggregate_vcf(_chromName,output_pos,bos.str());
     }
 }
 
@@ -286,7 +286,7 @@ process_pos_indel_denovo(const pos_t pos)
 
             std::stringstream bos;
 
-            bos << _chrom_name << sep
+            bos << _chromName << sep
                 << output_pos << sep
                 << ".";
 
@@ -298,7 +298,7 @@ process_pos_indel_denovo(const pos_t pos)
             denovo_indel_call_vcf(_opt, _dopt, sinfo, dindel, indelReportInfo, isri, bos);
             bos << "\n";
 
-            aggregate_vcf(_chrom_name,output_pos,bos.str());
+            aggregate_vcf(_chromName,output_pos,bos.str());
         }
     }
 }

@@ -209,7 +209,7 @@ starling_run(
 
     starling_pos_processor sppr(opt,dopt,ref,client_io);
 
-        sppr.resetChrom(rinfo.regionChrom);
+        sppr.resetChromBase(rinfo.regionChrom);
 
 
 

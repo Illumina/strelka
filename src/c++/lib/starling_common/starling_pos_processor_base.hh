@@ -98,12 +98,12 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     virtual
     ~starling_pos_processor_base();
 
-    // finish position report and reset structure to ground state:
-    //
+    /// finish position report and reset structure to ground state:
+    ///
     void reset();
 
-    // note that indel position should be normalized before calling:
-    //
+    /// note that indel position should be normalized before calling:
+    ///
     void
     insert_indel(const IndelObservation& obs,
                  const unsigned sampleId);
@@ -184,6 +184,9 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     }
 
 protected:
+    /// reset current chromosome -- must be called before inserting region data
+    void resetChromBase(const std::string& chromName);
+
     std::ostream*
     get_report_osptr() const
     {
@@ -590,7 +593,7 @@ protected:
     stage_manager _stageman;
 
     pos_range _report_influence_range;
-    const std::string& _chrom_name;
+    std::string _chromName;
 
     // used to keep read id's unique across multiple samples:
     read_id_counter _ric;

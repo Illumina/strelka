@@ -153,7 +153,7 @@ process_pos_snp_snoise(
         std::ostream& os(*_streams.snoise_osptr());
 
         // CHROM POS ID:
-        os << _chrom_name << '\t'
+        os << _chromName << '\t'
            << output_pos << '\t'
            << ".";
 

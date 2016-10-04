@@ -106,12 +106,13 @@ starling_pos_processor(
 
 void
 starling_pos_processor::
-resetChrom(const std::string& chrom)
+resetChromBase(const std::string& chromName)
 {
+    base_t::resetChromBase(chromName);
     reset();
 
     assert(_gvcfer);
-    _gvcfer->resetChrom(chrom);
+    _gvcfer->resetChrom(chromName);
 
     double maxIndelCandidateDepthSumOverNormalSamples(-1.);
     if (_dopt.gvcf.is_max_depth())

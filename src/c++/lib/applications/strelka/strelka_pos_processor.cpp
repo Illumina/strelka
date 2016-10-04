@@ -81,9 +81,9 @@ strelka_pos_processor(
 
 void
 strelka_pos_processor::
-resetChrom(const std::string& chromName)
+resetChromBase(const std::string& chromName)
 {
-    _chromName = chromName;
+    base_t::resetChromBase(chromName);
 
     // setup norm and max filtration depths
     {
@@ -206,7 +206,7 @@ process_pos_snp_somatic(const pos_t pos)
 
         if (_opt.is_somatic_callable())
         {
-            _scallProcessor.addToRegion(_chrom_name,output_pos,sgtg);
+            _scallProcessor.addToRegion(_chromName,output_pos,sgtg);
         }
     }
 
@@ -231,11 +231,11 @@ process_pos_snp_somatic(const pos_t pos)
 
         // have to keep tier1 counts for filtration purposes:
 #ifdef SOMATIC_DEBUG
-        write_snv_prefix_info_file(_chrom_name,output_pos,ref_base,normald,tumord,log_os);
+        write_snv_prefix_info_file(_chromName,output_pos,ref_base,normald,tumord,log_os);
         log_os << "\n";
 #endif
 
-        bos << _chrom_name << '\t'
+        bos << _chromName << '\t'
             << output_pos << '\t'
             << ".";
 

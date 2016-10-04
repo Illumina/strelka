@@ -278,7 +278,6 @@ starling_pos_processor_base(
     , _largest_indel_ref_span(opt.max_indel_size)
     , _largest_total_indel_ref_span_per_read(_largest_indel_ref_span)
     , _stageman(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE, get_largest_total_indel_ref_span_per_read(), _opt, _dopt),dopt.report_range,*this)
-    , _chrom_name(_opt.bam_seq_name)
     , _sample(sampleCount)
     , _pileupCleaner(opt)
     , _indelBuffer(opt,dopt,ref)
@@ -418,6 +417,16 @@ reset()
 
 void
 starling_pos_processor_base::
+resetChromBase(const std::string& chromName)
+{
+    reset();
+    _chromName = chromName;
+}
+
+
+
+void
+starling_pos_processor_base::
 insert_indel(
     const IndelObservation& obs,
     const unsigned sampleId)
@@ -543,9 +552,9 @@ insert_read(
 {
     boost::optional<align_id_t> retval;
 
-    if (0 != strcmp(_chrom_name.c_str(),chrom_name))
+    if (0 != strcmp(_chromName.c_str(),chrom_name))
     {
-        log_os << "ERROR: starling_pos_processor_base.insert_read(): read has unexpected sequence name: '" << chrom_name << "' expecting: '" << _chrom_name << "'\n"
+        log_os << "ERROR: starling_pos_processor_base.insert_read(): read has unexpected sequence name: '" << chrom_name << "' expecting: '" << _chromName << "'\n"
                << "\tread_key: " << read_key(br) << "\n";
         exit(EXIT_FAILURE);
     }
@@ -1063,7 +1072,7 @@ write_candidate_indels_pos(
         const IndelKey& indelKey(indelIter->first);
         const IndelData& indelData(getIndelData(indelIter));
         if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
-        bos << _chrom_name << "\t"
+        bos << _chromName << "\t"
             << output_pos << "\t"
             << INDEL::get_index_label(indelKey.type) << "\t";
         if (indelKey.is_breakpoint())
