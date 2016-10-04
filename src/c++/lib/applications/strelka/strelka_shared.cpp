@@ -43,19 +43,6 @@ strelka_deriv_options(
     if (opt.sfilter.is_depth_filter())
     {
         parse_chrom_depth(opt.sfilter.chrom_depth_file, sfilter.chrom_depth);
-
-        //TODO, verify that chroms match bam chroms
-        const std::string& chrom_name(opt.bam_seq_name);
-        cdmap_t::const_iterator cdi(sfilter.chrom_depth.find(std::string(chrom_name)));
-        if (cdi == sfilter.chrom_depth.end())
-        {
-            std::ostringstream oss;
-            oss << "ERROR: Can't find chromosome: '" << chrom_name << "' in chrom depth file: " << opt.sfilter.chrom_depth_file << "\n";
-            throw blt_exception(oss.str().c_str());
-        }
-        sfilter.expected_chrom_depth=(cdi->second);
-        sfilter.max_chrom_depth=(cdi->second*opt.sfilter.max_depth_factor);
-        assert(sfilter.max_chrom_depth>=0.);
     }
 
     sfilter.indelRegionStage=(addPostCallStage(opt.sfilter.indelRegionFlankSize));

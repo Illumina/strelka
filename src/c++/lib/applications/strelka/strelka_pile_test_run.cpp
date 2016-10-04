@@ -101,12 +101,8 @@ call(
         << pos << '\t'
         << ".";
 
-    write_vcf_somatic_snv_genotype_strand_grid(_opt,*(_dopt_ptr),sgtg,is_somatic_gvcf,
-                                               norm_cpi,
-                                               tumor_cpi,
-                                               norm_cpi,
-                                               tumor_cpi,
-                                               _os);
+    write_vcf_somatic_snv_genotype_strand_grid(_opt, *(_dopt_ptr), sgtg, is_somatic_gvcf, norm_cpi,
+                                               tumor_cpi, norm_cpi, tumor_cpi, 0, 0, _os);
 
     _os << "\n";
 }

@@ -43,10 +43,12 @@ safeFrac(const unsigned num, const D denom)
 }
 
 
+
 double
-calculateLogOddsRatio(  const CleanedPileup& n1_cpi,
-                        const CleanedPileup& t1_cpi,
-                        const blt_options& opt)
+calculateLogOddsRatio(
+    const CleanedPileup& n1_cpi,
+    const CleanedPileup& t1_cpi,
+    const blt_options& opt)
 {
 
     /**
@@ -81,6 +83,8 @@ calculateLogOddsRatio(  const CleanedPileup& n1_cpi,
     return LOR;
 }
 
+
+
 /// set sample specific empirical scoring features
 ///
 // similar to 'write_vcf_sample_info' below, redundancy needed to get order of output right
@@ -92,6 +96,7 @@ get_single_sample_scoring_features(
     const strelka_deriv_options& dopt,
     const CleanedPileup& tier1_cpi,
     const CleanedPileup& /*tier2_cpi*/,
+    const double normChromDepth,
     const bool isNormalSample,
     strelka_shared_modifiers_snv& smod)
 {
@@ -115,7 +120,7 @@ get_single_sample_scoring_features(
         double normalDepthRate(1.);
         if (isUniformDepthExpected)
         {
-            normalDepthRate = safeFrac(tier1_cpi.n_calls(),dopt.sfilter.expected_chrom_depth);
+            normalDepthRate = safeFrac(tier1_cpi.n_calls(), normChromDepth);
         }
 
         smod.features.set(SOMATIC_SNV_SCORING_FEATURES::N_DP_RATE,normalDepthRate);
@@ -187,6 +192,7 @@ get_scoring_features(
     const CleanedPileup& t1_cpi,
     const CleanedPileup& n2_cpi,
     const CleanedPileup& t2_cpi,
+    const double normChromDepth,
     const snv_result_set& rs,
     strelka_shared_modifiers_snv& smod)
 {
@@ -226,8 +232,8 @@ get_scoring_features(
     smod.features.set(SOMATIC_SNV_SCORING_FEATURES::QSS_NT,rs.from_ntype_qphred);
 
     static const bool isNormalSample(true);
-    get_single_sample_scoring_features(opt,dopt,n1_cpi,n2_cpi,isNormalSample,smod);
-    get_single_sample_scoring_features(opt,dopt,t1_cpi,t2_cpi,(!isNormalSample),smod);
+    get_single_sample_scoring_features(opt,dopt,n1_cpi,n2_cpi, normChromDepth, isNormalSample,smod);
+    get_single_sample_scoring_features(opt,dopt,t1_cpi,t2_cpi, normChromDepth, (!isNormalSample),smod);
 
     //MQ
     MapqTracker mapqTracker(n1_cpi.rawPileup().mapqTracker);
@@ -302,6 +308,8 @@ write_vcf_somatic_snv_genotype_strand_grid(
     const CleanedPileup& t1_epd,
     const CleanedPileup& n2_epd,
     const CleanedPileup& t2_epd,
+    const double normChromDepth,
+    const double maxChromDepth,
     std::ostream& os)
 {
     const snv_result_set& rs(sgt.rs);
@@ -318,7 +326,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
         if (dopt.sfilter.is_max_depth())
         {
-            if (normalDP > dopt.sfilter.max_chrom_depth)
+            if (normalDP > maxChromDepth)
             {
                 smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::HighDepth);
             }
@@ -364,7 +372,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
         // Make sure the empirical scoring feature vector is populated
         // this is done even if not running with EVS as some intermediate
         // calculations are still needed for VCF reporting
-        get_scoring_features(opt,dopt,sgt,n1_epd,t1_epd,n2_epd,t2_epd,rs,smod);
+        get_scoring_features(opt,dopt,sgt,n1_epd,t1_epd,n2_epd,t2_epd, normChromDepth, rs,smod);
 
         // if we are using empirical scoring, clear filters and apply single LowEVS filter
         if (isEVS)

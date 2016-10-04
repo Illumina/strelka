@@ -97,7 +97,7 @@ struct ScoringModelManager
     getMaxDepth() const
     {
         assert(_isChromSet);
-        return _maxDepth;
+        return _maxChromDepth;
     }
 
 private:
@@ -122,8 +122,8 @@ private:
     bool _isRNA;
 
     bool _isChromSet = false;
-    double _normDepth = 0.;
-    double _maxDepth = 0.;
+    double _normChromDepth = 0.;
+    double _maxChromDepth = 0.;
 
     std::unique_ptr<VariantScoringModelServer> _snvScoringModelPtr;
     std::unique_ptr<VariantScoringModelServer> _indelScoringModelPtr;

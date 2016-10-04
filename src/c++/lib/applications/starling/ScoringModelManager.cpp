@@ -76,7 +76,6 @@ ScoringModelManager(
 
 
 
-/// the current chromosome must be specified before handling any classifications:
 void
 ScoringModelManager::
 resetChrom(const std::string& chrom)
@@ -91,11 +90,11 @@ resetChrom(const std::string& chrom)
             oss << "ERROR: Can't find chromosome: '" << chrom << "' in depth file: " << _opt.chrom_depth_file << "\n";
             throw blt_exception(oss.str().c_str());
         }
-        _normDepth = (cdi->second);
-        _maxDepth = (_normDepth * _opt.max_depth_factor);
+        _normChromDepth = (cdi->second);
+        _maxChromDepth = (_normChromDepth * _opt.max_depth_factor);
     }
-    assert(_normDepth >= 0.);
-    assert(_maxDepth >= 0.);
+    assert(_normChromDepth >= 0.);
+    assert(_maxChromDepth >= 0.);
 }
 
 
@@ -120,7 +119,7 @@ classify_site(
             const bool isUniformDepthExpected(_dopt.is_max_depth());
             GermlineDiploidSiteLocusInfo::computeEmpiricalScoringFeatures(
                 locus, sampleIndex, _isRNA, isUniformDepthExpected, _isReportEVSFeatures,
-                _normDepth, locus.evsFeatures, locus.evsDevelopmentFeatures);
+                _normChromDepth, locus.evsFeatures, locus.evsDevelopmentFeatures);
         }
     }
 
@@ -144,7 +143,7 @@ classify_site(
                 locus.clearEVSFeatures();
                 GermlineDiploidSiteLocusInfo::computeEmpiricalScoringFeatures(
                     locus, sampleIndex, _isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures,
-                    _normDepth, locus.evsFeatures, locus.evsDevelopmentFeatures);
+                    _normChromDepth, locus.evsFeatures, locus.evsDevelopmentFeatures);
             }
 
             static const int maxEmpiricalVariantScore(60);
@@ -188,7 +187,7 @@ classify_indel(
             const bool isUniformDepthExpected(_dopt.is_max_depth());
             GermlineDiploidIndelLocusInfo::computeEmpiricalScoringFeatures(
                 locus, sampleIndex, _isRNA, isUniformDepthExpected, _isReportEVSFeatures,
-                _normDepth, locus.evsFeatures, locus.evsDevelopmentFeatures);
+                _normChromDepth, locus.evsFeatures, locus.evsDevelopmentFeatures);
         }
     }
 
@@ -212,7 +211,7 @@ classify_indel(
                 locus.clearEVSFeatures();
                 GermlineDiploidIndelLocusInfo::computeEmpiricalScoringFeatures(
                     locus, sampleIndex, _isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures,
-                    _normDepth, locus.evsFeatures, locus.evsDevelopmentFeatures);
+                    _normChromDepth, locus.evsFeatures, locus.evsDevelopmentFeatures);
             }
 
             static const int maxEmpiricalVariantScore(60);
@@ -250,7 +249,7 @@ default_classify_site(
     }
     if (_dopt.is_max_depth())
     {
-        if (allSampleLocusDepth > _maxDepth)
+        if (allSampleLocusDepth > _maxChromDepth)
         {
             sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
         }
@@ -317,7 +316,7 @@ default_classify_indel(
 
     if (_dopt.is_max_depth())
     {
-        if (allSampleLocusDepth > _maxDepth)
+        if (allSampleLocusDepth > _maxChromDepth)
         {
             sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
         }

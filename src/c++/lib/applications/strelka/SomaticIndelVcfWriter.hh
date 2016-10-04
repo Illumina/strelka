@@ -80,12 +80,15 @@ struct SomaticIndelVcfWriter
         const SomaticIndelVcfInfo& siInfo);
 
     /// add final information required
+    ///
+    /// \param maxChromDepth[in] max expected normal sample depth for this chromosome
     void
     addIndelWindowData(
         const std::string& chromName,
         const pos_t pos,
         const win_avg_set& wasNormal,
-        const win_avg_set& wasTumor);
+        const win_avg_set& wasTumor,
+        const double maxChromDepth);
 
 private:
     const strelka_options& _opt;

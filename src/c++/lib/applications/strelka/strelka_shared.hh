@@ -154,9 +154,11 @@ struct somatic_filter_deriv_options
         return (! chrom_depth.empty());
     }
 
-    double max_chrom_depth = 0;
-    double expected_chrom_depth = 0;
     cdmap_t chrom_depth;
+
+    /// one somatic indel feature requires a delayed computation (it is based on a window around the variant call,
+    /// this is accomplished by using a "post-call" stage in the pos-processor stage-manager scheme, here we
+    /// store the stage number associated with this post-call filtration step:
     unsigned indelRegionStage = 0;
 };
 
