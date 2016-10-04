@@ -188,23 +188,11 @@ starling_run(
 #endif
 
         const std::string& region(opt.regions[regionIndex]);
+        AnalysisRegionInfo rinfo;
+        getStrelkaAnalysisRegions(region, opt.max_indel_size, rinfo);
 
-        std::string regionChrom;
-        known_pos_range2 regionRange;
-        known_pos_range2 paddedRegionRange;
-        {
-            int32_t regionBeginPos(0), regionEndPos(0);
-            parse_bam_region(region.c_str(), regionChrom, regionBeginPos, regionEndPos);
-
-            // translate from samtools to strelka range:
-            regionRange.set_range(regionBeginPos, regionEndPos+1);
-
-            paddedRegionRange = getPaddedRange(opt, regionRange);
-        }
-
-        setRefSegment(opt, regionChrom, paddedRegionRange, ref);
-
-        streamData.resetRegion(region.c_str());
+        streamData.resetRegion(rinfo.streamerRegion.c_str());
+        setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
 
     const starling_deriv_options dopt(opt,ref);
     const pos_range& rlimit(dopt.report_range_limit);
@@ -214,7 +202,7 @@ starling_run(
 
     starling_pos_processor sppr(opt,dopt,ref,client_io);
 
-        sppr.resetChrom(regionChrom);
+        sppr.resetChrom(rinfo.regionChrom);
 
 
 

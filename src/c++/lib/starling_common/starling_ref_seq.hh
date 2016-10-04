@@ -42,8 +42,30 @@ setRefSegment(
     const known_pos_range2& range,
     reference_contig_segment& ref);
 
-/// expand target range for analayis to include a leading/trailing buffer
-known_pos_range2
-getPaddedRange(
-    const starling_base_options& opt,
-    const known_pos_range2 range);
+
+struct AnalysisRegionInfo
+{
+    /// chrom string from region parse
+    std::string regionChrom;
+
+    ///strelka range from region parse
+    known_pos_range2 regionRange;
+
+    ///analysis range padded by indel size (used for streamer classses)
+    known_pos_range2 streamerRegionRange;
+
+    ///analysis range padded by indel size + extra constant pad (used for reference region)
+    known_pos_range2 refRegionRange;
+    std::string streamerRegion;
+};
+
+
+/// given an input region for analysis, produce various related
+/// region objects used to manage edge-effects
+///
+/// \param region[in] samtools formated analysis region string
+void
+getStrelkaAnalysisRegions(
+    const std::string& region,
+    const unsigned maxIndelSize,
+    AnalysisRegionInfo& rinfo);

@@ -26,6 +26,7 @@
 #include "starling_common/starling_ref_seq.hh"
 
 #include "htsapi/samtools_fasta_util.hh"
+#include "htsapi/bam_header_util.hh"
 
 
 
@@ -81,20 +82,39 @@ setRefSegment(
 
 
 
-known_pos_range2
-getPaddedRange(
-    const starling_base_options& opt,
-    const known_pos_range2 range)
+static
+std::string
+getSamtoolsRegionString(
+    const std::string& chromName,
+    const known_pos_range2& range)
 {
+    std::ostringstream oss;
+    oss << chromName << ':' << range.begin_pos()+1 << '-' << range.end_pos();
+    return oss.str();
+}
+
+
+
+void
+getStrelkaAnalysisRegions(
+    const std::string& region,
+    const unsigned maxIndelSize,
+    AnalysisRegionInfo& rinfo)
+{
+    int32_t regionBeginPos(0), regionEndPos(0);
+    parse_bam_region(region.c_str(), rinfo.regionChrom, regionBeginPos, regionEndPos);
+
+    // translate from samtools to strelka range:
+    rinfo.regionRange.set_range(regionBeginPos, regionEndPos+1);
+
+    rinfo.streamerRegionRange = rinfo.regionRange;
+    rinfo.streamerRegionRange.expandBy(maxIndelSize);
+    rinfo.streamerRegionRange.makeNonNegative();
+
+    rinfo.streamerRegion = getSamtoolsRegionString(rinfo.regionChrom, rinfo.streamerRegionRange);
+
     static const pos_t region_read_size_pad(512);
-    const pos_t pad_size(opt.max_indel_size+region_read_size_pad);
-
-    known_pos_range2 paddedRange(range);
-    paddedRange.expandBy(pad_size);
-    if (paddedRange.begin_pos() < 0)
-    {
-        paddedRange.set_begin_pos(0);
-    }
-
-    return paddedRange;
+    rinfo.refRegionRange = rinfo.streamerRegionRange;
+    rinfo.refRegionRange.expandBy(region_read_size_pad);
+    rinfo.refRegionRange.makeNonNegative();
 }
