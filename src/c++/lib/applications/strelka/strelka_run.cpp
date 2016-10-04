@@ -59,39 +59,62 @@ strelka_run(
 
     opt.validate();
 
-    RunStatsManager segmentStatMan(opt.segmentStatsFilename);
-
+    starling_read_counts brc;
     reference_contig_segment ref;
-    get_starling_ref_seq(opt,ref);
-    const strelka_deriv_options dopt(opt,ref);
+    RunStatsManager segmentStatMan(opt.segmentStatsFilename);
+    const StrelkaSampleSetSummary ssi;
 
-    const pos_range& rlimit(dopt.report_range_limit);
+    ////////////////////////////////////////
+    // setup streamData:
+    //
+    HtsMergeStreamer streamData;
 
-    const std::string bam_region(get_starling_bam_region_string(opt,dopt));
-    HtsMergeStreamer streamData(bam_region.c_str());
-
-    std::vector<unsigned> registrationIndices;
-    for (const bool isTumor : opt.alignFileOpt.isAlignmentTumor)
+    // additional data structures required in the region loop below, which are filled in as a side effect of
+    // streamData initialization:
+    std::vector<std::reference_wrapper<const bam_hdr_t>> bamHeaders;
     {
-        const unsigned rindex(isTumor ? STRELKA_SAMPLE_TYPE::TUMOR : STRELKA_SAMPLE_TYPE::NORMAL);
-        registrationIndices.push_back(rindex);
+        std::vector<unsigned> registrationIndices;
+        for (const bool isTumor : opt.alignFileOpt.isAlignmentTumor)
+        {
+            const unsigned rindex(isTumor ? STRELKA_SAMPLE_TYPE::TUMOR : STRELKA_SAMPLE_TYPE::NORMAL);
+            registrationIndices.push_back(rindex);
+        }
+
+        bamHeaders = registerAlignments(opt, opt.alignFileOpt, registrationIndices, streamData);
+
+        assert(not bamHeaders.empty());
+        const bam_hdr_t& referenceHeader(bamHeaders.front());
+
+        static const bool noRequireNormalized(false);
+        registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader, streamData,
+                        noRequireNormalized);
+        registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
+
+        registerVcfList(opt.noise_vcf, INPUT_TYPE::NOISE_VARIANTS, referenceHeader, streamData);
     }
 
-    const auto allHeaders(registerAlignments(opt, opt.alignFileOpt, registrationIndices, streamData));
+    const bam_hdr_t& referenceHeader(bamHeaders.front());
 
-    assert(not allHeaders.empty());
-    const bam_hdr_t& referenceHeader(allHeaders.front());
+    const unsigned regionCount(opt.regions.size());
+    for (unsigned regionIndex(0); regionIndex<regionCount; ++regionIndex)
+    {
+        const std::string& region(opt.regions[regionIndex]);
+        AnalysisRegionInfo rinfo;
+        getStrelkaAnalysisRegions(region, opt.max_indel_size, rinfo);
 
-    const StrelkaSampleSetSummary ssi;
-    strelka_streams client_io(opt, dopt, pinfo, referenceHeader,ssi);
-    strelka_pos_processor sppr(opt,dopt,ref,client_io);
-    starling_read_counts brc;
+        streamData.resetRegion(rinfo.streamerRegion.c_str());
+        setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
 
-    static const bool noRequireNormalized(false);
-    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader, streamData, noRequireNormalized);
-    registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
+        streamData.resetRegion(rinfo.streamerRegion.c_str());
+        get_starling_ref_seq(opt, ref);
 
-    registerVcfList(opt.noise_vcf, INPUT_TYPE::NOISE_VARIANTS, referenceHeader, streamData);
+    const strelka_deriv_options dopt(opt, ref);
+    const pos_range& rlimit(dopt.report_range_limit);
+
+    //const std::string bam_region(get_starling_bam_region_string(opt, dopt));
+    strelka_streams client_io(opt, dopt, pinfo, referenceHeader, ssi);
+    strelka_pos_processor sppr(opt, dopt, ref, client_io);
+
 
     while (streamData.next())
     {
@@ -104,12 +127,12 @@ strelka_run(
         //   range indels which might influence results within the
         //   report range:
         //
-        if (rlimit.is_end_pos && (currentPos >= (rlimit.end_pos+static_cast<pos_t>(opt.max_indel_size)))) break;
+        if (rlimit.is_end_pos && (currentPos >= (rlimit.end_pos + static_cast<pos_t>(opt.max_indel_size)))) break;
 
         // wind sppr forward to position behind buffer head:
-        sppr.set_head_pos(currentPos-1);
+        sppr.set_head_pos(currentPos - 1);
 
-        if       (HTS_TYPE::BAM == currentHtsType)
+        if (HTS_TYPE::BAM == currentHtsType)
         {
             // Remove the filter below because it's not valid for
             // RNA-Seq case, reads should be selected for the report
@@ -140,17 +163,18 @@ strelka_run(
                     streamData.getCurrentVcfStreamer().report_state(log_os);
                 }
             }
-            else if (INPUT_TYPE::FORCED_GT_VARIANTS == currentIndex)     // process forced genotype tests from vcf file(s)
+            else if (INPUT_TYPE::FORCED_GT_VARIANTS ==
+                     currentIndex)     // process forced genotype tests from vcf file(s)
             {
                 if (vcfRecord.is_indel())
                 {
                     static const unsigned sample_no(0);
                     static const bool is_forced_output(true);
-                    process_candidate_indel(opt.max_indel_size, vcfRecord,sppr,sample_no,is_forced_output);
+                    process_candidate_indel(opt.max_indel_size, vcfRecord, sppr, sample_no, is_forced_output);
                 }
                 else if (vcfRecord.is_snv())
                 {
-                    sppr.insert_forced_output_pos(vcfRecord.pos-1);
+                    sppr.insert_forced_output_pos(vcfRecord.pos - 1);
                 }
                 else
                 {
@@ -165,8 +189,8 @@ strelka_run(
                 if (vcfRecord.is_snv())
                 {
                     SiteNoise sn;
-                    set_noise_from_vcf(vcfRecord.line,sn);
-                    sppr.insert_noise_pos(vcfRecord.pos-1,sn);
+                    set_noise_from_vcf(vcfRecord.line, sn);
+                    sppr.insert_noise_pos(vcfRecord.pos - 1, sn);
                 }
             }
             else
@@ -182,6 +206,5 @@ strelka_run(
     }
 
     sppr.reset();
-
-    //    brc.report(client_io.report_os());
+    }
 }
