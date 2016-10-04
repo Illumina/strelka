@@ -80,8 +80,6 @@ def main():
     result = []
 
     fns = dataset[dataset["tag"] == "FN"].shape[0]
-    # total_tp = dataset[dataset["tag"] == "TP"].shape[0]
-    # total_fp = dataset[dataset["tag"] == "FP"].shape[0]
     dataset = pandas.DataFrame(dataset[dataset["tag"] != "FN"])
 
     for f in args.q.split(","):
@@ -93,44 +91,8 @@ def main():
 
         data_remaining = dataset
 
-        if f == "QSS_NT":
-            strelka_f = (dataset["NT"] == "ref") & \
-                        (dataset["N_FDP_RATE"] < 0.4) & \
-                        (dataset["T_FDP_RATE"] < 0.4) & \
-                        (dataset["N_SDP_RATE"] < 0.75) & \
-                        (dataset["T_SDP_RATE"] < 0.75) & \
-                        (dataset[
-                         "N_DP_RATE"] < 0.3333)  # -> N_DP_RATE = N_DP / chr_depth < 1 -> N_DP < chr_depth
-            strelka_def_f = dataset[True != strelka_f]
-            strelka_f_tps = strelka_def_f[
-                strelka_def_f["tag"] == "TP"].shape[0]
-            strelka_f_fps = strelka_def_f[
-                strelka_def_f["tag"] == "FP"].shape[0]
-            data_remaining = dataset[True == strelka_f]
-        elif f == "QSI_NT":
-            strelka_f_ref = (dataset["NT"] == "ref")
-            strelka_f_ihpol = (dataset["IHP"] <= 14)
-            strelka_f_bcnoise = (dataset["bcn"] < 0.3)
-            strelka_f_repeat = (dataset["RC"] <= 8)
-            strelka_f = strelka_f_ref & strelka_f_ihpol & strelka_f_bcnoise & strelka_f_repeat
-
-            strelka_def_f = dataset[True != strelka_f]
-            strelka_f_tps = strelka_def_f[
-                strelka_def_f["tag"] == "TP"].shape[0]
-            strelka_f_fps = strelka_def_f[
-                strelka_def_f["tag"] == "FP"].shape[0]
-
-            print "Strelka default filtering:"
-            print "NT != ref: %i" % dataset[True != strelka_f_ref].shape[0]
-            print "iHpol: %i" % dataset[True != strelka_f_ihpol].shape[0]
-            print "BCNoise: %i" % dataset[True != strelka_f_bcnoise].shape[0]
-            print "Repeat: %i" % dataset[True != strelka_f_repeat].shape[0]
-            print "Total: %i (%i TP and %i FP)" % (dataset[True != strelka_f].shape[0], strelka_f_tps, strelka_f_fps)
-
-            data_remaining = dataset[True == strelka_f]
-        else:
-            strelka_f_tps = 0
-            strelka_f_fps = 0
+        strelka_f_tps = 0
+        strelka_f_fps = 0
 
         counter = 0
         for q in qual_vals:

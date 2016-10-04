@@ -82,13 +82,11 @@ def parseArgs():
 def main():
     args = parseArgs()
 
-#    chromDepth = pandas.read_csv("ChromDepth.txt", delimiter="\t", header=None, names=["chr", "depth", "dummy1", "dummy2"])
     datasets = []
     for i in args.inputs:
         i = os.path.abspath(i)
         print "Reading %s" % i
         df = pandas.read_csv(i, na_values=".")
-#        df = normalizeChromDepth(df, chromDepth)
         df.fillna("0", inplace=True)
         datasets.append(df)
 
@@ -112,7 +110,6 @@ def main():
     model = evs.EVSModel.createFromFile(args.classifier)
     preds = model.classify(
         dataset[dataset["tag"].isin(["TP", "FP", "UNK"])], features)
-#        dataset[dataset["tag"].isin(["TP", "FP"])], features)
 
     rlist = [fns, preds]
 
