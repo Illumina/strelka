@@ -89,7 +89,7 @@ resetRegion(
     base_t::resetRegionBase(chromName, reportRegion);
 
     assert(_gvcfer);
-    _gvcfer->resetChrom(chromName);
+    _gvcfer->resetRegion(chromName, reportRegion);
 
     // setup indel buffer max depth:
     {
@@ -127,7 +127,7 @@ starling_pos_processor::
 insert_nocompress_region(
     const known_pos_range2& range)
 {
-    _stageman.validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
+    _stagemanPtr->validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
     _nocompress_regions.addRegion(range);
     _is_skip_process_pos=false;
 }
@@ -139,7 +139,7 @@ starling_pos_processor::
 insert_targeted_region(
     const known_pos_range2& range)
 {
-    _stageman.validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
+    _stagemanPtr->validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
     _targeted_regions.addRegion(range);
     _is_skip_process_pos=false;
 }

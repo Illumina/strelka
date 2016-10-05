@@ -33,10 +33,8 @@
 
 
 strelka_deriv_options::
-strelka_deriv_options(
-    const strelka_options& opt,
-    const reference_contig_segment& ref)
-    : base_t(opt,ref)
+strelka_deriv_options(const strelka_options& opt)
+    : base_t(opt)
     , _sscaller_strand_grid(new somatic_snv_caller_strand_grid(opt))
     , _sicaller_grid(new somatic_indel_caller_grid(opt))
 {

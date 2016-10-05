@@ -174,9 +174,8 @@ struct strelka_deriv_options : public starling_base_deriv_options
 {
     typedef starling_base_deriv_options base_t;
 
-    strelka_deriv_options(
-        const strelka_options& opt,
-        const reference_contig_segment& ref);
+    explicit
+    strelka_deriv_options(const strelka_options& opt);
 
     ~strelka_deriv_options();
 

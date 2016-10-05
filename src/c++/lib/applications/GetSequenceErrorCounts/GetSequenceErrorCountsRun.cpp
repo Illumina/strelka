@@ -166,7 +166,7 @@ getSequenceErrorCountsRun(
         streamData.resetRegion(rinfo.streamerRegion.c_str());
         setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
 
-    const SequenceErrorCountsDerivOptions dopt(opt, ref);
+    const SequenceErrorCountsDerivOptions dopt(opt);
     SequenceErrorCountsPosProcessor sppr(opt, dopt, ref, client_io);
 
         sppr.resetRegion(rinfo.regionChrom, rinfo.regionRange);

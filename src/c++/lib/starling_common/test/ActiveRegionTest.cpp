@@ -41,7 +41,7 @@ struct TestIndelBuffer
         _opt.user_genome_size = ref.seq().size();
 
         const double maxDepth = 100.0;
-        _doptPtr.reset(new starling_base_deriv_options(_opt,ref));
+        _doptPtr.reset(new starling_base_deriv_options(_opt));
 
         _IndelBufferPtr.reset(new IndelBuffer(_opt, *_doptPtr, ref));
         _IndelBufferPtr->registerSample(depth_buffer(), depth_buffer(), maxDepth);

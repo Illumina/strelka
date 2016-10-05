@@ -96,7 +96,7 @@ snoise_run(
         streamData.resetRegion(rinfo.streamerRegion.c_str());
         setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
 
-    const starling_base_deriv_options dopt(opt, ref);
+    const starling_base_deriv_options dopt(opt);
     const unsigned sampleCount(1);
     snoise_streams streams(opt, pinfo, referenceHeader, sampleCount);
 

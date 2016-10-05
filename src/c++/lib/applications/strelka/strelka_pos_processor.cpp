@@ -143,7 +143,7 @@ insert_noise_pos(
     const pos_t pos,
     const SiteNoise& sn)
 {
-    _stageman.validate_new_pos_value(pos,STAGE::READ_BUFFER);
+    _stagemanPtr->validate_new_pos_value(pos,STAGE::READ_BUFFER);
     _noisePos.insertSiteNoise(pos,sn);
 }
 

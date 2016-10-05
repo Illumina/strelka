@@ -33,8 +33,6 @@
 #include <memory>
 #include <vector>
 
-extern const char STDIN_FILENAME[];
-
 extern const unsigned MAX_FLANK_SIZE;
 
 
@@ -147,18 +145,10 @@ struct pprob_digt_caller;
 //
 struct blt_deriv_options
 {
-    /// @param ref_end this is either the full reference contig size,
-    /// or the end position of the acquired reference segment if
-    /// -report-range-end was used
-    ///
     blt_deriv_options(
-        const blt_options& opt,
-        const pos_t ref_end);
+        const blt_options& opt);
 
     ~blt_deriv_options();
-
-    pos_range report_range;
-    //pos_range report_range_limit;   //  maximum report range
 
     const pprob_digt_caller&
     pdcaller() const
@@ -167,7 +157,7 @@ struct blt_deriv_options
     }
 
 private:
-    std::unique_ptr<pprob_digt_caller> _pdcaller; // object to precalculate bsnp_diploid priors..
+    std::unique_ptr<pprob_digt_caller> _pdcaller;
 };
 
 

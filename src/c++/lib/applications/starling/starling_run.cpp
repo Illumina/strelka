@@ -209,7 +209,7 @@ starling_run(
         streamData.resetRegion(rinfo.streamerRegion.c_str());
         setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
 
-    const starling_deriv_options dopt(opt,ref);
+    const starling_deriv_options dopt(opt);
     starling_pos_processor sppr(opt,dopt,ref,client_io);
 
         sppr.resetRegion(rinfo.regionChrom, rinfo.regionRange);

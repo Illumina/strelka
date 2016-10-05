@@ -100,20 +100,13 @@ struct ScoringModelManager
         return _maxChromDepth;
     }
 
+private:
     bool
     isChromSet() const
     {
         return (not _chromName.empty());
     }
 
-    const std::string&
-    getChromName() const
-    {
-        assert(isChromSet());
-        return _chromName;
-    }
-
-private:
     double
     snvEVSThreshold() const
     {

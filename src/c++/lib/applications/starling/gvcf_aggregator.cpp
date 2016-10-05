@@ -40,12 +40,13 @@ gvcf_aggregator(
     if (! opt.gvcf.is_gvcf_output())
         throw std::invalid_argument("gvcf_aggregator cannot be constructed with nothing to do.");
 
-    std::shared_ptr<variant_pipe_stage_base> nextPipeStage(new gvcf_writer(opt, dopt, streams, ref, nocompressRegions, _scoringModels));
+    _gvcfWriterPtr.reset(new gvcf_writer(opt, dopt, streams, ref, nocompressRegions, _scoringModels));
+    std::shared_ptr<variant_pipe_stage_base> nextPipeStage(_gvcfWriterPtr);
     if (opt.is_ploidy_prior)
     {
         std::shared_ptr<variant_pipe_stage_base> overlapper(new indel_overlapper(_scoringModels, ref, nextPipeStage));
-        _codon_phaser.reset(new Codon_phaser(opt, basecallBuffers, overlapper));
-        nextPipeStage = _codon_phaser;
+        _codonPhaserPtr.reset(new Codon_phaser(opt, basecallBuffers, overlapper));
+        nextPipeStage = _codonPhaserPtr;
     }
     const bool isTargetedRegions(not opt.gvcf.targeted_regions_bedfile.empty());
     _head.reset(new variant_prefilter_stage(_scoringModels, isTargetedRegions, targetedRegions, nextPipeStage));

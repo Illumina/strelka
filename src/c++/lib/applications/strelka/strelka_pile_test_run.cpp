@@ -62,7 +62,7 @@ strelka_pile_caller(strelka_options& opt,
     static const std::string ref_seq("ACGT");
     reference_contig_segment ref;
     ref.seq()=ref_seq;
-    _dopt_ptr.reset(new strelka_deriv_options(opt,ref));
+    _dopt_ptr.reset(new strelka_deriv_options(opt));
 }
 
 

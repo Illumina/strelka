@@ -59,16 +59,12 @@ gvcf_writer(
     : _opt(opt)
     , _streams(streams)
     , _ref(ref)
-    , _report_range(dopt.report_range.begin_pos,dopt.report_range.end_pos)
     , _dopt(dopt.gvcf)
-    , _head_pos(dopt.report_range.begin_pos)
     , _empty_site(_dopt, streams.getSampleCount())
+    , _headPos(0)
     , _gvcf_comp(opt.gvcf,nocompress_regions)
     , _scoringModels(scoringModels)
 {
-    assert(_report_range.is_begin_pos);
-    assert(_report_range.is_end_pos);
-
     if (! opt.gvcf.is_gvcf_output())
         throw std::invalid_argument("gvcf_writer cannot be constructed with nothing to do.");
 
@@ -137,9 +133,9 @@ skip_to_pos(
     const pos_t target_pos)
 {
     // advance through any indel region by adding individual sites
-    while (_head_pos<target_pos)
+    while (_headPos<target_pos)
     {
-        GermlineDiploidSiteLocusInfo si = get_empty_site(_head_pos);
+        GermlineDiploidSiteLocusInfo si = get_empty_site(_headPos);
 
         add_site_internal(si);
         // Don't do compressed ranges if there is an overlapping indel
@@ -148,13 +144,13 @@ skip_to_pos(
 
         if (_gvcf_comp.is_range_compressible(known_pos_range2(si.pos, target_pos)))
         {
-            const int deltapos(target_pos - _head_pos);
+            const int deltapos(target_pos - _headPos);
             for (auto& block : _blockPerSample)
             {
                 assert(block.count != 0);
                 block.count += deltapos;
             }
-            _head_pos= target_pos;
+            _headPos= target_pos;
         }
     }
 }
@@ -231,7 +227,7 @@ void
 gvcf_writer::
 flush_impl()
 {
-    skip_to_pos(_report_range.end_pos);
+    skip_to_pos(_reportRange.end_pos());
     writeAllNonVariantBlockRecords();
 }
 
@@ -248,7 +244,7 @@ add_site_internal(
         filter_site_by_last_indel_overlap(*diploidLocusPtr);
     }
 
-    _head_pos=locus.pos+1;
+    _headPos=locus.pos+1;
 
     // write_site
     queue_site_record(locus);

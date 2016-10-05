@@ -255,9 +255,8 @@ struct starling_base_deriv_options : public blt_deriv_options, private boost::no
 {
     typedef blt_deriv_options base_t;
 
-    starling_base_deriv_options(
-        const starling_base_options& opt,
-        const reference_contig_segment& ref);
+    explicit
+    starling_base_deriv_options(const starling_base_options& opt);
 
     ~starling_base_deriv_options();
 

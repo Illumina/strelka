@@ -52,6 +52,16 @@ struct gvcf_writer : public variant_pipe_stage_base
     void process(std::unique_ptr<GermlineSiteLocusInfo>) override;
     void process(std::unique_ptr<GermlineIndelLocusInfo>) override;
 
+    void
+    resetRegion(
+        const std::string& chromName,
+        const known_pos_range2& reportRange)
+    {
+        _chromName = chromName;
+        _reportRange = reportRange;
+        _headPos = _reportRange.begin_pos();
+    }
+
 private:
     unsigned
     getSampleCount() const
@@ -62,7 +72,8 @@ private:
     const std::string&
     getChromName() const
     {
-        return _scoringModels.getChromName();
+        assert(not _chromName.empty());
+        return _chromName;
     }
 
     void flush_impl() override;
@@ -145,11 +156,13 @@ private:
     const starling_options& _opt;
     const starling_streams& _streams;
     const reference_contig_segment& _ref;
-    const known_pos_range _report_range;
     const gvcf_deriv_options _dopt;
     std::vector<gvcf_block_site_record> _blockPerSample;
-    pos_t _head_pos;
     GermlineDiploidSiteLocusInfo _empty_site;
+
+    std::string _chromName;
+    known_pos_range2 _reportRange;
+    pos_t _headPos;
 
     std::unique_ptr<GermlineIndelLocusInfo> _last_indel;
 

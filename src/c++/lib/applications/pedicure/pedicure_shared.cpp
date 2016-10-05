@@ -32,10 +32,8 @@
 
 
 pedicure_deriv_options::
-pedicure_deriv_options(
-    const pedicure_options& opt,
-    const reference_contig_segment& ref)
-    : base_t(opt,ref)
+pedicure_deriv_options(const pedicure_options& opt)
+    : base_t(opt)
 {
     if (opt.dfilter.is_depth_filter())
     {

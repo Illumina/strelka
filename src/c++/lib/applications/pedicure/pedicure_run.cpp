@@ -111,7 +111,7 @@ pedicure_run(
         streamData.resetRegion(rinfo.streamerRegion.c_str());
         setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
 
-    const pedicure_deriv_options dopt(opt, ref);
+    const pedicure_deriv_options dopt(opt);
     pedicure_streams streams(opt, dopt, pinfo, referenceHeader, ssi);
     pedicure_pos_processor sppr(opt, dopt, ref, streams);
 

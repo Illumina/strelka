@@ -165,15 +165,13 @@ struct denovo_filter_deriv_options
 
 
 
-// data deterministically derived from the input options:
-//
+/// data deterministically derived from the input options
 struct pedicure_deriv_options : public starling_base_deriv_options
 {
     typedef starling_base_deriv_options base_t;
 
-    pedicure_deriv_options(
-        const pedicure_options& opt,
-        const reference_contig_segment& ref);
+    explicit
+    pedicure_deriv_options(const pedicure_options& opt);
 
     ~pedicure_deriv_options();
 

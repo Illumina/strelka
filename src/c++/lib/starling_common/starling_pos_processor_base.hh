@@ -264,9 +264,8 @@ protected:
     };
 
 
-    // this structure contains all information which is sample dependent:
-    //
 public:
+    /// consolidate sample specific data
     struct sample_info
     {
         sample_info(
@@ -575,7 +574,7 @@ protected:
     // largest
     unsigned _largest_total_indel_ref_span_per_read;
 
-    stage_manager _stageman;
+    std::unique_ptr<stage_manager> _stagemanPtr;
 
     std::string _chromName;
     known_pos_range2 _reportRange;

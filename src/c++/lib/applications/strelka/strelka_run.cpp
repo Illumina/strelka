@@ -115,7 +115,7 @@ strelka_run(
         streamData.resetRegion(rinfo.streamerRegion.c_str());
         setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
 
-    const strelka_deriv_options dopt(opt, ref);
+    const strelka_deriv_options dopt(opt);
     strelka_streams client_io(opt, dopt, pinfo, referenceHeader, ssi);
     strelka_pos_processor sppr(opt, dopt, ref, client_io);
 

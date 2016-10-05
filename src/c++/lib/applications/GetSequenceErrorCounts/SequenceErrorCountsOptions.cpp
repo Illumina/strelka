@@ -30,10 +30,8 @@
 
 
 SequenceErrorCountsDerivOptions::
-SequenceErrorCountsDerivOptions(
-    const SequenceErrorCountsOptions& opt,
-    const reference_contig_segment& ref)
-    : base_t(opt,ref)
+SequenceErrorCountsDerivOptions(const SequenceErrorCountsOptions& opt)
+    : base_t(opt)
 {
     if (opt.is_depth_filter())
     {

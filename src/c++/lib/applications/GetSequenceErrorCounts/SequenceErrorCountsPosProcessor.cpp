@@ -145,7 +145,7 @@ SequenceErrorCountsPosProcessor::
 insertExcludedRegion(
     const known_pos_range2& excludedRange)
 {
-    _stageman.validate_new_pos_value(excludedRange.begin_pos(),STAGE::READ_BUFFER);
+    _stagemanPtr->validate_new_pos_value(excludedRange.begin_pos(),STAGE::READ_BUFFER);
     _excludedRegions.addRegion(excludedRange);
     _is_skip_process_pos=false;
 }
@@ -157,7 +157,7 @@ SequenceErrorCountsPosProcessor::
 addKnownVariant(
     const vcf_record& knownVariant)
 {
-    _stageman.validate_new_pos_value(knownVariant.pos, STAGE::READ_BUFFER);
+    _stagemanPtr->validate_new_pos_value(knownVariant.pos, STAGE::READ_BUFFER);
     _knownVariants.addVcfRecord(knownVariant);
     _is_skip_process_pos=false;
 }

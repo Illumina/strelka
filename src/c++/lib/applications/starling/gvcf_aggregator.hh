@@ -25,6 +25,7 @@
 #include "gvcf_block_site_record.hh"
 #include "gvcf_locus_info.hh"
 #include "gvcf_compressor.hh"
+#include "gvcf_writer.hh"
 #include "ScoringModelManager.hh"
 #include "starling_streams.hh"
 
@@ -52,7 +53,7 @@ public:
     /// preserved until the block is completed
     bool is_phasing_block() const
     {
-        return (_codon_phaser && _codon_phaser->isBuffer());
+        return (_codonPhaserPtr && _codonPhaserPtr->isBuffer());
     }
 
     void add_site(std::unique_ptr<GermlineSiteLocusInfo> si);
@@ -61,9 +62,13 @@ public:
     void reset();
 
     void
-    resetChrom(const std::string& chrom)
+    resetRegion(
+        const std::string& chromName,
+        const known_pos_range2& reportRegion)
     {
-        _scoringModels.resetChrom(chrom);
+        _scoringModels.resetChrom(chromName);
+        assert(_gvcfWriterPtr);
+        _gvcfWriterPtr->resetRegion(chromName, reportRegion);
     }
 
     double
@@ -75,6 +80,7 @@ public:
 private:
     ScoringModelManager _scoringModels;
 
-    std::shared_ptr<Codon_phaser> _codon_phaser;
+    std::shared_ptr<Codon_phaser> _codonPhaserPtr;
+    std::shared_ptr<gvcf_writer> _gvcfWriterPtr;
     std::shared_ptr<variant_pipe_stage_base> _head;
 };

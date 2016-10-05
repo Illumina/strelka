@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE( simple_indel_test )
     opt.is_user_genome_size = true;
     opt.user_genome_size = rcs.seq().size();
 
-    starling_deriv_options dopt(opt,rcs);
+    starling_deriv_options dopt(opt);
 
     ScoringModelManager cm(opt, dopt.gvcf);
 
