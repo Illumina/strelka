@@ -136,7 +136,7 @@ starling_run(
         {
             registrationIndices.push_back(sampleIndex);
         }
-        bamHeaders = registerAlignments(opt, opt.alignFileOpt, registrationIndices, streamData);
+        bamHeaders = registerAlignments(opt.alignFileOpt, registrationIndices, streamData);
 
         assert(not bamHeaders.empty());
         const bam_hdr_t& referenceHeader(bamHeaders.front());
@@ -198,10 +198,20 @@ starling_run(
         AnalysisRegionInfo rinfo;
         getStrelkaAnalysisRegions(region, opt.max_indel_size, rinfo);
 
+        // check that target region chrom exists in bam headers:
+        if (not referenceHeaderInfo.chrom_to_index.count(rinfo.regionChrom))
+        {
+            using namespace illumina::common;
+            std::ostringstream oss;
+            oss << "ERROR: region contig name: '" << rinfo.regionChrom << "' is not found in the header of BAM/CRAM file: '" << opt.alignFileOpt.alignmentFilename.front() << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
+
         streamData.resetRegion(rinfo.streamerRegion.c_str());
         setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
 
-    const starling_deriv_options dopt(opt,ref);
+
+        const starling_deriv_options dopt(opt,ref);
     const pos_range& rlimit(dopt.report_range_limit);
 
    // const std::string bam_region(get_starling_bam_region_string(opt,dopt));

@@ -29,10 +29,10 @@
 #include "appstats/RunStatsManager.hh"
 #include "blt_util/log.hh"
 #include "common/Exceptions.hh"
+#include "htsapi/bam_header_info.hh"
 #include "starling_common/HtsMergeStreamerUtil.hh"
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
-
 
 
 
@@ -80,7 +80,7 @@ strelka_run(
             registrationIndices.push_back(rindex);
         }
 
-        bamHeaders = registerAlignments(opt, opt.alignFileOpt, registrationIndices, streamData);
+        bamHeaders = registerAlignments(opt.alignFileOpt, registrationIndices, streamData);
 
         assert(not bamHeaders.empty());
         const bam_hdr_t& referenceHeader(bamHeaders.front());
@@ -94,6 +94,7 @@ strelka_run(
     }
 
     const bam_hdr_t& referenceHeader(bamHeaders.front());
+    const bam_header_info referenceHeaderInfo(referenceHeader);
 
     const unsigned regionCount(opt.regions.size());
     for (unsigned regionIndex(0); regionIndex<regionCount; ++regionIndex)
@@ -102,11 +103,17 @@ strelka_run(
         AnalysisRegionInfo rinfo;
         getStrelkaAnalysisRegions(region, opt.max_indel_size, rinfo);
 
-        streamData.resetRegion(rinfo.streamerRegion.c_str());
-        setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
+        // check that target region chrom exists in bam headers:
+        if (not referenceHeaderInfo.chrom_to_index.count(rinfo.regionChrom))
+        {
+            using namespace illumina::common;
+            std::ostringstream oss;
+            oss << "ERROR: region contig name: '" << rinfo.regionChrom << "' is not found in the header of BAM/CRAM file: '" << opt.alignFileOpt.alignmentFilename.front() << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
 
         streamData.resetRegion(rinfo.streamerRegion.c_str());
-        get_starling_ref_seq(opt, ref);
+        setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
 
     const strelka_deriv_options dopt(opt, ref);
     const pos_range& rlimit(dopt.report_range_limit);

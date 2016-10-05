@@ -60,7 +60,7 @@ snoise_run(
     HtsMergeStreamer streamData(bam_region.c_str());
 
     std::vector<unsigned> registrationIndices(opt.alignFileOpt.alignmentFilename.size(),0);
-    const auto allHeaders(registerAlignments(opt, opt.alignFileOpt, registrationIndices, streamData));
+    const auto allHeaders(registerAlignments(opt.alignFileOpt, registrationIndices, streamData));
 
     assert(not allHeaders.empty());
     const bam_hdr_t& referenceHeader(allHeaders.front());

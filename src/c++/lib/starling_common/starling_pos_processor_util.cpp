@@ -50,7 +50,6 @@
 
 std::vector<std::reference_wrapper<const bam_hdr_t> >
 registerAlignments(
-    const starling_base_options& opt,
     const AlignmentFileOptions& alignFileOpt,
     const std::vector<unsigned>& registrationIndices,
     HtsMergeStreamer& streamData)
@@ -65,19 +64,6 @@ registerAlignments(
         const unsigned bamIndex(registrationIndices[alignmentFileIndex]);
         const bam_streamer& readStream(streamData.registerBam(alignFile.c_str(), bamIndex));
 
-        // check that target chrom exists in sample, only need to check once:
-        if (alignmentFileIndex==0)
-        {
-            const int32_t tid(readStream.target_name_to_id(opt.bam_seq_name.c_str()));
-            if (tid < 0)
-            {
-                using namespace illumina::common;
-                std::ostringstream oss;
-                oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM/CRAM file: '" << alignFile << "'\n";
-                BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-            }
-        }
-
         allHeaders.push_back(readStream.get_header());
 
         if (alignmentFileIndex > 0)
@@ -88,7 +74,7 @@ registerAlignments(
                 using namespace illumina::common;
                 std::ostringstream oss;
                 oss << "ERROR: input BAM/CRAM files have incompatible headers.\n";
-                oss << "\tfile1:\t'" << alignFileOpt.alignmentFilename[0] << "'\n";
+                oss << "\tfile1:\t'" << alignFileOpt.alignmentFilename.front() << "'\n";
                 oss << "\tfile2:\t'" << alignFile << "'\n";
                 BOOST_THROW_EXCEPTION(LogicException(oss.str()));
             }
