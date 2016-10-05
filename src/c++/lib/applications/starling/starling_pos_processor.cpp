@@ -82,7 +82,7 @@ starling_pos_processor(
 
 void
 starling_pos_processor::
-resetChromBase(const std::string& chromName)
+resetChrom(const std::string& chromName)
 {
     base_t::resetChromBase(chromName);
 

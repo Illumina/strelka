@@ -80,7 +80,7 @@ strelka_run(
             registrationIndices.push_back(rindex);
         }
 
-        bamHeaders = registerAlignments(opt.alignFileOpt, registrationIndices, streamData);
+        bamHeaders = registerAlignments(opt.alignFileOpt.alignmentFilename, registrationIndices, streamData);
 
         assert(not bamHeaders.empty());
         const bam_hdr_t& referenceHeader(bamHeaders.front());

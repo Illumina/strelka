@@ -41,6 +41,12 @@ struct snoise_pos_processor : public starling_pos_processor_base
         const reference_contig_segment& ref,
         const snoise_streams& streams);
 
+    void
+    resetChrom(const std::string& chromName)
+    {
+        base_t::resetChromBase(chromName);
+    }
+
 private:
     void
     process_pos_variants_impl(const pos_t pos) override

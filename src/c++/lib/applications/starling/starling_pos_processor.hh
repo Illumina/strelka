@@ -44,7 +44,7 @@ struct starling_pos_processor : public starling_pos_processor_base
         const starling_streams& streams);
 
     void
-    resetChromBase(const std::string& chromName);
+    resetChrom(const std::string& chromName);
 
     /// specify gvcf nocompress status of region
     void

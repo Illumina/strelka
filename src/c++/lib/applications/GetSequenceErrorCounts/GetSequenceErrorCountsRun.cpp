@@ -31,7 +31,9 @@
 
 #include "appstats/RunStatsManager.hh"
 #include "blt_util/log.hh"
+#include "common/Exceptions.hh"
 #include "htsapi/align_path_bam_util.hh"
+#include "htsapi/bam_header_info.hh"
 #include "starling_common/HtsMergeStreamerUtil.hh"
 #include "starling_common/ploidy_util.hh"
 #include "starling_common/starling_ref_seq.hh"
@@ -101,44 +103,75 @@ getSequenceErrorCountsRun(
 {
     opt.validate();
 
+    starling_read_counts brc;
+    reference_contig_segment ref;
     RunStatsManager segmentStatMan(opt.segmentStatsFilename);
 
-    reference_contig_segment ref;
-    get_starling_ref_seq(opt,ref);
+    ////////////////////////////////////////
+    // setup streamData:
+    //
+    HtsMergeStreamer streamData;
 
-    const SequenceErrorCountsDerivOptions dopt(opt,ref);
+    // additional data structures required in the region loop below, which are filled in as a side effect of
+    // streamData initialization:
+    std::vector<std::reference_wrapper<const bam_hdr_t>> bamHeaders;
+    {
+        std::vector<unsigned> registrationIndices(opt.alignFileOpt.alignmentFilename.size(), 0);
+        bamHeaders = registerAlignments(opt.alignFileOpt.alignmentFilename, registrationIndices, streamData);
+
+        assert(not bamHeaders.empty());
+        const bam_hdr_t& referenceHeader(bamHeaders.front());
+
+        static const bool noRequireNormalized(false);
+        registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader,
+                        streamData, noRequireNormalized);
+        registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
+        registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
+
+        if (!opt.knownVariantsFile.empty())
+        {
+            const vcf_streamer& vcfStream(
+                streamData.registerVcf(opt.knownVariantsFile.c_str(), INPUT_TYPE::KNOWN_VARIANTS));
+            vcfStream.validateBamHeaderChromSync(referenceHeader);
+        }
+
+        for (const std::string& excludeRegionFilename : opt.excludedRegionsFileList)
+        {
+            streamData.registerBed(excludeRegionFilename.c_str(), INPUT_TYPE::EXCLUDE_REGION);
+        }
+    }
+
+    const bam_hdr_t& referenceHeader(bamHeaders.front());
+    const bam_header_info referenceHeaderInfo(referenceHeader);
+
+    SequenceErrorCountsStreams client_io(opt, pinfo, referenceHeader);
+
+    const unsigned regionCount(opt.regions.size());
+    for (unsigned regionIndex(0); regionIndex<regionCount; ++regionIndex)
+    {
+
+        const std::string& region(opt.regions[regionIndex]);
+        AnalysisRegionInfo rinfo;
+        getStrelkaAnalysisRegions(region, opt.max_indel_size, rinfo);
+
+        // check that target region chrom exists in bam headers:
+        if (not referenceHeaderInfo.chrom_to_index.count(rinfo.regionChrom))
+        {
+            using namespace illumina::common;
+            std::ostringstream oss;
+            oss << "ERROR: region contig name: '" << rinfo.regionChrom << "' is not found in the header of BAM/CRAM file: '" << opt.alignFileOpt.alignmentFilename.front() << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
+
+        streamData.resetRegion(rinfo.streamerRegion.c_str());
+        setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
+
+    const SequenceErrorCountsDerivOptions dopt(opt, ref);
     const pos_range& rlimit(dopt.report_range_limit);
 
-    const std::string bam_region(get_starling_bam_region_string(opt,dopt));
-    HtsMergeStreamer streamData(bam_region.c_str());
+    SequenceErrorCountsPosProcessor sppr(opt, dopt, ref, client_io);
 
-    std::vector<unsigned> registrationIndices(opt.alignFileOpt.alignmentFilename.size(),0);
-    const auto allHeaders(registerAlignments(opt.alignFileOpt, registrationIndices, streamData));
-
-    assert(not allHeaders.empty());
-    const bam_hdr_t& referenceHeader(allHeaders.front());
-
-    SequenceErrorCountsStreams client_io(opt,pinfo,referenceHeader);
-
-    SequenceErrorCountsPosProcessor sppr(opt,dopt,ref,client_io);
-    starling_read_counts brc;
-
-    static const bool noRequireNormalized(false);
-    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader,
-                    streamData, noRequireNormalized);
-    registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
-    registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
-
-    if (! opt.knownVariantsFile.empty())
-    {
-        const vcf_streamer& vcfStream(streamData.registerVcf(opt.knownVariantsFile.c_str(), INPUT_TYPE::KNOWN_VARIANTS));
-        vcfStream.validateBamHeaderChromSync(referenceHeader);
-    }
-
-    for (const std::string& excludeRegionFilename : opt.excludedRegionsFileList)
-    {
-        streamData.registerBed(excludeRegionFilename.c_str(), INPUT_TYPE::EXCLUDE_REGION);
-    }
+        sppr.resetChrom(rinfo.regionChrom);
 
     while (streamData.next())
     {
@@ -150,12 +183,12 @@ getSequenceErrorCountsRun(
         // some additional padding is allowed for off-range indels
         // which might influence results within rlimit:
         //
-        if (rlimit.is_end_pos && (currentPos >= (rlimit.end_pos+static_cast<pos_t>(opt.max_indel_size)))) break;
+        if (rlimit.is_end_pos && (currentPos >= (rlimit.end_pos + static_cast<pos_t>(opt.max_indel_size)))) break;
 
         // wind sppr forward to position behind buffer head:
-        sppr.set_head_pos(currentPos-1);
+        sppr.set_head_pos(currentPos - 1);
 
-        if       (HTS_TYPE::BAM == currentHtsType)
+        if (HTS_TYPE::BAM == currentHtsType)
         {
             // Remove the filter below because it's not valid for
             // RNA-Seq case, reads should be selected for the report
@@ -174,7 +207,7 @@ getSequenceErrorCountsRun(
             {
                 using namespace ALIGNPATH;
                 path_t apath;
-                bam_cigar_to_apath(read.raw_cigar(),read.n_cigar(),apath);
+                bam_cigar_to_apath(read.raw_cigar(), read.n_cigar(), apath);
 
                 if (apath_indel_count(apath) > 2) continue;
             }
@@ -185,24 +218,25 @@ getSequenceErrorCountsRun(
         else if (HTS_TYPE::VCF == currentHtsType)
         {
             const vcf_record& vcfRecord(streamData.getCurrentVcf());
-            if     (INPUT_TYPE::CANDIDATE_INDELS == currentIndex)     // process candidate indels input from vcf file(s)
+            if (INPUT_TYPE::CANDIDATE_INDELS == currentIndex)     // process candidate indels input from vcf file(s)
             {
                 if (vcfRecord.is_indel())
                 {
                     process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
                 }
             }
-            else if (INPUT_TYPE::FORCED_GT_VARIANTS == currentIndex)     // process forced genotype tests from vcf file(s)
+            else if (INPUT_TYPE::FORCED_GT_VARIANTS ==
+                     currentIndex)     // process forced genotype tests from vcf file(s)
             {
                 if (vcfRecord.is_indel())
                 {
                     static const unsigned sample_no(0);
                     static const bool is_forced_output(true);
-                    process_candidate_indel(opt.max_indel_size, vcfRecord,sppr,sample_no,is_forced_output);
+                    process_candidate_indel(opt.max_indel_size, vcfRecord, sppr, sample_no, is_forced_output);
                 }
                 else if (vcfRecord.is_snv())
                 {
-                    sppr.insert_forced_output_pos(vcfRecord.pos-1);
+                    sppr.insert_forced_output_pos(vcfRecord.pos - 1);
                 }
             }
             else if (INPUT_TYPE::KNOWN_VARIANTS == currentIndex)
@@ -221,9 +255,9 @@ getSequenceErrorCountsRun(
         else if (HTS_TYPE::BED == currentHtsType)
         {
             const bed_record& bedRecord(streamData.getCurrentBed());
-            if     (INPUT_TYPE::EXCLUDE_REGION == currentIndex)
+            if (INPUT_TYPE::EXCLUDE_REGION == currentIndex)
             {
-                const known_pos_range2 excludedRange(bedRecord.begin,bedRecord.end);
+                const known_pos_range2 excludedRange(bedRecord.begin, bedRecord.end);
                 sppr.insertExcludedRegion(excludedRange);
             }
             else
@@ -239,4 +273,5 @@ getSequenceErrorCountsRun(
     }
 
     sppr.reset();
+    }
 }

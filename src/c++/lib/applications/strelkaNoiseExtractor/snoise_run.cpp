@@ -27,6 +27,8 @@
 #include "snoise_streams.hh"
 
 #include "blt_util/log.hh"
+#include "common/Exceptions.hh"
+#include "htsapi/bam_header_info.hh"
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/HtsMergeStreamerUtil.hh"
 #include "starling_common/starling_ref_seq.hh"
@@ -50,29 +52,59 @@ snoise_run(
     const prog_info& pinfo,
     const snoise_options& opt)
 {
+    starling_read_counts brc;
     reference_contig_segment ref;
-    get_starling_ref_seq(opt,ref);
 
-    const starling_base_deriv_options dopt(opt,ref);
+    ////////////////////////////////////////
+    // setup streamData:
+    //
+    HtsMergeStreamer streamData;
+
+    // additional data structures required in the region loop below, which are filled in as a side effect of
+    // streamData initialization:
+    std::vector<std::reference_wrapper<const bam_hdr_t>> bamHeaders;
+    {
+        std::vector<unsigned> registrationIndices(opt.alignFileOpt.alignmentFilename.size(), 0);
+        bamHeaders = registerAlignments(opt.alignFileOpt.alignmentFilename, registrationIndices, streamData);
+
+        assert(not bamHeaders.empty());
+        const bam_hdr_t& referenceHeader(bamHeaders.front());
+
+        registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader, streamData);
+        registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
+    }
+
+    const bam_hdr_t& referenceHeader(bamHeaders.front());
+    const bam_header_info referenceHeaderInfo(referenceHeader);
+
+    const unsigned regionCount(opt.regions.size());
+    for (unsigned regionIndex(0); regionIndex<regionCount; ++regionIndex)
+    {
+        const std::string& region(opt.regions[regionIndex]);
+        AnalysisRegionInfo rinfo;
+        getStrelkaAnalysisRegions(region, opt.max_indel_size, rinfo);
+
+        // check that target region chrom exists in bam headers:
+        if (not referenceHeaderInfo.chrom_to_index.count(rinfo.regionChrom))
+        {
+            using namespace illumina::common;
+            std::ostringstream oss;
+            oss << "ERROR: region contig name: '" << rinfo.regionChrom << "' is not found in the header of BAM/CRAM file: '" << opt.alignFileOpt.alignmentFilename.front() << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
+
+        streamData.resetRegion(rinfo.streamerRegion.c_str());
+        setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
+
+    const starling_base_deriv_options dopt(opt, ref);
     const pos_range& rlimit(dopt.report_range_limit);
-
-    const std::string bam_region(get_starling_bam_region_string(opt,dopt));
-    HtsMergeStreamer streamData(bam_region.c_str());
-
-    std::vector<unsigned> registrationIndices(opt.alignFileOpt.alignmentFilename.size(),0);
-    const auto allHeaders(registerAlignments(opt.alignFileOpt, registrationIndices, streamData));
-
-    assert(not allHeaders.empty());
-    const bam_hdr_t& referenceHeader(allHeaders.front());
 
     const unsigned sampleCount(1);
     snoise_streams streams(opt, pinfo, referenceHeader, sampleCount);
 
-    snoise_pos_processor sppr(opt,dopt,ref,streams);
-    starling_read_counts brc;
+    snoise_pos_processor sppr(opt, dopt, ref, streams);
 
-    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader, streamData);
-    registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
+        sppr.resetChrom(rinfo.regionChrom);
 
     while (streamData.next())
     {
@@ -84,12 +116,12 @@ snoise_run(
         // some additional padding is allowed for off-range indels
         // which might influence results within rlimit:
         //
-        if (rlimit.is_end_pos && (currentPos >= (rlimit.end_pos+static_cast<pos_t>(opt.max_indel_size)))) break;
+        if (rlimit.is_end_pos && (currentPos >= (rlimit.end_pos + static_cast<pos_t>(opt.max_indel_size)))) break;
 
         // wind sppr forward to position behind buffer head:
-        sppr.set_head_pos(currentPos-1);
+        sppr.set_head_pos(currentPos - 1);
 
-        if       (HTS_TYPE::BAM == currentHtsType)
+        if (HTS_TYPE::BAM == currentHtsType)
         {
             // Remove the filter below because it's not valid for
             // RNA-Seq case, reads should be selected for the report
@@ -109,24 +141,25 @@ snoise_run(
         else if (HTS_TYPE::VCF == currentHtsType)
         {
             const vcf_record& vcfRecord(streamData.getCurrentVcf());
-            if     (INPUT_TYPE::CANDIDATE_INDELS == currentIndex)     // process candidate indels input from vcf file(s)
+            if (INPUT_TYPE::CANDIDATE_INDELS == currentIndex)     // process candidate indels input from vcf file(s)
             {
                 if (vcfRecord.is_indel())
                 {
                     process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
                 }
             }
-            else if (INPUT_TYPE::FORCED_GT_VARIANTS == currentIndex)     // process forced genotype tests from vcf file(s)
+            else if (INPUT_TYPE::FORCED_GT_VARIANTS ==
+                     currentIndex)     // process forced genotype tests from vcf file(s)
             {
-                if       (vcfRecord.is_indel())
+                if (vcfRecord.is_indel())
                 {
                     static const unsigned sample_no(0);
                     static const bool is_forced_output(true);
-                    process_candidate_indel(opt.max_indel_size, vcfRecord,sppr,sample_no,is_forced_output);
+                    process_candidate_indel(opt.max_indel_size, vcfRecord, sppr, sample_no, is_forced_output);
                 }
                 else if (vcfRecord.is_snv())
                 {
-                    sppr.insert_forced_output_pos(vcfRecord.pos-1);
+                    sppr.insert_forced_output_pos(vcfRecord.pos - 1);
                 }
             }
             else
@@ -142,5 +175,5 @@ snoise_run(
     }
 
     sppr.reset();
+    }
 }
-

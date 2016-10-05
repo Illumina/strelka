@@ -136,7 +136,7 @@ starling_run(
         {
             registrationIndices.push_back(sampleIndex);
         }
-        bamHeaders = registerAlignments(opt.alignFileOpt, registrationIndices, streamData);
+        bamHeaders = registerAlignments(opt.alignFileOpt.alignmentFilename, registrationIndices, streamData);
 
         assert(not bamHeaders.empty());
         const bam_hdr_t& referenceHeader(bamHeaders.front());
@@ -172,7 +172,6 @@ starling_run(
         }
 
     }
-
 
     starling_streams client_io(opt, pinfo, bamHeaders, sampleNames);
 
@@ -210,8 +209,7 @@ starling_run(
         streamData.resetRegion(rinfo.streamerRegion.c_str());
         setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
 
-
-        const starling_deriv_options dopt(opt,ref);
+    const starling_deriv_options dopt(opt,ref);
     const pos_range& rlimit(dopt.report_range_limit);
 
    // const std::string bam_region(get_starling_bam_region_string(opt,dopt));
@@ -219,10 +217,7 @@ starling_run(
 
     starling_pos_processor sppr(opt,dopt,ref,client_io);
 
-        sppr.resetChromBase(rinfo.regionChrom);
-
-
-
+        sppr.resetChrom(rinfo.regionChrom);
 
 
     while (streamData.next())

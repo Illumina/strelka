@@ -29,6 +29,7 @@
 #include "appstats/RunStatsManager.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
+#include "common/Exceptions.hh"
 #include "htsapi/bam_header_util.hh"
 #include "starling_common/HtsMergeStreamerUtil.hh"
 #include "starling_common/starling_ref_seq.hh"
@@ -56,76 +57,68 @@ pedicure_run(
 {
     opt.validate();
 
-    RunStatsManager segmentStatMan(opt.segmentStatsFilename);
-
+    starling_read_counts brc;
     reference_contig_segment ref;
-    get_starling_ref_seq(opt,ref);
-    const pedicure_deriv_options dopt(opt,ref);
+    RunStatsManager segmentStatMan(opt.segmentStatsFilename);
+    const PedicureSampleSetSummary ssi(opt);
+
+    const unsigned sampleCount(opt.alignFileOpt.alignmentFilename.size());
+
+    ////////////////////////////////////////
+    // setup streamData:
+    //
+    HtsMergeStreamer streamData;
+
+    // setup all alignment data for main scan loop:
+    std::vector<std::reference_wrapper<const bam_hdr_t>> bamHeaders;
+    {
+        std::vector<unsigned> registrationIndices;
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        {
+            registrationIndices.push_back(sampleIndex);
+        }
+        bamHeaders = registerAlignments(opt.alignFileOpt.alignmentFilename, registrationIndices, streamData);
+
+        assert(not bamHeaders.empty());
+
+        static const bool noRequireNormalized(false);
+        const bam_hdr_t& referenceHeader(bamHeaders.front());
+        registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader, streamData, noRequireNormalized);
+        registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
+    }
+
+    const bam_hdr_t& referenceHeader(bamHeaders.front());
+    const bam_header_info referenceHeaderInfo(referenceHeader);
+
+    const unsigned regionCount(opt.regions.size());
+    for (unsigned regionIndex(0); regionIndex<regionCount; ++regionIndex)
+    {
+        const std::string& region(opt.regions[regionIndex]);
+        AnalysisRegionInfo rinfo;
+        getStrelkaAnalysisRegions(region, opt.max_indel_size, rinfo);
+
+        // check that target region chrom exists in bam headers:
+        if (not referenceHeaderInfo.chrom_to_index.count(rinfo.regionChrom))
+        {
+            using namespace illumina::common;
+            std::ostringstream oss;
+            oss << "ERROR: region contig name: '" << rinfo.regionChrom
+                << "' is not found in the header of BAM/CRAM file: '" << opt.alignFileOpt.alignmentFilename.front()
+                << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
+
+        streamData.resetRegion(rinfo.streamerRegion.c_str());
+        setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
+
+    const pedicure_deriv_options dopt(opt, ref);
 
     const pos_range& rlimit(dopt.report_range_limit);
 
-    const std::string bam_region(get_starling_bam_region_string(opt,dopt));
+    pedicure_streams streams(opt, dopt, pinfo, referenceHeader, ssi);
+    pedicure_pos_processor sppr(opt, dopt, ref, streams);
 
-    HtsMergeStreamer streamData(bam_region.c_str());
-
-    // setup all alignment data for main scan loop:
-    std::vector<const bam_streamer*> bamStreams;
-    unsigned sampleIndex(0);
-    for (const std::string& afile : opt.alignFileOpt.alignmentFilename)
-    {
-        bamStreams.emplace_back(&(streamData.registerBam(afile.c_str(),sampleIndex)));
-        ++sampleIndex;
-    }
-
-    // check bam header compatibility:
-    const unsigned bamCount(bamStreams.size());
-    if (bamCount > 1)
-    {
-        /// TODO: provide a better error exception for failed bam header check:
-        const bam_hdr_t& compareHeader(bamStreams[0]->get_header());
-        for (unsigned bamIndex(1); bamIndex<bamCount; ++bamIndex)
-        {
-            const bam_hdr_t& indexHeader(bamStreams[bamIndex]->get_header());
-            if (! check_header_compatibility(compareHeader,indexHeader))
-            {
-                log_os << "ERROR: incompatible bam headers between files:\n"
-                       << "\t" << opt.alignFileOpt.alignmentFilename[0] << "\n"
-                       << "\t" << opt.alignFileOpt.alignmentFilename[bamIndex] << "\n";
-                exit(EXIT_FAILURE);
-            }
-        }
-    }
-
-    const int32_t tid(bamStreams[0]->target_name_to_id(opt.bam_seq_name.c_str()));
-    if (tid < 0)
-    {
-        std::ostringstream oss;
-        oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM/CRAM file: '" <<  opt.alignFileOpt.alignmentFilename[0] << "'\n";
-        throw blt_exception(oss.str().c_str());
-    }
-
-    // We make the assumption that all alignment files have the
-    // same set of reference chromosomes (and thus tid matches for the
-    // same chrom label in the binary records). Check this constraint
-    // here:
-    for (unsigned bamIndex(1); bamIndex<bamCount; ++bamIndex)
-    {
-        const int32_t other_tid(bamStreams[bamIndex]->target_name_to_id(opt.bam_seq_name.c_str()));
-        if (tid != other_tid)
-        {
-            throw blt_exception("ERROR: sample BAM/CRAM files have mis-matched reference sequence dictionaries.\n");
-        }
-    }
-
-    const PedicureSampleSetSummary ssi(opt);
-    const bam_hdr_t& header(bamStreams[0]->get_header());
-    pedicure_streams streams(opt, dopt, pinfo, header, ssi);
-    pedicure_pos_processor sppr(opt,dopt,ref,streams);
-    starling_read_counts brc;
-
-    static const bool noRequireNormalized(false);
-    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, header, streamData, noRequireNormalized);
-    registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, header, streamData);
+        sppr.resetChrom(rinfo.regionChrom);
 
     while (streamData.next())
     {
@@ -138,12 +131,12 @@ pedicure_run(
         //   range indels which might influence results within the
         //   report range:
         //
-        if (rlimit.is_end_pos && (currentPos >= (rlimit.end_pos+static_cast<pos_t>(opt.max_indel_size)))) break;
+        if (rlimit.is_end_pos && (currentPos >= (rlimit.end_pos + static_cast<pos_t>(opt.max_indel_size)))) break;
 
         // wind sppr forward to position behind buffer head:
-        sppr.set_head_pos(currentPos-1);
+        sppr.set_head_pos(currentPos - 1);
 
-        if       (HTS_TYPE::BAM == currentHtsType)
+        if (HTS_TYPE::BAM == currentHtsType)
         {
             // Remove the filter below because it's not valid for
             // RNA-Seq case, reads should be selected for the report
@@ -163,24 +156,25 @@ pedicure_run(
         else if (HTS_TYPE::VCF == currentHtsType)
         {
             const vcf_record& vcfRecord(streamData.getCurrentVcf());
-            if     (INPUT_TYPE::CANDIDATE_INDELS == currentIndex)     // process candidate indels input from vcf file(s)
+            if (INPUT_TYPE::CANDIDATE_INDELS == currentIndex)     // process candidate indels input from vcf file(s)
             {
                 if (vcfRecord.is_indel())
                 {
                     process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
                 }
             }
-            else if (INPUT_TYPE::FORCED_GT_VARIANTS == currentIndex)     // process forced genotype tests from vcf file(s)
+            else if (INPUT_TYPE::FORCED_GT_VARIANTS ==
+                     currentIndex)     // process forced genotype tests from vcf file(s)
             {
                 if (vcfRecord.is_indel())
                 {
                     static const unsigned sample_no(0);
                     static const bool is_forced_output(true);
-                    process_candidate_indel(opt.max_indel_size, vcfRecord,sppr,sample_no,is_forced_output);
+                    process_candidate_indel(opt.max_indel_size, vcfRecord, sppr, sample_no, is_forced_output);
                 }
                 else if (vcfRecord.is_snv())
                 {
-                    sppr.insert_forced_output_pos(vcfRecord.pos-1);
+                    sppr.insert_forced_output_pos(vcfRecord.pos - 1);
                 }
 
             }
@@ -196,4 +190,5 @@ pedicure_run(
         }
     }
     sppr.reset();
+    }
 }
