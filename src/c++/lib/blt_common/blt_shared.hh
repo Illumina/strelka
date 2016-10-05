@@ -107,7 +107,6 @@ struct blt_options
     bool is_include_singleton = false;
     bool is_include_anomalous = false;
 
-    bool is_report_range_ref = false;
     int used_allele_count_min_qscore = 0; // print the above with a qscore cutoff...
 
     int max_vexp_iterations = 0;

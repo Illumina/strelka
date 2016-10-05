@@ -133,10 +133,6 @@ legacy_starling_arg_parse(
         {
             set_arg(i,ad,opt.user_report_range.is_end_pos,opt.user_report_range.end_pos);
         }
-        else if (ad.argstr[i]=="-report-range-reference")
-        {
-            opt.is_report_range_ref=true;
-        }
         else if (ad.argstr[i]=="-genome-size")
         {
             set_arg(i,ad,opt.is_user_genome_size,opt.user_genome_size);
