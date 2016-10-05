@@ -82,9 +82,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-bsnp-ssd-no-mismatch', '0.35'])
     segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
     segCmd.extend(['-min-vexp', '0.25'])
-
-    segCmd.extend(["-report-range-begin", str(gseg.beginPos) ])
-    segCmd.extend(["-report-range-end", str(gseg.endPos) ])
     segCmd.extend(["--ref", self.params.referenceFasta ])
     segCmd.extend(["-max-window-mismatch", "4", "20" ])
     segCmd.extend(["-genome-size", str(self.params.knownSize)] )

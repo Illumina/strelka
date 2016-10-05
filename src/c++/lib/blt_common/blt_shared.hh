@@ -100,7 +100,7 @@ struct blt_options
     unsigned max_win_mismatch_flank_size = 0;
     bool is_print_evidence = false;
     bool is_print_all_site_evidence = false;
-    pos_range user_report_range;   // requested report range
+    //pos_range user_report_range;   // requested report range
 
     bool is_include_singleton = false;
     bool is_include_anomalous = false;
@@ -132,7 +132,6 @@ struct blt_options
     //bool is_compute_hapscore = false;
     bool isReportEVSFeatures = false;
     bool is_compute_somatic_scoring_metrics = false;
-
 };
 
 
@@ -140,8 +139,7 @@ struct blt_options
 struct pprob_digt_caller;
 
 
-// data deterministically derived from the user input options:
-//
+/// data deterministically derived from the user input options
 struct blt_deriv_options
 {
     blt_deriv_options(

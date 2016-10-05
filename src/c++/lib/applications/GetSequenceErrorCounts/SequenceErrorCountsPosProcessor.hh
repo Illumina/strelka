@@ -30,6 +30,7 @@
 #include "starling_common/starling_pos_processor_base.hh"
 
 #include "blt_util/RecordTracker.hh"
+
 ///
 ///
 struct SequenceErrorCountsPosProcessor : public starling_pos_processor_base
