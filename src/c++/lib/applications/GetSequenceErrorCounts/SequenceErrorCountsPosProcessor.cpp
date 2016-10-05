@@ -95,7 +95,6 @@ resetChrom(
     {
         if (_opt.is_depth_filter())
         {
-            //TODO, verify that chroms match bam chroms
             cdmap_t::const_iterator cdi(_dopt.chrom_depth.find(chromName));
             if (cdi == _dopt.chrom_depth.end())
             {
@@ -575,7 +574,7 @@ process_pos_error_counts(
                 obs.signalCounts[sigIndex] == 0)
             {
                 std::ostream& obs_os(std::cout);
-                obs_os << _opt.bam_seq_name << "\t";
+                obs_os << _chromName << "\t";
                 obs_os << ik.pos << "\t" << ik.pos + ik.length << "\t" << INDEL::get_index_label(ik.type) << "\t";
                 obs_os << iri.repeat_unit << "\t" << iri.ref_repeat_count << "\t";
                 obs_os << GENOTYPE_STATUS::label(obs.variantStatus) << "\t";

@@ -160,7 +160,6 @@ struct denovo_filter_deriv_options
         return (! chrom_depth.empty());
     }
 
-    double max_depth = 0;
     cdmap_t chrom_depth;
 };
 

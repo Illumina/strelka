@@ -49,33 +49,6 @@ pedicure_pos_processor(
     , _icallProcessor(streams.denovo_callable_osptr())
     , _tier2_cpi(getSampleCount())
 {
-    /// get max proband depth
-    double max_candidate_proband_sample_depth(-1.);
-    {
-        if (dopt.dfilter.is_max_depth())
-        {
-            if (opt.max_candidate_indel_depth_factor > 0.)
-            {
-                max_candidate_proband_sample_depth = (opt.max_candidate_indel_depth_factor * dopt.dfilter.max_depth);
-            }
-        }
-
-        if (opt.max_candidate_indel_depth > 0.)
-        {
-            if (max_candidate_proband_sample_depth > 0.)
-            {
-                max_candidate_proband_sample_depth = std::min(max_candidate_proband_sample_depth,static_cast<double>(opt.max_candidate_indel_depth));
-            }
-            else
-            {
-                max_candidate_proband_sample_depth = opt.max_candidate_indel_depth;
-            }
-        }
-    }
-
-    getIndelBuffer().setMaxCandidateDepth(max_candidate_proband_sample_depth);
-
-
     using namespace PEDICURE_SAMPLETYPE;
 
     // setup indel buffer:
@@ -89,6 +62,61 @@ pedicure_pos_processor(
         }
 
         getIndelBuffer().finalizeSamples();
+    }
+}
+
+
+
+void
+pedicure_pos_processor::
+resetChrom(const std::string& chromName)
+{
+    base_t::resetChromBase(chromName);
+
+    // setup norm and max filtration depths
+    {
+        if (_opt.dfilter.is_depth_filter())
+        {
+            cdmap_t::const_iterator cdi(_dopt.dfilter.chrom_depth.find(chromName));
+            if (cdi == _dopt.dfilter.chrom_depth.end())
+            {
+                std::ostringstream oss;
+                oss << "ERROR: Can't find chromosome: '" << chromName << "' in chrom depth file: "
+                    << _opt.dfilter.chrom_depth_file << "\n";
+                throw blt_exception(oss.str().c_str());
+            }
+            _maxChromDepth = (cdi->second * _opt.dfilter.max_depth_factor);
+        }
+        assert(_maxChromDepth >= 0.);
+    }
+
+    // set indel buffer depth:
+    {
+        // get max proband depth
+        double max_candidate_proband_sample_depth(-1.);
+        {
+            if (_dopt.dfilter.is_max_depth())
+            {
+                if (_opt.max_candidate_indel_depth_factor > 0.)
+                {
+                    max_candidate_proband_sample_depth = (_opt.max_candidate_indel_depth_factor * _maxChromDepth);
+                }
+            }
+
+            if (_opt.max_candidate_indel_depth > 0.)
+            {
+                if (max_candidate_proband_sample_depth > 0.)
+                {
+                    max_candidate_proband_sample_depth = std::min(max_candidate_proband_sample_depth,static_cast<double>(_opt.max_candidate_indel_depth));
+                }
+                else
+                {
+                    max_candidate_proband_sample_depth = _opt.max_candidate_indel_depth;
+                }
+            }
+        }
+
+        getIndelBuffer().setMaxCandidateDepth(max_candidate_proband_sample_depth);
     }
 }
 
@@ -165,6 +193,7 @@ process_pos_snp_denovo(const pos_t pos)
         denovo_snv_call_vcf(
             _opt,_dopt,
             sinfo,
+            _maxChromDepth,
             pileups,
             dsc,
             bos);
@@ -295,7 +324,7 @@ process_pos_indel_denovo(const pos_t pos)
                 << sep << vcf_indel_seq;
 
             const AlleleReportInfo& indelReportInfo(indelData.getReportInfo());
-            denovo_indel_call_vcf(_opt, _dopt, sinfo, dindel, indelReportInfo, isri, bos);
+            denovo_indel_call_vcf(_opt, _dopt, sinfo, _maxChromDepth, dindel, indelReportInfo, isri, bos);
             bos << "\n";
 
             aggregate_vcf(_chromName,output_pos,bos.str());

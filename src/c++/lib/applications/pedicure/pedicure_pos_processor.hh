@@ -45,10 +45,7 @@ struct pedicure_pos_processor : public starling_pos_processor_base
         const pedicure_streams& streams);
 
     void
-    resetChrom(const std::string& chromName)
-    {
-        base_t::resetChromBase(chromName);
-    }
+    resetChrom(const std::string& chromName);
 
 private:
 
@@ -74,6 +71,9 @@ private:
     const pedicure_options& _opt;
     const pedicure_deriv_options& _dopt;
     const pedicure_streams& _streams;
+
+    double _maxChromDepth = 0.;
+
     std::string prev_vcf_line="";
     pos_t prev_vcf_pos=-1;
     std::vector<std::pair<pos_t,std::string>> buffer;

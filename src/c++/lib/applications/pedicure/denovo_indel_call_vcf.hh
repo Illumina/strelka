@@ -40,6 +40,7 @@ denovo_indel_call_vcf(
     const pedicure_options& opt,
     const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
+    const double maxChromDepth,
     const denovo_indel_call& dinc,
     const AlleleReportInfo& indelReportInfo,
     const std::vector<isriTiers_t>& isri,
