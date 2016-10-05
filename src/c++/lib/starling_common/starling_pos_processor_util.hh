@@ -43,14 +43,6 @@ registerAlignments(
     HtsMergeStreamer& streamData);
 
 
-/// format the bam region string from the program options and
-/// 'influence zones' defined by sppr.
-///
-std::string
-get_starling_bam_region_string(
-    const starling_base_options& opt,
-    const starling_base_deriv_options& dopt);
-
 
 /// handles mapped read alignments -- reads are parsed, their indels
 /// are extracted and buffered, and the reads themselves are buffered

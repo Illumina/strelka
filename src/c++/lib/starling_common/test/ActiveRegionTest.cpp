@@ -37,7 +37,6 @@ struct TestIndelBuffer
         const reference_contig_segment& ref)
     {
         // fake starling options
-        _opt.bam_seq_name = "chr1";
         _opt.is_user_genome_size = true;
         _opt.user_genome_size = ref.seq().size();
 
@@ -77,7 +76,6 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
     ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
 
     const auto snvPos = std::set<pos_t>({0, 2, 3});
-
 
     pos_t refLength = (pos_t)ref.seq().length();
 

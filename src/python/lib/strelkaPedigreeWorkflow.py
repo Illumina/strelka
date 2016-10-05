@@ -72,6 +72,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segStr = str(gseg.id)
 
     segCmd = [ self.params.strelkaPedigreeBin ]
+    segCmd.extend(["--region", gseg.chromLabel + ":" + str(gseg.beginPos) + "-" + str(gseg.endPos)])
     segCmd.extend(["-min-mapping-quality",str(self.params.minTier1Mapq)])
 
 #    segCmd.extend(["-min-qscore","0"])  # consider this once we go back to a quality based scoring model
@@ -86,7 +87,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["-report-range-end", str(gseg.endPos) ])
     segCmd.extend(["--ref", self.params.referenceFasta ])
     segCmd.extend(["-max-window-mismatch", "4", "20" ])
-    segCmd.extend(["-bam-seq-name", gseg.chromLabel] )
     segCmd.extend(["-genome-size", str(self.params.knownSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
     segCmd.extend(["-indel-nonsite-match-prob", "0.5"] )

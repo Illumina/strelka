@@ -31,42 +31,6 @@
 
 
 void
-get_starling_ref_seq(const starling_base_options& opt,
-                     reference_contig_segment& ref)
-{
-    assert(not opt.referenceFilename.empty());
-
-    // make a temp copy of report_range here to determine how much we
-    // pull from ref_seq:
-    pos_range ref_range = opt.user_report_range;
-    static const pos_t region_read_size_pad(512);
-    const pos_t pad_size(opt.max_indel_size+region_read_size_pad);
-    if (ref_range.is_begin_pos)
-    {
-        ref_range.begin_pos -= 1;
-        ref_range.begin_pos = std::max(0,ref_range.begin_pos-pad_size);
-    }
-    else
-    {
-        ref_range.set_begin_pos(0);
-    }
-
-    if (ref_range.is_end_pos)
-    {
-        ref_range.end_pos += pad_size;
-    }
-
-    ref.set_offset(ref_range.begin_pos);
-
-    assert(! opt.bam_seq_name.empty());
-
-    // note: the ref function below takes closed-closed endpoints, so we subtract one from endPos
-    get_standardized_region_seq(opt.referenceFilename, opt.bam_seq_name, ref_range.begin_pos, ref_range.end_pos-1, ref.seq());
-}
-
-
-
-void
 setRefSegment(
     const starling_base_options& opt,
     const std::string& chrom,

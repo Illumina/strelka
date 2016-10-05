@@ -150,8 +150,6 @@ write_starling_legacy_options(
     std::ostream& os)
 {
     os <<
-       " -bam-seq-name name - Analyze reads aligned to chromosome 'name' in the reads file (required)\n"
-       "\n"
        " -bsnp-diploid-het-bias x\n"
        "                    - Set bias term for the heterozygous state in the bsnp model, such that\n"
        "                      hets are expected at allele ratios in the range [0.5-x,0.5+x] (default: 0)\n"
@@ -235,13 +233,6 @@ finalize_legacy_starling_options(
     const prog_info& pinfo,
     starling_base_options& opt)
 {
-    // sanity check argument settings:
-    //
-    if (opt.bam_seq_name.empty())
-    {
-        pinfo.usage("must specify -bam-seq-name");
-    }
-
     if (! opt.is_user_genome_size)
     {
         // this requirement is not what we want, but it's the only way to make things reliable for now:

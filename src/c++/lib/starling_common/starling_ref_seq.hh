@@ -30,10 +30,14 @@
 #include <string>
 
 
+inline
 void
 get_starling_ref_seq(
-    const starling_base_options& opt,
-    reference_contig_segment& ref);
+    const starling_base_options&,
+    reference_contig_segment&)
+{
+    // pass
+}
 
 void
 setRefSegment(

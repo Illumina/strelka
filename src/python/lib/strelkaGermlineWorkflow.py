@@ -116,7 +116,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segCmd.extend(["-min-mapping-quality",self.params.minMapq])
     segCmd.extend(["--region", gseg.chromLabel + ":" + str(gseg.beginPos) + "-" + str(gseg.endPos)])
-    segCmd.extend(["-bam-seq-name", gseg.chromLabel] )
     segCmd.extend(["-report-range-begin", str(gseg.beginPos) ])
     segCmd.extend(["-report-range-end", str(gseg.endPos) ])
     segCmd.extend(["--ref", self.params.referenceFasta ])

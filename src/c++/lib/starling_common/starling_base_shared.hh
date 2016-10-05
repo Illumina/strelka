@@ -158,7 +158,7 @@ struct starling_base_options : public blt_options
     bool is_filter_unanchored = false;
 
     std::string realignedReadFilenamePrefix;
-    std::string bam_seq_name;
+    //std::string bam_seq_name;
 
     std::string candidate_indel_filename;
     bool is_write_candidate_indels_only = false;
