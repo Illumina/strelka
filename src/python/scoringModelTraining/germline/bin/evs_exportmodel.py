@@ -27,6 +27,8 @@ __author__ = "Peter Krusche <pkrusche@illumina.com>"
 
 import os
 import sys
+import pandas
+import json
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
 workflowDir = os.path.abspath(
@@ -47,6 +49,12 @@ def parseArgs():
                         help="Classifier pickle file name")
     parser.add_argument("-o", "--output", required=True,
                         help="Output file name")
+    parser.add_argument("-v", "--varianttype", default="SNV",
+                        help="Variant type (SNV/INDEL)")
+    parser.add_argument("-C", "--calibration",
+                        help="Calibration file name (if omitted, model is assumed to be already calibrated)")
+    parser.add_argument("-t", "--threshold", type = int, default = 3,
+                        help="Q-score threshold")
 
     args = parser.parse_args()
 
@@ -55,15 +63,21 @@ def parseArgs():
             raise Exception("Can't find input %s file: '%s'" % (label,filename))
 
     checkFile(args.classifier, "classifier")
+    if args.calibration != None :
+        checkFile(args.calibration, "calibration")
 
     return args
 
 
 def main() :
     args = parseArgs()
-
+    if args.calibration == None :
+        caldict = {"Coefficient" : 1, "Intercept" : 1}
+    else:
+        caldict = json.load(open(args.calibration))
+            
     model = evs.EVSModel.createFromFile(args.classifier)
-    model.save_json_strelka_format(args.output)
+    model.save_json_strelka_format(args.output, args.varianttype, caldict["Coefficient"], caldict["Intercept"], args.threshold)
 
 
 if __name__ == '__main__':
