@@ -75,7 +75,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-min-vexp', '0.25'])
 
     for bamPath in self.params.bamList :
-        segCmd.extend(["-bam-file",bamPath])
+        segCmd.extend(["--align-file",bamPath])
 
     if not isFirstSegment :
         segCmd.append("--skip-vcf-header")

@@ -81,7 +81,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["--counts-file", segFiles.counts[-1]])
 
     for bamPath in self.params.bamList :
-        segCmd.extend(["-bam-file", bamPath])
+        segCmd.extend(["--align-file",bamPath])
 
     if self.params.isHighDepthFilter :
         segCmd.extend(["--chrom-depth-file", self.paths.getChromDepth()])
