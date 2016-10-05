@@ -66,32 +66,8 @@ starling_pos_processor(
                           _opt, _dopt, _streams, ref, _nocompress_regions, _targeted_regions, basecallBuffers));
     }
 
-    // setup indel buffer:
+    // setup indel buffer samples:
     {
-        double maxIndelCandidateDepthSumOverNormalSamples(-1.);
-
-        if (dopt.gvcf.is_max_depth())
-        {
-            if (opt.max_candidate_indel_depth_factor > 0.)
-            {
-                maxIndelCandidateDepthSumOverNormalSamples = (opt.max_candidate_indel_depth_factor * _gvcfer->getMaxDepth());
-            }
-        }
-
-        if (opt.max_candidate_indel_depth > 0.)
-        {
-            if (maxIndelCandidateDepthSumOverNormalSamples > 0.)
-            {
-                maxIndelCandidateDepthSumOverNormalSamples = std::min(maxIndelCandidateDepthSumOverNormalSamples,static_cast<double>(opt.max_candidate_indel_depth));
-            }
-            else
-            {
-                maxIndelCandidateDepthSumOverNormalSamples = opt.max_candidate_indel_depth;
-            }
-        }
-
-        getIndelBuffer().setMaxCandidateDepth(maxIndelCandidateDepthSumOverNormalSamples);
-
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
             sample_info& sif(sample(sampleIndex));
@@ -109,33 +85,37 @@ starling_pos_processor::
 resetChromBase(const std::string& chromName)
 {
     base_t::resetChromBase(chromName);
-    reset();
 
     assert(_gvcfer);
     _gvcfer->resetChrom(chromName);
 
-    double maxIndelCandidateDepthSumOverNormalSamples(-1.);
-    if (_dopt.gvcf.is_max_depth())
+    // setup indel buffer max depth:
     {
-        if (_opt.max_candidate_indel_depth_factor > 0.)
+        double maxIndelCandidateDepthSumOverNormalSamples(-1.);
+        if (_dopt.gvcf.is_max_depth())
         {
-            maxIndelCandidateDepthSumOverNormalSamples = (_opt.max_candidate_indel_depth_factor * _gvcfer->getMaxDepth());
+            if (_opt.max_candidate_indel_depth_factor > 0.)
+            {
+                maxIndelCandidateDepthSumOverNormalSamples = (_opt.max_candidate_indel_depth_factor *
+                                                              _gvcfer->getMaxDepth());
+            }
         }
-    }
 
-    if (_opt.max_candidate_indel_depth > 0.)
-    {
-        if (maxIndelCandidateDepthSumOverNormalSamples > 0.)
+        if (_opt.max_candidate_indel_depth > 0.)
         {
-            maxIndelCandidateDepthSumOverNormalSamples = std::min(maxIndelCandidateDepthSumOverNormalSamples,static_cast<double>(_opt.max_candidate_indel_depth));
+            if (maxIndelCandidateDepthSumOverNormalSamples > 0.)
+            {
+                maxIndelCandidateDepthSumOverNormalSamples = std::min(maxIndelCandidateDepthSumOverNormalSamples,
+                                                                      static_cast<double>(_opt.max_candidate_indel_depth));
+            }
+            else
+            {
+                maxIndelCandidateDepthSumOverNormalSamples = _opt.max_candidate_indel_depth;
+            }
         }
-        else
-        {
-            maxIndelCandidateDepthSumOverNormalSamples = _opt.max_candidate_indel_depth;
-        }
-    }
 
-    getIndelBuffer().setMaxCandidateDepth(maxIndelCandidateDepthSumOverNormalSamples);
+        getIndelBuffer().setMaxCandidateDepth(maxIndelCandidateDepthSumOverNormalSamples);
+    }
 }
 
 
