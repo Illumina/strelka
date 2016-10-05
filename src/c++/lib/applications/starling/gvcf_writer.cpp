@@ -27,7 +27,6 @@
 #include "gvcf_header.hh"
 #include "indel_overlapper.hh"
 #include "LocusReportInfoUtil.hh"
-#include "ScoringModelManager.hh"
 #include "variant_prefilter_stage.hh"
 
 #include "blt_util/io_util.hh"
@@ -61,7 +60,6 @@ gvcf_writer(
     , _streams(streams)
     , _ref(ref)
     , _report_range(dopt.report_range.begin_pos,dopt.report_range.end_pos)
-    , _chrom(opt.bam_seq_name.c_str())
     , _dopt(dopt.gvcf)
     , _head_pos(dopt.report_range.begin_pos)
     , _empty_site(_dopt, streams.getSampleCount())
@@ -73,8 +71,6 @@ gvcf_writer(
 
     if (! opt.gvcf.is_gvcf_output())
         throw std::invalid_argument("gvcf_writer cannot be constructed with nothing to do.");
-
-    assert((nullptr !=_chrom) && (strlen(_chrom)>0));
 
     const unsigned sampleCount(_streams.getSampleCount());
     const auto& sampleNames(_streams.getSampleNames());
@@ -391,7 +387,7 @@ write_site_record_instance(
     const bool isAltAlleles(altAlleleCount > 0);
     const unsigned sampleCount(locus.getSampleCount());
 
-    os << _chrom << '\t'  // CHROM
+    os << getChromName() << '\t'  // CHROM
        << (locus.pos + 1) << '\t'  // POS
        << ".\t";           // ID
 
@@ -690,7 +686,7 @@ write_site_record(
     const gvcf_block_site_record& locus,
     std::ostream& os) const
 {
-    os << _chrom << '\t'  // CHROM
+    os << getChromName() << '\t'  // CHROM
        << (locus.pos+1) << '\t'  // POS
        << ".\t";           // ID
 
@@ -761,7 +757,7 @@ write_indel_record_instance(
     OrthogonalAlleleSetLocusReportInfo locusReportInfo;
     getLocusReportInfoFromAlleles(_ref, indelAlleles, locusReportInfo);
 
-    os << _chrom << '\t'   // CHROM
+    os << getChromName() << '\t'   // CHROM
        << locusReportInfo.vcfPos << '\t'   // POS
        << ".\t"            // ID
        << locusReportInfo.vcfRefSeq << '\t'; // REF

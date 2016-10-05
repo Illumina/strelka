@@ -96,8 +96,21 @@ struct ScoringModelManager
     double
     getMaxDepth() const
     {
-        assert(_isChromSet);
+        assert(isChromSet());
         return _maxChromDepth;
+    }
+
+    bool
+    isChromSet() const
+    {
+        return (not _chromName.empty());
+    }
+
+    const std::string&
+    getChromName() const
+    {
+        assert(isChromSet());
+        return _chromName;
     }
 
 private:
@@ -121,7 +134,7 @@ private:
     bool _isReportEVSFeatures;
     bool _isRNA;
 
-    bool _isChromSet = false;
+    std::string _chromName;
     double _normChromDepth = 0.;
     double _maxChromDepth = 0.;
 

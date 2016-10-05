@@ -80,7 +80,7 @@ void
 ScoringModelManager::
 resetChrom(const std::string& chrom)
 {
-    _isChromSet = true;
+    _chromName = chrom;
     if (_dopt.is_max_depth())
     {
         cdmap_t::const_iterator cdi(_dopt.chrom_depth.find(std::string(chrom)));
@@ -249,9 +249,12 @@ default_classify_site(
     }
     if (_dopt.is_max_depth())
     {
-        if (allSampleLocusDepth > _maxChromDepth)
+        if (isChromSet())
         {
-            sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+            if (allSampleLocusDepth > _maxChromDepth)
+            {
+                sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+            }
         }
     }
 
@@ -288,8 +291,6 @@ ScoringModelManager::
 default_classify_site_locus(
     GermlineSiteLocusInfo& locus) const
 {
-    assert(_isChromSet);
-
     const unsigned sampleCount(locus.getSampleCount());
     const unsigned allSampleLocusDepth(locus.getTotalReadDepth());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
@@ -350,7 +351,7 @@ ScoringModelManager::
 default_classify_indel_locus(
     GermlineIndelLocusInfo& locus) const
 {
-    assert(_isChromSet);
+    assert(isChromSet());
 
     const unsigned sampleCount(locus.getSampleCount());
     const unsigned allSampleLocusDepth(locus.getTotalReadDepth());

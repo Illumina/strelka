@@ -26,6 +26,7 @@
 
 #include "gvcf_block_site_record.hh"
 #include "gvcf_compressor.hh"
+#include "ScoringModelManager.hh"
 #include "starling_shared.hh"
 #include "starling_streams.hh"
 #include "variant_pipe_stage_base.hh"
@@ -33,8 +34,6 @@
 #include "blt_util/RegionTracker.hh"
 
 #include <iosfwd>
-
-struct ScoringModelManager;
 
 
 /// Assembles all site and indel call information into a consistent set, blocks output
@@ -58,6 +57,12 @@ private:
     getSampleCount() const
     {
         return _blockPerSample.size();
+    }
+
+    const std::string&
+    getChromName() const
+    {
+        return _scoringModels.getChromName();
     }
 
     void flush_impl() override;
@@ -141,7 +146,6 @@ private:
     const starling_streams& _streams;
     const reference_contig_segment& _ref;
     const known_pos_range _report_range;
-    const char* _chrom;
     const gvcf_deriv_options _dopt;
     std::vector<gvcf_block_site_record> _blockPerSample;
     pos_t _head_pos;
