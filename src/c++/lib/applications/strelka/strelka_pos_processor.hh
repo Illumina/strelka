@@ -49,7 +49,9 @@ struct strelka_pos_processor : public starling_pos_processor_base
         const strelka_streams& streams);
 
     void
-    resetChromBase(const std::string& chromName);
+    resetRegion(
+        const std::string& chromName,
+        const known_pos_range2& regionRange);
 
     void
     insert_noise_pos(

@@ -124,22 +124,6 @@ get_read_buffer_size(const unsigned largest_read_size,
 
 
 
-// public companion functions:
-//
-static
-int
-get_influence_zone_size(const unsigned largest_read_size,
-                        const unsigned largest_total_indel_span_per_read)
-{
-    static const unsigned min_influence_zone_read_size(512);
-    const unsigned influence_read_size(std::max(min_influence_zone_read_size,
-                                                largest_read_size));
-    return static_cast<int>(get_read_buffer_size(influence_read_size,largest_total_indel_span_per_read))-1;
-}
-
-
-
-
 // static methods:
 //
 void
@@ -313,23 +297,6 @@ starling_pos_processor_base(
                                                           _opt.is_all_sites());
         }
     }
-
-    // define an expanded indel influence zone around the report range:
-    //
-    // note that we don't know the max indel ref span per read at this point, so a fudge factor is
-    // added here:
-    const int bshift(get_influence_zone_size(get_largest_read_size(),
-                                             _opt.max_indel_size*2));
-    pos_range& rir( _report_influence_range);
-    rir = _dopt.report_range_limit;
-    if (rir.is_begin_pos)
-    {
-        rir.begin_pos -= bshift;
-    }
-    if (rir.is_end_pos)
-    {
-        rir.end_pos += bshift;
-    }
 }
 
 
@@ -417,10 +384,13 @@ reset()
 
 void
 starling_pos_processor_base::
-resetChromBase(const std::string& chromName)
+resetRegionBase(
+    const std::string& chromName,
+    const known_pos_range2& reportRange)
 {
     reset();
     _chromName = chromName;
+    _reportRange = reportRange;
 }
 
 
@@ -1268,13 +1238,9 @@ pileup_read_segment(
 
     // exact begin and end report range filters:
     {
-        const pos_range& rlimit(_dopt.report_range_limit);
-        if (rlimit.is_end_pos && (best_al.pos>=rlimit.end_pos)) return;
-        if (rlimit.is_begin_pos)
-        {
-            const pos_t al_end_pos(best_al.pos+static_cast<pos_t>(read_ref_mapped_size));
-            if (al_end_pos <= rlimit.begin_pos) return;
-        }
+        if (best_al.pos>=_reportRange.end_pos()) return;
+        const pos_t al_end_pos(best_al.pos+static_cast<pos_t>(read_ref_mapped_size));
+        if (al_end_pos <= _reportRange.begin_pos()) return;
     }
 
     // find trimmed sections (as defined by the CASAVA 1.0 caller)

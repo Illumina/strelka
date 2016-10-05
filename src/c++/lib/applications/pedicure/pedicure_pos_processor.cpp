@@ -69,9 +69,11 @@ pedicure_pos_processor(
 
 void
 pedicure_pos_processor::
-resetChrom(const std::string& chromName)
+resetRegion(
+    const std::string& chromName,
+    const known_pos_range2& reportRegion)
 {
-    base_t::resetChromBase(chromName);
+    base_t::resetRegionBase(chromName, reportRegion);
 
     // setup norm and max filtration depths
     {

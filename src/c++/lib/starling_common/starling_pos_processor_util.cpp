@@ -314,7 +314,6 @@ processInputReadAlignment(
     const bam_streamer& read_stream,
     const bam_record& read,
     const pos_t base_pos,
-    const pos_t /*report_begin_pos*/,
     starling_read_counts& brc,
     starling_pos_processor_base& sppr,
     const unsigned sampleIndex)

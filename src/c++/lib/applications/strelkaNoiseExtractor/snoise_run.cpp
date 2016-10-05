@@ -97,14 +97,12 @@ snoise_run(
         setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
 
     const starling_base_deriv_options dopt(opt, ref);
-    const pos_range& rlimit(dopt.report_range_limit);
-
     const unsigned sampleCount(1);
     snoise_streams streams(opt, pinfo, referenceHeader, sampleCount);
 
     snoise_pos_processor sppr(opt, dopt, ref, streams);
 
-        sppr.resetChrom(rinfo.regionChrom);
+        sppr.resetRegion(rinfo.regionChrom, rinfo.regionRange);
 
     while (streamData.next())
     {
@@ -112,11 +110,7 @@ snoise_run(
         const HTS_TYPE::index_t currentHtsType(streamData.getCurrentType());
         const unsigned currentIndex(streamData.getCurrentIndex());
 
-        // Process finishes at the the end of rlimit range. Note that
-        // some additional padding is allowed for off-range indels
-        // which might influence results within rlimit:
-        //
-        if (rlimit.is_end_pos && (currentPos >= (rlimit.end_pos + static_cast<pos_t>(opt.max_indel_size)))) break;
+        if (currentPos >= rinfo.streamerRegionRange.end_pos()) break;
 
         // wind sppr forward to position behind buffer head:
         sppr.set_head_pos(currentPos - 1);
@@ -136,7 +130,7 @@ snoise_run(
 
             processInputReadAlignment(opt, ref, streamData.getCurrentBamStreamer(),
                                       streamData.getCurrentBam(), currentPos,
-                                      rlimit.begin_pos, brc, sppr);
+                                      brc, sppr);
         }
         else if (HTS_TYPE::VCF == currentHtsType)
         {

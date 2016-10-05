@@ -90,22 +90,6 @@ set_report_range(const blt_options& opt,
 }
 
 
-/// the input report_range can optionally have unknown begin and end positions,
-/// the output range will have begin defined, and end defined if possible.
-static
-pos_range
-get_report_range_limit(const pos_range& report_range,
-                       const pos_t ref_end)
-{
-    pos_range rrl;
-
-    rrl.set_begin_pos((report_range.is_begin_pos ? report_range.begin_pos : 0));
-    rrl.is_end_pos = true;
-    rrl.end_pos = ref_end;
-    return rrl;
-}
-
-
 
 blt_deriv_options::
 blt_deriv_options(
@@ -114,9 +98,6 @@ blt_deriv_options(
     : _pdcaller(new pprob_digt_caller(opt.bsnp_diploid_theta))
 {
     set_report_range(opt,ref_end,report_range);
-
-    report_range_limit=get_report_range_limit(report_range,
-                                              ref_end);
 }
 
 

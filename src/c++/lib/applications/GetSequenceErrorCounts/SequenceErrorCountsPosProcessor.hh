@@ -47,7 +47,9 @@ struct SequenceErrorCountsPosProcessor : public starling_pos_processor_base
 
     void reset();
 
-    void resetChrom(const std::string& chromName);
+    void resetRegion(
+        const std::string& chromName,
+        const known_pos_range2& reportRegion);
 
     void
     insertExcludedRegion(

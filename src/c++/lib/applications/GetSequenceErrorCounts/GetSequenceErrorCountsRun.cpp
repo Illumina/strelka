@@ -167,11 +167,9 @@ getSequenceErrorCountsRun(
         setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
 
     const SequenceErrorCountsDerivOptions dopt(opt, ref);
-    const pos_range& rlimit(dopt.report_range_limit);
-
     SequenceErrorCountsPosProcessor sppr(opt, dopt, ref, client_io);
 
-        sppr.resetChrom(rinfo.regionChrom);
+        sppr.resetRegion(rinfo.regionChrom, rinfo.regionRange);
 
     while (streamData.next())
     {
@@ -179,11 +177,7 @@ getSequenceErrorCountsRun(
         const HTS_TYPE::index_t currentHtsType(streamData.getCurrentType());
         const unsigned currentIndex(streamData.getCurrentIndex());
 
-        // Process finishes at the the end of rlimit range. Note that
-        // some additional padding is allowed for off-range indels
-        // which might influence results within rlimit:
-        //
-        if (rlimit.is_end_pos && (currentPos >= (rlimit.end_pos + static_cast<pos_t>(opt.max_indel_size)))) break;
+        if (currentPos >= rinfo.streamerRegionRange.end_pos()) break;
 
         // wind sppr forward to position behind buffer head:
         sppr.set_head_pos(currentPos - 1);
@@ -213,7 +207,7 @@ getSequenceErrorCountsRun(
             }
 
             processInputReadAlignment(opt, ref, streamData.getCurrentBamStreamer(),
-                                      read, currentPos, rlimit.begin_pos, brc, sppr);
+                                      read, currentPos, brc, sppr);
         }
         else if (HTS_TYPE::VCF == currentHtsType)
         {

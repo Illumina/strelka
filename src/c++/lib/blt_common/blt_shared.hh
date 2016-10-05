@@ -158,7 +158,7 @@ struct blt_deriv_options
     ~blt_deriv_options();
 
     pos_range report_range;
-    pos_range report_range_limit;   //  maximum report range
+    //pos_range report_range_limit;   //  maximum report range
 
     const pprob_digt_caller&
     pdcaller() const

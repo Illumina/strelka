@@ -112,13 +112,10 @@ pedicure_run(
         setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
 
     const pedicure_deriv_options dopt(opt, ref);
-
-    const pos_range& rlimit(dopt.report_range_limit);
-
     pedicure_streams streams(opt, dopt, pinfo, referenceHeader, ssi);
     pedicure_pos_processor sppr(opt, dopt, ref, streams);
 
-        sppr.resetChrom(rinfo.regionChrom);
+        sppr.resetRegion(rinfo.regionChrom, rinfo.regionRange);
 
     while (streamData.next())
     {
@@ -126,12 +123,7 @@ pedicure_run(
         const HTS_TYPE::index_t currentHtsType(streamData.getCurrentType());
         const unsigned currentIndex(streamData.getCurrentIndex());
 
-        // If we're past the end of rlimit range then we're done.
-        //   Note that some additional padding is allowed for off
-        //   range indels which might influence results within the
-        //   report range:
-        //
-        if (rlimit.is_end_pos && (currentPos >= (rlimit.end_pos + static_cast<pos_t>(opt.max_indel_size)))) break;
+        if (currentPos >= rinfo.streamerRegionRange.end_pos()) break;
 
         // wind sppr forward to position behind buffer head:
         sppr.set_head_pos(currentPos - 1);
@@ -151,7 +143,7 @@ pedicure_run(
 
             processInputReadAlignment(opt, ref, streamData.getCurrentBamStreamer(),
                                       streamData.getCurrentBam(), currentPos,
-                                      rlimit.begin_pos, brc, sppr, currentIndex);
+                                      brc, sppr, currentIndex);
         }
         else if (HTS_TYPE::VCF == currentHtsType)
         {

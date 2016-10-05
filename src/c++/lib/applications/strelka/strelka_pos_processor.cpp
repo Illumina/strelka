@@ -81,9 +81,11 @@ strelka_pos_processor(
 
 void
 strelka_pos_processor::
-resetChromBase(const std::string& chromName)
+resetRegion(
+    const std::string& chromName,
+    const known_pos_range2& regionRange)
 {
-    base_t::resetChromBase(chromName);
+    base_t::resetRegionBase(chromName, regionRange);
 
     // setup norm and max filtration depths
     {

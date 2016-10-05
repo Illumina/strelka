@@ -82,9 +82,11 @@ starling_pos_processor(
 
 void
 starling_pos_processor::
-resetChrom(const std::string& chromName)
+resetRegion(
+    const std::string& chromName,
+    const known_pos_range2& reportRegion)
 {
-    base_t::resetChromBase(chromName);
+    base_t::resetRegionBase(chromName, reportRegion);
 
     assert(_gvcfer);
     _gvcfer->resetChrom(chromName);

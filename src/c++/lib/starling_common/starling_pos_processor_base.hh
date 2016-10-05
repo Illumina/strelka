@@ -165,27 +165,12 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     void
     set_head_pos(const pos_t pos);
 
-    // Is a read potentially containing an indel or an indel itself
-    // far enough from the report start and stop positions to be
-    // excluded?
-    //
-    bool
-    is_range_outside_report_influence_zone(const pos_range& pr) const
-    {
-        return (! _report_influence_range.is_range_intersect(pr));
-    }
-
-    // Does a range fall outside of the report start and stop positions?
-    //
-    bool
-    is_range_outside_report_zone(const pos_range& pr) const
-    {
-        return (! _dopt.report_range_limit.is_range_intersect(pr));
-    }
-
 protected:
-    /// reset current chromosome -- must be called before inserting region data
-    void resetChromBase(const std::string& chromName);
+    /// reset current report region -- must be called before inserting region data
+    void
+    resetRegionBase(
+        const std::string& chromName,
+        const known_pos_range2& reportRange);
 
     std::ostream*
     get_report_osptr() const
@@ -368,9 +353,9 @@ public:
 
 private:
     bool
-    is_pos_reportable(const pos_t pos)
+    is_pos_reportable(const pos_t pos) const
     {
-        return _dopt.report_range_limit.is_pos_intersect(pos);
+        return _reportRange.is_pos_intersect(pos);
     }
 
     void
@@ -592,8 +577,8 @@ protected:
 
     stage_manager _stageman;
 
-    pos_range _report_influence_range;
     std::string _chromName;
+    known_pos_range2 _reportRange;
 
     // used to keep read id's unique across multiple samples:
     read_id_counter _ric;

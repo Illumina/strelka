@@ -42,9 +42,11 @@ struct snoise_pos_processor : public starling_pos_processor_base
         const snoise_streams& streams);
 
     void
-    resetChrom(const std::string& chromName)
+    resetRegion(
+        const std::string& chromName,
+        const known_pos_range2& reportRange)
     {
-        base_t::resetChromBase(chromName);
+        base_t::resetRegionBase(chromName, reportRange);
     }
 
 private:
