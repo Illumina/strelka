@@ -80,9 +80,6 @@ private:
         const int stage_no,
         const pos_t pos) override;
 
-    void
-    write_counts(const pos_range& output_report_range) const override;
-
     bool
     derived_empty() const override
     {

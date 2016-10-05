@@ -133,7 +133,6 @@ struct blt_options
     bool isReportEVSFeatures = false;
     bool is_compute_somatic_scoring_metrics = false;
 
-    std::string report_filename;
 };
 
 

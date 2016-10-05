@@ -399,31 +399,6 @@ process_pos_indel_somatic(const pos_t pos)
 
 void
 strelka_pos_processor::
-write_counts(const pos_range& output_report_range) const
-{
-
-    std::ostream* report_os_ptr(get_report_osptr());
-    if (NULL==report_os_ptr) return;
-    std::ostream& report_os(*report_os_ptr);
-
-    for (unsigned i(0); i<STRELKA_SAMPLE_TYPE::SIZE; ++i)
-    {
-        const sample_info& sif(sample(i));
-        const std::string label(STRELKA_SAMPLE_TYPE::get_label(i));
-
-        report_os << std::setprecision(8);
-        report_stream_stat(sif.ss,(label+"_ALLSITES_COVERAGE").c_str(),output_report_range,report_os);
-        report_stream_stat(sif.used_ss,(label+"_ALLSITES_COVERAGE_USED").c_str(),output_report_range,report_os);
-
-        report_stream_stat(sif.ssn,(label+"_NO_REF_N_COVERAGE").c_str(),output_report_range,report_os);
-        report_stream_stat(sif.used_ssn,(label+"_NO_REF_N_COVERAGE_USED").c_str(),output_report_range,report_os);
-    }
-}
-
-
-
-void
-strelka_pos_processor::
 run_post_call_step(
     const int stage_no,
     const pos_t pos)

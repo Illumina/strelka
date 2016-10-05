@@ -70,9 +70,6 @@ private:
     void process_pos_error_counts(
         const pos_t pos);
 
-    void
-    write_counts(const pos_range&) const override {}
-
     bool
     derived_empty() const override
     {

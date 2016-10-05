@@ -50,12 +50,6 @@ struct starling_streams_base
     }
 
     std::ostream*
-    report_osptr() const
-    {
-        return _report_osptr.get();
-    }
-
-    std::ostream*
     candidate_indel_osptr() const
     {
         return _candidate_indel_osptr.get();
@@ -109,7 +103,6 @@ protected:
 
     std::vector<std::unique_ptr<bam_dumper>> _realign_bam_ptr;
 private:
-    std::unique_ptr<std::ostream> _report_osptr;
     std::unique_ptr<std::ostream> _candidate_indel_osptr;
     unsigned _sampleCount;
 };

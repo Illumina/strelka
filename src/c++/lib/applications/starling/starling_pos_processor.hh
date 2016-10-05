@@ -105,9 +105,6 @@ private:
         const std::vector<diploid_genotype>& allDgt,
         std::vector<uint8_t>& altAlleles) const;
 
-    void
-    write_counts(const pos_range& output_report_range) const override;
-
     const starling_options& _opt;
     const starling_deriv_options& _dopt;
     const starling_streams& _streams;

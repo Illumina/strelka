@@ -68,27 +68,6 @@ snoise_pos_processor(
 
 void
 snoise_pos_processor::
-write_counts(
-    const pos_range& output_report_range) const
-{
-    std::ostream* report_osptr(get_report_osptr());
-    if (nullptr==report_osptr) return;
-    std::ostream& report_os(*report_osptr);
-
-    const sample_info& sif(sample());
-
-    report_os << std::setprecision(8);
-    report_stream_stat(sif.ss,"ALLSITES_COVERAGE",output_report_range,report_os);
-    report_stream_stat(sif.used_ss,"ALLSITES_COVERAGE_USED",output_report_range,report_os);
-
-    report_stream_stat(sif.ssn,"NO_REF_N_COVERAGE",output_report_range,report_os);
-    report_stream_stat(sif.used_ssn,"NO_REF_N_COVERAGE_USED",output_report_range,report_os);
-}
-
-
-
-void
-snoise_pos_processor::
 process_pos_snp_snoise(
     const pos_t pos)
 {

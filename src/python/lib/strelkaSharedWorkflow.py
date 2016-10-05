@@ -133,9 +133,6 @@ class SharedPathInfo(object):
     def getTmpSegmentDir(self) :
         return os.path.join(self.params.workDir, "genomeSegment.tmpdir")
 
-    def getTmpSegmentReportPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
-
     def getTmpRunStatsPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "runStats.%s.xml" % (segStr))
 

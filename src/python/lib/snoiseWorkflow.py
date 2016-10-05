@@ -79,8 +79,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     for bamPath in self.params.bamList :
         segCmd.extend(["-bam-file",bamPath])
 
-    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.id)])
-
     if not isFirstSegment :
         segCmd.append("--skip-vcf-header")
 
@@ -185,9 +183,6 @@ class PathInfo(SharedPathInfo):
 
     def getTmpSegmentGvcfPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "noise.%s.vcf.gz" % (segStr))
-
-    def getTmpSegmentReportPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
 
     def getGvcfOutputPath(self) :
         return os.path.join( self.params.variantsDir, "noise.vcf.gz")

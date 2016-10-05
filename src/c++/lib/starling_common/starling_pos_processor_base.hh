@@ -172,12 +172,6 @@ protected:
         const std::string& chromName,
         const known_pos_range2& reportRange);
 
-    std::ostream*
-    get_report_osptr() const
-    {
-        return _streams.report_osptr();
-    }
-
     struct pos_win_avgs
     {
         pos_win_avgs()
@@ -483,10 +477,6 @@ protected:
     }
 
 private:
-    virtual
-    void
-    write_counts(const pos_range& output_report_range) const = 0;
-
     // return false if read is too large
     bool
     update_largest_read_size(const unsigned rs);

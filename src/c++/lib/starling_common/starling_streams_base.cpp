@@ -207,18 +207,6 @@ starling_streams_base(
 {
     assert(_sampleCount > 0);
 
-    const char* const cmdline(opt.cmdline.c_str());
-
-    if (! opt.report_filename.empty())
-    {
-        std::ofstream* fosptr(new std::ofstream);
-        _report_osptr.reset(fosptr);
-        std::ofstream& fos(*fosptr);
-        open_ofstream(pinfo,opt.report_filename,"report",fos);
-
-        write_audit(opt,pinfo,cmdline,fos);
-    }
-
     if (opt.is_write_candidate_indels())
     {
         _candidate_indel_osptr.reset(initialize_candidate_indel_file(opt,pinfo,opt.candidate_indel_filename));

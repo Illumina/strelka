@@ -132,8 +132,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-min-vexp', '0.25'])
     segCmd.extend(['--do-short-range-phasing'])
 
-    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.id)])
-
     segFiles.stats.append(self.paths.getTmpRunStatsPath(segStr))
     segCmd.extend(["--stats-file", segFiles.stats[-1]])
 

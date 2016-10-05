@@ -156,8 +156,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
     addListCmdOption(self.params.noiseVcfList, '--noise-vcf')
 
-    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.id)])
-
     segFiles.stats.append(self.paths.getTmpRunStatsPath(segStr))
     segCmd.extend(["--stats-file", segFiles.stats[-1]])
 

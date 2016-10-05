@@ -126,8 +126,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         for arg in self.params.extraVariantCallerArguments.strip().split() :
             segCmd.append(arg)
 
-    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.id)])
-
     segFiles.stats.append(self.paths.getTmpRunStatsPath(segStr))
     segCmd.extend(["--stats-file", segFiles.stats[-1]])
 
@@ -260,9 +258,6 @@ class PathInfo(SharedPathInfo):
 
     def getTmpRealignBamPath(self, segStr, label) :
         return os.path.join( self.getTmpSegmentDir(), "%s.%s.realigned.bam" % (label, segStr))
-
-    def getTmpSegmentReportPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
 
     def getDenovoOutputPath(self) :
         return os.path.join( self.params.variantsDir, "denovo.vcf.gz")

@@ -63,9 +63,6 @@ private:
     void
     aggregate_vcf(const std::string& chrom, const pos_t& pos, const std::string& vcf_line);
 
-    void
-    write_counts(const pos_range& output_report_range) const override;
-
     /////////////////////////////
 
     // keep some of the original pedicure classes handy so we don't

@@ -356,7 +356,6 @@ reset()
     if (_stagemanPtr)
     {
         _stagemanPtr->reset();
-        write_counts(pos_range(_reportRange.begin_pos(), _reportRange.end_pos()));
     }
 }
 

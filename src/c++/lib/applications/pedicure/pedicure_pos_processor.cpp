@@ -358,31 +358,3 @@ aggregate_vcf(const std::string& /*chrom*/, const pos_t& pos, const std::string&
         bos << vcf_line;
     }
 }
-
-void
-pedicure_pos_processor::
-write_counts(
-    const pos_range& output_report_range) const
-{
-
-    //TODO better handling in pedicure_vcf_Agg
-    std::ostream& bos(*_streams.denovo_osptr());
-    bos << prev_vcf_line;
-
-    std::ostream* report_os_ptr(get_report_osptr());
-    if (nullptr==report_os_ptr) return;
-    std::ostream& report_os(*report_os_ptr);
-
-    for (unsigned i(0); i<_opt.alignFileOpt.alignmentSampleInfo.size(); ++i)
-    {
-        const sample_info& sif(sample(i));
-        const std::string label(PEDICURE_SAMPLETYPE::get_label(i));
-
-        report_os << std::setprecision(8);
-        report_stream_stat(sif.ss,(label+"_ALLSITES_COVERAGE").c_str(),output_report_range,report_os);
-        report_stream_stat(sif.used_ss,(label+"_ALLSITES_COVERAGE_USED").c_str(),output_report_range,report_os);
-
-        report_stream_stat(sif.ssn,(label+"_NO_REF_N_COVERAGE").c_str(),output_report_range,report_os);
-        report_stream_stat(sif.used_ssn,(label+"_NO_REF_N_COVERAGE_USED").c_str(),output_report_range,report_os);
-    }
-}

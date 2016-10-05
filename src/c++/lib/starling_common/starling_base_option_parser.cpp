@@ -121,8 +121,6 @@ get_starling_base_option_parser(
 
     po::options_description other_opt("other-options");
     other_opt.add_options()
-    ("report-file", po::value(&opt.report_filename),
-     "Report non-error run info and statistics to file")
     ("stats-file", po::value(&opt.segmentStatsFilename),
      "Write runtime stats to file")
     ("report-evs-features", po::value(&opt.isReportEVSFeatures)->zero_tokens(),
