@@ -38,20 +38,5 @@ SequenceErrorCountsDerivOptions(
     if (opt.is_depth_filter())
     {
         parse_chrom_depth(opt.chrom_depth_file, chrom_depth);
-
-        //TODO, verify that chroms match bam chroms
-        const std::string& chrom_name(opt.bam_seq_name);
-        cdmap_t::const_iterator cdi(chrom_depth.find(std::string(chrom_name)));
-        if (cdi == chrom_depth.end())
-        {
-            std::ostringstream oss;
-            oss << "ERROR: Can't find chromosome: '" << chrom_name << "' in chrom depth file: " << opt.chrom_depth_file << "\n";
-            throw blt_exception(oss.str().c_str());
-        }
-        max_depth=(cdi->second*opt.max_depth_factor);
-        norm_depth=(cdi->second);
-        assert(max_depth>=0.);
-        assert(norm_depth>=0.);
     }
 }
-

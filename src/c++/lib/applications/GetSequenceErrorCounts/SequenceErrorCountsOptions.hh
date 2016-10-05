@@ -104,8 +104,6 @@ struct SequenceErrorCountsDerivOptions : public starling_base_deriv_options
     }
 
     std::string block_label;
-    double max_depth = 0;
-    double norm_depth = 0;
     cdmap_t chrom_depth;
 };
 

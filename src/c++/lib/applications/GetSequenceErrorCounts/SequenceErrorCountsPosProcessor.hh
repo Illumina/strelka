@@ -47,6 +47,8 @@ struct SequenceErrorCountsPosProcessor : public starling_pos_processor_base
 
     void reset();
 
+    void resetChrom(const std::string& chromName);
+
     void
     insertExcludedRegion(
         const known_pos_range2& excludedRange);
@@ -76,7 +78,11 @@ private:
     }
 
     const SequenceErrorCountsOptions& _opt;
+    const SequenceErrorCountsDerivOptions& _dopt;
     const SequenceErrorCountsStreams& _streams;
+
+    double _normChromDepth = 0.;
+    double _maxChromDepth = 0.;
 
     SequenceErrorCounts _counts;
 

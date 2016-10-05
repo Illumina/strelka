@@ -35,8 +35,9 @@ SequenceErrorCountsPosProcessor(
     const SequenceErrorCountsDerivOptions& dopt,
     const reference_contig_segment& ref,
     const SequenceErrorCountsStreams& streams)
-    : base_t(opt,dopt,ref,streams, opt.alignFileOpt.alignmentFilename.size()),
+    : base_t(opt, dopt,ref,streams, opt.alignFileOpt.alignmentFilename.size()),
       _opt(opt),
+      _dopt(dopt),
       _streams(streams)
 {
     // not generalized to multi-sample yet:
@@ -52,31 +53,9 @@ SequenceErrorCountsPosProcessor(
         }
     }
 
-    // setup indel buffer
+    // setup indel buffer samples
     {
         sample_info& normal_sif(sample(sampleId));
-
-        if (dopt.is_max_depth())
-        {
-            if (opt.max_candidate_indel_depth_factor > 0.)
-            {
-                _max_candidate_normal_sample_depth = (opt.max_candidate_indel_depth_factor * dopt.max_depth);
-            }
-        }
-
-        if (opt.max_candidate_indel_depth > 0.)
-        {
-            if (_max_candidate_normal_sample_depth > 0.)
-            {
-                _max_candidate_normal_sample_depth = std::min(_max_candidate_normal_sample_depth,static_cast<double>(opt.max_candidate_indel_depth));
-            }
-            else
-            {
-                _max_candidate_normal_sample_depth = opt.max_candidate_indel_depth;
-            }
-        }
-
-        getIndelBuffer().setMaxCandidateDepth(_max_candidate_normal_sample_depth);
 
         const unsigned syncSampleId = getIndelBuffer().registerSample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2, true);
 
@@ -85,6 +64,8 @@ SequenceErrorCountsPosProcessor(
         getIndelBuffer().finalizeSamples();
     }
 }
+
+
 
 SequenceErrorCountsPosProcessor::
 ~SequenceErrorCountsPosProcessor()
@@ -105,6 +86,62 @@ reset()
 
 void
 SequenceErrorCountsPosProcessor::
+resetChrom(
+    const std::string& chromName)
+{
+    base_t::resetChromBase(chromName);
+
+    // setup norm and max filtration depths
+    {
+        if (_opt.is_depth_filter())
+        {
+            //TODO, verify that chroms match bam chroms
+            cdmap_t::const_iterator cdi(_dopt.chrom_depth.find(chromName));
+            if (cdi == _dopt.chrom_depth.end())
+            {
+                std::ostringstream oss;
+                oss << "ERROR: Can't find chromosome: '" << chromName << "' in chrom depth file: "
+                    << _opt.chrom_depth_file << "\n";
+                throw blt_exception(oss.str().c_str());
+            }
+            _normChromDepth = cdi->second;
+            _maxChromDepth = (_normChromDepth * _opt.max_depth_factor);
+        }
+        assert(_normChromDepth >= 0.);
+        assert(_maxChromDepth >= 0.);
+    }
+
+    // setup indel buffer max depth
+    {
+        if (_dopt.is_max_depth())
+        {
+            if (_opt.max_candidate_indel_depth_factor > 0.)
+            {
+                _max_candidate_normal_sample_depth = (_opt.max_candidate_indel_depth_factor * _maxChromDepth);
+            }
+        }
+
+        if (_opt.max_candidate_indel_depth > 0.)
+        {
+            if (_max_candidate_normal_sample_depth > 0.)
+            {
+                _max_candidate_normal_sample_depth = std::min(_max_candidate_normal_sample_depth,
+                                                              static_cast<double>(_opt.max_candidate_indel_depth));
+            }
+            else
+            {
+                _max_candidate_normal_sample_depth = _opt.max_candidate_indel_depth;
+            }
+        }
+
+        getIndelBuffer().setMaxCandidateDepth(_max_candidate_normal_sample_depth);
+    }
+}
+
+
+
+void
+SequenceErrorCountsPosProcessor::
 insertExcludedRegion(
     const known_pos_range2& excludedRange)
 {
@@ -112,6 +149,8 @@ insertExcludedRegion(
     _excludedRegions.addRegion(excludedRange);
     _is_skip_process_pos=false;
 }
+
+
 
 void
 SequenceErrorCountsPosProcessor::
@@ -521,7 +560,7 @@ process_pos_error_counts(
             if (support[nonrefAlleleIndex+1] > 0 && _opt.is_write_observations())
             {
                 std::ostream& obs_os(*_streams.observation_bed_osptr());
-                obs_os << _opt.bam_seq_name << "\t";
+                obs_os << _chromName << "\t";
                 obs_os << indelKey.pos << "\t" << indelKey.pos + indelKey.deletionLength << "\t" << INDEL::get_index_label(indelKey.type) << "\t";
                 obs_os << indelReportInfo.repeat_unit << "\t" << indelReportInfo.ref_repeat_count << "\t";
                 obs_os << GENOTYPE_STATUS::label(obs.variantStatus) << "\t";
