@@ -57,10 +57,11 @@ pedicure_run(
 {
     opt.validate();
 
+    const pedicure_deriv_options dopt(opt);
+    const PedicureSampleSetSummary ssi(opt);
     starling_read_counts brc;
     reference_contig_segment ref;
     RunStatsManager segmentStatMan(opt.segmentStatsFilename);
-    const PedicureSampleSetSummary ssi(opt);
 
     const unsigned sampleCount(opt.alignFileOpt.alignmentFilename.size());
 
@@ -90,97 +91,83 @@ pedicure_run(
     const bam_hdr_t& referenceHeader(bamHeaders.front());
     const bam_header_info referenceHeaderInfo(referenceHeader);
 
-    const unsigned regionCount(opt.regions.size());
-    for (unsigned regionIndex(0); regionIndex<regionCount; ++regionIndex)
-    {
-        const std::string& region(opt.regions[regionIndex]);
-        AnalysisRegionInfo rinfo;
-        getStrelkaAnalysisRegionInfo(region, opt.max_indel_size, rinfo);
-
-        // check that target region chrom exists in bam headers:
-        if (not referenceHeaderInfo.chrom_to_index.count(rinfo.regionChrom))
-        {
-            using namespace illumina::common;
-            std::ostringstream oss;
-            oss << "ERROR: region contig name: '" << rinfo.regionChrom
-                << "' is not found in the header of BAM/CRAM file: '" << opt.alignFileOpt.alignmentFilename.front()
-                << "'\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-        }
-
-        streamData.resetRegion(rinfo.streamerRegion.c_str());
-        setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
-
-    const pedicure_deriv_options dopt(opt);
     pedicure_streams streams(opt, dopt, pinfo, referenceHeader, ssi);
     pedicure_pos_processor sppr(opt, dopt, ref, streams);
 
+    // parse and sanity check regions
+    const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilename.front());
+    std::vector<AnalysisRegionInfo> regionInfo;
+    getStrelkaAnalysisRegions(opt, referenceAlignmentFilename, referenceHeaderInfo, regionInfo);
+
+    for (const auto& rinfo : regionInfo)
+    {
+        setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
+        streamData.resetRegion(rinfo.streamerRegion.c_str());
         sppr.resetRegion(rinfo.regionChrom, rinfo.regionRange);
 
-    while (streamData.next())
-    {
-        const pos_t currentPos(streamData.getCurrentPos());
-        const HTS_TYPE::index_t currentHtsType(streamData.getCurrentType());
-        const unsigned currentIndex(streamData.getCurrentIndex());
-
-        if (currentPos >= rinfo.streamerRegionRange.end_pos()) break;
-
-        // wind sppr forward to position behind buffer head:
-        sppr.set_head_pos(currentPos - 1);
-
-        if (HTS_TYPE::BAM == currentHtsType)
+        while (streamData.next())
         {
-            // Remove the filter below because it's not valid for
-            // RNA-Seq case, reads should be selected for the report
-            // range by the bam reading functions
-            //
-            // /// get potential bounds of the read based only on current_pos:
-            // const known_pos_range any_read_bounds(current_pos-max_indel_size,current_pos+MAX_READ_SIZE+max_indel_size);
-            // if( sppr.is_range_outside_report_influence_zone(any_read_bounds) ) continue;
+            const pos_t currentPos(streamData.getCurrentPos());
+            const HTS_TYPE::index_t currentHtsType(streamData.getCurrentType());
+            const unsigned currentIndex(streamData.getCurrentIndex());
 
-            // Approximate begin range filter: (removed for RNA-Seq)
-            //if((current_pos+MAX_READ_SIZE+MAX_INDEL_SIZE) <= rlimit.begin_pos) continue;
+            if (currentPos >= rinfo.streamerRegionRange.end_pos()) break;
 
-            processInputReadAlignment(opt, ref, streamData.getCurrentBamStreamer(),
-                                      streamData.getCurrentBam(), currentPos,
-                                      brc, sppr, currentIndex);
-        }
-        else if (HTS_TYPE::VCF == currentHtsType)
-        {
-            const vcf_record& vcfRecord(streamData.getCurrentVcf());
-            if (INPUT_TYPE::CANDIDATE_INDELS == currentIndex)     // process candidate indels input from vcf file(s)
+            // wind sppr forward to position behind buffer head:
+            sppr.set_head_pos(currentPos - 1);
+
+            if (HTS_TYPE::BAM == currentHtsType)
             {
-                if (vcfRecord.is_indel())
-                {
-                    process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
-                }
+                // Remove the filter below because it's not valid for
+                // RNA-Seq case, reads should be selected for the report
+                // range by the bam reading functions
+                //
+                // /// get potential bounds of the read based only on current_pos:
+                // const known_pos_range any_read_bounds(current_pos-max_indel_size,current_pos+MAX_READ_SIZE+max_indel_size);
+                // if( sppr.is_range_outside_report_influence_zone(any_read_bounds) ) continue;
+
+                // Approximate begin range filter: (removed for RNA-Seq)
+                //if((current_pos+MAX_READ_SIZE+MAX_INDEL_SIZE) <= rlimit.begin_pos) continue;
+
+                processInputReadAlignment(opt, ref, streamData.getCurrentBamStreamer(),
+                                          streamData.getCurrentBam(), currentPos,
+                                          brc, sppr, currentIndex);
             }
-            else if (INPUT_TYPE::FORCED_GT_VARIANTS ==
-                     currentIndex)     // process forced genotype tests from vcf file(s)
+            else if (HTS_TYPE::VCF == currentHtsType)
             {
-                if (vcfRecord.is_indel())
+                const vcf_record& vcfRecord(streamData.getCurrentVcf());
+                if (INPUT_TYPE::CANDIDATE_INDELS == currentIndex)     // process candidate indels input from vcf file(s)
                 {
-                    static const unsigned sample_no(0);
-                    static const bool is_forced_output(true);
-                    process_candidate_indel(opt.max_indel_size, vcfRecord, sppr, sample_no, is_forced_output);
+                    if (vcfRecord.is_indel())
+                    {
+                        process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
+                    }
                 }
-                else if (vcfRecord.is_snv())
+                else if (INPUT_TYPE::FORCED_GT_VARIANTS ==
+                         currentIndex)     // process forced genotype tests from vcf file(s)
                 {
-                    sppr.insert_forced_output_pos(vcfRecord.pos - 1);
-                }
+                    if (vcfRecord.is_indel())
+                    {
+                        static const unsigned sample_no(0);
+                        static const bool is_forced_output(true);
+                        process_candidate_indel(opt.max_indel_size, vcfRecord, sppr, sample_no, is_forced_output);
+                    }
+                    else if (vcfRecord.is_snv())
+                    {
+                        sppr.insert_forced_output_pos(vcfRecord.pos - 1);
+                    }
 
+                }
+                else
+                {
+                    assert(false && "Unexpected hts index");
+                }
             }
             else
             {
-                assert(false && "Unexpected hts index");
+                assert(false && "Invalid input condition");
             }
-        }
-        else
-        {
-            log_os << "ERROR: invalid input condition.\n";
-            exit(EXIT_FAILURE);
         }
     }
     sppr.reset();
-    }
 }

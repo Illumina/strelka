@@ -175,7 +175,6 @@ starling_run(
     starling_streams client_io(opt, pinfo, bamHeaders, sampleNames);
     starling_pos_processor sppr(opt, dopt, ref, client_io);
 
-
     const bam_hdr_t& referenceHeader(bamHeaders.front());
     const bam_header_info referenceHeaderInfo(referenceHeader);
 
