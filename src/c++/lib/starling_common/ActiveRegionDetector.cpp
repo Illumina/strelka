@@ -31,8 +31,15 @@ void ActiveRegionDetector::insertMatch(const align_id_t alignId, const pos_t pos
     addAlignIdToPos(alignId, pos);
 }
 
-void ActiveRegionDetector::insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string& segmentSeq)
+void ActiveRegionDetector::insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string& segmentSeq, bool isBeginEdge)
 {
+    // For invariant counting
+    addVariantCount(getSampleId(alignId), pos, 1);
+    if (isBeginEdge)
+        addVariantCount(getSampleId(alignId), pos+1, 1);
+    else
+        addVariantCount(getSampleId(alignId), pos-1, 1);
+
     // soft clipp doesn't add mismatch count, but the base is used in haplotype generation
     setSoftClipSegment(alignId, pos, segmentSeq);
     addAlignIdToPos(alignId, pos);
@@ -110,7 +117,8 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
         return;
     }
 
-    bool isCurrentPosCandidateVariant = isCandidateVariant(pos);
+//    bool isCurrentPosCandidateVariant = isCandidateVariant(pos);
+    bool isCurrentPosCandidateVariant = !(isInvariant(pos));
 
     // check if we can include this position in the existing acitive region
     bool isSizeFit = (pos - _activeRegionStartPos) < (int)_maxDetectionWindowSize;
@@ -336,6 +344,19 @@ ActiveRegionDetector::isCandidateVariant(const pos_t pos) const
             return true;
     }
     return false;
+}
+
+bool
+ActiveRegionDetector::isInvariant(const pos_t pos) const
+{
+    for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
+    {
+        auto count = getVariantCount(sampleId, pos);
+        if (count >= 4
+            || count >= (0.1*getDepth(sampleId, pos)))
+            return false;
+    }
+    return true;
 }
 
 bool ActiveRegionDetector::isPolymorphicSite(const unsigned sampleId, const pos_t pos) const

@@ -186,6 +186,7 @@ void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySit
 
 //    std::cout << "***Sample " << sampleId << std::endl;
 //    std::cout << '>' << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << _refSeq << '\t' << totalCount << std::endl;
+//    std::cout << "chrom20" << '\t' << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << std::endl;
     for (const auto& entry : haplotypeToAlignIdSet)
     {
         const std::string& haplotype(entry.first);

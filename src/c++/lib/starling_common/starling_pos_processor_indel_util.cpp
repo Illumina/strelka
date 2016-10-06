@@ -441,7 +441,7 @@ add_alignment_indels_to_sppr(
                     const pos_t refPos(softClipStartPos);
                     std::string segmentSeq;
                     bam_seq_to_str(read_seq, read_offset, read_offset+ps.length, segmentSeq);
-                    active_region_detector.insertSoftClipSegment(id, refPos, segmentSeq);
+                    active_region_detector.insertSoftClipSegment(id, refPos, segmentSeq, is_begin_edge);
                 }
             }
         }

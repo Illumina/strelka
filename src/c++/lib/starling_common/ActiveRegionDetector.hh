@@ -55,7 +55,7 @@ public:
     static const int IndelWeight = 4;
 
     // maximum distance between two variants belonging to the same active region
-    static const int MaxDistanceBetweenTwoVariants = 14u;
+    static const int MaxDistanceBetweenTwoVariants = 20u;
 
     // alignment scores, same as bwa default values
     static const int ScoreMatch = 1;
@@ -82,11 +82,11 @@ public:
     ActiveRegionDetector(
         const reference_contig_segment& ref,
         IndelBuffer& indelBuffer,
-        const unsigned maxIndelSize,
-        const unsigned sampleCount,
-        const unsigned maxDetectionWindowSize = 30,
-        const unsigned minNumVariantsPerPosition = 9,
-        const unsigned minNumVariantsPerRegion = 2) :
+        unsigned maxIndelSize,
+        unsigned sampleCount,
+        unsigned maxDetectionWindowSize = 50,
+        unsigned minNumVariantsPerPosition = 9,
+        unsigned minNumVariantsPerRegion = 2) :
         _ref(ref),
         _indelBuffer(indelBuffer),
         _maxIndelSize(maxIndelSize),
@@ -124,7 +124,7 @@ public:
     /// \param alignId align id
     /// \param pos reference position
     /// \param baseChar soft-clipped segment sequence
-    void insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string& segmentSeq);
+    void insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string& segmentSeq, bool isBeginEdge);
 
     /// insert indel
     /// \param sampleId sample id
@@ -212,6 +212,7 @@ private:
     void getExpandedRange(const pos_range& origActiveRegion, pos_range& newActiveRegion);
 
     bool isCandidateVariant(const pos_t pos) const;
+    bool isInvariant(const pos_t pos) const;
 
     inline void resetCounter(const pos_t pos)
     {
