@@ -36,6 +36,7 @@ std::ostream&
 operator<<(std::ostream& os, const result_set& rs)
 {
     os << "rs: ntype: " << NTYPE::label(rs.ntype) << " qphred: " << rs.qphred << " n_qphred " << rs.from_ntype_qphred << "\n";
-    os << " max_gt: "; DDIGT::write_indel_state(static_cast<DDIGT::index_t>(rs.max_gt),os);
+    os << " max_gt: ";
+    DDIGT::write_indel_state(static_cast<DDIGT::index_t>(rs.max_gt),os);
     return os;
 }

@@ -4,7 +4,7 @@
 This directory contains very small datesets which can be used to
 demonstrate/verify workflow configuration and run steps using a
 demonstration script. To run each demonstration, execute the
-corresponding script in the strelka workflow installation: 
+corresponding script in the strelka workflow installation:
 
 ## Germline
 
@@ -26,7 +26,7 @@ sequences for only a small segment of chr20. The region has no
 intended significance apart from providing several simulated somatic
 snv and indel calls.
 
-Note that this example uses default configurations, except that  the 
+Note that this example uses default configurations, except that  the
 `--exome` option has been selected, to indicate that this is not WGS
 data and therefore standard filters based on locus depth relative to
 average chromosome depth are not applied.

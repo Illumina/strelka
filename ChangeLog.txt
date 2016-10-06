@@ -1,3 +1,4 @@
+- STREL-228 improve runtime for references with many small contigs
 - STREL-210 Retrain germline EVS
 - STREL-164 document short haplotyping
 - STREL-254 fix haploid indel call exception

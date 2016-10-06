@@ -170,7 +170,7 @@ parsePloidyFromVcf(
                 {
                     cn = 1;
                 }
-                else if(c == '0')
+                else if (c == '0')
                 {
                     cn = 0;
                 }

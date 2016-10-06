@@ -258,7 +258,7 @@ starling_run(
                     {
                         parsePloidyFromVcf(ploidyVcfSampleCount, vcfRecord.line, ploidyRange, samplePloidy);
                     }
-                    catch(...)
+                    catch (...)
                     {
                         log_os << "ERROR: Exception caught while parsing vcf ploidy record\n";
                         streamData.getCurrentVcfStreamer().report_state(log_os);

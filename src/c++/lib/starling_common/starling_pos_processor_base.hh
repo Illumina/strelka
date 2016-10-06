@@ -289,14 +289,14 @@ public:
         /// TODO restore this tracking structure by allowing the report_size to be updated multiple times during a run
         /// as we cycle through multiple regions
         const unsigned report_size,
-        const unsigned knownref_report_size,
+              const unsigned knownref_report_size,
 
-        , ss(report_size)
-        , used_ss(report_size)
-        , ssn(knownref_report_size)
-        , used_ssn(knownref_report_size)
+              , ss(report_size)
+              , used_ss(report_size)
+              , ssn(knownref_report_size)
+              , used_ssn(knownref_report_size)
 
-        depth_stream_stat_range ss;
+              depth_stream_stat_range ss;
         depth_stream_stat_range used_ss;
         depth_stream_stat_range ssn;
         depth_stream_stat_range used_ssn;

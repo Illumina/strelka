@@ -68,7 +68,7 @@ get_starling_base_option_parser(
     ("ref", po::value(&opt.referenceFilename),
      "fasta reference sequence, samtools index file must be present (required)")
     ("region", po::value<regions_t>(),
-    "samtools formatted region, eg. 'chr1:20-30'. May be supplied more than once but regions must not overlap. At least one entry required.")
+     "samtools formatted region, eg. 'chr1:20-30'. May be supplied more than once but regions must not overlap. At least one entry required.")
     ;
 
     po::options_description geno_opt("genotyping options");

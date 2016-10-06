@@ -58,10 +58,10 @@ initialize_gvcf_file(
 
 starling_streams::
 starling_streams(
-        const starling_options& opt,
-        const prog_info& pinfo,
-        const std::vector<std::reference_wrapper<const bam_hdr_t>>& bamHeaders,
-        const std::vector<std::string>& sampleNames)
+    const starling_options& opt,
+    const prog_info& pinfo,
+    const std::vector<std::reference_wrapper<const bam_hdr_t>>& bamHeaders,
+    const std::vector<std::string>& sampleNames)
     : base_t(opt, pinfo, sampleNames.size()),
       _sampleNames(sampleNames)
 {
