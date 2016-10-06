@@ -332,22 +332,29 @@ def getNextGenomeSegment(params) :
 
 
 
-def getGenomeSegmentGroups(params) :
+def getGenomeSegmentGroups(params, excludedContigs = None) :
     """
     Iterate segment groups and 'clump' small contigs together
     """
 
+    def isGroupEligible(gseg) :
+        if excludedContigs is None : return True
+        return (gseg.chromLabel not in excludedContigs)
+
     minSegmentGroupSize=200000
     group = []
     headSize = 0
+    isLastSegmentGroupEligible = True
     for gseg in getNextGenomeSegment(params) :
-        if headSize+gseg.size() <= minSegmentGroupSize :
+        isSegmentGroupEligible = isGroupEligible(gseg)
+        if (isSegmentGroupEligible and isLastSegmentGroupEligible) and (headSize+gseg.size() <= minSegmentGroupSize) :
             group.append(gseg)
             headSize += gseg.size()
         else :
             if len(group) != 0 : yield(group)
             group = [gseg]
             headSize = gseg.size()
+        isLastSegmentGroupEligible = isSegmentGroupEligible
     if len(group) != 0 : yield(group)
 
 

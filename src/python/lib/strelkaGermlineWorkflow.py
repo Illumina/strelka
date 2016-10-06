@@ -189,8 +189,12 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     if self.params.ploidyFilename is not None :
         segCmd.extend(['--ploidy-region-vcf', self.params.ploidyFilename])
 
-    if self.params.callContinuousVf is not None and gseg.chromLabel in self.params.callContinuousVf :
-        segCmd.append('--call-continuous-vf')
+    for gseg in gsegGroup :
+        # we have special logic to prevent the continuousVF tagets from being grouped, the assertion here
+        # verifies that this is working as expected:
+        if self.params.callContinuousVf is not None and gseg.chromLabel in self.params.callContinuousVf :
+            assert(len(gsegGroup) == 1)
+            segCmd.append('--call-continuous-vf')
 
     if self.params.extraVariantCallerArguments is not None :
         for arg in self.params.extraVariantCallerArguments.strip().split() :
@@ -268,7 +272,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
     sampleCount = len(self.params.bamList)
 
     segFiles = TempSegmentFiles(sampleCount)
-    for gsegGroup in getGenomeSegmentGroups(self.params) :
+    for gsegGroup in getGenomeSegmentGroups(self.params, excludedContigs = self.params.callContinuousVf) :
         segmentTasks |= callGenomeSegment(self, gsegGroup, segFiles, dependencies=dirTask)
 
     if len(segmentTasks) == 0 :
