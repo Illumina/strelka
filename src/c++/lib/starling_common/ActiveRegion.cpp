@@ -25,6 +25,61 @@
 #include <boost/algorithm/string.hpp>
 #include "ActiveRegion.hh"
 
+// adoptation of get_snp_hpol_size in blt_common
+static unsigned getHomoPolymerSize(const std::string& haplotype, const pos_t pos)
+{
+    // count upstream repeats:
+    bool isUpRepeat(false);
+    char upRepeat('N');
+    unsigned upSize(0);
+    for (pos_t i(pos-1); i>=0; i--)
+    {
+        if (isUpRepeat)
+        {
+            if (upRepeat != haplotype[i]) break;
+        }
+        else
+        {
+            upRepeat = haplotype[i];
+            isUpRepeat = true;
+            if (upRepeat == 'N') break;
+        }
+        upSize++;
+    }
+
+    // count downstream repeats:
+    bool isDownRepeat(false);
+    char downRepeat('N');
+    unsigned downSize(0);
+    const pos_t haplotypeLength(haplotype.length());
+    for (pos_t i(pos+1); i<haplotypeLength; i++)
+    {
+        if (isDownRepeat)
+        {
+            if (downRepeat != haplotype[i]) break;
+        }
+        else
+        {
+            downRepeat = haplotype[i];
+            isDownRepeat = true;
+            if (downRepeat == 'N') break;
+        }
+        downSize++;
+    }
+
+    return 1+((downRepeat==upRepeat) ? upSize+downSize : std::max(upSize,downSize) );
+}
+
+static bool isHomoPolymer(const std::string& haplotype)
+{
+    if (haplotype.length() == 0) return true;
+    char firstBase = haplotype[0];
+    for (unsigned i(1); i<haplotype.length(); ++i)
+        if (haplotype[i] != firstBase)
+            return false;
+    return true;
+}
+
 void ActiveRegion::insertHaplotypeBase(align_id_t alignId, pos_t pos, const std::string& base)
 {
     if (!_alignIdToHaplotype.count(alignId))
@@ -136,6 +191,9 @@ void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySit
         const std::string& haplotype(entry.first);
         if (haplotype.empty() || haplotype[0] == missingPrefix) continue;
 
+        // ignore if haplotype is a long homopolymer
+        if (haplotype.length() > MaxSNVHpolSize and isHomoPolymer(haplotype)) continue;
+
         const auto& alignIdList(entry.second);
         auto count = alignIdList.size();
 
@@ -149,50 +207,7 @@ void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySit
     }
 }
 
-// adoptation of get_snp_hpol_size in blt_common
-static unsigned getHomoPolymerSize(const std::string& haplotype, const pos_t pos)
-{
-    // count upstream repeats:
-    bool isUpRepeat(false);
-    char upRepeat('N');
-    unsigned upSize(0);
-    for (pos_t i(pos-1); i>=0; i--)
-    {
-        if (isUpRepeat)
-        {
-            if (upRepeat != haplotype[i]) break;
-        }
-        else
-        {
-            upRepeat = haplotype[i];
-            isUpRepeat = true;
-            if (upRepeat == 'N') break;
-        }
-        upSize++;
-    }
 
-    // count downstream repeats:
-    bool isDownRepeat(false);
-    char downRepeat('N');
-    unsigned downSize(0);
-    const pos_t haplotypeLength(haplotype.length());
-    for (pos_t i(pos+1); i<haplotypeLength; i++)
-    {
-        if (isDownRepeat)
-        {
-            if (downRepeat != haplotype[i]) break;
-        }
-        else
-        {
-            downRepeat = haplotype[i];
-            isDownRepeat = true;
-            if (downRepeat == 'N') break;
-        }
-        downSize++;
-    }
-
-    return 1+((downRepeat==upRepeat) ? upSize+downSize : std::max(upSize,downSize) );
-}
 
 void ActiveRegion::convertToPrimitiveAlleles(
     const unsigned sampleId,

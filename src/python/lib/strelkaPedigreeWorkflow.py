@@ -18,7 +18,7 @@
 #
 
 """
-Strelka somatic small variant calling workflow
+Pedicure de-novo small variant calling workflow
 """
 
 
@@ -37,8 +37,8 @@ from configBuildTimeInfo import workflowVersion
 from configureUtil import safeSetBool, getIniSections, dumpIniSections
 from pyflow import WorkflowRunner
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, runDepthFromAlignments
-from starkaWorkflow import runCount, SharedPathInfo, \
-                           StarkaCallWorkflow, StarkaWorkflow
+from strelkaSharedWorkflow import runCount, SharedPathInfo, \
+                           StrelkaSharedCallWorkflow, StrelkaSharedWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, bamListCatCmd
 
@@ -47,14 +47,10 @@ __version__ = workflowVersion
 
 
 
-def strelkaRunDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=None):
-    bamList=[]
-    if len(self.params.normalBamList) :
-        bamList.append(self.params.normalBamList[0])
-    elif len(self.params.tumorBamList) :
-        bamList.append(self.params.tumorBamList[0])
-    else :
-        return set()
+def strelkaPedigreeRunDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=None):
+    assert len(self.params.probandBamList) == 1
+    bamList = [ self.params.probandBamList[0] ]
+
 
     outputPath=self.paths.getChromDepth()
     return runDepthFromAlignments(self, bamList, outputPath, taskPrefix, dependencies)
@@ -63,38 +59,38 @@ def strelkaRunDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=N
 
 class TempSegmentFiles :
     def __init__(self) :
-        self.snv = []
-        self.indel = []
+        self.denovo = []
         self.callable = []
-        self.normalRealign = []
-        self.tumorRealign = []
         self.stats = []
 
 
 
 def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
-    isFirstSegment = (len(segFiles.snv) == 0)
+    isFirstSegment = (len(segFiles.denovo) == 0)
 
     segStr = str(gseg.id)
 
-    segCmd = [ self.params.strelkaBin ]
-    segCmd.append("-filter-unanchored")
+    segCmd = [ self.params.strelkaPedigreeBin ]
     segCmd.extend(["-min-mapping-quality",str(self.params.minTier1Mapq)])
-    segCmd.extend(["-min-qscore","0"])
+
+#    segCmd.extend(["-min-qscore","0"])  # consider this once we go back to a quality based scoring model
+    segCmd.extend(['-min-qscore','17'])
+
+    # next three parameters describe same quality dependency structure as starling
+    segCmd.extend(['-bsnp-ssd-no-mismatch', '0.35'])
+    segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
+    segCmd.extend(['-min-vexp', '0.25'])
+
     segCmd.extend(["-report-range-begin", str(gseg.beginPos) ])
     segCmd.extend(["-report-range-end", str(gseg.endPos) ])
     segCmd.extend(["-samtools-reference", self.params.referenceFasta ])
-    segCmd.extend(["-max-window-mismatch", "3", "20" ])
+    segCmd.extend(["-max-window-mismatch", "4", "20" ])
     segCmd.extend(["-bam-seq-name", gseg.chromLabel] )
     segCmd.extend(["-genome-size", str(self.params.knownSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
     segCmd.extend(["-indel-nonsite-match-prob", "0.5"] )
-    segCmd.extend(["--somatic-snv-rate", str(self.params.ssnvPrior) ] )
-    segCmd.extend(["--shared-site-error-rate", str(self.params.ssnvNoise) ] )
-    segCmd.extend(["--shared-site-error-strand-bias-fraction", str(self.params.ssnvNoiseStrandBiasFrac) ] )
-    segCmd.extend(["--somatic-indel-rate", str(self.params.sindelPrior) ] )
-    segCmd.extend(["--shared-indel-error-factor", str(self.params.sindelNoiseFactor)])
+
     segCmd.extend(["--tier2-min-mapping-quality", str(self.params.minTier2Mapq) ] )
     segCmd.extend(["--tier2-mismatch-density-filter-count", "10"] )
     segCmd.append("--tier2-no-filter-unanchored")
@@ -102,50 +98,21 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.append("--tier2-include-singleton")
     segCmd.append("--tier2-include-anomalous")
 
-    segCmd.extend(["--strelka-snv-max-filtered-basecall-frac", str(self.params.snvMaxFilteredBasecallFrac)])
-    segCmd.extend(["--strelka-snv-max-spanning-deletion-frac", str(self.params.snvMaxSpanningDeletionFrac)])
-    segCmd.extend(["--strelka-snv-min-qss-ref", str(self.params.ssnvQuality_LowerBound)])
+    tmpDenovoPath = self.paths.getTmpSegmentDenovoPath(segStr)
+    segFiles.denovo.append(tmpDenovoPath+".gz")
+    segCmd.extend(["--denovo-file",tmpDenovoPath])
 
-    segCmd.extend(["--strelka-indel-max-window-filtered-basecall-frac", str(self.params.indelMaxWindowFilteredBasecallFrac)])
-    segCmd.extend(["--strelka-indel-min-qsi-ref", str(self.params.sindelQuality_LowerBound)])
-
-    if self.params.indelErrorModelName is not None :
-        segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
-    if self.params.inputIndelErrorModelsFile is not None :
-        segCmd.extend(['--indel-error-models-file', self.params.inputIndelErrorModelsFile])
-
-    segCmd.extend(["--ssnv-contam-tolerance", str(self.params.ssnvContamTolerance) ] )
-    segCmd.extend(["--indel-contam-tolerance", str(self.params.indelContamTolerance) ] )
-
-    if self.params.isEVS :
-        segCmd.extend(['--somatic-snv-scoring-model-file', self.params.somaticSnvScoringModelFile])
-        if self.params.isSomaticIndelEmpiricalScoring:
-            segCmd.extend(['--somatic-indel-scoring-model-file', self.params.somaticIndelScoringModelFile])
-
-    if self.params.isReportEVSFeatures :
-        segCmd.append("--report-evs-features")
-
-    for bamPath in self.params.normalBamList :
-        segCmd.extend(["--normal-align-file", bamPath])
-    for bamPath in self.params.tumorBamList :
-        segCmd.extend(["--tumor-align-file", bamPath])
-
-    tmpSnvPath = self.paths.getTmpSegmentSnvPath(segStr)
-    segFiles.snv.append(tmpSnvPath+".gz")
-    segCmd.extend(["--somatic-snv-file ", tmpSnvPath ] )
-
-    tmpIndelPath = self.paths.getTmpSegmentIndelPath(segStr)
-    segFiles.indel.append(tmpIndelPath+".gz")
-    segCmd.extend(["--somatic-indel-file", tmpIndelPath ] )
+    for bamPath in self.params.probandBamList :
+        segCmd.extend(["--proband-align-file", bamPath])
+    for bamPath in self.params.parentBamList :
+        segCmd.extend(["--parent-align-file", bamPath])
+    for bamPath in self.params.siblingBamList :
+        segCmd.extend(["--sibling-align-file", bamPath])
 
     if self.params.isOutputCallableRegions :
         tmpCallablePath = self.paths.getTmpSegmentRegionPath(segStr)
         segFiles.callable.append(tmpCallablePath+".gz")
-        segCmd.extend(["--somatic-callable-regions-file", tmpCallablePath ])
-
-    if self.params.isWriteRealignedBam :
-        segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(segStr, "normal")])
-        segCmd.extend(["--tumor-realigned-read-file",self.paths.getTmpUnsortRealignBamPath(segStr, "tumor")])
+        segCmd.extend(["--denovo-callable-regions-file", tmpCallablePath ])
 
     def addListCmdOption(optList,arg) :
         if optList is None : return
@@ -154,7 +121,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     addListCmdOption(self.params.indelCandidatesList, '--candidate-indel-input-vcf')
     addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
-    addListCmdOption(self.params.noiseVcfList, '--noise-vcf')
+
+    if self.params.extraVariantCallerArguments is not None :
+        for arg in self.params.extraVariantCallerArguments.strip().split() :
+            segCmd.append(arg)
 
     segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.id)])
 
@@ -162,16 +132,11 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["--stats-file", segFiles.stats[-1]])
 
     if not isFirstSegment :
-        segCmd.append("--strelka-skip-header")
+        segCmd.append("--pedicure-skip-header")
 
     if self.params.isHighDepthFilter :
-        segCmd.extend(["--strelka-chrom-depth-file", self.paths.getChromDepth()])
-        segCmd.extend(["--strelka-max-depth-factor", self.params.depthFilterMultiple])
-
-    if self.params.extraStrelkaArguments is not None :
-        for arg in self.params.extraStrelkaArguments.strip().split() :
-            segCmd.append(arg)
-
+        segCmd.extend(["--pedicure-chrom-depth-file", self.paths.getChromDepth()])
+        segCmd.extend(["--pedicure-max-depth-factor", self.params.depthFilterMultiple])
 
     nextStepWait = set()
 
@@ -190,37 +155,18 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
                                                                tmpName, fileName)
             return cmd
 
-        headerFixCmd  = getHeaderFixCmd(tmpSnvPath)
-        headerFixCmd += " && "
-        headerFixCmd += getHeaderFixCmd(tmpIndelPath)
+        headerFixCmd  = getHeaderFixCmd(tmpDenovoPath)
 
         self.addTask(headerFixTask, headerFixCmd, dependencies=callTask, isForceLocal=True)
         compressWaitFor=headerFixTask
 
     compressTask=preJoin(taskPrefix,"compressSegmentOutput_"+gseg.id)
-    compressCmd="\"%s\" \"%s\" && \"%s\" \"%s\"" % (self.params.bgzipBin, tmpSnvPath, self.params.bgzipBin, tmpIndelPath)
+    compressCmd="\"%s\" \"%s\"" % (self.params.bgzipBin, tmpDenovoPath)
     if self.params.isOutputCallableRegions :
         compressCmd += " && \"%s\" \"%s\"" % (self.params.bgzipBin, self.paths.getTmpSegmentRegionPath(segStr))
 
     self.addTask(compressTask, compressCmd, dependencies=compressWaitFor, isForceLocal=True)
     nextStepWait.add(compressTask)
-
-    if self.params.isWriteRealignedBam :
-        def sortRealignBam(label, sortList) :
-            unsorted = self.paths.getTmpUnsortRealignBamPath(segStr, label)
-            sorted   = self.paths.getTmpRealignBamPath(segStr, label)
-            sortList.append(sorted)
-
-            # adjust sorted to remove the ".bam" suffix
-            sorted = sorted[:-4]
-            sortCmd="\"%s\" sort \"%s\" \"%s\" && rm -f \"%s\"" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
-
-            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+label+"_"+gseg.id)
-            self.addTask(sortTaskLabel,sortCmd,dependencies=callTask,memMb=self.params.callMemMb)
-            nextStepWait.add(sortTaskLabel)
-
-        sortRealignBam("normal", segFiles.normalRealign)
-        sortRealignBam("tumor", segFiles.tumorRealign)
 
     return nextStepWait
 
@@ -228,7 +174,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
 def callGenome(self,taskPrefix="",dependencies=None):
     """
-    run strelka on all genome segments
+    run variant caller on all genome segments
     """
 
     tmpSegmentDir=self.paths.getTmpSegmentDir()
@@ -249,10 +195,8 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     finishTasks = set()
 
-    finishTasks.add(self.concatIndexVcf(taskPrefix, completeSegmentsTask, segFiles.snv,
-                                        self.paths.getSnvOutputPath(),"SNV"))
-    finishTasks.add(self.concatIndexVcf(taskPrefix, completeSegmentsTask, segFiles.indel,
-                                        self.paths.getIndelOutputPath(),"Indel"))
+    finishTasks.add(self.concatIndexVcf(taskPrefix, completeSegmentsTask, segFiles.denovo,
+                                        self.paths.getDenovoOutputPath(),"denovo"))
 
     # merge segment stats:
     finishTasks.add(self.mergeRunStats(taskPrefix,completeSegmentsTask, segFiles.stats))
@@ -260,14 +204,6 @@ def callGenome(self,taskPrefix="",dependencies=None):
     if self.params.isOutputCallableRegions :
         finishTasks.add(self.concatIndexBed(taskPrefix, completeSegmentsTask, segFiles.callable,
                                             self.paths.getRegionOutputPath(), "callableRegions"))
-
-    if self.params.isWriteRealignedBam :
-        def finishBam(tmpList, output, label) :
-            cmd = bamListCatCmd(self.params.samtoolsBin,tmpList,output)
-            finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeBAM"), cmd, dependencies=completeSegmentsTask))
-
-        finishBam(segFiles.normalRealign, self.paths.getRealignedBamPath("normal"), "realignedNormal")
-        finishBam(segFiles.tumorRealign, self.paths.getRealignedBamPath("tumor"), "realignedTumor")
 
     if not self.params.isRetainTempFiles :
         rmStatsTmpCmd = getRmdirCmd() + [tmpSegmentDir]
@@ -279,11 +215,11 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
 
 
-"""
-A separate call workflow is setup so that we can delay the workflow execution until
-the ref count file exists
-"""
-class CallWorkflow(StarkaCallWorkflow) :
+class CallWorkflow(StrelkaSharedCallWorkflow) :
+    """
+    A separate call workflow is setup so that we can delay the workflow execution until
+    the ref count file exists
+    """
 
     def __init__(self,params,paths) :
         super(CallWorkflow,self).__init__(params)
@@ -313,14 +249,11 @@ class PathInfo(SharedPathInfo):
     def __init__(self, params) :
         super(PathInfo,self).__init__(params)
 
-    def getTmpSegmentSnvPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "somatic.snvs.unfiltered.%s.vcf" % (segStr))
-
-    def getTmpSegmentIndelPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "somatic.indels.unfiltered.%s.vcf" % (segStr))
+    def getTmpSegmentDenovoPath(self, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "denovo.unfiltered.%s.vcf" % (segStr))
 
     def getTmpSegmentRegionPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "somatic.callable.regions.%s.bed" % (segStr))
+        return os.path.join( self.getTmpSegmentDir(), "denovo.callable.regions.%s.bed" % (segStr))
 
     def getTmpUnsortRealignBamPath(self, segStr, label) :
         return os.path.join( self.getTmpSegmentDir(), "%s.%s.unsorted.realigned.bam" % (label, segStr))
@@ -328,32 +261,33 @@ class PathInfo(SharedPathInfo):
     def getTmpRealignBamPath(self, segStr, label) :
         return os.path.join( self.getTmpSegmentDir(), "%s.%s.realigned.bam" % (label, segStr))
 
-    def getSnvOutputPath(self) :
-        return os.path.join( self.params.variantsDir, "somatic.snvs.vcf.gz")
+    def getTmpSegmentReportPath(self, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
 
-    def getIndelOutputPath(self) :
-        return os.path.join( self.params.variantsDir, "somatic.indels.vcf.gz")
+    def getDenovoOutputPath(self) :
+        return os.path.join( self.params.variantsDir, "denovo.vcf.gz")
 
     def getRegionOutputPath(self) :
-        return os.path.join( self.params.regionsDir, 'somatic.callable.regions.bed.gz');
+        return os.path.join( self.params.regionsDir, 'denovo.callable.regions.bed.gz');
 
     def getRealignedBamPath(self, label) :
         return os.path.join( self.params.realignedDir, '%s.realigned.bam' % (label));
 
 
 
-class StrelkaWorkflow(StarkaWorkflow) :
+class StrelkaPedigreeWorkflow(StrelkaSharedWorkflow) :
     """
-    Strelka somatic small variant calling workflow
+    Pedicure de-novo small variant calling workflow
     """
 
     def __init__(self,params,iniSections) :
         global PathInfo
-        super(StrelkaWorkflow,self).__init__(params,iniSections, PathInfo)
+        super(StrelkaPedigreeWorkflow, self).__init__(params, iniSections, PathInfo)
 
         # format bam lists:
-        if self.params.normalBamList is None : self.params.normalBamList = []
-        if self.params.tumorBamList is None : self.params.tumorBamList = []
+        if self.params.probandBamList is None : self.params.probandBamList = []
+        if self.params.parentBamList is None : self.params.parentBamList = []
+        if self.params.siblingBamList is None : self.params.siblingBamList = []
 
         # bools coming from the ini file need to be cleaned up:
         safeSetBool(self.params,"isWriteRealignedBam")
@@ -362,27 +296,28 @@ class StrelkaWorkflow(StarkaWorkflow) :
             self.params.regionsDir=os.path.join(self.params.resultsDir,"regions")
             ensureDir(self.params.regionsDir)
 
-        if self.params.isWriteRealignedBam :
-            self.params.realignedDir=os.path.join(self.params.resultsDir,"realigned")
-            ensureDir(self.params.realignedDir)
+#        if self.params.isWriteRealignedBam :
+#            self.params.realignedDir=os.path.join(self.params.resultsDir,"realigned")
+#            ensureDir(self.params.realignedDir)
+
 
 
     def getSuccessMessage(self) :
         "Message to be included in email for successful runs"
 
-        msg  = "Strelka workflow successfully completed.\n\n"
+        msg  = "Strelka pedigree small variant workflow successfully completed.\n\n"
         msg += "\tworkflow version: %s\n" % (__version__)
         return msg
 
 
 
     def workflow(self) :
-        self.flowLog("Initiating Strelka workflow version: %s" % (__version__))
+        self.flowLog("Initiating Pedicure workflow version: %s" % (__version__))
         self.setCallMemMb()
 
         callPreReqs = set()
         callPreReqs |= runCount(self)
         if self.params.isHighDepthFilter :
-            callPreReqs |= strelkaRunDepthFromAlignments(self)
+            callPreReqs |= strelkaPedigreeRunDepthFromAlignments(self)
 
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)

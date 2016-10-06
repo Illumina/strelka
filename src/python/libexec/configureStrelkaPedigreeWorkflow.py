@@ -19,7 +19,7 @@
 #
 
 """
-This script configures the de-novo small variant calling workflow
+This script configures the strelka pedigree small variant calling workflow
 """
 
 import os,sys
@@ -32,20 +32,20 @@ templateConfigDir=os.path.abspath(os.path.join(scriptDir,'@THIS_RELATIVE_CONFIGD
 sys.path.append(workflowDir)
 
 from configBuildTimeInfo import workflowVersion
-from starkaOptions import StarkaWorkflowOptionsBase
+from strelkaSharedOptions import StrelkaSharedWorkflowOptionsBase
 from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFile
 from makeRunScript import makeRunScript
-from pedicureWorkflow import PedicureWorkflow
+from strelkaPedigreeWorkflow import StrelkaPedigreeWorkflow
 from workflowUtil import ensureDir
 
 
 
-class PedicureWorkflowOptions(StarkaWorkflowOptionsBase) :
+class StrelkaPedigreeWorkflowOptions(StrelkaSharedWorkflowOptionsBase) :
 
     def workflowDescription(self) :
         return """Version: %s
 
-This script configures the Pedicure de-novo small variant calling pipeline.
+This script configures Strelka pedigree small variant calling.
 You must specify BAM or CRAM file(s) for the proband and additional related samples.
 """ % (workflowVersion)
 
@@ -60,13 +60,13 @@ You must specify BAM or CRAM file(s) for the proband and additional related samp
         group.add_option("--outputCallableRegions", dest="isOutputCallableRegions", action="store_true",
                          help="Output a bed file describing de-novo callable regions of the genome")
 
-        StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
+        StrelkaSharedWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
 
     def getOptionDefaults(self) :
 
         self.configScriptDir=scriptDir
-        defaults=StarkaWorkflowOptionsBase.getOptionDefaults(self)
+        defaults=StrelkaSharedWorkflowOptionsBase.getOptionDefaults(self)
 
         configDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_CONFIGDIR@"))
         assert os.path.isdir(configDir)
@@ -81,7 +81,7 @@ You must specify BAM or CRAM file(s) for the proband and additional related samp
 
     def validateAndSanitizeExistingOptions(self,options) :
 
-        StarkaWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
+        StrelkaSharedWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
         groomBamList(options.probandBamList,"proband sample")
         groomBamList(options.parentBamList, "parent sample")
         groomBamList(options.siblingBamList, "sibling sample")
@@ -90,7 +90,8 @@ You must specify BAM or CRAM file(s) for the proband and additional related samp
 
     def validateOptionExistence(self,options) :
 
-        StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
+        StrelkaSharedWorkflowOptionsBase.validateOptionExistence(self,options)
+
 
         if len(options.probandBamList) != 1 :
             raise OptParseException("Must specify one proband sample BAM/CRAM file")
@@ -107,21 +108,21 @@ You must specify BAM or CRAM file(s) for the proband and additional related samp
 
 def main() :
 
-    primarySectionName="pedicure"
-    options,iniSections=PedicureWorkflowOptions().getRunOptions(primarySectionName,
+    primarySectionName="strelkaPedigree"
+    options,iniSections=StrelkaPedigreeWorkflowOptions().getRunOptions(primarySectionName,
                                                                version=workflowVersion)
 
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:
     #
-    PedicureWorkflow(options,iniSections)
+    StrelkaPedigreeWorkflow(options,iniSections)
 
     # generate runscript:
     #
     ensureDir(options.runDir)
     scriptFile=os.path.join(options.runDir,"runWorkflow.py")
 
-    makeRunScript(scriptFile,os.path.join(workflowDir,"pedicureWorkflow.py"),"PedicureWorkflow",primarySectionName,iniSections)
+    makeRunScript(scriptFile,os.path.join(workflowDir,"strelkaPedigreeWorkflow.py"),"StrelkaPedigreeWorkflow",primarySectionName,iniSections)
 
     notefp=sys.stdout
     notefp.write("""
@@ -134,4 +135,3 @@ To execute the workflow, run the following script and set appropriate options:
 
 if __name__ == "__main__" :
     main()
-

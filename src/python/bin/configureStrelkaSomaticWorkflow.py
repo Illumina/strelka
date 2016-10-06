@@ -32,22 +32,22 @@ templateConfigDir=os.path.abspath(os.path.join(scriptDir,'@THIS_RELATIVE_CONFIGD
 sys.path.append(workflowDir)
 
 from configBuildTimeInfo import workflowVersion
-from starkaOptions import StarkaWorkflowOptionsBase
+from strelkaSharedOptions import StrelkaSharedWorkflowOptionsBase
 from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFile, \
                             checkFixTabixListOption, validateFixExistingFileArg
 from makeRunScript import makeRunScript
-from strelkaWorkflow import StrelkaWorkflow
+from strelkaSomaticWorkflow import StrelkaSomaticWorkflow
 from workflowUtil import ensureDir
 
 
 
-class StrelkaWorkflowOptions(StarkaWorkflowOptionsBase) :
+class StrelkaSomaticWorkflowOptions(StrelkaSharedWorkflowOptionsBase) :
 
     def workflowDescription(self) :
         return """Version: %s
 
-This script configures the Strelka somatic small variant calling pipeline.
-You must specify BAM/CRAM file(s) for a pair of samples.
+This script configures Strelka somatic small variant calling.
+You must specify an alignment file (BAM or CRAM) file for each sample of a matched tumor-normal pair.
 """ % (workflowVersion)
 
 
@@ -59,7 +59,7 @@ You must specify BAM/CRAM file(s) for a pair of samples.
         group.add_option("--outputCallableRegions", dest="isOutputCallableRegions", action="store_true",
                          help="Output a bed file describing somatic callable regions of the genome")
 
-        StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
+        StrelkaSharedWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
     def addExtendedGroupOptions(self,group) :
         group.add_option("--somaticSnvScoringModelFile", type="string", dest="somaticSnvScoringModelFile", metavar="FILE",
@@ -71,18 +71,18 @@ You must specify BAM/CRAM file(s) for a pair of samples.
         group.add_option("--noiseVcf", type="string",dest="noiseVcfList",metavar="FILE", action="append",
                          help="Noise vcf file (submit argument multiple times for more than one file)")
 
-        StarkaWorkflowOptionsBase.addExtendedGroupOptions(self,group)
+        StrelkaSharedWorkflowOptionsBase.addExtendedGroupOptions(self,group)
 
     def getOptionDefaults(self) :
 
         self.configScriptDir=scriptDir
-        defaults=StarkaWorkflowOptionsBase.getOptionDefaults(self)
+        defaults=StrelkaSharedWorkflowOptionsBase.getOptionDefaults(self)
 
         configDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_CONFIGDIR@"))
         assert os.path.isdir(configDir)
 
         defaults.update({
-            'runDir' : 'StrelkaWorkflow',
+            'runDir' : 'StrelkaSomaticWorkflow',
             "minTier2Mapq" : 0,
             "isSomaticIndelEmpiricalScoring" : False,
             'somaticSnvScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
@@ -96,7 +96,7 @@ You must specify BAM/CRAM file(s) for a pair of samples.
 
     def validateAndSanitizeExistingOptions(self,options) :
 
-        StarkaWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
+        StrelkaSharedWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
         groomBamList(options.normalBamList,"normal sample")
         groomBamList(options.tumorBamList, "tumor sample")
 
@@ -108,7 +108,7 @@ You must specify BAM/CRAM file(s) for a pair of samples.
 
     def validateOptionExistence(self,options) :
 
-        StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
+        StrelkaSharedWorkflowOptionsBase.validateOptionExistence(self,options)
 
         def checkRequired(bamList,label):
             if (bamList is None) or (len(bamList) == 0) :
@@ -131,21 +131,21 @@ You must specify BAM/CRAM file(s) for a pair of samples.
 
 def main() :
 
-    primarySectionName="strelka"
-    options,iniSections=StrelkaWorkflowOptions().getRunOptions(primarySectionName,
+    primarySectionName="StrelkaSomatic"
+    options,iniSections=StrelkaSomaticWorkflowOptions().getRunOptions(primarySectionName,
                                                                version=workflowVersion)
 
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:
     #
-    StrelkaWorkflow(options,iniSections)
+    StrelkaSomaticWorkflow(options,iniSections)
 
     # generate runscript:
     #
     ensureDir(options.runDir)
     scriptFile=os.path.join(options.runDir,"runWorkflow.py")
 
-    makeRunScript(scriptFile,os.path.join(workflowDir,"strelkaWorkflow.py"),"StrelkaWorkflow",primarySectionName,iniSections)
+    makeRunScript(scriptFile,os.path.join(workflowDir,"strelkaSomaticWorkflow.py"),"StrelkaSomaticWorkflow",primarySectionName,iniSections)
 
     notefp=sys.stdout
     notefp.write("""

@@ -1308,7 +1308,7 @@ updateIndelLocusWithSampleInfo(
 
 /// determine if an allele group is reportable
 ///
-/// \return true if no alleles are less than pos.
+/// \return true if alleles exist and no alleles are less than pos.
 static
 bool
 isAlleleGroupReportable(
@@ -1325,7 +1325,7 @@ isAlleleGroupReportable(
         }
     }
 
-    return true;
+    return (alleleGroupSize != 0);
 }
 
 
@@ -1491,7 +1491,6 @@ process_pos_indel_digt(const pos_t pos)
                 isReportedLocus = true;
 
                 _gvcfer->add_indel(std::move(locusPtr));
-
             }
         }
     }
