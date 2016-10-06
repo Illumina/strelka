@@ -332,6 +332,26 @@ def getNextGenomeSegment(params) :
 
 
 
+def getGenomeSegmentGroups(params) :
+    """
+    Iterate segment groups and 'clump' small contigs together
+    """
+
+    minSegmentGroupSize=200000
+    group = []
+    headSize = 0
+    for gseg in getNextGenomeSegment(params) :
+        if headSize+gseg.size() <= minSegmentGroupSize :
+            group.append(gseg)
+            headSize += gseg.size()
+        else :
+            if len(group) != 0 : yield(group)
+            group = [gseg]
+            headSize = gseg.size()
+    if len(group) != 0 : yield(group)
+
+
+
 def cleanPyEnv() :
     """
     clear out some potentially destabilizing env variables:

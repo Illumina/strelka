@@ -34,13 +34,13 @@ pyflowDir=os.path.join(scriptDir,"pyflow")
 sys.path.append(os.path.abspath(pyflowDir))
 
 from configBuildTimeInfo import workflowVersion
-from configureUtil import safeSetBool, getIniSections, dumpIniSections, joinFile
+from configureUtil import safeSetBool, joinFile
 from pyflow import WorkflowRunner
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, runDepthFromAlignments
 from strelkaSharedWorkflow import runCount, SharedPathInfo, \
                            StrelkaSharedCallWorkflow, StrelkaSharedWorkflow
-from workflowUtil import checkFile, ensureDir, preJoin, which, \
-                         getNextGenomeSegment, bamListCatCmd
+from workflowUtil import ensureDir, preJoin, \
+                         getGenomeSegmentGroups, bamListCatCmd
 
 
 __version__ = workflowVersion
@@ -106,22 +106,26 @@ def gvcfSampleLabel(sampleIndex) :
     return "gVCF_S%i" % (sampleIndex+1)
 
 
-def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
+def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=None) :
+
+    assert(len(gsegGroup) != 0)
+    gid=gsegGroup[0].id
+    if len(gsegGroup) > 1 :
+        gid += "_to_"+gsegGroup[-1].id
 
     isFirstSegment = (len(segFiles.variants) == 0)
 
-    segStr = str(gseg.id)
-
     segCmd = [ self.params.strelkaGermlineBin ]
+    for gseg in gsegGroup :
+        segCmd.extend(["--region", gseg.bamRegion])
 
     segCmd.extend(["-min-mapping-quality",self.params.minMapq])
-    segCmd.extend(["--region", gseg.chromLabel + ":" + str(gseg.beginPos) + "-" + str(gseg.endPos)])
     segCmd.extend(["--ref", self.params.referenceFasta ])
     segCmd.extend(["-max-window-mismatch", "2", "20" ])
     segCmd.extend(["-genome-size", str(self.params.knownSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
 
-    segCmd.extend(["--gvcf-output-prefix", self.paths.getTmpSegmentGvcfPrefix(segStr)])
+    segCmd.extend(["--gvcf-output-prefix", self.paths.getTmpSegmentGvcfPrefix(gid)])
     segCmd.extend(['--gvcf-min-gqx','15'])
     segCmd.extend(['--gvcf-max-snv-strand-bias','10'])
     segCmd.extend(['-min-qscore','17'])
@@ -130,7 +134,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-min-vexp', '0.25'])
     segCmd.extend(['--do-short-range-phasing'])
 
-    segFiles.stats.append(self.paths.getTmpRunStatsPath(segStr))
+    segFiles.stats.append(self.paths.getTmpRunStatsPath(gid))
     segCmd.extend(["--stats-file", segFiles.stats[-1]])
 
     # RNA-Seq het calls are considered over a wider frequency range:
@@ -166,7 +170,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     # TODO STREL-125 come up with new solution for outbams
     if self.params.isWriteRealignedBam :
-        segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(segStr)])
+        segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(gid)])
 
     def addListCmdOption(optList,arg) :
         if optList is None : return
@@ -192,7 +196,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         for arg in self.params.extraVariantCallerArguments.strip().split() :
             segCmd.append(arg)
 
-    segTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gseg.id)
+    segTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gid)
     self.addTask(segTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
 
     # clean up and compress genome segment files:
@@ -215,33 +219,33 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
         compressCmd += " | \"%s\" -c >| \"%s\"" % (self.params.bgzip9Bin, compressedVariantsPath)
 
-        compressTaskLabel=preJoin(taskPrefix,"compressGenomeSegment_"+gseg.id+"_"+label)
+        compressTaskLabel=preJoin(taskPrefix,"compressGenomeSegment_"+gid+"_"+label)
         self.addTask(compressTaskLabel, compressCmd, dependencies=segTaskLabel, memMb=self.params.callMemMb)
         nextStepWait.add(compressTaskLabel)
         return compressedVariantsPath
 
-    rawVariantsPath = self.paths.getTmpSegmentVariantsPath(segStr)
+    rawVariantsPath = self.paths.getTmpSegmentVariantsPath(gid)
     compressedVariantsPath = compressRawVcf(rawVariantsPath, "variants")
     segFiles.variants.append(compressedVariantsPath)
 
     sampleCount = len(self.params.bamList)
     for sampleIndex in range(sampleCount) :
-        rawVariantsPath = self.paths.getTmpSegmentGvcfPath(segStr, sampleIndex)
+        rawVariantsPath = self.paths.getTmpSegmentGvcfPath(gid, sampleIndex)
         compressedVariantsPath = compressRawVcf(rawVariantsPath, gvcfSampleLabel(sampleIndex))
         segFiles.sample[sampleIndex].gvcf.append(compressedVariantsPath)
 
 
     if self.params.isWriteRealignedBam :
         def sortRealignBam(sortList) :
-            unsorted = self.paths.getTmpUnsortRealignBamPath(segStr)
-            sorted   = self.paths.getTmpRealignBamPath(segStr)
+            unsorted = self.paths.getTmpUnsortRealignBamPath(gid)
+            sorted   = self.paths.getTmpRealignBamPath(gid)
             sortList.append(sorted)
 
             # adjust sorted to remove the ".bam" suffix
             sorted = sorted[:-4]
             sortCmd="\"%s\" sort \"%s\" \"%s\" && rm -f \"%s\"" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
 
-            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+gseg.id)
+            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+gid)
             self.addTask(sortTaskLabel,sortCmd,dependencies=segTaskLabel,memMb=self.params.callMemMb)
             nextStepWait.add(sortTaskLabel)
 
@@ -264,9 +268,8 @@ def callGenome(self,taskPrefix="",dependencies=None):
     sampleCount = len(self.params.bamList)
 
     segFiles = TempSegmentFiles(sampleCount)
-    for gseg in getNextGenomeSegment(self.params) :
-
-        segmentTasks |= callGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
+    for gsegGroup in getGenomeSegmentGroups(self.params) :
+        segmentTasks |= callGenomeSegment(self, gsegGroup, segFiles, dependencies=dirTask)
 
     if len(segmentTasks) == 0 :
         raise Exception("No genome regions to analyze. Possible target region parse error.")
