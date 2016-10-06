@@ -18,13 +18,13 @@
 //
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
 #include "starling_common/starling_ref_seq.hh"
 
+#include "common/Exceptions.hh"
 #include "htsapi/samtools_fasta_util.hh"
 #include "htsapi/bam_header_util.hh"
 
@@ -60,16 +60,14 @@ getSamtoolsRegionString(
 
 
 void
-getStrelkaAnalysisRegions(
+getStrelkaAnalysisRegionInfo(
     const std::string& region,
     const unsigned maxIndelSize,
     AnalysisRegionInfo& rinfo)
 {
     int32_t regionBeginPos(0), regionEndPos(0);
     parse_bam_region(region.c_str(), rinfo.regionChrom, regionBeginPos, regionEndPos);
-
-    // translate from samtools to strelka range:
-    rinfo.regionRange.set_range(regionBeginPos, regionEndPos+1);
+    rinfo.regionRange.set_range(regionBeginPos, regionEndPos);
 
     rinfo.streamerRegionRange = rinfo.regionRange;
     rinfo.streamerRegionRange.expandBy(maxIndelSize);
@@ -81,4 +79,36 @@ getStrelkaAnalysisRegions(
     rinfo.refRegionRange = rinfo.streamerRegionRange;
     rinfo.refRegionRange.expandBy(region_read_size_pad);
     rinfo.refRegionRange.makeNonNegative();
+}
+
+
+
+void
+getStrelkaAnalysisRegions(
+    const starling_base_options& opt,
+    const std::string& referenceAlignmentFilename,
+    const bam_header_info& referenceHeaderInfo,
+    std::vector<AnalysisRegionInfo>& regionInfo)
+{
+    /// TODO add test that regions do not intersect
+    const unsigned regionCount(opt.regions.size());
+    regionInfo.resize(regionCount);
+
+    for (unsigned regionIndex(0); regionIndex < regionCount; ++regionIndex)
+    {
+        const std::string& region(opt.regions[regionIndex]);
+        auto& rinfo(regionInfo[regionIndex]);
+        getStrelkaAnalysisRegionInfo(region, opt.max_indel_size, rinfo);
+
+        // check that target region chrom exists in bam headers:
+        if (not referenceHeaderInfo.chrom_to_index.count(rinfo.regionChrom))
+        {
+            using namespace illumina::common;
+            std::ostringstream oss;
+            oss << "ERROR: region contig name: '" << rinfo.regionChrom
+                << "' is not found in the header of BAM/CRAM file: '" << referenceAlignmentFilename
+                << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
+    }
 }

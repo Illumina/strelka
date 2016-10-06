@@ -26,18 +26,10 @@
 
 #include "starling_common/starling_base_shared.hh"
 #include "blt_util/known_pos_range2.hh"
+#include "htsapi/bam_header_info.hh"
 
 #include <string>
 
-
-inline
-void
-get_starling_ref_seq(
-    const starling_base_options&,
-    reference_contig_segment&)
-{
-    // pass
-}
 
 void
 setRefSegment(
@@ -69,7 +61,18 @@ struct AnalysisRegionInfo
 ///
 /// \param region[in] samtools formated analysis region string
 void
-getStrelkaAnalysisRegions(
+getStrelkaAnalysisRegionInfo(
     const std::string& region,
     const unsigned maxIndelSize,
     AnalysisRegionInfo& rinfo);
+
+
+/// parse and sanity check regions
+///
+/// TODO reorg this into a different module
+void
+getStrelkaAnalysisRegions(
+    const starling_base_options& opt,
+    const std::string& referenceAlignmentFilename,
+    const bam_header_info& referenceHeaderInfo,
+    std::vector<AnalysisRegionInfo>& regionInfo);

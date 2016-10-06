@@ -179,25 +179,15 @@ starling_run(
     const bam_hdr_t& referenceHeader(bamHeaders.front());
     const bam_header_info referenceHeaderInfo(referenceHeader);
 
-    /// TODO STREL-228 add test that regions do not intersect, and chromes are synced with ref and BAM input, and that regioncount >0
-    const unsigned regionCount(opt.regions.size());
-    for (unsigned regionIndex(0); regionIndex<regionCount; ++regionIndex)
+    // parse and sanity check regions
+    const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilename.front());
+    std::vector<AnalysisRegionInfo> regionInfo;
+    getStrelkaAnalysisRegions(opt, referenceAlignmentFilename, referenceHeaderInfo, regionInfo);
+
+    for (const auto& rinfo : regionInfo)
     {
-        const std::string& region(opt.regions[regionIndex]);
-        AnalysisRegionInfo rinfo;
-        getStrelkaAnalysisRegions(region, opt.max_indel_size, rinfo);
-
-        // check that target region chrom exists in bam headers:
-        if (not referenceHeaderInfo.chrom_to_index.count(rinfo.regionChrom))
-        {
-            using namespace illumina::common;
-            std::ostringstream oss;
-            oss << "ERROR: region contig name: '" << rinfo.regionChrom << "' is not found in the header of BAM/CRAM file: '" << opt.alignFileOpt.alignmentFilename.front() << "'\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-        }
-
-        streamData.resetRegion(rinfo.streamerRegion.c_str());
         setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
+        streamData.resetRegion(rinfo.streamerRegion.c_str());
         sppr.resetRegion(rinfo.regionChrom, rinfo.regionRange);
 
         while (streamData.next())
@@ -205,8 +195,6 @@ starling_run(
             const pos_t currentPos(streamData.getCurrentPos());
             const HTS_TYPE::index_t currentHtsType(streamData.getCurrentType());
             const unsigned currentIndex(streamData.getCurrentIndex());
-
-            if (currentPos >= rinfo.streamerRegionRange.end_pos()) break;
 
             // wind sppr forward to position behind buffer head:
             sppr.set_head_pos(currentPos-1);

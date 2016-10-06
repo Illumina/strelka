@@ -101,7 +101,7 @@ strelka_run(
     {
         const std::string& region(opt.regions[regionIndex]);
         AnalysisRegionInfo rinfo;
-        getStrelkaAnalysisRegions(region, opt.max_indel_size, rinfo);
+        getStrelkaAnalysisRegionInfo(region, opt.max_indel_size, rinfo);
 
         // check that target region chrom exists in bam headers:
         if (not referenceHeaderInfo.chrom_to_index.count(rinfo.regionChrom))
