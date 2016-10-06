@@ -258,7 +258,6 @@ starling_pos_processor_base(
     , _ref(ref)
     , _streams(streams)
     , _rmi(STARLING_INIT_LARGEST_READ_SIZE)
-      //, _largest_indel_size(std::min(opt.max_indel_size,STARLING_INIT_LARGEST_INDEL_SIZE)) -- tmp change for GRUOPER handling
     , _largest_indel_ref_span(opt.max_indel_size)
     , _largest_total_indel_ref_span_per_read(_largest_indel_ref_span)
     , _sample(sampleCount)
@@ -267,6 +266,11 @@ starling_pos_processor_base(
     , _active_region_detector(ref, _indelBuffer, opt.max_indel_size, sampleCount)
 {
     assert(sampleCount != 0);
+
+    for (auto& sampleVal : _sample)
+    {
+        sampleVal.reset(new sample_info(_opt, ref, &_ric));
+    }
 
     if (_opt.is_bsnp_nploid)
     {
@@ -373,14 +377,6 @@ resetRegionBase(
 
     const pos_range pr(_reportRange.begin_pos(), _reportRange.end_pos());
     _stagemanPtr.reset(new stage_manager(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE, get_largest_total_indel_ref_span_per_read(), _opt, _dopt), pr, *this));
-    {
-        const unsigned report_size(_reportRange.size());
-        const unsigned knownref_report_size(get_ref_seq_known_size(_ref, pr));
-        for (auto& sampleVal : _sample)
-        {
-            sampleVal.reset(new sample_info(_opt, _ref, report_size, knownref_report_size, &_ric));
-        }
-    }
 }
 
 
@@ -814,6 +810,8 @@ process_pos(const int stage_no,
 #if 0
     log_os << "pos,stage_no: " << pos << " " << stage_no << "\n";
 #endif
+
+    assert(isChromSet());
 
     if (empty()) return;
 
@@ -1505,12 +1503,18 @@ process_pos_site_stats(
     const unsigned n_spandel(pi.spanningDeletionReadCount);
     const unsigned n_submapped(pi.n_submapped);
 
+#if 0
     sif.ss.update(sif.cpi.n_calls());
     sif.used_ss.update(sif.cpi.n_used_calls());
     if (pi.get_ref_base() != 'N')
     {
         sif.ssn.update(sif.cpi.n_calls());
         sif.used_ssn.update(sif.cpi.n_used_calls());
+    }
+#endif
+
+    if (pi.get_ref_base() != 'N')
+    {
         sif.wav.insert(pos,sif.cpi.n_used_calls(),sif.cpi.n_unused_calls(),n_spandel,n_submapped);
     }
     else

@@ -100,7 +100,7 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
 
     /// finish position report and reset structure to ground state:
     ///
-    void reset();
+    virtual void reset();
 
     /// note that indel position should be normalized before calling:
     ///
@@ -171,6 +171,12 @@ protected:
     resetRegionBase(
         const std::string& chromName,
         const known_pos_range2& reportRange);
+
+    bool
+    isChromSet() const
+    {
+        return (not _chromName.empty());
+    }
 
     struct pos_win_avgs
     {
@@ -265,16 +271,10 @@ public:
         sample_info(
             const starling_base_options& opt,
             const reference_contig_segment& ref,
-            const unsigned report_size,
-            const unsigned knownref_report_size,
             read_id_counter* ricp)
             : bc_buff(ref)
             , read_buff(ricp)
             , sample_opt(opt)
-            , ss(report_size)
-            , used_ss(report_size)
-            , ssn(knownref_report_size)
-            , used_ssn(knownref_report_size)
             , wav()
         {}
 
@@ -285,10 +285,22 @@ public:
 
         starling_sample_options sample_opt;
 
+#if 0
+        /// TODO restore this tracking structure by allowing the report_size to be updated multiple times during a run
+        /// as we cycle through multiple regions
+        const unsigned report_size,
+        const unsigned knownref_report_size,
+
+        , ss(report_size)
+        , used_ss(report_size)
+        , ssn(knownref_report_size)
+        , used_ssn(knownref_report_size)
+
         depth_stream_stat_range ss;
         depth_stream_stat_range used_ss;
         depth_stream_stat_range ssn;
         depth_stream_stat_range used_ssn;
+#endif
 
         // regional basecall average windows:
         pos_win_avgs wav;

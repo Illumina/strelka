@@ -58,7 +58,7 @@ struct starling_pos_processor : public starling_pos_processor_base
     insert_targeted_region(
         const known_pos_range2& range);
 
-    void reset();
+    void reset() override;
 
 private:
 

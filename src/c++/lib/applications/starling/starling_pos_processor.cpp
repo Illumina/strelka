@@ -156,6 +156,8 @@ reset()
     {
         _gvcfer->reset();
     }
+    _nocompress_regions.clear();
+    _targeted_regions.clear();
 }
 
 
