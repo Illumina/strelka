@@ -1,0 +1,224 @@
+// -*- mode: c++; indent-tabs-mode: nil; -*-
+//
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+//
+
+///
+/// \author Sangtae Kim
+///
+
+#pragma once
+
+#include <blt_util/reference_contig_segment.hh>
+#include <vector>
+#include <iostream>
+#include "starling_types.hh"
+#include "indel.hh"
+#include "IndelBuffer.hh"
+
+/// AlignInfo object to store sample id and indel align type
+struct AlignInfo
+{
+    unsigned sampleId;
+    INDEL_ALIGN_TYPE::index_t indelAlignType;
+};
+
+struct HaplotypeInfo
+{
+    std::vector<std::pair<align_id_t, std::string>> readSegments;
+    unsigned numReads;
+};
+
+class ActiveRegionReadBuffer
+{
+public:
+
+    // maximum buffer size in bases (must be larger than the maximum read size + max indel size
+    static const unsigned MaxBufferSize = 1000u;
+
+    // maximum read depth
+    // TODO: dynamically calculate maximum depth
+    static const unsigned MaxDepth = 1000u;
+
+    // maximum repeat unit to consider
+    static const unsigned MaxRepeatUnitLength = 6u;
+
+    // variant count to add for a single mismatch or indel
+    static const int MismatchWeight = 1;
+    static const int IndelWeight = 4;
+
+    ActiveRegionReadBuffer(
+            const reference_contig_segment& ref,
+            unsigned sampleCount,
+            IndelBuffer& indelBuffer)
+            :
+            _ref(ref),
+            _sampleCount(sampleCount),
+            _indelBuffer(indelBuffer),
+            _variantCounter(sampleCount, std::vector<unsigned>(MaxBufferSize)),
+            _depth(sampleCount, std::vector<unsigned>(MaxBufferSize)),
+            _positionToAlignIds(MaxBufferSize),
+            _alignIdToAlignInfo(MaxDepth),
+            _variantInfo(MaxDepth, std::vector<VariantType>(MaxBufferSize, VariantType())),
+            _insertSeqBuffer(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string()))
+    {}
+
+    /// insert match at position pos
+    /// \param alignId align id
+    /// \param pos reference position
+    void insertMatch(const align_id_t alignId, const pos_t pos);
+
+    /// insert mismatch at position pos
+    /// \param alignId align id
+    /// \param pos reference position
+    /// \param baseChar read base char
+    void insertMismatch(const align_id_t alignId, const pos_t pos, const char baseChar);
+
+    /// insert soft-clipped segment
+    /// \param alignId align id
+    /// \param pos reference position
+    /// \param baseChar soft-clipped segment sequence
+    void insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string& segmentSeq, bool isBeginEdge);
+
+    /// insert indel
+    /// \param sampleId sample id
+    /// \param indelObservation indel observation object
+    void insertIndel(const unsigned sampleId, const IndelObservation& indelObservation);
+
+    void setEndPos(pos_t endPos)
+    {
+        if (not _readBufferRange.is_begin_pos)
+            _readBufferRange.set_begin_pos(endPos-1);
+
+        return _readBufferRange.set_end_pos(endPos);
+    }
+
+    pos_t getBeginPos() const { return _readBufferRange.begin_pos; }
+    pos_t getEndPos() const { return _readBufferRange.end_pos; }
+
+    const AlignInfo& getAlignInfo(align_id_t alignId) const
+    {
+        return _alignIdToAlignInfo[alignId % MaxDepth];
+    }
+
+    void getHaplotypeReads(pos_range posRange, HaplotypeInfo &haplotypeInfo, bool includePartialReads) const;
+
+    /// cache sampleId and indelAlignType corresponding to alignId
+    /// \param alignId align id
+    /// \param sampleId sample id
+    /// \param indelAlignType indel align type
+    void setAlignInfo(const align_id_t alignId, unsigned sampleId, INDEL_ALIGN_TYPE::index_t indelAlignType)
+    {
+        AlignInfo& alignInfo = _alignIdToAlignInfo[alignId % MaxDepth];
+        alignInfo.sampleId = sampleId;
+        alignInfo.indelAlignType = indelAlignType;
+    }
+
+    unsigned getSampleId(const align_id_t alignId) const
+    {
+        return _alignIdToAlignInfo[alignId % MaxDepth].sampleId;
+    }
+
+    void resetCounter(const pos_t pos)
+    {
+        int index = pos % MaxBufferSize;
+
+        for (unsigned sampleId=0; sampleId<_sampleCount; ++sampleId)
+        {
+            _variantCounter[sampleId][index] = 0;
+            _depth[sampleId][index] = 0;
+        }
+    }
+
+    void addVariantCount(const unsigned sampleId, const pos_t pos, unsigned count)
+    {
+        int index = pos % MaxBufferSize;
+        _variantCounter[sampleId][index] += count;
+        ++_depth[sampleId][index];
+    }
+
+    unsigned getVariantCount(const unsigned sampleId, const pos_t pos) const
+    {
+        return _variantCounter[sampleId][pos % MaxBufferSize];
+    }
+
+    void addAlignIdToPos(const align_id_t alignId, const pos_t pos)
+    {
+        int index = pos % MaxBufferSize;
+        if (_positionToAlignIds[index].empty() || _positionToAlignIds[index].back() != alignId)
+            _positionToAlignIds[index].push_back(alignId);
+    }
+
+    unsigned getDepth(const unsigned sampleId, const pos_t pos) const
+    {
+        int index = pos % MaxBufferSize;
+        return _depth[sampleId][index];
+    }
+
+    const std::vector<align_id_t>& getPositionToAlignIds(const pos_t pos) const
+    {
+        return _positionToAlignIds[pos % MaxBufferSize];
+    }
+
+    void clearPos(pos_t pos)
+    {
+        _positionToAlignIds[pos % MaxBufferSize].clear();
+        resetCounter(pos);
+        _readBufferRange.set_begin_pos(pos+1);
+    }
+
+private:
+    enum VariantType
+    {
+        MATCH,
+        MISMATCH,
+        SOFT_CLIP,
+        DELETE,
+        INSERT,
+        MISMATCH_INSERT
+    };
+
+    const reference_contig_segment& _ref;
+    const unsigned _sampleCount;
+    IndelBuffer& _indelBuffer;
+
+    pos_range _readBufferRange;
+
+    std::vector<std::vector<unsigned>> _variantCounter;
+    std::vector<std::vector<unsigned>> _depth;
+
+    // for haplotypes
+    std::vector<std::vector<align_id_t>> _positionToAlignIds;
+
+    // to store align information
+    std::vector<AlignInfo> _alignIdToAlignInfo;
+
+    std::vector<std::vector<VariantType>> _variantInfo;
+    std::vector<std::vector<std::string>> _insertSeqBuffer;
+    char _snvBuffer[MaxDepth][MaxBufferSize];
+
+    // to record reference repeat count
+    uint8_t _repeatCount[MaxBufferSize];
+
+    void setMatch(const align_id_t id, const pos_t pos);
+    void setMismatch(const align_id_t id, const pos_t pos, char baseChar);
+    void setDelete(const align_id_t id, const pos_t pos);
+    void setInsert(const align_id_t id, const pos_t pos, const std::string& insertSeq);
+    void setSoftClipSegment(const align_id_t id, const pos_t pos, const std::string& segmentSeq);
+    bool setHaplotypeBase(const align_id_t id, const pos_t pos, std::string& base) const;
+};

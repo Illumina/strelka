@@ -348,7 +348,7 @@ add_alignment_indels_to_sppr(
     auto& active_region_detector(sppr.getActiveRegionDetector());
     if (sppr.is_active_region_detector_enabled())
     {
-        active_region_detector.setAlignInfo(id, sample_no, iat);
+        active_region_detector.getReadBuffer().setAlignInfo(id, sample_no, iat);
     }
 
     while (path_index<aps)
@@ -433,7 +433,6 @@ add_alignment_indels_to_sppr(
                 if (sppr.is_active_region_detector_enabled() && !isLowMapQuality)
                 {
                     pos_t softClipStartPos(ref_head_pos);
-
                     // for leading/trailing soft-clip, place the segment at the end/start position
                     if (is_begin_edge)
                         --softClipStartPos;
@@ -441,7 +440,7 @@ add_alignment_indels_to_sppr(
                     const pos_t refPos(softClipStartPos);
                     std::string segmentSeq;
                     bam_seq_to_str(read_seq, read_offset, read_offset+ps.length, segmentSeq);
-                    active_region_detector.insertSoftClipSegment(id, refPos, segmentSeq, is_begin_edge);
+                    active_region_detector.getReadBuffer().insertSoftClipSegment(id, refPos, segmentSeq, is_begin_edge);
                 }
             }
         }
@@ -476,11 +475,11 @@ add_alignment_indels_to_sppr(
 
                 if (ref.get_base(ref_pos) != base_char)
                 {
-                    active_region_detector.insertMismatch(id, ref_pos, base_char);
+                    active_region_detector.getReadBuffer().insertMismatch(id, ref_pos, base_char);
                 }
                 else
                 {
-                    active_region_detector.insertMatch(id, ref_pos);
+                    active_region_detector.getReadBuffer().insertMatch(id, ref_pos);
                 }
             }
         }

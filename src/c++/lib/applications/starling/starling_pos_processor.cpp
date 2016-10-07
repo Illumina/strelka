@@ -160,6 +160,7 @@ reset()
     _targeted_regions.clear();
     _variantLocusAlreadyOutputToPos = -1;
     _forcedAllelesAlreadyOutput.clear();
+    _active_region_detector->clear();
 }
 
 

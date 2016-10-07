@@ -29,6 +29,7 @@
 #include "starling_read_segment.hh"
 #include "indel.hh"
 #include "IndelBuffer.hh"
+#include "ActiveRegionReadBuffer.hh"
 
 #include <vector>
 #include <list>
@@ -44,18 +45,12 @@ public:
     // maximum buffer size in bases (must be larger than the maximum read size + max indel size
     static const unsigned MaxBufferSize = 1000u;
 
-    // maximum read depth
-    static const unsigned MaxDepth = ActiveRegion::MaxDepth;
-
     // minimum read depth
     static const unsigned MinDepth = ActiveRegion::MinHaplotypeCount;
 
-    // variant count to add for a single mismatch or indel
-    static const int MismatchWeight = 1;
-    static const int IndelWeight = 4;
 
     // maximum distance between two variants belonging to the same active region
-    static const int MaxDistanceBetweenTwoVariants = 20u;
+    static const int MaxDistanceBetweenTwoVariants = 13u;
 
     // alignment scores, same as bwa default values
     static const int ScoreMatch = 1;
@@ -65,8 +60,7 @@ public:
     static const int ScoreOffEdge = -100;
 
     // for expansion of active regions
-    const unsigned MaxRepeatUnitLength = 3u;
-    const pos_t MaxRepeatSpan = 20u;
+    const pos_t MaxRepeatSpan = 100u;
 
     // minimum alternative allele fraction to call a position as a candidate variant
     const float MinAlternativeAlleleFraction = 0.2;
@@ -84,52 +78,32 @@ public:
         IndelBuffer& indelBuffer,
         unsigned maxIndelSize,
         unsigned sampleCount,
-        unsigned maxDetectionWindowSize = 50,
+        unsigned maxDetectionWindowSize = 100,
         unsigned minNumVariantsPerPosition = 9,
         unsigned minNumVariantsPerRegion = 2) :
         _ref(ref),
+        _readBuffer(ref, sampleCount, indelBuffer),
         _indelBuffer(indelBuffer),
         _maxIndelSize(maxIndelSize),
         _sampleCount(sampleCount),
         _maxDetectionWindowSize(maxDetectionWindowSize),
         _minNumVariantsPerPositionPerSample(minNumVariantsPerPosition),
         _minNumVariantsPerRegion(minNumVariantsPerRegion),
-        _variantCounter(sampleCount, std::vector<unsigned>(MaxBufferSize)),
-        _depth(sampleCount, std::vector<unsigned>(MaxBufferSize)),
-        _positionToAlignIds(MaxBufferSize),
-        _alignIdToAlignInfo(MaxDepth),
-        _variantInfo(MaxDepth, std::vector<VariantType>(MaxBufferSize, VariantType())),
-        _insertSeqBuffer(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string())),
         _polySites(sampleCount),
-        _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
+        _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true)),
+        _alignerForAssembly(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, 0, ScoreOpen, true, true))
     {
         _numVariants = 0;
+        _activeRegionPtr = nullptr;
         _activeRegionStartPos = 0;
         _prevVariantPos = 0;
         _lastActiveRegionEnd = 0;
     }
 
-    /// insert match at position pos
-    /// \param alignId align id
-    /// \param pos reference position
-    void insertMatch(const align_id_t alignId, const pos_t pos);
-
-    /// insert mismatch at position pos
-    /// \param alignId align id
-    /// \param pos reference position
-    /// \param baseChar read base char
-    void insertMismatch(const align_id_t alignId, const pos_t pos, const char baseChar);
-
-    /// insert soft-clipped segment
-    /// \param alignId align id
-    /// \param pos reference position
-    /// \param baseChar soft-clipped segment sequence
-    void insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string& segmentSeq, bool isBeginEdge);
-
-    /// insert indel
-    /// \param sampleId sample id
-    /// \param indelObservation indel observation object
-    void insertIndel(const unsigned sampleId, const IndelObservation& indelObservation);
+    ActiveRegionReadBuffer& getReadBuffer()
+    {
+        return _readBuffer;
+    }
 
     /// update the active region buffer start position
     /// \param pos reference position
@@ -138,29 +112,15 @@ public:
     /// update the active region end position. Creates an active region if needed.
     /// \param pos reference position
     /// \param isLastPos
-    void updateEndPosition(const pos_t pos, const bool isLastPos);
-
-    /// cache sampleId and indelAlignType corresponding to alignId
-    /// \param alignId align id
-    /// \param sampleId sample id
-    /// \param indelAlignType indel align type
-    inline void setAlignInfo(const align_id_t alignId, unsigned sampleId, INDEL_ALIGN_TYPE::index_t indelAlignType)
-    {
-        AlignInfo& alignInfo = _alignIdToAlignInfo[alignId % MaxDepth];
-        alignInfo.sampleId = sampleId;
-        alignInfo.indelAlignType = indelAlignType;
-    }
-
-    inline unsigned getSampleId(const align_id_t alignId)
-    {
-        return _alignIdToAlignInfo[alignId % MaxDepth].sampleId;
-    }
+    void updateEndPosition(const pos_t pos);
 
     /// Checks if mismatches occur consistently at position pos
     /// \param sampleId sample id
     /// \param pos reference position
     /// \return true if pos is a polymorphic site; false otherwise.
     bool isPolymorphicSite(const unsigned sampleId, const pos_t pos) const;
+
+    void clear();
 
 private:
     enum VariantType
@@ -174,6 +134,8 @@ private:
     };
 
     const reference_contig_segment& _ref;
+    ActiveRegionReadBuffer _readBuffer;
+
     IndelBuffer& _indelBuffer;
 
     const unsigned _maxIndelSize;
@@ -188,86 +150,22 @@ private:
     pos_t _lastActiveRegionEnd;
     unsigned _numVariants;
 
-    std::list<ActiveRegion> _activeRegions;
-    std::vector<std::vector<unsigned>> _variantCounter;
-    std::vector<std::vector<unsigned>> _depth;
-
-    // for haplotypes
-    std::vector<std::vector<align_id_t>> _positionToAlignIds;
-
-    // to store align information
-    std::vector<AlignInfo> _alignIdToAlignInfo;
-
-    std::vector<std::vector<VariantType>> _variantInfo;
-    std::vector<std::vector<std::string>> _insertSeqBuffer;
-    char _snvBuffer[MaxDepth][MaxBufferSize];
+    std::unique_ptr<ActiveRegion> _activeRegionPtr;
 
     // record polymorphic sites
     RangeSet _polySites;
 
     // aligner to be used in active regions
     GlobalAligner<int> _aligner;
+    GlobalAligner<int> _alignerForAssembly;
 
     // expand the active region to cover repeats
     void getExpandedRange(const pos_range& origActiveRegion, pos_range& newActiveRegion);
 
+    void processActiveRegion();
+
     bool isCandidateVariant(const pos_t pos) const;
     bool isInvariant(const pos_t pos) const;
-
-    inline void resetCounter(const pos_t pos)
-    {
-        int index = pos % MaxBufferSize;
-
-        for (unsigned sampleId=0; sampleId<_sampleCount; ++sampleId)
-        {
-            _variantCounter[sampleId][index] = 0;
-            _depth[sampleId][index] = 0;
-        }
-    }
-
-    inline void addVariantCount(const unsigned sampleId, const pos_t pos, unsigned count)
-    {
-        int index = pos % MaxBufferSize;
-        _variantCounter[sampleId][index] += count;
-        ++_depth[sampleId][index];
-    }
-
-    inline unsigned getVariantCount(const unsigned sampleId, const pos_t pos) const
-    {
-        return _variantCounter[sampleId][pos % MaxBufferSize];
-    }
-
-    inline void addAlignIdToPos(const align_id_t alignId, const pos_t pos)
-    {
-        int index = pos % MaxBufferSize;
-        if (_positionToAlignIds[index].empty() || _positionToAlignIds[index].back() != alignId)
-            _positionToAlignIds[index].push_back(alignId);
-    }
-
-    inline unsigned getDepth(const unsigned sampleId, const pos_t pos) const
-    {
-        int index = pos % MaxBufferSize;
-        return _depth[sampleId][index];
-    }
-
-    inline const std::vector<align_id_t>& getPositionToAlignIds(const pos_t pos) const
-    {
-        return _positionToAlignIds[pos % MaxBufferSize];
-    }
-
-    void setMatch(const align_id_t id, const pos_t pos);
-    void setMismatch(const align_id_t id, const pos_t pos, char baseChar);
-    void setDelete(const align_id_t id, const pos_t pos);
-    void setInsert(const align_id_t id, const pos_t pos, const std::string& insertSeq);
-    void setSoftClipSegment(const align_id_t id, const pos_t pos, const std::string& segmentSeq);
-
-    bool setHaplotypeBase(const align_id_t id, const pos_t pos, std::string& base) const;
-
-    inline void clearPos(pos_t pos)
-    {
-        _positionToAlignIds[pos % MaxBufferSize].clear();
-        resetCounter(pos);
-    }
 };
 
 

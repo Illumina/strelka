@@ -452,7 +452,7 @@ insert_indel(
 
         if (is_active_region_detector_enabled())
         {
-            getActiveRegionDetector().insertIndel(sampleId, obs);
+            getActiveRegionDetector().getReadBuffer().insertIndel(sampleId, obs);
         }
         else
         {
@@ -840,7 +840,7 @@ process_pos(const int stage_no,
         init_read_segment_pos(pos);
         if (is_active_region_detector_enabled())
         {
-            getActiveRegionDetector().updateEndPosition(pos, pos == (_reportRange.end_pos()-1));
+            getActiveRegionDetector().updateEndPosition(pos);
         }
 
         if (_opt.is_write_candidate_indels())

@@ -105,8 +105,9 @@ addIndelObservation(
         }
 
         assert (insertTarget != nullptr);
-        const auto retval = insertTarget->insert(obs_data.id);
-        assert (retval.second);
+        insertTarget->insert(obs_data.id);
+//        const auto retval = insertTarget->insert(obs_data.id);
+//        assert (retval.second);
     }
 }
 
