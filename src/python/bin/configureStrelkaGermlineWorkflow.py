@@ -83,8 +83,8 @@ You must specify an alignment file (BAM or CRAM) file at least one sample.
             'runDir' : 'StrelkaGermlineWorkflow',
             'bgzip9Bin' : joinFile(libexecDir,"bgzip9"),
             'configDir' : configDir,
-            'germlineSnvScoringModelFile' : joinFile(configDir,'germlineVariantScoringModels.json'),
-            'germlineIndelScoringModelFile' : joinFile(configDir,'germlineVariantScoringModels.json'),
+            'germlineSnvScoringModelFile' : joinFile(configDir,'germlineSNVScoringModels.json'),
+            'germlineIndelScoringModelFile' : joinFile(configDir,'germlineIndelScoringModels.json'),
             'callContinuousVf' : []
             })
         return defaults

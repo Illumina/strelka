@@ -1,3 +1,4 @@
+- STREL-210 Retrain germline EVS
 - STREL-164 document short haplotyping
 - STREL-254 fix haploid indel call exception
 - STREL-227 shift away from legacy naming schemes
