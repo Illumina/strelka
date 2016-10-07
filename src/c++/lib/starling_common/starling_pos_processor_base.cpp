@@ -263,7 +263,7 @@ starling_pos_processor_base(
     , _sample(sampleCount)
     , _pileupCleaner(opt)
     , _indelBuffer(opt,dopt,ref)
-    , _active_region_detector(ref, _indelBuffer, opt.max_indel_size, sampleCount)
+    , _active_region_detector(new ActiveRegionDetector(ref, _indelBuffer, opt.max_indel_size, sampleCount))
 {
     assert(sampleCount != 0);
 
@@ -375,8 +375,26 @@ resetRegionBase(
     _chromName = chromName;
     _reportRange = reportRange;
 
+    // note that reseting these 'largest indel seen' values shouldn't really be necessary/important,
+    // but it contributes to easier verification that a series of regions put into the caller will
+    // give the same result as those regions processed one at a time
+    _largest_indel_ref_span = _opt.max_indel_size;
+    _largest_total_indel_ref_span_per_read = _largest_indel_ref_span;
+
     const pos_range pr(_reportRange.begin_pos(), _reportRange.end_pos());
     _stagemanPtr.reset(new stage_manager(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE, get_largest_total_indel_ref_span_per_read(), _opt, _dopt), pr, *this));
+
+    _forced_output_pos.clear();
+    _indelBuffer.clearIndels();
+
+    /// TODO, it might be better to have some kind of regionReset() on this structure
+    ///  -- not clear how to do this accurately, so for now we just nuke and replace the entire object
+    _active_region_detector.reset(new ActiveRegionDetector(_ref, _indelBuffer, _opt.max_indel_size, getSampleCount()));
+
+    for (auto& sampleVal : _sample)
+    {
+        sampleVal->resetRegion();
+    }
 }
 
 
@@ -434,7 +452,7 @@ insert_indel(
 
         if (is_active_region_detector_enabled())
         {
-            _active_region_detector.insertIndel(sampleId, obs);
+            getActiveRegionDetector().insertIndel(sampleId, obs);
         }
         else
         {
@@ -822,7 +840,7 @@ process_pos(const int stage_no,
         init_read_segment_pos(pos);
         if (is_active_region_detector_enabled())
         {
-            _active_region_detector.updateEndPosition(pos, pos == (_reportRange.end_pos()-1));
+            getActiveRegionDetector().updateEndPosition(pos, pos == (_reportRange.end_pos()-1));
         }
 
         if (_opt.is_write_candidate_indels())
@@ -858,7 +876,7 @@ process_pos(const int stage_no,
         }
 
         if (is_active_region_detector_enabled())
-            _active_region_detector.updateStartPosition(pos);
+            getActiveRegionDetector().updateStartPosition(pos);
     }
     else if (stage_no==STAGE::POST_ALIGN)
     {
@@ -891,7 +909,7 @@ process_pos(const int stage_no,
     }
     else if (stage_no==STAGE::CLEAR_INDEL_BUFFER)
     {
-        getIndelBuffer().clearPosition(pos);
+        getIndelBuffer().clearIndelsAtPosition(pos);
     }
     else if (stage_no==STAGE::POST_CALL)
     {
@@ -1261,7 +1279,7 @@ pileup_read_segment(
     if ((! is_submapped) && _opt.is_max_win_mismatch)
     {
         const rc_segment_bam_seq ref_bseq(_ref);
-        create_mismatch_filter_map(_opt,best_al,ref_bseq,sampleIndex,bseq,read_begin,read_end,_active_region_detector, _rmi);
+        create_mismatch_filter_map(_opt,best_al,ref_bseq,sampleIndex,bseq,read_begin,read_end, getActiveRegionDetector(), _rmi);
         if (_opt.tier2.is_tier2_mismatch_density_filter_count)
         {
             const int max_pass(_opt.tier2.tier2_mismatch_density_filter_count);

@@ -81,6 +81,18 @@ strelka_pos_processor(
 
 void
 strelka_pos_processor::
+reset()
+{
+    base_t::reset();
+
+    _indelWriter.clear();
+    _noisePos.clear();
+}
+
+
+
+void
+strelka_pos_processor::
 resetRegion(
     const std::string& chromName,
     const known_pos_range2& regionRange)

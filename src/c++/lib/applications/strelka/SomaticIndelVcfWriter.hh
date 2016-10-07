@@ -55,8 +55,7 @@ struct SomaticIndelVcfWriter
         std::ostream* osptr) :
         _opt(opt),
         _dopt(dopt),
-        _osptr(osptr)
-    {}
+        _osptr(osptr) {}
 
     /// return true if indel information is cached for this position
     bool
@@ -71,6 +70,12 @@ struct SomaticIndelVcfWriter
     empty() const
     {
         return (_data.empty());
+    }
+
+    void
+    clear()
+    {
+        _data.clear();
     }
 
     /// store an indel call

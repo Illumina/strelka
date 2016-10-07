@@ -227,8 +227,15 @@ void
 gvcf_writer::
 flush_impl()
 {
-    skip_to_pos(_reportRange.end_pos());
-    writeAllNonVariantBlockRecords();
+    if (not _chromName.empty())
+    {
+        skip_to_pos(_reportRange.end_pos());
+        writeAllNonVariantBlockRecords();
+    }
+
+    _chromName.clear();
+    _headPos = 0;
+    _last_indel.reset(nullptr);
 }
 
 

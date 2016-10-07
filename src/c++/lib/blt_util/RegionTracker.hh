@@ -145,6 +145,12 @@ struct RegionPayloadTracker
         return _regions.empty();
     }
 
+    void
+    clear()
+    {
+        _regions.clear();
+    }
+
     /// is single position in a tracked region w/ payload?
     boost::optional<T>
     isIntersectRegion(

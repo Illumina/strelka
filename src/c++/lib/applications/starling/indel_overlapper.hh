@@ -62,6 +62,7 @@ private:
     {
         // flush out accumulated sites & indels
         process_overlaps();
+        clearBuffers();
     }
 
     static void modify_indel_conflict_site(GermlineSiteLocusInfo& siteLocus);
@@ -82,6 +83,7 @@ private:
     void
     clearBuffers()
     {
+        _indel_range.set_range(-1, -1);
         _indel_buffer.clear();
         _nonvariant_indel_buffer.clear();
         _site_buffer.clear();

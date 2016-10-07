@@ -69,6 +69,19 @@ pedicure_pos_processor(
 
 void
 pedicure_pos_processor::
+reset()
+{
+    base_t::reset();
+
+    prev_vcf_line="";
+    prev_vcf_pos=-1;
+    buffer.clear();
+}
+
+
+
+void
+pedicure_pos_processor::
 resetRegion(
     const std::string& chromName,
     const known_pos_range2& reportRegion)

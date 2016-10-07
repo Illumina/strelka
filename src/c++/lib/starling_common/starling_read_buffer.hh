@@ -134,6 +134,19 @@ struct starling_read_buffer : private boost::noncopyable
     void
     dump_pos(const pos_t pos, std::ostream& os) const;
 
+    /// clear contents of read buffer
+    void
+    clear()
+    {
+        pos_group_t::iterator iter(_pos_group.begin());
+        const pos_group_t::iterator end(_pos_group.end());
+
+        while (iter != end)
+        {
+            clear_iter(iter++);
+        }
+    }
+
     /// return total reads buffered
     unsigned
     size() const

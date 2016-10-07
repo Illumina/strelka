@@ -153,6 +153,9 @@ private:
         return _empty_site;
     }
 
+    /// TODO STREL-125 why can't we get rid of this? Indel overlapper should already be doing the same thing!
+    void filter_site_by_last_indel_overlap(GermlineDiploidSiteLocusInfo& locus);
+
     const starling_options& _opt;
     const starling_streams& _streams;
     const reference_contig_segment& _ref;
@@ -165,9 +168,6 @@ private:
     pos_t _headPos;
 
     std::unique_ptr<GermlineIndelLocusInfo> _last_indel;
-
-    /// TODO STREL-125 why can't we get rid of this? Indel overlapper should already be doing the same thing!
-    void filter_site_by_last_indel_overlap(GermlineDiploidSiteLocusInfo& locus);
 
     gvcf_compressor _gvcf_comp;
     const ScoringModelManager& _scoringModels;

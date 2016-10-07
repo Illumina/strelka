@@ -112,10 +112,12 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     {
         return _opt.is_short_haplotyping_enabled;
     }
+
     ActiveRegionDetector&
-    get_active_region_detector()
+    getActiveRegionDetector()
     {
-        return _active_region_detector;
+        assert(_active_region_detector);
+        return (*_active_region_detector);
     }
 
     // in range [begin,end), is the estimated depth always below
@@ -194,6 +196,18 @@ protected:
             _wav.emplace_back(winsize);
             if (winsize>_max_winsize) _max_winsize=winsize;
             return (_wav.size()-1);
+        }
+
+        /// reset average data for each window, but leave the window/winsize info in place
+        void
+        resetRegion()
+        {
+            _is_last_pos = false;
+            _last_insert_pos = false;
+            for (auto& win : _wav)
+            {
+                win.reset();
+            }
         }
 
         void
@@ -277,6 +291,18 @@ public:
             , sample_opt(opt)
             , wav()
         {}
+
+        void
+        resetRegion()
+        {
+            bc_buff.clear();
+            read_buff.clear();
+            estdepth_buff.clear();
+            estdepth_buff_tier2.clear();
+            wav.resetRegion();
+            cpi.clear();
+            ploidyRegions.clear();
+        }
 
         pos_basecall_buffer bc_buff;
         starling_read_buffer read_buff;
@@ -596,6 +622,5 @@ protected:
 private:
     IndelBuffer _indelBuffer;
 
-    // to keep active regions
-    ActiveRegionDetector _active_region_detector;
+    std::unique_ptr<ActiveRegionDetector> _active_region_detector;
 };

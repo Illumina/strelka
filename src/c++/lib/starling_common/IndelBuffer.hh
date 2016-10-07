@@ -176,7 +176,14 @@ struct IndelBuffer
     }
 
     void
-    clearPosition(const pos_t pos);
+    clearIndelsAtPosition(const pos_t pos);
+
+    /// clear all indel data, but not sample info
+    void
+    clearIndels()
+    {
+        _indelBuffer.clear();
+    }
 
     bool
     empty() const

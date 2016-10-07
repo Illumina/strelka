@@ -55,6 +55,12 @@ struct pos_basecall_buffer
     {}
 
     void
+    clear()
+    {
+        _pdata.clear();
+    }
+
+    void
     insert_pos_submap_count(const pos_t pos)
     {
         _pdata.getRef(pos).n_submapped++;

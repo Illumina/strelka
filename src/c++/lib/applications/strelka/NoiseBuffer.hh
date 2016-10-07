@@ -54,6 +54,12 @@ struct NoiseBuffer
         if (_ndata.isKeyPresent(pos)) _ndata.erase(pos);
     }
 
+    void
+    clear()
+    {
+        _ndata.clear();
+    }
+
     bool
     empty() const
     {

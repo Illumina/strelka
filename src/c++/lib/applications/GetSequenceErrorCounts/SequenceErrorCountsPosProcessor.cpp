@@ -80,6 +80,9 @@ SequenceErrorCountsPosProcessor::
 reset()
 {
     base_t::reset();
+
+    _excludedRegions.clear();
+    _knownVariants.clear();
 }
 
 

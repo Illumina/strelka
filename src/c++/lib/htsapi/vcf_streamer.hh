@@ -81,4 +81,3 @@ private:
     vcf_record _vcfrec;
     bool _isRequireNormalized;
 };
-

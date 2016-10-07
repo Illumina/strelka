@@ -158,6 +158,8 @@ reset()
     }
     _nocompress_regions.clear();
     _targeted_regions.clear();
+    _variantLocusAlreadyOutputToPos = -1;
+    _forcedAllelesAlreadyOutput.clear();
 }
 
 

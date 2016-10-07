@@ -46,7 +46,7 @@ struct SequenceErrorCountsPosProcessor : public starling_pos_processor_base
     virtual
     ~SequenceErrorCountsPosProcessor();
 
-    void reset();
+    void reset() override;
 
     void resetRegion(
         const std::string& chromName,

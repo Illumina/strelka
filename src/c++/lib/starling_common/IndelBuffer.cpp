@@ -265,7 +265,7 @@ findDataException(const IndelKey& indelKey) const
 
 void
 IndelBuffer::
-clearPosition(const pos_t pos)
+clearIndelsAtPosition(const pos_t pos)
 {
     const iterator i_begin(positionIterator(pos));
     const iterator i_end(positionIterator(pos + 1));
