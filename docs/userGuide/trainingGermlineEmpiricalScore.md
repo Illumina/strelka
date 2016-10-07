@@ -18,7 +18,18 @@
 
 ## Introduction
 
-This document outlines the process of training germline Empirical Variant Score (EVS) models for Strelka. We use one model for snvs and another for indels.
+This document outlines the Empirical Variant Score (EVS) model training process for Strelka germline variants. This is
+the same method used to train the default SNV and indel EVS re-scoring models which come with Strelka, although the
+speicic training and truth data sets shown here are just small examples provided for demonstration purposes.
+
+## Requirements
+
+Strelka germline EVS training has additional dependencies which are not included
+in the primary build system. All packages required to retrain the EVS model and
+run the steps in this guide are provided in the [training environment Dockerfile]
+(trainingSomaticEmpiricalScore/Dockerfile) (shared with the somatic EVS training procedure),
+which can be used to either setup an EVS training docker image or as a guideline to install
+dependencies on another system.
 
 ## Step 1: Build snv and indel training data sets
 
@@ -29,31 +40,63 @@ model in addition to various experimental features will be reported. Note that E
 features can be reported even when scoring itself is turned off with the `--disableEVS` option
 (recommended to avoid using previous EVS output for training a new EVS model).
 
-Given a strelka gVCF genome.vcf.gz and a corresponding platinum genomes truth vcf with a bed file specifying confident regions, the following steps will produce two CSV feature files suitable for EVS training/testing of the snv and indel models. We assume bgzip is available from the user's $PATH (temp note: /illumina/thirdparty/samtools/samtools-1.2/bin/bgzip).
+Given a strelka gVCF genome.vcf.gz and a corresponding platinum genomes truth vcf with a bed file specifying confident regions, the following steps will produce two CSV feature files suitable for EVS training/testing of the snv and indel models.
 
 ### Step 1a: Preliminary filtering of the VCF file:
 
-First we need to filter out some unwanted gvcf entries. The following extracts the list of scoring features for use in Step 1c and removes the following: off-target entries (in exome data), entries that have been flagged with any type of conflict, entries that do not have diploid genotype (i.e. hemizygotes):
+First we need to filter out some unwanted gVCF entries. The following extracts the list of scoring features for use in Step 1c and removes the following:
 
-```
-gzip -dc genome.vcf.gz | ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/germline/bin/filter_vcf.pl | bgzip -cf  > filtered.vcf.gz
+1. off-target entries (in exome data)
+2. entries that have been flagged with any type of conflict
+3. entries that do not have diploid genotype (i.e. hemizygotes)
+
+```bash
+gzip -dc genome.vcf.gz |\
+python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/germline/bin/filterTrainingVcf.py |\
+${STRELKA_INSTALL_PATH}/libexec/bgzip -cf >|\
+filtered.vcf.gz
+
+gzip -dc filtered.vcf.gz | awk '/^#/ && /scoring_features/' >| scoringFeatures.txt
 ```
 
 ### Step 1b: Assigning truth labels using hap.py:
 
-Next, we run [hap.py](https://github.com/Illumina/hap.py) (temp note: /illumina/development/haplocompare/haplocompare-v0.2.9/bin/hap.py), which will use platinum genomes as a truth set to label calls as TP, FP, or UNK (= unknown, i.e. calls in ambiguous regions. We discard FNs (variants that do not result in strelka calls), since most of them will not appear in the vcf in the first place. Submit the happy job to an exclusive cluster node (-l excl).
+Next, the haplotype comparison tool [hap.py](https://github.com/Illumina/hap.py) is used to assign training labels to
+the strelka output. The truth set will be used to label strelka calls as true positive (TP), false positive (FP),
+or unknown (UNK) if ambiguous regions have been provided to to `hap.py`. In the subsequent training steps, false
+negatives are disregarded (variants that do not result in strelka calls), since most of them will not appear in the
+output vcf in the first place. In the example below the [Platinum Genomes](http://www.illumina.com/platinumgenomes/)
+truth set is used to label the variant calling output. For example, using NA12878/hg19 the following truth data could
+be obtained:
+
+```bash
+wget ftp://platgene_ro:@ussd-ftp.illumina.com/2016-1.0/hg19/small_variants/NA12878/NA12878.vcf.gz
+wget ftp://platgene_ro:@ussd-ftp.illumina.com/2016-1.0/hg19/small_variants/ConfidentRegions.bed.gz
+```
+
+And labeled using `hap.py`. This is an example hap.py command-line for a 40 core cluster producing apporpiately
+labeled output:
+
+```bash
+hap.py NA12878.vcf.gz filtered.vcf.gz -f ConfidentRegions.bed.gz -o happy_PG_annotated -V --preserve-info --threads 40 -P
+```
+
+### Step 1c: Convert the annotated variant output into a CSV feature file:
+
+The annotated hap.py output is next converted to a pair of csv files respectively containing features for snv and
+indel calls. The example command-line:
+ 
 
 ```
-hap.py platinumgenomes.vcf.gz filtered.vcf.gz -f ConfidentRegions.bed.gz -o annotated -V --preserve-info --threads 40 -P
+gzip -dc happy_PG_annotated.vcf.gz |\
+python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/germline/bin/parseAnnotatedTrainingVcf.py \
+    --scoringFeatures scoringFeatures.txt \
+    --snvOutput snv_training_data.csv \
+    --indelOutput indel_training_data.csv
 ```
 
-### Step 1c: Convert the hap.py output into a CSV feature file:
-
-Finally, the following script converts the hap.py output to a pair of csv files containing features for snv and indel calls respectively:
-
-```
-gzip -dc annotated.vcf.gz | ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/germline/bin/parse_happy.pl
-```
+...generates the labeled snv and indel feature files `snv_training_data.csv` and `indel_training_data.csv` for use in
+subsequent training steps.
 
 ### Step 1d (optional): Handle multiple training data sets
 

@@ -47,7 +47,7 @@ class StrelkaSomaticWorkflowOptions(StrelkaSharedWorkflowOptionsBase) :
         return """Version: %s
 
 This script configures Strelka somatic small variant calling.
-You must specify an alignment file (BAM or CRAM) file for each sample of a matched tumor-normal pair.
+You must specify an alignment file (BAM or CRAM) for each sample of a matched tumor-normal pair.
 """ % (workflowVersion)
 
 

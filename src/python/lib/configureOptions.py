@@ -181,9 +181,9 @@ class ConfigureWorkflowOptions(object) :
         from optparse import OptionGroup, OptionParser, SUPPRESS_HELP
 
         description=self.workflowDescription()+"""
-Configuration will produce a workflow run script which
-can execute the workflow on a single node or through
-sge and resume any interrupted execution.
+Configuration will produce a workflow run script which can
+execute the workflow on a single node or through sge and
+resume any interrupted execution.
 """
 
         globalConfigFile=os.path.join(globalConfigDir,configFileName)

@@ -45,7 +45,7 @@ class StrelkaGermlineWorkflowOptions(StrelkaSharedWorkflowOptionsBase) :
         return """Version: %s
 
 This script configures Strelka germline small variant calling.
-You must specify an alignment file (BAM or CRAM) file at least one sample.
+You must specify an alignment file (BAM or CRAM) for at least one sample.
 """ % (workflowVersion)
 
 

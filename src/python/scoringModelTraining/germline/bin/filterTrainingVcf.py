@@ -1,0 +1,96 @@
+#!/usr/bin/env python
+#
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#
+
+"""
+Filters out some gvcf entries before passing it to hap.py. This script makes hard assumptions about the order of entries in the vcf.
+"""
+
+import sys
+
+
+def getOptions() :
+
+    from optparse import OptionParser
+
+    usage = "usage: %prog < input.vcf > filtered.vcf"
+    parser = OptionParser(usage=usage)
+
+    #    parser.add_option("--", dest="isUnique",action="store_true",default=False,
+    #                      help="filter all but one record with the same {CHR,POS,REF,ALT}")
+
+    (options,args) = parser.parse_args()
+
+    if len(args) != 0 :
+        parser.print_help()
+        sys.exit(2)
+
+    return (options,args)
+
+
+class VCFID :
+    CHROM = 0
+    POS = 1
+    REF = 3
+    ALT = 4
+    QUAL = 5
+    FILTER = 6
+    INFO = 7
+    FORMAT = 8
+    SAMPLE = 9
+
+
+def main() :
+
+    import re
+
+    (options,args) = getOptions()
+
+    infp=sys.stdin
+    outfp=sys.stdout
+
+    for line in infp :
+        if line[0] == "#" :
+            outfp.write(line)
+            continue
+
+        word=line.strip().split('\t')
+
+        # EVS training procedure requires exactly one sample
+        assert(len(word) == (VCFID.SAMPLE+1))
+
+        filterVals=word[VCFID.FILTER].split(';')
+
+        # Skip entries matching OffTarget in the filter field (for WES data)
+        if "OffTarget" in filterVals : continue
+
+        # Skip entries matching any type of conflict
+        for filterVal in filterVals :
+            if filterVal.endswith("Conflict") : continue
+
+        sampleVals=word[VCFID.SAMPLE].split(':')
+
+        # Skip entries the do not have diploid genotype (hemizygotes)
+        # TODO detect which field is GT instead of assuming it is first
+        if not re.match(".[/|].",sampleVals[0]) : continue
+
+        outfp.write(line)
+
+if __name__ == "__main__" :
+    main()

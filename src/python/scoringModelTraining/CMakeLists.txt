@@ -19,5 +19,6 @@
 
 set(STRELKA_EVS_DIR "${THIS_DATADIR}/scoringModelTraining")
 
+add_subdirectory (germline)
 add_subdirectory (somatic)
 
