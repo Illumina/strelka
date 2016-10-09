@@ -101,9 +101,9 @@ pedicure_run(
 
     for (const auto& rinfo : regionInfo)
     {
-        setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
-        streamData.resetRegion(rinfo.streamerRegion.c_str());
         sppr.resetRegion(rinfo.regionChrom, rinfo.regionRange);
+        streamData.resetRegion(rinfo.streamerRegion.c_str());
+        setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
 
         while (streamData.next())
         {
