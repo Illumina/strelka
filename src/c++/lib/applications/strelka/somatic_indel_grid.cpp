@@ -213,20 +213,24 @@ get_somatic_indel(
             }
         }
 
-        static const bool is_somatic_multi_indel_filter(true);
 #if 0
         std::cerr << "BUG: testing tier/ik: " << i << " " << ik;
 #endif
+        static const bool is_somatic_multi_indel_filter(true);
+        bool isMultiIndelFilter(false);
         if (is_somatic_multi_indel_filter)
         {
-            const bool ismulti(is_multi_indel_allele(dopt,normalIndelSampleData,tumorIndelSampleData,is_include_tier2,tier_rs[i].is_overlap));
-            if (ismulti)
+            isMultiIndelFilter = (is_multi_indel_allele(dopt,normalIndelSampleData,tumorIndelSampleData,is_include_tier2,tier_rs[i].is_overlap));
+            if (isMultiIndelFilter)
             {
-                tier_rs[i].qphred=0;
 #if 0
                 std::cerr << "BUG: rejected\n";
 #endif
-                continue;
+                if (not sindel.is_forced_output)   // if forced output then there's still a point to computing tier2
+                {
+                    tier_rs[i].qphred = 0;
+                    continue;
+                }
             }
         }
 
@@ -273,6 +277,12 @@ get_somatic_indel(
             _ln_som_mismatch,
             tier_rs[i]
         );
+
+        if (isMultiIndelFilter)
+        {
+            // this takes care of filtered cases which are also forced calls
+            tier_rs[i].qphred = 0;
+        }
     }
 
     if (! sindel.is_forced_output)

@@ -51,7 +51,7 @@ struct snv_result_set : result_set
 
 struct indel_result_set : result_set
 {
-    bool is_overlap;
+    bool is_overlap = false;
 };
 
 struct somatic_snv_genotype_grid
