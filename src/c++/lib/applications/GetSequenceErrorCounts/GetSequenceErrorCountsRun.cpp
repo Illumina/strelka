@@ -101,12 +101,14 @@ getSequenceErrorCountsRun(
     const prog_info& pinfo,
     const SequenceErrorCountsOptions& opt)
 {
+    // ensure that this object is created first for runtime benchmark
+    RunStatsManager segmentStatMan(opt.segmentStatsFilename);
+
     opt.validate();
 
     const SequenceErrorCountsDerivOptions dopt(opt);
     starling_read_counts brc;
     reference_contig_segment ref;
-    RunStatsManager segmentStatMan(opt.segmentStatsFilename);
 
     ////////////////////////////////////////
     // setup streamData:

@@ -57,13 +57,15 @@ strelka_run(
 {
     using namespace illumina::common;
 
+    // ensure that this object is created first for runtime benchmark
+    RunStatsManager segmentStatMan(opt.segmentStatsFilename);
+
     opt.validate();
 
     const strelka_deriv_options dopt(opt);
     const StrelkaSampleSetSummary ssi;
     starling_read_counts brc;
     reference_contig_segment ref;
-    RunStatsManager segmentStatMan(opt.segmentStatsFilename);
 
     ////////////////////////////////////////
     // setup streamData:

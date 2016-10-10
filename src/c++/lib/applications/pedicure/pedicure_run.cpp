@@ -55,13 +55,15 @@ pedicure_run(
     const prog_info& pinfo,
     const pedicure_options& opt)
 {
+    // ensure that this object is created first for runtime benchmark
+    RunStatsManager segmentStatMan(opt.segmentStatsFilename);
+
     opt.validate();
 
     const pedicure_deriv_options dopt(opt);
     const PedicureSampleSetSummary ssi(opt);
     starling_read_counts brc;
     reference_contig_segment ref;
-    RunStatsManager segmentStatMan(opt.segmentStatsFilename);
 
     const unsigned sampleCount(opt.alignFileOpt.alignmentFilename.size());
 

@@ -110,12 +110,14 @@ starling_run(
 {
     using namespace illumina::common;
 
+    // ensure that this object is created first for runtime benchmark
+    RunStatsManager segmentStatMan(opt.segmentStatsFilename);
+
     opt.validate();
 
     const starling_deriv_options dopt(opt);
     starling_read_counts brc;
     reference_contig_segment ref;
-    RunStatsManager segmentStatMan(opt.segmentStatsFilename);
 
     const unsigned sampleCount(opt.alignFileOpt.alignmentFilename.size());
 
