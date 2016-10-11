@@ -72,6 +72,7 @@ denovo_indel_call_vcf(
     const pedicure_options& opt,
     const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
+    const double maxChromDepth,
     const denovo_indel_call& dinc,
     const AlleleReportInfo& indelReportInfo,
     const std::vector<isriTiers_t>& isri,
@@ -88,7 +89,7 @@ denovo_indel_call_vcf(
             const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
 
             const unsigned& depth(isri[probandIndex][PEDICURE_TIERS::TIER1].tier1Depth);
-            if (depth > dopt.dfilter.max_depth)
+            if (depth > maxChromDepth)
             {
                 smod.set_filter(PEDICURE_VCF_FILTERS::HighDepth);
             }
@@ -104,11 +105,12 @@ denovo_indel_call_vcf(
             }
         }
 
-
+#if 0
         if (rs.dindel_qphred < opt.dfilter.dindel_qual_lowerbound)
         {
-//            smod.set_filter(PEDICURE_VCF_FILTERS::QDI);
+            smod.set_filter(PEDICURE_VCF_FILTERS::QDI);
         }
+#endif
 
         if (indelReportInfo.ref_repeat_count > opt.dfilter.indelMaxRefRepeat)
         {
@@ -119,8 +121,6 @@ denovo_indel_call_vcf(
         {
             smod.set_filter(PEDICURE_VCF_FILTERS::iHpol);
         }
-
-
     }
 
 

@@ -124,22 +124,6 @@ get_read_buffer_size(const unsigned largest_read_size,
 
 
 
-// public companion functions:
-//
-static
-int
-get_influence_zone_size(const unsigned largest_read_size,
-                        const unsigned largest_total_indel_span_per_read)
-{
-    static const unsigned min_influence_zone_read_size(512);
-    const unsigned influence_read_size(std::max(min_influence_zone_read_size,
-                                                largest_read_size));
-    return static_cast<int>(get_read_buffer_size(influence_read_size,largest_total_indel_span_per_read))-1;
-}
-
-
-
-
 // static methods:
 //
 void
@@ -274,23 +258,18 @@ starling_pos_processor_base(
     , _ref(ref)
     , _streams(streams)
     , _rmi(STARLING_INIT_LARGEST_READ_SIZE)
-    //, _largest_indel_size(std::min(opt.max_indel_size,STARLING_INIT_LARGEST_INDEL_SIZE)) -- tmp change for GRUOPER handling
     , _largest_indel_ref_span(opt.max_indel_size)
     , _largest_total_indel_ref_span_per_read(_largest_indel_ref_span)
-    , _stageman(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE, get_largest_total_indel_ref_span_per_read(), _opt, _dopt),dopt.report_range,*this)
-    , _chrom_name(_opt.bam_seq_name)
     , _sample(sampleCount)
     , _pileupCleaner(opt)
     , _indelBuffer(opt,dopt,ref)
-    , _active_region_detector(ref, _indelBuffer, opt.max_indel_size, sampleCount)
+    , _active_region_detector(new ActiveRegionDetector(ref, _indelBuffer, opt.max_indel_size, sampleCount))
 {
     assert(sampleCount != 0);
 
-    const unsigned report_size(_dopt.report_range.size());
-    const unsigned knownref_report_size(get_ref_seq_known_size(_ref,_dopt.report_range));
     for (auto& sampleVal : _sample)
     {
-        sampleVal.reset(new sample_info(_opt, ref, report_size, knownref_report_size, &_ric));
+        sampleVal.reset(new sample_info(_opt, ref, &_ric));
     }
 
     if (_opt.is_bsnp_nploid)
@@ -314,23 +293,6 @@ starling_pos_processor_base(
                                                           _opt.is_all_sites());
         }
     }
-
-    // define an expanded indel influence zone around the report range:
-    //
-    // note that we don't know the max indel ref span per read at this point, so a fudge factor is
-    // added here:
-    const int bshift(get_influence_zone_size(get_largest_read_size(),
-                                             _opt.max_indel_size*2));
-    pos_range& rir( _report_influence_range);
-    rir = _dopt.report_range_limit;
-    if (rir.is_begin_pos)
-    {
-        rir.begin_pos -= bshift;
-    }
-    if (rir.is_end_pos)
-    {
-        rir.end_pos += bshift;
-    }
 }
 
 
@@ -338,7 +300,7 @@ void
 starling_pos_processor_base::
 update_stageman()
 {
-    _stageman.revise_stage_data(
+    _stagemanPtr->revise_stage_data(
         STAGE::get_stage_data(get_largest_read_size(),
                               get_largest_total_indel_ref_span_per_read(),
                               _opt,
@@ -395,23 +357,44 @@ void
 starling_pos_processor_base::
 reset()
 {
-    _stageman.reset();
-
-    pos_range output_report_range(_dopt.report_range);
-
-    if ((! output_report_range.is_begin_pos) &&
-        _stageman.is_first_pos_set())
+    if (_stagemanPtr)
     {
-        output_report_range.set_begin_pos(_stageman.min_pos());
+        _stagemanPtr->reset();
     }
+}
 
-    if ((! output_report_range.is_end_pos) &&
-        _stageman.is_first_pos_set())
+
+
+void
+starling_pos_processor_base::
+resetRegionBase(
+    const std::string& chromName,
+    const known_pos_range2& reportRange)
+{
+    reset();
+    _chromName = chromName;
+    _reportRange = reportRange;
+
+    // note that reseting these 'largest indel seen' values shouldn't really be necessary/important,
+    // but it contributes to easier verification that a series of regions put into the caller will
+    // give the same result as those regions processed one at a time
+    _largest_indel_ref_span = _opt.max_indel_size;
+    _largest_total_indel_ref_span_per_read = _largest_indel_ref_span;
+
+    const pos_range pr(_reportRange.begin_pos(), _reportRange.end_pos());
+    _stagemanPtr.reset(new stage_manager(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE, get_largest_total_indel_ref_span_per_read(), _opt, _dopt), pr, *this));
+
+    _forced_output_pos.clear();
+    _indelBuffer.clearIndels();
+
+    /// TODO, it might be better to have some kind of regionReset() on this structure
+    ///  -- not clear how to do this accurately, so for now we just nuke and replace the entire object
+    _active_region_detector.reset(new ActiveRegionDetector(_ref, _indelBuffer, _opt.max_indel_size, getSampleCount()));
+
+    for (auto& sampleVal : _sample)
     {
-        output_report_range.set_end_pos(_stageman.max_pos()+1);
+        sampleVal->resetRegion();
     }
-
-    write_counts(output_report_range);
 }
 
 
@@ -461,7 +444,7 @@ insert_indel(
 
     try
     {
-        _stageman.validate_new_pos_value(obs.key.pos,STAGE::READ_BUFFER);
+        _stagemanPtr->validate_new_pos_value(obs.key.pos,STAGE::READ_BUFFER);
 
         // dynamically scale maximum indel size:
         const unsigned len(std::min(static_cast<unsigned>((obs.key.delete_length())),_opt.max_indel_size));
@@ -469,7 +452,7 @@ insert_indel(
 
         if (is_active_region_detector_enabled())
         {
-            _active_region_detector.insertIndel(sampleId, obs);
+            getActiveRegionDetector().insertIndel(sampleId, obs);
         }
         else
         {
@@ -490,7 +473,7 @@ void
 starling_pos_processor_base::
 insert_forced_output_pos(const pos_t pos)
 {
-    _stageman.validate_new_pos_value(pos,STAGE::READ_BUFFER);
+    _stagemanPtr->validate_new_pos_value(pos,STAGE::READ_BUFFER);
     _forced_output_pos.insert(pos);
     _is_skip_process_pos=false;
 }
@@ -505,7 +488,7 @@ insert_ploidy_region(
     const unsigned ploidy)
 {
     assert(ploidy==0 || ploidy==1);
-    _stageman.validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
+    _stagemanPtr->validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
     return sample(sampleIndex).ploidyRegions.addRegion(range,ploidy);
 }
 
@@ -543,9 +526,9 @@ insert_read(
 {
     boost::optional<align_id_t> retval;
 
-    if (0 != strcmp(_chrom_name.c_str(),chrom_name))
+    if (0 != strcmp(_chromName.c_str(),chrom_name))
     {
-        log_os << "ERROR: starling_pos_processor_base.insert_read(): read has unexpected sequence name: '" << chrom_name << "' expecting: '" << _chrom_name << "'\n"
+        log_os << "ERROR: starling_pos_processor_base.insert_read(): read has unexpected sequence name: '" << chrom_name << "' expecting: '" << _chromName << "'\n"
                << "\tread_key: " << read_key(br) << "\n";
         exit(EXIT_FAILURE);
     }
@@ -557,7 +540,7 @@ insert_read(
     // in this region:
     //
     /// TODO this should never happen, investigate/fix turn this into an assertion
-    if (! _stageman.is_new_pos_value_valid(al.pos,STAGE::HEAD))
+    if (! _stagemanPtr->is_new_pos_value_valid(al.pos,STAGE::HEAD))
     {
         log_os << "WARNING: skipping alignment for read outside of buffer range: " << br << "\n";
         return retval;
@@ -786,7 +769,7 @@ void
 starling_pos_processor_base::
 align_pos(const pos_t pos)
 {
-    known_pos_range realign_buffer_range(get_realignment_range(pos, _stageman.get_stage_data()));
+    known_pos_range realign_buffer_range(get_realignment_range(pos, _stagemanPtr->get_stage_data()));
 
     const unsigned sampleCount(getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
@@ -814,7 +797,7 @@ align_pos(const pos_t pos)
             // check that read has not been realigned too far to the left:
             if (rseg.is_realigned)
             {
-                if (! _stageman.is_new_pos_value_valid(rseg.realignment.pos,STAGE::POST_ALIGN))
+                if (! _stagemanPtr->is_new_pos_value_valid(rseg.realignment.pos,STAGE::POST_ALIGN))
                 {
                     log_os << "WARNING: read realigned outside bounds of realignment stage buffer. Skipping...\n"
                            << "\tread: " << rseg.key() << "\n";
@@ -831,8 +814,8 @@ void
 starling_pos_processor_base::
 set_head_pos(const pos_t pos)
 {
-    _stageman.validate_new_pos_value(pos,STAGE::READ_BUFFER);
-    _stageman.handle_new_pos_value(pos);
+    _stagemanPtr->validate_new_pos_value(pos,STAGE::READ_BUFFER);
+    _stagemanPtr->handle_new_pos_value(pos);
 }
 
 
@@ -846,6 +829,8 @@ process_pos(const int stage_no,
     log_os << "pos,stage_no: " << pos << " " << stage_no << "\n";
 #endif
 
+    assert(isChromSet());
+
     if (empty()) return;
 
     const unsigned sampleCount(getSampleCount());
@@ -855,7 +840,7 @@ process_pos(const int stage_no,
         init_read_segment_pos(pos);
         if (is_active_region_detector_enabled())
         {
-            _active_region_detector.updateEndPosition(pos, pos == (_dopt.report_range.end_pos-1));
+            getActiveRegionDetector().updateEndPosition(pos, pos == (_reportRange.end_pos()-1));
         }
 
         if (_opt.is_write_candidate_indels())
@@ -891,7 +876,7 @@ process_pos(const int stage_no,
         }
 
         if (is_active_region_detector_enabled())
-            _active_region_detector.updateStartPosition(pos);
+            getActiveRegionDetector().updateStartPosition(pos);
     }
     else if (stage_no==STAGE::POST_ALIGN)
     {
@@ -924,7 +909,7 @@ process_pos(const int stage_no,
     }
     else if (stage_no==STAGE::CLEAR_INDEL_BUFFER)
     {
-        getIndelBuffer().clearPosition(pos);
+        getIndelBuffer().clearIndelsAtPosition(pos);
     }
     else if (stage_no==STAGE::POST_CALL)
     {
@@ -1063,7 +1048,7 @@ write_candidate_indels_pos(
         const IndelKey& indelKey(indelIter->first);
         const IndelData& indelData(getIndelData(indelIter));
         if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
-        bos << _chrom_name << "\t"
+        bos << _chromName << "\t"
             << output_pos << "\t"
             << INDEL::get_index_label(indelKey.type) << "\t";
         if (indelKey.is_breakpoint())
@@ -1122,7 +1107,7 @@ rebuffer_pos_reads(const pos_t pos)
 
             const pos_t new_pos(get_new_read_pos(rseg));
             if ((new_pos!=pos) &&
-                (_stageman.is_new_pos_value_valid(new_pos,STAGE::POST_ALIGN)))
+                (_stagemanPtr->is_new_pos_value_valid(new_pos,STAGE::POST_ALIGN)))
             {
                 new_read_pos.push_back(std::make_pair(std::make_pair(rseg.id(),r.second),new_pos));
             }
@@ -1259,13 +1244,9 @@ pileup_read_segment(
 
     // exact begin and end report range filters:
     {
-        const pos_range& rlimit(_dopt.report_range_limit);
-        if (rlimit.is_end_pos && (best_al.pos>=rlimit.end_pos)) return;
-        if (rlimit.is_begin_pos)
-        {
-            const pos_t al_end_pos(best_al.pos+static_cast<pos_t>(read_ref_mapped_size));
-            if (al_end_pos <= rlimit.begin_pos) return;
-        }
+        if (best_al.pos>=_reportRange.end_pos()) return;
+        const pos_t al_end_pos(best_al.pos+static_cast<pos_t>(read_ref_mapped_size));
+        if (al_end_pos <= _reportRange.begin_pos()) return;
     }
 
     // find trimmed sections (as defined by the CASAVA 1.0 caller)
@@ -1298,7 +1279,7 @@ pileup_read_segment(
     if ((! is_submapped) && _opt.is_max_win_mismatch)
     {
         const rc_segment_bam_seq ref_bseq(_ref);
-        create_mismatch_filter_map(_opt,best_al,ref_bseq,sampleIndex,bseq,read_begin,read_end,_active_region_detector, _rmi);
+        create_mismatch_filter_map(_opt,best_al,ref_bseq,sampleIndex,bseq,read_begin,read_end, getActiveRegionDetector(), _rmi);
         if (_opt.tier2.is_tier2_mismatch_density_filter_count)
         {
             const int max_pass(_opt.tier2.tier2_mismatch_density_filter_count);
@@ -1375,7 +1356,7 @@ pileup_read_segment(
                 log_os << "j,ref,read: " << j << " " << ref_pos <<  " " << read_pos << "\n";
 #endif
 
-                _stageman.validate_new_pos_value(ref_pos,STAGE::get_pileup_stage_no(_opt));
+                _stagemanPtr->validate_new_pos_value(ref_pos,STAGE::get_pileup_stage_no(_opt));
 
                 const uint8_t call_code(bseq.get_code(read_pos));
                 const uint8_t call_id(bam_seq_code_to_id(call_code));
@@ -1487,7 +1468,7 @@ pileup_read_segment(
 
                     // skip position outside of report range:
                     if (! is_pos_reportable(ref_pos)) continue;
-                    _stageman.validate_new_pos_value(ref_pos,STAGE::get_pileup_stage_no(_opt));
+                    _stagemanPtr->validate_new_pos_value(ref_pos,STAGE::get_pileup_stage_no(_opt));
 
                     if (is_submapped)
                     {
@@ -1540,12 +1521,18 @@ process_pos_site_stats(
     const unsigned n_spandel(pi.spanningDeletionReadCount);
     const unsigned n_submapped(pi.n_submapped);
 
+#if 0
     sif.ss.update(sif.cpi.n_calls());
     sif.used_ss.update(sif.cpi.n_used_calls());
     if (pi.get_ref_base() != 'N')
     {
         sif.ssn.update(sif.cpi.n_calls());
         sif.used_ssn.update(sif.cpi.n_used_calls());
+    }
+#endif
+
+    if (pi.get_ref_base() != 'N')
+    {
         sif.wav.insert(pos,sif.cpi.n_used_calls(),sif.cpi.n_unused_calls(),n_spandel,n_submapped);
     }
     else

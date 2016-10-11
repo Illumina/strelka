@@ -46,6 +46,10 @@ struct ScoringModelManager
         const starling_options& opt,
         const gvcf_deriv_options& gvcfDerivedOptions);
 
+    /// the current chromosome must be specified before handling any classifications:
+    void
+    resetChrom(const std::string& chrom);
+
     void
     classify_site(
         GermlineDiploidSiteLocusInfo& locus) const;
@@ -89,7 +93,20 @@ struct ScoringModelManager
         return static_cast<bool>(_indelScoringModelPtr);
     }
 
+    double
+    getMaxDepth() const
+    {
+        assert(isChromSet());
+        return _maxChromDepth;
+    }
+
 private:
+    bool
+    isChromSet() const
+    {
+        return (not _chromName.empty());
+    }
+
     double
     snvEVSThreshold() const
     {
@@ -109,6 +126,10 @@ private:
     const gvcf_deriv_options& _dopt;
     bool _isReportEVSFeatures;
     bool _isRNA;
+
+    std::string _chromName;
+    double _normChromDepth = 0.;
+    double _maxChromDepth = 0.;
 
     std::unique_ptr<VariantScoringModelServer> _snvScoringModelPtr;
     std::unique_ptr<VariantScoringModelServer> _indelScoringModelPtr;

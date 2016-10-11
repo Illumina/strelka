@@ -50,33 +50,19 @@
 
 std::vector<std::reference_wrapper<const bam_hdr_t> >
 registerAlignments(
-    const starling_base_options& opt,
-    const AlignmentFileOptions& alignFileOpt,
+    const std::vector<std::string>& alignmentFilename,
     const std::vector<unsigned>& registrationIndices,
     HtsMergeStreamer& streamData)
 {
-    assert(registrationIndices.size() == alignFileOpt.alignmentFilename.size());
+    const unsigned alignmentFileCount(alignmentFilename.size());
+    assert(registrationIndices.size() == alignmentFileCount);
 
     std::vector<std::reference_wrapper<const bam_hdr_t>> allHeaders;
-    const unsigned alignmentFileCount(alignFileOpt.alignmentFilename.size());
     for (unsigned alignmentFileIndex(0); alignmentFileIndex<alignmentFileCount; ++alignmentFileIndex)
     {
-        const std::string& alignFile(alignFileOpt.alignmentFilename[alignmentFileIndex]);
+        const std::string& alignFile(alignmentFilename[alignmentFileIndex]);
         const unsigned bamIndex(registrationIndices[alignmentFileIndex]);
         const bam_streamer& readStream(streamData.registerBam(alignFile.c_str(), bamIndex));
-
-        // check that target chrom exists in sample, only need to check once:
-        if (alignmentFileIndex==0)
-        {
-            const int32_t tid(readStream.target_name_to_id(opt.bam_seq_name.c_str()));
-            if (tid < 0)
-            {
-                using namespace illumina::common;
-                std::ostringstream oss;
-                oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM/CRAM file: '" << alignFile << "'\n";
-                BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-            }
-        }
 
         allHeaders.push_back(readStream.get_header());
 
@@ -88,7 +74,7 @@ registerAlignments(
                 using namespace illumina::common;
                 std::ostringstream oss;
                 oss << "ERROR: input BAM/CRAM files have incompatible headers.\n";
-                oss << "\tfile1:\t'" << alignFileOpt.alignmentFilename[0] << "'\n";
+                oss << "\tfile1:\t'" << alignmentFilename.front() << "'\n";
                 oss << "\tfile2:\t'" << alignFile << "'\n";
                 BOOST_THROW_EXCEPTION(LogicException(oss.str()));
             }
@@ -97,23 +83,6 @@ registerAlignments(
 
     return allHeaders;
 }
-
-
-
-std::string
-get_starling_bam_region_string(const starling_base_options& opt,
-                               const starling_base_deriv_options& dopt)
-{
-    const int zsize(opt.max_indel_size);
-    const pos_t begin_pos(std::max(0,dopt.report_range.begin_pos-zsize));
-    const pos_t end_pos(dopt.report_range.end_pos+zsize);
-
-    std::ostringstream bam_region_oss;
-    bam_region_oss << opt.bam_seq_name << ':' << begin_pos+1 << '-' << end_pos;
-    return bam_region_oss.str();
-}
-
-
 
 
 
@@ -345,7 +314,6 @@ processInputReadAlignment(
     const bam_streamer& read_stream,
     const bam_record& read,
     const pos_t base_pos,
-    const pos_t /*report_begin_pos*/,
     starling_read_counts& brc,
     starling_pos_processor_base& sppr,
     const unsigned sampleIndex)

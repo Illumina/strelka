@@ -37,7 +37,7 @@ sys.path.append(os.path.abspath(pyflowDir))
 from configBuildTimeInfo import workflowVersion
 from configureUtil import argToBool, getIniSections, dumpIniSections
 from pyflow import WorkflowRunner
-from starkaWorkflow import runCount, SharedPathInfo, StarkaWorkflow
+from strelkaSharedWorkflow import runCount, SharedPathInfo, StrelkaSharedWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, getFastaChromOrderSize, bamListCatCmd
 
@@ -62,11 +62,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segCmd = [ self.params.snoiseBin ]
 
+    segCmd.extend(["--region", gseg.chromLabel + ":" + str(gseg.beginPos) + "-" + str(gseg.endPos)])
     segCmd.extend(["-min-mapping-quality",self.params.minMapq])
-    segCmd.extend(["-bam-seq-name", gseg.chromLabel] )
-    segCmd.extend(["-report-range-begin", str(gseg.beginPos) ])
-    segCmd.extend(["-report-range-end", str(gseg.endPos) ])
-    segCmd.extend(["-samtools-reference", self.params.referenceFasta ])
+    segCmd.extend(["--ref", self.params.referenceFasta ])
     segCmd.extend(["-max-window-mismatch", "2", "20" ])
     segCmd.extend(["-genome-size", str(self.params.knownSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
@@ -77,9 +75,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-min-vexp', '0.25'])
 
     for bamPath in self.params.bamList :
-        segCmd.extend(["-bam-file",bamPath])
-
-    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.id)])
+        segCmd.extend(["--align-file",bamPath])
 
     if not isFirstSegment :
         segCmd.append("--skip-vcf-header")
@@ -146,11 +142,11 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
 
 
-"""
-A separate call workflow is setup so that we can delay the workflow execution until
-the ref count file exists
-"""
 class CallWorkflow(WorkflowRunner) :
+    """
+    A separate call workflow is setup so that we can delay the workflow execution until
+    the ref count file exists
+    """
 
     def __init__(self,params,paths) :
         self.params = params
@@ -186,9 +182,6 @@ class PathInfo(SharedPathInfo):
     def getTmpSegmentGvcfPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "noise.%s.vcf.gz" % (segStr))
 
-    def getTmpSegmentReportPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
-
     def getGvcfOutputPath(self) :
         return os.path.join( self.params.variantsDir, "noise.vcf.gz")
 
@@ -197,7 +190,7 @@ class PathInfo(SharedPathInfo):
 
 
 
-class snoiseWorkflow(StarkaWorkflow) :
+class snoiseWorkflow(StrelkaSharedWorkflow) :
     """
     germline small variant calling workflow
     """

@@ -345,7 +345,7 @@ add_alignment_indels_to_sppr(
     unsigned total_indel_ref_span_per_read(0);
     const unsigned aps(al.path.size());
 
-    auto& active_region_detector(sppr.get_active_region_detector());
+    auto& active_region_detector(sppr.getActiveRegionDetector());
     if (sppr.is_active_region_detector_enabled())
     {
         active_region_detector.setAlignInfo(id, sample_no, iat);

@@ -19,7 +19,7 @@
 #
 
 """
-replace vcf header cmdline field
+replace or add vcf header cmdline field
 
 usage $0 "new cmdline" < in > out
 """
@@ -33,9 +33,23 @@ def main() :
     infp = sys.stdin
     outfp = sys.stdout
 
+    class State :
+        isNewCLWritten = False
+
+    def writeNewCL(outfp) :
+        line2 = prefix + " ".join(sys.argv[1:]) + "\n"
+        outfp.write(line2)
+        State.isNewCLWritten = True
+
     for line in infp :
-        if line.startswith(prefix):
-            line = prefix + " ".join(sys.argv[1:]) + "\n"
+        if line.startswith("##") :
+            if line.startswith(prefix):
+                writeNewCL(outfp)
+                continue
+        else :
+            if not State.isNewCLWritten :
+                writeNewCL(outfp)
+
         outfp.write(line)
 
 

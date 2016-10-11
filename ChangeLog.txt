@@ -1,4 +1,10 @@
 - STREL-184 enable somatic indel EVS
+- STREL-228 improve runtime for references with many small contigs
+- STREL-210 Retrain germline EVS
+- STREL-164 document short haplotyping
+- STREL-254 fix haploid indel call exception
+- STREL-227 shift away from legacy naming schemes
+- STREL-240 make active regions non-overlapping
 - STREL-239 fix haploid nonvariant indels in multi-sample analysis
 - STREL-238 add multi-sample ploidy specification using vcf
 - STREL-217 integrate short haplotying with multi-sample support

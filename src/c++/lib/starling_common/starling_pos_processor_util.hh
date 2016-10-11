@@ -38,19 +38,10 @@
 /// register a set of alignment files to the hts streamer and verify consistency conditions.
 std::vector<std::reference_wrapper<const bam_hdr_t> >
 registerAlignments(
-    const starling_base_options& opt,
-    const AlignmentFileOptions& alignFileOpt,
+    const std::vector<std::string>& alignmentFilename,
     const std::vector<unsigned>& registrationIndices,
     HtsMergeStreamer& streamData);
 
-
-/// format the bam region string from the program options and
-/// 'influence zones' defined by sppr.
-///
-std::string
-get_starling_bam_region_string(
-    const starling_base_options& opt,
-    const starling_base_deriv_options& dopt);
 
 
 /// handles mapped read alignments -- reads are parsed, their indels
@@ -63,7 +54,6 @@ processInputReadAlignment(
     const bam_streamer& read_stream,
     const bam_record& read,
     const pos_t base_pos,
-    const pos_t report_begin_pos,
     starling_read_counts& brc,
     starling_pos_processor_base& sppr,
     const unsigned sampleIndex = 0);

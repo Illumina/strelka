@@ -26,14 +26,18 @@
 include ("${THIS_GLOBALS_CMAKE}")
 
 set (THIS_STRELKADEMODIR "${THIS_DEMODIR}/strelka")
-install(FILES "README.txt" DESTINATION ${THIS_STRELKADEMODIR})
+install(FILES "README.md" DESTINATION ${THIS_STRELKADEMODIR})
 install(DIRECTORY "expectedResults" DESTINATION ${THIS_STRELKADEMODIR})
-install(DIRECTORY "expectedResultsStarlingMito" DESTINATION ${THIS_STRELKADEMODIR})
+#install(DIRECTORY "expectedResultsMito" DESTINATION ${THIS_STRELKADEMODIR})
 
-install(FILES "runStrelkaWorkflowDemo.bash"  DESTINATION ${THIS_BINDIR} PERMISSIONS ${THIS_EXECUTABLE_PERMISSIONS})
-install(FILES "runStarlingMitoWorkflowDemo.bash"  DESTINATION ${THIS_BINDIR} PERMISSIONS ${THIS_EXECUTABLE_PERMISSIONS})
-install(FILES "runStarlingWorkflowDemo.bash"  DESTINATION ${THIS_BINDIR} PERMISSIONS ${THIS_EXECUTABLE_PERMISSIONS})
-install(FILES "runDenovoVariantWorkflowDemo.bash"  DESTINATION ${THIS_BINDIR} PERMISSIONS ${THIS_EXECUTABLE_PERMISSIONS})
+install(FILES runStrelkaGermlineWorkflowDemo.bash  DESTINATION ${THIS_BINDIR} PERMISSIONS ${THIS_EXECUTABLE_PERMISSIONS})
+install(FILES runStrelkaSomaticWorkflowDemo.bash  DESTINATION ${THIS_BINDIR} PERMISSIONS ${THIS_EXECUTABLE_PERMISSIONS})
+#install(FILES "runMitoWorkflowDemo.bash"  DESTINATION ${THIS_BINDIR} PERMISSIONS ${THIS_EXECUTABLE_PERMISSIONS})
+#install(FILES "runDenovoVariantWorkflowDemo.bash"  DESTINATION ${THIS_BINDIR} PERMISSIONS ${THIS_EXECUTABLE_PERMISSIONS})
+
+# add legacy filename links
+install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E create_symlink runStrelkaGermlineWorkflowDemo.bash runStarlingWorkflowDemo.bash WORKING_DIRECTORY ${THIS_BINDIR})")
+install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E create_symlink runStrelkaSomaticWorkflowDemo.bash runStrelkaWorkflowDemo.bash WORKING_DIRECTORY ${THIS_BINDIR})")
 
 add_subdirectory (data)
 

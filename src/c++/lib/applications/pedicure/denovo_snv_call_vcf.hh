@@ -37,6 +37,7 @@ denovo_snv_call_vcf(
     const pedicure_options& opt,
     const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
+    const double maxChromDepth,
     const cpiPtrTiers_t& pileups,
     denovo_snv_call& dsc,
     std::ostream& os);

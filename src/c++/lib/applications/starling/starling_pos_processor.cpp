@@ -63,35 +63,11 @@ starling_pos_processor(
         }
 
         _gvcfer.reset(new gvcf_aggregator(
-                          _opt, _dopt, _streams, ref,_nocompress_regions, basecallBuffers));
+                          _opt, _dopt, _streams, ref, _nocompress_regions, _targeted_regions, basecallBuffers));
     }
 
-    // setup indel buffer:
+    // setup indel buffer samples:
     {
-        double maxIndelCandidateDepthSumOverNormalSamples(-1.);
-
-        if (dopt.gvcf.is_max_depth())
-        {
-            if (opt.max_candidate_indel_depth_factor > 0.)
-            {
-                maxIndelCandidateDepthSumOverNormalSamples = (opt.max_candidate_indel_depth_factor * dopt.gvcf.max_depth);
-            }
-        }
-
-        if (opt.max_candidate_indel_depth > 0.)
-        {
-            if (maxIndelCandidateDepthSumOverNormalSamples > 0.)
-            {
-                maxIndelCandidateDepthSumOverNormalSamples = std::min(maxIndelCandidateDepthSumOverNormalSamples,static_cast<double>(opt.max_candidate_indel_depth));
-            }
-            else
-            {
-                maxIndelCandidateDepthSumOverNormalSamples = opt.max_candidate_indel_depth;
-            }
-        }
-
-        getIndelBuffer().setMaxCandidateDepth(maxIndelCandidateDepthSumOverNormalSamples);
-
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
             sample_info& sif(sample(sampleIndex));
@@ -106,11 +82,65 @@ starling_pos_processor(
 
 void
 starling_pos_processor::
+resetRegion(
+    const std::string& chromName,
+    const known_pos_range2& reportRegion)
+{
+    base_t::resetRegionBase(chromName, reportRegion);
+
+    assert(_gvcfer);
+    _gvcfer->resetRegion(chromName, reportRegion);
+
+    // setup indel buffer max depth:
+    {
+        double maxIndelCandidateDepthSumOverNormalSamples(-1.);
+        if (_dopt.gvcf.is_max_depth())
+        {
+            if (_opt.max_candidate_indel_depth_factor > 0.)
+            {
+                maxIndelCandidateDepthSumOverNormalSamples = (_opt.max_candidate_indel_depth_factor *
+                                                              _gvcfer->getMaxDepth());
+            }
+        }
+
+        if (_opt.max_candidate_indel_depth > 0.)
+        {
+            if (maxIndelCandidateDepthSumOverNormalSamples > 0.)
+            {
+                maxIndelCandidateDepthSumOverNormalSamples = std::min(maxIndelCandidateDepthSumOverNormalSamples,
+                                                                      static_cast<double>(_opt.max_candidate_indel_depth));
+            }
+            else
+            {
+                maxIndelCandidateDepthSumOverNormalSamples = _opt.max_candidate_indel_depth;
+            }
+        }
+
+        getIndelBuffer().setMaxCandidateDepth(maxIndelCandidateDepthSumOverNormalSamples);
+    }
+}
+
+
+
+void
+starling_pos_processor::
 insert_nocompress_region(
     const known_pos_range2& range)
 {
-    _stageman.validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
+    _stagemanPtr->validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
     _nocompress_regions.addRegion(range);
+    _is_skip_process_pos=false;
+}
+
+
+
+void
+starling_pos_processor::
+insert_targeted_region(
+    const known_pos_range2& range)
+{
+    _stagemanPtr->validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
+    _targeted_regions.addRegion(range);
     _is_skip_process_pos=false;
 }
 
@@ -126,6 +156,10 @@ reset()
     {
         _gvcfer->reset();
     }
+    _nocompress_regions.clear();
+    _targeted_regions.clear();
+    _variantLocusAlreadyOutputToPos = -1;
+    _forcedAllelesAlreadyOutput.clear();
 }
 
 
@@ -1308,7 +1342,7 @@ updateIndelLocusWithSampleInfo(
 
 /// determine if an allele group is reportable
 ///
-/// \return true if no alleles are less than pos.
+/// \return true if alleles exist and no alleles are less than pos.
 static
 bool
 isAlleleGroupReportable(
@@ -1325,7 +1359,7 @@ isAlleleGroupReportable(
         }
     }
 
-    return true;
+    return (alleleGroupSize != 0);
 }
 
 
@@ -1491,7 +1525,6 @@ process_pos_indel_digt(const pos_t pos)
                 isReportedLocus = true;
 
                 _gvcfer->add_indel(std::move(locusPtr));
-
             }
         }
     }
@@ -1709,28 +1742,5 @@ process_pos_indel_continuous(const pos_t pos)
         if (not isReportableLocus) continue;
 
         _gvcfer->add_indel(std::move(locusPtr));
-    }
-}
-
-
-
-void
-starling_pos_processor::
-write_counts(const pos_range& output_report_range) const
-{
-    std::ostream* report_osptr(get_report_osptr());
-    if (NULL==report_osptr) return;
-    std::ostream& report_os(*report_osptr);
-
-    const sample_info& sif(sample());
-
-    report_os << std::setprecision(8);
-    report_stream_stat(sif.ss,"ALLSITES_COVERAGE",output_report_range,report_os);
-    report_stream_stat(sif.used_ss,"ALLSITES_COVERAGE_USED",output_report_range,report_os);
-
-    if (_opt.is_ref_set())
-    {
-        report_stream_stat(sif.ssn,"NO_REF_N_COVERAGE",output_report_range,report_os);
-        report_stream_stat(sif.used_ssn,"NO_REF_N_COVERAGE_USED",output_report_range,report_os);
     }
 }

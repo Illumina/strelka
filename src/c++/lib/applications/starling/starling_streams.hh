@@ -35,7 +35,7 @@ struct starling_streams : public starling_streams_base
         const starling_options& opt,
         const prog_info& pinfo,
         const std::vector<std::reference_wrapper<const bam_hdr_t>>& bamHeaders,
-        const unsigned sampleCount);
+        const std::vector<std::string>& sampleNames);
 
     std::ostream&
     gvcfSampleStream(const unsigned sampleIndex) const

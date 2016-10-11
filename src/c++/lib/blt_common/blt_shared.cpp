@@ -34,96 +34,16 @@
 #include <sstream>
 
 
-const char STDIN_FILENAME[] = "-";
-
-
 // arbitrary... but things will be a total mess if not capped somewhere:
 const unsigned MAX_FLANK_SIZE(100);
 
 
 
-static
-void
-set_report_range(const blt_options& opt,
-                 const pos_t ref_end,
-                 pos_range& report_range)
-{
-    // The range format submitted by users on the command-line is
-    // 1-indexed and fully closed, so begin=1 and end=3 refers to the
-    // set: {1,2,3}
-    //
-    // The blt internal range format is zero-indexed and half-closed,
-    // so begin=0 and end=3 refers to the set: {0,1,2} , this is the
-    // internal equivalent to the command-line range specied above.
-    //
-    // In the next step below we change from the command-line range
-    // representation to the internal representation:
-    //
-    report_range = opt.user_report_range;
-    if (report_range.is_begin_pos)
-    {
-        report_range.begin_pos -= 1;
-    }
-
-    if (! opt.is_ref_set()) return;
-
-    if (report_range.is_begin_pos)
-    {
-        if (report_range.begin_pos>=ref_end)
-        {
-            log_os << "ERROR::-report-range-begin argument must be <= reference sequence size\n";
-            exit(EXIT_FAILURE);
-        }
-        report_range.begin_pos=std::max(report_range.begin_pos,static_cast<pos_t>(0));
-    }
-    else
-    {
-        report_range.set_begin_pos(0);
-    }
-
-    if (report_range.is_end_pos)
-    {
-        report_range.end_pos=std::min(report_range.end_pos,ref_end);
-    }
-    else
-    {
-        report_range.set_end_pos(ref_end);
-    }
-}
-
-
-/// the input report_range can optionally have unknown begin and end positions,
-/// the output range will have begin defined, and end defined if possible.
-static
-pos_range
-get_report_range_limit(const pos_range& report_range,
-                       const bool is_ref_set,
-                       const pos_t ref_end)
-{
-    pos_range rrl;
-
-    rrl.set_begin_pos((report_range.is_begin_pos ? report_range.begin_pos : 0));
-    rrl.is_end_pos = (report_range.is_end_pos || is_ref_set);
-    rrl.end_pos = (report_range.is_end_pos ?
-                   report_range.end_pos :
-                   (is_ref_set ? ref_end : 0));
-    return rrl;
-}
-
-
-
 blt_deriv_options::
 blt_deriv_options(
-    const blt_options& opt,
-    const pos_t ref_end)
+    const blt_options& opt)
     : _pdcaller(new pprob_digt_caller(opt.bsnp_diploid_theta))
-{
-    set_report_range(opt,ref_end,report_range);
-
-    report_range_limit=get_report_range_limit(report_range,
-                                              opt.is_ref_set(),
-                                              ref_end);
-}
+{}
 
 
 

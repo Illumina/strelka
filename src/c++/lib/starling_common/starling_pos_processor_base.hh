@@ -98,12 +98,12 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     virtual
     ~starling_pos_processor_base();
 
-    // finish position report and reset structure to ground state:
-    //
-    void reset();
+    /// finish position report and reset structure to ground state:
+    ///
+    virtual void reset();
 
-    // note that indel position should be normalized before calling:
-    //
+    /// note that indel position should be normalized before calling:
+    ///
     void
     insert_indel(const IndelObservation& obs,
                  const unsigned sampleId);
@@ -112,10 +112,12 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     {
         return _opt.is_short_haplotyping_enabled;
     }
+
     ActiveRegionDetector&
-    get_active_region_detector()
+    getActiveRegionDetector()
     {
-        return _active_region_detector;
+        assert(_active_region_detector);
+        return (*_active_region_detector);
     }
 
     // in range [begin,end), is the estimated depth always below
@@ -165,29 +167,17 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     void
     set_head_pos(const pos_t pos);
 
-    // Is a read potentially containing an indel or an indel itself
-    // far enough from the report start and stop positions to be
-    // excluded?
-    //
-    bool
-    is_range_outside_report_influence_zone(const pos_range& pr) const
-    {
-        return (! _report_influence_range.is_range_intersect(pr));
-    }
-
-    // Does a range fall outside of the report start and stop positions?
-    //
-    bool
-    is_range_outside_report_zone(const pos_range& pr) const
-    {
-        return (! _dopt.report_range_limit.is_range_intersect(pr));
-    }
-
 protected:
-    std::ostream*
-    get_report_osptr() const
+    /// reset current report region -- must be called before inserting region data
+    void
+    resetRegionBase(
+        const std::string& chromName,
+        const known_pos_range2& reportRange);
+
+    bool
+    isChromSet() const
     {
-        return _streams.report_osptr();
+        return (not _chromName.empty());
     }
 
     struct pos_win_avgs
@@ -206,6 +196,18 @@ protected:
             _wav.emplace_back(winsize);
             if (winsize>_max_winsize) _max_winsize=winsize;
             return (_wav.size()-1);
+        }
+
+        /// reset average data for each window, but leave the window/winsize info in place
+        void
+        resetRegion()
+        {
+            _is_last_pos = false;
+            _last_insert_pos = false;
+            for (auto& win : _wav)
+            {
+                win.reset();
+            }
         }
 
         void
@@ -276,26 +278,31 @@ protected:
     };
 
 
-    // this structure contains all information which is sample dependent:
-    //
 public:
+    /// consolidate sample specific data
     struct sample_info
     {
         sample_info(
             const starling_base_options& opt,
             const reference_contig_segment& ref,
-            const unsigned report_size,
-            const unsigned knownref_report_size,
             read_id_counter* ricp)
             : bc_buff(ref)
             , read_buff(ricp)
             , sample_opt(opt)
-            , ss(report_size)
-            , used_ss(report_size)
-            , ssn(knownref_report_size)
-            , used_ssn(knownref_report_size)
             , wav()
         {}
+
+        void
+        resetRegion()
+        {
+            bc_buff.clear();
+            read_buff.clear();
+            estdepth_buff.clear();
+            estdepth_buff_tier2.clear();
+            wav.resetRegion();
+            cpi.clear();
+            ploidyRegions.clear();
+        }
 
         pos_basecall_buffer bc_buff;
         starling_read_buffer read_buff;
@@ -304,10 +311,22 @@ public:
 
         starling_sample_options sample_opt;
 
-        depth_stream_stat_range ss;
+#if 0
+        /// TODO restore this tracking structure by allowing the report_size to be updated multiple times during a run
+        /// as we cycle through multiple regions
+        const unsigned report_size,
+              const unsigned knownref_report_size,
+
+              , ss(report_size)
+              , used_ss(report_size)
+              , ssn(knownref_report_size)
+              , used_ssn(knownref_report_size)
+
+              depth_stream_stat_range ss;
         depth_stream_stat_range used_ss;
         depth_stream_stat_range ssn;
         depth_stream_stat_range used_ssn;
+#endif
 
         // regional basecall average windows:
         pos_win_avgs wav;
@@ -365,9 +384,9 @@ public:
 
 private:
     bool
-    is_pos_reportable(const pos_t pos)
+    is_pos_reportable(const pos_t pos) const
     {
-        return _dopt.report_range_limit.is_pos_intersect(pos);
+        return _reportRange.is_pos_intersect(pos);
     }
 
     void
@@ -496,10 +515,6 @@ protected:
     }
 
 private:
-    virtual
-    void
-    write_counts(const pos_range& output_report_range) const = 0;
-
     // return false if read is too large
     bool
     update_largest_read_size(const unsigned rs);
@@ -587,10 +602,10 @@ protected:
     // largest
     unsigned _largest_total_indel_ref_span_per_read;
 
-    stage_manager _stageman;
+    std::unique_ptr<stage_manager> _stagemanPtr;
 
-    pos_range _report_influence_range;
-    const std::string& _chrom_name;
+    std::string _chromName;
+    known_pos_range2 _reportRange;
 
     // used to keep read id's unique across multiple samples:
     read_id_counter _ric;
@@ -607,6 +622,5 @@ protected:
 private:
     IndelBuffer _indelBuffer;
 
-    // to keep active regions
-    ActiveRegionDetector _active_region_detector;
+    std::unique_ptr<ActiveRegionDetector> _active_region_detector;
 };

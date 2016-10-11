@@ -37,10 +37,8 @@
 
 
 starling_base_deriv_options::
-starling_base_deriv_options(
-    const starling_base_options& opt,
-    const reference_contig_segment& ref)
-    : base_t(opt,ref.end())
+starling_base_deriv_options(const starling_base_options& opt)
+    : base_t(opt)
     , sal(opt.max_realignment_candidates)
     , variant_window_first_stage(0)
     , variant_window_last_stage(0)
@@ -87,9 +85,11 @@ starling_base_deriv_options(
 }
 
 
+
 // dtor is required here for unique_ptr
 starling_base_deriv_options::
 ~starling_base_deriv_options() {}
+
 
 
 void

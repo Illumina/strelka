@@ -99,6 +99,17 @@ ActiveRegionDetector::updateStartPosition(const pos_t pos)
 void
 ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
 {
+    const pos_t posToClear = pos - _maxDetectionWindowSize - _maxDeletionSize;
+
+    if (pos < _lastActiveRegionEnd)
+    {
+        // this position was already covered by the previous active region
+        _activeRegionStartPos = 0;
+        _numVariants = 0;
+        clearPos(posToClear);
+        return;
+    }
+
     bool isCurrentPosCandidateVariant = isCandidateVariant(pos);
 
     // check if we can include this position in the existing acitive region
@@ -135,6 +146,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
 
             // expand active region to include repeats
             getExpandedRange(pos_range(origBeginPos, origEndPos), newActiveRegion);
+            _lastActiveRegionEnd = newActiveRegion.end_pos;
 
             _activeRegions.emplace_back(newActiveRegion, _ref, _sampleCount, _aligner, _alignIdToAlignInfo);
             auto& activeRegion(_activeRegions.back());
@@ -166,8 +178,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
             _numVariants = 0;
         }
     }
-
-    const pos_t posToClear = pos - _maxDetectionWindowSize - _maxDeletionSize;
+    
     clearPos(posToClear);
 }
 
@@ -194,7 +205,8 @@ void ActiveRegionDetector::getExpandedRange(const pos_range& origActiveRegion, p
             deltaPos = std::max(deltaPos, repeatSpan);
     }
     deltaPos = std::min(deltaPos, MaxRepeatSpan);
-    pos_t minStart(std::max(origStart - deltaPos, (pos_t)0u));
+    const pos_t minStartLowerBound(std::max(0,_lastActiveRegionEnd-1));
+    const pos_t minStart(std::max(origStart - deltaPos, minStartLowerBound));
     pos_t newBeginPos;
     for (newBeginPos = origStart; newBeginPos > minStart; --newBeginPos)
     {

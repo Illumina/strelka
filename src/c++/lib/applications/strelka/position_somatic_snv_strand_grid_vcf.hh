@@ -45,6 +45,8 @@ write_vcf_somatic_snv_genotype_strand_grid(
     const CleanedPileup& t1_epd,
     const CleanedPileup& n2_epd,
     const CleanedPileup& t2_epd,
+    const double normChromDepth,
+    const double maxChromDepth,
     std::ostream& os);
 
 /// Calculate LOR feature for SNVs (log odds ratio for  T_REF T_ALT

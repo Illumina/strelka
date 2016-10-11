@@ -84,6 +84,7 @@ denovo_snv_call_vcf(
     const pedicure_options& opt,
     const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
+    const double maxChromDepth,
     const cpiPtrTiers_t& pileups,
     denovo_snv_call& dsc,
     std::ostream& os)
@@ -103,7 +104,7 @@ denovo_snv_call_vcf(
 
         if (dopt.dfilter.is_max_depth())
         {
-            if (probandDP > dopt.dfilter.max_depth)
+            if (probandDP > maxChromDepth)
             {
                 smod.set_filter(PEDICURE_VCF_FILTERS::HighDepth);
             }

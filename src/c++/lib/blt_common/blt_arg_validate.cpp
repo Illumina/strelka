@@ -105,36 +105,4 @@ validate_blt_opt(
             pinfo.usage("-bsnp-diploid-het-bias argument must be in range [0,0.5)\n");
         }
     }
-
-    const pos_range& rr(opt.user_report_range);
-
-    if (opt.is_report_range_ref)
-    {
-        if       (! opt.is_ref_set())
-        {
-            pinfo.usage("a reference must be specified when using -report-range-reference flag");
-        }
-        else if (rr.is_begin_pos)
-        {
-            pinfo.usage("-report-range-begin cannot be combined with -report-range-reference flag");
-        }
-        else if (rr.is_end_pos)
-        {
-            pinfo.usage("-report-range-end cannot be combined with -report-range-reference flag");
-        }
-    }
-
-    if (rr.is_begin_pos)
-    {
-        if (rr.begin_pos<=0) pinfo.usage("-report-range-begin argument must be > 0");
-    }
-
-    if (rr.is_end_pos)
-    {
-        if (rr.end_pos<=0) pinfo.usage("-report-range-end argument must be > 0");
-        if (rr.is_begin_pos && rr.end_pos<rr.begin_pos)
-        {
-            pinfo.usage("-report-range-end argument must be >= to -report-range-begin argument");
-        }
-    }
 }

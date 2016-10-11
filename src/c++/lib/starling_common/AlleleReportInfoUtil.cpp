@@ -213,10 +213,11 @@ getAlleleReportInfo(
 
 
 ReadPathScores
-indel_lnp_to_pprob(const starling_base_deriv_options& dopt,
-                   const ReadPathScores& path_lnp,
-                   const bool is_tier2_pass,
-                   const bool is_use_alt_indel)
+indel_lnp_to_pprob(
+    const starling_base_deriv_options& dopt,
+    const ReadPathScores& path_lnp,
+    const bool is_tier2_pass,
+    const bool is_use_alt_indel)
 {
     unsigned n_alleles(2);
     if (is_use_alt_indel)
@@ -224,8 +225,8 @@ indel_lnp_to_pprob(const starling_base_deriv_options& dopt,
         n_alleles += path_lnp.alt_indel.size();
     }
 
-    static const double allele_prior(1./static_cast<double>(n_alleles));
-    static const double allele_lnprior(std::log(allele_prior));
+    const double allele_prior(1./static_cast<double>(n_alleles));
+    const double allele_lnprior(std::log(allele_prior));
 
     ReadPathScores pprob;
     ReadPathScores::score_t pprob_nonsite = dopt.get_nonsite_path_lnp(is_tier2_pass,path_lnp.nsite) + dopt.nonsite_lnprior;

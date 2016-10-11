@@ -34,7 +34,9 @@
 #include <list>
 #include <set>
 
-/// An agent that detects active regions
+/// detects active regions
+///
+/// active regions are short genome segmetns where variation is sufficiently dense to trigger special haplotype handling methods
 class ActiveRegionDetector
 {
 public:
@@ -77,7 +79,6 @@ public:
     /// \param maxDetectionWindowSize maximum active region size
     /// \param minNumVariantsPerPosition minimum number of variants per position to make the position as a candidate variant pos
     /// \param minNumVariantsPerRegion minimum number of variants per region to create an active region
-    /// \return active region detector object
     ActiveRegionDetector(
         const reference_contig_segment& ref,
         IndelBuffer& indelBuffer,
@@ -105,6 +106,7 @@ public:
         _numVariants = 0;
         _activeRegionStartPos = 0;
         _prevVariantPos = 0;
+        _lastActiveRegionEnd = 0;
     }
 
     /// insert match at position pos
@@ -183,6 +185,7 @@ private:
 
     pos_t _activeRegionStartPos;
     pos_t _prevVariantPos;
+    pos_t _lastActiveRegionEnd;
     unsigned _numVariants;
 
     std::list<ActiveRegion> _activeRegions;

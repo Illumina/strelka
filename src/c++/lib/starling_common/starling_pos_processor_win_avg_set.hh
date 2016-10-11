@@ -37,6 +37,15 @@ struct win_avg_set
         , ss_submap_win(size)
     {}
 
+    void
+    reset()
+    {
+        ss_used_win.reset();
+        ss_filt_win.reset();
+        ss_spandel_win.reset();
+        ss_submap_win.reset();
+    }
+
     window_average ss_used_win;
     window_average ss_filt_win;
     window_average ss_spandel_win;

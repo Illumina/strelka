@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
     BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
     BOOST_REQUIRE_EQUAL(vptr->alt[0],"TGCCCTTTGGCAGAGCAGGTGTGCTGTGCTG");
 
-    vcfs.set_region("chr10:89717700-89717810");
+    vcfs.resetRegion("chr10:89717700-89717810");
 
     // tests that we can reset VCF regions
     BOOST_REQUIRE( vcfs.next() );

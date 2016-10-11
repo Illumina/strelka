@@ -18,100 +18,97 @@
 //
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
-#include "blt_util/log.hh"
-#include "blt_util/seq_util.hh"
 #include "starling_common/starling_ref_seq.hh"
 
-extern "C" {
-#include "htslib/faidx.h"
+#include "common/Exceptions.hh"
+#include "htsapi/samtools_fasta_util.hh"
+#include "htsapi/bam_header_util.hh"
+
+
+
+void
+setRefSegment(
+    const starling_base_options& opt,
+    const std::string& chrom,
+    const known_pos_range2& range,
+    reference_contig_segment& ref)
+{
+    assert(! chrom.empty());
+
+    ref.set_offset(range.begin_pos());
+    // note: the ref function below takes closed-closed endpoints, so we subtract one from endPos
+    get_standardized_region_seq(opt.referenceFilename, chrom, range.begin_pos(), range.end_pos()-1, ref.seq());
 }
 
-#include <cassert>
-#include <cstdlib>
-
-#include <iostream>
-#include <sstream>
 
 
 static
-void
-get_samtools_ref_seq(const char* ref_file,
-                     const char* chr_name,
-                     std::string& ref_seq,
-                     const pos_range& pr)
+std::string
+getSamtoolsRegionString(
+    const std::string& chromName,
+    const known_pos_range2& range)
 {
-    faidx_t* fai(fai_load(ref_file));
-    std::ostringstream fa_region_oss;
-    fa_region_oss << chr_name;
-    if (pr.is_end_pos)
-    {
-        const pos_t begin(1+(pr.is_begin_pos ? pr.begin_pos : 0));
-        fa_region_oss << ':' << begin << '-' << pr.end_pos;
-    }
-    else if (pr.is_begin_pos)
-    {
-        fa_region_oss << ':' << pr.begin_pos+1;
-    }
-    int len; // throwaway...
-    char* ref_tmp(fai_fetch(fai,fa_region_oss.str().c_str(), &len));
-    if (NULL == ref_tmp)
-    {
-        log_os << "ERROR: Can't find sequence region '" << fa_region_oss.str() << "' in reference file: '" << ref_file << "'\n";
-        exit(EXIT_FAILURE);
-    }
-    ref_seq.assign(ref_tmp);
-    free(ref_tmp);
-    fai_destroy(fai);
+    std::ostringstream oss;
+    oss << chromName << ':' << range.begin_pos()+1 << '-' << range.end_pos();
+    return oss.str();
 }
 
 
 
 void
-get_starling_ref_seq(const starling_base_options& opt,
-                     reference_contig_segment& ref)
+getStrelkaAnalysisRegionInfo(
+    const std::string& region,
+    const unsigned maxIndelSize,
+    AnalysisRegionInfo& rinfo)
 {
-    assert(opt.is_ref_set());
+    int32_t regionBeginPos(0), regionEndPos(0);
+    parse_bam_region(region.c_str(), rinfo.regionChrom, regionBeginPos, regionEndPos);
+    rinfo.regionRange.set_range(regionBeginPos, regionEndPos);
 
-    // make a temp copy of report_range here to determine how much we
-    // pull from ref_seq:
-    pos_range ref_range = opt.user_report_range;
+    rinfo.streamerRegionRange = rinfo.regionRange;
+    rinfo.streamerRegionRange.expandBy(maxIndelSize);
+    rinfo.streamerRegionRange.makeNonNegative();
+
+    rinfo.streamerRegion = getSamtoolsRegionString(rinfo.regionChrom, rinfo.streamerRegionRange);
+
     static const pos_t region_read_size_pad(512);
-    const pos_t pad_size(opt.max_indel_size+region_read_size_pad);
-    if (ref_range.is_begin_pos)
-    {
-        ref_range.begin_pos -= 1;
-        ref_range.begin_pos = std::max(0,ref_range.begin_pos-pad_size);
-    }
-    else
-    {
-        ref_range.set_begin_pos(0);
-    }
+    rinfo.refRegionRange = rinfo.streamerRegionRange;
+    rinfo.refRegionRange.expandBy(region_read_size_pad);
+    rinfo.refRegionRange.makeNonNegative();
+}
 
-    if (ref_range.is_end_pos)
-    {
-        ref_range.end_pos += pad_size;
-    }
 
-    ref.set_offset(ref_range.begin_pos);
 
-    const char* filename(NULL);
-    const char* chrom_name(NULL);
+void
+getStrelkaAnalysisRegions(
+    const starling_base_options& opt,
+    const std::string& referenceAlignmentFilename,
+    const bam_header_info& referenceHeaderInfo,
+    std::vector<AnalysisRegionInfo>& regionInfo)
+{
+    /// TODO add test that regions do not intersect
+    const unsigned regionCount(opt.regions.size());
+    regionInfo.resize(regionCount);
 
-    if (opt.is_samtools_ref_set)
+    for (unsigned regionIndex(0); regionIndex < regionCount; ++regionIndex)
     {
-        assert(! opt.bam_seq_name.empty());
-        filename=opt.samtools_ref_seq_file.c_str();
-        chrom_name=opt.bam_seq_name.c_str();
-        get_samtools_ref_seq(filename,chrom_name,ref.seq(),ref_range);
+        const std::string& region(opt.regions[regionIndex]);
+        auto& rinfo(regionInfo[regionIndex]);
+        getStrelkaAnalysisRegionInfo(region, opt.max_indel_size, rinfo);
+
+        // check that target region chrom exists in bam headers:
+        if (not referenceHeaderInfo.chrom_to_index.count(rinfo.regionChrom))
+        {
+            using namespace illumina::common;
+            std::ostringstream oss;
+            oss << "ERROR: region contig name: '" << rinfo.regionChrom
+                << "' is not found in the header of BAM/CRAM file: '" << referenceAlignmentFilename
+                << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
     }
-    else
-    {
-        assert(0);
-    }
-    standardize_ref_seq(filename,chrom_name,ref.seq(),ref_range.begin_pos);
 }

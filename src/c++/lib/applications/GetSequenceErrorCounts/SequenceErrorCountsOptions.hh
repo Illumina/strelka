@@ -87,15 +87,14 @@ struct SequenceErrorCountsOptions : public starling_base_options
 };
 
 
-// data deterministically derived from the input options:
-//
+/// data deterministically derived from the input options:
+///
 struct SequenceErrorCountsDerivOptions : public starling_base_deriv_options
 {
     typedef starling_base_deriv_options base_t;
 
-    SequenceErrorCountsDerivOptions(
-        const SequenceErrorCountsOptions& opt,
-        const reference_contig_segment& ref);
+    explicit
+    SequenceErrorCountsDerivOptions(const SequenceErrorCountsOptions& opt);
 
     bool
     is_max_depth() const
@@ -104,8 +103,5 @@ struct SequenceErrorCountsDerivOptions : public starling_base_deriv_options
     }
 
     std::string block_label;
-    double max_depth = 0;
-    double norm_depth = 0;
     cdmap_t chrom_depth;
 };
-

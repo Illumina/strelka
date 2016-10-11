@@ -43,19 +43,29 @@ struct starling_pos_processor : public starling_pos_processor_base
         const reference_contig_segment& ref,
         const starling_streams& streams);
 
+    void
+    resetRegion(
+        const std::string& chromName,
+        const known_pos_range2& reportRegion);
+
     /// specify gvcf nocompress status of region
     void
     insert_nocompress_region(
         const known_pos_range2& range);
 
-    void reset();
+    /// specify targeted status of region
+    void
+    insert_targeted_region(
+        const known_pos_range2& range);
+
+    void reset() override;
 
 private:
 
     bool
     derived_empty() const override
     {
-        return _nocompress_regions.empty();
+        return (_nocompress_regions.empty() and _targeted_regions.empty());
     }
 
     bool
@@ -95,9 +105,6 @@ private:
         const std::vector<diploid_genotype>& allDgt,
         std::vector<uint8_t>& altAlleles) const;
 
-    void
-    write_counts(const pos_range& output_report_range) const override;
-
     const starling_options& _opt;
     const starling_deriv_options& _dopt;
     const starling_streams& _streams;
@@ -105,6 +112,7 @@ private:
     std::unique_ptr<gvcf_aggregator> _gvcfer;
 
     RegionTracker _nocompress_regions;
+    RegionTracker _targeted_regions;
 
     /// mark the position below which indel output is excluded
     pos_t _variantLocusAlreadyOutputToPos = -1;

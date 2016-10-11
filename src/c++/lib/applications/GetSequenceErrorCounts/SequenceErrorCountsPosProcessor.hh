@@ -30,6 +30,7 @@
 #include "starling_common/starling_pos_processor_base.hh"
 
 #include "blt_util/RecordTracker.hh"
+
 ///
 ///
 struct SequenceErrorCountsPosProcessor : public starling_pos_processor_base
@@ -45,7 +46,11 @@ struct SequenceErrorCountsPosProcessor : public starling_pos_processor_base
     virtual
     ~SequenceErrorCountsPosProcessor();
 
-    void reset();
+    void reset() override;
+
+    void resetRegion(
+        const std::string& chromName,
+        const known_pos_range2& reportRegion);
 
     void
     insertExcludedRegion(
@@ -66,9 +71,6 @@ private:
     void process_pos_error_counts(
         const pos_t pos);
 
-    void
-    write_counts(const pos_range&) const override {}
-
     bool
     derived_empty() const override
     {
@@ -76,7 +78,11 @@ private:
     }
 
     const SequenceErrorCountsOptions& _opt;
+    const SequenceErrorCountsDerivOptions& _dopt;
     const SequenceErrorCountsStreams& _streams;
+
+    double _normChromDepth = 0.;
+    double _maxChromDepth = 0.;
 
     SequenceErrorCounts _counts;
 

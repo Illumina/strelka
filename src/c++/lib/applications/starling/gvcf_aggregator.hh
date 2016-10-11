@@ -25,13 +25,13 @@
 #include "gvcf_block_site_record.hh"
 #include "gvcf_locus_info.hh"
 #include "gvcf_compressor.hh"
+#include "gvcf_writer.hh"
 #include "ScoringModelManager.hh"
 #include "starling_streams.hh"
 
 #include <iosfwd>
 
 
-///
 /// Assembles all site and indel call information into a consistent set, blocks output
 /// and writes to a VCF stream
 ///
@@ -43,7 +43,8 @@ public:
         const starling_deriv_options& dopt,
         const starling_streams& streams,
         const reference_contig_segment& ref,
-        const RegionTracker& nocompress_regions,
+        const RegionTracker& nocompressRegions,
+        const RegionTracker& targetedRegions,
         const std::vector<std::reference_wrapper<const pos_basecall_buffer>>& basecallBuffers);
 
     ~gvcf_aggregator();
@@ -52,7 +53,7 @@ public:
     /// preserved until the block is completed
     bool is_phasing_block() const
     {
-        return (_codon_phaser && _codon_phaser->isBuffer());
+        return (_codonPhaserPtr && _codonPhaserPtr->isBuffer());
     }
 
     void add_site(std::unique_ptr<GermlineSiteLocusInfo> si);
@@ -60,10 +61,26 @@ public:
     void add_indel(std::unique_ptr<GermlineIndelLocusInfo> info);
     void reset();
 
+    void
+    resetRegion(
+        const std::string& chromName,
+        const known_pos_range2& reportRegion)
+    {
+        _scoringModels.resetChrom(chromName);
+        assert(_gvcfWriterPtr);
+        _gvcfWriterPtr->resetRegion(chromName, reportRegion);
+    }
+
+    double
+    getMaxDepth() const
+    {
+        return _scoringModels.getMaxDepth();
+    }
+
 private:
     ScoringModelManager _scoringModels;
 
-    std::shared_ptr<Codon_phaser> _codon_phaser;
+    std::shared_ptr<Codon_phaser> _codonPhaserPtr;
+    std::shared_ptr<gvcf_writer> _gvcfWriterPtr;
     std::shared_ptr<variant_pipe_stage_base> _head;
 };
-

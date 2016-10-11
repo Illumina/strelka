@@ -122,9 +122,8 @@ debug_dump_digt_lhood(const blt_float_t* lhood,
 
 
 
-// Use caller object to precalculate prior distributions based on
-// theta value:
-//
+/// Used to precalculate prior distributions based on theta value
+///
 struct pprob_digt_caller : private boost::noncopyable
 {
     explicit

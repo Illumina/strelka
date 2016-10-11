@@ -63,6 +63,14 @@ po::options_description
 get_starling_base_option_parser(
     starling_base_options& opt)
 {
+    po::options_description core_opt("core options");
+    core_opt.add_options()
+    ("ref", po::value(&opt.referenceFilename),
+     "fasta reference sequence, samtools index file must be present (required)")
+    ("region", po::value<regions_t>(),
+     "samtools formatted region, eg. 'chr1:20-30'. May be supplied more than once but regions must not overlap. At least one entry required.")
+    ;
+
     po::options_description geno_opt("genotyping options");
     geno_opt.add_options()
     ("snp-theta", po::value(&opt.bsnp_diploid_theta)->default_value(opt.bsnp_diploid_theta),
@@ -113,8 +121,6 @@ get_starling_base_option_parser(
 
     po::options_description other_opt("other-options");
     other_opt.add_options()
-    ("report-file", po::value(&opt.report_filename),
-     "Report non-error run info and statistics to file")
     ("stats-file", po::value(&opt.segmentStatsFilename),
      "Write runtime stats to file")
     ("report-evs-features", po::value(&opt.isReportEVSFeatures)->zero_tokens(),
@@ -127,7 +133,7 @@ get_starling_base_option_parser(
 
     po::options_description new_opt("Shared small-variant options");
 
-    new_opt.add(geno_opt);
+    new_opt.add(core_opt).add(geno_opt);
     new_opt.add(realign_opt).add(indel_opt).add(ploidy_opt);
     new_opt.add(input_opt).add(other_opt);
 
@@ -142,10 +148,6 @@ write_starling_legacy_options(
     std::ostream& os)
 {
     os <<
-       " -bam-seq-name name - Analyze reads aligned to chromosome 'name' in the reads file (required)\n"
-       " -samtools-reference file\n"
-       "                    - Get the reference sequence from the multi-sequence fasta 'file' following samtools reference conventions (single-seq or samtools reference required)\n"
-       "\n"
        " -bsnp-diploid-het-bias x\n"
        "                    - Set bias term for the heterozygous state in the bsnp model, such that\n"
        "                      hets are expected at allele ratios in the range [0.5-x,0.5+x] (default: 0)\n"
@@ -177,18 +179,6 @@ write_starling_legacy_options(
        " -indel-nonsite-match-prob x\n"
        "                    - The probability of a base matching the reference in an 'average' mismapped read. This\n"
        "                      value is used by the indel-caller only. (default: " << default_opt.indel_nonsite_match_prob << ")\n"
-       " -report-range-begin n\n"
-       "                    - Event reports and coverage begin at base n\n"
-       "                      (default: 1)\n"
-       " -report-range-end n\n"
-       "                    - Event reports and coverage end after base n or min(n,ref_size) if reference\n"
-       "                      specified.\n"
-       "                      (default: ref_size)\n"
-       " -report-range-reference\n"
-       "                    - Event reports and coverage span the entire reference sequence.\n"
-       "                      A reference sequence is required to use this flag. This sets begin=1 and\n"
-       "                      end=ref_size. This flag cannot be combined with -report-range-begin/-end.\n"
-       "                      (NOTE: this behaviour is now default, but the flag is still accepted.)\n"
        " -genome-size n     - Specify the total number of non-ambiguous bases in the genome to which the input reads\n"
        "                      have been aligned for use in indel calling.\n"
        " -max-candidate-indel-density x\n"
@@ -229,33 +219,6 @@ finalize_legacy_starling_options(
     const prog_info& pinfo,
     starling_base_options& opt)
 {
-    // sanity check argument settings:
-    //
-    if (opt.bam_seq_name.empty())
-    {
-        pinfo.usage("must specify -bam-seq-name");
-    }
-
-    if (! opt.is_ref_set())
-    {
-        pinfo.usage("must specify samtools-reference");
-    }
-
-    // canonicalize the reference sequence path:
-    if (opt.is_samtools_ref_set)
-    {
-        if (! compat_realpath(opt.samtools_ref_seq_file))
-        {
-            std::ostringstream oss;
-            oss << "can't resolve samtools reference path: " << opt.samtools_ref_seq_file << "\n";
-            pinfo.usage(oss.str().c_str());
-        }
-    }
-    else
-    {
-        assert(false && "must specify samtools reference");
-    }
-
     if (! opt.is_user_genome_size)
     {
         // this requirement is not what we want, but it's the only way to make things reliable for now:
@@ -286,6 +249,42 @@ finalize_starling_base_options(
     const po::variables_map& vm,
     starling_base_options& opt)
 {
+    // check for and sanitize the reference fasta sequence
+    if (opt.referenceFilename.empty())
+    {
+        pinfo.usage("Must specify a fasta reference file");
+    }
+
+    // canonicalize the reference sequence path:
+    /// TODO: replace this with the same thing from boost?
+    if (! compat_realpath(opt.referenceFilename))
+    {
+        std::ostringstream oss;
+        oss << "can't resolve reference path: " << opt.referenceFilename << "\n";
+        pinfo.usage(oss.str().c_str());
+    }
+
+    // set analysis regions:
+    if (vm.count("region"))
+    {
+        opt.regions=(boost::any_cast<regions_t>(vm["region"].value()));
+    }
+
+    // validate regions:
+    {
+        if (opt.regions.empty())
+        {
+            pinfo.usage("Need at least one samtools formatted region");
+        }
+        for (const auto& region : opt.regions)
+        {
+            if (region.empty())
+            {
+                pinfo.usage("Empty region argument");
+            }
+        }
+    }
+
     // max_theta for indels is actually 2./3., but because we don't
     // allow non-reference hets, we stick with the lower value
     // used for snps:

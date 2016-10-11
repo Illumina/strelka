@@ -41,6 +41,14 @@ struct snoise_pos_processor : public starling_pos_processor_base
         const reference_contig_segment& ref,
         const snoise_streams& streams);
 
+    void
+    resetRegion(
+        const std::string& chromName,
+        const known_pos_range2& reportRange)
+    {
+        base_t::resetRegionBase(chromName, reportRange);
+    }
+
 private:
     void
     process_pos_variants_impl(const pos_t pos) override
@@ -50,9 +58,6 @@ private:
 
     void
     process_pos_snp_snoise(const pos_t pos);
-
-    void
-    write_counts(const pos_range& output_report_range) const override;
 
     const snoise_streams& _streams;
 };

@@ -33,8 +33,6 @@
 #include <memory>
 #include <vector>
 
-extern const char STDIN_FILENAME[];
-
 extern const unsigned MAX_FLANK_SIZE;
 
 
@@ -57,14 +55,8 @@ struct blt_options
     void
     validate() const
     {
-        // this should never be true, TODO: can we move this into a state enum so it *can't* be true:
+        // this should never be true once the object is fully constructed, TODO: can we move this into a state enum so it *can't* be true:
         assert(! (is_compute_germline_scoring_metrics() && is_compute_somatic_scoring_metrics));
-    }
-
-    bool
-    is_ref_set() const
-    {
-        return (is_samtools_ref_set);
     }
 
     virtual
@@ -108,15 +100,11 @@ struct blt_options
     unsigned max_win_mismatch_flank_size = 0;
     bool is_print_evidence = false;
     bool is_print_all_site_evidence = false;
-    pos_range user_report_range;   // requested report range
-
-    bool is_samtools_ref_set = false;
-    std::string samtools_ref_seq_file;
+    //pos_range user_report_range;   // requested report range
 
     bool is_include_singleton = false;
     bool is_include_anomalous = false;
 
-    bool is_report_range_ref = false;
     int used_allele_count_min_qscore = 0; // print the above with a qscore cutoff...
 
     int max_vexp_iterations = 0;
@@ -144,8 +132,6 @@ struct blt_options
     //bool is_compute_hapscore = false;
     bool isReportEVSFeatures = false;
     bool is_compute_somatic_scoring_metrics = false;
-
-    std::string report_filename;
 };
 
 
@@ -153,22 +139,13 @@ struct blt_options
 struct pprob_digt_caller;
 
 
-// data deterministically derived from the user input options:
-//
+/// data deterministically derived from the user input options
 struct blt_deriv_options
 {
-    /// @param ref_end this is either the full reference contig size,
-    /// or the end position of the acquired reference segment if
-    /// -report-range-end was used
-    ///
     blt_deriv_options(
-        const blt_options& opt,
-        const pos_t ref_end);
+        const blt_options& opt);
 
     ~blt_deriv_options();
-
-    pos_range report_range;
-    pos_range report_range_limit;   //  maximum report range
 
     const pprob_digt_caller&
     pdcaller() const
@@ -177,7 +154,7 @@ struct blt_deriv_options
     }
 
 private:
-    std::unique_ptr<pprob_digt_caller> _pdcaller; // object to precalculate bsnp_diploid priors..
+    std::unique_ptr<pprob_digt_caller> _pdcaller;
 };
 
 

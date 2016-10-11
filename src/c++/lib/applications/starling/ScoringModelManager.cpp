@@ -78,6 +78,29 @@ ScoringModelManager(
 
 void
 ScoringModelManager::
+resetChrom(const std::string& chrom)
+{
+    _chromName = chrom;
+    if (_dopt.is_max_depth())
+    {
+        cdmap_t::const_iterator cdi(_dopt.chrom_depth.find(std::string(chrom)));
+        if (cdi == _dopt.chrom_depth.end())
+        {
+            std::ostringstream oss;
+            oss << "ERROR: Can't find chromosome: '" << chrom << "' in depth file: " << _opt.chrom_depth_file << "\n";
+            throw blt_exception(oss.str().c_str());
+        }
+        _normChromDepth = (cdi->second);
+        _maxChromDepth = (_normChromDepth * _opt.max_depth_factor);
+    }
+    assert(_normChromDepth >= 0.);
+    assert(_maxChromDepth >= 0.);
+}
+
+
+
+void
+ScoringModelManager::
 classify_site(
     GermlineDiploidSiteLocusInfo& locus) const
 {
@@ -96,7 +119,7 @@ classify_site(
             const bool isUniformDepthExpected(_dopt.is_max_depth());
             GermlineDiploidSiteLocusInfo::computeEmpiricalScoringFeatures(
                 locus, sampleIndex, _isRNA, isUniformDepthExpected, _isReportEVSFeatures,
-                _dopt.norm_depth, locus.evsFeatures, locus.evsDevelopmentFeatures);
+                _normChromDepth, locus.evsFeatures, locus.evsDevelopmentFeatures);
         }
     }
 
@@ -120,20 +143,13 @@ classify_site(
                 locus.clearEVSFeatures();
                 GermlineDiploidSiteLocusInfo::computeEmpiricalScoringFeatures(
                     locus, sampleIndex, _isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures,
-                    _dopt.norm_depth, locus.evsFeatures, locus.evsDevelopmentFeatures);
+                    _normChromDepth, locus.evsFeatures, locus.evsDevelopmentFeatures);
             }
 
             static const int maxEmpiricalVariantScore(60);
             sampleInfo.empiricalVariantScore = std::min(
                                                    error_prob_to_qphred(_snvScoringModelPtr->scoreVariant(locus.evsFeatures.getAll())),
                                                    maxEmpiricalVariantScore);
-
-            // monkey-hack:
-            /// TODO TEMPORARY!!!!
-            if ((not locus.isQual()) or locus.anyVariantAlleleQuality==0)
-            {
-                sampleInfo.empiricalVariantScore = 0;
-            }
 
             if (sampleInfo.empiricalVariantScore < snvEVSThreshold())
             {
@@ -171,7 +187,7 @@ classify_indel(
             const bool isUniformDepthExpected(_dopt.is_max_depth());
             GermlineDiploidIndelLocusInfo::computeEmpiricalScoringFeatures(
                 locus, sampleIndex, _isRNA, isUniformDepthExpected, _isReportEVSFeatures,
-                _dopt.norm_depth, locus.evsFeatures, locus.evsDevelopmentFeatures);
+                _normChromDepth, locus.evsFeatures, locus.evsDevelopmentFeatures);
         }
     }
 
@@ -195,20 +211,13 @@ classify_indel(
                 locus.clearEVSFeatures();
                 GermlineDiploidIndelLocusInfo::computeEmpiricalScoringFeatures(
                     locus, sampleIndex, _isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures,
-                    _dopt.norm_depth, locus.evsFeatures, locus.evsDevelopmentFeatures);
+                    _normChromDepth, locus.evsFeatures, locus.evsDevelopmentFeatures);
             }
 
             static const int maxEmpiricalVariantScore(60);
             sampleInfo.empiricalVariantScore = std::min(
                                                    error_prob_to_qphred(_indelScoringModelPtr->scoreVariant(locus.evsFeatures.getAll())),
                                                    maxEmpiricalVariantScore);
-
-            // monkey-hack:
-            /// TODO TEMPORARY!!!!
-            if (locus.anyVariantAlleleQuality==0)
-            {
-                sampleInfo.empiricalVariantScore=0;
-            }
 
             if (sampleInfo.empiricalVariantScore < indelEVSThreshold())
             {
@@ -240,8 +249,13 @@ default_classify_site(
     }
     if (_dopt.is_max_depth())
     {
-        if (allSampleLocusDepth > _dopt.max_depth)
-            sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+        if (isChromSet())
+        {
+            if (allSampleLocusDepth > _maxChromDepth)
+            {
+                sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+            }
+        }
     }
 
     // high DPFratio filter
@@ -303,8 +317,10 @@ default_classify_indel(
 
     if (_dopt.is_max_depth())
     {
-        if (allSampleLocusDepth > _dopt.max_depth)
+        if (allSampleLocusDepth > _maxChromDepth)
+        {
             sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+        }
     }
 
     if (_opt.is_max_ref_rep())
@@ -335,6 +351,8 @@ ScoringModelManager::
 default_classify_indel_locus(
     GermlineIndelLocusInfo& locus) const
 {
+    assert(isChromSet());
+
     const unsigned sampleCount(locus.getSampleCount());
     const unsigned allSampleLocusDepth(locus.getTotalReadDepth());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)

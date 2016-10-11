@@ -25,11 +25,46 @@
 #include "variant_prefilter_stage.hh"
 
 #include "ScoringModelManager.hh"
+#include "blt_util/RegionTracker.hh"
 
-variant_prefilter_stage::variant_prefilter_stage(const ScoringModelManager& model, std::shared_ptr<variant_pipe_stage_base> destination)
+
+
+variant_prefilter_stage::
+variant_prefilter_stage(
+    const ScoringModelManager& model,
+    const bool isTargetedRegions,
+    const RegionTracker& targetedRegions,
+    std::shared_ptr<variant_pipe_stage_base> destination)
     : variant_pipe_stage_base(destination)
     , _model(model)
+    , _isTargetedRegions(isTargetedRegions)
+    , _targetedRegions(targetedRegions)
 {}
+
+
+
+void
+variant_prefilter_stage::
+applySharedLocusFilters(
+    LocusInfo& locus) const
+{
+    // add filter for all sites in 'no-ploid' regions:
+    const unsigned sampleCount(locus.getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+    {
+        LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
+        if (sampleInfo.isPloidyConflict())
+        {
+            sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
+        }
+    }
+
+    // apply off target filter
+    if (_isTargetedRegions and (not _targetedRegions.isIntersectRegion(locus.pos)))
+    {
+        locus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::OffTarget);
+    }
+}
 
 
 
@@ -37,16 +72,7 @@ void
 variant_prefilter_stage::
 process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr)
 {
-    // add filter for all sites in 'no-ploid' regions:
-    const unsigned sampleCount(locusPtr->getSampleCount());
-    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
-    {
-        LocusSampleInfo& sampleInfo(locusPtr->getSample(sampleIndex));
-        if (sampleInfo.isPloidyConflict())
-        {
-            sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
-        }
-    }
+    applySharedLocusFilters(*locusPtr);
 
     // apply filtration/EVS model:
     if (dynamic_cast<GermlineContinuousSiteLocusInfo*>(locusPtr.get()) != nullptr)
@@ -73,16 +99,7 @@ process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr)
         if (altAllele.indelKey.is_breakpoint()) return;
     }
 
-    // add filter for all indels in 'no-ploid' regions:
-    const unsigned sampleCount(locusPtr->getSampleCount());
-    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
-    {
-        LocusSampleInfo& sampleInfo(locusPtr->getSample(sampleIndex));
-        if (sampleInfo.isPloidyConflict())
-        {
-            sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
-        }
-    }
+    applySharedLocusFilters(*locusPtr);
 
     // apply filtration/EVS model:
     if (dynamic_cast<GermlineContinuousIndelLocusInfo*>(locusPtr.get()) != nullptr)

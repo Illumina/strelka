@@ -30,6 +30,7 @@
 #include "blt_util/id_map.hh"
 #include "blt_util/log.hh"
 #include "common/Exceptions.hh"
+#include "htsapi/bam_header_util.hh"
 #include "starling_common/HtsMergeStreamerUtil.hh"
 #include "starling_common/ploidy_util.hh"
 #include "starling_common/starling_ref_seq.hh"
@@ -44,7 +45,8 @@ enum index_t
     CANDIDATE_INDELS,
     FORCED_GT_VARIANTS,
     PLOIDY_REGION,
-    NOCOMPRESS_REGION
+    NOCOMPRESS_REGION,
+    TARGETED_REGION
 };
 }
 
@@ -108,181 +110,211 @@ starling_run(
 {
     using namespace illumina::common;
 
-    opt.validate();
-
+    // ensure that this object is created first for runtime benchmark
     RunStatsManager segmentStatMan(opt.segmentStatsFilename);
 
+    opt.validate();
+
+    const starling_deriv_options dopt(opt);
+    starling_read_counts brc;
     reference_contig_segment ref;
-    get_starling_ref_seq(opt,ref);
-
-    const starling_deriv_options dopt(opt,ref);
-    const pos_range& rlimit(dopt.report_range_limit);
-
-    const std::string bam_region(get_starling_bam_region_string(opt,dopt));
-
-    HtsMergeStreamer streamData(bam_region.c_str());
 
     const unsigned sampleCount(opt.alignFileOpt.alignmentFilename.size());
 
-    std::vector<unsigned> registrationIndices;
-    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
-    {
-        registrationIndices.push_back(sampleIndex);
-    }
-    const auto allHeaders(registerAlignments(opt, opt.alignFileOpt, registrationIndices, streamData));
-    starling_streams client_io(opt, pinfo, allHeaders, sampleCount);
+    ////////////////////////////////////////
+    // setup streamData:
+    //
+    HtsMergeStreamer streamData;
 
-    starling_pos_processor sppr(opt,dopt,ref,client_io);
-    starling_read_counts brc;
-
-    assert(not allHeaders.empty());
-    const bam_hdr_t& referenceHeader(allHeaders.front());
-
-    static const bool noRequireNormalized(false);
-    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader, streamData, noRequireNormalized);
-    registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
-
+    // additional data structures required in the region loop below, which are filled in as a side effect of
+    // streamData initialization:
+    std::vector<std::reference_wrapper<const bam_hdr_t>> bamHeaders;
+    std::vector<std::string> sampleNames;
     unsigned ploidyVcfSampleCount(0);
     std::vector<unsigned> sampleIndexToPloidyVcfSampleIndex;
-    if (! opt.ploidy_region_vcf.empty())
+
     {
-        const vcf_streamer& vcfStream(streamData.registerVcf(opt.ploidy_region_vcf.c_str(), INPUT_TYPE::PLOIDY_REGION));
-        vcfStream.validateBamHeaderChromSync(referenceHeader);
-
-        const std::vector<std::string>& sampleNames();
-        mapVcfSampleIndices(vcfStream, client_io.getSampleNames(), sampleIndexToPloidyVcfSampleIndex);
-        ploidyVcfSampleCount = vcfStream.getSampleCount();
-    }
-
-    if (! opt.gvcf.nocompress_region_bedfile.empty())
-    {
-        streamData.registerBed(opt.gvcf.nocompress_region_bedfile.c_str(), INPUT_TYPE::NOCOMPRESS_REGION);
-    }
-
-    while (streamData.next())
-    {
-        const pos_t currentPos(streamData.getCurrentPos());
-        const HTS_TYPE::index_t currentHtsType(streamData.getCurrentType());
-        const unsigned currentIndex(streamData.getCurrentIndex());
-
-        // Process finishes at the the end of rlimit range. Note that
-        // some additional padding is allowed for off-range indels
-        // which might influence results within rlimit:
-        //
-        if (rlimit.is_end_pos && (currentPos >= (rlimit.end_pos+static_cast<pos_t>(opt.max_indel_size)))) break;
-
-        // wind sppr forward to position behind buffer head:
-        sppr.set_head_pos(currentPos-1);
-
-        if       (HTS_TYPE::BAM == currentHtsType)
+        std::vector<unsigned> registrationIndices;
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
-            // Remove the filter below because it's not valid for
-            // RNA-Seq case, reads should be selected for the report
-            // range by the bam reading functions
-            //
-            // /// get potential bounds of the read based only on current_pos:
-            // const known_pos_range any_read_bounds(current_pos-max_indel_size,current_pos+MAX_READ_SIZE+max_indel_size);
-            // if( sppr.is_range_outside_report_influence_zone(any_read_bounds) ) continue;
-
-            // Approximate begin range filter: (removed for RNA-Seq)
-            //if((current_pos+MAX_READ_SIZE+max_indel_size) <= rlimit.begin_pos) continue;
-
-            processInputReadAlignment(opt, ref, streamData.getCurrentBamStreamer(),
-                                      streamData.getCurrentBam(), currentPos,
-                                      rlimit.begin_pos, brc, sppr, currentIndex);
+            registrationIndices.push_back(sampleIndex);
         }
-        else if (HTS_TYPE::VCF == currentHtsType)
-        {
-            const vcf_record& vcfRecord(streamData.getCurrentVcf());
-            if     (INPUT_TYPE::CANDIDATE_INDELS == currentIndex)     // process candidate indels input from vcf file(s)
-            {
-                if (vcfRecord.is_indel())
-                {
-                    process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
-                }
-                else
-                {
-                    log_os << "WARNING: candidate indel vcf variant record cannot be categorized as indel:\n";
-                    streamData.getCurrentVcfStreamer().report_state(log_os);
-                }
-            }
-            else if (INPUT_TYPE::FORCED_GT_VARIANTS == currentIndex)     // process forced genotype tests from vcf file(s)
-            {
-                if (vcfRecord.is_indel())
-                {
-                    static const unsigned sample_no(0);
-                    static const bool is_forced_output(true);
-                    process_candidate_indel(opt.max_indel_size, vcfRecord, sppr, sample_no, is_forced_output);
-                }
-                else if (vcfRecord.is_snv())
-                {
-                    sppr.insert_forced_output_pos(vcfRecord.pos - 1);
-                }
-                else
-                {
-                    std::ostringstream oss;
-                    oss << "ERROR: forcedGT vcf variant record cannot be categorized as SNV or indel:\n";
-                    streamData.getCurrentVcfStreamer().report_state(oss);
-                    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-                }
-            }
-            else if (INPUT_TYPE::PLOIDY_REGION == currentIndex)
-            {
-                std::vector<unsigned> samplePloidy;
-                known_pos_range2 ploidyRange;
-                try
-                {
-                    parsePloidyFromVcf(ploidyVcfSampleCount, vcfRecord.line, ploidyRange, samplePloidy);
-                }
-                catch (...)
-                {
-                    log_os << "ERROR: Exception caught while parsing vcf ploidy record\n";
-                    streamData.getCurrentVcfStreamer().report_state(log_os);
-                    throw;
-                }
+        bamHeaders = registerAlignments(opt.alignFileOpt.alignmentFilename, registrationIndices, streamData);
 
-                for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        assert(not bamHeaders.empty());
+        const bam_hdr_t& referenceHeader(bamHeaders.front());
+
+        static const bool noRequireNormalized(false);
+        registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader, streamData,
+                        noRequireNormalized);
+        registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
+
+        for (const bam_hdr_t& bamHeader : bamHeaders)
+        {
+            sampleNames.push_back(get_bam_header_sample_name(bamHeader));
+        }
+
+        if (!opt.ploidy_region_vcf.empty())
+        {
+            const vcf_streamer& vcfStream(streamData.registerVcf(opt.ploidy_region_vcf.c_str(), INPUT_TYPE::PLOIDY_REGION));
+            vcfStream.validateBamHeaderChromSync(referenceHeader);
+
+            mapVcfSampleIndices(vcfStream, sampleNames, sampleIndexToPloidyVcfSampleIndex);
+            ploidyVcfSampleCount = vcfStream.getSampleCount();
+        }
+
+        if (!opt.gvcf.nocompress_region_bedfile.empty())
+        {
+            streamData.registerBed(opt.gvcf.nocompress_region_bedfile.c_str(), INPUT_TYPE::NOCOMPRESS_REGION);
+        }
+
+        if (! opt.gvcf.targeted_regions_bedfile.empty())
+        {
+            streamData.registerBed(opt.gvcf.targeted_regions_bedfile.c_str(), INPUT_TYPE::TARGETED_REGION);
+        }
+    }
+
+    starling_streams client_io(opt, pinfo, bamHeaders, sampleNames);
+    starling_pos_processor sppr(opt, dopt, ref, client_io);
+
+    const bam_hdr_t& referenceHeader(bamHeaders.front());
+    const bam_header_info referenceHeaderInfo(referenceHeader);
+
+    // parse and sanity check regions
+    const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilename.front());
+    std::vector<AnalysisRegionInfo> regionInfo;
+    getStrelkaAnalysisRegions(opt, referenceAlignmentFilename, referenceHeaderInfo, regionInfo);
+
+    for (const auto& rinfo : regionInfo)
+    {
+        sppr.resetRegion(rinfo.regionChrom, rinfo.regionRange);
+        streamData.resetRegion(rinfo.streamerRegion.c_str());
+        setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
+
+        while (streamData.next())
+        {
+            const pos_t currentPos(streamData.getCurrentPos());
+            const HTS_TYPE::index_t currentHtsType(streamData.getCurrentType());
+            const unsigned currentIndex(streamData.getCurrentIndex());
+
+            // wind sppr forward to position behind buffer head:
+            sppr.set_head_pos(currentPos-1);
+
+            if       (HTS_TYPE::BAM == currentHtsType)
+            {
+                // Remove the filter below because it's not valid for
+                // RNA-Seq case, reads should be selected for the report
+                // range by the bam reading functions
+                //
+                // /// get potential bounds of the read based only on current_pos:
+                // const known_pos_range any_read_bounds(current_pos-max_indel_size,current_pos+MAX_READ_SIZE+max_indel_size);
+                // if( sppr.is_range_outside_report_influence_zone(any_read_bounds) ) continue;
+
+                // Approximate begin range filter: (removed for RNA-Seq)
+                //if((current_pos+MAX_READ_SIZE+max_indel_size) <= rlimit.begin_pos) continue;
+
+                processInputReadAlignment(opt, ref, streamData.getCurrentBamStreamer(),
+                                          streamData.getCurrentBam(), currentPos,
+                                          brc, sppr, currentIndex);
+            }
+            else if (HTS_TYPE::VCF == currentHtsType)
+            {
+                const vcf_record& vcfRecord(streamData.getCurrentVcf());
+                if     (INPUT_TYPE::CANDIDATE_INDELS == currentIndex)     // process candidate indels input from vcf file(s)
                 {
-                    const unsigned ploidy(samplePloidy[sampleIndexToPloidyVcfSampleIndex[sampleIndex]]);
-                    if ((ploidy == 0) || (ploidy == 1))
+                    if (vcfRecord.is_indel())
                     {
-                        const bool retval(sppr.insert_ploidy_region(sampleIndex, ploidyRange, ploidy));
-                        if (!retval)
+                        process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
+                    }
+                    else
+                    {
+                        log_os << "WARNING: candidate indel vcf variant record cannot be categorized as indel:\n";
+                        streamData.getCurrentVcfStreamer().report_state(log_os);
+                    }
+                }
+                else if (INPUT_TYPE::FORCED_GT_VARIANTS == currentIndex)     // process forced genotype tests from vcf file(s)
+                {
+                    if (vcfRecord.is_indel())
+                    {
+                        static const unsigned sample_no(0);
+                        static const bool is_forced_output(true);
+                        process_candidate_indel(opt.max_indel_size, vcfRecord, sppr, sample_no, is_forced_output);
+                    }
+                    else if (vcfRecord.is_snv())
+                    {
+                        sppr.insert_forced_output_pos(vcfRecord.pos - 1);
+                    }
+                    else
+                    {
+                        std::ostringstream oss;
+                        oss << "ERROR: forcedGT vcf variant record cannot be categorized as SNV or indel:\n";
+                        streamData.getCurrentVcfStreamer().report_state(oss);
+                        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                    }
+                }
+                else if (INPUT_TYPE::PLOIDY_REGION == currentIndex)
+                {
+                    std::vector<unsigned> samplePloidy;
+                    known_pos_range2 ploidyRange;
+                    try
+                    {
+                        parsePloidyFromVcf(ploidyVcfSampleCount, vcfRecord.line, ploidyRange, samplePloidy);
+                    }
+                    catch (...)
+                    {
+                        log_os << "ERROR: Exception caught while parsing vcf ploidy record\n";
+                        streamData.getCurrentVcfStreamer().report_state(log_os);
+                        throw;
+                    }
+
+                    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+                    {
+                        const unsigned ploidy(samplePloidy[sampleIndexToPloidyVcfSampleIndex[sampleIndex]]);
+                        if ((ploidy == 0) || (ploidy == 1))
                         {
-                            std::ostringstream oss;
-                            const auto& sampleName(client_io.getSampleNames()[sampleIndex]);
-                            oss << "ERROR: ploidy vcf FORMAT/CN values conflict. Conflict detected in sample '"
-                                << sampleName << "' at:\n";
-                            streamData.getCurrentVcfStreamer().report_state(oss);
-                            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                            const bool retval(sppr.insert_ploidy_region(sampleIndex, ploidyRange, ploidy));
+                            if (!retval)
+                            {
+                                std::ostringstream oss;
+                                const auto& sampleName(client_io.getSampleNames()[sampleIndex]);
+                                oss << "ERROR: ploidy vcf FORMAT/CN values conflict. Conflict detected in sample '"
+                                    << sampleName << "' at:\n";
+                                streamData.getCurrentVcfStreamer().report_state(oss);
+                                BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                            }
                         }
                     }
                 }
+                else
+                {
+                    assert(false && "Unexpected hts index");
+                }
+            }
+            else if (HTS_TYPE::BED == currentHtsType)
+            {
+                const bed_record& bedRecord(streamData.getCurrentBed());
+                if (INPUT_TYPE::NOCOMPRESS_REGION == currentIndex)
+                {
+                    known_pos_range2 range(bedRecord.begin,bedRecord.end);
+                    sppr.insert_nocompress_region(range);
+                }
+
+                else if (INPUT_TYPE::TARGETED_REGION == currentIndex)
+                {
+                    known_pos_range2 range(bedRecord.begin,bedRecord.end);
+                    sppr.insert_targeted_region(range);
+                }
+                else
+                {
+                    assert(false && "Unexpected hts index");
+                }
             }
             else
             {
-                assert(false && "Unexpected hts index");
+                assert(false && "Invalid input condition");
             }
-        }
-        else if (HTS_TYPE::BED == currentHtsType)
-        {
-            const bed_record& bedRecord(streamData.getCurrentBed());
-            if (INPUT_TYPE::NOCOMPRESS_REGION == currentIndex)
-            {
-                known_pos_range2 range(bedRecord.begin,bedRecord.end);
-                sppr.insert_nocompress_region(range);
-            }
-            else
-            {
-                assert(false && "Unexpected hts index");
-            }
-        }
-        else
-        {
-            assert(false && "Invalid input condition");
         }
     }
-
     sppr.reset();
 }
 

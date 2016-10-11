@@ -47,7 +47,7 @@ Strelka Code Development
 
 For strelka code development and debugging details, see the
 [Strelka developer guide] [DeveloperGuide]. This includes details
-on Strelka's developement protocols, special build instructions,
+on Strelka's development protocols, special build instructions,
 recommended workflows for investigating
 calls, and internal documentation details.
 

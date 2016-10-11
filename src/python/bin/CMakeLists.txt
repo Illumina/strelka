@@ -34,3 +34,6 @@ install_fileglob("${CMAKE_CURRENT_BINARY_DIR}" "${INSTALL_TO_DIR}" "*.py"
 install_fileglob("${CMAKE_CURRENT_BINARY_DIR}" "${INSTALL_TO_DIR}" "*.ini"
                  "${THIS_LIBRARY_PERMISSIONS}")
 
+# add legacy filename links
+install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E create_symlink configureStrelkaGermlineWorkflow.py configureStarlingWorkflow.py WORKING_DIRECTORY ${INSTALL_TO_DIR})")
+install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E create_symlink configureStrelkaSomaticWorkflow.py configureStrelkaWorkflow.py WORKING_DIRECTORY ${INSTALL_TO_DIR})")

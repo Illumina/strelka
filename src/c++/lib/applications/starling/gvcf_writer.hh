@@ -26,6 +26,7 @@
 
 #include "gvcf_block_site_record.hh"
 #include "gvcf_compressor.hh"
+#include "ScoringModelManager.hh"
 #include "starling_shared.hh"
 #include "starling_streams.hh"
 #include "variant_pipe_stage_base.hh"
@@ -33,8 +34,6 @@
 #include "blt_util/RegionTracker.hh"
 
 #include <iosfwd>
-
-struct ScoringModelManager;
 
 
 /// Assembles all site and indel call information into a consistent set, blocks output
@@ -53,11 +52,28 @@ struct gvcf_writer : public variant_pipe_stage_base
     void process(std::unique_ptr<GermlineSiteLocusInfo>) override;
     void process(std::unique_ptr<GermlineIndelLocusInfo>) override;
 
+    void
+    resetRegion(
+        const std::string& chromName,
+        const known_pos_range2& reportRange)
+    {
+        _chromName = chromName;
+        _reportRange = reportRange;
+        _headPos = _reportRange.begin_pos();
+    }
+
 private:
     unsigned
     getSampleCount() const
     {
         return _blockPerSample.size();
+    }
+
+    const std::string&
+    getChromName() const
+    {
+        assert(not _chromName.empty());
+        return _chromName;
     }
 
     void flush_impl() override;
@@ -137,20 +153,21 @@ private:
         return _empty_site;
     }
 
+    /// TODO STREL-125 why can't we get rid of this? Indel overlapper should already be doing the same thing!
+    void filter_site_by_last_indel_overlap(GermlineDiploidSiteLocusInfo& locus);
+
     const starling_options& _opt;
     const starling_streams& _streams;
     const reference_contig_segment& _ref;
-    const known_pos_range _report_range;
-    const char* _chrom;
     const gvcf_deriv_options _dopt;
     std::vector<gvcf_block_site_record> _blockPerSample;
-    pos_t _head_pos;
     GermlineDiploidSiteLocusInfo _empty_site;
 
-    std::unique_ptr<GermlineIndelLocusInfo> _last_indel;
+    std::string _chromName;
+    known_pos_range2 _reportRange;
+    pos_t _headPos;
 
-    /// TODO STREL-125 why can't we get rid of this? Indel overlapper should already be doing the same thing!
-    void filter_site_by_last_indel_overlap(GermlineDiploidSiteLocusInfo& locus);
+    std::unique_ptr<GermlineIndelLocusInfo> _last_indel;
 
     gvcf_compressor _gvcf_comp;
     const ScoringModelManager& _scoringModels;

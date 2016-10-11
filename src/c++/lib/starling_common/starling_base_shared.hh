@@ -40,6 +40,8 @@
 enum { STRELKA_MAX_READ_SIZE = 25000 };
 
 
+typedef std::vector<std::string> regions_t;
+
 
 struct starling_base_options : public blt_options
 {
@@ -66,6 +68,11 @@ struct starling_base_options : public blt_options
     {
         return (not realignedReadFilenamePrefix.empty());
     }
+
+    std::string referenceFilename;
+
+    // list of chromosome regions to be analyzed
+    regions_t regions;
 
     //
     double bindel_diploid_theta = 0.0001;
@@ -151,7 +158,7 @@ struct starling_base_options : public blt_options
     bool is_filter_unanchored = false;
 
     std::string realignedReadFilenamePrefix;
-    std::string bam_seq_name;
+    //std::string bam_seq_name;
 
     std::string candidate_indel_filename;
     bool is_write_candidate_indels_only = false;
@@ -248,9 +255,8 @@ struct starling_base_deriv_options : public blt_deriv_options, private boost::no
 {
     typedef blt_deriv_options base_t;
 
-    starling_base_deriv_options(
-        const starling_base_options& opt,
-        const reference_contig_segment& ref);
+    explicit
+    starling_base_deriv_options(const starling_base_options& opt);
 
     ~starling_base_deriv_options();
 

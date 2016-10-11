@@ -57,31 +57,8 @@ strelka_pos_processor(
     // set sample-specific parameter overrides:
     normal_sif.sample_opt.min_read_bp_flank = opt.normal_sample_min_read_bp_flank;
 
-    // setup indel buffer:
+    // setup indel buffer samples:
     {
-        double maxIndelCandidateDepthSumOverNormalSamples(-1.);
-        if (dopt.sfilter.is_max_depth())
-        {
-            if (opt.max_candidate_indel_depth_factor > 0.)
-            {
-                maxIndelCandidateDepthSumOverNormalSamples = (opt.max_candidate_indel_depth_factor * dopt.sfilter.max_chrom_depth);
-            }
-        }
-
-        if (opt.max_candidate_indel_depth > 0.)
-        {
-            if (maxIndelCandidateDepthSumOverNormalSamples > 0.)
-            {
-                maxIndelCandidateDepthSumOverNormalSamples = std::min(maxIndelCandidateDepthSumOverNormalSamples,static_cast<double>(opt.max_candidate_indel_depth));
-            }
-            else
-            {
-                maxIndelCandidateDepthSumOverNormalSamples = opt.max_candidate_indel_depth;
-            }
-        }
-
-        getIndelBuffer().setMaxCandidateDepth(maxIndelCandidateDepthSumOverNormalSamples);
-
         /// TODO: setup a stronger sample id handler -- using the version from manta would be a good start here
         sample_id_t sample_id;
         sample_id = getIndelBuffer().registerSample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2, true);
@@ -104,11 +81,81 @@ strelka_pos_processor(
 
 void
 strelka_pos_processor::
+reset()
+{
+    base_t::reset();
+
+    _indelWriter.clear();
+    _noisePos.clear();
+}
+
+
+
+void
+strelka_pos_processor::
+resetRegion(
+    const std::string& chromName,
+    const known_pos_range2& regionRange)
+{
+    base_t::resetRegionBase(chromName, regionRange);
+
+    // setup norm and max filtration depths
+    {
+        if (_dopt.sfilter.is_max_depth())
+        {
+            /// TODO verify that chroms match bam chroms
+            cdmap_t::const_iterator cdi(_dopt.sfilter.chrom_depth.find(_chromName));
+            if (cdi == _dopt.sfilter.chrom_depth.end())
+            {
+                std::ostringstream oss;
+                oss << "ERROR: Can't find chromosome: '" << _chromName << "' in chrom depth file: "
+                    << _opt.sfilter.chrom_depth_file << "\n";
+                throw blt_exception(oss.str().c_str());
+            }
+            _normChromDepth = cdi->second;
+            _maxChromDepth = (_normChromDepth * _opt.sfilter.max_depth_factor);
+        }
+        assert(_normChromDepth >= 0.);
+        assert(_maxChromDepth >= 0.);
+    }
+
+    // setup indel buffer max depth:
+    {
+        double maxIndelCandidateDepthSumOverNormalSamples(-1.);
+        if (_dopt.sfilter.is_max_depth())
+        {
+            if (_opt.max_candidate_indel_depth_factor > 0.)
+            {
+                maxIndelCandidateDepthSumOverNormalSamples = (_opt.max_candidate_indel_depth_factor * _maxChromDepth);
+            }
+        }
+
+        if (_opt.max_candidate_indel_depth > 0.)
+        {
+            if (maxIndelCandidateDepthSumOverNormalSamples > 0.)
+            {
+                maxIndelCandidateDepthSumOverNormalSamples = std::min(maxIndelCandidateDepthSumOverNormalSamples,
+                                                                      static_cast<double>(_opt.max_candidate_indel_depth));
+            }
+            else
+            {
+                maxIndelCandidateDepthSumOverNormalSamples = _opt.max_candidate_indel_depth;
+            }
+        }
+
+        getIndelBuffer().setMaxCandidateDepth(maxIndelCandidateDepthSumOverNormalSamples);
+    }
+}
+
+
+
+void
+strelka_pos_processor::
 insert_noise_pos(
     const pos_t pos,
     const SiteNoise& sn)
 {
-    _stageman.validate_new_pos_value(pos,STAGE::READ_BUFFER);
+    _stagemanPtr->validate_new_pos_value(pos,STAGE::READ_BUFFER);
     _noisePos.insertSiteNoise(pos,sn);
 }
 
@@ -173,7 +220,7 @@ process_pos_snp_somatic(const pos_t pos)
 
         if (_opt.is_somatic_callable())
         {
-            _scallProcessor.addToRegion(_chrom_name,output_pos,sgtg);
+            _scallProcessor.addToRegion(_chromName,output_pos,sgtg);
         }
     }
 
@@ -198,21 +245,18 @@ process_pos_snp_somatic(const pos_t pos)
 
         // have to keep tier1 counts for filtration purposes:
 #ifdef SOMATIC_DEBUG
-        write_snv_prefix_info_file(_chrom_name,output_pos,ref_base,normald,tumord,log_os);
+        write_snv_prefix_info_file(_chromName,output_pos,ref_base,normald,tumord,log_os);
         log_os << "\n";
 #endif
 
-        bos << _chrom_name << '\t'
+        bos << _chromName << '\t'
             << output_pos << '\t'
             << ".";
 
         static const bool is_write_nqss(false);
-        write_vcf_somatic_snv_genotype_strand_grid(_opt,_dopt,sgtg,is_write_nqss,
-                                                   *(normal_cpi_ptr[0]),
-                                                   *(tumor_cpi_ptr[0]),
-                                                   *(normal_cpi_ptr[1]),
-                                                   *(tumor_cpi_ptr[1]),
-                                                   bos);
+        write_vcf_somatic_snv_genotype_strand_grid(_opt, _dopt, sgtg, is_write_nqss, *(normal_cpi_ptr[0]),
+                                                   *(tumor_cpi_ptr[0]), *(normal_cpi_ptr[1]), *(tumor_cpi_ptr[1]),
+                                                   _normChromDepth, _maxChromDepth, bos);
         bos << "\n";
 
         is_reported_event = true;
@@ -367,34 +411,6 @@ process_pos_indel_somatic(const pos_t pos)
 
 void
 strelka_pos_processor::
-write_counts(const pos_range& output_report_range) const
-{
-
-    std::ostream* report_os_ptr(get_report_osptr());
-    if (NULL==report_os_ptr) return;
-    std::ostream& report_os(*report_os_ptr);
-
-    for (unsigned i(0); i<STRELKA_SAMPLE_TYPE::SIZE; ++i)
-    {
-        const sample_info& sif(sample(i));
-        const std::string label(STRELKA_SAMPLE_TYPE::get_label(i));
-
-        report_os << std::setprecision(8);
-        report_stream_stat(sif.ss,(label+"_ALLSITES_COVERAGE").c_str(),output_report_range,report_os);
-        report_stream_stat(sif.used_ss,(label+"_ALLSITES_COVERAGE_USED").c_str(),output_report_range,report_os);
-
-        if (_opt.is_ref_set())
-        {
-            report_stream_stat(sif.ssn,(label+"_NO_REF_N_COVERAGE").c_str(),output_report_range,report_os);
-            report_stream_stat(sif.used_ssn,(label+"_NO_REF_N_COVERAGE_USED").c_str(),output_report_range,report_os);
-        }
-    }
-}
-
-
-
-void
-strelka_pos_processor::
 run_post_call_step(
     const int stage_no,
     const pos_t pos)
@@ -410,6 +426,6 @@ run_post_call_step(
     const win_avg_set& was_normal(sample(STRELKA_SAMPLE_TYPE::NORMAL).wav.get_win_avg_set(_indelRegionIndexNormal));
     const win_avg_set& was_tumor(sample(STRELKA_SAMPLE_TYPE::TUMOR).wav.get_win_avg_set(_indelRegionIndexTumor));
 
-    _indelWriter.addIndelWindowData(pos, was_normal, was_tumor);
+    _indelWriter.addIndelWindowData(_chromName, pos, was_normal, was_tumor, _maxChromDepth);
 }
 

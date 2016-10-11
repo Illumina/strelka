@@ -255,8 +255,8 @@ increment_het_ratio_lhood(
 
 
 
-// total the path likelihoods of ref,indel and alt_indel states
-//
+/// total the path likelihoods of ref,indel and alt_indel states
+///
 void
 get_sum_path_pprob(
     const starling_base_deriv_options& dopt,

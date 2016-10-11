@@ -82,10 +82,12 @@ void
 writeSomaticIndelVcfGrid(
     const strelka_options& opt,
     const strelka_deriv_options& dopt,
+    const std::string& chromName,
     const pos_t pos,
     const SomaticIndelVcfInfo& siInfo,
     const win_avg_set& wasNormal,
     const win_avg_set& wasTumor,
+    const double maxChromDepth,
     std::ostream& os)
 {
     const indel_result_set& rs(siInfo.sindel.rs);
@@ -95,7 +97,7 @@ writeSomaticIndelVcfGrid(
     if (dopt.sfilter.is_max_depth())
     {
         const unsigned& depth(siInfo.nisri[0].tier1Depth);
-        if (depth > dopt.sfilter.max_chrom_depth)
+        if (depth > maxChromDepth)
         {
             smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::HighDepth);
         }
@@ -152,7 +154,7 @@ writeSomaticIndelVcfGrid(
 
     static const char sep('\t');
     // CHROM
-    os << opt.bam_seq_name;
+    os << chromName;
 
     // POS+
     os << sep << output_pos;
@@ -269,14 +271,17 @@ cacheIndel(
 void
 SomaticIndelVcfWriter::
 addIndelWindowData(
+    const std::string& chromName,
     const pos_t pos,
     const win_avg_set& wasNormal,
-    const win_avg_set& wasTumor)
+    const win_avg_set& wasTumor,
+    const double maxChromDepth)
 {
+    assert(not chromName.empty());
     assert(testPos(pos));
     for (const auto& indelInfo : _data[pos])
     {
-        writeSomaticIndelVcfGrid(_opt, _dopt, pos, indelInfo, wasNormal, wasTumor, *_osptr);
+        writeSomaticIndelVcfGrid(_opt, _dopt, chromName, pos, indelInfo, wasNormal, wasTumor, maxChromDepth, *_osptr);
     }
     _data.erase(pos);
 }

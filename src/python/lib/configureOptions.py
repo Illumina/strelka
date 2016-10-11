@@ -119,10 +119,11 @@ class ConfigureWorkflowOptions(object) :
 
         # next is the 'global' ini file, in the same directory as the configure
         # script:
-        cmdlineScriptName=os.path.basename(sys.argv[0])
+        realArg0=os.path.realpath(sys.argv[0])
+        cmdlineScriptName=os.path.basename(realArg0)
         configFileName=cmdlineScriptName+".ini"
 
-        cmdlineScriptDir=os.path.abspath(os.path.dirname(sys.argv[0]))
+        cmdlineScriptDir=os.path.abspath(os.path.dirname(realArg0))
         globalConfigPath=os.path.join(cmdlineScriptDir,configFileName)
         updateIniSections(iniSections,getIniSections(globalConfigPath))
 
@@ -148,11 +149,13 @@ class ConfigureWorkflowOptions(object) :
             parser.print_help()
             sys.exit(2)
 
-        if len(args) : # or (len(sys.argv) == 1):
-            parser.print_help()
-            sys.exit(2)
-
         try :
+            nargs=len(args)
+            if nargs :
+                plural=""
+                if nargs>1 : plural="s"
+                raise OptParseException("%i unrecognized argument%s:\n%s" % (nargs, plural, "\n".join(["'"+arg+"'" for arg in args])))
+
             # sanitize arguments before writing defaults, check for missing arguments after:
             #
             self.validateAndSanitizeExistingOptions(options)

@@ -20,7 +20,6 @@
 
 #include "gvcf_aggregator.hh"
 
-#include "bedstreamprocessor.hh"
 #include "gvcf_writer.hh"
 #include "indel_overlapper.hh"
 #include "variant_prefilter_stage.hh"
@@ -33,23 +32,24 @@ gvcf_aggregator(
     const starling_deriv_options& dopt,
     const starling_streams& streams,
     const reference_contig_segment& ref,
-    const RegionTracker& nocompress_regions,
+    const RegionTracker& nocompressRegions,
+    const RegionTracker& targetedRegions,
     const std::vector<std::reference_wrapper<const pos_basecall_buffer>>& basecallBuffers)
     : _scoringModels(opt, dopt.gvcf)
 {
     if (! opt.gvcf.is_gvcf_output())
         throw std::invalid_argument("gvcf_aggregator cannot be constructed with nothing to do.");
 
-    std::shared_ptr<variant_pipe_stage_base> nextPipeStage(new gvcf_writer(opt, dopt, streams, ref, nocompress_regions, _scoringModels));
+    _gvcfWriterPtr.reset(new gvcf_writer(opt, dopt, streams, ref, nocompressRegions, _scoringModels));
+    std::shared_ptr<variant_pipe_stage_base> nextPipeStage(_gvcfWriterPtr);
     if (opt.is_ploidy_prior)
     {
         std::shared_ptr<variant_pipe_stage_base> overlapper(new indel_overlapper(_scoringModels, ref, nextPipeStage));
-        _codon_phaser.reset(new Codon_phaser(opt, basecallBuffers, overlapper));
-        nextPipeStage = _codon_phaser;
+        _codonPhaserPtr.reset(new Codon_phaser(opt, basecallBuffers, overlapper));
+        nextPipeStage = _codonPhaserPtr;
     }
-    std::shared_ptr<variant_pipe_stage_base> targeted_region_processor(
-        new bed_stream_processor(opt.gvcf.targeted_regions_bedfile, opt.bam_seq_name.c_str(), nextPipeStage));
-    _head.reset(new variant_prefilter_stage(_scoringModels, targeted_region_processor));
+    const bool isTargetedRegions(not opt.gvcf.targeted_regions_bedfile.empty());
+    _head.reset(new variant_prefilter_stage(_scoringModels, isTargetedRegions, targetedRegions, nextPipeStage));
 }
 
 gvcf_aggregator::~gvcf_aggregator()

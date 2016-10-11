@@ -29,7 +29,6 @@
 #include "starling_common/starling_base_shared.hh"
 
 
-
 struct starling_options : public starling_base_options
 {
     starling_options()
@@ -92,19 +91,17 @@ struct starling_options : public starling_base_options
 };
 
 
-// data deterministically derived from the input options:
-//
+/// data deterministically derived from the input options:
+///
 struct starling_deriv_options : public starling_base_deriv_options
 {
     typedef starling_base_deriv_options base_t;
 
-    starling_deriv_options(
-        const starling_options& opt,
-        const reference_contig_segment& ref)
-        : base_t(opt,ref),
-          gvcf(opt.gvcf, opt.bam_seq_name, opt.isRNA)
+    explicit
+    starling_deriv_options(const starling_options& opt)
+        : base_t(opt),
+          gvcf(opt.gvcf, opt.isRNA)
     {}
 
     gvcf_deriv_options gvcf;
 };
-

@@ -55,8 +55,7 @@ struct SomaticIndelVcfWriter
         std::ostream* osptr) :
         _opt(opt),
         _dopt(dopt),
-        _osptr(osptr)
-    {}
+        _osptr(osptr) {}
 
     /// return true if indel information is cached for this position
     bool
@@ -73,6 +72,12 @@ struct SomaticIndelVcfWriter
         return (_data.empty());
     }
 
+    void
+    clear()
+    {
+        _data.clear();
+    }
+
     /// store an indel call
     void
     cacheIndel(
@@ -80,11 +85,15 @@ struct SomaticIndelVcfWriter
         const SomaticIndelVcfInfo& siInfo);
 
     /// add final information required
+    ///
+    /// \param maxChromDepth[in] max expected normal sample depth for this chromosome
     void
     addIndelWindowData(
+        const std::string& chromName,
         const pos_t pos,
         const win_avg_set& wasNormal,
-        const win_avg_set& wasTumor);
+        const win_avg_set& wasTumor,
+        const double maxChromDepth);
 
 private:
     const strelka_options& _opt;

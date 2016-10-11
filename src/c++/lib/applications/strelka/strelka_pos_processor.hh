@@ -48,6 +48,13 @@ struct strelka_pos_processor : public starling_pos_processor_base
         const reference_contig_segment& ref,
         const strelka_streams& streams);
 
+    void reset() override;
+
+    void
+    resetRegion(
+        const std::string& chromName,
+        const known_pos_range2& regionRange);
+
     void
     insert_noise_pos(
         const pos_t pos,
@@ -75,9 +82,6 @@ private:
         const int stage_no,
         const pos_t pos) override;
 
-    void
-    write_counts(const pos_range& output_report_range) const override;
-
     bool
     derived_empty() const override
     {
@@ -91,6 +95,9 @@ private:
     const strelka_options& _opt;
     const strelka_deriv_options& _dopt;
     const strelka_streams& _streams;
+
+    double _normChromDepth = 0.;
+    double _maxChromDepth = 0.;
 
     CleanedPileup _tier2_cpi[STRELKA_SAMPLE_TYPE::SIZE];
 

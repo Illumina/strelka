@@ -26,7 +26,6 @@
 #include "VariantScoringModelBase.hh"
 #include "VariantScoringModelMetadata.hh"
 #include "VariantScoringModelTypes.hh"
-#include "blt_util/log.hh"
 
 #include <algorithm>
 #include <memory>

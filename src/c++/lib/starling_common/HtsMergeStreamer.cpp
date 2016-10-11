@@ -94,6 +94,43 @@ queueItem(
 
 
 
+void
+HtsMergeStreamer::
+resetRegion(const char* region)
+{
+    assert(nullptr != region);
+
+    _isStreamBegin = false;
+    _isStreamEnd = false;
+    _streamQueue = queue_t(); // why no .clear() for queues?
+
+    const unsigned streamCount(_order.size());
+    for (unsigned streamIndex(0); streamIndex < streamCount; ++streamIndex)
+    {
+        const auto& orderData(_order[streamIndex]);
+        if (orderData.htsType == HTS_TYPE::BAM)
+        {
+            getHtsStreamer(streamIndex, _data._bam).resetRegion(region);
+        }
+        else if (orderData.htsType == HTS_TYPE::BED)
+        {
+            getHtsStreamer(streamIndex, _data._bed).resetRegion(region);
+        }
+        else if (orderData.htsType == HTS_TYPE::VCF)
+        {
+            getHtsStreamer(streamIndex, _data._vcf).resetRegion(region);
+        }
+        else
+        {
+            assert(false and "Unexpected hts file type.");
+        }
+
+        queueItem(streamIndex);
+    }
+}
+
+
+
 bool
 HtsMergeStreamer::
 next()
