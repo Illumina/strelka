@@ -166,7 +166,11 @@ strelka_streams(
                 {
                     {
                         std::ostringstream oss;
-                        oss << "SNV Empirical Variant Score (EVS) is less than " << opt.sfilter.snvMinEVS;
+
+                        // Currently the lowEVS filter is shared btw. indels and snvs. For the header
+                        // we report the cut-off value from the SNV currently
+                        const VariantScoringModelServer& varModel(*dopt.somaticSnvScoringModel);
+                        oss << "Empirical Variant Score (EVS) is less than " << varModel.scoreFilterThreshold();
                         write_vcf_filter(fos, get_label(LowEVSsnv), oss.str().c_str());
                     }
                 }

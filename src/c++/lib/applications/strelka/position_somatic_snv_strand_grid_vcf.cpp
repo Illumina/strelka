@@ -383,17 +383,11 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
             smod.EVS = error_prob_to_phred(smod.EVS);
 
-            // TMP!!!! Empirically re-maps EVS value to get a better calibration
-            // See STARKA-257 github comment for more detail on this fit
-            auto recal_somatic_snv_score = [](double& score)
-            {
-                return 2.51*score+0.98;
-            };
+            static const double maxEmpiricalVariantScore(60);
+            smod.EVS = std::min(smod.EVS,maxEmpiricalVariantScore);
 
-            smod.EVS = recal_somatic_snv_score(smod.EVS);
             smod.filters.clear();
 
-            // Temp hack to handle sample with large LOH, if REF is already het, set low score and filter by default
             if (rs.ntype != NTYPE::REF) smod.EVS=0;
 
             if (smod.EVS < varModel.scoreFilterThreshold())
