@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
     {
         unsigned sampleId = alignId % sampleCount;
         detector.setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ);
-        for (pos_t pos(0); pos<refLength-1; ++pos)
+        for (pos_t pos(0); pos<refLength; ++pos)
         {
             // only sample 1 has mismatches
             // alternative allele frequency 0.5
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
 
     for (unsigned sampleId(0); sampleId<sampleCount; ++sampleId)
     {
-        for (pos_t pos(0); pos<refLength-1; ++pos)
+        for (pos_t pos(0); pos<refLength; ++pos)
         {
             if ((sampleId == 1) and (snvPos.find(pos) != snvPos.end()))
             {
@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
     for (int alignId=0; alignId < depth; ++alignId)
     {
         detector.setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ);
-        for (pos_t pos(0); pos<refLength-1; ++pos)
+        for (pos_t pos(0); pos<refLength; ++pos)
         {
             detector.insertMatch(alignId, pos);
 
@@ -235,11 +235,12 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
             }
         }
 
-        for (pos_t pos(startPosition); pos<endPosition; ++pos)
+        for (pos_t pos(startPosition); pos<endPosition-1; ++pos)
         {
             detector.updateEndPosition(pos, false);
             detector.updateStartPosition(pos - (readLength + maxIndelSize));
         }
+	detector.updateEndPosition(endPosition-1, true);
 
         // check if polySites are correctly set
         BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, startPosition+snvOffsets[0]), true);
