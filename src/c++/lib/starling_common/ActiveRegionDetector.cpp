@@ -178,7 +178,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
             _numVariants = 0;
         }
     }
-    
+
     clearPos(posToClear);
 }
 

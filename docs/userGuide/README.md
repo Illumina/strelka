@@ -16,6 +16,7 @@ Strelka User Guide
   * [Statistics](#statistics)
 * [Run configuration and Execution](#run-configuration-and-execution)
   * [Configuration](#configuration)
+    * [General options](#general-options)
     * [Germline](#germline-1)
     * [Somatic](#somatic-1)
     * [Advanced configuration options](#advanced-configuration-options)
@@ -173,6 +174,19 @@ germline workflow.
 
 On completion, the configuration script will create the workflow run script `${STRELKA_ANALYSIS_PATH}/runWorkflow.py`. This can be used to run the workflow in various
 parallel compute modes per the instructions in the [Execution] section below.
+
+#### General options
+
+##### Forced genotypes
+
+You can force genotype calls in any Strelka workflow by passing a forced genotype VCF with the `--forcedGT` flag.  This should guarantee that all variants in the input VCF show up in the output VCF, even if there is no evidence for the variant.  Variants in the forced genotype VCF __must__ be normalized--if they are not, Strelka will exit with an error providing the first non-normalized record encountered, as well as advice for normalizing the VCF before relaunching Strelka.
+You may specify multiple forced genotype VCFs by passing multiple VCFs with the `forcedGT` flag (e.g. `--forcedGT fgt1.vcf.gz --forcedGT fgt2.vcf.gz ...`).  Forced genotype VCFs must be indexed.
+
+##### Candidate indels
+
+A VCF with candidate indels can be provided to any Strelka workflow with the `--indelCandidates` flag.  This __will not__ guarantee that candidates in the input VCF will show up in the output--if there is no evidence for the candidate indel, it will not be reported.  Variants in the candidate indel VCF do not strictly need to be normalized, _however_, if they are not normalized, they will be skipped.
+Skipped non-normalized candidate indels will be warned in the run directory in {runDir}/workspace/pyflow.data/logs/pyflow_tasks_stderr_log.txt.  Any non-normalized candidate indels will appear in that file with the preceding warning text: "WARNING: Input VCF record is not normalized:", followed by the VCF record for the non-normalized entry, as well as advice for normalizing the VCF if desired.  It is up to the user to determine whether it is critical to normalize the skipped indels.
+You may specify multiple candidate indel VCFs by passing multiple VCFs with the `indelCandidates` flag (e.g. `--indelCandidates cand1.vcf.gz --indelCandidates cand2.vcf.gz ...`).  Indel candidate VCFs must be indexed.
 
 #### Germline
 

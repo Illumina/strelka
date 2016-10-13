@@ -33,7 +33,7 @@ for modelPrefix in germline somatic; do
     for modelFilePath in $(ls ${EVSDir}/models/${modelPrefix}*ScoringModels.json); do
         if ! [ -f $modelFilePath ]; then continue; fi
         echo "checking $(basename $modelFilePath)"
-        $scriptDir/validateJsonModelFromSchema.py --schema ${EVSDir}/schema/empiricalScoringModelSchema.json < $modelFilePath 
+        $scriptDir/validateJsonModelFromSchema.py --schema ${EVSDir}/schema/empiricalScoringModelSchema.json < $modelFilePath
     done
 done
 
