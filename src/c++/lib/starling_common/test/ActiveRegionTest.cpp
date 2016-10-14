@@ -240,7 +240,7 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
             detector.updateEndPosition(pos, false);
             detector.updateStartPosition(pos - (readLength + maxIndelSize));
         }
-	detector.updateEndPosition(endPosition-1, true);
+        detector.updateEndPosition(endPosition-1, true);
 
         // check if polySites are correctly set
         BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, startPosition+snvOffsets[0]), true);

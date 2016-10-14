@@ -140,7 +140,7 @@ writeSomaticIndelVcfGrid(
 
         if (rs.ntype != NTYPE::REF)
         {
-        	smod.EVS = 1.0;
+            smod.EVS = 1.0;
             smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::Nonref);
         }
 

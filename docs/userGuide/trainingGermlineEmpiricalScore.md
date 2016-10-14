@@ -5,10 +5,11 @@
 ## Table of Contents
 [] (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
 * [Introduction](#introduction)
+* [Requirements](#requirements)
 * [Step 1: Build snv and indel training data sets](#step-1-build-snv-and-indel-training-data-sets)
   * [Step 1a: Preliminary filtering of the VCF file:](#step-1a-preliminary-filtering-of-the-vcf-file)
   * [Step 1b: Assigning truth labels using hap.py:](#step-1b-assigning-truth-labels-using-happy)
-  * [Step 1c: Convert the hap.py output into a CSV feature file:](#step-1c-convert-the-happy-output-into-a-csv-feature-file)
+  * [Step 1c: Convert the annotated variant output into a CSV feature file:](#step-1c-convert-the-annotated-variant-output-into-a-csv-feature-file)
   * [Step 1d (optional): Handle multiple training data sets](#step-1d-optional-handle-multiple-training-data-sets)
 * [Step 2: Training an EVS model](#step-2-training-an-evs-model)
 * [Step 3: Calculate Scores](#step-3-calculate-scores)
@@ -85,7 +86,7 @@ hap.py NA12878.vcf.gz filtered.vcf.gz -f ConfidentRegions.bed.gz -o happy_PG_ann
 
 The annotated hap.py output is next converted to a pair of csv files respectively containing features for snv and
 indel calls. The example command-line:
- 
+
 
 ```
 gzip -dc happy_PG_annotated.vcf.gz |\
