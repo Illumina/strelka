@@ -62,19 +62,19 @@ gzip -dc filtered.vcf.gz | awk '/^#/ && /scoring_features/' >| scoringFeatures.t
 ### Step 1b: Assigning truth labels using hap.py:
 
 Next, the haplotype comparison tool [hap.py](https://github.com/Illumina/hap.py) is used to assign training labels to
-the strelka output. The truth set will be used to label strelka calls as true positive (TP), false positive (FP),
-or unknown (UNK) if ambiguous regions have been provided to to `hap.py`. In the subsequent training steps, false
-negatives are disregarded (variants that do not result in strelka calls), since most of them will not appear in the
-output vcf in the first place. In the example below the [Platinum Genomes](http://www.illumina.com/platinumgenomes/)
-truth set is used to label the variant calling output. For example, using NA12878/hg19 the following truth data could
-be obtained:
+the strelka output. The truth set will be used to label strelka calls as true positive (TP) or false positive (FP), and
+if confident regions are provided to the labeling schme, then calls in non-confident regions will be labeled as unknown
+(UNK). False negatives are disregarded in the subsequent training steps. In the example below the
+[Platinum Genomes](http://www.illumina.com/platinumgenomes/)
+truth set is used to label the variant calling output. For NA12878/hg19 these truth data could
+be obtained from ftp as follows:
 
 ```bash
 wget ftp://platgene_ro:@ussd-ftp.illumina.com/2016-1.0/hg19/small_variants/NA12878/NA12878.vcf.gz
 wget ftp://platgene_ro:@ussd-ftp.illumina.com/2016-1.0/hg19/small_variants/ConfidentRegions.bed.gz
 ```
 
-And labeled using `hap.py`. This is an example hap.py command-line for a 40 core cluster producing apporpiately
+Using this truth set, the following is an example hap.py command-line for a 40 core cluster producing appropriately
 labeled output:
 
 ```bash

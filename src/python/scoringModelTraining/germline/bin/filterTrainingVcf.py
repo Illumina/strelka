@@ -19,7 +19,7 @@
 #
 
 """
-Filters out some gvcf entries before passing it to hap.py. This script makes hard assumptions about the order of entries in the vcf.
+Filters out some gvcf entries before passing it to hap.py.
 """
 
 import sys
@@ -31,9 +31,6 @@ def getOptions() :
 
     usage = "usage: %prog < input.vcf > filtered.vcf"
     parser = OptionParser(usage=usage)
-
-    #    parser.add_option("--", dest="isUnique",action="store_true",default=False,
-    #                      help="filter all but one record with the same {CHR,POS,REF,ALT}")
 
     (options,args) = parser.parse_args()
 
@@ -62,20 +59,20 @@ def main() :
 
     (options,args) = getOptions()
 
-    infp=sys.stdin
-    outfp=sys.stdout
+    infp = sys.stdin
+    outfp = sys.stdout
 
     for line in infp :
         if line[0] == "#" :
             outfp.write(line)
             continue
 
-        word=line.strip().split('\t')
+        word = line.strip().split('\t')
 
         # EVS training procedure requires exactly one sample
         assert(len(word) == (VCFID.SAMPLE+1))
 
-        filterVals=word[VCFID.FILTER].split(';')
+        filterVals = word[VCFID.FILTER].split(';')
 
         # Skip entries matching OffTarget in the filter field (for WES data)
         if "OffTarget" in filterVals : continue
@@ -84,11 +81,12 @@ def main() :
         for filterVal in filterVals :
             if filterVal.endswith("Conflict") : continue
 
-        sampleVals=word[VCFID.SAMPLE].split(':')
+        formatVals = word[VCFID.FORMAT].split(':')
+        sampleVals = word[VCFID.SAMPLE].split(':')
 
-        # Skip entries the do not have diploid genotype (hemizygotes)
-        # TODO detect which field is GT instead of assuming it is first
-        if not re.match(".[/|].",sampleVals[0]) : continue
+        # Skip entries that do not have diploid genotype (hemizygotes)
+        sampleGTIndex = formatVals.index("GT")
+        if not re.match(".[/|].",sampleVals[sampleGTIndex]) : continue
 
         outfp.write(line)
 

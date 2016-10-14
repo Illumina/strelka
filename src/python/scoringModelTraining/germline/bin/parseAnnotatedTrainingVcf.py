@@ -29,7 +29,7 @@ def getOptions() :
 
     from optparse import OptionParser
 
-    usage = "usage: %prog [optoins] < annotated.vcf"
+    usage = "usage: %prog [options] < annotated.vcf"
     parser = OptionParser(usage=usage)
 
     parser.add_option("--scoringFeatures", type="string", dest="scoringFeaturesPath",metavar="FILE",
@@ -82,10 +82,10 @@ def main() :
 
     (options,args) = getOptions()
 
-    infp=sys.stdin
+    infp = sys.stdin
 
-    snv_outfp=open(options.snvOutputPath,"w")
-    indel_outfp=open(options.indelOutputPath,"w")
+    snv_outfp = open(options.snvOutputPath,"w")
+    indel_outfp = open(options.indelOutputPath,"w")
 
     class HeaderData :
         isOutputHeaderInitialized = False
@@ -125,12 +125,12 @@ def main() :
         if line[0] == "#" :
             continue
 
-        word=line.strip().split('\t')
+        word = line.strip().split('\t')
 
         # expecting standard happy annotation with truth/query samples:
         assert(len(word) == (VCFID.SAMPLE+2))
 
-        filterVals=word[VCFID.FILTER].split(';')
+        filterVals = word[VCFID.FILTER].split(';')
 
         # Skip entries matching OffTarget in the filter field (for WES data)
         if "OffTarget" in filterVals : continue
@@ -140,11 +140,13 @@ def main() :
 
         isSNV = (word[VCFID.INFO].find("CIGAR=") == -1)
 
+        formatVals = word[VCFID.FORMAT].split(":")
         queryVals = word[VCFID.SAMPLE+1].split(":")
 
         if "NOCALL" in queryVals : continue
 
-        qlabel = queryVals[1]
+        sampleBDIndex = formatVals.index("BD")
+        qlabel = queryVals[sampleBDIndex]
         if qlabel not in ("TP","FP","UNK") :
             raise Exception("Query value is not TP|FP|UNK as expected:\n%s" % (line))
 
@@ -152,7 +154,8 @@ def main() :
             if isSNV : return "SNP"
             else : return "INDEL"
 
-        qtype = queryVals[4]
+        sampleBVTIndex = formatVals.index("BVT")
+        qtype = queryVals[sampleBVTIndex]
         if qtype != typeLabel(isSNV) : continue
 
         def typeStream(isSNV) :
