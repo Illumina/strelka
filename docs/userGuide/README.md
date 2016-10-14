@@ -16,9 +16,9 @@ Strelka User Guide
   * [Statistics](#statistics)
 * [Run configuration and Execution](#run-configuration-and-execution)
   * [Configuration](#configuration)
-    * [General options](#general-options)
-    * [Germline](#germline-1)
-    * [Somatic](#somatic-1)
+    * [General configuration options](#general-configuration-options)
+    * [Germline configuration options](#germline-configuration-options)
+    * [Somatic configuration options](#somatic-configuration-options)
     * [Advanced configuration options](#advanced-configuration-options)
   * [Execution](#execution)
     * [Advanced execution options](#advanced-execution-options)
@@ -175,23 +175,26 @@ germline workflow.
 On completion, the configuration script will create the workflow run script `${STRELKA_ANALYSIS_PATH}/runWorkflow.py`. This can be used to run the workflow in various
 parallel compute modes per the instructions in the [Execution] section below.
 
-#### General options
-
-##### Forced genotypes
-
-You can force genotype calls in any Strelka workflow by passing a forced genotype VCF with the `--forcedGT` flag.  This should guarantee that all variants in the input VCF show up in the output VCF, even if there is no evidence for the variant.  Variants in the forced genotype VCF __must__ be normalized—if they are not, Strelka will exit with an error providing the first non-normalized record encountered, as well as advice for normalizing the VCF before relaunching Strelka.
-
-You may specify multiple forced genotype VCFs by passing multiple VCFs with the `forcedGT` flag (e.g. `--forcedGT fgt1.vcf.gz --forcedGT fgt2.vcf.gz ...`).  Forced genotype VCFs must be indexed.
+#### General configuration options
 
 ##### Candidate indels
 
-A VCF with candidate indels can be provided to any Strelka workflow with the `--indelCandidates` flag.  This __will not__ guarantee that candidates in the input VCF will show up in the output—if there is no evidence for the candidate indel, it will not be reported.  Variants in the candidate indel VCF do not strictly need to be normalized, _however_, if they are not normalized, they will be skipped.
+One or more candidate indels VCFs can be provided to any Strelka workflow with the `--indelCandidates` flag. Any indels provided by this mechanism will be given candidate status and considered during realignment and genotyping steps, but will not be printed to the output unless standard variant output thresholds are
+met. This is a useful mechanism to supply Strelka with larger indels (ie. larger than can be found by the read mapper), or to provide population variants.
 
-Skipped non-normalized candidate indels will be warned in the run directory in `{runDir}/workspace/pyflow.data/logs/pyflow_tasks_stderr_log.txt`.  Any non-normalized candidate indels will appear in that file with the preceding warning text: "WARNING: Input VCF record is not normalized:", followed by the VCF record for the non-normalized entry, as well as advice for normalizing the VCF if desired.  It is up to the user to determine whether it is critical to normalize the skipped indels.
+Any candidate indel record which is not left-normalized will be skipped with a warning.
 
-You may specify multiple candidate indel VCFs by passing multiple VCFs with the `indelCandidates` flag (e.g. `--indelCandidates cand1.vcf.gz --indelCandidates cand2.vcf.gz ...`).  Indel candidate VCFs must be indexed.
+You may specify multiple candidate indel VCFs by passing multiple VCFs with the `indelCandidates` flag (e.g. `--indelCandidates cand1.vcf.gz --indelCandidates cand2.vcf.gz ...`).  All input VCFs must be bgzip compressed and tabix-indexed.
 
-#### Germline
+##### Forced genotypes
+
+One or more forced genotype VCFs can be provided to any Strelka workflow with the `--forcedGT` flag.  Any indel allele provided in these files will be treated as a candidate (per the `--indelCandidates` option above), and additionally must appear in the output VCF, even when there is no support for the allele. Be aware that in certain cases where the forced allele overlaps another called allele, the forced allele may appear in the output on a VCF record with a different position and/or an additional prefix/suffix added to the REF and ALT fields compared to the allele description in the VCF input. Any SNV listed in the forced genotype VCF will prevent the corresponding site form being compressed into a homozygous reference block, but will not provide any special treatment of the alternate base(s) listed in the VCF.
+
+Any forced genotype variant record which is not left-normalized will __trigger a runtime error__.
+
+You may specify multiple forced genotype VCFs by passing multiple VCFs with the `forcedGT` flag (e.g. `--forcedGT fgt1.vcf.gz --forcedGT fgt2.vcf.gz ...`).  All input VCFs must be bgzip compressed and tabix-indexed.
+
+#### Germline configuration options
 
 Germline analysis is configured with the script: `${STRELKA_INSTALL_PATH}/bin/configureStrelkaGermlineWorkflow.py`
 
@@ -211,7 +214,7 @@ Joint Diploid Sample Analysis -- Example Configuration:
     --referenceFasta hg19.fa \
     --runDir ${STRELKA_ANALYSIS_PATH}
 
-#### Somatic
+#### Somatic configuration options
 
 Somatic analysis is configured with the script: `${STRELKA_INSTALL_PATH}/bin/configureStrelkaSomaticWorkflow.py`
 
