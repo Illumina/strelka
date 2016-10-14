@@ -7,9 +7,9 @@
 * [Introduction](#introduction)
 * [Requirements](#requirements)
 * [Step 1: Build snv and indel training data sets](#step-1-build-snv-and-indel-training-data-sets)
-  * [Step 1a: Preliminary filtering of the VCF file:](#step-1a-preliminary-filtering-of-the-vcf-file)
-  * [Step 1b: Assigning truth labels using hap.py:](#step-1b-assigning-truth-labels-using-happy)
-  * [Step 1c: Convert the annotated variant output into a CSV feature file:](#step-1c-convert-the-annotated-variant-output-into-a-csv-feature-file)
+  * [Step 1a: Preliminary filtering of the VCF file](#step-1a-preliminary-filtering-of-the-vcf-file)
+  * [Step 1b: Assigning truth labels using hap.py](#step-1b-assigning-truth-labels-using-happy)
+  * [Step 1c: Convert the annotated variant output into a CSV feature file](#step-1c-convert-the-annotated-variant-output-into-a-csv-feature-file)
   * [Step 1d (optional): Handle multiple training data sets](#step-1d-optional-handle-multiple-training-data-sets)
 * [Step 2: Training an EVS model](#step-2-training-an-evs-model)
 * [Step 3: Calculate Scores](#step-3-calculate-scores)
@@ -43,7 +43,7 @@ features can be reported even when scoring itself is turned off with the `--disa
 
 Given a strelka gVCF genome.vcf.gz and a corresponding platinum genomes truth vcf with a bed file specifying confident regions, the following steps will produce two CSV feature files suitable for EVS training/testing of the snv and indel models.
 
-### Step 1a: Preliminary filtering of the VCF file:
+### Step 1a: Preliminary filtering of the VCF file
 
 First we need to filter out some unwanted gVCF entries. The following extracts the list of scoring features for use in Step 1c and removes the following:
 
@@ -60,7 +60,7 @@ filtered.vcf.gz
 gzip -dc filtered.vcf.gz | awk '/^#/ && /scoring_features/' >| scoringFeatures.txt
 ```
 
-### Step 1b: Assigning truth labels using hap.py:
+### Step 1b: Assigning truth labels using hap.py
 
 Next, the haplotype comparison tool [hap.py](https://github.com/Illumina/hap.py) is used to assign training labels to
 the strelka output. The truth set will be used to label strelka calls as true positive (TP) or false positive (FP), and
@@ -82,7 +82,7 @@ labeled output:
 hap.py NA12878.vcf.gz filtered.vcf.gz -f ConfidentRegions.bed.gz -o happy_PG_annotated -V --preserve-info --threads 40 -P
 ```
 
-### Step 1c: Convert the annotated variant output into a CSV feature file:
+### Step 1c: Convert the annotated variant output into a CSV feature file
 
 The annotated hap.py output is next converted to a pair of csv files respectively containing features for snv and
 indel calls. The example command-line:

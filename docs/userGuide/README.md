@@ -179,20 +179,19 @@ parallel compute modes per the instructions in the [Execution] section below.
 
 ##### Candidate indels
 
-One or more candidate indels VCFs can be provided to any Strelka workflow with the `--indelCandidates` flag. Any indels provided by this mechanism will be given candidate status and considered during realignment and genotyping steps, but will not be printed to the output unless standard variant output thresholds are
-met. This is a useful mechanism to supply Strelka with larger indels (ie. larger than can be found by the read mapper), or to provide population variants.
+One or more candidate indel VCFs can be provided to any Strelka workflow with the `--indelCandidates` flag. Any indels provided in this way will be given candidate status and considered during realignment and genotyping steps, but will not be output unless the indel allele is found in the input samples. This is a useful mechanism to supply Strelka with larger indels (ie. larger than can be found by the read mapper), or to provide population variants.
 
 Any candidate indel record which is not left-normalized will be skipped with a warning.
 
-You may specify multiple candidate indel VCFs by passing multiple VCFs with the `indelCandidates` flag (e.g. `--indelCandidates cand1.vcf.gz --indelCandidates cand2.vcf.gz ...`).  All input VCFs must be bgzip compressed and tabix-indexed.
+Multiple candidate indel VCFs may be submitted to the workflow (e.g. `--indelCandidates cand1.vcf.gz --indelCandidates cand2.vcf.gz ...`). All input VCFs must be bgzip compressed and tabix-indexed.
 
 ##### Forced genotypes
 
-One or more forced genotype VCFs can be provided to any Strelka workflow with the `--forcedGT` flag.  Any indel allele provided in these files will be treated as a candidate (per the `--indelCandidates` option above), and additionally must appear in the output VCF, even when there is no support for the allele. Be aware that in certain cases where the forced allele overlaps another called allele, the forced allele may appear in the output on a VCF record with a different position and/or an additional prefix/suffix added to the REF and ALT fields compared to the allele description in the VCF input. Any SNV listed in the forced genotype VCF will prevent the corresponding site form being compressed into a homozygous reference block, but will not provide any special treatment of the alternate base(s) listed in the VCF.
+One or more forced genotype VCFs can be provided to any Strelka workflow with the `--forcedGT` flag.  Any indel allele provided in this way will be treated as a candidate (per the `--indelCandidates` option above), and additionally must appear in the output VCF, even when there is no support for the allele in the input samples. Be aware that in certain cases where the forced allele overlaps another called allele, the forced allele may appear in the output on a VCF record with a different position and/or an additional prefix/suffix added to the REF and ALT fields compared to the allele description in the VCF input. Any SNV listed in the forced genotype VCF will prevent the corresponding site form being compressed into a homozygous reference block and ensure that a VCF site record is output for the given position, but will not provide any special treatment of the alternate base(s) listed in the VCF.
 
 Any forced genotype variant record which is not left-normalized will __trigger a runtime error__.
 
-You may specify multiple forced genotype VCFs by passing multiple VCFs with the `forcedGT` flag (e.g. `--forcedGT fgt1.vcf.gz --forcedGT fgt2.vcf.gz ...`).  All input VCFs must be bgzip compressed and tabix-indexed.
+Multiple forced genotype VCFs may be submitted to the workflow (e.g. `--forcedGT fgt1.vcf.gz --forcedGT fgt2.vcf.gz ...`). All input VCFs must be bgzip compressed and tabix-indexed.
 
 #### Germline configuration options
 
