@@ -48,6 +48,7 @@ struct VariantScoringModelServer
     scoreVariant(
         const VariantScoringModelBase::featureInput_t& features) const
     {
+
         return std::max(0.,std::min(1.,(_meta.probScale * std::pow(_model->getProb(features), _meta.probPow))));
     }
 

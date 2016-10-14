@@ -64,8 +64,6 @@ You must specify an alignment file (BAM or CRAM) for each sample of a matched tu
     def addExtendedGroupOptions(self,group) :
         group.add_option("--somaticSnvScoringModelFile", type="string", dest="somaticSnvScoringModelFile", metavar="FILE",
                          help="Provide a custom EVS model file for somatic SNVs (default: %default)")
-        group.add_option("--enableSomaticIndelScoring", action="store_true", dest="isSomaticIndelEmpiricalScoring",
-                         help="Enable empirical variant scoring for somatic indels")
         group.add_option("--somaticIndelScoringModelFile", type="string", dest="somaticIndelScoringModelFile", metavar="FILE",
                          help="Provide a custom EVS model file for somatic Indels (default: %default)")
         group.add_option("--noiseVcf", type="string",dest="noiseVcfList",metavar="FILE", action="append",
@@ -84,7 +82,6 @@ You must specify an alignment file (BAM or CRAM) for each sample of a matched tu
         defaults.update({
             'runDir' : 'StrelkaSomaticWorkflow',
             "minTier2Mapq" : 0,
-            "isSomaticIndelEmpiricalScoring" : False,
             'somaticSnvScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
             'somaticIndelScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
             'isOutputCallableRegions' : False,

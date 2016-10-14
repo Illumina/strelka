@@ -298,6 +298,7 @@ starling_run(
                     known_pos_range2 range(bedRecord.begin,bedRecord.end);
                     sppr.insert_nocompress_region(range);
                 }
+
                 else if (INPUT_TYPE::TARGETED_REGION == currentIndex)
                 {
                     known_pos_range2 range(bedRecord.begin,bedRecord.end);
