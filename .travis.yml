@@ -30,9 +30,11 @@ matrix:
           packages:
           - llvm-3.4
           - llvm-3.4-dev
-    - os: osx
-      compiler: clang
-      osx_image: xcode61
+
+# disable osx test specification until travis can enable this option on for us
+#    - os: osx
+#      compiler: clang
+#      osx_image: xcode61
     # gcc would just repeat the clang test on OSX (unless we do some extra work...), so skip it
  
 script:
@@ -40,7 +42,8 @@ script:
     cd build &&
     ../configure --jobs=4 --prefix=../install &&
     make -j4 install &&
-    ../install/bin/runMantaWorkflowDemo.py
+    ../install/bin/runStrelkaGermlineWorkflowDemo.bash &&
+    ../install/bin/runStrelkaSomaticWorkflowDemo.bash
 
 branches:
   only:
@@ -52,5 +55,4 @@ notifications:
   email:
     recipients:
       - csaunders@illumina.com
-      - xchen@illumina.com
 
