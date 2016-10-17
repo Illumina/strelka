@@ -290,19 +290,8 @@ strelka_streams(
                         const double threshold(varModel.scoreFilterThreshold());
 
                         std::ostringstream oss;
-                        oss << "Indel Empirical Variant Score (EVS) is less than " << threshold;
+                        oss << "Empirical Variant Score (EVS) is less than " << threshold;
                         write_vcf_filter(fos, get_label(LowEVSindel), oss.str().c_str());
-                    }
-                    {
-                        std::ostringstream oss;
-                        oss << "Normal type is not homozygous reference.";
-                        write_vcf_filter(fos, get_label(Nonref), oss.str().c_str());
-                    }
-                    {
-                        // depth filter potentially applied in both EVS and non-EVS case
-                        std::ostringstream oss;
-                        oss << "Normal type is not homozygous reference.";
-                        write_vcf_filter(fos, get_label(HighDepth), oss.str().c_str());
                     }
                 }
                 else
@@ -320,7 +309,10 @@ strelka_streams(
                 }
             }
 
-            write_shared_vcf_header_info(opt.sfilter, dopt.sfilter, (! isUseEVS), fos);
+            // for indels only, we temporarily keep using the highdepth filter while EVS is on, so we need
+            // to add this into the header too:
+            const bool isPrintRuleFilters(true);
+            write_shared_vcf_header_info(opt.sfilter, dopt.sfilter, isPrintRuleFilters, fos);
 
             if (opt.isReportEVSFeatures)
             {

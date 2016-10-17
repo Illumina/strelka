@@ -22,19 +22,17 @@
 ///
 
 #include "SomaticIndelVcfWriter.hh"
+#include "somaticAlleleUtil.hh"
 #include "somatic_call_shared.hh"
 #include "somatic_indel_grid.hh"
 #include "somatic_indel_scoring_features.hh"
-#include "strelka_vcf_locus_info.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/io_util.hh"
-#include "blt_util/qscore.hh"
 #include "blt_util/fisher_exact_test.hh"
 #include "blt_util/binomial_test.hh"
 
 #include <iomanip>
 #include <iostream>
-#include <limits>
 
 
 
@@ -92,8 +90,10 @@ writeSomaticIndelVcfGrid(
 {
     const indel_result_set& rs(siInfo.sindel.rs);
 
-    // always use high depth filter when enabled
     strelka_shared_modifiers_indel smod;
+
+    // this filter is applied to both EVS and non-EVS models
+    /// TODO add a "relative to expected depth" feature to the EVS model so that EVS is a single filter/single ROC model
     if (dopt.sfilter.is_max_depth())
     {
         const unsigned& depth(siInfo.nisri[0].tier1Depth);
@@ -131,18 +131,7 @@ writeSomaticIndelVcfGrid(
     {
         assert(dopt.somaticIndelScoringModel);
         const VariantScoringModelServer& varModel(*dopt.somaticIndelScoringModel);
-        smod.EVS = varModel.scoreVariant(smod.features.getAll());
-
-        static const int maxEmpiricalVariantScore(60);
-        smod.EVS = std::min(int(error_prob_to_phred(smod.EVS)),maxEmpiricalVariantScore);
-
-        smod.isEVS = true;
-
-        if (rs.ntype != NTYPE::REF)
-        {
-            smod.EVS = 1.0;
-            smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::Nonref);
-        }
+        updateAlleleEVSScore(varModel, rs, smod);
 
         if (smod.EVS < varModel.scoreFilterThreshold())
         {
@@ -177,13 +166,6 @@ writeSomaticIndelVcfGrid(
     os << sep
        << "SOMATIC";
 
-    if (smod.isEVS)
-    {
-        const StreamScoper ss(os);
-        os << std::fixed << std::setprecision(4);
-        os << ";EVS=" << smod.EVS;
-    }
-
     os << ";QSI=" << rs.qphred
        << ";TQSI=" << (siInfo.sindel.sindel_tier+1)
        << ";NT=" << NTYPE::label(rs.ntype)
@@ -200,16 +182,21 @@ writeSomaticIndelVcfGrid(
         const StreamScoper ss(os);
         os << std::fixed << std::setprecision(2);
         os << ";MQ=" << mapqTracker.getRMS()
-           << ";MQ0=" << mapqTracker.zeroCount
-           ;
+           << ";MQ0=" << mapqTracker.zeroCount;
+
+        if (siInfo.indelReportInfo.is_repeat_unit())
+        {
+            os << ";RU=" << siInfo.indelReportInfo.repeat_unit
+               << ";RC=" << siInfo.indelReportInfo.ref_repeat_count
+               << ";IC=" << siInfo.indelReportInfo.indel_repeat_count;
+        }
+        os << ";IHP=" << siInfo.indelReportInfo.ihpol;
+
+        if (smod.isEVS)
+        {
+            os << ";EVS=" << smod.EVS;
+        }
     }
-    if (siInfo.indelReportInfo.is_repeat_unit())
-    {
-        os << ";RU=" << siInfo.indelReportInfo.repeat_unit
-           << ";RC=" << siInfo.indelReportInfo.ref_repeat_count
-           << ";IC=" << siInfo.indelReportInfo.indel_repeat_count;
-    }
-    os << ";IHP=" << siInfo.indelReportInfo.ihpol;
 
     if (opt.isReportEVSFeatures)
     {

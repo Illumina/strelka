@@ -23,7 +23,7 @@
 ///
 
 #include "position_somatic_snv_strand_grid_vcf.hh"
-#include "strelka_digt_states.hh"
+#include "somaticAlleleUtil.hh"
 #include "strelka_vcf_locus_info.hh"
 #include "somatic_call_shared.hh"
 #include "blt_util/io_util.hh"
@@ -34,15 +34,6 @@
 #include <iostream>
 
 
-template <typename D>
-static
-double
-safeFrac(const unsigned num, const D denom)
-{
-    return ( (denom > 0) ? (num/static_cast<double>(denom)) : 0.);
-}
-
-
 
 double
 calculateLogOddsRatio(
@@ -50,7 +41,6 @@ calculateLogOddsRatio(
     const CleanedPileup& t1_cpi,
     const blt_options& opt)
 {
-
     /**
      * Calculate LOR feature (log odds ratio for  T_REF T_ALT
      *                                            N_REF N_ALT)
@@ -100,10 +90,8 @@ get_single_sample_scoring_features(
     const bool isNormalSample,
     strelka_shared_modifiers_snv& smod)
 {
-
     if (opt.isReportEVSFeatures)
     {
-
         // {2,N_FDP_RATE},{3,T_FDP_RATE},{4,N_SDP_RATE},
         // {5,T_SDP_RATE},{6,N_DP_RATE},{7,TIER1_ALLELE_RATE}
         const double FDP_ratio(safeFrac(tier1_cpi.n_unused_calls(), tier1_cpi.n_calls()));
@@ -152,7 +140,6 @@ get_single_sample_scoring_features(
         // cap the allele rate at 0.5
         smod.features.set(SOMATIC_SNV_SCORING_FEATURES::TIER1_ALT_RATE,std::min(0.5,allele_freq));
     }
-
 }
 
 
@@ -377,21 +364,15 @@ write_vcf_somatic_snv_genotype_strand_grid(
         // if we are using empirical scoring, clear filters and apply single LowEVS filter
         if (isEVS)
         {
+            assert(dopt.somaticSnvScoringModel);
             const VariantScoringModelServer& varModel(*dopt.somaticSnvScoringModel);
-            smod.isEVS = true;
-            smod.EVS = varModel.scoreVariant(smod.features.getAll());
-
-            smod.EVS = error_prob_to_phred(smod.EVS);
-
-            static const double maxEmpiricalVariantScore(60);
-            smod.EVS = std::min(smod.EVS,maxEmpiricalVariantScore);
+            updateAlleleEVSScore(varModel, rs, smod);
 
             smod.filters.clear();
-
-            if (rs.ntype != NTYPE::REF) smod.EVS=0;
-
             if (smod.EVS < varModel.scoreFilterThreshold())
+            {
                 smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::LowEVSsnv);
+            }
         }
     }
 

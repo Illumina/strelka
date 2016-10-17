@@ -34,26 +34,22 @@
 #include <iosfwd>
 
 
-
 namespace SOMATIC_VARIANT_VCF_FILTERS
 {
 
 enum index_t
 {
-    // SNVs and indels:
+    // Shared:
     HighDepth,
-    // SNVs only:
+    // SNV only:
     LowEVSsnv,
     BCNoise,
     SpanDel,
     QSS_ref,
-    // indels only:
+    // indel only:
     LowEVSindel,
-    Repeat,
-    iHpol,
     IndelBCNoise,
     QSI_ref,
-    Nonref,
     SIZE
 };
 
@@ -65,26 +61,20 @@ get_label(const unsigned idx)
     {
     case HighDepth:
         return "HighDepth";
+    case LowEVSsnv:
+        return "LowEVS";
     case BCNoise:
         return "BCNoise";
     case SpanDel:
         return "SpanDel";
     case QSS_ref:
         return "QSS_ref";
-    case Repeat:
-        return "Repeat";
-    case iHpol:
-        return "iHpol";
     case IndelBCNoise:
         return "BCNoise";
     case QSI_ref:
         return "QSI_ref";
-    case LowEVSsnv:
-        return "LowEVS";
     case LowEVSindel:
         return "LowEVS";
-    case Nonref:
-        return "Nonref";
     default:
         assert(false && "Unknown vcf filter id");
         return nullptr;

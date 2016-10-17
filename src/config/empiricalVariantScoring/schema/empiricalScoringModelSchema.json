@@ -68,10 +68,9 @@
                 },
                 "FilterCutoff":
                 {
-                    "description": "recommended default maximum error prob which should be PASS'd",
+                    "description": "recommended minimum phred-scaled quality score which should be PASS'd",
                     "type": "number",
-                    "minimum": 0,
-                    "maximum": 1
+                    "minimum": 0
                 },
                 "ModelType":
                 {
