@@ -208,10 +208,8 @@ writeSomaticIndelVcfGrid(
         smod.dfeatures.writeValues(os);
     }
 
-    if (siInfo.indelReportInfo.it == SimplifiedIndelReportType::BREAKPOINT)
-    {
-        os << ";SVTYPE=BND";
-    }
+    // vcf header does not include breakpoint fields, so don't let this be casually turned back on:
+    assert (siInfo.indelReportInfo.it != SimplifiedIndelReportType::BREAKPOINT);
 
     if (rs.is_overlap)
     {
@@ -232,6 +230,7 @@ writeSomaticIndelVcfGrid(
 
     os << '\n';
 }
+
 
 
 void

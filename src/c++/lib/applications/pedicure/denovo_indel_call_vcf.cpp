@@ -153,15 +153,6 @@ denovo_indel_call_vcf(
            << ";IC=" << indelReportInfo.indel_repeat_count;
     }
     os << ";IHP=" << indelReportInfo.ihpol;
-//    if ((iri.it == INDEL::BP_LEFT) ||
-//        (iri.it == INDEL::BP_RIGHT))
-//    {
-//        os << ";SVTYPE=BND";
-//    }
-    if (rs.is_overlap)
-    {
-//        os << ";OVERLAP";
-    }
 
     //FORMAT
     os << sep << "GT:GQ:GQX:DPI:AD";
