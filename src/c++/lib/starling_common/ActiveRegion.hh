@@ -73,10 +73,11 @@ public:
     /// \return active region object
     ActiveRegion(pos_range& posRange,
                  const reference_contig_segment& ref,
+                 const unsigned maxIndelSize,
                  const unsigned sampleCount,
                  const GlobalAligner<int>& aligner,
                  const std::vector<AlignInfo>& alignIdToAlignInfo):
-        _posRange(posRange), _ref(ref), _sampleCount(sampleCount),
+        _posRange(posRange), _ref(ref), _maxIndelSize(maxIndelSize), _sampleCount(sampleCount),
         _aligner(aligner),
         _alignIdToAlignInfo(alignIdToAlignInfo)
     {
@@ -118,6 +119,7 @@ public:
 private:
     pos_range _posRange;
     const reference_contig_segment& _ref;
+    const unsigned _maxIndelSize;
     const unsigned _sampleCount;
     std::string _refSeq;
     const GlobalAligner<int> _aligner;
