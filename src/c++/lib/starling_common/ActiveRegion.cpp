@@ -257,20 +257,25 @@ void ActiveRegion::convertToPrimitiveAlleles(
             break;
         case ALIGNPATH::INSERT:
         {
-            auto insertSeq(haploptypeSeq.substr(haplotypePosOffset, segmentLength));
-            indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(referencePos, INDEL::INDEL, 0, insertSeq.c_str()));
-
+            if (segmentLength <= _maxIndelSize)
+            {
+                auto insertSeq(haploptypeSeq.substr(haplotypePosOffset, segmentLength));
+                indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(referencePos, INDEL::INDEL, 0, insertSeq.c_str()));
+                ++numVariants;
+                isIndelExist = true;
+            }
             haplotypePosOffset += segmentLength;
-            ++numVariants;
-            isIndelExist = true;
             break;
         }
         case ALIGNPATH::DELETE:
         {
-            indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(referencePos, INDEL::INDEL, segmentLength));
+            if (segmentLength <= _maxIndelSize)
+            {
+                indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(referencePos, INDEL::INDEL, segmentLength));
+                ++numVariants;
+                isIndelExist = true;
+            }
             referencePos += segmentLength;
-            ++numVariants;
-            isIndelExist = true;
             break;
         }
         default:

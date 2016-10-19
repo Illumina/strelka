@@ -99,7 +99,7 @@ ActiveRegionDetector::updateStartPosition(const pos_t pos)
 void
 ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
 {
-    const pos_t posToClear = pos - _maxDetectionWindowSize - _maxDeletionSize;
+    const pos_t posToClear = pos - _maxDetectionWindowSize - _maxIndelSize;
 
     if (pos < _lastActiveRegionEnd)
     {
@@ -148,7 +148,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
             getExpandedRange(pos_range(origBeginPos, origEndPos), newActiveRegion);
             _lastActiveRegionEnd = newActiveRegion.end_pos;
 
-            _activeRegions.emplace_back(newActiveRegion, _ref, _sampleCount, _aligner, _alignIdToAlignInfo);
+            _activeRegions.emplace_back(newActiveRegion, _ref, _maxIndelSize, _sampleCount, _aligner, _alignIdToAlignInfo);
             auto& activeRegion(_activeRegions.back());
             // add haplotype bases
             for (pos_t activeRegionPos(newActiveRegion.begin_pos); activeRegionPos<newActiveRegion.end_pos; ++activeRegionPos)

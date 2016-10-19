@@ -74,7 +74,7 @@ public:
     /// Creates an object that reads variant information and creates active regions
     /// \param ref reference segment
     /// \param indelBuffer indel buffer
-    /// \param maxDeletionSize maximum deletion size
+    /// \param maxIndelSize maximum indel size
     /// \param sampleCount sample count
     /// \param maxDetectionWindowSize maximum active region size
     /// \param minNumVariantsPerPosition minimum number of variants per position to make the position as a candidate variant pos
@@ -82,14 +82,14 @@ public:
     ActiveRegionDetector(
         const reference_contig_segment& ref,
         IndelBuffer& indelBuffer,
-        unsigned maxDeletionSize,
-        unsigned sampleCount,
-        unsigned maxDetectionWindowSize = 30,
-        unsigned minNumVariantsPerPosition = 9,
-        unsigned minNumVariantsPerRegion = 2) :
+        const unsigned maxIndelSize,
+        const unsigned sampleCount,
+        const unsigned maxDetectionWindowSize = 30,
+        const unsigned minNumVariantsPerPosition = 9,
+        const unsigned minNumVariantsPerRegion = 2) :
         _ref(ref),
         _indelBuffer(indelBuffer),
-        _maxDeletionSize(maxDeletionSize),
+        _maxIndelSize(maxIndelSize),
         _sampleCount(sampleCount),
         _maxDetectionWindowSize(maxDetectionWindowSize),
         _minNumVariantsPerPositionPerSample(minNumVariantsPerPosition),
@@ -176,7 +176,7 @@ private:
     const reference_contig_segment& _ref;
     IndelBuffer& _indelBuffer;
 
-    const unsigned _maxDeletionSize;
+    const unsigned _maxIndelSize;
     const unsigned _sampleCount;
     const unsigned _maxDetectionWindowSize;
 

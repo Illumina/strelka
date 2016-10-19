@@ -1,3 +1,4 @@
+- STREL-269 prevent indels larger than the max indel size from becoming candidate
 - STREL-267 forced indel call does not appear in somatic output
 v2.7.0
 - STREL-184 enable somatic indel EVS
