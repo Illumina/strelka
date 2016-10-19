@@ -326,7 +326,10 @@ process_pos_indel_somatic(const pos_t pos)
         const IndelSampleData& normalIndelSampleData(indelData.getSampleData(NORMAL));
         const IndelSampleData& tumorIndelSampleData(indelData.getSampleData(TUMOR));
 
-        if (normalIndelSampleData.read_path_lnp.empty() && tumorIndelSampleData.read_path_lnp.empty()) continue;
+        if (not indelData.isForcedOutput)
+        {
+            if (normalIndelSampleData.read_path_lnp.empty() && tumorIndelSampleData.read_path_lnp.empty()) continue;
+        }
 
         if (_opt.is_somatic_indel())
         {
