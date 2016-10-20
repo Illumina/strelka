@@ -29,13 +29,13 @@
 #include "LocusReportInfoUtil.hh"
 #include "variant_prefilter_stage.hh"
 
+#include "blt_common/ref_context.hh"
 #include "blt_util/io_util.hh"
 #include "blt_util/log.hh"
 
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <blt_common/ref_context.hh>
 
 
 
@@ -293,23 +293,32 @@ queue_site_record(
 static
 GermlineFilterKeeper
 getExtendedLocusFilters(
-    const LocusInfo& locus)
+    const LocusInfo& locus,
+    const int targetSampleIndex = 0)
 {
-    GermlineFilterKeeper locusFilters = locus.filters;
+    bool isFirstSample(true);
     GermlineFilterKeeper sampleFilterUnion;
     const unsigned sampleCount(locus.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
+        if (targetSampleIndex >= 0)
+        {
+            if (static_cast<int>(sampleIndex) != targetSampleIndex) continue;
+        }
+
         const auto& sampleInfo(locus.getSample(sampleIndex));
-        if (sampleIndex == 0)
+        if (isFirstSample)
         {
             sampleFilterUnion = sampleInfo.filters;
+            isFirstSample = false;
         }
         else
         {
             sampleFilterUnion.unionMerge(sampleInfo.filters);
         }
     }
+
+    GermlineFilterKeeper locusFilters = locus.filters;
     locusFilters.merge(sampleFilterUnion);
     return locusFilters;
 }
@@ -335,7 +344,6 @@ writeSiteVcfAltField(
             os << id_to_base(siteAlleles[altAlleleIndex].baseIndex);
         }
     }
-
 }
 
 
@@ -412,7 +420,7 @@ write_site_record_instance(
     os << '\t';
 
     // FILTER:
-    getExtendedLocusFilters(locus).write(os);
+    getExtendedLocusFilters(locus, targetSampleIndex).write(os);
     os << '\t';
 
     // INFO:
@@ -778,7 +786,7 @@ write_indel_record_instance(
     os << locus.anyVariantAlleleQuality << '\t'; //QUAL
 
     // FILTER:
-    getExtendedLocusFilters(locus).write(os);
+    getExtendedLocusFilters(locus, targetSampleIndex).write(os);
     os << '\t';
 
     // INFO
