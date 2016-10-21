@@ -324,27 +324,27 @@ Features used in each model are listed here and definitions are provided further
 \begin{enumerate}
 	\item SNV features:
 	\begin{enumerate}
-		\item \texttt{GENO}
-		\item \texttt{SAMPLE\_MQ}
-		\item \texttt{I\_SNVHPOL}
-		\item \texttt{I\_SNVSB}
-		\item \texttt{I\_MQRankSum}
-		\item \texttt{I\_ReadPosRankSum}
-		\item \texttt{TDP\_NORM}
-		\item \texttt{F\_DP\_NORM}
-		\item \texttt{F\_GQX\_EXACT}
+		\item \texttt{GenotypeCategory}
+		\item \texttt{SampleRMSMappingQuality}
+		\item \texttt{SiteHomopolymerLength}
+		\item \texttt{SampleStrandBias}
+		\item \texttt{SampleRMSMappingQualityRankSum}
+		\item \texttt{SampleReadPosRankSum}
+		\item \texttt{RelativeTotalLocusDepth}
+		\item \texttt{SampleUsedDepthFraction}
+		\item \texttt{ConservativeGenotypeQuality}
 	\end{enumerate}
 	\item Indel features:
 	\begin{enumerate}
-		\item \texttt{GENO}
-		\item \texttt{IDREP1}
-		\item \texttt{RULEN1}
-		\item \texttt{ABlower}
-		\item \texttt{AB}
-		\item \texttt{F\_MQ}
-		\item \texttt{TDP\_NORM}
-		\item \texttt{AD1\_NORM}
-		\item \texttt{F\_GQX\_EXACT}
+		\item \texttt{GenotypeCategory}
+		\item \texttt{IndelAlleleRepeatCount}
+		\item \texttt{IndelAlleleRepeatUnitSize}
+		\item \texttt{SampleIndelAlleleBiasLower}
+		\item \texttt{SampleIndelAlleleBias}
+		\item \texttt{SampleProxyRMSMappingQuality}
+		\item \texttt{RelativeTotalLocusDepth}
+		\item \texttt{SamplePrimaryAltAlleleDepthFraction}
+		\item \texttt{ConservativeGenotypeQuality}
 	\end{enumerate}
 \end{enumerate}
 
@@ -359,12 +359,12 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
 \begin{enumerate}
 	\item Shared filter conditions
 	\begin{enumerate}
-		\item \texttt{F\_GQX\_EXACT} ~ variant is filtered if this value is less than 15
-		\item \texttt{TDP\_NORM} ~ variant is filtered if this value is greater than 3
+		\item \texttt{ConservativeGenotypeQuality} ~ variant is filtered if this value is less than 15
+		\item \texttt{RelativeTotalLocusDepth} ~ variant is filtered if this value is greater than 3
 	\end{enumerate}
 	\item SNV specific filter conditions:
 	\begin{enumerate}
-		\item \texttt{I\_SNVSB} ~ SNV is filtered if this value is greater than 10
+		\item \texttt{SampleStrandBias} ~ SNV is filtered if this value is greater than 10
 	\end{enumerate}
 \end{enumerate}
 
@@ -372,36 +372,36 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
 
 \begin{enumerate}
 	
-\item \texttt{GENO} ~ A category variable reflecting the most likely genotype as heterozygous (0), homozygous (1) or alt-heterozygous (2).
+\item \texttt{GenotypeCategory} ~ A category variable reflecting the most likely genotype as heterozygous (0), homozygous (1) or alt-heterozygous (2).
 
-\item \texttt{I\_MQ} ~ RMS mapping quality of all reads spanning the variant in one sample. This feature matches the SAMPLE/MQ value defined in the VCF spec.
+\item \texttt{SampleRMSMappingQuality} ~ RMS mapping quality of all reads spanning the variant in one sample. This feature matches the SAMPLE/MQ value defined in the VCF spec.
 
-\item \texttt{I\_SNVHPOL} ~ Length of the longest homopolymer containing the current position if this position can be treated as any base.
+\item \texttt{SiteHomopolymerLength} ~ Length of the longest homopolymer containing the current position if this position can be treated as any base.
 
 % TODO note this metric doesn't allow for any strand bias, which could be problematic at high depth. High values don't indicate high bias, but high confidence in any level of bias, no matter how small. This may not be exactly what we want: this feature might have an optimal threshold which changes as a function of depth:
-\item \texttt{I\_SNVSB} ~ Log ratio of the sample's genotype likelihood computed assuming the alternate allele occurs on only one strand vs both strands (thus positive values indicate bias).
+\item \texttt{SampleStrandBias} ~ Log ratio of the sample's genotype likelihood computed assuming the alternate allele occurs on only one strand vs both strands (thus positive values indicate bias).
 
-\item \texttt{I\_MQRankSum} ~ Z-score of Mann-Whitney U test for reference vs alternate allele mapping quality values in one sample.
+\item \texttt{SampleRMSMappingQualityRankSum} ~ Z-score of Mann-Whitney U test for reference vs alternate allele mapping quality values in one sample.
 
-\item \texttt{I\_ReadPosRankSum} ~ Z-score of Mann-Whitney U test for reference vs alternate allele read positions in one sample.
+\item \texttt{SampleReadPosRankSum} ~ Z-score of Mann-Whitney U test for reference vs alternate allele read positions in one sample.
 
-\item \texttt{TDP\_NORM} ~ Locus depth relative to expectation: this is the ratio of total read depth at the variant locus in all samples over the total expected depth in all samples. Depth at the variant locus includes reads at any mapping quality. Expected depth is taken from the preliminary depth estimation step defined above in ``\nameref{sec:depth_est}''. This value is set to 1 in exome and targeted analyses, because it is problematic to define expected depth in this case.
+\item \texttt{RelativeTotalLocusDepth} ~ Locus depth relative to expectation: this is the ratio of total read depth at the variant locus in all samples over the total expected depth in all samples. Depth at the variant locus includes reads at any mapping quality. Expected depth is taken from the preliminary depth estimation step defined above in ``\nameref{sec:depth_est}''. This value is set to 1 in exome and targeted analyses, because it is problematic to define expected depth in this case.
 
-\item \texttt{F\_DP\_NORM} ~ The ratio of reads actually used to genotype the locus over the total number of reads mapped ot the variant locus in one sample. Reads are not used if the mapping quality is less than the minimum threshold, if the local read alignment fails the mismatch density filter or if the basecall is ambiguous.
+\item \texttt{SampleUsedDepthFraction} ~ The ratio of reads used to genotype the locus over the total number of reads mapped ot the variant locus in one sample. Reads are not used if the mapping quality is less than the minimum threshold, if the local read alignment fails the mismatch density filter or if the basecall is ambiguous.
 
-\item \texttt{F\_GQX\_EXACT} ~ The model-based GQX value for one sample, reflecting the conservative confidence of the called genotype.
+\item \texttt{ConservativeGenotypeQuality} ~ The model-based ConservativeGenotypeQuality (GQX) value for one sample, reflecting the conservative confidence of the called genotype.
 
-\item \texttt{IDREP1} ~ The number of times the indel's \emph{repeat unit} occurs in a haplotype containing the indel allele. The \emph{repeat unit} is found by comparing the reference and indel alleles to find the smallest possible repeating sequence unit shared between the two alleles. 
+\item \texttt{IndelAlleleRepeatCount} ~ The number of times the indel's \emph{repeat unit} occurs in a haplotype containing the indel allele. The \emph{repeat unit} is found by comparing the reference and indel alleles to find the smallest possible repeating sequence unit shared between the two alleles. 
 
-\item \texttt{RULEN1} ~ Length of the indel's \emph{repeat unit}, as defined for feature \texttt{IDREP1}.
+\item \texttt{IndelAlleleRepeatUnitSize} ~ Length of the indel's \emph{repeat unit}, as defined for feature \texttt{IndelAlleleRepeatCount}.
 
-\item \texttt{ABlower} ~ For one sample, th is the negative log probability of seeing N or fewer observations of one allele in a heterozygous variant out of the total observations from both alleles. N is typically the observation count of the reference allele. If the heterozygous variant does not include the reference allele, the first indel allele is used instead.
+\item \texttt{SampleIndelAlleleBiasLower} ~ For one sample, this is the negative log probability of seeing N or fewer observations of one allele in a heterozygous variant out of the total observations from both alleles. N is typically the observation count of the reference allele. If the heterozygous variant does not include the reference allele, the first indel allele is used instead.
 
-\item \texttt{AB} ~ Similar to \texttt{ABlower}, except the count used is twice the count of the least frequently observed allele.
+\item \texttt{SampleIndelAlleleBias} ~ Similar to \texttt{SampleIndelAlleleBiasLower}, except the count used is twice the count of the least frequently observed allele.
 
-\item \texttt{F\_MQ} ~ RMS mapping quality of all reads spanning the position immediately proceeding the indel in one sample. This feature approximates the SAMPLE/MQ value defined in the VCF spec.
+\item \texttt{SampleProxyRMSMappingQuality} ~ RMS mapping quality of all reads spanning the position immediately proceeding the indel in one sample. This feature approximates the SAMPLE/MQ value defined in the VCF spec.
 	
-\item \texttt{AD1\_NORM} ~ For one sample, this is the ratio of the confident observation count of the best-supported non-reference indel allele at the variant locus, over all confident allele observation counts.
+\item \texttt{SamplePrimaryAltAlleleDepthFraction} ~ For one sample, this is the ratio of the confident observation count of the best-supported non-reference indel allele at the variant locus, over all confident allele observation counts.
 		
 \end{enumerate}
 
