@@ -34,4 +34,5 @@ void
 getLocusReportInfoFromAlleles(
     const reference_contig_segment& ref,
     const std::vector<GermlineIndelAlleleInfo>& indelAlleles,
+    unsigned commonPrefixLength,
     OrthogonalAlleleSetLocusReportInfo& locusReportInfo);

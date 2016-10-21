@@ -70,8 +70,9 @@ struct OrthogonalAlleleSetLocusReportInfo
 /// into an cigar alignment
 void
 setIndelAlleleCigar(
-    const unsigned lead,
-    const unsigned trail,
+    unsigned lead,
+    unsigned trail,
+    const unsigned commonPrefixLength,
     const IndelKey& indelKey,
     ALIGNPATH::path_t& cigar);
 

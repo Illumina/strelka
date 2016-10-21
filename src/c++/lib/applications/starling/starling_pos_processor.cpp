@@ -1025,6 +1025,45 @@ addIndelAllelesToLocus(
     }
 }
 
+// calculate the common prefix length between reference and all alt alleles
+static unsigned getCommonPrefixLength(
+        const GermlineIndelLocusInfo& locus,
+        const reference_contig_segment& ref)
+{
+    const auto& locusRange(locus.range());
+
+    unsigned minLenCommonPrefix(locusRange.size());
+    for (auto& indelAllele : locus.getIndelAlleles())
+    {
+        auto& indelKey = indelAllele.indelKey;
+
+        unsigned lenCommonPrefix(indelKey.pos - locusRange.begin_pos());
+        bool isOutsideOfCommonPrefix = false;
+        for (unsigned i(0); i<indelKey.insert_length(); ++i)
+        {
+            if (ref.get_base(locusRange.begin_pos()+lenCommonPrefix) != indelKey.insert_seq()[i])
+            {
+                isOutsideOfCommonPrefix = true;
+                break;
+            }
+            ++lenCommonPrefix;
+        }
+
+        if (not isOutsideOfCommonPrefix)
+        {
+            for (pos_t pos(indelKey.right_pos()); pos<locusRange.end_pos(); ++pos)
+            {
+                if (ref.get_base(locusRange.begin_pos()+lenCommonPrefix) != ref.get_base(pos))
+                    break;
+                ++lenCommonPrefix;
+            }
+        }
+        if (lenCommonPrefix < minLenCommonPrefix)
+            minLenCommonPrefix = lenCommonPrefix;
+    }
+
+    return minLenCommonPrefix;
+}
 
 
 /// setup indelSampleInfo assuming that corresponding sampleInfo has already been initialized
@@ -1514,6 +1553,18 @@ process_pos_indel_digt(const pos_t pos)
 
             // add sample-independent info:
             locusPtr->anyVariantAlleleQuality = ln_error_prob_to_qphred(homRefLogProb);
+
+            // get common prefix length
+
+            unsigned commonPrefixLength(0);
+            if (locusPtr->getAltAlleleCount() > 1)
+            {
+                commonPrefixLength = getCommonPrefixLength(*locusPtr, _ref);
+                if (commonPrefixLength > 0)
+                {
+                    locusPtr->setCommonPrefix(commonPrefixLength);
+                }
+            }
 
             if (isForcedOutput or locusPtr->isVariantLocus())
             {

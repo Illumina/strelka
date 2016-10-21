@@ -65,6 +65,7 @@ void
 getLocusReportInfoFromAlleles(
     const reference_contig_segment& ref,
     const std::vector<GermlineIndelAlleleInfo>& indelAlleles,
+    unsigned commonPrefixLength,
     OrthogonalAlleleSetLocusReportInfo& locusReportInfo)
 {
     assert(indelAlleles.size()>0);
@@ -115,10 +116,13 @@ getLocusReportInfoFromAlleles(
             }
         }
 
-        // minus 1 for vcf preceding base, and plus 1 for 0-index to 1-index shift equals -- same value:
-        locusReportInfo.vcfPos = alleleSetRange.begin_pos();
+        alleleSetRange.set_begin_pos(alleleSetRange.begin_pos());
 
-        copy_ref_subseq(ref, alleleSetRange.begin_pos() - 1, alleleSetRange.end_pos(), vcfRefSeq);
+        // minus 1 for vcf preceding base, and plus 1 for 0-index to 1-index shift equals -- same value:
+        // shift the pos if commonPrefixLength > 1
+        locusReportInfo.vcfPos = alleleSetRange.begin_pos() + commonPrefixLength;
+
+        copy_ref_subseq(ref, alleleSetRange.begin_pos() - 1 + commonPrefixLength, alleleSetRange.end_pos(), vcfRefSeq);
 
         const unsigned altAlleleCount(indelAlleles.size());
         for (unsigned altAlleleIndex(0); altAlleleIndex < altAlleleCount; ++altAlleleIndex)
@@ -127,17 +131,19 @@ getLocusReportInfoFromAlleles(
             std::string& vcfAltSeq(locusReportInfo.altAlleles[altAlleleIndex].vcfAltSeq);
 
             copy_ref_subseq(ref, alleleSetRange.begin_pos() - 1, indelKey.pos, vcfAltSeq);
-            const unsigned leadingPad(indelKey.pos - (alleleSetRange.begin_pos() - 1));
+            unsigned leadingPad(indelKey.pos - (alleleSetRange.begin_pos() - 1));
 
             vcfAltSeq += indelKey.insert_seq();
 
             append_ref_subseq(ref, indelKey.right_pos(), alleleSetRange.end_pos(), vcfAltSeq);
-            const unsigned trailingPad(alleleSetRange.end_pos() - indelKey.right_pos());
+            unsigned trailingPad(alleleSetRange.end_pos() - indelKey.right_pos());
 
+            // trim the common prefix
+            vcfAltSeq = vcfAltSeq.substr(commonPrefixLength);
 
             // get corresponding CIGAR string:
             auto& vcfCigar(locusReportInfo.altAlleles[altAlleleIndex].vcfCigar);
-            setIndelAlleleCigar(leadingPad, trailingPad, indelKey, vcfCigar);
+            setIndelAlleleCigar(leadingPad, trailingPad, commonPrefixLength, indelKey, vcfCigar);
         }
 
         // compare all ALT sequences to sanity check that they don't match

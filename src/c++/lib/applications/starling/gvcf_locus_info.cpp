@@ -262,7 +262,6 @@ getAlleleBiasFeatures(
 }
 
 
-
 void
 GermlineDiploidSiteLocusInfo::
 computeEmpiricalScoringFeatures(
