@@ -233,7 +233,7 @@ get_scoring_features(
     smod.features.set(SOMATIC_SNV_SCORING_FEATURES::MQ0_FRAC, safeFrac(n_mapq0,n_mapq));
 
     //ReadPosRankSum
-    const double ReadPosRankSum = t1_cpi.rawPileup().read_pos_ranksum.get_u_stat();
+    const double ReadPosRankSum = t1_cpi.rawPileup().read_pos_ranksum.get_z_stat();
     smod.features.set(SOMATIC_SNV_SCORING_FEATURES::ReadPosRankSum,ReadPosRankSum);
 
     //StrandBias

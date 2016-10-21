@@ -18,8 +18,7 @@
 //
 //
 
-/// \file
-
+///
 /// \author Morten Kallberg
 ///
 
@@ -32,43 +31,47 @@
 
 static
 double
-get_z_score(const int n1, const int n2, const double w1)
+getMannWhitneyZScore(
+    const int n1,
+    const int n2,
+    const double w1)
 {
     const double mean = n1*(n1+n2+1)/2.0;
     const double var  = std::sqrt(n2*mean/6.0);
-    if (static_cast<int>(var)==0)
+    static const double epsilon(0.0001);
+    if (std::abs(var)<epsilon)
     {
         return 0.0;
     }
     return (w1-mean)/var;
 }
 
+
+
 double
 fastRanksum::
-get_raw_score() const
+getExpectedCategory2Value() const
 {
     double R2 = 0;
-    int N2 = 0;
+    unsigned N2 = 0;
 
     for (unsigned i=0; i<_obs.size(); i++)
     {
         if (_obs[i].empty()) continue;
-        const int obs2 = _obs[i].B;
-        R2 += i*obs2;
-        N2 += obs2;
+        const unsigned c2 = _obs[i].c2;
+        R2 += i*c2;
+        N2 += c2;
     }
 
-    //return the z-score for the smaller of U1 and U2 assuming a gaussian approx.
-    if (N2>0)
-        return 1.0*R2/N2;
-    return 0;
-    //    return get_avg_alt();
+    if (N2==0) return 0;
+    return R2/N2;
 }
 
-// return the U statistic
+
+
 double
 fastRanksum::
-get_u_stat() const
+get_z_stat() const
 {
     double R1 = 0;
     double R2 = 0;
@@ -78,47 +81,41 @@ get_u_stat() const
     for (const auto& robs : _obs)
     {
         if (robs.empty()) continue;
-        const int obs1 = robs.A;
-        const int obs2 = robs.B;
+        const int obs1 = robs.c1;
+        const int obs2 = robs.c2;
         double rank_weight = (2*(N1+N2+1) + (obs1+obs2)-1)/2.0;
         R1 += rank_weight*obs1;
         R2 += rank_weight*obs2;
         N1 += obs1;
         N2 += obs2;
     }
-    //return the z-score for the smaller of U1 and U2 assuming a gaussian approx.
+
+#if 1
+    // this performs the equivalent of the z-score computation on U, even though U, mean(U), var(U)
+    // are not directly enumerated
+    // TODO: is there a reference for this transformation?
     if (R1>R2)
     {
-        return get_z_score(N2,N1,R2);
+        return getMannWhitneyZScore(N2, N1, R2);
     }
     else
     {
-        return get_z_score(N1,N2,R1);
+        return getMannWhitneyZScore(N1, N2, R1);
     }
-}
+#else
+    // for verification purposes, you can actually enumerate U and U stats to get the ?always same? answer here:
+    const double U1 = R1 - (N1*(N1+1))/2.;
+    const double U2 = R2 - (N2*(N2+1))/2.;
+    const double U = std::min(U1,U2);
 
-double
-fastRanksum::
-get_u_stat_uniform() const
-{
-    double R1 = 0;
-    double R2 = 0;
-    int N1 = 0;
-    int N2 = 0;
-    //loop over all observations
-    for (unsigned i=0; i<_obs.size(); i++)
+    const double mean = N1*N2/2.0;
+    const double var  = std::sqrt(mean*(N1+N2+1)/6.0);
+
+    static const double epsilon(0.0001);
+    if (std::abs(var)<epsilon)
     {
-        if (_obs[i].empty()) continue;
-        const int obs1 = _obs[i].A;
-        const int obs2 = _obs[i].B;
-//        double rank_weight = (2*(N1+N2+1) + (obs1+obs2)-1)/2.0;
-        R1 += i*obs1;
-        R2 += i*obs2;
-        N1 += obs1;
-        N2 += obs2;
+        return 0.0;
     }
-    //return the average rank weight of case with most observations
-    if (N1>N2)
-        return R1/N1;
-    return R2/N2;
+    return (U-mean)/var;
+#endif
 }
