@@ -49,15 +49,15 @@ struct GERMLINE_SNV_SCORING_FEATURES : public FeatureSet
      */
     enum index_t
     {
-        GENO,
-        I_MQ,
-        I_SNVHPOL,
-        I_SNVSB,
-        I_MQRankSum,
-        I_ReadPosRankSum,
-        TDP_NORM,
-        F_DP_NORM,
-        F_GQX_EXACT,
+        GenotypeCategory,
+        SampleRMSMappingQuality,
+        SiteHomopolymerLength,
+        SampleStrandBias,
+        SampleRMSMappingQualityRankSum,
+        SampleReadPosRankSum,
+        RelativeTotalLocusDepth,
+        SampleUsedDepthFraction,
+        ConservativeGenotypeQuality,
         SIZE
     };
 
@@ -72,24 +72,24 @@ struct GERMLINE_SNV_SCORING_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-        case GENO:
-            return "GENO";
-        case I_MQ:
-            return "I_MQ";
-        case I_SNVHPOL:
-            return "I_SNVHPOL";
-        case I_SNVSB:
-            return "I_SNVSB";
-        case I_MQRankSum:
-            return "I_MQRankSum";
-        case I_ReadPosRankSum:
-            return "I_ReadPosRankSum";
-        case TDP_NORM:
-            return "TDP_NORM";
-        case F_DP_NORM:
-            return "F_DP_NORM";
-        case F_GQX_EXACT:
-            return "F_GQX_EXACT";
+        case GenotypeCategory:
+            return "GenotypeCategory";
+        case SampleRMSMappingQuality:
+            return "SampleRMSMappingQuality";
+        case SiteHomopolymerLength:
+            return "SiteHomopolymerLength";
+        case SampleStrandBias:
+            return "SampleStrandBias";
+        case SampleRMSMappingQualityRankSum:
+            return "SampleRMSMappingQualityRankSum";
+        case SampleReadPosRankSum:
+            return "SampleReadPosRankSum";
+        case RelativeTotalLocusDepth:
+            return "RelativeTotalLocusDepth";
+        case SampleUsedDepthFraction:
+            return "SampleUsedDepthFraction";
+        case ConservativeGenotypeQuality:
+            return "ConservativeGenotypeQuality";
         default:
             assert(false && "Unknown feature");
             return nullptr;
@@ -121,8 +121,8 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     enum index_t
     {
         I_BaseQRankSum,
-        ABlower,
-        AB,
+        SampleIndelAlleleBiasLower,
+        SampleIndelAlleleBias,
         I_RawPos,
         I_RawBaseQ,
         mapqZeroFraction,
@@ -132,7 +132,7 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         AD0_NORM,
         QUAL_EXACT,
         F_GQ_EXACT,
-        AD1_NORM,
+        SamplePrimaryAltAlleleDepthFraction,
         SIZE
     };
 
@@ -149,10 +149,10 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         {
         case I_BaseQRankSum:
             return "I_BaseQRankSum";
-        case ABlower:
-            return "ABlower";
-        case AB:
-            return "AB";
+        case SampleIndelAlleleBiasLower:
+            return "SampleIndelAlleleBiasLower";
+        case SampleIndelAlleleBias:
+            return "SampleIndelAlleleBias";
         case I_RawPos:
             return "I_RawPos";
         case I_RawBaseQ:
@@ -171,8 +171,8 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "QUAL_EXACT";
         case F_GQ_EXACT:
             return "F_GQ_EXACT";
-        case AD1_NORM:
-            return "AD1_NORM";
+        case SamplePrimaryAltAlleleDepthFraction:
+            return "SamplePrimaryAltAlleleDepthFraction";
         default:
             assert(false && "Unknown feature");
             return nullptr;
@@ -204,15 +204,15 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
     */
     enum index_t
     {
-        GENO,
-        IDREP1,
-        RULEN1,
-        ABlower,
-        AB,
-        F_MQ,
-        TDP_NORM,
-        AD1_NORM,
-        F_GQX_EXACT,
+        GenotypeCategory,
+        IndelAlleleRepeatCount,
+        IndelAlleleRepeatUnitSize,
+        SampleIndelAlleleBiasLower,
+        SampleIndelAlleleBias,
+        SampleProxyRMSMappingQuality,
+        RelativeTotalLocusDepth,
+        SamplePrimaryAltAlleleDepthFraction,
+        ConservativeGenotypeQuality,
         SIZE
     };
 
@@ -227,24 +227,24 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-        case GENO:
-            return "GENO";
-        case IDREP1:
-            return "IDREP1";
-        case RULEN1:
-            return "RULEN1";
-        case ABlower:
-            return "ABlower";
-        case AB:
-            return "AB";
-        case F_MQ:
-            return "F_MQ";
-        case TDP_NORM:
-            return "TDP_NORM";
-        case AD1_NORM:
-            return "AD1_NORM";
-        case F_GQX_EXACT:
-            return "F_GQX_EXACT";
+        case GenotypeCategory:
+            return "GenotypeCategory";
+        case IndelAlleleRepeatCount:
+            return "IndelAlleleRepeatCount";
+        case IndelAlleleRepeatUnitSize:
+            return "IndelAlleleRepeatUnitSize";
+        case SampleIndelAlleleBiasLower:
+            return "SampleIndelAlleleBiasLower";
+        case SampleIndelAlleleBias:
+            return "SampleIndelAlleleBias";
+        case SampleProxyRMSMappingQuality:
+            return "SampleProxyRMSMappingQuality";
+        case RelativeTotalLocusDepth:
+            return "RelativeTotalLocusDepth";
+        case SamplePrimaryAltAlleleDepthFraction:
+            return "SamplePrimaryAltAlleleDepthFraction";
+        case ConservativeGenotypeQuality:
+            return "ConservativeGenotypeQuality";
         default:
             assert(false && "Unknown feature");
             return nullptr;

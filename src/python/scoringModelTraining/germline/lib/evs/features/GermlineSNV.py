@@ -36,30 +36,15 @@ class GermlineSNVFeatures(VcfFeatureSet):
             use for EVS training
 
             Any change here must be done together with changing
-            src/c++/lib/applications/strelka/strelkaScoringFeatures.hh
+            src/c++/lib/applications/starling/germlineVariantEmpiricalScoringFeatures.hh
         """
         return [
-            "GENO",
-            "I_MQ",
-            "I_SNVHPOL",
-            "I_SNVSB",
-#            "I_BaseQRankSum",
-            "I_MQRankSum",
-            "I_ReadPosRankSum",
-#            "AD0_NORM",
-#            "AD1_NORM",
-#            "AB",
-#            "ABlower",
-#            "I_RawBaseQ",
-#            "I_RawPos",
-#            "mapqZeroFraction",
-            "TDP_NORM",
-#            "QUAL_NORM",
-#            "F_GQX_NORM",
-#            "F_GQ_NORM",
-            "F_DP_NORM",
-#            "QUAL_EXACT",
-            "F_GQX_EXACT"]
-#            "F_GQ_EXACT"]
-
-
+            "GenotypeCategory",
+            "SampleRMSMappingQuality",
+            "SiteHomopolymerLength",
+            "SampleStrandBias",
+            "SampleRMSMappingQualityRankSum",
+            "SampleReadPosRankSum",
+            "RelativeTotalLocusDepth",
+            "SampleUsedDepthFraction",
+            "ConservativeGenotypeQuality"]
