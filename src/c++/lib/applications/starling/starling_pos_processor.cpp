@@ -1556,14 +1556,11 @@ process_pos_indel_digt(const pos_t pos)
 
             // get common prefix length
 
-            unsigned commonPrefixLength(0);
             if (locusPtr->getAltAlleleCount() > 1)
             {
-                commonPrefixLength = getCommonPrefixLength(*locusPtr, _ref);
+                unsigned commonPrefixLength(getCommonPrefixLength(*locusPtr, _ref));
                 if (commonPrefixLength > 0)
-                {
                     locusPtr->setCommonPrefix(commonPrefixLength);
-                }
             }
 
             if (isForcedOutput or locusPtr->isVariantLocus())
