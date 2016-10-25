@@ -1025,6 +1025,69 @@ addIndelAllelesToLocus(
     }
 }
 
+/// STREL-275: Added to address the bug that the REF and ALTs share a common prefix of length >1.
+/// This problem happened when an internal and external deletions overlap and
+/// the flanking sequences happened to be the same. E.g.
+///
+/// AATATATT (REF)
+/// A----ATT (Internal deletion)
+/// AATA---- (External deletion)
+///
+/// In this case, the vcf record becomes unnormalized, like
+///
+/// chr20 pos . AATATATT AATT,AATA ...
+///
+/// whereas the correct record should be
+///
+/// chr20 pos+2 . TATATT TT,TA ...
+///
+/// STREL-275 implements a suboptimal fix for NS5 by
+/// (1) detecting and marking the locus with common prefixes and
+/// (2) changing the output to remove the common prefix.
+///
+/// TODO: A more natural solution can be implemented later when the haplotyping is integrated up to the genotyping stage.
+///
+/// \param locus locus to be investigated
+/// \param ref reference
+/// \return the length of the common prefix of the reference and all ALT alleles
+static unsigned getCommonPrefixLength(
+        const GermlineIndelLocusInfo& locus,
+        const reference_contig_segment& ref)
+{
+    const auto& locusRange(locus.range());
+
+    unsigned minLenCommonPrefix(locusRange.size());
+    for (auto& indelAllele : locus.getIndelAlleles())
+    {
+        auto& indelKey = indelAllele.indelKey;
+
+        unsigned lenCommonPrefix(indelKey.pos - locusRange.begin_pos());
+        bool isOutsideOfCommonPrefix = false;
+        for (unsigned i(0); i<indelKey.insert_length(); ++i)
+        {
+            if (ref.get_base(locusRange.begin_pos()+lenCommonPrefix) != indelKey.insert_seq()[i])
+            {
+                isOutsideOfCommonPrefix = true;
+                break;
+            }
+            ++lenCommonPrefix;
+        }
+
+        if (not isOutsideOfCommonPrefix)
+        {
+            for (pos_t pos(indelKey.right_pos()); pos<locusRange.end_pos(); ++pos)
+            {
+                if (ref.get_base(locusRange.begin_pos()+lenCommonPrefix) != ref.get_base(pos))
+                    break;
+                ++lenCommonPrefix;
+            }
+        }
+        if (lenCommonPrefix < minLenCommonPrefix)
+            minLenCommonPrefix = lenCommonPrefix;
+    }
+
+    return minLenCommonPrefix;
+}
 
 
 /// setup indelSampleInfo assuming that corresponding sampleInfo has already been initialized
@@ -1514,6 +1577,15 @@ process_pos_indel_digt(const pos_t pos)
 
             // add sample-independent info:
             locusPtr->anyVariantAlleleQuality = ln_error_prob_to_qphred(homRefLogProb);
+
+            // get common prefix length
+
+            if (locusPtr->getAltAlleleCount() > 1)
+            {
+                unsigned commonPrefixLength(getCommonPrefixLength(*locusPtr, _ref));
+                if (commonPrefixLength > 0)
+                    locusPtr->setCommonPrefix(commonPrefixLength);
+            }
 
             if (isForcedOutput or locusPtr->isVariantLocus())
             {

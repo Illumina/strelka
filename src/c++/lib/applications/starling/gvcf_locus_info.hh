@@ -532,7 +532,7 @@ struct GermlineIndelLocusInfo : public LocusInfo
     GermlineIndelLocusInfo(
         const unsigned sampleCount)
         : LocusInfo(sampleCount),
-          _indelSampleInfo(sampleCount)
+          _indelSampleInfo(sampleCount), _commonPrefixLength(0)
     {}
 
     virtual ~GermlineIndelLocusInfo() {}
@@ -588,6 +588,24 @@ struct GermlineIndelLocusInfo : public LocusInfo
             _range.merge_range(known_pos_range2(indelKey.pos, indelKey.right_pos()));
             if (pos > _range.begin_pos()) pos = _range.begin_pos();
         }
+    }
+
+
+    // Added to address STREL-275
+    // set if the reference and all alt sequences have a common prefix
+    void
+    setCommonPrefix(const unsigned commonPrefixLength)
+    {
+        _commonPrefixLength = commonPrefixLength;
+        pos += commonPrefixLength;
+        _range.set_begin_pos(_range.begin_pos() + commonPrefixLength);
+    }
+
+    // Added to address STREL-275
+    unsigned
+    getCommonPrefixLength() const
+    {
+        return _commonPrefixLength;
     }
 
     const std::vector<GermlineIndelAlleleInfo>&
@@ -648,6 +666,8 @@ private:
 
     /// the refernece range of all indel alleles at this locus:
     known_pos_range2 _range;
+
+    unsigned _commonPrefixLength;
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineIndelLocusInfo& ii);
