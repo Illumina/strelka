@@ -1025,7 +1025,31 @@ addIndelAllelesToLocus(
     }
 }
 
-// calculate the common prefix length between reference and all alt alleles
+/// STREL-275: Added to address the bug that the REF and ALTs share a common prefix of length >1.
+/// This problem happened when an internal and external deletions overlap and
+/// the flanking sequences happened to be the same. E.g.
+///
+/// AATATATT (REF)
+/// A----ATT (Internal deletion)
+/// AATA---- (External deletion)
+///
+/// In this case, the vcf record becomes unnormalized, like
+///
+/// chr20 pos . AATATATT AATT,AATA ...
+///
+/// whereas the correct record should be
+///
+/// chr20 pos+2 . TATATT TT,TA ...
+///
+/// STREL-275 implements a suboptimal fix for NS5 by
+/// (1) detecting and marking the locus with common prefixes and
+/// (2) changing the output to remove the common prefix.
+///
+/// TODO: A more natural solution can be implemented later when the haplotyping is integrated up to the genotyping stage.
+///
+/// \param locus locus to be investigated
+/// \param ref reference
+/// \return the length of the common prefix of the reference and all ALT alleles
 static unsigned getCommonPrefixLength(
         const GermlineIndelLocusInfo& locus,
         const reference_contig_segment& ref)
