@@ -1,4 +1,4 @@
-Strelka Small Variant Caller
+Strelka2 Small Variant Caller
 ============================
 
 Strelka calls somatic and germline small variants from mapped sequencing reads. It is optimized for rapid clinical analysis of somatic variation in tumor/normal sample pairs and germline variation in small cohorts. For best indel performance, Strelka is designed to be run with the [Manta structural variant and indel caller][manta], which provides additional sample-specific indel candidates up to Strelka's configured maxiumum indel size (by default this is 50). By design, Manta and Strelka together provide complete coverage over all indel sizes (in additional to all SVs and SNVs) for clinical somatic and germline analysis scenarios.
@@ -16,7 +16,7 @@ Methods and benchmarking details for the original version of Strelka's somatic c
 Saunders, C.T. *et al.* (2012) Strelka: Accurate somatic small-variant calling from sequenced tumor-normal sample pairs. *Bioinformatics*,
 28, 1811-1817. [doi:10.1093/bioinformatics/bts271][bpaper]
 
-Note that the somatic calling model has been extensively updated since this time. An updated publication is in progress.
+Note that the somatic calling model in Strelka2 has been extensively updated since this time. An updated publication is in progress.
 
 [bpaper]:https://dx.doi.org/10.1093/bioinformatics/bts271
 
