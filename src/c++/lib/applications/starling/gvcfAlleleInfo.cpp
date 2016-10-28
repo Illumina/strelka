@@ -37,8 +37,10 @@
 #include <typeinfo>
 
 
-// remove numPrefixToRemove matches from a cigar match segment of length matchSegmentLength
-void removeCommonPrefixFromCigar(unsigned &matchSegmentLength, unsigned &numPrefixToRemove, bool isFirstSegment = false)
+/// remove numPrefixToRemove matches from a cigar match segment of length matchSegmentLength
+static
+void
+removeCommonPrefixFromCigar(unsigned &matchSegmentLength, unsigned &numPrefixToRemove, bool isFirstSegment = false)
 {
     if (isFirstSegment)
         --matchSegmentLength;   // save the initial match
@@ -57,6 +59,8 @@ void removeCommonPrefixFromCigar(unsigned &matchSegmentLength, unsigned &numPref
     if (isFirstSegment)
         ++matchSegmentLength;   // restore the initial match
 }
+
+
 
 void
 setIndelAlleleCigar(

@@ -22,6 +22,8 @@
 
 #include "fastRanksum.hh"
 
+#include <cmath>
+
 
 BOOST_AUTO_TEST_SUITE( test_fastRanksum )
 

@@ -1,4 +1,6 @@
-sudo: false
+
+sudo: required
+dist: trusty
 
 language: cpp
 
@@ -6,15 +8,15 @@ matrix:
   include:
     - os: linux
       compiler: gcc
-      addons:
-        apt:
-          sources:
-          - ubuntu-toolchain-r-test # for gcc 4.8
-          packages:
-          - gcc-4.8
-          - g++-4.8
-      before_install:
-      - export CC=gcc-4.8 CXX=g++-4.8
+#      addons:
+#        apt:
+#          sources:
+#          - ubuntu-toolchain-r-test # for gcc 4.8
+#          packages:
+#          - gcc-4.8
+#          - g++-4.8
+#      before_install:
+#      - export CC=gcc-4.8 CXX=g++-4.8
       install:
       # install cppcheck from source:
       - wget https://sourceforge.net/projects/cppcheck/files/cppcheck/1.69/cppcheck-1.69.tar.bz2 &&
@@ -25,16 +27,16 @@ matrix:
         cd ..
     - os: linux
       compiler: clang
-      addons:
-        apt:
-          packages:
-          - llvm-3.4
-          - llvm-3.4-dev
+#      addons:
+#        apt:
+#          packages:
+#          - llvm-3.4
+#          - llvm-3.4-dev
 
 # disable osx test specification until travis can enable this option on for us
-#    - os: osx
-#      compiler: clang
-#      osx_image: xcode61
+    - os: osx
+      compiler: clang
+      osx_image: xcode7.3
     # gcc would just repeat the clang test on OSX (unless we do some extra work...), so skip it
  
 script:
