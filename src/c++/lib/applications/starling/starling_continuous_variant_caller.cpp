@@ -26,16 +26,6 @@
 
 
 
-static double Likelihood(unsigned coverage, unsigned observedCallCount, double expectedFrequency)
-{
-    if (observedCallCount == 0)
-        return 0;
-
-    return boost::math::pdf(boost::math::binomial(coverage, expectedFrequency), observedCallCount);
-}
-
-
-
 static double AssignPValue(unsigned observedCallCount, unsigned coverage, unsigned estimatedBaseCallQuality)
 {
     if (observedCallCount == 0)
@@ -58,16 +48,45 @@ poisson_qscore(unsigned callCount, unsigned coverage, unsigned estimatedBaseCall
 
 
 
-
-// calculate the ratio of the log likelihood of the variants on either strand / both strands
-double starling_continuous_variant_caller::strand_bias(
-    unsigned fwdAlt, unsigned revAlt, unsigned fwdOther, unsigned revOther, double /*noise*/)
+static
+double
+binomialLogDensity(
+    unsigned trials,
+    unsigned successes,
+    double successProb)
 {
-    double expectedVf = (fwdAlt + revAlt) / ((double)fwdOther+revOther+fwdAlt+revAlt);
+    using namespace boost::math;
 
-    // TODO: removed noise terms as they always evaluate to -inf
-    auto fwd = std::log(Likelihood(fwdAlt+fwdOther, fwdAlt, expectedVf));// + std::log(Likelihood(revAlt+revOther, revAlt, noise));
-    auto rev = std::log(Likelihood(revAlt+revOther, revAlt, expectedVf));// + std::log(Likelihood(fwdAlt+fwdOther, fwdAlt, noise));
-    auto both = std::log(Likelihood(fwdAlt+fwdOther+revAlt+revOther, fwdAlt+revAlt, expectedVf));
-    return std::max(fwd, rev) - both;
+    assert((successProb >= 0.) and (successProb <= 1.));
+    assert(successes <= trials);
+
+    if (trials==0) return 0;
+    return std::log(pdf(binomial(trials, successProb), successes));
+}
+
+
+
+double
+starling_continuous_variant_caller::
+strandBias(
+   unsigned fwdAlt,
+   unsigned revAlt,
+   unsigned fwdOther,
+   unsigned revOther)
+{
+    const unsigned fwdTotal(fwdAlt+fwdOther);
+    const unsigned revTotal(revAlt+revOther);
+    const unsigned total(fwdTotal+revTotal);
+    if (total==0) return 0;
+
+    const double fwdAltFreq(safeFrac(fwdAlt,fwdTotal));
+    const double revAltFreq(safeFrac(revAlt,revTotal));
+    const double altFreq(safeFrac(fwdAlt + revAlt, total));
+
+    static const double errorRate(0.005);
+
+    const double fwdLnp(binomialLogDensity( fwdTotal, fwdAlt, fwdAltFreq) + binomialLogDensity( revTotal, revAlt, errorRate));
+    const double revLnp(binomialLogDensity( fwdTotal, fwdAlt, errorRate) + binomialLogDensity( revTotal, revAlt, revAltFreq));
+    const double lnp(binomialLogDensity( fwdTotal, fwdAlt, altFreq) + binomialLogDensity( revTotal, revAlt, altFreq));
+    return std::max(-100., std::max(fwdLnp, revLnp) - lnp);
 }

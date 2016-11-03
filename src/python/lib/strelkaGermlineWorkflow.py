@@ -97,7 +97,7 @@ class TempSegmentFiles :
         self.sample = [TempSegmentFilesPerSample() for _ in range(sampleCount)]
 
 
-# we need extra quoting for files with spaces in this workflow because command is stringified below to enable gVCF pipe:
+# we need extra quoting for files with spaces in this workflow because some commands are stringified as shell calls:
 def quote(instr):
     return "\"%s\"" % (instr)
 
@@ -137,8 +137,8 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     segFiles.stats.append(self.paths.getTmpRunStatsPath(gid))
     segCmd.extend(["--stats-file", segFiles.stats[-1]])
 
-    # RNA-Seq het calls are considered over a wider frequency range:
     if self.params.isRNA:
+        # RNA-Seq het calls are considered over a wider frequency range:
         segCmd.extend(['-bsnp-diploid-het-bias', '0.40'])
         segCmd.extend(['--use-rna-scoring'])
 
@@ -190,7 +190,7 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
         segCmd.extend(['--ploidy-region-vcf', self.params.ploidyFilename])
 
     for gseg in gsegGroup :
-        # we have special logic to prevent the continuousVF tagets from being grouped, the assertion here
+        # we have special logic to prevent the continuousVF targets from being grouped, the assertion here
         # verifies that this is working as expected:
         if self.params.callContinuousVf is not None and gseg.chromLabel in self.params.callContinuousVf :
             assert(len(gsegGroup) == 1)

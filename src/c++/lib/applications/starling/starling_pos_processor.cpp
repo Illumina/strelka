@@ -252,6 +252,8 @@ updateSiteSampleInfo(
     const auto& pi(cpi.rawPileup());
     siteSampleInfo.mapqTracker = pi.mapqTracker;
 
+    siteSampleInfo.strandBias = strandBias;
+
     /// add EVS feature info
     const auto& sampleInfo(locus.getSample(sampleIndex));
     if (locus.isForcedOutput or sampleInfo.isVariant())
@@ -265,8 +267,6 @@ updateSiteSampleInfo(
             siteSampleInfo.rawPos = pi.get_raw_pos();
             siteSampleInfo.avgBaseQ = pi.get_raw_baseQ();
         }
-
-        siteSampleInfo.strandBias = strandBias;
     }
 
     locus.setSiteSampleInfo(sampleIndex, siteSampleInfo);
@@ -819,9 +819,10 @@ updateContinuousSnvLocusWithSampleInfo(
 
             if (altAlleleIndex == primaryAltAlleleIndex)
             {
-                strandBias = starling_continuous_variant_caller::strand_bias(
-                                 sampleStrandBias.fwdAlt, sampleStrandBias.revAlt, sampleStrandBias.fwdOther, sampleStrandBias.revOther,
-                                 opt.noise_floor);
+                strandBias = starling_continuous_variant_caller::strandBias(sampleStrandBias.fwdAlt,
+                                                                           sampleStrandBias.revAlt,
+                                                                           sampleStrandBias.fwdOther,
+                                                                           sampleStrandBias.revOther);
             }
 
             auto& sbcounts(strandBiasCounts[altAlleleIndex]);
@@ -865,8 +866,7 @@ updateContinuousSnvLocusWithSampleInfo(
                              starling_continuous_variant_caller::poisson_qscore(
                                  continuousSiteSampleInfo.continuousAlleleDepth,
                                  continuousSiteSampleInfo.continuousTotalDepth,
-                                 (unsigned) opt.min_qscore, 40);
-
+                                 (unsigned) opt.continuousSiteCallerAverageQuality, 40);
     }
 }
 
@@ -875,7 +875,7 @@ updateContinuousSnvLocusWithSampleInfo(
 static
 void
 updateContinuousSnvLocusInfo(
-    const starling_options& opt,
+    const starling_options& /*opt*/,
     const reference_contig_segment& ref,
     const pos_t pos,
     const std::vector<StrandBiasCounts>& strandBiasCounts,
@@ -894,8 +894,8 @@ updateContinuousSnvLocusInfo(
     {
         auto& allele(siteAlleles[alleleIndex]);
         const auto& sbcounts(strandBiasCounts[alleleIndex]);
-        allele.strandBias = starling_continuous_variant_caller::strand_bias(
-                                sbcounts.fwdAlt, sbcounts.revAlt, sbcounts.fwdOther, sbcounts.revOther, opt.noise_floor);
+        allele.strandBias = starling_continuous_variant_caller::strandBias(sbcounts.fwdAlt, sbcounts.revAlt,
+                                                                           sbcounts.fwdOther, sbcounts.revOther);
     }
 
     // get the qual score:
@@ -1719,7 +1719,7 @@ updateContinuousIndelLocusWithSampleInfo(
                          starling_continuous_variant_caller::poisson_qscore(
                              indelSampleInfo.legacyReportInfo.n_confident_indel_reads,
                              indelSampleInfo.legacyReportInfo.total_confident_reads(),
-                             (unsigned) opt.min_qscore, 40);
+                             (unsigned) opt.continuousSiteCallerAverageQuality, 40);
 
     // use diploid gt codes as a convenient way to summarize the continuous variant calls:
     static const VcfGenotype hetGtIndex(0,1);

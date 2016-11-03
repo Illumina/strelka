@@ -165,15 +165,21 @@ struct starling_base_options : public blt_options
 
     double indel_nonsite_match_prob = 0.25;
 
+    //------------------------------------------------------
+    // continuous allele frequency caller options:
+
     // Assume a ploidy-based prior (0%, 50%, 100% or 0% 100% for haploid, diploid
     // If false, a continuous model is used
     bool is_ploidy_prior = true;
 
-    // the assumed noise (uniform) in basecalls
-    double noise_floor = -1;
-
-    // the minimum allele frequency to call a heterozygous genotype when not assuming ploidy
+    /// the minimum allele frequency to call a heterozygous genotype when not assuming ploidy
     double min_het_vf = 0.01;
+
+    /// average quality used for the purpose of computing q-score in mito:
+    int continuousSiteCallerAverageQuality = 17;
+
+
+    //------------------------------------------------------
 
     // vcfs can be input to specify candidate indels:
     std::vector<std::string> input_candidate_indel_vcf;

@@ -105,31 +105,6 @@ finalizeSequenceErrorCountsOptions(
 
     if (!opt.is_ploidy_prior)
     {
-        if (opt.noise_floor < 0)
-        {
-            // not specified - derive from the min qscore
-            opt.noise_floor = pow(10, (-1.0 * opt.min_qscore)/10.0);
-#ifdef DEBUG_OPTIONS
-            log_os << "Setting noise floor to: " << opt.noise_floor << " from min_qscore " << opt.min_qscore << "\n";
-#endif
-        }
-        else if (opt.noise_floor > 0 && opt.noise_floor < 0.5)
-        {
-            // specified explicitly. Override the min_qscore if it is incompatible with the noise floor
-            int min_qscore = (int)round(-10 * log10(opt.noise_floor));
-            if (min_qscore > opt.min_qscore)
-            {
-                opt.min_qscore = min_qscore;
-#ifdef DEBUG_OPTIONS
-                log_os << "Overriding min q_score to: " << min_qscore << " to support noise floor " << opt.noise_floor << "\n";
-#endif
-            }
-
-        }
-        if (opt.noise_floor >= 0.5 || opt.noise_floor <= 0.0)
-        {
-            pinfo.usage("noise-floor must be in range (0, 0.5)");
-        }
         if (opt.min_het_vf <= 0.0 || opt.min_het_vf >= 0.5)
         {
             pinfo.usage("min-het-vf must be in range (0, 0.5)");

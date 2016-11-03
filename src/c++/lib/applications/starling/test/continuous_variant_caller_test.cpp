@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
-//
+
 #include "boost/test/unit_test.hpp"
 #include "starling_continuous_variant_caller.hh"
 #include <vector>
@@ -43,230 +43,16 @@ BOOST_AUTO_TEST_CASE( qscore_calculation )
     }
 }
 
-#if 0
-BOOST_AUTO_TEST_CASE( call_from_counts )
-{
-    starling_base_options opt;
-    snp_pos_info pileup;
-
-    for (int i=0; i<10; i++)
-        pileup.calls.emplace_back(base_to_id('C'), 30, false, 0, 0, false, false, false, false, false);
-    for (int i=0; i<20; i++)
-        pileup.calls.emplace_back(base_to_id('G'), 30, false, 0, 0, false, false, false, false, false);
-//    for (int i=0;i<30; i++)
-//        pileup.calls.emplace_back(base_to_id('T'), 30, false, 0, 0, false, false, false, false, false);
-    for (int i=0; i<40; i++)
-        pileup.calls.emplace_back(base_to_id('A'), 30, false, 0, 0, false, false, false, false, false);
-
-    const unsigned sampleCount(1);
-    GermlineContinuousSiteLocusInfo locus(sampleCount, 10, 'A', pileup, opt.min_qscore, opt.min_het_vf);
-
-    starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, BASE_ID::C, false, locus);
-    auto C = std::find_if(locus.altAlleles.begin(), locus.altAlleles.end(), [&](const GermlineSiteAlleleInfo& call)
-    {
-        return call.base == BASE_ID::C;
-    });
-    BOOST_REQUIRE(C != locus.altAlleles.end());
-    BOOST_REQUIRE_EQUAL(10, C->_alleleDepth);
-    //BOOST_REQUIRE_EQUAL(40, C->gqx);
-    BOOST_REQUIRE_EQUAL(70, C->_totalDepth);
-
-    locus.altAlleles.clear();
-    starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, BASE_ID::G, false, locus);
-    auto G = std::find_if(locus.altAlleles.begin(), locus.altAlleles.end(), [&](const GermlineSiteAlleleInfo& call)
-    {
-        return call.base == BASE_ID::G;
-    });
-    BOOST_REQUIRE(G != locus.altAlleles.end());
-    BOOST_REQUIRE_EQUAL(20, G->_alleleDepth);
-    //BOOST_REQUIRE_EQUAL(40, G->gqx);
-    BOOST_REQUIRE_EQUAL(70, G->_totalDepth);
-
-    locus.altAlleles.clear();
-    starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, BASE_ID::T, false, locus);
-    auto T = std::find_if(locus.altAlleles.begin(), locus.altAlleles.end(), [&](const GermlineSiteAlleleInfo& call)
-    {
-        return call.base == BASE_ID::T;
-    });
-    BOOST_REQUIRE(T == locus.altAlleles.end());
-
-    locus.altAlleles.clear();
-    starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, BASE_ID::A, true, locus);
-    auto A = std::find_if(locus.altAlleles.begin(), locus.altAlleles.end(), [&](const GermlineSiteAlleleInfo& call)
-    {
-        return call.base == BASE_ID::A;
-    });
-    BOOST_REQUIRE(A != locus.altAlleles.end());
-    BOOST_REQUIRE_EQUAL(40, A->_alleleDepth);
-    //BOOST_REQUIRE_EQUAL(40, A->gqx);
-    BOOST_REQUIRE_EQUAL(70, A->_totalDepth);
-}
-#endif
-
-#if 0
-BOOST_AUTO_TEST_CASE( do_not_call_low_vf )
-{
-    starling_base_options opt;
-    snp_pos_info pileup;
-
-    opt.min_het_vf = 0.03; // 3% threshold
-
-    // insert C at 2%, should not be called
-    for (int i=0; i<2; i++)
-        pileup.calls.emplace_back(base_to_id('C'), 30, false, 0, 0, false, false, false, false, false);
-
-    for (int i=0; i<5; i++)
-        pileup.calls.emplace_back(base_to_id('T'), 30, false, 0, 0, false, false, false, false, false);
-
-    for (int i=0; i<93; i++)
-        pileup.calls.emplace_back(base_to_id('A'), 30, false, 0, 0, false, false, false, false, false);
-
-    const unsigned sampleCount(1);
-    GermlineContinuousSiteLocusInfo locus(sampleCount, 10, 'A', pileup, opt.min_qscore, opt.min_het_vf);
-
-    starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, BASE_ID::C, false, locus);
-    auto C = std::find_if(locus.altAlleles.begin(), locus.altAlleles.end(), [&](const GermlineSiteAlleleInfo& call)
-    {
-        return call.base == BASE_ID::C;
-    });
-    BOOST_REQUIRE(C == locus.altAlleles.end());
-
-    locus.altAlleles.clear();
-    starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, BASE_ID::A, true, locus);
-    auto A = std::find_if(locus.altAlleles.begin(), locus.altAlleles.end(), [&](const GermlineSiteAlleleInfo& call)
-    {
-        return call.base == BASE_ID::A;
-    });
-    BOOST_REQUIRE(A != locus.altAlleles.end());
-    BOOST_REQUIRE_EQUAL(93, A->_alleleDepth);
-    //BOOST_REQUIRE_EQUAL(40, A->gqx);
-    BOOST_REQUIRE_EQUAL(100, A->_totalDepth);
-
-    locus.altAlleles.clear();
-    starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, BASE_ID::T, false, locus);
-    auto T = std::find_if(locus.altAlleles.begin(), locus.altAlleles.end(), [&](const GermlineSiteAlleleInfo& call)
-    {
-        return call.base == BASE_ID::T;
-    });
-    BOOST_REQUIRE(T != locus.altAlleles.end());
-    BOOST_REQUIRE_EQUAL(5, T->_alleleDepth);
-    //BOOST_REQUIRE_EQUAL(13, T->gqx);
-    BOOST_REQUIRE_EQUAL(100, T->_totalDepth);
-}
-#endif
-
-#if 0
-BOOST_AUTO_TEST_CASE( gt_forced_output_calculated_correctly )
-{
-    starling_base_options opt;
-    snp_pos_info pileup;
-
-    opt.min_het_vf = 0.03; // 3% threshold
-
-    // insert C at 2%, should not be called normally, but it will be if forced
-    for (int i = 0; i < 2; i++)
-        pileup.calls.emplace_back(base_to_id('C'), 30, false, 0, 0, false, false, false, false, false);
-
-    for (int i = 0; i < 5; i++)
-        pileup.calls.emplace_back(base_to_id('T'), 30, false, 0, 0, false, false, false, false, false);
-
-    for (int i = 0; i < 93; i++)
-        pileup.calls.emplace_back(base_to_id('A'), 30, false, 0, 0, false, false, false, false, false);
-
-    const unsigned sampleCount(1);
-    GermlineContinuousSiteLocusInfo locus(sampleCount, 10, 'A', pileup, opt.min_qscore, opt.min_het_vf, true);
-
-    starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, BASE_ID::C, true, locus);
-    auto C = std::find_if(locus.altAlleles.begin(), locus.altAlleles.end(),
-                          [&](const GermlineSiteAlleleInfo& call)
-    {
-        return call.base == BASE_ID::C;
-    });
-    BOOST_REQUIRE(C != locus.altAlleles.end());
-    // below min het vf GT should be 0/0 (STAR-66)
-    BOOST_REQUIRE(0 == strcmp(locus.get_gt(*C), "0/0"));
-
-    locus.altAlleles.clear();
-    starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, BASE_ID::A, true, locus);
-    auto A = std::find_if(locus.altAlleles.begin(), locus.altAlleles.end(),
-                          [&](const GermlineSiteAlleleInfo& call)
-    {
-        return call.base == BASE_ID::A;
-    });
-    BOOST_REQUIRE(A != locus.altAlleles.end());
-    BOOST_REQUIRE_EQUAL(93, A->_alleleDepth);
-    // BOOST_REQUIRE_EQUAL(40, A->gqx);
-    BOOST_REQUIRE_EQUAL(100, A->_totalDepth);
-    BOOST_REQUIRE(0 == strcmp(locus.get_gt(*A), "0/0"));
-
-    locus.altAlleles.clear();
-    starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, BASE_ID::T, true, locus);
-    auto T = std::find_if(locus.altAlleles.begin(), locus.altAlleles.end(),
-                          [&](const GermlineSiteAlleleInfo& call)
-    {
-        return call.base == BASE_ID::T;
-    });
-    BOOST_REQUIRE(T != locus.altAlleles.end());
-    BOOST_REQUIRE_EQUAL(5, T->_alleleDepth);
-    // BOOST_REQUIRE_EQUAL(13, T->gqx);
-    BOOST_REQUIRE_EQUAL(100, T->_totalDepth);
-    BOOST_REQUIRE(0 == strcmp(locus.get_gt(*T), "0/1"));
-
-    // G will be called since it is forced output
-    // below min het vf GT should be 0/0 (STAR-66)
-    locus.altAlleles.clear();
-    starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, BASE_ID::G, true, locus);
-    auto G = std::find_if(locus.altAlleles.begin(), locus.altAlleles.end(),
-                          [&](const GermlineSiteAlleleInfo& call)
-    {
-        return call.base == BASE_ID::G;
-    });
-    BOOST_REQUIRE(G != locus.altAlleles.end());
-    BOOST_REQUIRE_EQUAL(0, G->_alleleDepth);
-    BOOST_REQUIRE_EQUAL(100, G->_totalDepth);
-    BOOST_REQUIRE(0 == strcmp(locus.get_gt(*G), "0/0"));
-}
-#endif
-
-#if 0
-BOOST_AUTO_TEST_CASE( homalt_called_correctly )
-{
-    starling_base_options opt;
-    snp_pos_info pileup;
-
-    opt.min_het_vf = 0.03; // 3% threshold
-
-    // insert A at 2%, should not be called normally
-    for (int i=0; i<2; i++)
-        pileup.calls.emplace_back(base_to_id('A'), 30, false, 0, 0, false, false, false, false, false);
-
-    for (int i=0; i<98; i++)
-        pileup.calls.emplace_back(base_to_id('T'), 30, false, 0, 0, false, false, false, false, false);
-
-    const unsigned sampleCount(1);
-    GermlineContinuousSiteLocusInfo locus(sampleCount, 10, 'A', pileup, opt.min_qscore, opt.min_het_vf);
-
-    starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, BASE_ID::T, false, locus);
-    auto T = std::find_if(locus.altAlleles.begin(), locus.altAlleles.end(), [&](const GermlineSiteAlleleInfo& call)
-    {
-        return call.base == BASE_ID::T;
-    });
-    BOOST_REQUIRE(T != locus.altAlleles.end());
-    BOOST_REQUIRE_EQUAL(98, T->_alleleDepth);
-    BOOST_REQUIRE_EQUAL(100, T->_totalDepth);
-    BOOST_REQUIRE(0 == strcmp(locus.get_gt(*T), "1/1"));
-
-    BOOST_REQUIRE_EQUAL(1, locus.altAlleles.size());
-}
-#endif
-
 BOOST_AUTO_TEST_CASE( compute_sb )
 {
+    static const double epsilon(0.0001);
+
     // TODO: diploid one returns -11776.1. chrM 14213
-    BOOST_REQUIRE_CLOSE_FRACTION(0.246095, starling_continuous_variant_caller::strand_bias(4769,4058, 2, 4, .01), 0.0001);
-    // chr1 16892310, SB: -65.243244, fwdAlt: 0, revAlt:62, fwdOther:190, revOther:8
-    // diplod one returns 131.7
-    BOOST_REQUIRE_CLOSE_FRACTION(-65.243244, starling_continuous_variant_caller::strand_bias(0,62, 190, 8, .01), 0.0001);
+    BOOST_REQUIRE_CLOSE_FRACTION(-100.0, starling_continuous_variant_caller::strandBias(4769, 4058, 2, 4), epsilon);
+    BOOST_REQUIRE_CLOSE_FRACTION(116.9888344, starling_continuous_variant_caller::strandBias(0, 62, 190, 8), epsilon);
+
+    BOOST_REQUIRE_CLOSE_FRACTION(251.724361, starling_continuous_variant_caller::strandBias(379, 0, 4940, 5601), epsilon);
+    BOOST_REQUIRE_CLOSE_FRACTION(-100.0, starling_continuous_variant_caller::strandBias(379, 400, 4940, 5601), epsilon);
 }
 
 
