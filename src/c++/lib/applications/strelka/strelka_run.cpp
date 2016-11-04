@@ -162,7 +162,7 @@ strelka_run(
                         static const bool is_forced_output(true);
                         process_candidate_indel(opt.max_indel_size, vcfRecord, sppr, sample_no, is_forced_output);
                     }
-                    else if (vcfRecord.is_snv())
+                    else if (vcfRecord.is_snv() or vcfRecord.is_ref_site())
                     {
                         sppr.insert_forced_output_pos(vcfRecord.pos - 1);
                     }

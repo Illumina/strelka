@@ -1,3 +1,4 @@
+- STREL-318 Accept VCFs with unknown ALT values as forced-call sites
 - STREL-275 REF and ALTs do not share a common prefix of size over 1 
 - STREL-274 simplify variant filter logic in multi-sample germline gVCF(s)
 - STREL-269 prevent indels larger than the max indel size from becoming candidate
