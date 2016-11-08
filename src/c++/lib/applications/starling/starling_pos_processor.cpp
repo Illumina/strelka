@@ -820,9 +820,9 @@ updateContinuousSnvLocusWithSampleInfo(
             if (altAlleleIndex == primaryAltAlleleIndex)
             {
                 strandBias = starling_continuous_variant_caller::strandBias(sampleStrandBias.fwdAlt,
-                                                                           sampleStrandBias.revAlt,
-                                                                           sampleStrandBias.fwdOther,
-                                                                           sampleStrandBias.revOther);
+                                                                            sampleStrandBias.revAlt,
+                                                                            sampleStrandBias.fwdOther,
+                                                                            sampleStrandBias.revOther);
             }
 
             auto& sbcounts(strandBiasCounts[altAlleleIndex]);
@@ -1051,8 +1051,8 @@ addIndelAllelesToLocus(
 /// \param ref reference
 /// \return the length of the common prefix of the reference and all ALT alleles
 static unsigned getCommonPrefixLength(
-        const GermlineIndelLocusInfo& locus,
-        const reference_contig_segment& ref)
+    const GermlineIndelLocusInfo& locus,
+    const reference_contig_segment& ref)
 {
     const auto& locusRange(locus.range());
 

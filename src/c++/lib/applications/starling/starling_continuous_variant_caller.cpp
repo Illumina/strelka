@@ -69,10 +69,10 @@ binomialLogDensity(
 double
 starling_continuous_variant_caller::
 strandBias(
-   unsigned fwdAlt,
-   unsigned revAlt,
-   unsigned fwdOther,
-   unsigned revOther)
+    unsigned fwdAlt,
+    unsigned revAlt,
+    unsigned fwdOther,
+    unsigned revOther)
 {
     const unsigned fwdTotal(fwdAlt+fwdOther);
     const unsigned revTotal(revAlt+revOther);

@@ -40,7 +40,7 @@
 /// remove numPrefixToRemove matches from a cigar match segment of length matchSegmentLength
 static
 void
-removeCommonPrefixFromCigar(unsigned &matchSegmentLength, unsigned &numPrefixToRemove, bool isFirstSegment = false)
+removeCommonPrefixFromCigar(unsigned& matchSegmentLength, unsigned& numPrefixToRemove, bool isFirstSegment = false)
 {
     if (isFirstSegment)
         --matchSegmentLength;   // save the initial match
