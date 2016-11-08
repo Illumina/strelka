@@ -52,8 +52,8 @@ removeCommonPrefixFromCigar(unsigned &matchSegmentLength, unsigned &numPrefixToR
     }
     else
     {
-        matchSegmentLength = 0;
         numPrefixToRemove -= matchSegmentLength;
+        matchSegmentLength = 0;
     }
 
     if (isFirstSegment)
