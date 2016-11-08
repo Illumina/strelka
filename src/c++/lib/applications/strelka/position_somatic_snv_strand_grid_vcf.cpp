@@ -444,7 +444,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
         if (smod.isEVS)
         {
-            os << ";EVS=" << smod.EVS;
+            os << ";" << opt.SomaticEVSVcfInfoTag  << "=" << smod.EVS;
         }
     }
 

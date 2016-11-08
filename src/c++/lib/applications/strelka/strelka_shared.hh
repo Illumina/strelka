@@ -140,6 +140,8 @@ struct strelka_options : public starling_base_options
     /// somatic scoring models:
     std::string somatic_snv_scoring_model_filename;
     std::string somatic_indel_scoring_model_filename;
+
+    const std::string SomaticEVSVcfInfoTag = "SomaticEVS";
 };
 
 
