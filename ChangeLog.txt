@@ -1,6 +1,6 @@
 - STREL-321 fix rare shared variant prefix issue in multi-sample analysis
 - STREL-322 fix VCF namespace conflict on INFO/EVS
-- STREL-200 Adjust mito strand-bias for consistency with autosomes
+- STREL-200 Adjust mitochondrial strand-bias for consistency with autosomes
 - STREL-319 Sync RNA-seq EVS feature names with DNA changes
 - STREL-318 Accept VCFs with unknown ALT values as forced-call sites
 - STREL-275 REF and ALTs do not share a common prefix of size over 1 
