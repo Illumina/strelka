@@ -252,6 +252,8 @@ updateSiteSampleInfo(
     const auto& pi(cpi.rawPileup());
     siteSampleInfo.mapqTracker = pi.mapqTracker;
 
+    siteSampleInfo.strandBias = strandBias;
+
     /// add EVS feature info
     const auto& sampleInfo(locus.getSample(sampleIndex));
     if (locus.isForcedOutput or sampleInfo.isVariant())
@@ -265,8 +267,6 @@ updateSiteSampleInfo(
             siteSampleInfo.rawPos = pi.get_raw_pos();
             siteSampleInfo.avgBaseQ = pi.get_raw_baseQ();
         }
-
-        siteSampleInfo.strandBias = strandBias;
     }
 
     locus.setSiteSampleInfo(sampleIndex, siteSampleInfo);
@@ -819,9 +819,10 @@ updateContinuousSnvLocusWithSampleInfo(
 
             if (altAlleleIndex == primaryAltAlleleIndex)
             {
-                strandBias = starling_continuous_variant_caller::strand_bias(
-                                 sampleStrandBias.fwdAlt, sampleStrandBias.revAlt, sampleStrandBias.fwdOther, sampleStrandBias.revOther,
-                                 opt.noise_floor);
+                strandBias = starling_continuous_variant_caller::strandBias(sampleStrandBias.fwdAlt,
+                                                                            sampleStrandBias.revAlt,
+                                                                            sampleStrandBias.fwdOther,
+                                                                            sampleStrandBias.revOther);
             }
 
             auto& sbcounts(strandBiasCounts[altAlleleIndex]);
@@ -865,8 +866,7 @@ updateContinuousSnvLocusWithSampleInfo(
                              starling_continuous_variant_caller::poisson_qscore(
                                  continuousSiteSampleInfo.continuousAlleleDepth,
                                  continuousSiteSampleInfo.continuousTotalDepth,
-                                 (unsigned) opt.min_qscore, 40);
-
+                                 (unsigned) opt.continuousSiteCallerAverageQuality, 40);
     }
 }
 
@@ -875,7 +875,7 @@ updateContinuousSnvLocusWithSampleInfo(
 static
 void
 updateContinuousSnvLocusInfo(
-    const starling_options& opt,
+    const starling_options& /*opt*/,
     const reference_contig_segment& ref,
     const pos_t pos,
     const std::vector<StrandBiasCounts>& strandBiasCounts,
@@ -894,8 +894,8 @@ updateContinuousSnvLocusInfo(
     {
         auto& allele(siteAlleles[alleleIndex]);
         const auto& sbcounts(strandBiasCounts[alleleIndex]);
-        allele.strandBias = starling_continuous_variant_caller::strand_bias(
-                                sbcounts.fwdAlt, sbcounts.revAlt, sbcounts.fwdOther, sbcounts.revOther, opt.noise_floor);
+        allele.strandBias = starling_continuous_variant_caller::strandBias(sbcounts.fwdAlt, sbcounts.revAlt,
+                                                                           sbcounts.fwdOther, sbcounts.revOther);
     }
 
     // get the qual score:
@@ -1025,6 +1025,69 @@ addIndelAllelesToLocus(
     }
 }
 
+/// STREL-275: Added to address the bug that the REF and ALTs share a common prefix of length >1.
+/// This problem happened when an internal and external deletions overlap and
+/// the flanking sequences happened to be the same. E.g.
+///
+/// AATATATT (REF)
+/// A----ATT (Internal deletion)
+/// AATA---- (External deletion)
+///
+/// In this case, the vcf record becomes unnormalized, like
+///
+/// chr20 pos . AATATATT AATT,AATA ...
+///
+/// whereas the correct record should be
+///
+/// chr20 pos+2 . TATATT TT,TA ...
+///
+/// STREL-275 implements a suboptimal fix for NS5 by
+/// (1) detecting and marking the locus with common prefixes and
+/// (2) changing the output to remove the common prefix.
+///
+/// TODO: A more natural solution can be implemented later when the haplotyping is integrated up to the genotyping stage.
+///
+/// \param locus locus to be investigated
+/// \param ref reference
+/// \return the length of the common prefix of the reference and all ALT alleles
+static unsigned getCommonPrefixLength(
+    const GermlineIndelLocusInfo& locus,
+    const reference_contig_segment& ref)
+{
+    const auto& locusRange(locus.range());
+
+    unsigned minLenCommonPrefix(locusRange.size());
+    for (auto& indelAllele : locus.getIndelAlleles())
+    {
+        auto& indelKey = indelAllele.indelKey;
+
+        unsigned lenCommonPrefix(indelKey.pos - locusRange.begin_pos());
+        bool isOutsideOfCommonPrefix = false;
+        for (unsigned i(0); i<indelKey.insert_length(); ++i)
+        {
+            if (ref.get_base(locusRange.begin_pos()+lenCommonPrefix) != indelKey.insert_seq()[i])
+            {
+                isOutsideOfCommonPrefix = true;
+                break;
+            }
+            ++lenCommonPrefix;
+        }
+
+        if (not isOutsideOfCommonPrefix)
+        {
+            for (pos_t pos(indelKey.right_pos()); pos<locusRange.end_pos(); ++pos)
+            {
+                if (ref.get_base(locusRange.begin_pos()+lenCommonPrefix) != ref.get_base(pos))
+                    break;
+                ++lenCommonPrefix;
+            }
+        }
+        if (lenCommonPrefix < minLenCommonPrefix)
+            minLenCommonPrefix = lenCommonPrefix;
+    }
+
+    return minLenCommonPrefix;
+}
 
 
 /// setup indelSampleInfo assuming that corresponding sampleInfo has already been initialized
@@ -1515,6 +1578,15 @@ process_pos_indel_digt(const pos_t pos)
             // add sample-independent info:
             locusPtr->anyVariantAlleleQuality = ln_error_prob_to_qphred(homRefLogProb);
 
+            // get common prefix length
+
+            if (locusPtr->getAltAlleleCount() > 1)
+            {
+                unsigned commonPrefixLength(getCommonPrefixLength(*locusPtr, _ref));
+                if (commonPrefixLength > 0)
+                    locusPtr->setCommonPrefix(commonPrefixLength);
+            }
+
             if (isForcedOutput or locusPtr->isVariantLocus())
             {
                 // finished! send this locus down the pipe:
@@ -1647,7 +1719,7 @@ updateContinuousIndelLocusWithSampleInfo(
                          starling_continuous_variant_caller::poisson_qscore(
                              indelSampleInfo.legacyReportInfo.n_confident_indel_reads,
                              indelSampleInfo.legacyReportInfo.total_confident_reads(),
-                             (unsigned) opt.min_qscore, 40);
+                             (unsigned) opt.continuousSiteCallerAverageQuality, 40);
 
     // use diploid gt codes as a convenient way to summarize the continuous variant calls:
     static const VcfGenotype hetGtIndex(0,1);

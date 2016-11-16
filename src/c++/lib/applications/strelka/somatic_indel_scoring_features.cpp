@@ -169,7 +169,7 @@ calculateScoringFeatures(
 {
     const indel_result_set& rs(siInfo.sindel.rs);
     smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::QSI_NT, rs.from_ntype_qphred);
-    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::ABS_T_RR, fabs(siInfo.tisri[0].readpos_ranksum.get_u_stat()));
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::ABS_T_RR, fabs(siInfo.tisri[0].readpos_ranksum.get_z_stat()));
     smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::ABS_T_SOR, fabs(calculateSOR(siInfo.tisri[0])));
 
     if (siInfo.indelReportInfo.is_repeat_unit())

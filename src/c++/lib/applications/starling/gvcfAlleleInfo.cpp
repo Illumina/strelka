@@ -37,17 +37,43 @@
 #include <typeinfo>
 
 
+/// remove numPrefixToRemove matches from a cigar match segment of length matchSegmentLength
+static
+void
+removeCommonPrefixFromCigar(unsigned& matchSegmentLength, unsigned& numPrefixToRemove, bool isFirstSegment = false)
+{
+    if (isFirstSegment)
+        --matchSegmentLength;   // save the initial match
+
+    if (matchSegmentLength >= numPrefixToRemove)
+    {
+        matchSegmentLength -= numPrefixToRemove;
+        numPrefixToRemove = 0;
+    }
+    else
+    {
+        numPrefixToRemove -= matchSegmentLength;
+        matchSegmentLength = 0;
+    }
+
+    if (isFirstSegment)
+        ++matchSegmentLength;   // restore the initial match
+}
 
 
 
 void
 setIndelAlleleCigar(
-    const unsigned lead,
-    const unsigned trail,
+    unsigned lead,
+    unsigned trail,
+    const unsigned commonPrefixLength,
     const IndelKey& indelKey,
     ALIGNPATH::path_t& cigar)
 {
     using namespace ALIGNPATH;
+
+    unsigned numPrefixToRemove(commonPrefixLength);
+    removeCommonPrefixFromCigar(lead, numPrefixToRemove, true);
 
     cigar.clear();
     if (lead)
@@ -58,10 +84,19 @@ setIndelAlleleCigar(
     {
         cigar.push_back(path_segment(DELETE, indelKey.delete_length()));
     }
-    if (indelKey.insert_length())
-    {
-        cigar.push_back(path_segment(INSERT, indelKey.insert_length()));
-    }
+    unsigned insertLength(indelKey.insert_length());
+    if (numPrefixToRemove)
+        removeCommonPrefixFromCigar(insertLength, numPrefixToRemove);
+
+    if (insertLength)
+        cigar.push_back(path_segment(INSERT, insertLength));
+
+    if (numPrefixToRemove)
+        removeCommonPrefixFromCigar(trail, numPrefixToRemove);
+
+    // numPrefixToRemove > 0 means that commonPrefixLength is incorrect
+    assert(numPrefixToRemove == 0);
+
     if (trail)
     {
         cigar.push_back(path_segment(MATCH,trail));

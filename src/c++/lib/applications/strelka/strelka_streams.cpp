@@ -141,7 +141,7 @@ strelka_streams(
             fos << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"Somatic SNV site strand bias\">\n";
             fos << "##INFO=<ID=PNOISE,Number=1,Type=Float,Description=\"Fraction of panel containing non-reference noise at this site\">\n";
             fos << "##INFO=<ID=PNOISE2,Number=1,Type=Float,Description=\"Fraction of panel containing more than one non-reference noise obs at this site\">\n";
-            fos << "##INFO=<ID=EVS,Number=1,Type=Float,Description=\"Empirical Variant Score (EVS) expressing the phred-scaled probability of the call being a false positive observation.\">\n";
+            fos << "##INFO=<ID=" << opt.SomaticEVSVcfInfoTag << ",Number=1,Type=Float,Description=\"Somatic Empirical Variant Score (EVS) expressing the phred-scaled probability of the call being a false positive observation.\">\n";
 
             if (opt.isReportEVSFeatures)
             {
@@ -170,7 +170,7 @@ strelka_streams(
                         // Currently the lowEVS filter is shared btw. indels and snvs. For the header
                         // we report the cut-off value from the SNV currently
                         const VariantScoringModelServer& varModel(*dopt.somaticSnvScoringModel);
-                        oss << "Empirical Variant Score (EVS) is less than " << varModel.scoreFilterThreshold();
+                        oss << "Somatic Empirical Variant Score (" << opt.SomaticEVSVcfInfoTag << ") is less than " << varModel.scoreFilterThreshold();
                         write_vcf_filter(fos, get_label(LowEVSsnv), oss.str().c_str());
                     }
                 }
@@ -249,7 +249,7 @@ strelka_streams(
             fos << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
             fos << "##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description=\"Somatic mutation\">\n";
             fos << "##INFO=<ID=OVERLAP,Number=0,Type=Flag,Description=\"Somatic indel possibly overlaps a second indel.\">\n";
-            fos << "##INFO=<ID=EVS,Number=1,Type=Float,Description=\"Empirical Variant Score (EVS) expressing the phred-scaled probability of the call being a false positive observation.\">\n";
+            fos << "##INFO=<ID=" << opt.SomaticEVSVcfInfoTag << ",Number=1,Type=Float,Description=\"Somatic Empirical Variant Score (EVS) expressing the phred-scaled probability of the call being a false positive observation.\">\n";
 
             if (opt.isReportEVSFeatures)
             {
@@ -289,7 +289,7 @@ strelka_streams(
                         const double threshold(varModel.scoreFilterThreshold());
 
                         std::ostringstream oss;
-                        oss << "Empirical Variant Score (EVS) is less than " << threshold;
+                        oss << "Somatic Empirical Variant Score (" << opt.SomaticEVSVcfInfoTag << ") is less than " << threshold;
                         write_vcf_filter(fos, get_label(LowEVSindel), oss.str().c_str());
                     }
                 }

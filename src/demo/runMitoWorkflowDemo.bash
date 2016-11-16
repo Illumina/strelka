@@ -25,14 +25,15 @@
 set -o nounset
 set -o pipefail
 
-scriptDir=$(dirname $0)
+thisDir=$(dirname $0)
+scriptDir=$thisDir/../bin
 demoDir=$scriptDir/../share/demo/strelka
 dataDir=$demoDir/data
 expectedDir=$demoDir/expectedResultsMito
 
 analysisDir=./starlingMitoDemoAnalysis
 
-configScript=$scriptDir/configureStarlingWorkflow.py
+configScript=$scriptDir/configureStrelkaGermlineWorkflow.py
 
 demoConfigFile=$demoDir/starlingDemoConfig.ini
 
@@ -41,7 +42,7 @@ demoConfigFile=$demoDir/starlingDemoConfig.ini
 if [ ! -e $configScript ]; then
     cat<<END 1>&2
 
-ERROR: Starling workflow must be installed prior to running demo.
+ERROR: Strelka must be installed prior to running demo.
 
 END
     exit 2

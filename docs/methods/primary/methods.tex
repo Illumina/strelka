@@ -16,7 +16,7 @@
 \usepackage[noend]{algpseudocode}
 
 
-\title{'Methods for Strelka Small Variant Caller'}
+\title{'Strelka Small Variant Caller Methods'}
 
 
 % simple scientific notation:
@@ -61,6 +61,7 @@ The details of the shared and application specific model steps are provided belo
 An initial step in all workflows is the rapid estimation of the sequencing depth for each chromosome. For somatic analysis this depth is only computed for the normal sample. This information is used downstream to filter out high-depth regions (details below) when Strelka is run in its default whole genome sequencing mode. This step is skipped for exome or other targeted analyses.
 
 \subsubsection{Chromosome depth estimation}
+\label{sec:depth_est}
 
 For each chromosome, depth is estimated using a modified median calculation. As a first step, each chromosome is partitioned into segments of similar size to ensure the estimation process samples several chromosome regions. The chromosome is divided into the smallest number of segments no larger than $S_{max}$, where all segments have nearly equal size (all sizes must be $S$ or $S+1$, given smallest segment size of $S$). If this procedure results in more than 20 segments then $S_{max}$ is doubled until 20 or fewer segments are found. $S_{max}$ is initialized to 2 Mbase.
 
@@ -286,21 +287,120 @@ Note that the somatic callability track is based on the core somatic variant qua
 
 \subsubsection{Germline Calling Model and Genotype likelihoods}
 
+
+% snv strand bias note:
+% dgt.strand_bias=std::max(lhood_fwd[tgt],lhood_rev[tgt])-lhood[tgt];
+
+
 \subsubsection{Germline Filtration and Scoring}
-The final score of a candidate variant is assigned by a classifier of which the input features are the variant probability described above along with several other features that may not be taken into account fully in the probabilistic model. We refer to this step as \emph{empirical variant scoring}.
 
-\paragraph{Model description, training, and calibration}
-Empirical variant scoring in Strelka is performed by two random forest classifiers -- one for snvs and one for indels -- as implemented in the scikit-learn python package, trained on a labeled set of candidate variants. Each classifier uses 50 decision trees with a maximum depth of 12, a minimum of 50 samples per leaf, and no limit on the maximum number of features.
+The germline variant calling model provides a useful representation of the sequencing data at the putative variant locus; however, there is additional information not used by the model which is predictive of call accuracy. These may be metrics such as the number of reads or alleles which are filtered out of the call quality computation, the quality of alignments in the region around the putative variant or various allele/strand/quality biases indicative of assay or mapping artifacts. As a final step in the germline variant calling process, such additional information is enumerated as a set of predictive features and used to improve call precision for a given recall level beyond what can be achieved from the core variant calling model alone. These additional features are employed in the final step of germline calling in one of two ways:
 
-The training dataset is compiled from a collection of sequencing runs on different platforms and chemistries, all from an individual for which a gold standard truth set is available via the Platinum Genomes project. Candidate variants that correspond to the high-confidence regions of the truth set are labeled as true or false using the hap.py haplotype comparison tool. Variants that exist in the truth set but were called with incorrect genotype are treated as false variants. It is believed that the vast majority of candidate variants outside of the high-confidence regions (and classified by hap.py as unknown) are false; for this reason, these variants are added to the set of false variants that are presented to the model during training.
+\begin{itemize}
+    \item Empirical Variant Scoring (EVS):
+    The EVS model is used to provide a single aggregate quality score for each variant which incorporates the information from all variant calling features. This model is used to improve variant call precision for a given recall level as stated above, but also provides additional benefits: (1) the EVS model tends to provide a greater precision improvement than simple hard-filtration of the features (see below) (2) consolidating all accuracy predictors to a single metric allows for an optimized exploration of the full ROC curve for applications which require much higher recall or precision than provided with default variant passing thresholds (3) the training mechanism provides a pathway to create calibrated quality values, but note that this step is not taken in the current EVS model provided with Strelka.
+    \item Hard Filters:
+    When the EVS model is not used, simple cutoffs are applied to a set of features (not necessarily the same set used by EVS) to filter out calls which are not sufficiently likely to be real. Hard filters are used at all homozygous reference sites, for any contig where the continuous (heteropolasmic) calling option has been selected, and for any assay where EVS is turned off by default (such as enrichment and amplicon-based targeted sequencing).
+\end{itemize}
+
+
+\paragraph{EVS model}
+
+Empirical variant scoring in Strelka uses pre-trained random forest models taking EVS features as input to produce the probability of an erroneous variant call. There is a separate trained random forest model and feature set for each of the two high-level variant categories, SNVs and indels. Strelka is intended to run with models which have been pre-trained on a combined training data set representing a wide variety of sample-prep and sequencing assays. Note that although scripts are provided to recreate the EVS model training procedure, there is no intention for the models to be retrained for each input sequencing dataset to be analyzed (this is in contrast to dynamic re-scoring systems such as the GATK VQSR procedure [CITE]).
+
+The EVS models are trained using the random forest learning procedures implemented in the scikit-learn package [CITE], trained on a set of candidate calls with truth labels assigned as described below. Each random forest model uses 50 decision trees with a maximum depth of 12, a minimum of 50 samples per leaf, and no limit on the maximum number of features. The remaining options are set to scikit-learn defaults.
+
+The training data are compiled from a collection of sequencing runs using different sample prep, sequencing platforms and chemistries, all from an individual for which a gold standard truth set is available from the Platinum Genomes project \cite{eberle2016}. Candidate variants that correspond to the high-confidence regions of the truth set are labeled as true or false using the hap.py haplotype comparison tool (\urlstyle{same}\url{https://github.com/Illumina/hap.py}). Variants that exist in the truth set but were called with incorrect genotype are treated as false variants. It is believed that the vast majority of candidate variants outside of the high-confidence regions (and classified by hap.py as unknown) are false; for this reason, these variants are added to the set of false variants that are presented to the model during training.
 
 The output scores produced by the random forest classifier are well calibrated under the assumption (used during training) that all of the unknown candidate variants are false. However, if this assumption is not made and the model performance is evaluated on variants in the confident regions only, the model is overly pessimistic. In order to achieve an acceptable precision-recall tradeoff, the model output is recalibrated by passing it through a monotonic transform that is set to roughly optimize f-score when the resulting score is thresholded at the default phred-scale threshold of 15.
 
-\paragraph{Feature descriptions}
+\paragraph{Features used by the EVS model}
 
-\subsubsection{Denovo Calling Model and Genotype likelihoods}
+Features used in each model are listed here and definitions are provided further below.
 
-\subsubsection{Denovo Filtration and Scoring}
+\begin{itemize}
+    \item SNV features:
+    \begin{itemize}
+        \item \texttt{GenotypeCategory}
+        \item \texttt{SampleRMSMappingQuality}
+        \item \texttt{SiteHomopolymerLength}
+        \item \texttt{SampleStrandBias}
+        \item \texttt{SampleRMSMappingQualityRankSum}
+        \item \texttt{SampleReadPosRankSum}
+        \item \texttt{RelativeTotalLocusDepth}
+        \item \texttt{SampleUsedDepthFraction}
+        \item \texttt{ConservativeGenotypeQuality}
+    \end{itemize}
+    \item Indel features:
+    \begin{itemize}
+        \item \texttt{GenotypeCategory}
+        \item \texttt{SampleIndelAlleleRepeatCount}
+        \item \texttt{SampleIndelAlleleRepeatUnitSize}
+        \item \texttt{SampleIndelAlleleBiasLower}
+        \item \texttt{SampleIndelAlleleBias}
+        \item \texttt{SampleProxyRMSMappingQuality}
+        \item \texttt{RelativeTotalLocusDepth}
+        \item \texttt{SampleIndelAlleleDepthFraction}
+        \item \texttt{ConservativeGenotypeQuality}
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Hard filters}
+
+In this case a set of filters is defined. Each filter is triggered when a single feature exceeds some critical value. Filtration thresholds are set to remove variants which are very likely to be incorrect.
+
+The hard filter model is used whenever EVS cannot be. This is aways the method used to filter homozygous reference calls, and for certain calls which are not well represented in EVS training (hemizygous variants). The EVS model may be turned off for all variants whenever the assay conditions are suspected to poorly match the EVS models training conditions, in which case the simple hard filters will be used as the default fallback.
+
+\paragraph{Hard filter thresholds}
+
+\begin{itemize}
+    \item Shared filter conditions
+    \begin{itemize}
+        \item \texttt{ConservativeGenotypeQuality} ~ variant is filtered if this value is less than 15
+        \item \texttt{RelativeTotalLocusDepth} ~ variant is filtered if this value is greater than 3
+    \end{itemize}
+    \item SNV specific filter conditions:
+    \begin{itemize}
+        \item \texttt{SampleStrandBias} ~ SNV is filtered if this value is greater than 10
+    \end{itemize}
+\end{itemize}
+
+\paragraph{EVS/hard-filter feature descriptions}
+
+\begin{itemize}
+
+\item \texttt{GenotypeCategory} ~ A category variable reflecting the most likely genotype as heterozygous (0), homozygous (1) or alt-heterozygous (2).
+
+\item \texttt{SampleRMSMappingQuality} ~ RMS mapping quality of all reads spanning the variant in one sample. This feature matches the SAMPLE/MQ value defined in the VCF spec.
+
+\item \texttt{SiteHomopolymerLength} ~ Length of the longest homopolymer containing the current position if this position can be treated as any base.
+
+% TODO note this metric doesn't allow for any strand bias, which could be problematic at high depth. High values don't indicate high bias, but high confidence in any level of bias, no matter how small. This may not be exactly what we want: this feature might have an optimal threshold which changes as a function of depth:
+\item \texttt{SampleStrandBias} ~ Log ratio of the sample's genotype likelihood computed assuming the alternate allele occurs on only one strand vs both strands (thus positive values indicate bias).
+
+\item \texttt{SampleRMSMappingQualityRankSum} ~ Z-score of Mann-Whitney U test for reference vs alternate allele mapping quality values in one sample.
+
+\item \texttt{SampleReadPosRankSum} ~ Z-score of Mann-Whitney U test for reference vs alternate allele read positions in one sample.
+
+\item \texttt{RelativeTotalLocusDepth} ~ Locus depth relative to expectation: this is the ratio of total read depth at the variant locus in all samples over the total expected depth in all samples. Depth at the variant locus includes reads at any mapping quality. Expected depth is taken from the preliminary depth estimation step defined above in ``\nameref{sec:depth_est}''. This value is set to 1 in exome and targeted analyses, because it is problematic to define expected depth in this case.
+
+\item \texttt{SampleUsedDepthFraction} ~ The ratio of reads used to genotype the locus over the total number of reads at the variant locus in one sample. Reads are not used if the mapping quality is less than the minimum threshold, if the local read alignment fails the mismatch density filter or if the basecall is ambiguous.
+
+\item \texttt{ConservativeGenotypeQuality} ~ The model-based ConservativeGenotypeQuality (GQX) value for one sample, reflecting the conservative confidence of the called genotype.
+
+\item \texttt{SampleIndelAlleleRepeatCount} ~ The number of times the primary indel allele's \emph{repeat unit} occurs in a haplotype containing the indel allele. The primary indel allele's \emph{repeat unit} is found by comparing the reference and primary indel alleles to find the smallest possible repeating sequence unit shared between the two alleles. The primary indel allele is the best supported allele among all overlapping indel alleles at the locus of interest in one sample.
+
+\item \texttt{SampleIndelAlleleRepeatUnitSize} ~ Length of the primary indel allele's \emph{repeat unit}, as defined for feature \texttt{SampleIndelAlleleRepeatCount}.
+
+\item \texttt{SampleIndelAlleleBiasLower} ~ For one sample, this is the negative log probability of seeing N or fewer observations of one allele in a heterozygous variant out of the total observations from both alleles. N is typically the observation count of the reference allele. If the heterozygous variant does not include the reference allele, the first indel allele is used instead.
+
+\item \texttt{SampleIndelAlleleBias} ~ Similar to \texttt{SampleIndelAlleleBiasLower}, except the count used is twice the count of the least frequently observed allele.
+
+\item \texttt{SampleProxyRMSMappingQuality} ~ RMS mapping quality of all reads spanning the position immediately proceeding the indel in one sample. This feature approximates the SAMPLE/MQ value defined in the VCF spec.
+
+\item \texttt{SampleIndelAlleleDepthFraction} ~ For one sample, this is the ratio of the confident observation count of the best-supported non-reference indel allele at the variant locus, over all confident allele observation counts.
+
+\end{itemize}
 
 
 \bibliographystyle{alpha}

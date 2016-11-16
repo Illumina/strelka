@@ -28,29 +28,22 @@
 #include <iosfwd>
 
 
-// Calculates the Mann-Whitney rank-sum statistic from two populations with
-// sparse (and similar) observation spaces
-//
-// this is a variation on the original ranksum class which only accepts small unsigned
-// observations for better performance.
-//
+/// Calculates the Mann-Whitney rank-sum statistic from two populations with
+/// sparse (and similar) observation spaces
+///
+/// this is a variation on the original ranksum class which only accepts small unsigned
+/// observations for better performance.
+///
 struct fastRanksum
 {
-    // insert an (A/B) observation for base-call case
+    /// insert an observation, indicating membership in category 1 or 2
     void
     add_observation(
-        const bool isA,
+        const bool isCategory1,
         const unsigned obs)
     {
         if (obs >= _obs.size()) _obs.resize(obs+16);
-        _obs[obs].inc(isA);
-//        if (!isA){
-//            this->total_alt+=obs;
-//            this->total_alt_count++;
-//            std::cerr << "obs: " << obs << std::endl;
-//            std::cerr << "sum: " <<this->total_alt << std::endl;
-//            std::cerr << "count: " << this->total_alt_count << std::endl;
-//        }
+        _obs[obs].inc(isCategory1);
     }
 
     void
@@ -66,23 +59,16 @@ struct fastRanksum
         }
     }
 
-    //return rank-sum U statistic
-    double get_u_stat() const;
+    /// \return z-score of the Mann-Whitney U statistic
+    double get_z_stat() const;
 
-    //
-    double get_u_stat_uniform() const;
-
-    // return average cycle of the alternate allele
-    double get_raw_score() const;
-
-    double get_avg_alt() const;
+    /// \return average value of category 2
+    double getExpectedCategory2Value() const;
 
     void
     clear()
     {
         _obs.resize(0);
-//        this->total_alt = 0;
-//        this->total_alt_count = 0;
     }
 
 
@@ -91,17 +77,17 @@ private:
     struct ranksumObs
     {
         ranksumObs() :
-            A(0),
-            B(0)
+            c1(0),
+            c2(0)
         {}
 
         void
-        inc(const bool isA)
+        inc(const bool isCategory1)
         {
-            if (isA) A++; // case
+            if (isCategory1) c1++;
             else
             {
-                B++;
+                c2++;
             }
         }
 
@@ -112,27 +98,25 @@ private:
         {
             if (isFlipObservationCategories)
             {
-                A += rhs.A;
-                B += rhs.B;
+                c1 += rhs.c1;
+                c2 += rhs.c2;
             }
             else
             {
-                A += rhs.B;
-                B += rhs.A;
+                c1 += rhs.c2;
+                c2 += rhs.c1;
             }
         }
 
         bool
         empty() const
         {
-            return ((A+B)==0);
+            return ((c1+c2)==0);
         }
 
-        unsigned A;
-        unsigned B;
+        unsigned c1;
+        unsigned c2;
     };
 
-    std::vector<ranksumObs> _obs; // observations for ref/alt bases
-//    unsigned total_alt=0;
-//    unsigned total_alt_count=0;
+    std::vector<ranksumObs> _obs;
 };

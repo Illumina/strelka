@@ -32,6 +32,12 @@ can be found in the [strelka developer guide] [developerGuide].
 
 ### Prerequisites to build from source
 
+[![Build Status] [tcistatus]] [tcihome]
+
+[tcistatus]:https://travis-ci.org/Illumina/strelka.svg?branch=master
+[tcihome]:https://travis-ci.org/Illumina/strelka
+
+
 Strelka requires a compiler supporting most of the C++11 standard. These
 are the current minimum versions enforced by the build system:
 

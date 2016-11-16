@@ -128,15 +128,15 @@ building tree 1 of 50
 ...
 building tree 50 of 50
 Feature ranking:
-1. feature 7:F_DP_NORM (0.452272 +- 0.000716)
-2. feature 6:TDP_NORM (0.299713 +- 0.000792)
-3. feature 8:F_GQX_EXACT (0.134600 +- 0.000876)
-4. feature 1:I_MQ (0.037543 +- 0.000379)
-5. feature 2:I_SNVHPOL (0.031712 +- 0.000416)
-6. feature 3:I_SNVSB (0.016012 +- 0.000521)
-7. feature 0:GENO (0.014921 +- 0.000669)
-8. feature 4:I_MQRankSum (0.010185 +- 0.000514)
-9. feature 5:I_ReadPosRankSum (0.003041 +- 0.000232)
+1. feature 7:SampleUsedDepthFraction (0.452272 +- 0.000716)
+2. feature 6:RelativeTotalLocusDepth (0.299713 +- 0.000792)
+3. feature 8:ConservativeGenotypeQuality (0.134600 +- 0.000876)
+4. feature 1:SampleRMSMappingQuality (0.037543 +- 0.000379)
+5. feature 2:SiteHomopolymerLength (0.031712 +- 0.000416)
+6. feature 3:SampleStrandBias (0.016012 +- 0.000521)
+7. feature 0:GenotypeCategory (0.014921 +- 0.000669)
+8. feature 4:SampleRMSMappingQualityRankSum (0.010185 +- 0.000514)
+9. feature 5:SampleReadPosRankSum (0.003041 +- 0.000232)
 ```
 
 ## Step 3: Calculate Scores

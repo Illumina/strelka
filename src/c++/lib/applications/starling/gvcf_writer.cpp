@@ -766,7 +766,7 @@ write_indel_record_instance(
     // create VCF specific transformation of the alt allele list
     const auto& indelAlleles(locus.getIndelAlleles());
     OrthogonalAlleleSetLocusReportInfo locusReportInfo;
-    getLocusReportInfoFromAlleles(_ref, indelAlleles, locusReportInfo);
+    getLocusReportInfoFromAlleles(_ref, indelAlleles, locus.getCommonPrefixLength(), locusReportInfo);
 
     os << getChromName() << '\t'   // CHROM
        << locusReportInfo.vcfPos << '\t'   // POS

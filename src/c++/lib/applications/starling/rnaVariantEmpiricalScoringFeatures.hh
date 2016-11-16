@@ -59,9 +59,9 @@ struct RNA_SNV_SCORING_FEATURES : public FeatureSet
         I_AvgBaseQ,
         I_AvgPos,
         I_BaseQRankSum,
-        I_ReadPosRankSum,
-        I_SNVHPOL,
-        I_SNVSB,
+        SampleReadPosRankSum,
+        SiteHomopolymerLength,
+        SampleStrandBias,
         AD0,
         AD1,
         ADR,
@@ -97,12 +97,12 @@ struct RNA_SNV_SCORING_FEATURES : public FeatureSet
             return "I_AvgPos";
         case I_BaseQRankSum:
             return "I_BaseQRankSum";
-        case I_ReadPosRankSum:
-            return "I_ReadPosRankSum";
-        case I_SNVHPOL:
-            return "I_SNVHPOL";
-        case I_SNVSB:
-            return "I_SNVSB";
+        case SampleReadPosRankSum:
+            return "SampleReadPosRankSum";
+        case SiteHomopolymerLength:
+            return "SiteHomopolymerLength";
+        case SampleStrandBias:
+            return "SampleStrandBias";
         case AD0:
             return "AD0";
         case AD1:
@@ -140,17 +140,17 @@ struct RNA_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
 
     enum index_t
     {
-        I_MQ,
-        I_MQRankSum,
+        SampleRMSMappingQuality,
+        SampleRMSMappingQualityRankSum,
         mapqZeroFraction,
-        F_DP_NORM,
+        SampleUsedDepthFraction,
         QUAL_NORM,
         F_GQX_NORM,
         F_GQ_NORM,
         AD0_NORM,
-        AD1_NORM,
+        SamplePrimaryAltAlleleDepthFraction,
         QUAL_EXACT,
-        F_GQX_EXACT,
+        ConservativeGenotypeQuality,
         F_GQ_EXACT,
         SIZE
     };
@@ -166,14 +166,14 @@ struct RNA_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-        case I_MQ:
-            return "I_MQ";
-        case I_MQRankSum:
-            return "I_MQRankSum";
+        case SampleRMSMappingQuality:
+            return "SampleRMSMappingQuality";
+        case SampleRMSMappingQualityRankSum:
+            return "SampleRMSMappingQualityRankSum";
         case mapqZeroFraction:
             return "mapqZeroFraction";
-        case F_DP_NORM:
-            return "F_DP_NORM";
+        case SampleUsedDepthFraction:
+            return "SampleUsedDepthFraction";
         case QUAL_NORM:
             return "QUAL_NORM";
         case F_GQX_NORM:
@@ -182,12 +182,12 @@ struct RNA_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "F_GQ_NORM";
         case AD0_NORM:
             return "AD0_NORM";
-        case AD1_NORM:
-            return "AD1_NORM";
+        case SamplePrimaryAltAlleleDepthFraction:
+            return "SamplePrimaryAltAlleleDepthFraction";
         case QUAL_EXACT:
             return "QUAL_EXACT";
-        case F_GQX_EXACT:
-            return "F_GQX_EXACT";
+        case ConservativeGenotypeQuality:
+            return "ConservativeGenotypeQuality";
         case F_GQ_EXACT:
             return "F_GQ_EXACT";
         default:
@@ -222,13 +222,13 @@ struct RNA_INDEL_SCORING_FEATURES : public FeatureSet
         QUAL,
         F_GQX,
         REFREP1,
-        IDREP1,
-        RULEN1,
+        IndelAlleleRepeatCount,
+        IndelAlleleRepeatUnitSize,
         AD0,
         AD1,
         AD2,
-        ABlower,
-        AB,
+        SampleIndelAlleleBiasLower,
+        SampleIndelAlleleBias,
         F_DPI,
         SIZE
     };
@@ -250,20 +250,20 @@ struct RNA_INDEL_SCORING_FEATURES : public FeatureSet
             return "F_GQX";
         case REFREP1:
             return "REFREP1";
-        case IDREP1:
-            return "IDREP1";
-        case RULEN1:
-            return "RULEN1";
+        case IndelAlleleRepeatCount:
+            return "IndelAlleleRepeatCount";
+        case IndelAlleleRepeatUnitSize:
+            return "IndelAlleleRepeatUnitSize";
         case AD0:
             return "AD0";
         case AD1:
             return "AD1";
         case AD2:
             return "AD2";
-        case ABlower:
-            return "ABlower";
-        case AB:
-            return "AB";
+        case SampleIndelAlleleBiasLower:
+            return "SampleIndelAlleleBiasLower";
+        case SampleIndelAlleleBias:
+            return "SampleIndelAlleleBias";
         case F_DPI:
             return "F_DPI";
         default:
@@ -297,17 +297,17 @@ struct RNA_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     enum index_t
     {
         F_GQ,
-        F_MQ,
+        SampleProxyRMSMappingQuality,
         mapqZeroFraction,
         F_DPI_NORM,
         QUAL_NORM,
         F_GQX_NORM,
         F_GQ_NORM,
         AD0_NORM,
-        AD1_NORM,
+        SamplePrimaryAltAlleleDepthFraction,
         AD2_NORM,
         QUAL_EXACT,
-        F_GQX_EXACT,
+        ConservativeGenotypeQuality,
         F_GQ_EXACT,
         SIZE
     };
@@ -325,8 +325,8 @@ struct RNA_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         {
         case F_GQ:
             return "F_GQ";
-        case F_MQ:
-            return "F_MQ";
+        case SampleProxyRMSMappingQuality:
+            return "SampleProxyRMSMappingQuality";
         case mapqZeroFraction:
             return "mapqZeroFraction";
         case F_DPI_NORM:
@@ -339,14 +339,14 @@ struct RNA_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "F_GQ_NORM";
         case AD0_NORM:
             return "AD0_NORM";
-        case AD1_NORM:
-            return "AD1_NORM";
+        case SamplePrimaryAltAlleleDepthFraction:
+            return "SamplePrimaryAltAlleleDepthFraction";
         case AD2_NORM:
             return "AD2_NORM";
         case QUAL_EXACT:
             return "QUAL_EXACT";
-        case F_GQX_EXACT:
-            return "F_GQX_EXACT";
+        case ConservativeGenotypeQuality:
+            return "ConservativeGenotypeQuality";
         case F_GQ_EXACT:
             return "F_GQ_EXACT";
         default:

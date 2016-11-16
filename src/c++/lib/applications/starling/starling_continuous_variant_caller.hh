@@ -32,7 +32,12 @@ struct starling_continuous_variant_caller
     int
     poisson_qscore(unsigned callCount, unsigned coverage, unsigned estimatedBaseCallQuality, int maxQScore);
 
+    /// return log likelihood ratio of the variants on either strand over both strands
     static
     double
-    strand_bias(unsigned fwdAlt, unsigned revAlt, unsigned fwdOther, unsigned revOther, double noise);
+    strandBias(
+        unsigned fwdAlt,
+        unsigned revAlt,
+        unsigned fwdOther,
+        unsigned revOther);
 };

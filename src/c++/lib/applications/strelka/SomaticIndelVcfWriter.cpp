@@ -194,7 +194,7 @@ writeSomaticIndelVcfGrid(
 
         if (smod.isEVS)
         {
-            os << ";EVS=" << smod.EVS;
+            os << ";" << opt.SomaticEVSVcfInfoTag << "=" << smod.EVS;
         }
     }
 

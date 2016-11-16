@@ -18,44 +18,31 @@
 //
 //
 
-/// \file
+#include "htsapi/vcf_record.hh"
 
-/// \author Chris Saunders
-///
-
-#if 0
-#include "blt_util/reference_contig_segment.hh"
-
-#include <iostream>
+#include "boost/test/unit_test.hpp"
 
 
-static
-void
-test_rcs()
+BOOST_AUTO_TEST_SUITE( vcf_record_test )
+
+BOOST_AUTO_TEST_CASE( test_snv )
 {
-    std::ostream& os(std::cerr);
+    vcf_record vcfr;
+    vcfr.set("chr1\t1\t.\tA\tT\n");
+    BOOST_REQUIRE(not vcfr.is_indel());
+    BOOST_REQUIRE(vcfr.is_snv());
+    BOOST_REQUIRE(not vcfr.is_ref_site());
+}
 
-    reference_contig_segment ref;
-    ref.seq() = "12345";
-    ref.set_offset(10);
-
-    for (unsigned i(5); i<20; ++i)
-    {
-        os << "get_base i/res: " << i << " " << ref.get_base(i) << "\n";
-    }
-
-    std::string test;
-    pos_t lens[2] = { 3, 8 };
-    for (unsigned j(0); j<2; ++j)
-    {
-        for (unsigned i(5); i<20; ++i)
-        {
-            ref.get_substring(i,lens[j],test);
-            os << "get_ss" << lens[j] << " i/res: " << i << " " << test << "\n";
-        }
-    }
+BOOST_AUTO_TEST_CASE( test_site )
+{
+    vcf_record vcfr;
+    vcfr.set("chr1\t1\t.\tA\t.\n");
+    BOOST_REQUIRE(not vcfr.is_indel());
+    BOOST_REQUIRE(not vcfr.is_snv());
+    BOOST_REQUIRE(vcfr.is_ref_site());
 }
 
 
-//int main() { test_rcs(); }
-#endif
+BOOST_AUTO_TEST_SUITE_END()
+

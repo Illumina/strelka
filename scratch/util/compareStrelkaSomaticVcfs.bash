@@ -53,7 +53,7 @@ stripQSX() {
 }
 
 stripEVS() {
-    sed "s/EVS=[0-9]*//g"
+    sed "s/SomaticEVS=[0-9]*//g"
 }
 
 stripEVSF() {

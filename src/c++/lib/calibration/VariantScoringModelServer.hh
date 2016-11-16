@@ -27,6 +27,8 @@
 #include "VariantScoringModelMetadata.hh"
 #include "VariantScoringModelTypes.hh"
 
+#include <cmath>
+
 #include <algorithm>
 #include <memory>
 

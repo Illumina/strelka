@@ -22,52 +22,66 @@
 
 #include "fastRanksum.hh"
 
+#include <cmath>
+
 
 BOOST_AUTO_TEST_SUITE( test_fastRanksum )
 
 
 BOOST_AUTO_TEST_CASE( test_fastRanksum )
 {
-    fastRanksum r;
-    r.add_observation(true,44);
-    r.add_observation(true,45); //check tie both
-    r.add_observation(false,45);
-    r.add_observation(false,50);
-    r.add_observation(true,52);
-    r.add_observation(true,53);
-    r.add_observation(true,56);
-    r.add_observation(true,58); //check tie single
-    r.add_observation(true,58);
-    r.add_observation(false,61);
-    r.add_observation(false,63);
-    r.add_observation(true,65);
-    r.add_observation(false,75);
-    r.add_observation(true,79);
-    r.add_observation(false,85);
-    r.add_observation(false,93);
-
-    static const double tol(0.001);
-    BOOST_REQUIRE_CLOSE(-1.27021, r.get_u_stat() , tol);
-}
-
-
-#if 0
-BOOST_AUTO_TEST_CASE( test_ranksum_runtime )
-{
-    ranksum r;
-    for (unsigned i(0); i<10000000; ++i)
+    for (unsigned polarity(0); polarity<2; ++polarity)
     {
-        r.add_observation(true,44);
-        r.add_observation(true,45);
-        r.add_observation(true,46);
-        r.add_observation(false,45);
-        r.add_observation(false,46);
-        r.add_observation(false,47);
-    }
-    r.get_u_stat();
-}
-#endif
+        const bool v1(polarity == 0);
+        const bool v2(not v1);
 
+        fastRanksum r;
+        r.add_observation(v1, 44);
+        r.add_observation(v1, 45); //check tie both
+        r.add_observation(v2, 45);
+        r.add_observation(v2, 50);
+        r.add_observation(v1, 52);
+        r.add_observation(v1, 53);
+        r.add_observation(v1, 56);
+        r.add_observation(v1, 58); //check tie single
+        r.add_observation(v1, 58);
+        r.add_observation(v2, 61);
+        r.add_observation(v2, 63);
+        r.add_observation(v1, 65);
+        r.add_observation(v2, 75);
+        r.add_observation(v1, 79);
+        r.add_observation(v2, 85);
+        r.add_observation(v2, 93);
+
+        static const double tol(0.001);
+        BOOST_REQUIRE_CLOSE(1.27021, std::abs(r.get_z_stat()), tol);
+    }
+}
+
+BOOST_AUTO_TEST_CASE( test_fastRanksum2 )
+{
+    for (unsigned polarity(0); polarity<2; ++polarity)
+    {
+        const bool v1(polarity==0);
+        const bool v2(not v1);
+        fastRanksum r;
+        r.add_observation(v1, 1);
+        r.add_observation(v1, 2);
+        r.add_observation(v1, 3);
+        r.add_observation(v1, 4);
+        r.add_observation(v1, 5);
+        r.add_observation(v1, 6);
+        r.add_observation(v1, 7);
+        r.add_observation(v1, 8);
+        r.add_observation(v1, 9);
+        r.add_observation(v1, 10);
+        r.add_observation(v2, 11);
+        r.add_observation(v2, 12);
+
+        static const double tol(0.001);
+        BOOST_REQUIRE_CLOSE(2.14834, std::abs(r.get_z_stat()), tol);
+    }
+}
 
 BOOST_AUTO_TEST_SUITE_END()
 
