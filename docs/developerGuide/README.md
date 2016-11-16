@@ -15,6 +15,9 @@ Strelka Developer Guide
     * [Automating Portable Binary Builds for Linux](#automating-portable-binary-builds-for-linux)
   * [Coding Guidelines](#coding-guidelines)
     * [Source formatting](#source-formatting)
+    * [Git conventions](#git-conventions)
+    * [Commit consolidation](#commit-consolidation)
+    * [Changelog conventions](#changelog-conventions)
     * [Error handling](#error-handling)
     * [Unit tests](#unit-tests)
   * [IDE support](#ide-support)
@@ -159,6 +162,41 @@ specified by `builderImage`.
   * "ANSI" bracket style
 * Note the above restrictions are enforced by an astyle script which is occasionally run on the master branch (see [run_cxx_formatter.bash](../../scratch/source_check_and_format/run_cxx_formatter.bash))
 * Otherwise, follow local code conventions
+
+### Git conventions
+
+#### Commit messages
+
+All git commit messages should be prepended with either the associated JIRA or github issue id. For example:
+
+```
+MANTA-123 improve insertion genotype accuracy
+
+Improve assembly and realignemnt of large insertions to reduce hom->het undercall
+```
+
+Very minor updates (eg. "Fix spelling errors in user guide") may be made without an associated ticket.
+All git commit messages should attempt to conform to practices outlined here:
+
+http://chris.beams.io/posts/git-commit/
+
+### Commit consolidation
+
+On any single-developer research branch, history editing is encouraged within the branch to collapse bugs and
+build a more clear feature-by-feature story for other other developers to follow.
+
+In all other situations history editing is discouraged and a conventional merge-based workflow is preferred.
+
+### Changelog conventions
+
+Changelog entries should follow very similar guidelines to git commit header lines as described here:
+
+http://chris.beams.io/posts/git-commit/
+
+...except that a longer message length can be used if needed.
+
+Changelog entries should typically be made for any major branch merge, bug fix, or user-visible changes.
+
 
 ### Error handling
 
