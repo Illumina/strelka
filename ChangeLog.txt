@@ -1,9 +1,10 @@
+- STREL-248 update somatic EVS to include isaac04 data in training
 - STREL-321 fix rare shared variant prefix issue in multi-sample analysis
 - STREL-322 fix VCF namespace conflict on INFO/EVS
 - STREL-200 Adjust mitochondrial strand-bias for consistency with autosomes
 - STREL-319 Sync RNA-seq EVS feature names with DNA changes
 - STREL-318 Accept VCFs with unknown ALT values as forced-call sites
-- STREL-275 REF and ALTs do not share a common prefix of size over 1 
+- STREL-275 REF and ALTs do not share a common prefix of size over 1
 - STREL-274 simplify variant filter logic in multi-sample germline gVCF(s)
 - STREL-269 prevent indels larger than the max indel size from becoming candidate
 - STREL-267 forced indel call does not appear in somatic output
