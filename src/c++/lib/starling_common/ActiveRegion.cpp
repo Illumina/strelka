@@ -259,10 +259,12 @@ void ActiveRegion::convertToPrimitiveAlleles(
         {
             if (segmentLength <= _maxIndelSize)
             {
+                // left-align insertion
+                // the insertion can be moved left by 1 base
+                // if the last base of insertSeq equals to prevBase
+                // E.g. GT -> GT(ATAT) vs GT -> G(TATA)T
                 pos_t insertPos(referencePos);
                 auto insertSeq(haploptypeSeq.substr(haplotypePosOffset, segmentLength));
-
-                // left-align
                 char prevBase = _ref.get_base(insertPos-1);
                 while (insertSeq.back() == prevBase)
                 {
@@ -285,7 +287,10 @@ void ActiveRegion::convertToPrimitiveAlleles(
         {
             if (segmentLength <= _maxIndelSize)
             {
-                // left-align
+                // left-align deletion
+                // the deletion can be moved left by 1 base
+                // if the last base of the deleted sequence (lastDeletionBase) equals to prevBase
+                // E.g. GT(ATAT) -> GT vs G(TATA)T -> GT
                 pos_t deletePos(referencePos);
                 char prevBase = _ref.get_base(deletePos-1);
                 char lastDeletionBase = _ref.get_base(deletePos + segmentLength - 1);
