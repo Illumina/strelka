@@ -259,8 +259,22 @@ void ActiveRegion::convertToPrimitiveAlleles(
         {
             if (segmentLength <= _maxIndelSize)
             {
+                pos_t insertPos(referencePos);
                 auto insertSeq(haploptypeSeq.substr(haplotypePosOffset, segmentLength));
-                indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(referencePos, INDEL::INDEL, 0, insertSeq.c_str()));
+
+                // left-align
+                char prevBase = _ref.get_base(insertPos-1);
+                while (insertSeq.back() == prevBase)
+                {
+                    // move insertion 1 base to left
+                    insertSeq = prevBase + insertSeq;
+                    insertSeq.pop_back();
+
+                    --insertPos;
+                    prevBase = _ref.get_base(insertPos-1);
+                }
+
+                indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(insertPos, INDEL::INDEL, 0, insertSeq.c_str()));
                 ++numVariants;
                 isIndelExist = true;
             }
@@ -271,7 +285,19 @@ void ActiveRegion::convertToPrimitiveAlleles(
         {
             if (segmentLength <= _maxIndelSize)
             {
-                indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(referencePos, INDEL::INDEL, segmentLength));
+                // left-align
+                pos_t deletePos(referencePos);
+                char prevBase = _ref.get_base(deletePos-1);
+                char lastDeletionBase = _ref.get_base(deletePos + segmentLength - 1);
+                while (lastDeletionBase == prevBase)
+                {
+                    // move deletion 1 base to left
+                    --deletePos;
+                    lastDeletionBase = _ref.get_base(deletePos + segmentLength - 1);
+                    prevBase = _ref.get_base(deletePos-1);
+                }
+
+                indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(deletePos, INDEL::INDEL, segmentLength));
                 ++numVariants;
                 isIndelExist = true;
             }
