@@ -1,3 +1,4 @@
+- STREL-331 left-shift indels inside of active regions
 - STREL-248 update somatic EVS to include isaac04 data in training
 - STREL-321 fix rare shared variant prefix issue in multi-sample analysis
 - STREL-322 fix VCF namespace conflict on INFO/EVS

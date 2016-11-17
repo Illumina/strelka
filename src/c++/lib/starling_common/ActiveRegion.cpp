@@ -259,10 +259,29 @@ void ActiveRegion::convertToPrimitiveAlleles(
         {
             if (segmentLength <= _maxIndelSize)
             {
+                // left-align insertion
+                // the insertion can be moved left by 1 base
+                // if the last base of insertSeq equals to prevBase
+                // E.g. GT -> GT(ATAT) vs GT -> G(TATA)T
+                pos_t insertPos(referencePos);
                 auto insertSeq(haploptypeSeq.substr(haplotypePosOffset, segmentLength));
-                indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(referencePos, INDEL::INDEL, 0, insertSeq.c_str()));
-                ++numVariants;
-                isIndelExist = true;
+                char prevBase = _ref.get_base(insertPos-1);
+                while (insertSeq.back() == prevBase)
+                {
+                    // move insertion 1 base to left
+                    insertSeq = prevBase + insertSeq;
+                    insertSeq.pop_back();
+
+                    --insertPos;
+                    prevBase = _ref.get_base(insertPos-1);
+                }
+
+                if (prevBase != 'N')
+                {
+                    indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(insertPos, INDEL::INDEL, 0, insertSeq.c_str()));
+                    ++numVariants;
+                    isIndelExist = true;
+                }
             }
             haplotypePosOffset += segmentLength;
             break;
@@ -271,9 +290,27 @@ void ActiveRegion::convertToPrimitiveAlleles(
         {
             if (segmentLength <= _maxIndelSize)
             {
-                indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(referencePos, INDEL::INDEL, segmentLength));
-                ++numVariants;
-                isIndelExist = true;
+                // left-align deletion
+                // the deletion can be moved left by 1 base
+                // if the last base of the deleted sequence (lastDeletionBase) equals to prevBase
+                // E.g. GT(ATAT) -> GT vs G(TATA)T -> GT
+                pos_t deletePos(referencePos);
+                char prevBase = _ref.get_base(deletePos-1);
+                char lastDeletionBase = _ref.get_base(deletePos + segmentLength - 1);
+                while (lastDeletionBase == prevBase)
+                {
+                    // move deletion 1 base to left
+                    --deletePos;
+                    lastDeletionBase = _ref.get_base(deletePos + segmentLength - 1);
+                    prevBase = _ref.get_base(deletePos-1);
+                }
+
+                if (prevBase != 'N')
+                {
+                    indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(deletePos, INDEL::INDEL, segmentLength));
+                    ++numVariants;
+                    isIndelExist = true;
+                }
             }
             referencePos += segmentLength;
             break;
