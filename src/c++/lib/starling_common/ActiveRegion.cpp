@@ -266,7 +266,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
                 pos_t insertPos(referencePos);
                 auto insertSeq(haploptypeSeq.substr(haplotypePosOffset, segmentLength));
                 char prevBase = _ref.get_base(insertPos-1);
-                while (insertSeq.back() == prevBase)
+                while (prevBase != 'N' and insertSeq.back() == prevBase)
                 {
                     // move insertion 1 base to left
                     insertSeq = prevBase + insertSeq;
@@ -294,7 +294,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
                 pos_t deletePos(referencePos);
                 char prevBase = _ref.get_base(deletePos-1);
                 char lastDeletionBase = _ref.get_base(deletePos + segmentLength - 1);
-                while (lastDeletionBase == prevBase)
+                while (prevBase != 'N' and lastDeletionBase == prevBase)
                 {
                     // move deletion 1 base to left
                     --deletePos;
