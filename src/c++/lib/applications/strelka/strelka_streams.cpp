@@ -141,7 +141,13 @@ strelka_streams(
             fos << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"Somatic SNV site strand bias\">\n";
             fos << "##INFO=<ID=PNOISE,Number=1,Type=Float,Description=\"Fraction of panel containing non-reference noise at this site\">\n";
             fos << "##INFO=<ID=PNOISE2,Number=1,Type=Float,Description=\"Fraction of panel containing more than one non-reference noise obs at this site\">\n";
-            fos << "##INFO=<ID=" << opt.SomaticEVSVcfInfoTag << ",Number=1,Type=Float,Description=\"Somatic Empirical Variant Score (EVS) expressing the phred-scaled probability of the call being a false positive observation.\">\n";
+
+            const bool isUseEVS(dopt.somaticSnvScoringModel);
+            if (isUseEVS)
+            {
+                fos << "##INFO=<ID=" << opt.SomaticEVSVcfInfoTag
+                    << ",Number=1,Type=Float,Description=\"Somatic Empirical Variant Score (EVS) expressing the phred-scaled probability of the call being a false positive observation.\">\n";
+            }
 
             if (opt.isReportEVSFeatures)
             {
@@ -159,7 +165,6 @@ strelka_streams(
             fos << "##FORMAT=<ID=TU,Number=2,Type=Integer,Description=\"Number of 'T' alleles used in tiers 1,2\">\n";
 
             // FILTERS:
-            const bool isUseEVS(dopt.somaticSnvScoringModel);
             {
                 using namespace SOMATIC_VARIANT_VCF_FILTERS;
                 if (isUseEVS)
@@ -249,7 +254,14 @@ strelka_streams(
             fos << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
             fos << "##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description=\"Somatic mutation\">\n";
             fos << "##INFO=<ID=OVERLAP,Number=0,Type=Flag,Description=\"Somatic indel possibly overlaps a second indel.\">\n";
-            fos << "##INFO=<ID=" << opt.SomaticEVSVcfInfoTag << ",Number=1,Type=Float,Description=\"Somatic Empirical Variant Score (EVS) expressing the phred-scaled probability of the call being a false positive observation.\">\n";
+
+            const bool isUseEVS(opt.isUseSomaticIndelScoring());
+
+            if (isUseEVS)
+            {
+                fos << "##INFO=<ID=" << opt.SomaticEVSVcfInfoTag
+                    << ",Number=1,Type=Float,Description=\"Somatic Empirical Variant Score (EVS) expressing the phred-scaled probability of the call being a false positive observation.\">\n";
+            }
 
             if (opt.isReportEVSFeatures)
             {
@@ -278,7 +290,6 @@ strelka_streams(
             fos << "##FORMAT=<ID=BCN" << opt.sfilter.indelRegionFlankSize <<  ",Number=1,Type=Float,Description=\"Fraction of filtered reads within " << opt.sfilter.indelRegionFlankSize << " bases of the indel.\">\n";
 
             // FILTERS:
-            const bool isUseEVS(opt.isUseSomaticIndelScoring());
             {
                 using namespace SOMATIC_VARIANT_VCF_FILTERS;
                 if (isUseEVS)
