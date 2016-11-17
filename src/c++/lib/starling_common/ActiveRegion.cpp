@@ -266,7 +266,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
                 pos_t insertPos(referencePos);
                 auto insertSeq(haploptypeSeq.substr(haplotypePosOffset, segmentLength));
                 char prevBase = _ref.get_base(insertPos-1);
-                while (prevBase != 'N' and insertSeq.back() == prevBase)
+                while (insertSeq.back() == prevBase)
                 {
                     // move insertion 1 base to left
                     insertSeq = prevBase + insertSeq;
@@ -276,9 +276,12 @@ void ActiveRegion::convertToPrimitiveAlleles(
                     prevBase = _ref.get_base(insertPos-1);
                 }
 
-                indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(insertPos, INDEL::INDEL, 0, insertSeq.c_str()));
-                ++numVariants;
-                isIndelExist = true;
+                if (prevBase != 'N')
+                {
+                    indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(insertPos, INDEL::INDEL, 0, insertSeq.c_str()));
+                    ++numVariants;
+                    isIndelExist = true;
+                }
             }
             haplotypePosOffset += segmentLength;
             break;
@@ -294,7 +297,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
                 pos_t deletePos(referencePos);
                 char prevBase = _ref.get_base(deletePos-1);
                 char lastDeletionBase = _ref.get_base(deletePos + segmentLength - 1);
-                while (prevBase != 'N' and lastDeletionBase == prevBase)
+                while (lastDeletionBase == prevBase)
                 {
                     // move deletion 1 base to left
                     --deletePos;
@@ -302,9 +305,12 @@ void ActiveRegion::convertToPrimitiveAlleles(
                     prevBase = _ref.get_base(deletePos-1);
                 }
 
-                indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(deletePos, INDEL::INDEL, segmentLength));
-                ++numVariants;
-                isIndelExist = true;
+                if (prevBase != 'N')
+                {
+                    indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(deletePos, INDEL::INDEL, segmentLength));
+                    ++numVariants;
+                    isIndelExist = true;
+                }
             }
             referencePos += segmentLength;
             break;
