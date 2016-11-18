@@ -644,25 +644,56 @@ normalizeAlignment(
     const bam_seq_base& readSeq,
     alignment& al)
 {
-    // first pass is to collapse internal indels:
-    const bool isc1 = collapseAlignmentIndels(refSeq,readSeq,al);
+    bool isAlignmentChanged(false);
 
-    // second pass through left-shifts:
-    const bool isls = leftShiftAlignmentIndels(refSeq,readSeq,al);
+    bool isCollapseAgain(true);
+    bool isLeftShiftAgain(true);
 
-    // third pass is to collapse internal indels again
-    // (indels may have been left-shifted to become adjacent):
-    const bool isc2 = collapseAlignmentIndels(refSeq,readSeq,al);
+    // iterate through cycles of collapsing internal indels and left-shifting until no change occurs:
+    while (isCollapseAgain or isLeftShiftAgain)
+    {
+        // first pass is to collapse internal indels:
+        if (isCollapseAgain)
+        {
+            const bool isCollapsed = collapseAlignmentIndels(refSeq, readSeq, al);
+            if (isCollapsed)
+            {
+                isAlignmentChanged = true;
+                isLeftShiftAgain = true;
+                isCollapseAgain = apath_cleaner(al.path);
+            }
+            else
+            {
+                isCollapseAgain = false;
+            }
+        }
+
+        // second pass through left-shifts:
+        if (isLeftShiftAgain)
+        {
+            const bool isLeftShifted = leftShiftAlignmentIndels(refSeq, readSeq, al);
+            if (isLeftShifted)
+            {
+                isAlignmentChanged = true;
+                isCollapseAgain = true;
+                isLeftShiftAgain = apath_cleaner(al.path);
+            }
+            else
+            {
+                isLeftShiftAgain = false;
+            }
+        }
+    }
 
     // final pass is to handle edge indels
-    const bool isne = normalizeEdgeIndels(refSeq,readSeq,al);
-
-    if (isc1 || isls || isc2 || isne)
+    const bool isEdgeNormalized = normalizeEdgeIndels(refSeq,readSeq,al);
+    if (isEdgeNormalized)
     {
+        isAlignmentChanged = true;
         apath_cleaner(al.path);
-        return true;
     }
-    return false;
+
+    return isAlignmentChanged;
 }
 
 

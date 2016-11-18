@@ -91,6 +91,16 @@ BOOST_AUTO_TEST_CASE( test_normalizeAlignment )
     // collapse, then left-shift
     testNormalizeAlignment("ATTGC","ATGC",0,"2M1I2D1M",0,"1M1D3M");
 
+    // left-shift, merge indels, then more left-shifting for the merged indel
+    //
+    // This example is taken form HCC-1187BL hg19:chr2:27151600 and described in STREL-336,
+    // in this case the second indel "8I" can be left-shifted adjacent to the first indel "6I".
+    // When these indels are merged into one larger insertions "14I", that new merged insertion
+    // can be left-shifted one more base. Failure to add the final left shift of the merged indel
+    // was the cause of the error reported in STREL-336.
+    testNormalizeAlignment("CACACACA","CACACACATATATACGCACACA",0,"3M6I3M8I2M",0,"2M14I6M");
+
+
     // left-edge behavior
     testNormalizeAlignment("AAAAAAATGTA","AAAAAATGT",2,"3M1I5M",1,"9M");
     testNormalizeAlignment("AAAAAAATGTA","GGAAAAAATGT",2,"2S3M1I5M",1,"2S9M");
@@ -113,7 +123,7 @@ BOOST_AUTO_TEST_CASE( test_normalizeAlignment )
 
     // left-shifting policy that reduces mismatches:
     //
-    // This example case suggested in review by A Halpern in review.
+    // This example case suggested by Aaron Halpern in review.
     // The original left design would left shift only if the mismatch
     // count did not change, but it seems reasonable that left-shifting
     // if the mistmatch count does not get worse is reasonable, and
