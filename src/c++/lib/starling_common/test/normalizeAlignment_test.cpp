@@ -101,6 +101,23 @@ BOOST_AUTO_TEST_CASE( test_normalizeAlignment )
     testNormalizeAlignment("CACACACA","CACACACATATATACGCACACA",0,"3M6I3M8I2M",0,"2M14I6M");
 
 
+    // The following two tests are motivated by a failure observed at hg19:chr2:179046342
+    // in HCC1187BL leading to an unnormalized somatic indel, this is a second case addressed as
+    // part of STREL-336. The identified issue was as follows: Whenever any indel was
+    // left-shifted, the refPos and readPos values were not being updated to reflect the shift
+    // and so the refPos/readPos pointers were effectively running ahead by the shift value.
+    // If more than one indel is in the alignment, any left-shift computation on subsequent
+    // indels was incorrect
+    //
+
+    // simplified demo based on the motivating issue
+    testNormalizeAlignment("TAAAGT","TAAAAAAGAT",0,"4M3I1M1I1M",0,"1M3I4M1I1M");
+
+    // motivating bug representing a failed read normalization aligned to hg19:chr2:179046342
+    testNormalizeAlignment("AAAATATATATATATATATATA", "AATATATATATATATATATATATATATATATATATCTA", 0, "17M8I3M8I2M", 0,
+                           "1M8I19M8I2M");
+
+
     // left-edge behavior
     testNormalizeAlignment("AAAAAAATGTA","AAAAAATGT",2,"3M1I5M",1,"9M");
     testNormalizeAlignment("AAAAAAATGTA","GGAAAAAATGT",2,"2S3M1I5M",1,"2S9M");

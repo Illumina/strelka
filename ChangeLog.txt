@@ -1,4 +1,4 @@
-- STREL-336 Fix failed somatic indel normalizations
+- STREL-336 Fix incorrect indel normalizations
 - STREL-332 Revert to core somatic indel scoring with adjusted threshold
 - STREL-331 left-shift indels inside of active regions
 - STREL-248 update somatic EVS to include isaac4 data in training

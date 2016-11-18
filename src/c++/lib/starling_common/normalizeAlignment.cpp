@@ -63,12 +63,12 @@ std::ostream&
 operator<<(std::ostream& os, const AlignmentInfo& ai)
 {
     os << "AI"
-       << " refpos: " << ai.refPos << "readPos: " << ai.readPos
-       << " MSegs: " << ai.startPriorMatchSegment << "," << ai.endPriorMatchSegment
-       << " ISegs: " << ai.startPriorIndelSegment << "," << ai.endPriorIndelSegment
-       << " prM " << ai.priorMatchLength
-       << " prD " << ai.priorDeleteLength
-       << " prI " << ai.priorInsertLength;
+       << " refpos " << ai.refPos << " readPos " << ai.readPos
+       << " MatchSegs " << ai.startPriorMatchSegment << "," << ai.endPriorMatchSegment
+       << " IndelSegs " << ai.startPriorIndelSegment << "," << ai.endPriorIndelSegment
+       << " priorMatchLen " << ai.priorMatchLength
+       << " priorDelLen " << ai.priorDeleteLength
+       << " priorInsLen " << ai.priorInsertLength;
     return os;
 }
 #endif
@@ -83,6 +83,10 @@ findLeftShift(
     const bam_seq_base& readSeq,
     const AlignmentInfo& ai)
 {
+    /// TODO stabilize normalization routines to the point where we can confidently set these assertions
+    // assert(ai.refPos < static_cast<pos_t>(refSeq.size()));
+    // assert(ai.readPos < static_cast<pos_t>(readSeq.size()));
+
     pos_t shift(0);
 
     pos_t refRightPos(ai.refPos-1);
@@ -96,6 +100,7 @@ findLeftShift(
         assert((readRightPos-shift) >= 0);
         assert((refLeftPos-shift) >= 0);
         assert((refRightPos-shift) >= 0);
+
         const bool isLeftMatch(readSeq.get_char(readLeftPos-shift)==refSeq.get_char(refLeftPos-shift));
         const bool isRightMatch(readSeq.get_char(readRightPos-shift)==refSeq.get_char(refRightPos-shift));
         if ((!isRightMatch) && isLeftMatch) break;
@@ -143,6 +148,8 @@ leftShiftIndel(
         const unsigned newLength((matchSegIndex == ai.startPriorMatchSegment) ? (ai.priorMatchLength-shiftSize) : 0);
         al.path[matchSegIndex] = path_segment(MATCH, newLength);
     }
+    ai.refPos -= shiftSize;
+    ai.readPos -= shiftSize;
 }
 
 
