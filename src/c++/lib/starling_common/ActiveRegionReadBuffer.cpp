@@ -157,6 +157,51 @@ bool ActiveRegionReadBuffer::setHaplotypeBase(const align_id_t id, const pos_t p
     return isSoftClipped;
 }
 
+void ActiveRegionReadBuffer::setEndPos(pos_t endPos)
+{
+    auto pos(endPos-1);
+    auto posIndex(pos % MaxBufferSize);
+
+    if (not _readBufferRange.is_begin_pos)
+    {
+        _readBufferRange.set_begin_pos(pos);
+        for (auto repeatUnitLength(1u); repeatUnitLength<=MaxRepeatUnitLength; ++repeatUnitLength)
+        {
+            auto repeatUnitIndex(repeatUnitLength-1);
+            _repeatCount[posIndex][repeatUnitIndex] = repeatUnitLength;
+        }
+    }
+
+    // calculate repeat counter
+    auto base(_ref.get_base(pos));
+
+    _isAnchor[posIndex] = true;
+    for (auto repeatUnitLength(1u); repeatUnitLength<=MaxRepeatUnitLength; ++repeatUnitLength)
+    {
+        auto prevBase(_ref.get_base(pos - repeatUnitLength));
+        auto repeatUnitIndex(repeatUnitLength-1);
+        unsigned repeatCount;
+        if (prevBase != 'N' and base == prevBase)
+            repeatCount = _repeatCount[(pos - 1) % MaxBufferSize][repeatUnitIndex] + 1;
+        else
+            repeatCount = repeatUnitLength;
+        _repeatCount[posIndex][repeatUnitIndex] = repeatCount;
+        if (repeatCount >= repeatUnitLength*2)
+        {
+            // repeat found
+            if (repeatCount == repeatUnitLength*2)
+            {
+                // unset _isAnchor for pos [pos-repeatCount+1, pos-1]
+                for (pos_t prevPos(pos-1u); prevPos > (pos_t)(pos-repeatCount); --prevPos)
+                    _isAnchor[prevPos % MaxBufferSize] = false;
+            }
+            _isAnchor[posIndex] = false;
+        }
+    }
+
+    return _readBufferRange.set_end_pos(endPos);
+}
+
 void ActiveRegionReadBuffer::getHaplotypeReads(pos_range posRange, HaplotypeInfo &haplotypeInfo, bool includePartialReads) const
 {
     std::map<align_id_t, std::string> alignIdToHaplotype;

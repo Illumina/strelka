@@ -302,4 +302,32 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
     BOOST_REQUIRE_EQUAL(itr->second.isConfirmedInActiveRegion, true);
 }
 
+// Checks whether anchors are selected outside of repeat regions
+BOOST_AUTO_TEST_CASE( test_assemblyAnchorSelection )
+{
+    reference_contig_segment ref;
+    ref.seq() = "TATATACCCATGAAA";
+
+    TestIndelBuffer testBuffer(ref);
+
+    const unsigned sampleCount = 1;
+
+    ActiveRegionReadBuffer buffer(ref, sampleCount, testBuffer.getIndelBuffer());
+
+    const pos_t length(ref.seq().length());
+
+    for (pos_t pos(0); pos<length; ++pos)
+    {
+        buffer.setEndPos(pos+1);
+    }
+
+    for (pos_t pos(0); pos<length; ++pos)
+    {
+        if (pos >= 9 and pos <= 11)
+            BOOST_CHECK(buffer.isAnchor(pos));
+        else
+            BOOST_CHECK(not buffer.isAnchor(pos));
+    }
+}
+
 BOOST_AUTO_TEST_SUITE_END()

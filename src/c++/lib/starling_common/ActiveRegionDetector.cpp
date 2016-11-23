@@ -147,76 +147,45 @@ void ActiveRegionDetector::getExpandedRange(const pos_range& origActiveRegion, p
     // e.g. In TACGACGAC|GAC if origStart points C before |, the start position is moved to T
     // note that bases after origStart are ignored. For example, in TACGAC|GAC, the start position doesn't move.
     pos_t origStart = origActiveRegion.begin_pos;
-    pos_t deltaPos(0);
-    for (unsigned repeatUnitLength(1); repeatUnitLength<=ActiveRegionReadBuffer::MaxRepeatUnitLength; ++repeatUnitLength)
-    {
-        pos_t repeatSpan = repeatUnitLength;
-        for (pos_t pos(origStart-1); pos >= _ref.get_offset(); --pos)
-        {
-            char baseChar = _ref.get_base(pos);
-            char baseCharToCompare = _ref.get_base(pos+repeatUnitLength);
-            if (baseChar != baseCharToCompare)
-                break;
-            ++repeatSpan;
-        }
-        unsigned repeatLength = repeatSpan / repeatUnitLength;
-        if (repeatLength > 1)
-            deltaPos = std::max(deltaPos, repeatSpan);
-    }
-    deltaPos = std::min(deltaPos, MaxRepeatSpan);
-
     const pos_t minStartLowerBound(std::max(0,_lastActiveRegionEnd-1));
-    const pos_t minStart(std::max(origStart - deltaPos, minStartLowerBound));
+    const pos_t minStart(std::max(origStart - MaxRepeatSpan, minStartLowerBound));
     pos_t newBeginPos;
     for (newBeginPos = origStart; newBeginPos > minStart; --newBeginPos)
     {
-        bool isLowDepth = false;
+        bool isPrevPosLowDepth = false;
         for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
         {
             if (_readBuffer.getDepth(sampleId, newBeginPos-1) < MinDepth)
             {
-                isLowDepth = true;
+                isPrevPosLowDepth = true;
                 break;
             }
         }
-        if (isLowDepth) break;
+        if (isPrevPosLowDepth) break;
+
+        bool isAnchor = _readBuffer.isAnchor(newBeginPos);
+        if (isAnchor) break;
     }
     newActiveRegion.set_begin_pos(newBeginPos);
 
     // calculate newEnd
     pos_t origEnd = origActiveRegion.end_pos;
-    deltaPos = 0;
-    for (unsigned repeatUnitLength(1); repeatUnitLength<=ActiveRegionReadBuffer::MaxRepeatUnitLength; ++repeatUnitLength)
-    {
-        pos_t repeatSpan = repeatUnitLength;
-        for (pos_t pos(origEnd); pos < _ref.end(); ++pos)
-        {
-            char baseChar = _ref.get_base(pos);
-            char baseCharToCompare = _ref.get_base(pos-repeatUnitLength);
-            if (baseChar != baseCharToCompare)
-                break;
-            ++repeatSpan;
-        }
-        unsigned repeatLength = repeatSpan / repeatUnitLength;
-        if (repeatLength > 1)
-            deltaPos = std::max(deltaPos, repeatSpan);
-    }
-    deltaPos = std::min(deltaPos, MaxRepeatSpan);
-
-    pos_t maxEnd(std::min(origEnd + deltaPos, _ref.end()));
+    pos_t maxEnd(std::min(origEnd + MaxRepeatSpan, _ref.end()));
     pos_t newEndPos;
     for (newEndPos = origEnd; newEndPos < maxEnd; ++newEndPos)
     {
-        bool isLowDepth = false;
+        bool isPrevPosLowDepth = false;
         for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
         {
-            if (_readBuffer.getDepth(sampleId, newBeginPos-1) < MinDepth)
+            if (_readBuffer.getDepth(sampleId, newEndPos-1) < MinDepth)
             {
-                isLowDepth = true;
+                isPrevPosLowDepth = true;
                 break;
             }
         }
-        if (isLowDepth) break;
+        if (isPrevPosLowDepth) break;
+        bool isAnchor = _readBuffer.isAnchor(newEndPos);
+        if (isAnchor) break;
     }
     newActiveRegion.set_end_pos(newEndPos);
 }

@@ -100,13 +100,12 @@ public:
     /// \param indelObservation indel observation object
     void insertIndel(const unsigned sampleId, const IndelObservation& indelObservation);
 
-    void setEndPos(pos_t endPos)
+    bool isAnchor(pos_t pos)
     {
-        if (not _readBufferRange.is_begin_pos)
-            _readBufferRange.set_begin_pos(endPos-1);
-
-        return _readBufferRange.set_end_pos(endPos);
+        return _isAnchor[pos % MaxBufferSize];
     }
+
+    void setEndPos(pos_t endPos);
 
     pos_t getBeginPos() const { return _readBufferRange.begin_pos; }
     pos_t getEndPos() const { return _readBufferRange.end_pos; }
@@ -213,7 +212,8 @@ private:
     char _snvBuffer[MaxDepth][MaxBufferSize];
 
     // to record reference repeat count
-    uint8_t _repeatCount[MaxBufferSize];
+    unsigned _repeatCount[MaxBufferSize][MaxRepeatUnitLength];
+    bool _isAnchor[MaxBufferSize];
 
     void setMatch(const align_id_t id, const pos_t pos);
     void setMismatch(const align_id_t id, const pos_t pos, char baseChar);
