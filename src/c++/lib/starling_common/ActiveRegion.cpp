@@ -82,8 +82,12 @@ static bool isHomoPolymer(const std::string& haplotype)
     return true;
 }
 
-void ActiveRegion::processHaplotypes(IndelBuffer &indelBuffer, RangeSet &polySites) const
+void ActiveRegion::processHaplotypes(IndelBuffer &indelBuffer, RangeSet &polySites)
 {
+    // if not enough reads are read, adjust the window size
+    if (_readBuffer.getEndPos() < _posRange.end_pos)
+        _posRange.set_end_pos(_readBuffer.getEndPos());
+
     for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
     {
         bool isAssemblyRequired = processHaplotypesWithCounting(indelBuffer, polySites, sampleId);

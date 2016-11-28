@@ -85,6 +85,11 @@ public:
         return _posRange.end_pos;
     }
 
+    void extendEndPosition(const pos_t endPos)
+    {
+        _posRange.set_end_pos(endPos);
+    }
+
     /// \param pos reference position
     /// \return true if pos belongs to this active region; false otherwise
     bool contains(pos_t pos) const
@@ -96,7 +101,7 @@ public:
     /// Determine indel candidacy and regiser polymorphic sites to relax MMDF.
     /// \param indelBuffer
     /// \param polySites
-    void processHaplotypes(IndelBuffer &indelBuffer, RangeSet &polySites) const;
+    void processHaplotypes(IndelBuffer &indelBuffer, RangeSet &polySites);
 
     /// Mark a read soft-clipped
     /// \param alignId align id

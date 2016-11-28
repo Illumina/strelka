@@ -109,7 +109,6 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
     detector.clear();
 
     // check if polySites are correctly set
-
     for (unsigned sampleId(0); sampleId<sampleCount; ++sampleId)
     {
         for (pos_t pos(0); pos<refLength; ++pos)
@@ -237,7 +236,6 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
         for (pos_t pos(startPosition); pos<endPosition; ++pos)
         {
             detector.updateEndPosition(pos);
-            detector.updateStartPosition(pos - (readLength + maxIndelSize));
         }
         detector.clear();
 

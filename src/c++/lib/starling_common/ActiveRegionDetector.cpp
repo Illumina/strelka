@@ -28,13 +28,20 @@ void
 ActiveRegionDetector::updateStartPosition(const pos_t pos)
 {
     for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
+    {
         _polySites[sampleId].eraseTo(pos);
+    }
+    _readBuffer.clearPos(pos);
 }
 
 void
 ActiveRegionDetector::processActiveRegion()
 {
-    _activeRegionPtr->processHaplotypes(_indelBuffer, _polySites);
+    if (_activeRegionPtr)
+    {
+        _activeRegionPtr->processHaplotypes(_indelBuffer, _polySites);
+        _activeRegionPtr.reset();
+    }
 }
 
 void
@@ -51,12 +58,6 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
         _numVariants = 0;
         _readBuffer.clearPos(posToClear);
         return;
-    }
-
-    if (_activeRegionPtr and (_activeRegionPtr->getEndPosition() <= (pos_t)(pos-10u)))
-    {
-        processActiveRegion();
-        _activeRegionPtr.reset();
     }
 
     pos_t posToProcess(pos-1);
@@ -93,8 +94,17 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
             getExpandedRange(pos_range(origBeginPos, origEndPos), newActiveRegion);
             _lastActiveRegionEnd = newActiveRegion.end_pos;
 
-            _activeRegionPtr = std::unique_ptr<ActiveRegion>(
-                    new ActiveRegion(newActiveRegion, _ref, _maxIndelSize, _sampleCount, _aligner, _alignerForAssembly, _readBuffer));
+            if (_activeRegionPtr and (_activeRegionPtr->getEndPosition() >= newActiveRegion.begin_pos))
+            {
+                // merge with the previous active region
+                _activeRegionPtr->extendEndPosition(newActiveRegion.end_pos);
+            }
+            else
+            {
+                _activeRegionPtr = std::unique_ptr<ActiveRegion>(
+                        new ActiveRegion(newActiveRegion, _ref, _maxIndelSize, _sampleCount,
+                                         _aligner, _alignerForAssembly, _readBuffer));
+            }
         }
 
         if (isCurrentPosCandidateVariant)
@@ -111,7 +121,10 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
         }
     }
 
-    _readBuffer.clearPos(posToClear);
+    if (_activeRegionPtr and (_activeRegionPtr->getEndPosition() <= pos))
+    {
+        processActiveRegion();
+    }
 }
 
 void ActiveRegionDetector::clear()
@@ -126,14 +139,20 @@ void ActiveRegionDetector::clear()
         getExpandedRange(pos_range(origBeginPos, origEndPos), newActiveRegion);
         _lastActiveRegionEnd = newActiveRegion.end_pos;
 
-        _activeRegionPtr = std::unique_ptr<ActiveRegion>(
-                new ActiveRegion(newActiveRegion, _ref, _maxIndelSize, _sampleCount, _aligner, _alignerForAssembly, _readBuffer));
+        if (_activeRegionPtr and (_activeRegionPtr->getEndPosition() >= newActiveRegion.begin_pos))
+        {
+            // merge with the previous active region
+            _activeRegionPtr->extendEndPosition(newActiveRegion.end_pos);
+        }
+        else
+        {
+            _activeRegionPtr = std::unique_ptr<ActiveRegion>(
+                    new ActiveRegion(newActiveRegion, _ref, _maxIndelSize, _sampleCount,
+                                     _aligner, _alignerForAssembly, _readBuffer));
+        }
     }
-    if (_activeRegionPtr)
-    {
-        processActiveRegion();
-        _activeRegionPtr.reset();
-    }
+
+    processActiveRegion();
 
     _numVariants = 0;
     _activeRegionStartPos = 0;
@@ -163,7 +182,7 @@ void ActiveRegionDetector::getExpandedRange(const pos_range& origActiveRegion, p
         }
         if (isPrevPosLowDepth) break;
 
-        bool isAnchor = _readBuffer.isAnchor(newBeginPos);
+        bool isAnchor = _readBuffer.isAnchor(newBeginPos) and (not isCandidateVariant(newBeginPos));
         if (isAnchor) break;
     }
     newActiveRegion.set_begin_pos(newBeginPos);
@@ -184,7 +203,7 @@ void ActiveRegionDetector::getExpandedRange(const pos_range& origActiveRegion, p
             }
         }
         if (isPrevPosLowDepth) break;
-        bool isAnchor = _readBuffer.isAnchor(newEndPos);
+        bool isAnchor = _readBuffer.isAnchor(newEndPos) and (not isCandidateVariant(newEndPos));
         if (isAnchor) break;
     }
     newActiveRegion.set_end_pos(newEndPos);
@@ -203,19 +222,6 @@ ActiveRegionDetector::isCandidateVariant(const pos_t pos) const
             return true;
     }
     return false;
-}
-
-bool
-ActiveRegionDetector::isInvariant(const pos_t pos) const
-{
-    for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
-    {
-        auto count = _readBuffer.getVariantCount(sampleId, pos);
-        if (count >= 9
-            || (count >= 2 and count >= (0.1*_readBuffer.getDepth(sampleId, pos))))
-            return false;
-    }
-    return true;
 }
 
 bool ActiveRegionDetector::isPolymorphicSite(const unsigned sampleId, const pos_t pos) const

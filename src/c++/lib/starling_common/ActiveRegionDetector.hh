@@ -89,12 +89,12 @@ public:
         _maxDetectionWindowSize(maxDetectionWindowSize),
         _minNumVariantsPerPositionPerSample(minNumVariantsPerPosition),
         _minNumVariantsPerRegion(minNumVariantsPerRegion),
+        _activeRegionPtr(nullptr),
         _polySites(sampleCount),
         _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true)),
         _alignerForAssembly(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, 0, ScoreOpen, true, true))
     {
         _numVariants = 0;
-        _activeRegionPtr = nullptr;
         _activeRegionStartPos = 0;
         _prevVariantPos = 0;
         _lastActiveRegionEnd = 0;
@@ -165,7 +165,6 @@ private:
     void processActiveRegion();
 
     bool isCandidateVariant(const pos_t pos) const;
-    bool isInvariant(const pos_t pos) const;
 };
 
 
