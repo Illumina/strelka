@@ -47,10 +47,10 @@ public:
 
     // minimum read depth
     static const unsigned MinDepth = ActiveRegion::MinHaplotypeCount;
+    static const unsigned MaxDistanceBetweenTwoVariants = 13u;
 
-
-    // maximum distance between two variants belonging to the same active region
-    static const int MaxDistanceBetweenTwoVariants = 13u;
+    static const unsigned MaxDetectionWindowSize = 100u;
+    static const unsigned MinNumVariantsPerRegion = 2u;
 
     // alignment scores, same as bwa default values
     static const int ScoreMatch = 1;
@@ -60,10 +60,7 @@ public:
     static const int ScoreOffEdge = -100;
 
     // for expansion of active regions
-    const pos_t MaxRepeatSpan = 100u;
-
-    // minimum alternative allele fraction to call a position as a candidate variant
-    const float MinAlternativeAlleleFraction = 0.2;
+    const pos_t MaxRepeatSpan = 1000u;
 
     /// Creates an object that reads variant information and creates active regions
     /// \param ref reference segment
@@ -77,27 +74,22 @@ public:
         const reference_contig_segment& ref,
         IndelBuffer& indelBuffer,
         unsigned maxIndelSize,
-        unsigned sampleCount,
-        unsigned maxDetectionWindowSize = 100,
-        unsigned minNumVariantsPerPosition = 9,
-        unsigned minNumVariantsPerRegion = 2) :
+        unsigned sampleCount) :
         _ref(ref),
         _readBuffer(ref, sampleCount, indelBuffer),
         _indelBuffer(indelBuffer),
         _maxIndelSize(maxIndelSize),
         _sampleCount(sampleCount),
-        _maxDetectionWindowSize(maxDetectionWindowSize),
-        _minNumVariantsPerPositionPerSample(minNumVariantsPerPosition),
-        _minNumVariantsPerRegion(minNumVariantsPerRegion),
-        _activeRegionPtr(nullptr),
         _polySites(sampleCount),
         _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true)),
         _alignerForAssembly(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, 0, ScoreOpen, true, true))
     {
-        _numVariants = 0;
+        _isBeginning = true;
         _activeRegionStartPos = 0;
+        _anchorPosFollowingPrevVariant = 1;
+        _prevAnchorPos = 0;
         _prevVariantPos = 0;
-        _lastActiveRegionEnd = 0;
+        _numVariants = 0;
     }
 
     ActiveRegionReadBuffer& getReadBuffer()
@@ -140,17 +132,15 @@ private:
 
     const unsigned _maxIndelSize;
     const unsigned _sampleCount;
-    const unsigned _maxDetectionWindowSize;
 
-    const unsigned _minNumVariantsPerPositionPerSample;
-    const unsigned _minNumVariantsPerRegion;
-
+    bool _isBeginning;
     pos_t _activeRegionStartPos;
+    pos_t _anchorPosFollowingPrevVariant;
+    pos_t _prevAnchorPos;
     pos_t _prevVariantPos;
-    pos_t _lastActiveRegionEnd;
     unsigned _numVariants;
 
-    std::unique_ptr<ActiveRegion> _activeRegionPtr;
+    std::list<ActiveRegion> _activeRegions;
 
     // record polymorphic sites
     RangeSet _polySites;
@@ -163,8 +153,6 @@ private:
     void getExpandedRange(const pos_range& origActiveRegion, pos_range& newActiveRegion);
 
     void processActiveRegion();
-
-    bool isCandidateVariant(const pos_t pos) const;
 };
 
 

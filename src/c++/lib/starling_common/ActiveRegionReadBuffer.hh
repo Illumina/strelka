@@ -55,12 +55,21 @@ public:
     // TODO: dynamically calculate maximum depth
     static const unsigned MaxDepth = 1000u;
 
+    static const unsigned MinNumVariantsPerPosition = 9u;
+
+    static const pos_t MaxAssemblyPadding = (pos_t)9u;
+
+    static const pos_t MinRepeatSpan = (pos_t)3u;
+
     // maximum repeat unit to consider
-    static const unsigned MaxRepeatUnitLength = 6u;
+    static const unsigned MaxRepeatUnitLength = 50u;
 
     // variant count to add for a single mismatch or indel
     static const int MismatchWeight = 1;
     static const int IndelWeight = 4;
+
+    // minimum alternative allele fraction to call a position as a candidate variant
+    const float MinAlternativeAlleleFraction = 0.2;
 
     ActiveRegionReadBuffer(
             const reference_contig_segment& ref,
@@ -100,9 +109,14 @@ public:
     /// \param indelObservation indel observation object
     void insertIndel(const unsigned sampleId, const IndelObservation& indelObservation);
 
-    bool isAnchor(pos_t pos)
+    bool isAnchor(pos_t pos) const
     {
         return _isAnchor[pos % MaxBufferSize];
+    }
+
+    unsigned getRepeatSpan(pos_t pos) const
+    {
+        return _maxRepeatSpan[pos % MaxBufferSize];
     }
 
     void setEndPos(pos_t endPos);
@@ -151,6 +165,12 @@ public:
         ++_depth[sampleId][index];
     }
 
+    void addSoftClipCount(const unsigned sampleId, const pos_t pos, unsigned count)
+    {
+        int index = pos % MaxBufferSize;
+        _variantCounter[sampleId][index] += count;
+    }
+
     unsigned getVariantCount(const unsigned sampleId, const pos_t pos) const
     {
         return _variantCounter[sampleId][pos % MaxBufferSize];
@@ -180,6 +200,8 @@ public:
         resetCounter(pos);
         _readBufferRange.set_begin_pos(pos+1);
     }
+
+    bool isCandidateVariant(const pos_t pos) const;
 
 private:
     enum VariantType
@@ -212,8 +234,9 @@ private:
     char _snvBuffer[MaxDepth][MaxBufferSize];
 
     // to record reference repeat count
-    unsigned _repeatCount[MaxBufferSize][MaxRepeatUnitLength];
+    unsigned _repeatSpan[MaxBufferSize][MaxRepeatUnitLength];
     bool _isAnchor[MaxBufferSize];
+    unsigned _maxRepeatSpan[MaxBufferSize];
 
     void setMatch(const align_id_t id, const pos_t pos);
     void setMismatch(const align_id_t id, const pos_t pos, char baseChar);
@@ -221,4 +244,5 @@ private:
     void setInsert(const align_id_t id, const pos_t pos, const std::string& insertSeq);
     void setSoftClipSegment(const align_id_t id, const pos_t pos, const std::string& segmentSeq);
     bool setHaplotypeBase(const align_id_t id, const pos_t pos, std::string& base) const;
+    void updateRepeatSpan(pos_t pos);
 };

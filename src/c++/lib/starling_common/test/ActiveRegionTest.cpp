@@ -66,7 +66,7 @@ private:
 BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
 {
     reference_contig_segment ref;
-    ref.seq() = "TCTGT";
+    ref.seq() = "GATCTGT";
     TestIndelBuffer testBuffer(ref);
 
     const unsigned maxIndelSize = 50;
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
 
     ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
 
-    const auto snvPos = std::set<pos_t>({0, 2, 3});
+    const auto snvPos = std::set<pos_t>({2, 4, 5});
 
     pos_t refLength = (pos_t)ref.seq().length();
 
@@ -304,7 +304,7 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
 BOOST_AUTO_TEST_CASE( test_assemblyAnchorSelection )
 {
     reference_contig_segment ref;
-    ref.seq() = "TATATACCCATGAAA";
+    ref.seq() = "TATATACCCCCATGAAAAA";
 
     TestIndelBuffer testBuffer(ref);
 
@@ -317,11 +317,12 @@ BOOST_AUTO_TEST_CASE( test_assemblyAnchorSelection )
     for (pos_t pos(0); pos<length; ++pos)
     {
         buffer.setEndPos(pos+1);
+        buffer.insertMatch(0, pos);
     }
 
     for (pos_t pos(0); pos<length; ++pos)
     {
-        if (pos >= 9 and pos <= 11)
+        if (pos >= 11 and pos <= 13)
             BOOST_CHECK(buffer.isAnchor(pos));
         else
             BOOST_CHECK(not buffer.isAnchor(pos));

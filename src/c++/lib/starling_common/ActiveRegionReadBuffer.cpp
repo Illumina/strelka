@@ -34,14 +34,15 @@ void ActiveRegionReadBuffer::insertMatch(const align_id_t alignId, const pos_t p
 void ActiveRegionReadBuffer::insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string& segmentSeq, bool isBeginEdge)
 {
     // For invariant counting
-    addVariantCount(getSampleId(alignId), pos, 4);
+    addVariantCount(getSampleId(alignId), pos, IndelWeight);
+    unsigned sampleId(getSampleId(alignId));
     if (isBeginEdge)
     {
-        addVariantCount(getSampleId(alignId), pos+1, 4);
+        addSoftClipCount(sampleId, pos+1, IndelWeight);
     }
     else
     {
-        addVariantCount(getSampleId(alignId), pos-1, 4);
+        addSoftClipCount(sampleId, pos-1, IndelWeight);
     }
 
     // soft clipp doesn't add mismatch count, but the base is used in haplotype generation
@@ -157,6 +158,43 @@ bool ActiveRegionReadBuffer::setHaplotypeBase(const align_id_t id, const pos_t p
     return isSoftClipped;
 }
 
+void ActiveRegionReadBuffer::updateRepeatSpan(pos_t pos)
+{
+    // calculate repeat counter
+    auto base(_ref.get_base(pos));
+    auto posIndex(pos % MaxBufferSize);
+
+    _isAnchor[posIndex] = true;
+    _maxRepeatSpan[posIndex] = 0;
+    for (auto repeatUnitLength(1u); repeatUnitLength<=MaxRepeatUnitLength; ++repeatUnitLength)
+    {
+        auto prevBase(_ref.get_base(pos - repeatUnitLength));
+        auto repeatUnitIndex(repeatUnitLength-1);
+        unsigned repeatSpan;
+        if (prevBase != 'N' and base == prevBase)
+            repeatSpan = _repeatSpan[(pos - 1) % MaxBufferSize][repeatUnitIndex] + 1;
+        else
+            repeatSpan = repeatUnitLength;
+        _repeatSpan[posIndex][repeatUnitIndex] = repeatSpan;
+        if (repeatSpan >= repeatUnitLength*2 and repeatSpan >= MinRepeatSpan)
+        {
+            // repeat found
+            if (repeatSpan == repeatUnitLength*2 or repeatSpan == MinRepeatSpan)
+            {
+                // unset _isAnchor for pos [pos-repeatCount+1, pos-1]
+                for (pos_t prevPos(pos-1u); prevPos > (pos_t)(pos-repeatSpan); --prevPos)
+                {
+                    pos_t prevPosIndex(prevPos % MaxBufferSize);
+                    _isAnchor[prevPosIndex] = false;
+                    _maxRepeatSpan[prevPosIndex] = std::max(_maxRepeatSpan[prevPosIndex], repeatSpan);
+                }
+            }
+            _isAnchor[posIndex] = false;
+            _maxRepeatSpan[posIndex] = std::max(_maxRepeatSpan[posIndex], repeatSpan);
+        }
+    }
+}
+
 void ActiveRegionReadBuffer::setEndPos(pos_t endPos)
 {
     auto pos(endPos-1);
@@ -164,42 +202,23 @@ void ActiveRegionReadBuffer::setEndPos(pos_t endPos)
 
     if (not _readBufferRange.is_begin_pos)
     {
+        // initialization
         _readBufferRange.set_begin_pos(pos);
         for (auto repeatUnitLength(1u); repeatUnitLength<=MaxRepeatUnitLength; ++repeatUnitLength)
         {
             auto repeatUnitIndex(repeatUnitLength-1);
-            _repeatCount[posIndex][repeatUnitIndex] = repeatUnitLength;
+            _repeatSpan[posIndex][repeatUnitIndex] = repeatUnitLength;
         }
-    }
 
-    // calculate repeat counter
-    auto base(_ref.get_base(pos));
-
-    _isAnchor[posIndex] = true;
-    for (auto repeatUnitLength(1u); repeatUnitLength<=MaxRepeatUnitLength; ++repeatUnitLength)
-    {
-        auto prevBase(_ref.get_base(pos - repeatUnitLength));
-        auto repeatUnitIndex(repeatUnitLength-1);
-        unsigned repeatCount;
-        if (prevBase != 'N' and base == prevBase)
-            repeatCount = _repeatCount[(pos - 1) % MaxBufferSize][repeatUnitIndex] + 1;
-        else
-            repeatCount = repeatUnitLength;
-        _repeatCount[posIndex][repeatUnitIndex] = repeatCount;
-        if (repeatCount >= repeatUnitLength*2)
+        for (pos_t initPos(pos); initPos < (pos_t)(pos + MaxRepeatUnitLength*2u); ++initPos)
         {
-            // repeat found
-            if (repeatCount == repeatUnitLength*2)
-            {
-                // unset _isAnchor for pos [pos-repeatCount+1, pos-1]
-                for (pos_t prevPos(pos-1u); prevPos > (pos_t)(pos-repeatCount); --prevPos)
-                    _isAnchor[prevPos % MaxBufferSize] = false;
-            }
-            _isAnchor[posIndex] = false;
+            updateRepeatSpan(initPos);
         }
     }
 
-    return _readBufferRange.set_end_pos(endPos);
+    updateRepeatSpan(pos + MaxRepeatUnitLength*2);
+
+    _readBufferRange.set_end_pos(endPos);
 }
 
 void ActiveRegionReadBuffer::getHaplotypeReads(pos_range posRange, HaplotypeInfo &haplotypeInfo, bool includePartialReads) const
@@ -211,6 +230,9 @@ void ActiveRegionReadBuffer::getHaplotypeReads(pos_range posRange, HaplotypeInfo
     // add haplotype bases
     for (pos_t pos(posRange.begin_pos); pos<posRange.end_pos; ++pos)
     {
+        if (not _readBufferRange.is_pos_intersect(pos))
+            continue;
+
         for (const align_id_t alignId : getPositionToAlignIds(pos))
         {
             allAlignIds.insert(alignId);
@@ -260,4 +282,18 @@ void ActiveRegionReadBuffer::getHaplotypeReads(pos_range posRange, HaplotypeInfo
     }
 
     haplotypeInfo.numReads = allAlignIds.size();
+}
+
+bool ActiveRegionReadBuffer::isCandidateVariant(const pos_t pos) const
+{
+    for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
+    {
+        if (_ref.get_base(pos) == 'N')
+            return false;
+        auto count = getVariantCount(sampleId, pos);
+        if ((count >= MinNumVariantsPerPosition and count >= (MinAlternativeAlleleFraction*getDepth(sampleId, pos)))
+            or count >= (0.35*getDepth(sampleId, pos)))
+            return true;
+    }
+    return false;
 }

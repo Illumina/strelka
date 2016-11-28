@@ -52,7 +52,6 @@ public:
 
     // minimum haplotype frequency to relax MMDF
     const float HaplotypeFrequencyThreshold = 0.4;
-    const unsigned AssemblyFlankingSequenceLength = 10u;
 
     /// Creates an active region object
     /// \param posRange position range of the active region
