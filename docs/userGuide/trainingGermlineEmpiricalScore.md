@@ -220,15 +220,32 @@ ggsave("snv.png", width=4, height=3, dpi=120)
 
 ![PR curve](trainingGermlineEmpiricalScore/snv.png)
 
-## Step 5: Export the model for use in Strelka
+## Step 5: Calibrate the model
 
-Strelka uses models in JSON format, which can be produced from the model pickle file as follows:
+The scored test data can also be used to generate a QQ plot and calibrate the model, so that reported EVS scores (GQX values) will correspond roughly with phred-scale precision:
+
+```
+python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/germline/bin/evs_qq.py \
+    --output snv_qq.csv \
+    --calibration snv_calibration.json \
+    snv_classified.csv
+```
+
+This produces a CSV output file that can be used to plot binned empirical precision vs uncalibrated or calibrated EVS scores, as well as a JSON calibration file that can be used to apply the inferred calibration when exporting the model (Step 6).
+
+## Step 6: Export the model for use in Strelka
+
+Strelka uses models in JSON format, which can be produced from the model pickle file and (optionally) the calibration file as follows:
 
 ```
 python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/germline/bin/evs_exportmodel.py \
     --classifier snv_training_model.pickle \
-    --output snv_training_model.json
+    --output germlineSNVScoringModels.json \
+    --calibration snv_calibration.json \
+    --varianttype SNV \
+    --threshold 3
 ```
 
-Note that if the model's feature set has been changed, additional steps are required to use this file in Strelka.
-This operation is outside of user guide scope at present.
+Note that the EVS score threshold for the variant type in question can also specified.
+
+To use in Strelka, name the output file germlineSNVScoringModels.json or germlineIndelScoringModels.json, copy it to ${STRELKA_SOURCE_PATH}/config/empiricalVariantScoring/models/ and rerun the install script. Note that if the model's feature set has been changed, additional steps are required to use this file in Strelka. This operation is outside of user guide scope at present.
