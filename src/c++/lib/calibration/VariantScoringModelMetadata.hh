@@ -50,7 +50,7 @@ struct VariantScoringModelMetadata
     /// as part of an optional calibration component to all models, scale the prob using this factor (after power transform) before reporting:
     double probScale = 1.;
 
-    /// \TODO Doc this. what is the orientation of this number? <,>,<=,>=? Does it mean filter stuff to remove or to keep?
+    /// Phred-scale threshold: PASS variants will be >= filterCutoff
     double filterCutoff;
 };
 

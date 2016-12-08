@@ -110,15 +110,13 @@ private:
     double
     snvEVSThreshold() const
     {
-        return _opt.min_gqx;
-//        return _snvScoringModelPtr->scoreFilterThreshold();
+        return _snvScoringModelPtr->scoreFilterThreshold();
     }
 
     double
     indelEVSThreshold() const
     {
-        return _opt.min_gqx;
-//        return _indelScoringModelPtr->scoreFilterThreshold();
+        return _indelScoringModelPtr->scoreFilterThreshold();
     }
 
     // for setting the vcf header filters

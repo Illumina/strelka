@@ -73,7 +73,7 @@ get_label(const index_t i)
     switch (i)
     {
     case SNV:
-        return "SNP";
+        return "SNV";
     case INDEL:
         return "INDEL";
     default:
