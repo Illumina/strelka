@@ -60,6 +60,8 @@ struct gvcf_options
     double max_depth_factor = 3.;
     bool is_min_gqx = true;
     double min_gqx = 30.;
+    bool is_min_homref_gqx = true;
+    double min_homref_gqx = 30;
     bool is_max_base_filt = true;
     double max_base_filt = .4; //DPFratio
     bool is_max_snv_sb = true;

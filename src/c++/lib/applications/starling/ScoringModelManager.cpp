@@ -242,10 +242,17 @@ default_classify_site(
     GermlineSiteLocusInfo& locus) const
 {
     LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
-
-    if (_opt.is_min_gqx)
+    if (sampleInfo.max_gt().isVariant())
     {
-        if (sampleInfo.gqx < _opt.min_gqx) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+        if (_opt.is_min_gqx) {
+            if (sampleInfo.gqx < _opt.min_gqx) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+        }
+    }
+    else
+    {
+        if (_opt.is_min_homref_gqx) {
+            if (sampleInfo.gqx < _opt.min_homref_gqx) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+        }
     }
     if (_dopt.is_max_depth())
     {

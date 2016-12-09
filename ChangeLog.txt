@@ -1,3 +1,4 @@
+- STREL-357 Add separate threshold for homref calls
 v2.7.1
 - STREL-336 Fix incorrect indel normalizations
 - STREL-332 Revert to core somatic indel scoring with adjusted threshold
