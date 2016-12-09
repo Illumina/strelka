@@ -103,7 +103,7 @@ class StrelkaRF(EVSModel):
         #full_model = {"Meta" : meta, "Model" : all_trees }
         full_model = meta
         full_model["Model"] = all_trees
-        modelFile = {"CalibrationModels" : {"Somatic" : { "SNP" : full_model }}}
+        modelFile = {"CalibrationModels" : {"Somatic" : { "SNV" : full_model }}}
         json.dump(modelFile, open(filename,"wb"))
 
     def plots(self, prefix, featurenames):

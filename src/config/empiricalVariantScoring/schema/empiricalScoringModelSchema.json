@@ -16,7 +16,7 @@
                     "type": "object",
                     "minProperties": 1,
                     "patternProperties": {
-                        "^(SNP|INDEL)$": {
+                        "^(SNV|INDEL)$": {
                             "$ref": "#/definitions/StrelkaEVSModel"
                         }
                     },
