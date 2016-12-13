@@ -260,9 +260,20 @@ void ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
     {
         const std::string& contig(contigs[i].seq);
 
-        if (contig.length() > maxHaplotypeLength)
-            maxHaplotypeLength = contig.length();
-        haplotypeToAlignIdSet[contig] = std::vector<align_id_t>();
+//        std::cout << "*** " << contig << '\t' << entry.second.size() << std::endl;
+        auto start(contig.find(prefixAnchor));
+        if (start == std::string::npos) continue;
+
+        start += prefixAnchor.length() - 1;
+        auto end(contig.rfind(suffixAnchor));
+        if (end == std::string::npos or start > end) continue;
+        end += 1;
+
+        const std::string haplotype(contig.substr(start, end-start));
+
+        if (haplotype.length() > maxHaplotypeLength)
+            maxHaplotypeLength = haplotype.length();
+        haplotypeToAlignIdSet[haplotype] = std::vector<align_id_t>();
         unsigned numPseudoReads(0);
         for (unsigned readIndex : contigs[i].supportReads)
         {
@@ -270,13 +281,16 @@ void ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
             {
                 // TODO: how to add align id for pseudo read?
                 ++numPseudoReads;
-                haplotypeToAlignIdSet[contig].push_back(10000+numPseudoReads);
+                haplotypeToAlignIdSet[haplotype].push_back(10000+numPseudoReads);
                 continue;
             }
 
-            haplotypeToAlignIdSet[contig].push_back(readIndexToAlignId[readIndex]);
+            haplotypeToAlignIdSet[haplotype].push_back(readIndexToAlignId[readIndex]);
         }
     }
+
+    if (not haplotypeToAlignIdSet.size())
+        return;
 
     // determine threshold to select 2 haplotypes with the largest counts
 //    unsigned largestCount = (unsigned)(reads.size()*0.1);
@@ -303,18 +317,18 @@ void ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
 
     for (const auto& entry : haplotypeToAlignIdSet)
     {
-        const std::string& contig(entry.first);
+        const std::string& haplotype(entry.first);
 
-//        std::cout << "*** " << contig << '\t' << entry.second.size() << std::endl;
-        auto start(contig.find(prefixAnchor));
-        if (start == std::string::npos) continue;
-
-        start += prefixAnchor.length() - 1;
-        auto end(contig.rfind(suffixAnchor));
-        if (end == std::string::npos or start > end) continue;
-        end += 1;
-
-        const std::string haplotype(contig.substr(start, end-start));
+////        std::cout << "*** " << contig << '\t' << entry.second.size() << std::endl;
+//        auto start(contig.find(prefixAnchor));
+//        if (start == std::string::npos) continue;
+//
+//        start += prefixAnchor.length() - 1;
+//        auto end(contig.rfind(suffixAnchor));
+//        if (end == std::string::npos or start > end) continue;
+//        end += 1;
+//
+//        const std::string haplotype(contig.substr(start, end-start));
 
         // ignore if haplotype is a long homopolymer
         if (haplotype.length() > MaxSNVHpolSize and isHomoPolymer(haplotype)) continue;
