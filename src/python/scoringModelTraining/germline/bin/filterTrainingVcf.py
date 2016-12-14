@@ -78,8 +78,12 @@ def main() :
         if "OffTarget" in filterVals : continue
 
         # Skip entries matching any type of conflict
+        foundConflict = False
         for filterVal in filterVals :
-            if filterVal.endswith("Conflict") : continue
+            if filterVal.endswith("Conflict") : 
+                foundConflict = True
+                continue
+        if foundConflict: continue
 
         formatVals = word[VCFID.FORMAT].split(':')
         sampleVals = word[VCFID.SAMPLE].split(':')
