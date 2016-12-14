@@ -52,7 +52,9 @@ get_starling_option_parser(
     ("gvcf-max-depth-factor", po::value(&opt.gvcf.max_depth_factor)->default_value(opt.gvcf.max_depth_factor),
      "If a chrom depth file is supplied then loci with depth exceeding the mean chromosome depth times this value are filtered")
     ("gvcf-min-gqx", po::value(&opt.gvcf.min_gqx)->default_value(opt.gvcf.min_gqx),
-     "Minimum locus GQX in gVCF output. Providing a negative value disables the filter.")
+     "Default minimum locus GQX in gVCF output (used for non-homref variants not passed through EVS). Providing a negative value disables the filter.")
+    ("gvcf-min-homref-gqx", po::value(&opt.gvcf.min_homref_gqx)->default_value(opt.gvcf.min_homref_gqx),
+     "Minimum homref locus GQX in gVCF output. Providing a negative value disables the filter.")
     ("gvcf-max-snv-strand-bias", po::value(&opt.gvcf.max_snv_sb)->default_value(opt.gvcf.max_snv_sb),
      "Maximum SNV strand bias value")
     ("gvcf-no-snv-strand-bias-filter", po::value(&opt.gvcf.is_max_snv_sb)->zero_tokens()->implicit_value(false),
@@ -137,6 +139,7 @@ finalize_starling_options(
 
     // gvcf option handlers:
     opt.gvcf.is_min_gqx = (opt.gvcf.min_gqx >= 0);
+    opt.gvcf.is_min_homref_gqx = (opt.gvcf.min_homref_gqx >= 0);
     opt.gvcf.is_max_snv_hpol = (opt.gvcf.max_snv_hpol >= 0);
 
     if (opt.gvcf.block_percent_tol > 100)
