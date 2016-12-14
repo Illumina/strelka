@@ -122,8 +122,9 @@ private:
     std::set<align_id_t> _alignIdReachingEnd;
     std::set<align_id_t> _alignIdSoftClipped;
 
-    bool processHaplotypesWithCounting(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId) const;
-    void processHaplotypesWithAssembly(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId) const;
+    bool processHaplotypesWithCounting(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId, bool forceCounting = false) const;
+    bool processHaplotypesWithAssembly(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId) const;
+    void bypassIndelsInBam(IndelBuffer &indelBuffer) const;
 
     void convertToPrimitiveAlleles(
         const unsigned sampleId,
