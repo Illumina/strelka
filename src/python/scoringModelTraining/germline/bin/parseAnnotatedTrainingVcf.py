@@ -34,10 +34,16 @@ def getOptions() :
 
     parser.add_option("--scoringFeatures", type="string", dest="scoringFeaturesPath",metavar="FILE",
                       help="Scoring feature lists extracted from the EVS feature variant VCF")
-    parser.add_option("--snvOutput", type="string", dest="snvOutputPath",metavar="FILE",
-                      help="Write labeled SNV feature output in csv format to this file (required)")
-    parser.add_option("--indelOutput", type="string", dest="indelOutputPath",metavar="FILE",
-                      help="Write labeled indel feature output in csv format to this file (required)")
+    parser.add_option("--snvOutput", type="string", dest="snvOutputPath", metavar="FILE",
+                      help="Write labeled SNV feature output for training data (default: all of it) in csv format to this file (required)")
+    parser.add_option("--indelOutput", type="string", dest="indelOutputPath", metavar="FILE",
+                      help="Write labeled indel feature output for training data (default: all of it) in csv format to this file (required)")
+    parser.add_option("--traintest", dest="traintest", default=False, action="store_true",
+                      help="Divide data into training (chr1 and chr10-chr19) and test (chr2-chr9 and chr20-chr22) sets")
+    parser.add_option("--snvTestOutput", type="string", dest="snvTestOutputPath",metavar="FILE",
+                      help="Write labeled SNV feature output for test data in csv format to this file (optional)")
+    parser.add_option("--indelTestOutput", type="string", dest="indelTestOutputPath",metavar="FILE",
+                      help="Write labeled indel feature output for test data in csv format to this file (optional)")
 
     (options,args) = parser.parse_args()
 
@@ -53,7 +59,11 @@ def getOptions() :
         parser.error("SNV output filename is required")
     if options.indelOutputPath is None :
         parser.error("Indel output filename is required")
-
+    if options.traintest and (options.snvTestOutputPath is None) :
+        parser.error("SNV test output filename is required when using traintest option")
+    if options.traintest and (options.indelTestOutputPath is None) :
+        parser.error("Indel test output filename is required when using traintest option")
+ 
     return (options,args)
 
 
@@ -86,6 +96,9 @@ def main() :
 
     snv_outfp = open(options.snvOutputPath,"w")
     indel_outfp = open(options.indelOutputPath,"w")
+    if options.traintest :
+        snv_test_outfp = open(options.snvTestOutputPath,"w")
+        indel_test_outfp = open(options.indelTestOutputPath,"w")
 
     class HeaderData :
         isOutputHeaderInitialized = False
@@ -114,6 +127,10 @@ def main() :
 
         writeCsvHeader(snv_outfp, HeaderData.snvFeatures, "snv")
         writeCsvHeader(indel_outfp, HeaderData.indelFeatures, "indel")
+        if options.traintest :
+            writeCsvHeader(snv_test_outfp, HeaderData.snvFeatures, "snv")
+            writeCsvHeader(indel_test_outfp, HeaderData.indelFeatures, "indel")
+
 
     for line in open(options.scoringFeaturesPath) :
         if line[0] == "#" :
@@ -130,6 +147,12 @@ def main() :
         # expecting standard happy annotation with truth/query samples:
         assert(len(word) == (VCFID.SAMPLE+2))
 
+        isTrain = True
+        if options.traintest :
+            if not re.match("chr1", word[VCFID.CHROM]) :
+                isTrain = False
+
+
         filterVals = word[VCFID.FILTER].split(';')
 
         # Skip entries matching OffTarget in the filter field (for WES data)
@@ -143,7 +166,9 @@ def main() :
         formatVals = word[VCFID.FORMAT].split(":")
         queryVals = word[VCFID.SAMPLE+1].split(":")
 
-        if "NOCALL" in queryVals : continue
+        # After filtering out entries without evsf there shouldn't be any NOCALLs left:
+        if "NOCALL" in queryVals :
+            raise Exception("Query value has EVSF but is labeled NOCALL:\n%s" % (line))
 
         sampleBDIndex = formatVals.index("BD")
         qlabel = queryVals[sampleBDIndex]
@@ -158,11 +183,16 @@ def main() :
         qtype = queryVals[sampleBVTIndex]
         if qtype != typeLabel(isSNV) : continue
 
-        def typeStream(isSNV) :
-            if isSNV : return snv_outfp
-            else :     return indel_outfp
+        def outputStream(isSNV, isTrain) :
+            if isTrain :
+                if isSNV : return snv_outfp
+                else :     return indel_outfp
+            else : 
+                if isSNV : return snv_test_outfp
+                else :     return indel_test_outfp
 
-        typeStream(isSNV).write(",".join([word[VCFID.CHROM], word[VCFID.POS], qtype, evsf, qlabel]) +"\n")
+            
+        outputStream(isSNV, isTrain).write(",".join([word[VCFID.CHROM], word[VCFID.POS], qtype, evsf, qlabel]) +"\n")
 
 
 if __name__ == "__main__" :
