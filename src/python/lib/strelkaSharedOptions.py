@@ -91,9 +91,13 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
         group.add_option("--retainTempFiles", dest="isRetainTempFiles", action="store_true",
                          help="Keep all temporary files (for workflow debugging)")
         group.add_option("--disableEVS", dest="isEVS", action="store_false",
-                         help="Disable empirical variant scoring.")
+                         help="Disable empirical variant scoring (EVS).")
         group.add_option("--reportEVSFeatures", dest="isReportEVSFeatures", action="store_true",
-                         help="Report all Empirical Variant Scoring (EVS) features in VCF output.")
+                         help="Report all empirical variant scoring features in VCF output.")
+        group.add_option("--snvScoringModelFile", type="string", dest="snvScoringModelFile", metavar="FILE",
+                         help="Provide a custom empirical scoring model file for SNVs (default: %default)")
+        group.add_option("--indelScoringModelFile", type="string", dest="indelScoringModelFile", metavar="FILE",
+                         help="Provide a custom empirical scoring model file for indels (default: %default)")
 
         ConfigureWorkflowOptions.addExtendedGroupOptions(self,group)
 
@@ -164,6 +168,9 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
         indelErrorModelName = None
         inputIndelErrorModelsFile = None
 
+        snvScoringModelFile = None
+        indelScoringModelFile = None
+
         return cleanLocals(locals())
 
 
@@ -187,6 +194,9 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
             options.genomeRegionList = None
         else :
             options.genomeRegionList = [parseGenomeRegion(rr) for r in options.regionStrList for rr in r.split("+")]
+
+        options.snvScoringModelFile=validateFixExistingFileArg(options.snvScoringModelFile,"SNV empirical scoring model file")
+        options.indelScoringModelFile=validateFixExistingFileArg(options.indelScoringModelFile,"Indel empirical scoring model file")
 
 
     def validateOptionExistence(self,options) :

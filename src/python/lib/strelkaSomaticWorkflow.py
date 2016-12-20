@@ -121,10 +121,10 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     segCmd.extend(["--indel-contam-tolerance", str(self.params.indelContamTolerance) ] )
 
     if self.params.isEVS :
-        if self.params.somaticSnvScoringModelFile is not None :
-            segCmd.extend(['--somatic-snv-scoring-model-file', self.params.somaticSnvScoringModelFile])
-        if self.params.somaticIndelScoringModelFile is not None :
-            segCmd.extend(['--somatic-indel-scoring-model-file', self.params.somaticIndelScoringModelFile])
+        if self.params.snvScoringModelFile is not None :
+            segCmd.extend(['--somatic-snv-scoring-model-file', self.params.snvScoringModelFile])
+        if self.params.indelScoringModelFile is not None :
+            segCmd.extend(['--somatic-indel-scoring-model-file', self.params.indelScoringModelFile])
 
     if self.params.isReportEVSFeatures :
         segCmd.append("--report-evs-features")

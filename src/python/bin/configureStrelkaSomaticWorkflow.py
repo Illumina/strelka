@@ -61,15 +61,13 @@ You must specify an alignment file (BAM or CRAM) for each sample of a matched tu
 
         StrelkaSharedWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
+
     def addExtendedGroupOptions(self,group) :
-        group.add_option("--somaticSnvScoringModelFile", type="string", dest="somaticSnvScoringModelFile", metavar="FILE",
-                         help="Provide a custom EVS model file for somatic SNVs (default: %default)")
-        group.add_option("--somaticIndelScoringModelFile", type="string", dest="somaticIndelScoringModelFile", metavar="FILE",
-                         help="Provide a custom EVS model file for somatic Indels (default: %default)")
         group.add_option("--noiseVcf", type="string",dest="noiseVcfList",metavar="FILE", action="append",
                          help="Noise vcf file (submit argument multiple times for more than one file)")
 
         StrelkaSharedWorkflowOptionsBase.addExtendedGroupOptions(self,group)
+
 
     def getOptionDefaults(self) :
 
@@ -82,13 +80,12 @@ You must specify an alignment file (BAM or CRAM) for each sample of a matched tu
         defaults.update({
             'runDir' : 'StrelkaSomaticWorkflow',
             "minTier2Mapq" : 0,
-            'somaticSnvScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
-            'somaticIndelScoringModelFile' : None, #joinFile(configDir,'somaticVariantScoringModels.json'),
+            'snvScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
+            #'indelScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
             'isOutputCallableRegions' : False,
             'noiseVcfList' : None
             })
         return defaults
-
 
 
     def validateAndSanitizeExistingOptions(self,options) :
@@ -98,9 +95,6 @@ You must specify an alignment file (BAM or CRAM) for each sample of a matched tu
         groomBamList(options.tumorBamList, "tumor sample")
 
         checkFixTabixListOption(options.noiseVcfList,"noise vcf")
-
-        options.somaticSnvScoringModelFile=validateFixExistingFileArg(options.somaticSnvScoringModelFile,"Somatic SNV empirical scoring file")
-        options.somaticIndelScoringModelFile=validateFixExistingFileArg(options.somaticIndelScoringModelFile,"Somatic indel empirical scoring file")
 
 
     def validateOptionExistence(self,options) :

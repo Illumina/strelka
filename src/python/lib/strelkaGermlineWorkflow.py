@@ -145,10 +145,10 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
 
     # Empirical Variant Scoring(EVS):
     if self.params.isEVS :
-        if self.params.germlineSnvScoringModelFile is not None :
-            segCmd.extend(['--snv-scoring-model-file', self.params.germlineSnvScoringModelFile])
-        if self.params.germlineIndelScoringModelFile is not None :
-            segCmd.extend(['--indel-scoring-model-file', self.params.germlineIndelScoringModelFile])
+        if self.params.snvScoringModelFile is not None :
+            segCmd.extend(['--snv-scoring-model-file', self.params.snvScoringModelFile])
+        if self.params.indelScoringModelFile is not None :
+            segCmd.extend(['--indel-scoring-model-file', self.params.indelScoringModelFile])
 
     if self.params.indelErrorModelName is not None :
         segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
@@ -413,8 +413,8 @@ class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
             self.params.isEVS = False
 
         if self.params.isRNA :
-            self.params.germlineSnvScoringModelFile = joinFile(self.params.configDir,'RNAVariantScoringModels.json')
-            self.params.germlineIndelScoringModelFile = None
+            self.params.snvScoringModelFile = joinFile(self.params.configDir,'RNAVariantScoringModels.json')
+            self.params.indelScoringModelFile = None
 
 
     def getSuccessMessage(self) :
