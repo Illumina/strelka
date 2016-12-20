@@ -21,7 +21,7 @@
 
 This document outlines the Empirical Variant Score (EVS) model training process for Strelka germline variants. This is
 the same method used to train the default SNV and indel EVS re-scoring models which come with Strelka, although the
-speicic training and truth data sets shown here are just small examples provided for demonstration purposes.
+specific training and truth data sets shown here are just small examples provided for demonstration purposes.
 
 ## Requirements
 
@@ -64,7 +64,7 @@ gzip -dc filtered.vcf.gz | awk '/^#/ && /scoring_features/' >| scoringFeatures.t
 
 Next, the haplotype comparison tool [hap.py](https://github.com/Illumina/hap.py) is used to assign training labels to
 the strelka output. The truth set will be used to label strelka calls as true positive (TP) or false positive (FP), and
-if confident regions are provided to the labeling schme, then calls in non-confident regions will be labeled as unknown
+if confident regions are provided to the labeling scheme, then calls in non-confident regions will be labeled as unknown
 (UNK). False negatives are disregarded in the subsequent training steps. In the example below the
 [Platinum Genomes](http://www.illumina.com/platinumgenomes/)
 truth set is used to label the variant calling output. For NA12878/hg19 these truth data could
@@ -109,7 +109,7 @@ be combined as required for the model learning and/or evaluation procedures desc
 ## Step 2: Training an EVS model
 
 The next step is to train a model given one or more labeled feature datasets produced in Step 1.
-An example is shown below; the `--features` argument below must by germline.snv or germline.indel for snv and indel features respectively. Specifying the --ambig argument (recommended) causes unkown calls (i.e. calls in ambiguous regions) to be used as negative examples; leaving it off will avoid using unknown calls.
+An example is shown below; the `--features` argument below must by germline.snv or germline.indel for snv and indel features respectively. Specifying the --ambig argument (recommended) causes unknown calls (i.e. calls in ambiguous regions) to be used as negative examples; leaving it off will avoid using unknown calls.
 
 ```
 python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/germline/bin/evs_learn.py \
