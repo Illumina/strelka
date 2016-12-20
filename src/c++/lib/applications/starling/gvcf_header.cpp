@@ -48,12 +48,12 @@ add_gvcf_filters(
 
     using namespace GERMLINE_VARIANT_VCF_FILTERS;
     write_vcf_filter(os,get_label(IndelConflict),"Indel genotypes from two or more loci conflict in at least one sample");
-    write_vcf_filter(os,get_label(SiteConflict),"Site is filtered due to an overlapping indel call filter.");
+    write_vcf_filter(os,get_label(SiteConflict),"Site is filtered due to an overlapping indel call filter");
 
     if (opt.is_min_gqx)
     {
         std::ostringstream oss;
-        oss << "Locus GQX is less than " << opt.min_gqx << " or not present";
+        oss << "Locus GQX is below threshold or not present";
         write_vcf_filter(os,get_label(LowGQX),oss.str().c_str());
     }
 
@@ -135,9 +135,9 @@ finish_gvcf_header(
 
     // indel specific:
     os << "##INFO=<ID=CIGAR,Number=A,Type=String,Description=\"CIGAR alignment for each alternate indel allele\">\n";
-    os << "##INFO=<ID=RU,Number=A,Type=String,Description=\"Smallest repeating sequence unit extended or contracted in the indel allele relative to the reference. RUs are not reported if longer than 20 bases.\">\n";
-    os << "##INFO=<ID=REFREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in reference.\">\n";
-    os << "##INFO=<ID=IDREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in indel allele.\">\n";
+    os << "##INFO=<ID=RU,Number=A,Type=String,Description=\"Smallest repeating sequence unit extended or contracted in the indel allele relative to the reference. RUs are not reported if longer than 20 bases\">\n";
+    os << "##INFO=<ID=REFREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in reference\">\n";
+    os << "##INFO=<ID=IDREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in indel allele\">\n";
     os << "##INFO=<ID=MQ,Number=1,Type=Integer,Description=\"RMS of mapping quality\">\n";
 
 #if 0
@@ -151,7 +151,7 @@ finish_gvcf_header(
 
     if (opt.isReportEVSFeatures)
     {
-        os << "##INFO=<ID=EVSF,Number=.,Type=Float,Description=\"Empirical variant scoring features.\">\n";
+        os << "##INFO=<ID=EVSF,Number=.,Type=Float,Description=\"Empirical variant scoring features\">\n";
     }
 
     //FORMAT:
@@ -173,8 +173,8 @@ finish_gvcf_header(
     }
 
 
-    os << "##FORMAT=<ID=DPI,Number=1,Type=Integer,Description=\"Read depth associated with indel, taken from the site preceding the indel.\">\n";
-    os << "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification.\">\n";
+    os << "##FORMAT=<ID=DPI,Number=1,Type=Integer,Description=\"Read depth associated with indel, taken from the site preceding the indel\">\n";
+    os << "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification\">\n";
 
     if (opt.isUseCodonPhaser)
     {
