@@ -26,13 +26,6 @@ from evs import EVSModel
 import evs.tools.io as io
 
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.pipeline import make_pipeline
-from sklearn.tree import export_graphviz
-import cPickle
-import subprocess
-from IPython.display import Image
 
 
 class StrelkaRF(EVSModel):
@@ -92,6 +85,7 @@ class StrelkaRF(EVSModel):
 
         return instances
 
+
     def save_json_strelka_format(self, filename, varianttype, power, scale, threshold):
         """ Save to json including all strelka scoring model meta-data """
         import datetime
@@ -111,6 +105,7 @@ class StrelkaRF(EVSModel):
         modelFile = {"CalibrationModels" : {"Germline" : { varianttype : full_model }}}
         json.dump(modelFile, open(filename,"wb"))
 
+
     def plots(self, prefix, featurenames):
         """ Make diagnostic plots """
 
@@ -127,6 +122,9 @@ class StrelkaRF(EVSModel):
                                                     importances[indices[f]],
                                                     std[indices[f]])
 
+#        from sklearn.tree import export_graphviz
+#        import subprocess
+#
 #        images = []
 #        for i, tree in enumerate(self.clf.estimators_):
             # creates indel_tree_...dot files

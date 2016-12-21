@@ -97,6 +97,8 @@ def main():
     data = pandas.DataFrame(dataset.dropna(subset=["qual"]))
     data = data.iloc[numpy.random.permutation(len(data))] # shuffle before sorting: this ensures random order within tied groups
     data = data.sort("qual")
+
+    # note this call fails on numpy 1.9.x (default package for Ubuntu 14.04) TODO: workaround?
     bins = numpy.array_split(data,args.nbins)
 
     counter = 0

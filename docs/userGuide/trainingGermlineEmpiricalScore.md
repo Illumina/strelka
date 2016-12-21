@@ -120,28 +120,11 @@ python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/germline/bin/evs_learn
     snv_training_data.csv
 ```
 
-=>
-
-```
-Reading snv_training_data.csv
-building tree 1 of 50
-...
-building tree 50 of 50
-Feature ranking:
-1. feature 7:SampleUsedDepthFraction (0.452272 +- 0.000716)
-2. feature 6:RelativeTotalLocusDepth (0.299713 +- 0.000792)
-3. feature 8:ConservativeGenotypeQuality (0.134600 +- 0.000876)
-4. feature 1:SampleRMSMappingQuality (0.037543 +- 0.000379)
-5. feature 2:SiteHomopolymerLength (0.031712 +- 0.000416)
-6. feature 3:SampleStrandBias (0.016012 +- 0.000521)
-7. feature 0:GenotypeCategory (0.014921 +- 0.000669)
-8. feature 4:SampleRMSMappingQualityRankSum (0.010185 +- 0.000514)
-9. feature 5:SampleReadPosRankSum (0.003041 +- 0.000232)
-```
 
 ## Step 3: Calculate Scores
 
-Given a trained model any labeled testing data can be scored.
+Given a trained model any labeled testing data can be scored. The testing data is provided in the same format as
+csv training files used in step 2.
 
 ```
 python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/germline/bin/evs_evaluate.py \
@@ -164,12 +147,12 @@ UNK   121596    54937
 
 ## Step 4: Evaluate Precision / Recall for the model
 
-Any scored test data output can be further processed to evaluate precision / recall as
+Any scored test data output from step 3 can be further processed to evaluate precision / recall as
 follows:
 
 ```
 python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/germline/bin/evs_pr.py \
-     --N 100 \
+     -N 100 \
      --output snv_precisionrecall.csv \
      snv_classified.csv
 ```
@@ -239,7 +222,7 @@ Strelka uses models in JSON format, which can be produced from the model pickle 
 
 ```
 python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/germline/bin/evs_exportmodel.py \
-    --classifier snv_training_model.pickle \
+    --classifier snv_model.pickle \
     --output germlineSNVScoringModel.json \
     --calibration snv_calibration.json \
     --varianttype SNV \
