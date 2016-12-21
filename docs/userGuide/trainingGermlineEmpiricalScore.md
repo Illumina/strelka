@@ -240,7 +240,7 @@ Strelka uses models in JSON format, which can be produced from the model pickle 
 ```
 python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/germline/bin/evs_exportmodel.py \
     --classifier snv_training_model.pickle \
-    --output germlineSNVScoringModels.json \
+    --output germlineSNVScoringModel.json \
     --calibration snv_calibration.json \
     --varianttype SNV \
     --threshold 3
@@ -248,4 +248,11 @@ python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/germline/bin/evs_expor
 
 Note that the EVS score threshold for the variant type in question can also specified.
 
-To use in Strelka, name the output file germlineSNVScoringModels.json or germlineIndelScoringModels.json, copy it to ${STRELKA_SOURCE_PATH}/config/empiricalVariantScoring/models/ and rerun the install script. Note that if the model's feature set has been changed, additional steps are required to use this file in Strelka. This operation is outside of user guide scope at present.
+To use in Strelka, point it to the new model files by adding
+```
+--snvScoringModelFile germlineSNVScoringModel.json \
+--indelScoringModelFile germlineIndelScoringModel.json
+``` 
+to the options supplied to configureStarlingWorkflow.py.
+
+Note that if the model's feature set has been changed, additional steps are required to use this file in Strelka. This operation is outside of user guide scope at present.
