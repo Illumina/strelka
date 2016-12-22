@@ -236,6 +236,6 @@ To use in Strelka, point it to the new model files by adding
 --snvScoringModelFile germlineSNVScoringModel.json \
 --indelScoringModelFile germlineIndelScoringModel.json
 ``` 
-to the options supplied to configureStarlingWorkflow.py.
+to the options supplied to configureStrelkaGermlineWorkflow.py.
 
 Note that if the model's feature set has been changed, additional steps are required to use this file in Strelka. This operation is outside of user guide scope at present.
