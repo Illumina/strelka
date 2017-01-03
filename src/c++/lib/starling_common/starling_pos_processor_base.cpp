@@ -49,9 +49,11 @@
 //
 // initial setting is large to help consistently deal with grouperisms:
 //
-//const unsigned STARLING_INIT_LARGEST_READ_SIZE(250);
-const unsigned STARLING_INIT_LARGEST_READ_SIZE(450);
+const unsigned STARLING_INIT_LARGEST_READ_SIZE(250);
 const double STARLING_LARGEST_READ_SIZE_PAD(1.25);
+
+// additional distance between HEAD and READ_BUFFER for haplotyping
+const unsigned HAPLOTYPING_PADDING(200);
 
 // largest indel_size grows dynamically with observed indel size until
 // hitting max_indel_size. Initialized to the follow value prior to
@@ -193,7 +195,7 @@ get_stage_data(
     // read realignment
     // base-call pos entry (pileup)
     //
-    sdata.add_stage(READ_BUFFER,HEAD,get_read_buffer_size(largest_read_size,largest_total_indel_ref_span_per_read));
+    sdata.add_stage(READ_BUFFER,HEAD,get_read_buffer_size(largest_read_size,largest_total_indel_ref_span_per_read)+HAPLOTYPING_PADDING);
 
     //
     // POST_ALIGN_STAGE - the end of this stage is where snp and indel

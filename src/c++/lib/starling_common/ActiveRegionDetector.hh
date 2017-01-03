@@ -45,11 +45,10 @@ public:
     // maximum buffer size in bases (must be larger than the maximum read size + max indel size
     static const unsigned MaxBufferSize = 1000u;
 
-    // minimum read depth
-    static const unsigned MinDepth = ActiveRegion::MinHaplotypeCount;
+    // max distance between two variants to be placed in the same active region
     static const unsigned MaxDistanceBetweenTwoVariants = 13u;
 
-    static const unsigned MaxDetectionWindowSize = 100u;
+    // min number of variants to form an active region
     static const unsigned MinNumVariantsPerRegion = 2u;
 
     // alignment scores, same as bwa default values
@@ -59,17 +58,11 @@ public:
     static const int ScoreExtend = -1;
     static const int ScoreOffEdge = -100;
 
-    // for expansion of active regions
-    const pos_t MaxRepeatSpan = 1000u;
-
     /// Creates an object that reads variant information and creates active regions
     /// \param ref reference segment
     /// \param indelBuffer indel buffer
     /// \param maxIndelSize maximum indel size
     /// \param sampleCount sample count
-    /// \param maxDetectionWindowSize maximum active region size
-    /// \param minNumVariantsPerPosition minimum number of variants per position to make the position as a candidate variant pos
-    /// \param minNumVariantsPerRegion minimum number of variants per region to create an active region
     ActiveRegionDetector(
         const reference_contig_segment& ref,
         IndelBuffer& indelBuffer,
@@ -81,8 +74,7 @@ public:
         _maxIndelSize(maxIndelSize),
         _sampleCount(sampleCount),
         _polySites(sampleCount),
-        _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true)),
-        _alignerForAssembly(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, 0, ScoreOpen, true, true))
+        _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
     {
         _isBeginning = true;
         _activeRegionStartPos = 0;
@@ -92,6 +84,8 @@ public:
         _numVariants = 0;
     }
 
+    /// Gets the read buffer
+    /// \return read buffer
     ActiveRegionReadBuffer& getReadBuffer()
     {
         return _readBuffer;
@@ -103,7 +97,6 @@ public:
 
     /// update the active region end position. Creates an active region if needed.
     /// \param pos reference position
-    /// \param isLastPos
     void updateEndPosition(const pos_t pos);
 
     /// Checks if mismatches occur consistently at position pos
@@ -112,6 +105,7 @@ public:
     /// \return true if pos is a polymorphic site; false otherwise.
     bool isPolymorphicSite(const unsigned sampleId, const pos_t pos) const;
 
+    /// clear active region detector
     void clear();
 
 private:
@@ -147,7 +141,6 @@ private:
 
     // aligner to be used in active regions
     GlobalAligner<int> _aligner;
-    GlobalAligner<int> _alignerForAssembly;
 
     void processActiveRegion();
 };

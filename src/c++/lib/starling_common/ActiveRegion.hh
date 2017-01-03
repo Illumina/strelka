@@ -38,6 +38,7 @@
 #include <options/IterativeAssemblerOptions.hh>
 
 typedef std::vector<RangeMap<pos_t,unsigned char>> RangeSet;
+typedef std::map<std::string, std::vector<align_id_t>> HaplotypeToAlignIdSet;
 
 /// Represent all haplotypes found in the current active region
 class ActiveRegion
@@ -45,6 +46,19 @@ class ActiveRegion
 public:
     // if haplotype depth is at least HighDepth, low depth filter is not applied
     static const unsigned HighDepth = 20u;
+
+    // if the number of reads is larger than MinNumReadsToBypassAssembly, assembly is not conducted
+    static const unsigned MinNumReadsToBypassAssembly = 1000u;
+
+    // minimum fraction of reads covering the entire region to perform counting
+    float MinFracReadsCoveringRegion = 0.65f;
+
+    // if the region length is larger than MaxRefSpanToPerformAssembly, do not perform assembly
+    static const unsigned MaxRefSpanToPerformAssembly = 250u;
+
+    // assembly parameters
+    const unsigned MaxAssemblyWordSize = 76u;
+    const unsigned MinAssemblyCoverage = 3u;
 
     // minimum haplotype count to consider
     static const unsigned MinHaplotypeCount = 3u;
@@ -56,6 +70,8 @@ public:
     /// Creates an active region object
     /// \param posRange position range of the active region
     /// \param ref reference
+    /// \param maxIndelSize max indel size
+    /// \param sampleCount sample count
     /// \param aligner aligner for aligning haplotypes to the reference
     /// \param readBuffer read buffer
     /// \return active region object
@@ -64,11 +80,9 @@ public:
                  const unsigned maxIndelSize,
                  const unsigned sampleCount,
                  const GlobalAligner<int>& aligner,
-                 const GlobalAligner<int>& alignerForAssembly,
                  const ActiveRegionReadBuffer& readBuffer):
         _posRange(posRange), _ref(ref), _maxIndelSize(maxIndelSize), _sampleCount(sampleCount),
-        _aligner(aligner), _alignerForAssembly(alignerForAssembly),
-        _readBuffer(readBuffer)
+        _aligner(aligner), _readBuffer(readBuffer)
     {
     }
 
@@ -82,11 +96,6 @@ public:
     pos_t getEndPosition() const
     {
         return _posRange.end_pos;
-    }
-
-    void extendEndPosition(const pos_t endPos)
-    {
-        _posRange.set_end_pos(endPos);
     }
 
     /// \param pos reference position
@@ -115,15 +124,26 @@ private:
     const unsigned _maxIndelSize;
     const unsigned _sampleCount;
     const GlobalAligner<int> _aligner;
-    const GlobalAligner<int> _alignerForAssembly;
 
     const ActiveRegionReadBuffer& _readBuffer;
-    std::set<align_id_t> _alignIdReachingStart;
-    std::set<align_id_t> _alignIdReachingEnd;
     std::set<align_id_t> _alignIdSoftClipped;
 
-    bool processHaplotypesWithCounting(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId, bool forceCounting = false) const;
+    /// Create haplotypes using counting and process variants
+    /// \param indelBuffer indel buffer
+    /// \param polySites container to record polymorphic sites for MMDF relax
+    /// \param sampleId sample id
+    /// \return true if haplotype generation succeeds, false otherwise
+    bool processHaplotypesWithCounting(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId) const;
+
+    /// Create haplotypes using assembly and process variants
+    /// \param indelBuffer indel buffer
+    /// \param polySites container to record polymorphic sites for MMDF relax
+    /// \param sampleId sample id
+    /// \return true if haplotype generation succeeds, false otherwise
     bool processHaplotypesWithAssembly(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId) const;
+
+    /// Bypass indels within the region
+    /// \param indelBuffer indel buffer
     void bypassIndelsInBam(IndelBuffer &indelBuffer) const;
 
     void convertToPrimitiveAlleles(
@@ -131,8 +151,6 @@ private:
         const std::string& haploptypeSeq,
         const std::vector<align_id_t>& alignIdList,
         const unsigned totalReadCount,
-        const bool isTopTwo,
-        const pos_range posRange,
         IndelBuffer& indelBuffer,
         RangeSet& polySites) const;
 };

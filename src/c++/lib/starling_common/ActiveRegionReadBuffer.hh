@@ -38,7 +38,7 @@ struct AlignInfo
     INDEL_ALIGN_TYPE::index_t indelAlignType;
 };
 
-struct HaplotypeInfo
+struct ReadInfo
 {
     std::vector<std::pair<align_id_t, std::string>> readSegments;
     unsigned numReads;
@@ -71,6 +71,14 @@ public:
     // minimum alternative allele fraction to call a position as a candidate variant
     const float MinAlternativeAlleleFraction = 0.2;
 
+    // if the fraction is larger than MinAlternativeAlleleFractionLowDepth
+    // the position becomes candidate even if the number is lower than MinNumVariantsPerPosition
+    const float MinAlternativeAlleleFractionLowDepth = 0.35;
+
+    /// Read buffer to be used in active regions
+    /// \param ref reference
+    /// \param sampleCount sample count
+    /// \param indelBuffer indel buffer
     ActiveRegionReadBuffer(
             const reference_contig_segment& ref,
             unsigned sampleCount,
@@ -109,27 +117,39 @@ public:
     /// \param indelObservation indel observation object
     void insertIndel(const unsigned sampleId, const IndelObservation& indelObservation);
 
+    /// checks if pos is an anchor position
+    /// \param pos reference position
+    /// \return true if pos is an anchor position, false otherwise
     bool isAnchor(pos_t pos) const
     {
         return _isAnchor[pos % MaxBufferSize];
     }
 
-    unsigned getRepeatSpan(pos_t pos) const
-    {
-        return _maxRepeatSpan[pos % MaxBufferSize];
-    }
-
+    /// Set end position of the buffer
+    /// \param endPos end position (exclusive)
     void setEndPos(pos_t endPos);
 
+    /// Gets the beginning position
+    /// \return begin position
     pos_t getBeginPos() const { return _readBufferRange.begin_pos; }
+
+    /// Gets the end position
+    /// \return end position
     pos_t getEndPos() const { return _readBufferRange.end_pos; }
 
+    /// Gets sample id and indel align type
+    /// \param alignId align id
+    /// \return sample id and indel align type
     const AlignInfo& getAlignInfo(align_id_t alignId) const
     {
         return _alignIdToAlignInfo[alignId % MaxDepth];
     }
 
-    void getHaplotypeReads(pos_range posRange, HaplotypeInfo &haplotypeInfo, bool includePartialReads) const;
+    /// Gets read segments for the range
+    /// \param posRange position range
+    /// \param readInfo read info object to store read segments
+    /// \param includePartialReads if true, only reads fully covering the region will be retrieved
+    void getReadSegments(pos_range posRange, ReadInfo &readInfo, bool includePartialReads) const;
 
     /// cache sampleId and indelAlignType corresponding to alignId
     /// \param alignId align id
@@ -142,10 +162,69 @@ public:
         alignInfo.indelAlignType = indelAlignType;
     }
 
+    /// Gets sample id
+    /// \param alignId align id
+    /// \return sample id
     unsigned getSampleId(const align_id_t alignId) const
     {
         return _alignIdToAlignInfo[alignId % MaxDepth].sampleId;
     }
+
+    /// Clear buffer
+    /// \param pos position
+    void clearPos(pos_t pos)
+    {
+        _positionToAlignIds[pos % MaxBufferSize].clear();
+        resetCounter(pos);
+        _readBufferRange.set_begin_pos(pos+1);
+    }
+
+    /// Checks if pos is candidate variant position
+    /// \param pos position
+    /// \return true if pos is candidate variant, false otherwise
+    bool isCandidateVariant(const pos_t pos) const;
+
+private:
+    enum VariantType
+    {
+        MATCH,
+        MISMATCH,
+        SOFT_CLIP,
+        DELETE,
+        INSERT,
+        MISMATCH_INSERT
+    };
+
+    const reference_contig_segment& _ref;
+    const unsigned _sampleCount;
+    IndelBuffer& _indelBuffer;
+
+    pos_range _readBufferRange;
+
+    std::vector<std::vector<unsigned>> _variantCounter;
+    std::vector<std::vector<unsigned>> _depth;
+
+    // for haplotypes
+    std::vector<std::vector<align_id_t>> _positionToAlignIds;
+
+    // to store align information
+    std::vector<AlignInfo> _alignIdToAlignInfo;
+
+    std::vector<std::vector<VariantType>> _variantInfo;
+    std::vector<std::vector<std::string>> _insertSeqBuffer;
+    char _snvBuffer[MaxDepth][MaxBufferSize];
+
+    // to record reference repeat count
+    unsigned _repeatSpan[MaxBufferSize][MaxRepeatUnitLength];
+    bool _isAnchor[MaxBufferSize];
+
+    void setMatch(const align_id_t id, const pos_t pos);
+    void setMismatch(const align_id_t id, const pos_t pos, char baseChar);
+    void setDelete(const align_id_t id, const pos_t pos);
+    void setInsert(const align_id_t id, const pos_t pos, const std::string& insertSeq);
+    void setSoftClipSegment(const align_id_t id, const pos_t pos, const std::string& segmentSeq);
+    bool setHaplotypeBase(const align_id_t id, const pos_t pos, std::string& base) const;
+    void updateRepeatSpan(pos_t pos);
 
     void resetCounter(const pos_t pos)
     {
@@ -193,56 +272,4 @@ public:
     {
         return _positionToAlignIds[pos % MaxBufferSize];
     }
-
-    void clearPos(pos_t pos)
-    {
-        _positionToAlignIds[pos % MaxBufferSize].clear();
-        resetCounter(pos);
-        _readBufferRange.set_begin_pos(pos+1);
-    }
-
-    bool isCandidateVariant(const pos_t pos) const;
-
-private:
-    enum VariantType
-    {
-        MATCH,
-        MISMATCH,
-        SOFT_CLIP,
-        DELETE,
-        INSERT,
-        MISMATCH_INSERT
-    };
-
-    const reference_contig_segment& _ref;
-    const unsigned _sampleCount;
-    IndelBuffer& _indelBuffer;
-
-    pos_range _readBufferRange;
-
-    std::vector<std::vector<unsigned>> _variantCounter;
-    std::vector<std::vector<unsigned>> _depth;
-
-    // for haplotypes
-    std::vector<std::vector<align_id_t>> _positionToAlignIds;
-
-    // to store align information
-    std::vector<AlignInfo> _alignIdToAlignInfo;
-
-    std::vector<std::vector<VariantType>> _variantInfo;
-    std::vector<std::vector<std::string>> _insertSeqBuffer;
-    char _snvBuffer[MaxDepth][MaxBufferSize];
-
-    // to record reference repeat count
-    unsigned _repeatSpan[MaxBufferSize][MaxRepeatUnitLength];
-    bool _isAnchor[MaxBufferSize];
-    unsigned _maxRepeatSpan[MaxBufferSize];
-
-    void setMatch(const align_id_t id, const pos_t pos);
-    void setMismatch(const align_id_t id, const pos_t pos, char baseChar);
-    void setDelete(const align_id_t id, const pos_t pos);
-    void setInsert(const align_id_t id, const pos_t pos, const std::string& insertSeq);
-    void setSoftClipSegment(const align_id_t id, const pos_t pos, const std::string& segmentSeq);
-    bool setHaplotypeBase(const align_id_t id, const pos_t pos, std::string& base) const;
-    void updateRepeatSpan(pos_t pos);
 };

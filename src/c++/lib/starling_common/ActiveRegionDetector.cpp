@@ -73,7 +73,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
 
 //    std::cout << (posToProcess+1) << "\t" << isCurrentPosCandidateVariant << '\t' << isAnchor << std::endl;
 
-    unsigned distanceFromPrevVariant = posToProcess - _prevVariantPos;
+    unsigned distanceFromPrevVariant = (unsigned) (posToProcess - _prevVariantPos);
     if (distanceFromPrevVariant > MaxDistanceBetweenTwoVariants and _anchorPosFollowingPrevVariant > 0)
     {
         if (_numVariants >= MinNumVariantsPerRegion )
@@ -81,7 +81,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
             // close the existing active region
             pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
             _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
-                                     _aligner, _alignerForAssembly, _readBuffer);
+                                     _aligner, _readBuffer);
             // we have no existing acive region at this point
             _numVariants = 0;
             _activeRegionStartPos = 0;
@@ -130,7 +130,7 @@ void ActiveRegionDetector::clear()
             _anchorPosFollowingPrevVariant = _readBuffer.getEndPos();
         pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
         _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
-                                    _aligner, _alignerForAssembly, _readBuffer);
+                                    _aligner, _readBuffer);
     }
 
     processActiveRegion();

@@ -23,9 +23,11 @@
 ///
 
 #include <boost/algorithm/string.hpp>
-#include <assembly/SmallAssembler.hh>
 #include <assembly/IterativeAssembler.hh>
 #include "ActiveRegion.hh"
+
+// compile with this macro to get verbose output:
+//#define DEBUG_ACTIVE_REGION
 
 // adoptation of get_snp_hpol_size in blt_common
 static unsigned getHomoPolymerSize(const std::string& haplotype, const pos_t pos)
@@ -53,7 +55,7 @@ static unsigned getHomoPolymerSize(const std::string& haplotype, const pos_t pos
     bool isDownRepeat(false);
     char downRepeat('N');
     unsigned downSize(0);
-    const pos_t haplotypeLength(haplotype.length());
+    const pos_t haplotypeLength((const pos_t) haplotype.length());
     for (pos_t i(pos+1); i<haplotypeLength; i++)
     {
         if (isDownRepeat)
@@ -84,7 +86,7 @@ static bool isHomoPolymer(const std::string& haplotype)
 
 void ActiveRegion::processHaplotypes(IndelBuffer &indelBuffer, RangeSet &polySites)
 {
-    // if not enough reads are read, adjust the window size
+    // adjust the window size if not enough reads are available
     if (_readBuffer.getEndPos() < _posRange.end_pos)
         _posRange.set_end_pos(_readBuffer.getEndPos());
 
@@ -93,51 +95,46 @@ void ActiveRegion::processHaplotypes(IndelBuffer &indelBuffer, RangeSet &polySit
         bool isHaplotypingSuccess = processHaplotypesWithCounting(indelBuffer, polySites, sampleId);
         if (not isHaplotypingSuccess)
         {
-            // Counting failed. Try assembly.
+            // counting failed. Try assembly.
             isHaplotypingSuccess = processHaplotypesWithAssembly(indelBuffer, polySites, sampleId);
         }
 
         if (not isHaplotypingSuccess)
         {
-            // Both counting and assembly failed
+            // both counting and assembly failed
+            // bypass indels parsed from BAM
             bypassIndelsInBam(indelBuffer);
         }
     }
 }
 
-bool ActiveRegion::processHaplotypesWithCounting(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId, bool forceCounting) const
+bool ActiveRegion::processHaplotypesWithCounting(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId) const
 {
-    HaplotypeInfo haplotypeInfo;
-    _readBuffer.getHaplotypeReads(_posRange, haplotypeInfo, false);
+    ReadInfo readInfo;
+    _readBuffer.getReadSegments(_posRange, readInfo, false);
 
-    unsigned numReads(haplotypeInfo.numReads);
-    unsigned numReadsCoveringFullRegion(haplotypeInfo.readSegments.size());
-    unsigned maxHaplotypeLength(0);
-    std::map<std::string, std::vector<align_id_t>> haplotypeToAlignIdSet;
-    for (const auto& entry : haplotypeInfo.readSegments)
+    unsigned numReads(readInfo.numReads);
+    unsigned numReadsCoveringFullRegion((unsigned int) readInfo.readSegments.size());
+
+    // if the fraction of reads fully covering the region is low, give up counting
+    if (numReadsCoveringFullRegion < MinFracReadsCoveringRegion*numReads)
+        return false;
+
+    HaplotypeToAlignIdSet haplotypeToAlignIdSet;
+    for (const auto& entry : readInfo.readSegments)
     {
         align_id_t alignId = entry.first;
         unsigned currentSampleId = _readBuffer.getSampleId(alignId);
         if (currentSampleId != sampleId) continue;
 
         const std::string& haplotype(entry.second);
-        if (haplotype.length() > maxHaplotypeLength)
-            maxHaplotypeLength = haplotype.length();
 
         if (!haplotypeToAlignIdSet.count(haplotype))
             haplotypeToAlignIdSet[haplotype] = std::vector<align_id_t>();
         haplotypeToAlignIdSet[haplotype].push_back(alignId);
     }
 
-    bool isSuccess(true);
-    if (std::max(maxHaplotypeLength, _posRange.size()) > 10 and haplotypeInfo.numReads < 1000u and numReadsCoveringFullRegion < 0.65*numReads)
-    {
-        isSuccess = false;
-        if (not forceCounting)
-            return isSuccess;
-    }
-
-    // determine threshold to select 3 haplotypes with the largest counts
+    // determine threshold to select 2 haplotypes with the largest counts
     unsigned largestCount = MinHaplotypeCount;
     unsigned secondLargestCount = MinHaplotypeCount;
     unsigned totalCount = 0;
@@ -162,7 +159,11 @@ bool ActiveRegion::processHaplotypesWithCounting(IndelBuffer& indelBuffer, Range
 
     std::string refStr;
     _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
-//    std::cout << "chr20" << '\t' << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tCounting"<< std::endl;
+
+#ifdef DEBUG_ACTIVE_REGION
+    std::cout << "chr20" << '\t' << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tCounting"<< std::endl;
+#endif
+
     for (const auto& entry : haplotypeToAlignIdSet)
     {
         const std::string& haplotype(entry.first);
@@ -173,75 +174,83 @@ bool ActiveRegion::processHaplotypesWithCounting(IndelBuffer& indelBuffer, Range
         const auto& alignIdList(entry.second);
         auto count = alignIdList.size();
 
-//        if (count >= secondLargestCount)
-//            std::cout << haplotype << '\t' << count << std::endl;
+#ifdef DEBUG_ACTIVE_REGION
+        if (count >= secondLargestCount)
+            std::cout << haplotype << '\t' << count << std::endl;
+#endif
 
         if (count >= secondLargestCount and haplotype != refStr)
         {
-            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, totalCount, count >= secondLargestCount, _posRange,
+            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, totalCount,
                                       indelBuffer, polySites);
         }
     }
 
-    return isSuccess;
+    // counting success
+    return true;
 }
 
 bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId) const
 {
+    // if reference span is too large, give up assembly
+    if (_posRange.size() > MaxRefSpanToPerformAssembly)
+    {
+#ifdef DEBUG_ACTIVE_REGION
+            std::cout << "chr20" << '\t' << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << "\tAssembly"<< std::endl;
+#endif
+        return false;   // assembly fail; bypass indels later
+    }
+
+    // Expand the region to include left/right anchors.
+    // prefix anchor
     pos_t minBeginPos = std::max(_readBuffer.getBeginPos(), _posRange.begin_pos - ActiveRegionReadBuffer::MaxAssemblyPadding);
     pos_t beginPos(_posRange.begin_pos);
     for (; beginPos > minBeginPos; --beginPos)
     {
+        // anchor should not include a variant position
         if (_readBuffer.isCandidateVariant(beginPos-1)) break;
     }
 
+    // suffix anchor
     pos_t maxEndPos = std::min(_readBuffer.getEndPos(), _posRange.end_pos + ActiveRegionReadBuffer::MaxAssemblyPadding);
-
     pos_t endPos(_posRange.end_pos);
     for (; endPos < maxEndPos; ++endPos)
     {
         if (_readBuffer.isCandidateVariant(endPos)) break;
     }
 
-    if (endPos - beginPos > 250)
-    {
-//        std::cout << "chr20" << '\t' << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << "\tAssembly"<< std::endl;
-        return false;
-    }
-
     std::string refStr;
     _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
 
+    // prefix anchor ends with the first base of the active region
     std::string prefixAnchor;
     _ref.get_substring(beginPos, _posRange.begin_pos - beginPos + 1, prefixAnchor);
 
+    // suffix anchor starts with the last base of the active region
     std::string suffixAnchor;
     _ref.get_substring(_posRange.end_pos-1, endPos-_posRange.end_pos + 1, suffixAnchor);
 
-    HaplotypeInfo haplotypeInfo;
-    _readBuffer.getHaplotypeReads(pos_range(beginPos, endPos), haplotypeInfo, true);
+    // get read segments
+    ReadInfo readInfo;
+    _readBuffer.getReadSegments(pos_range(beginPos, endPos), readInfo, true);
 
-//    std::cout << "chr20" << '\t' << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tAssembly"<< std::endl;
+    // too many reads; do not perform assembly (too time-consuming)
+    if (readInfo.numReads > MinNumReadsToBypassAssembly)
+        return false;   // assembly fail; bypass indels later
 
-    if (haplotypeInfo.numReads > 1000u)
-        return false;
-
+#ifdef DEBUG_ACTIVE_REGION
+        std::cout << "chr20" << '\t' << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tAssembly"<< std::endl;
+#endif
     AssemblyReadInput reads;
     std::vector<align_id_t> readIndexToAlignId;
 
-    for (const auto& entry : haplotypeInfo.readSegments)
+    for (const auto& entry : readInfo.readSegments)
     {
         align_id_t alignId = entry.first;
         unsigned currentSampleId = _readBuffer.getSampleId(alignId);
         if (currentSampleId != sampleId) continue;
 
         const std::string& readSegment(entry.second);
-//        std::cout << "-> " << readSegment << std::endl;
-
-        // ignore if the readSegment doesn't have prefixAnchor nor suffixAnchor
-//        auto start(readSegment.find(prefixAnchor));
-//        auto end(readSegment.rfind(suffixAnchor));
-//        if (start == std::string::npos and end == std::string::npos) continue;
 
         if (not readSegment.empty())
         {
@@ -250,58 +259,54 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
         }
     }
 
-    AssemblyReadOutput readInfo;
+    AssemblyReadOutput assemblyReadOutput;
     Assembly contigs;
 
     IterativeAssemblerOptions assembleOption;
 
-//    unsigned maxRepeatSpan(0);
-//    for (pos_t pos(beginPos); pos<endPos; ++pos)
-//    {
-//        unsigned repeatSpan = _readBuffer.getRepeatSpan(pos);
-//        if (repeatSpan > maxRepeatSpan)
-//            maxRepeatSpan = repeatSpan;
-//    }
-
-    unsigned minWordLength(ActiveRegionReadBuffer::MaxAssemblyPadding*2u+2u);
+    unsigned minWordLength((unsigned int) (prefixAnchor.size() + suffixAnchor.size()));
     assembleOption.minWordLength = minWordLength;
 
-    unsigned maxWordLength(std::max(minWordLength, (unsigned)(endPos - beginPos + _maxIndelSize)));
-    assembleOption.maxWordLength = std::min(76u, maxWordLength);
+    unsigned maxWordLength(std::max(minWordLength, endPos - beginPos + _maxIndelSize));
+    assembleOption.maxWordLength = std::min(ActiveRegion::MaxAssemblyWordSize, maxWordLength);
+    assembleOption.minCoverage = MinAssemblyCoverage;
 
-    assembleOption.minCoverage = 3;
-    runIterativeAssembler(assembleOption, reads, readInfo, contigs);
+    // perform assembly
+    runIterativeAssembler(assembleOption, reads, assemblyReadOutput, contigs);
 
-    std::map<std::string, std::vector<align_id_t>> haplotypeToAlignIdSet;
+    HaplotypeToAlignIdSet haplotypeToAlignIdSet;
     unsigned maxHaplotypeLength(0);
     for (unsigned i(0); i<contigs.size(); ++i)
     {
         const std::string& contig(contigs[i].seq);
 
-//        std::cout << "*** " << contig << '\t' << contigs[i].supportReads.size() << std::endl;
-
+        // ignore if the contig does not contain prefix anchor
         auto start(contig.find(prefixAnchor));
         if (start == std::string::npos) continue;
 
+        // remove prefix padding
         start += prefixAnchor.length() - 1;
+
+        // ignore if the contig does not contain suffix anchor
         auto end(contig.rfind(suffixAnchor));
         if (end == std::string::npos or start > end) continue;
+
+        // remove suffix padding
         end += 1;
 
         const std::string haplotype(contig.substr(start, end-start));
 
-//        std::cout << haplotype << std::endl;
-
         if (haplotype.length() > maxHaplotypeLength)
-            maxHaplotypeLength = haplotype.length();
+            maxHaplotypeLength = (unsigned int) haplotype.length();
         haplotypeToAlignIdSet[haplotype] = std::vector<align_id_t>();
         unsigned numPseudoReads(0);
         for (unsigned readIndex : contigs[i].supportReads)
         {
-            if (readInfo[readIndex].isPseudo)
+            if (assemblyReadOutput[readIndex].isPseudo)
             {
-                // TODO: how to add align id for pseudo read?
                 ++numPseudoReads;
+                // TODO: how to add align id for pseudo read?
+                // for pseudo reads, assign fake align id
                 haplotypeToAlignIdSet[haplotype].push_back(10000+numPseudoReads);
                 continue;
             }
@@ -310,11 +315,10 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
         }
     }
 
-    if (not haplotypeToAlignIdSet.size())
-        return true;
+    if (haplotypeToAlignIdSet.empty())
+        return true;    // assembly fail; do not bypass indels
 
     // determine threshold to select 2 haplotypes with the largest counts
-//    unsigned largestCount = (unsigned)(reads.size()*0.1);
     unsigned largestCount = MinHaplotypeCount;
     unsigned secondLargestCount = largestCount;
     unsigned totalCount = 0;
@@ -340,23 +344,25 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
     {
         const std::string& haplotype(entry.first);
 
-        // ignore if haplotype is a long homopolymer
-        if (haplotype.length() > MaxSNVHpolSize and isHomoPolymer(haplotype)) continue;
-
         const auto& alignIdList(entry.second);
         auto count(alignIdList.size());
 
-//        std::cout << haplotype << '\t' << count << std::endl;
+#ifdef DEBUG_ACTIVE_REGION
+            if (count >= secondLargestCount)
+                std::cout << haplotype << '\t' << count << std::endl;
+#endif
+
         if (count >= secondLargestCount)
         {
-            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, totalCount, count >= secondLargestCount, _posRange,
+            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, totalCount,
                                       indelBuffer, polySites);
         }
     }
 
-    return true;
+    return true;    // assembly success
 }
 
+// simply bypass all indels in BAM
 void ActiveRegion::bypassIndelsInBam(IndelBuffer &indelBuffer) const
 {
     auto it(indelBuffer.positionIterator(_posRange.begin_pos));
@@ -377,19 +383,17 @@ void ActiveRegion::convertToPrimitiveAlleles(
     const std::string& haploptypeSeq,
     const std::vector<align_id_t>& alignIdList,
     const unsigned totalReadCount,
-    const bool isTopTwo,
-    const pos_range posRange,
     IndelBuffer& indelBuffer,
     RangeSet& polySites) const
 {
     std::string reference;
-    _ref.get_substring(posRange.begin_pos, posRange.size(), reference);
+    _ref.get_substring(_posRange.begin_pos, _posRange.size(), reference);
     if (reference == haploptypeSeq)
         return;
 
     pos_t referencePos;
     AlignmentResult<int> result;
-    referencePos = posRange.begin_pos;
+    referencePos = _posRange.begin_pos;
     _aligner.align(haploptypeSeq.cbegin(),haploptypeSeq.cend(),reference.cbegin(),reference.cend(),result);
 
     const ALIGNPATH::path_t& alignPath = result.align.apath;
@@ -436,7 +440,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
                 // if the last base of insertSeq equals to prevBase
                 // E.g. GT -> GT(ATAT) vs GT -> G(TATA)T
                 pos_t insertPos(referencePos);
-                auto insertSeq(haploptypeSeq.substr(haplotypePosOffset, segmentLength));
+                auto insertSeq(haploptypeSeq.substr((unsigned long) haplotypePosOffset, segmentLength));
                 char prevBase = _ref.get_base(insertPos-1);
                 while (insertSeq.back() == prevBase)
                 {
@@ -498,32 +502,26 @@ void ActiveRegion::convertToPrimitiveAlleles(
 
         if (indelKeyPtr != nullptr)
         {
-            auto* indelDataPtr = indelBuffer.getIndelDataPtr(*indelKeyPtr);
-//            if (indelDataPtr == nullptr)
+            auto* indelDataPtr(indelBuffer.getIndelDataPtr(*indelKeyPtr));
+            // novel indel
+            for (auto alignId : alignIdList)
             {
-                // novel indel
-                for (auto alignId : alignIdList)
-                {
-                    IndelObservationData indelObservationData;
-                    const auto& alignInfo(_readBuffer.getAlignInfo(alignId));
-                    indelObservationData.iat = alignInfo.indelAlignType;
-                    indelObservationData.id = alignId;
-                    indelBuffer.addIndelObservation(alignInfo.sampleId, {*indelKeyPtr, indelObservationData});
-                }
-                indelDataPtr = indelBuffer.getIndelDataPtr(*indelKeyPtr);
+                IndelObservationData indelObservationData;
+                const auto& alignInfo(_readBuffer.getAlignInfo(alignId));
+                indelObservationData.iat = alignInfo.indelAlignType;
+                indelObservationData.id = alignId;
+                indelBuffer.addIndelObservation(alignInfo.sampleId, {*indelKeyPtr, indelObservationData});
             }
+            indelDataPtr = indelBuffer.getIndelDataPtr(*indelKeyPtr);
             assert(indelDataPtr != nullptr && "Missing indelData");
 
             // determine whether this indel is candidate or private
             indelDataPtr->isConfirmedInActiveRegion = true;
-//            std::cout << indelKeyPtr->pos << "," << indelKeyPtr->insertSequence
-//                      << "," << indelKeyPtr->deletionLength
-//                      << "," << indelBuffer.isCandidateIndel(*indelKeyPtr, *indelDataPtr) << std::endl;
             // TODO: perform candidacy test here
         }
     }
 
-    if (!isTopTwo or mismatchPositions.empty()) return;
+    if (mismatchPositions.empty()) return;
 
     // relax MMDF
     auto readCount = alignIdList.size();

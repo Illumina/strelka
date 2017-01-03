@@ -165,7 +165,6 @@ void ActiveRegionReadBuffer::updateRepeatSpan(pos_t pos)
     auto posIndex(pos % MaxBufferSize);
 
     _isAnchor[posIndex] = true;
-    _maxRepeatSpan[posIndex] = 0;
     for (auto repeatUnitLength(1u); repeatUnitLength<=MaxRepeatUnitLength; ++repeatUnitLength)
     {
         auto prevBase(_ref.get_base(pos - repeatUnitLength));
@@ -186,11 +185,9 @@ void ActiveRegionReadBuffer::updateRepeatSpan(pos_t pos)
                 {
                     pos_t prevPosIndex(prevPos % MaxBufferSize);
                     _isAnchor[prevPosIndex] = false;
-                    _maxRepeatSpan[prevPosIndex] = std::max(_maxRepeatSpan[prevPosIndex], repeatSpan);
                 }
             }
             _isAnchor[posIndex] = false;
-            _maxRepeatSpan[posIndex] = std::max(_maxRepeatSpan[posIndex], repeatSpan);
         }
     }
 }
@@ -221,7 +218,7 @@ void ActiveRegionReadBuffer::setEndPos(pos_t endPos)
     _readBufferRange.set_end_pos(endPos);
 }
 
-void ActiveRegionReadBuffer::getHaplotypeReads(pos_range posRange, HaplotypeInfo &haplotypeInfo, bool includePartialReads) const
+void ActiveRegionReadBuffer::getReadSegments(pos_range posRange, ReadInfo &readInfo, bool includePartialReads) const
 {
     std::map<align_id_t, std::string> alignIdToHaplotype;
     std::set<align_id_t> alignIdsReachingEnd;
@@ -278,10 +275,10 @@ void ActiveRegionReadBuffer::getHaplotypeReads(pos_range posRange, HaplotypeInfo
         const auto& haplotype(entry.second);
         if (haplotype.empty()) continue;
 
-        haplotypeInfo.readSegments.push_back(entry);
+        readInfo.readSegments.push_back(entry);
     }
 
-    haplotypeInfo.numReads = allAlignIds.size();
+    readInfo.numReads = allAlignIds.size();
 }
 
 bool ActiveRegionReadBuffer::isCandidateVariant(const pos_t pos) const
@@ -292,7 +289,7 @@ bool ActiveRegionReadBuffer::isCandidateVariant(const pos_t pos) const
             return false;
         auto count = getVariantCount(sampleId, pos);
         if ((count >= MinNumVariantsPerPosition and count >= (MinAlternativeAlleleFraction*getDepth(sampleId, pos)))
-            or count >= (0.35*getDepth(sampleId, pos)))
+            or count >= (MinAlternativeAlleleFractionLowDepth*getDepth(sampleId, pos)))
             return true;
     }
     return false;
