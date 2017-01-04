@@ -149,9 +149,6 @@ private:
     GlobalAligner<int> _aligner;
     GlobalAligner<int> _alignerForAssembly;
 
-    // expand the active region to cover repeats
-    void getExpandedRange(const pos_range& origActiveRegion, pos_range& newActiveRegion);
-
     void processActiveRegion();
 };
 

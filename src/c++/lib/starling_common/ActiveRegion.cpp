@@ -100,10 +100,7 @@ void ActiveRegion::processHaplotypes(IndelBuffer &indelBuffer, RangeSet &polySit
         if (not isHaplotypingSuccess)
         {
             // Both counting and assembly failed
-            if (_posRange.size() > 50)
-                bypassIndelsInBam(indelBuffer);
-            else
-                processHaplotypesWithCounting(indelBuffer, polySites, sampleId, true);
+            bypassIndelsInBam(indelBuffer);
         }
     }
 }
@@ -207,7 +204,10 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
     }
 
     if (endPos - beginPos > 250)
+    {
+//        std::cout << "chr20" << '\t' << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << "\tAssembly"<< std::endl;
         return false;
+    }
 
     std::string refStr;
     _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
@@ -221,10 +221,11 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
     HaplotypeInfo haplotypeInfo;
     _readBuffer.getHaplotypeReads(pos_range(beginPos, endPos), haplotypeInfo, true);
 
+//    std::cout << "chr20" << '\t' << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tAssembly"<< std::endl;
+
     if (haplotypeInfo.numReads > 1000u)
         return false;
 
-//    std::cout << "chr20" << '\t' << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tAssembly"<< std::endl;
     AssemblyReadInput reads;
     std::vector<align_id_t> readIndexToAlignId;
 
@@ -310,7 +311,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
     }
 
     if (not haplotypeToAlignIdSet.size())
-        return false;
+        return true;
 
     // determine threshold to select 2 haplotypes with the largest counts
 //    unsigned largestCount = (unsigned)(reads.size()*0.1);
@@ -345,6 +346,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
         const auto& alignIdList(entry.second);
         auto count(alignIdList.size());
 
+//        std::cout << haplotype << '\t' << count << std::endl;
         if (count >= secondLargestCount)
         {
             convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, totalCount, count >= secondLargestCount, _posRange,
