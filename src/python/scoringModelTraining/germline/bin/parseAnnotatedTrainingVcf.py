@@ -159,21 +159,23 @@ def main() :
         if "OffTarget" in filterVals : continue
 
         evsf = getKeyVal(word[VCFID.INFO],"EVSF")
-        if evsf is None : continue
+        if evsf is None : evsf = ""
 
         isSNV = (word[VCFID.INFO].find("CIGAR=") == -1)
 
         formatVals = word[VCFID.FORMAT].split(":")
+        truthVals = word[VCFID.SAMPLE].split(":")
         queryVals = word[VCFID.SAMPLE+1].split(":")
-
-        # After filtering out entries without evsf there shouldn't be any NOCALLs left:
-        if "NOCALL" in queryVals :
-            raise Exception("Query value has EVSF but is labeled NOCALL:\n%s" % (line))
-
         sampleBDIndex = formatVals.index("BD")
-        qlabel = queryVals[sampleBDIndex]
-        if qlabel not in ("TP","FP","UNK") :
-            raise Exception("Query value is not TP|FP|UNK as expected:\n%s" % (line))
+
+        if "NOCALL" in queryVals :
+            if truthVals[sampleBDIndex] != "FN" : continue
+            label = "FN"
+        else : 
+            label = queryVals[sampleBDIndex]
+
+        if label not in ("TP","FP","FN","UNK") :
+            raise Exception("Variant label is not TP|FP|FN|UNK as expected:\n%s" % (line))
 
         def typeLabel(isSNV) :
             if isSNV : return "SNP"
@@ -181,7 +183,9 @@ def main() :
 
         sampleBVTIndex = formatVals.index("BVT")
         qtype = queryVals[sampleBVTIndex]
-        if qtype != typeLabel(isSNV) : continue
+        if (evsf != "" and qtype != typeLabel(isSNV)) : continue
+        if qtype == None : 
+            raise Exception("No valid type in input line:\n%s" % (line))
 
         def outputStream(isSNV, isTrain) :
             if isTrain :
@@ -191,8 +195,10 @@ def main() :
                 if isSNV : return snv_test_outfp
                 else :     return indel_test_outfp
 
-
-        outputStream(isSNV, isTrain).write(",".join([word[VCFID.CHROM], word[VCFID.POS], qtype, evsf, qlabel]) +"\n")
+        outputStream(isSNV, isTrain).write(",".join([word[VCFID.CHROM], word[VCFID.POS], qtype, evsf, label]) +"\n")
+        # Add an extra FN entry if a variant is truth FN,query FP:
+        if (label == "FP" and truthVals[sampleBDIndex] == "FN") :
+            outputStream(isSNV, isTrain).write(",".join([word[VCFID.CHROM], word[VCFID.POS], qtype, evsf, "FN"]) +"\n")
 
 
 if __name__ == "__main__" :
