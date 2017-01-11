@@ -106,6 +106,9 @@ addIndelObservation(
 
         assert (insertTarget != nullptr);
         insertTarget->insert(obs_data.id);
+
+        // assertion is removed because the same read can be inserted twice in active regions
+        // TODO: revisit this later
 //        const auto retval = insertTarget->insert(obs_data.id);
 //        assert (retval.second);
     }

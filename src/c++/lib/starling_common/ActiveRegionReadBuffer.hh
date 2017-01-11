@@ -30,6 +30,7 @@
 #include "starling_types.hh"
 #include "indel.hh"
 #include "IndelBuffer.hh"
+#include "ReferenceRepeatFinder.hh"
 
 /// AlignInfo object to store sample id and indel align type
 struct AlignInfo
@@ -49,7 +50,7 @@ class ActiveRegionReadBuffer
 public:
 
     // maximum buffer size in bases (must be larger than the maximum read size + max indel size
-    static const unsigned MaxBufferSize = 1000u;
+    static const unsigned MaxBufferSize = ReferenceRepeatFinder::MaxBufferSize;
 
     // maximum read depth
     // TODO: dynamically calculate maximum depth
@@ -58,8 +59,6 @@ public:
     static const unsigned MinNumVariantsPerPosition = 9u;
 
     static const pos_t MaxAssemblyPadding = (pos_t)9u;
-
-    static const pos_t MinRepeatSpan = (pos_t)3u;
 
     // maximum repeat unit to consider
     static const unsigned MaxRepeatUnitLength = 50u;
@@ -85,6 +84,7 @@ public:
             IndelBuffer& indelBuffer)
             :
             _ref(ref),
+            _refRepeatFinder(ref),
             _sampleCount(sampleCount),
             _indelBuffer(indelBuffer),
             _variantCounter(sampleCount, std::vector<unsigned>(MaxBufferSize)),
@@ -122,7 +122,7 @@ public:
     /// \return true if pos is an anchor position, false otherwise
     bool isAnchor(pos_t pos) const
     {
-        return _isAnchor[pos % MaxBufferSize];
+        return _refRepeatFinder.isAnchor(pos);
     }
 
     /// Set end position of the buffer
@@ -196,6 +196,8 @@ private:
     };
 
     const reference_contig_segment& _ref;
+    ReferenceRepeatFinder _refRepeatFinder;
+
     const unsigned _sampleCount;
     IndelBuffer& _indelBuffer;
 
@@ -214,17 +216,12 @@ private:
     std::vector<std::vector<std::string>> _insertSeqBuffer;
     char _snvBuffer[MaxDepth][MaxBufferSize];
 
-    // to record reference repeat count
-    unsigned _repeatSpan[MaxBufferSize][MaxRepeatUnitLength];
-    bool _isAnchor[MaxBufferSize];
-
     void setMatch(const align_id_t id, const pos_t pos);
     void setMismatch(const align_id_t id, const pos_t pos, char baseChar);
     void setDelete(const align_id_t id, const pos_t pos);
     void setInsert(const align_id_t id, const pos_t pos, const std::string& insertSeq);
     void setSoftClipSegment(const align_id_t id, const pos_t pos, const std::string& segmentSeq);
     bool setHaplotypeBase(const align_id_t id, const pos_t pos, std::string& base) const;
-    void updateRepeatSpan(pos_t pos);
 
     void resetCounter(const pos_t pos)
     {

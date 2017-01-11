@@ -158,62 +158,18 @@ bool ActiveRegionReadBuffer::setHaplotypeBase(const align_id_t id, const pos_t p
     return isSoftClipped;
 }
 
-void ActiveRegionReadBuffer::updateRepeatSpan(pos_t pos)
-{
-    // calculate repeat counter
-    auto base(_ref.get_base(pos));
-    auto posIndex(pos % MaxBufferSize);
-
-    _isAnchor[posIndex] = true;
-    for (auto repeatUnitLength(1u); repeatUnitLength<=MaxRepeatUnitLength; ++repeatUnitLength)
-    {
-        auto prevBase(_ref.get_base(pos - repeatUnitLength));
-        auto repeatUnitIndex(repeatUnitLength-1);
-        unsigned repeatSpan;
-        if (prevBase != 'N' and base == prevBase)
-            repeatSpan = _repeatSpan[(pos - 1) % MaxBufferSize][repeatUnitIndex] + 1;
-        else
-            repeatSpan = repeatUnitLength;
-        _repeatSpan[posIndex][repeatUnitIndex] = repeatSpan;
-        if (repeatSpan >= repeatUnitLength*2 and repeatSpan >= MinRepeatSpan)
-        {
-            // repeat found
-            if (repeatSpan == repeatUnitLength*2 or repeatSpan == MinRepeatSpan)
-            {
-                // unset _isAnchor for pos [pos-repeatCount+1, pos-1]
-                for (pos_t prevPos(pos-1u); prevPos > (pos_t)(pos-repeatSpan); --prevPos)
-                {
-                    pos_t prevPosIndex(prevPos % MaxBufferSize);
-                    _isAnchor[prevPosIndex] = false;
-                }
-            }
-            _isAnchor[posIndex] = false;
-        }
-    }
-}
-
 void ActiveRegionReadBuffer::setEndPos(pos_t endPos)
 {
     auto pos(endPos-1);
-    auto posIndex(pos % MaxBufferSize);
 
     if (not _readBufferRange.is_begin_pos)
     {
         // initialization
         _readBufferRange.set_begin_pos(pos);
-        for (auto repeatUnitLength(1u); repeatUnitLength<=MaxRepeatUnitLength; ++repeatUnitLength)
-        {
-            auto repeatUnitIndex(repeatUnitLength-1);
-            _repeatSpan[posIndex][repeatUnitIndex] = repeatUnitLength;
-        }
-
-        for (pos_t initPos(pos); initPos < (pos_t)(pos + MaxRepeatUnitLength*2u); ++initPos)
-        {
-            updateRepeatSpan(initPos);
-        }
+        _refRepeatFinder.initRepeatSpan(pos);
     }
 
-    updateRepeatSpan(pos + MaxRepeatUnitLength*2);
+    _refRepeatFinder.updateRepeatSpan(pos + MaxRepeatUnitLength*2u);
 
     _readBufferRange.set_end_pos(endPos);
 }
@@ -278,7 +234,7 @@ void ActiveRegionReadBuffer::getReadSegments(pos_range posRange, ReadInfo &readI
         readInfo.readSegments.push_back(entry);
     }
 
-    readInfo.numReads = allAlignIds.size();
+    readInfo.numReads = (unsigned)(allAlignIds.size());
 }
 
 bool ActiveRegionReadBuffer::isCandidateVariant(const pos_t pos) const

@@ -27,7 +27,7 @@
 #include "ActiveRegion.hh"
 
 // compile with this macro to get verbose output:
-//#define DEBUG_ACTIVE_REGION
+#define DEBUG_ACTIVE_REGION
 
 // adoptation of get_snp_hpol_size in blt_common
 static unsigned getHomoPolymerSize(const std::string& haplotype, const pos_t pos)
@@ -161,7 +161,7 @@ bool ActiveRegion::processHaplotypesWithCounting(IndelBuffer& indelBuffer, Range
     _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
 
 #ifdef DEBUG_ACTIVE_REGION
-    std::cout << "chr20" << '\t' << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tCounting"<< std::endl;
+    std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tCounting"<< std::endl;
 #endif
 
     for (const auto& entry : haplotypeToAlignIdSet)
@@ -176,7 +176,7 @@ bool ActiveRegion::processHaplotypesWithCounting(IndelBuffer& indelBuffer, Range
 
 #ifdef DEBUG_ACTIVE_REGION
         if (count >= secondLargestCount)
-            std::cout << haplotype << '\t' << count << std::endl;
+            std::cerr << haplotype << '\t' << count << std::endl;
 #endif
 
         if (count >= secondLargestCount and haplotype != refStr)
@@ -196,14 +196,19 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
     if (_posRange.size() > MaxRefSpanToPerformAssembly)
     {
 #ifdef DEBUG_ACTIVE_REGION
-            std::cout << "chr20" << '\t' << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << "\tAssembly"<< std::endl;
+            std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << "\tAssembly"<< std::endl;
 #endif
         return false;   // assembly fail; bypass indels later
     }
 
     // Expand the region to include left/right anchors.
+    // TODO: anchors may be too short if there are SNVs close to anchors
     // prefix anchor
-    pos_t minBeginPos = std::max(_readBuffer.getBeginPos(), _posRange.begin_pos - ActiveRegionReadBuffer::MaxAssemblyPadding);
+    pos_t minBeginPos(0u);
+    if (_posRange.begin_pos > ActiveRegionReadBuffer::MaxAssemblyPadding)
+        minBeginPos = _posRange.begin_pos - ActiveRegionReadBuffer::MaxAssemblyPadding;
+    minBeginPos = std::max(_readBuffer.getBeginPos(), minBeginPos);
+
     pos_t beginPos(_posRange.begin_pos);
     for (; beginPos > minBeginPos; --beginPos)
     {
@@ -239,7 +244,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
         return false;   // assembly fail; bypass indels later
 
 #ifdef DEBUG_ACTIVE_REGION
-        std::cout << "chr20" << '\t' << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tAssembly"<< std::endl;
+        std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tAssembly"<< std::endl;
 #endif
     AssemblyReadInput reads;
     std::vector<align_id_t> readIndexToAlignId;
@@ -264,11 +269,16 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
 
     IterativeAssemblerOptions assembleOption;
 
+    // We only accept haplotypes that start with prefixAnchor and end with suffixAnchor.
+    // So, the minimum size of legitimate haplotypes is prefixAnchor.size() + suffixAnchor.size().
+    // For most regions, minWordLength will be 20.
+    // If there are SNVs closer to anchors, minWordLength may be smaller than 20.
     unsigned minWordLength((unsigned int) (prefixAnchor.size() + suffixAnchor.size()));
     assembleOption.minWordLength = minWordLength;
 
-    unsigned maxWordLength(std::max(minWordLength, endPos - beginPos + _maxIndelSize));
-    assembleOption.maxWordLength = std::min(ActiveRegion::MaxAssemblyWordSize, maxWordLength);
+    // maxWordLength must not be smaller than minWordLength.
+    unsigned maxWordLength(std::max(minWordLength, ActiveRegion::MaxAssemblyWordSize));
+    assembleOption.maxWordLength = maxWordLength;
     assembleOption.minCoverage = MinAssemblyCoverage;
 
     // perform assembly
@@ -349,7 +359,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
 
 #ifdef DEBUG_ACTIVE_REGION
             if (count >= secondLargestCount)
-                std::cout << haplotype << '\t' << count << std::endl;
+                std::cerr << haplotype << '\t' << count << std::endl;
 #endif
 
         if (count >= secondLargestCount)
@@ -363,6 +373,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
 }
 
 // simply bypass all indels in BAM
+// The original indel candidacy method will be used.
 void ActiveRegion::bypassIndelsInBam(IndelBuffer &indelBuffer) const
 {
     auto it(indelBuffer.positionIterator(_posRange.begin_pos));
@@ -502,8 +513,6 @@ void ActiveRegion::convertToPrimitiveAlleles(
 
         if (indelKeyPtr != nullptr)
         {
-            auto* indelDataPtr(indelBuffer.getIndelDataPtr(*indelKeyPtr));
-            // novel indel
             for (auto alignId : alignIdList)
             {
                 IndelObservationData indelObservationData;
@@ -512,7 +521,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
                 indelObservationData.id = alignId;
                 indelBuffer.addIndelObservation(alignInfo.sampleId, {*indelKeyPtr, indelObservationData});
             }
-            indelDataPtr = indelBuffer.getIndelDataPtr(*indelKeyPtr);
+            auto* indelDataPtr(indelBuffer.getIndelDataPtr(*indelKeyPtr));
             assert(indelDataPtr != nullptr && "Missing indelData");
 
             // determine whether this indel is candidate or private
