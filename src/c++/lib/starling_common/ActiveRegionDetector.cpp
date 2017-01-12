@@ -24,318 +24,121 @@
 
 #include "ActiveRegionDetector.hh"
 
-void ActiveRegionDetector::insertMatch(const align_id_t alignId, const pos_t pos)
-{
-    addVariantCount(getSampleId(alignId), pos, 0);
-    setMatch(alignId, pos);
-    addAlignIdToPos(alignId, pos);
-}
-
-void ActiveRegionDetector::insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string& segmentSeq)
-{
-    // soft clipp doesn't add mismatch count, but the base is used in haplotype generation
-    setSoftClipSegment(alignId, pos, segmentSeq);
-    addAlignIdToPos(alignId, pos);
-}
-
-void
-ActiveRegionDetector::insertMismatch(const align_id_t alignId, const pos_t pos, const char baseChar)
-{
-    addVariantCount(getSampleId(alignId), pos, MismatchWeight);
-    setMismatch(alignId, pos, baseChar);
-    addAlignIdToPos(alignId, pos);
-}
-
-void
-ActiveRegionDetector::insertIndel(const unsigned sampleId, const IndelObservation& indelObservation)
-{
-    auto pos = indelObservation.key.pos;
-
-    auto alignId = indelObservation.data.id;
-    auto indelKey = indelObservation.key;
-
-    if (!indelObservation.data.is_low_map_quality)
-    {
-        if (indelKey.isPrimitiveInsertionAllele())
-        {
-            addVariantCount(sampleId, pos - 1, IndelWeight);
-            addVariantCount(sampleId, pos, IndelWeight);
-            setInsert(alignId, pos - 1, indelObservation.key.insert_seq());
-            addAlignIdToPos(alignId, pos - 1);
-        }
-        else if (indelKey.isPrimitiveDeletionAllele())
-        {
-            unsigned length = indelObservation.key.deletionLength;
-            for (unsigned i(0); i<length; ++i)
-            {
-                addVariantCount(sampleId, pos + i, IndelWeight);
-                setDelete(alignId, pos + i);
-                addAlignIdToPos(alignId, pos + i);
-            }
-            addVariantCount(sampleId, pos - 1, IndelWeight);
-        }
-        else
-        {
-            // ignore BP_LEFT, BP_RIGHT, SWAP
-        }
-    }
-    _indelBuffer.addIndelObservation(sampleId, indelObservation);
-}
-
 void
 ActiveRegionDetector::updateStartPosition(const pos_t pos)
 {
-    if (_activeRegions.empty()) return;
-
-    if (_activeRegions.front().getBeginPosition() == pos)
-    {
-        _activeRegions.pop_front();
-    }
-
     for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
+    {
         _polySites[sampleId].eraseTo(pos);
+    }
+    _readBuffer.clearPos(pos);
 }
 
 void
-ActiveRegionDetector::updateEndPosition(const pos_t pos, const bool isLastPos)
+ActiveRegionDetector::processActiveRegion()
 {
-    const pos_t posToClear = pos - _maxDetectionWindowSize - _maxIndelSize;
-
-    if (pos < _lastActiveRegionEnd)
+    if (not _activeRegions.empty())
     {
-        // this position was already covered by the previous active region
-        _activeRegionStartPos = 0;
-        _numVariants = 0;
-        clearPos(posToClear);
-        return;
+        _activeRegions.front().processHaplotypes(_indelBuffer, _polySites);
+        _activeRegions.pop_front();
+    }
+}
+
+void
+ActiveRegionDetector::updateEndPosition(const pos_t pos)
+{
+    _readBuffer.setEndPos(pos+1);
+
+    if (_isBeginning)
+    {
+        _activeRegionStartPos = pos;
+        _anchorPosFollowingPrevVariant = pos;
+        _prevAnchorPos = pos;
+        _isBeginning = false;
     }
 
-    bool isCurrentPosCandidateVariant = isCandidateVariant(pos);
-
-    // check if we can include this position in the existing acitive region
-    bool isSizeFit = (pos - _activeRegionStartPos) < (int)_maxDetectionWindowSize;
-    auto distanceFromPrevVariant = pos - _prevVariantPos;
-    bool isConsecutiveVariant = (distanceFromPrevVariant == 1); // size may exceed _maxDetectionWindowSize for consecutive variants
-    bool isNotFarFromPrevVariant = (pos > 0) && (distanceFromPrevVariant <= MaxDistanceBetweenTwoVariants);
-
-    bool isExtensible = (isSizeFit || isConsecutiveVariant) && isNotFarFromPrevVariant;
-
-    if (isExtensible && !isLastPos)  // if pos is the last position, we cannot extend
+    // process and pop active regions
+    if ((not _activeRegions.empty()) and (_activeRegions.front().getEndPosition() <= (pos_t)(pos-ActiveRegionReadBuffer::MaxAssemblyPadding)))
     {
-        // this position extends the existing active region
-        if (isCurrentPosCandidateVariant)
-        {
-            ++_numVariants;
-            _prevVariantPos = pos;
-        }
+        processActiveRegion();
     }
-    else
+
+    pos_t posToProcess(pos-1);
+    if (posToProcess < 0) return;
+
+    bool isCurrentPosCandidateVariant = _readBuffer.isCandidateVariant(posToProcess);
+    bool isAnchor = _readBuffer.isAnchor(posToProcess) and (not isCurrentPosCandidateVariant);
+
+    if (!isCurrentPosCandidateVariant and !isAnchor) return;
+
+//    std::cout << (posToProcess+1) << "\t" << isCurrentPosCandidateVariant << '\t' << isAnchor << std::endl;
+
+    unsigned distanceFromPrevVariant = (unsigned) (posToProcess - _prevVariantPos);
+    if (distanceFromPrevVariant > MaxDistanceBetweenTwoVariants and _anchorPosFollowingPrevVariant > 0)
     {
-        if (isLastPos && isExtensible && isCurrentPosCandidateVariant)
+        if (_numVariants >= MinNumVariantsPerRegion )
         {
-            ++_numVariants;
-            _prevVariantPos = pos;
-        }
-
-        // this position doesn't extend the existing active region
-        if (_numVariants >= _minNumVariantsPerRegion)
-        {
-            pos_t origBeginPos = _activeRegionStartPos;
-            pos_t origEndPos = _prevVariantPos + 1;
-            pos_range newActiveRegion;
-
-            // expand active region to include repeats
-            getExpandedRange(pos_range(origBeginPos, origEndPos), newActiveRegion);
-            _lastActiveRegionEnd = newActiveRegion.end_pos;
-
-            _activeRegions.emplace_back(newActiveRegion, _ref, _maxIndelSize, _sampleCount, _aligner, _alignIdToAlignInfo);
-            auto& activeRegion(_activeRegions.back());
-            // add haplotype bases
-            for (pos_t activeRegionPos(newActiveRegion.begin_pos); activeRegionPos<newActiveRegion.end_pos; ++activeRegionPos)
-            {
-                for (const align_id_t alignId : getPositionToAlignIds(activeRegionPos))
-                {
-                    std::string haplotypeBase;
-                    bool isSoftClipped = setHaplotypeBase(alignId, activeRegionPos, haplotypeBase);
-                    if (isSoftClipped)
-                        activeRegion.setSoftClipped(alignId);
-                    activeRegion.insertHaplotypeBase(alignId, activeRegionPos, haplotypeBase);
-                }
-            }
-            activeRegion.processHaplotypes(_indelBuffer, _polySites);
-        }
-
-        if (isCurrentPosCandidateVariant)
-        {
-            // start new active region
-            _activeRegionStartPos = pos;
-            _numVariants = 1;
-            _prevVariantPos = pos;
+            // close the existing active region
+            pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
+            _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
+                                     _aligner, _readBuffer);
+            // we have no existing acive region at this point
+            _numVariants = 0;
+            _activeRegionStartPos = 0;
         }
         else
         {
-            _activeRegionStartPos = 0;
+            // no active region is detected
             _numVariants = 0;
         }
     }
 
-    clearPos(posToClear);
-}
-
-void ActiveRegionDetector::getExpandedRange(const pos_range& origActiveRegion, pos_range& newActiveRegion)
-{
-    // if origStart is within repeat region, move the start position outside of the repeat region
-    // e.g. In TACGACGAC|GAC if origStart points C before |, the start position is moved to T
-    // note that bases after origStart are ignored. For example, in TACGAC|GAC, the start position doesn't move.
-    pos_t origStart = origActiveRegion.begin_pos;
-    pos_t deltaPos(0);
-    for (unsigned repeatUnitLength(1); repeatUnitLength<=MaxRepeatUnitLength; ++repeatUnitLength)
+    if (isAnchor)
     {
-        pos_t repeatSpan = repeatUnitLength;
-        for (pos_t pos(origStart-repeatUnitLength); pos >= _ref.get_offset(); --pos)
+        if (_numVariants == 0)
         {
-            char baseChar = _ref.get_base(pos);
-            char baseCharToCompare = _ref.get_base(pos+repeatUnitLength);
-            if (baseChar != baseCharToCompare)
-                break;
-            ++repeatSpan;
+            // this position can be a start of an active region
+            _activeRegionStartPos = posToProcess;
         }
-        unsigned repeatLength = repeatSpan / repeatUnitLength;
-        if (repeatLength > 1)
-            deltaPos = std::max(deltaPos, repeatSpan);
-    }
-    deltaPos = std::min(deltaPos, MaxRepeatSpan);
-    const pos_t minStartLowerBound(std::max(0,_lastActiveRegionEnd-1));
-    const pos_t minStart(std::max(origStart - deltaPos, minStartLowerBound));
-    pos_t newBeginPos;
-    for (newBeginPos = origStart; newBeginPos > minStart; --newBeginPos)
-    {
-        bool isLowDepth = false;
-        for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
+
+        if (not _anchorPosFollowingPrevVariant)
         {
-            if (getDepth(sampleId, newBeginPos-1) < MinDepth)
-            {
-                isLowDepth = true;
-                break;
-            }
+            _anchorPosFollowingPrevVariant = posToProcess;
         }
-        if (isLowDepth) break;
+        _prevAnchorPos = posToProcess;
     }
-    newActiveRegion.set_begin_pos(newBeginPos);
 
-    // calculate newEnd
-    pos_t origEnd = origActiveRegion.end_pos;
-    deltaPos = 0;
-    for (unsigned repeatUnitLength(1); repeatUnitLength<=MaxRepeatUnitLength; ++repeatUnitLength)
+    if (isCurrentPosCandidateVariant)
     {
-        pos_t repeatSpan = repeatUnitLength;
-        for (pos_t pos(origEnd+repeatUnitLength-1); pos < _ref.end(); ++pos)
-        {
-            char baseChar = _ref.get_base(pos);
-            char baseCharToCompare = _ref.get_base(pos-repeatUnitLength);
-            if (baseChar != baseCharToCompare)
-                break;
-            ++repeatSpan;
-        }
-        unsigned repeatLength = repeatSpan / repeatUnitLength;
-        if (repeatLength > 1)
-            deltaPos = std::max(deltaPos, repeatSpan);
+        if (not _activeRegionStartPos)
+            _activeRegionStartPos = _prevAnchorPos;
+        // extend the existing active region
+        ++_numVariants;
+        _prevVariantPos = posToProcess;
+        _anchorPosFollowingPrevVariant = 0;
     }
-    deltaPos = std::min(deltaPos, MaxRepeatSpan);
+}
 
-    pos_t maxEnd(std::min(origEnd + deltaPos, _ref.end()));
-    pos_t newEndPos;
-    for (newEndPos = origEnd; newEndPos < maxEnd; ++newEndPos)
+void ActiveRegionDetector::clear()
+{
+    if (_isBeginning) return;
+
+    if (_numVariants >= MinNumVariantsPerRegion)
     {
-        bool isLowDepth = false;
-        for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
-        {
-            if (getDepth(sampleId, newBeginPos-1) < MinDepth)
-            {
-                isLowDepth = true;
-                break;
-            }
-        }
-        if (isLowDepth) break;
-    }
-    newActiveRegion.set_end_pos(newEndPos);
-}
-
-void ActiveRegionDetector::setMatch(const align_id_t id, const pos_t pos)
-{
-    _variantInfo[id % MaxDepth][pos % MaxBufferSize] = MATCH;
-}
-
-void ActiveRegionDetector::setMismatch(const align_id_t id, const pos_t pos, char baseChar)
-{
-    unsigned idIndex = id % MaxDepth;
-    unsigned posIndex = pos % MaxBufferSize;
-    _variantInfo[idIndex][posIndex] = MISMATCH;
-    _snvBuffer[idIndex][posIndex] = baseChar;
-}
-
-void ActiveRegionDetector::setSoftClipSegment(const align_id_t id, const pos_t pos, const std::string& segmentSeq)
-{
-    unsigned idIndex = id % MaxDepth;
-    unsigned posIndex = pos % MaxBufferSize;
-    _variantInfo[idIndex][posIndex] = SOFT_CLIP;
-    _insertSeqBuffer[idIndex][posIndex] = segmentSeq;
-}
-
-void ActiveRegionDetector::setDelete(const align_id_t id, const pos_t pos)
-{
-    _variantInfo[id % MaxDepth][pos % MaxBufferSize] = DELETE;
-}
-
-void ActiveRegionDetector::setInsert(const align_id_t id, const pos_t pos, const std::string& insertSeq)
-{
-    unsigned idIndex = id % MaxDepth;
-    unsigned posIndex = pos % MaxBufferSize;
-    _variantInfo[idIndex][posIndex] = (_variantInfo[idIndex][posIndex] == MISMATCH ? MISMATCH_INSERT : INSERT);
-    _insertSeqBuffer[idIndex][posIndex] = insertSeq;
-}
-
-bool ActiveRegionDetector::setHaplotypeBase(const align_id_t id, const pos_t pos, std::string& base) const
-{
-    unsigned idIndex = id % MaxDepth;
-    unsigned posIndex = pos % MaxBufferSize;
-    const auto variant = _variantInfo[idIndex][posIndex];
-    switch (variant)
-    {
-    case MATCH:
-        base = _ref.get_base(pos);
-        break;
-    case MISMATCH:
-        base = std::string(1, _snvBuffer[idIndex][posIndex]);
-        break;
-    case DELETE:
-        base = "";
-        break;
-    case INSERT:
-        base = _ref.get_base(pos) + _insertSeqBuffer[idIndex][posIndex];
-        break;
-    case SOFT_CLIP:
-        base = _insertSeqBuffer[idIndex][posIndex];
-        break;
-    case MISMATCH_INSERT:
-        base = _snvBuffer[idIndex][posIndex] + _insertSeqBuffer[idIndex][posIndex];
+        // close the existing active region
+        if (not _anchorPosFollowingPrevVariant)
+            _anchorPosFollowingPrevVariant = _readBuffer.getEndPos();
+        pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
+        _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
+                                    _aligner, _readBuffer);
     }
 
-    bool isSoftClipped = (variant == SOFT_CLIP);
-    return isSoftClipped;
-}
+    processActiveRegion();
 
-bool
-ActiveRegionDetector::isCandidateVariant(const pos_t pos) const
-{
-    for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
-    {
-        auto count = getVariantCount(sampleId, pos);
-        if (count >= _minNumVariantsPerPositionPerSample
-            && count >= (MinAlternativeAlleleFraction*getDepth(sampleId, pos)))
-            return true;
-    }
-    return false;
+    _activeRegionStartPos = 0;
+    _anchorPosFollowingPrevVariant = 1;
+    _prevVariantPos = 0;
+    _numVariants = 0;
 }
 
 bool ActiveRegionDetector::isPolymorphicSite(const unsigned sampleId, const pos_t pos) const

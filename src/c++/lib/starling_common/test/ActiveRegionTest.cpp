@@ -66,7 +66,7 @@ private:
 BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
 {
     reference_contig_segment ref;
-    ref.seq() = "TCTGT";
+    ref.seq() = "GATCTGT";
     TestIndelBuffer testBuffer(ref);
 
     const unsigned maxIndelSize = 50;
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
 
     ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
 
-    const auto snvPos = std::set<pos_t>({0, 2, 3});
+    const auto snvPos = std::set<pos_t>({2, 4, 5});
 
     pos_t refLength = (pos_t)ref.seq().length();
 
@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
     for (int alignId=0; alignId < depth*sampleCount; ++alignId)
     {
         unsigned sampleId = alignId % sampleCount;
-        detector.setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ);
+        detector.getReadBuffer().setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ);
         for (pos_t pos(0); pos<refLength; ++pos)
         {
             // only sample 1 has mismatches
@@ -92,25 +92,23 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
                 or (snvPos.find(pos) == snvPos.end()))
             {
                 // No SNV
-                detector.insertMatch(alignId, pos);
+                detector.getReadBuffer().insertMatch(alignId, pos);
             }
             else
             {
                 // SNV position
-                detector.insertMismatch(alignId, pos, 'A');
+                detector.getReadBuffer().insertMismatch(alignId, pos, 'A');
             }
         }
     }
 
-    for (pos_t pos(0); pos<refLength-1; ++pos)
+    for (pos_t pos(0); pos<refLength; ++pos)
     {
-        detector.updateEndPosition(pos, false);
+        detector.updateEndPosition(pos);
     }
-    detector.updateEndPosition(refLength-1, true);
-
+    detector.clear();
 
     // check if polySites are correctly set
-
     for (unsigned sampleId(0); sampleId<sampleCount; ++sampleId)
     {
         for (pos_t pos(0); pos<refLength; ++pos)
@@ -152,10 +150,10 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
     // fake reading reads
     for (int alignId=0; alignId < depth; ++alignId)
     {
-        detector.setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ);
+        detector.getReadBuffer().setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ);
         for (pos_t pos(0); pos<refLength; ++pos)
         {
-            detector.insertMatch(alignId, pos);
+            detector.getReadBuffer().insertMatch(alignId, pos);
 
             if (pos == indelPos && (alignId % 2))
             {
@@ -167,16 +165,16 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
                 indelObservationData.iat = INDEL_ALIGN_TYPE::GENOME_TIER1_READ;
                 indelObservation.data = indelObservationData;
 
-                detector.insertIndel(sampleId, indelObservation);
+                detector.getReadBuffer().insertIndel(sampleId, indelObservation);
             }
         }
     }
 
-    for (pos_t pos(0); pos<refLength-1; ++pos)
+    for (pos_t pos(0); pos<refLength; ++pos)
     {
-        detector.updateEndPosition(pos, false);
+        detector.updateEndPosition(pos);
     }
-    detector.updateEndPosition(refLength-1, true);
+    detector.clear();
 
     const auto itr(testBuffer.getIndelBuffer().getIndelIter(indelKey));
     BOOST_REQUIRE_EQUAL(itr->second.isConfirmedInActiveRegion, true);
@@ -219,28 +217,27 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
         pos_t endPosition = startPosition + readLength;
         for (int alignId=0; alignId < depth; ++alignId)
         {
-            detector.setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ);
+            detector.getReadBuffer().setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ);
             for (pos_t pos(startPosition); pos<endPosition; ++pos)
             {
                 // SNVs at startPosition+10 and startPosition+12
                 auto isSnvPosition = (pos == startPosition+snvOffsets[0]) || (pos == startPosition+snvOffsets[1]);
                 if ((alignId % 2) && isSnvPosition)
                 {
-                    detector.insertMismatch(alignId, pos, 'G');
+                    detector.getReadBuffer().insertMismatch(alignId, pos, 'G');
                 }
                 else
                 {
-                    detector.insertMatch(alignId, pos);
+                    detector.getReadBuffer().insertMatch(alignId, pos);
                 }
             }
         }
 
-        for (pos_t pos(startPosition); pos<endPosition-1; ++pos)
+        for (pos_t pos(startPosition); pos<endPosition; ++pos)
         {
-            detector.updateEndPosition(pos, false);
-            detector.updateStartPosition(pos - (readLength + maxIndelSize));
+            detector.updateEndPosition(pos);
         }
-        detector.updateEndPosition(endPosition-1, true);
+        detector.clear();
 
         // check if polySites are correctly set
         BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, startPosition+snvOffsets[0]), true);
@@ -252,7 +249,7 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
 BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
 {
     reference_contig_segment ref;
-    ref.seq() = "GTC";
+    ref.seq() = "GTCC";
 
     TestIndelBuffer testBuffer(ref);
 
@@ -271,10 +268,10 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
     // fake reading reads
     for (int alignId=0; alignId < depth; ++alignId)
     {
-        detector.setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ);
+        detector.getReadBuffer().setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ);
         for (pos_t pos(0); pos<refLength; ++pos)
         {
-            detector.insertMatch(alignId, pos);
+            detector.getReadBuffer().insertMatch(alignId, pos);
 
             if (pos == indelPos && (alignId % 2))
             {
@@ -286,16 +283,16 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
                 indelObservationData.iat = INDEL_ALIGN_TYPE::GENOME_TIER1_READ;
                 indelObservation.data = indelObservationData;
 
-                detector.insertIndel(sampleId, indelObservation);
+                detector.getReadBuffer().insertIndel(sampleId, indelObservation);
             }
         }
     }
 
-    for (pos_t pos(0); pos<refLength-1; ++pos)
+    for (pos_t pos(0); pos<refLength; ++pos)
     {
-        detector.updateEndPosition(pos, false);
+        detector.updateEndPosition(pos);
     }
-    detector.updateEndPosition(refLength-1, true);
+    detector.clear();
 
     // check if the indel is shifted 1 base to the left
     auto leftShiftedIndelKey = IndelKey(indelPos-1, INDEL::INDEL, 0, "TATA");

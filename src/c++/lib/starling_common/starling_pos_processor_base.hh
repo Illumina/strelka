@@ -622,5 +622,7 @@ protected:
 private:
     IndelBuffer _indelBuffer;
 
+protected:
     std::unique_ptr<ActiveRegionDetector> _active_region_detector;
+
 };

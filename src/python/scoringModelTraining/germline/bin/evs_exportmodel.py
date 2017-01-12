@@ -75,7 +75,7 @@ def main() :
         caldict = {"Coefficient" : 1, "Intercept" : 1}
     else:
         caldict = json.load(open(args.calibration))
-            
+
     model = evs.EVSModel.createFromFile(args.classifier)
     model.save_json_strelka_format(args.output, args.varianttype, caldict["Coefficient"], caldict["Intercept"], args.threshold)
 

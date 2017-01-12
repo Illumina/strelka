@@ -29,32 +29,36 @@
 #include "alignment/GlobalAligner.hh"
 #include "blt_util/align_path.hh"
 #include "IndelBuffer.hh"
+#include "ActiveRegionReadBuffer.hh"
 
 #include <string>
 #include <map>
 #include <set>
+#include <options/SmallAssemblerOptions.hh>
+#include <options/IterativeAssemblerOptions.hh>
 
 typedef std::vector<RangeMap<pos_t,unsigned char>> RangeSet;
-
-/// AlignInfo object to store sample id and indel align type
-struct AlignInfo
-{
-    AlignInfo() {}
-
-    unsigned sampleId;
-    INDEL_ALIGN_TYPE::index_t indelAlignType;
-};
+typedef std::map<std::string, std::vector<align_id_t>> HaplotypeToAlignIdSet;
 
 /// Represent all haplotypes found in the current active region
 class ActiveRegion
 {
 public:
-    // maximum read depth
-    // TODO: dynamically calculate maximum depth
-    static const unsigned MaxDepth = 1000u;
-
     // if haplotype depth is at least HighDepth, low depth filter is not applied
     static const unsigned HighDepth = 20u;
+
+    // if the number of reads is larger than MinNumReadsToBypassAssembly, assembly is not conducted
+    static const unsigned MinNumReadsToBypassAssembly = 1000u;
+
+    // minimum fraction of reads covering the entire region to perform counting
+    float MinFracReadsCoveringRegion = 0.65f;
+
+    // if the region length is larger than MaxRefSpanToPerformAssembly, do not perform assembly
+    static const unsigned MaxRefSpanToPerformAssembly = 250u;
+
+    // assembly parameters
+    const unsigned MaxAssemblyWordSize = 76u;
+    const unsigned MinAssemblyCoverage = 3u;
 
     // minimum haplotype count to consider
     static const unsigned MinHaplotypeCount = 3u;
@@ -63,31 +67,35 @@ public:
     // minimum haplotype frequency to relax MMDF
     const float HaplotypeFrequencyThreshold = 0.4;
 
-    const char missingPrefix = '.';
-
     /// Creates an active region object
     /// \param posRange position range of the active region
     /// \param ref reference
+    /// \param maxIndelSize max indel size
+    /// \param sampleCount sample count
     /// \param aligner aligner for aligning haplotypes to the reference
-    /// \param alignIdToAlignInfo map from align id to (sampleId, indelAlignType)
+    /// \param readBuffer read buffer
     /// \return active region object
     ActiveRegion(pos_range& posRange,
                  const reference_contig_segment& ref,
                  const unsigned maxIndelSize,
                  const unsigned sampleCount,
                  const GlobalAligner<int>& aligner,
-                 const std::vector<AlignInfo>& alignIdToAlignInfo):
+                 const ActiveRegionReadBuffer& readBuffer):
         _posRange(posRange), _ref(ref), _maxIndelSize(maxIndelSize), _sampleCount(sampleCount),
-        _aligner(aligner),
-        _alignIdToAlignInfo(alignIdToAlignInfo)
+        _aligner(aligner), _readBuffer(readBuffer)
     {
-        _ref.get_substring(_posRange.begin_pos, _posRange.size(), _refSeq);
     }
 
     /// \return begin position of the active region
     pos_t getBeginPosition() const
     {
         return _posRange.begin_pos;
+    }
+
+    /// \return begin position of the active region
+    pos_t getEndPosition() const
+    {
+        return _posRange.end_pos;
     }
 
     /// \param pos reference position
@@ -97,17 +105,11 @@ public:
         return _posRange.is_pos_intersect(pos);
     }
 
-    /// Insert haplotype base of the alignment into the position
-    /// \param alignId align id
-    /// \param pos reference position
-    /// \param base base at position pos. base.length() is 1 for match/mismatch, >1 for insertion, and 0 for deletion.
-    void insertHaplotypeBase(align_id_t alignId, pos_t pos, const std::string& base);
-
     /// Decompose haplotypes into primitive alleles.
     /// Determine indel candidacy and regiser polymorphic sites to relax MMDF.
     /// \param indelBuffer
     /// \param polySites
-    void processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites) const;
+    void processHaplotypes(IndelBuffer &indelBuffer, RangeSet &polySites);
 
     /// Mark a read soft-clipped
     /// \param alignId align id
@@ -121,22 +123,34 @@ private:
     const reference_contig_segment& _ref;
     const unsigned _maxIndelSize;
     const unsigned _sampleCount;
-    std::string _refSeq;
     const GlobalAligner<int> _aligner;
-    const std::vector<AlignInfo>&  _alignIdToAlignInfo;
 
-    std::map<align_id_t, std::string> _alignIdToHaplotype;
-    std::set<align_id_t> _alignIdReachingEnd;
+    const ActiveRegionReadBuffer& _readBuffer;
     std::set<align_id_t> _alignIdSoftClipped;
 
-    void processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId) const;
+    /// Create haplotypes using counting and process variants
+    /// \param indelBuffer indel buffer
+    /// \param polySites container to record polymorphic sites for MMDF relax
+    /// \param sampleId sample id
+    /// \return true if haplotype generation succeeds, false otherwise
+    bool processHaplotypesWithCounting(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId) const;
+
+    /// Create haplotypes using assembly and process variants
+    /// \param indelBuffer indel buffer
+    /// \param polySites container to record polymorphic sites for MMDF relax
+    /// \param sampleId sample id
+    /// \return true if haplotype generation succeeds, false otherwise
+    bool processHaplotypesWithAssembly(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId) const;
+
+    /// Bypass indels within the region
+    /// \param indelBuffer indel buffer
+    void bypassIndelsInBam(IndelBuffer &indelBuffer) const;
 
     void convertToPrimitiveAlleles(
         const unsigned sampleId,
         const std::string& haploptypeSeq,
         const std::vector<align_id_t>& alignIdList,
         const unsigned totalReadCount,
-        const bool isTopTwo,
         IndelBuffer& indelBuffer,
         RangeSet& polySites) const;
 };

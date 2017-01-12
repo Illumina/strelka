@@ -52,6 +52,9 @@
 const unsigned STARLING_INIT_LARGEST_READ_SIZE(250);
 const double STARLING_LARGEST_READ_SIZE_PAD(1.25);
 
+// additional distance between HEAD and READ_BUFFER for haplotyping
+const unsigned HAPLOTYPING_PADDING(200);
+
 // largest indel_size grows dynamically with observed indel size until
 // hitting max_indel_size. Initialized to the follow value prior to
 // observation:
@@ -192,7 +195,7 @@ get_stage_data(
     // read realignment
     // base-call pos entry (pileup)
     //
-    sdata.add_stage(READ_BUFFER,HEAD,get_read_buffer_size(largest_read_size,largest_total_indel_ref_span_per_read));
+    sdata.add_stage(READ_BUFFER,HEAD,get_read_buffer_size(largest_read_size,largest_total_indel_ref_span_per_read)+HAPLOTYPING_PADDING);
 
     //
     // POST_ALIGN_STAGE - the end of this stage is where snp and indel
@@ -452,7 +455,7 @@ insert_indel(
 
         if (is_active_region_detector_enabled())
         {
-            getActiveRegionDetector().insertIndel(sampleId, obs);
+            getActiveRegionDetector().getReadBuffer().insertIndel(sampleId, obs);
         }
         else
         {
@@ -840,7 +843,7 @@ process_pos(const int stage_no,
         init_read_segment_pos(pos);
         if (is_active_region_detector_enabled())
         {
-            getActiveRegionDetector().updateEndPosition(pos, pos == (_reportRange.end_pos()-1));
+            getActiveRegionDetector().updateEndPosition(pos);
         }
 
         if (_opt.is_write_candidate_indels())

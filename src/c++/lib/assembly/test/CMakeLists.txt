@@ -19,35 +19,10 @@
 
 ################################################################################
 ##
-## Configuration file for the lib subfolder
+## Configuration file for the unit tests subdirectory
 ##
 ## author Ole Schulz-Trieglaff
 ##
 ################################################################################
 
-##
-## List of libraries
-##
-## note that order approximates dependency chain, where libraries are listed
-## after libraries upon which they depend:
-set (THIS_ALL_LIBRARIES blt_util common htsapi appstats options errorAnalysis calibration blt_common assembly alignment starling_common strelka_common)
-
-##
-## Build all the libraries for the project
-## THIS_AVAILABLE_LIBRARIES is incrementally updated
-##
-set (THIS_AVAILABLE_LIBRARIES "")
-foreach (THIS_LIB_DIR ${THIS_ALL_LIBRARIES})
-    add_subdirectory(${THIS_LIB_DIR})
-
-    set(THIS_AVAILABLE_LIBRARIES ${THIS_PROJECT_NAME}_${THIS_LIB_DIR} ${THIS_AVAILABLE_LIBRARIES})
-endforeach ()
-
-set (THIS_AVAILABLE_LIBRARIES ${THIS_AVAILABLE_LIBRARIES} PARENT_SCOPE)
-
-
-#
-# handle applications separately
-#
-add_subdirectory(applications)
-
+include(${THIS_CXX_TEST_LIBRARY_CMAKE})
