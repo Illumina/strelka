@@ -63,7 +63,7 @@ def getOptions() :
         parser.error("SNV test output filename is required when using traintest option")
     if options.traintest and (options.indelTestOutputPath is None) :
         parser.error("Indel test output filename is required when using traintest option")
- 
+
     return (options,args)
 
 
@@ -187,11 +187,11 @@ def main() :
             if isTrain :
                 if isSNV : return snv_outfp
                 else :     return indel_outfp
-            else : 
+            else :
                 if isSNV : return snv_test_outfp
                 else :     return indel_test_outfp
 
-            
+
         outputStream(isSNV, isTrain).write(",".join([word[VCFID.CHROM], word[VCFID.POS], qtype, evsf, qlabel]) +"\n")
 
 

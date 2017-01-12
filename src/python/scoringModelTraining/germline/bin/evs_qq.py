@@ -133,6 +133,6 @@ def main():
     df.to_csv(args.output)
     json.dump({"Coefficient" : regr.coef_[0,0], "Intercept" : regr.intercept_[0]}, open(args.calibration, 'w'))
 
-        
+
 if __name__ == '__main__':
     main()

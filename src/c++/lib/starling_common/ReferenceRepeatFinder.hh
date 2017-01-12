@@ -26,26 +26,29 @@
 
 #include <blt_util/blt_types.hh>
 #include <blt_util/reference_contig_segment.hh>
+#include <vector>
 
 class ReferenceRepeatFinder
 {
 public:
-    static const pos_t MinRepeatSpan = (pos_t)3u;
-
-    // maximum repeat unit to consider
-    static const unsigned MaxRepeatUnitLength = 50u;
-
-    // maximum buffer size in bases (must be larger than the maximum read size + max indel size
-    static const unsigned MaxBufferSize = 1000u;
-
-    ReferenceRepeatFinder(const reference_contig_segment& ref): _ref(ref) {}
+    ReferenceRepeatFinder(
+            const reference_contig_segment& ref,
+            const unsigned maxRepeatUnitLength,
+            const unsigned maxBufferSize,
+            const unsigned minRepeatSpan):
+            _ref(ref), _maxRepeatUnitLength(maxRepeatUnitLength),
+            _maxBufferSize(maxBufferSize), _minRepeatSpan(minRepeatSpan),
+            _repeatSpan(maxBufferSize, std::vector<unsigned>(maxRepeatUnitLength)),
+            _isAnchor(maxBufferSize)
+    {
+    }
 
     /// checks if pos is an anchor position
     /// \param pos reference position
     /// \return true if pos is an anchor position, false otherwise
     bool isAnchor(pos_t pos) const
     {
-        return _isAnchor[pos % MaxBufferSize];
+        return _isAnchor[pos % _maxBufferSize];
     }
 
     void initRepeatSpan(pos_t pos);
@@ -53,8 +56,11 @@ public:
 
 private:
     const reference_contig_segment& _ref;
+    const unsigned _maxRepeatUnitLength;
+    const unsigned _maxBufferSize;
+    const unsigned _minRepeatSpan;
 
     // to record reference repeat count
-    unsigned _repeatSpan[MaxBufferSize][MaxRepeatUnitLength];
-    bool _isAnchor[MaxBufferSize];
+    std::vector<std::vector<unsigned>> _repeatSpan;
+    std::vector<bool> _isAnchor;
 };

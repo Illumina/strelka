@@ -27,7 +27,7 @@
 #include "ActiveRegion.hh"
 
 // compile with this macro to get verbose output:
-#define DEBUG_ACTIVE_REGION
+//#define DEBUG_ACTIVE_REGION
 
 // adoptation of get_snp_hpol_size in blt_common
 static unsigned getHomoPolymerSize(const std::string& haplotype, const pos_t pos)

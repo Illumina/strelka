@@ -14,7 +14,8 @@
 * [Step 2: Training an EVS model](#step-2-training-an-evs-model)
 * [Step 3: Calculate Scores](#step-3-calculate-scores)
 * [Step 4: Evaluate Precision / Recall for the model](#step-4-evaluate-precision--recall-for-the-model)
-* [Step 5: Export the model for use in Strelka](#step-5-export-the-model-for-use-in-strelka)
+* [Step 5: Calibrate the model](#step-5-calibrate-the-model)
+* [Step 6: Export the model for use in Strelka](#step-6-export-the-model-for-use-in-strelka)
 [] (END automated TOC section, any edits will be overwritten on next source refresh)
 
 ## Introduction
@@ -235,7 +236,7 @@ To use in Strelka, point it to the new model files by adding
 ```
 --snvScoringModelFile germlineSNVScoringModel.json \
 --indelScoringModelFile germlineIndelScoringModel.json
-``` 
+```
 to the options supplied to configureStrelkaGermlineWorkflow.py.
 
 Note that if the model's feature set has been changed, additional steps are required to use this file in Strelka. This operation is outside of user guide scope at present.

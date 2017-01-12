@@ -80,7 +80,7 @@ def main() :
         # Skip entries matching any type of conflict
         foundConflict = False
         for filterVal in filterVals :
-            if filterVal.endswith("Conflict") : 
+            if filterVal.endswith("Conflict") :
                 foundConflict = True
                 continue
         if foundConflict: continue

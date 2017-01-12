@@ -28,28 +28,28 @@ void ReferenceRepeatFinder::updateRepeatSpan(pos_t pos)
 {
     // calculate repeat counter
     auto base(_ref.get_base(pos));
-    auto posIndex(pos % MaxBufferSize);
+    auto posIndex(pos % _maxBufferSize);
 
     _isAnchor[posIndex] = true;
-    for (auto repeatUnitLength(1u); repeatUnitLength<=MaxRepeatUnitLength; ++repeatUnitLength)
+    for (auto repeatUnitLength(1u); repeatUnitLength<=_maxRepeatUnitLength; ++repeatUnitLength)
     {
         auto prevBase(_ref.get_base(pos - repeatUnitLength));
         auto repeatUnitIndex(repeatUnitLength-1);
         unsigned repeatSpan;
         if (prevBase != 'N' and base == prevBase)
-            repeatSpan = _repeatSpan[(pos - 1) % MaxBufferSize][repeatUnitIndex] + 1;
+            repeatSpan = _repeatSpan[(pos - 1) % _maxBufferSize][repeatUnitIndex] + 1;
         else
             repeatSpan = repeatUnitLength;
         _repeatSpan[posIndex][repeatUnitIndex] = repeatSpan;
-        if (repeatSpan >= repeatUnitLength*2 and repeatSpan >= MinRepeatSpan)
+        if (repeatSpan >= repeatUnitLength*2u and repeatSpan >= _minRepeatSpan)
         {
             // repeat found
-            if (repeatSpan == repeatUnitLength*2 or repeatSpan == MinRepeatSpan)
+            if (repeatSpan == repeatUnitLength*2u or repeatSpan == _minRepeatSpan)
             {
                 // unset _isAnchor for pos [pos-repeatCount+1, pos-1]
                 for (pos_t prevPos(pos-1u); prevPos > (pos_t)(pos-repeatSpan); --prevPos)
                 {
-                    pos_t prevPosIndex(prevPos % MaxBufferSize);
+                    pos_t prevPosIndex(prevPos % _maxBufferSize);
                     _isAnchor[prevPosIndex] = false;
                 }
             }
@@ -60,15 +60,18 @@ void ReferenceRepeatFinder::updateRepeatSpan(pos_t pos)
 
 void ReferenceRepeatFinder::initRepeatSpan(pos_t pos)
 {
-    auto posIndex(pos % MaxBufferSize);
+    auto posIndex(pos % _maxBufferSize);
 
-    for (auto repeatUnitLength(1u); repeatUnitLength<=MaxRepeatUnitLength; ++repeatUnitLength)
+    // initialize _repeatSpan for pos
+    for (auto repeatUnitLength(1u); repeatUnitLength<=_maxRepeatUnitLength; ++repeatUnitLength)
     {
         auto repeatUnitIndex(repeatUnitLength-1);
         _repeatSpan[posIndex][repeatUnitIndex] = repeatUnitLength;
     }
 
-    for (pos_t initPos(pos); initPos < (pos_t)(pos + MaxRepeatUnitLength*2u); ++initPos)
+    // read ahead MaxRepeatUnitLength*2u to determine if this position is within repeat
+    // e.g. GTATCA|GTTAGTT
+    for (pos_t initPos(pos); initPos < (pos_t)(pos + _maxRepeatUnitLength*2u); ++initPos)
     {
         updateRepeatSpan(initPos);
     }

@@ -50,7 +50,7 @@ class ActiveRegionReadBuffer
 public:
 
     // maximum buffer size in bases (must be larger than the maximum read size + max indel size
-    static const unsigned MaxBufferSize = ReferenceRepeatFinder::MaxBufferSize;
+    static const unsigned MaxBufferSize = 1000u;
 
     // maximum read depth
     // TODO: dynamically calculate maximum depth
@@ -62,6 +62,8 @@ public:
 
     // maximum repeat unit to consider
     static const unsigned MaxRepeatUnitLength = 50u;
+
+    static const unsigned MinRepeatSpan = (pos_t)3u;
 
     // variant count to add for a single mismatch or indel
     static const int MismatchWeight = 1;
@@ -84,7 +86,7 @@ public:
             IndelBuffer& indelBuffer)
             :
             _ref(ref),
-            _refRepeatFinder(ref),
+            _refRepeatFinder(ref, MaxRepeatUnitLength, MaxBufferSize, MinRepeatSpan),
             _sampleCount(sampleCount),
             _indelBuffer(indelBuffer),
             _variantCounter(sampleCount, std::vector<unsigned>(MaxBufferSize)),
