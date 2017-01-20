@@ -158,15 +158,23 @@ def main() :
         # Skip entries matching OffTarget in the filter field (for WES data)
         if "OffTarget" in filterVals : continue
 
-        evsf = getKeyVal(word[VCFID.INFO],"EVSF")
-        if evsf is None : evsf = ""
-
-        isSNV = (word[VCFID.INFO].find("CIGAR=") == -1)
+        def typeLabel(isSNV) :
+            if isSNV : return "SNP"
+            else : return "INDEL"
 
         formatVals = word[VCFID.FORMAT].split(":")
         truthVals = word[VCFID.SAMPLE].split(":")
         queryVals = word[VCFID.SAMPLE+1].split(":")
         sampleBDIndex = formatVals.index("BD")
+        sampleBVTIndex = formatVals.index("BVT")
+        qtype = queryVals[sampleBVTIndex]
+        evsf = getKeyVal(word[VCFID.INFO],"EVSF")
+        if evsf is None : 
+            evsf = ""
+            isSNV = (qtype==typeLabel(1))
+        else:
+            isSNV = (word[VCFID.INFO].find("CIGAR=") == -1)
+            if (qtype != typeLabel(isSNV)) : continue
 
         if "NOCALL" in queryVals :
             if truthVals[sampleBDIndex] != "FN" : continue
@@ -177,13 +185,6 @@ def main() :
         if label not in ("TP","FP","FN","UNK") :
             raise Exception("Variant label is not TP|FP|FN|UNK as expected:\n%s" % (line))
 
-        def typeLabel(isSNV) :
-            if isSNV : return "SNP"
-            else : return "INDEL"
-
-        sampleBVTIndex = formatVals.index("BVT")
-        qtype = queryVals[sampleBVTIndex]
-        if (evsf != "" and qtype != typeLabel(isSNV)) : continue
         if qtype == None : 
             raise Exception("No valid type in input line:\n%s" % (line))
 
