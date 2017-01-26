@@ -56,6 +56,6 @@ class FeatureSet(object):
         return FeatureSet.sets[name]()
 
 
-import StrelkaSNV   # noqa
-import StrelkaIndel  # noqa
+import SomaticSNV   # noqa
+import SomaticIndel  # noqa
 import PosAndAlleles  # noqa

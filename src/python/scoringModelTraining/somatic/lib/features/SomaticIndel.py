@@ -20,30 +20,25 @@
 from VcfFeatureSet import VcfFeatureSet
 
 
-@VcfFeatureSet.register("strelka.snv")
-class StrelkaSNVFeatures(VcfFeatureSet):
-    """Collect SNV features from VCF"""
+@VcfFeatureSet.register("somatic.indel")
+class StrelkaIndelFeatures(VcfFeatureSet):
+    """Collect indel features from VCF"""
 
     def collect(self, vcfname):
         """ Return a data frame with features collected from the
-            given VCF"""
+            given VCF """
 
-        return self.collectCore(vcfname,"snv_scoring_features")
-
+        return self.collectCore(vcfname,"indel_scoring_features")
 
     def trainingfeatures(self):
-        """ Return a list of columns that are features to
-            use for EVS training
-
-            Any change here must be done together with changing SOMATIC_SNV_SCORING_FEATURES::index_t in
-            "${STRELKA_REPO_PATH}/src/c++/lib/applications/strelka/somaticVariantEmpiricalScoringFeatures.hh"
-        """
-        return [
-            "QSS_NT",
-            "N_DP_RATE",
-            "TIER1_ALT_RATE",
-            "MQ",
-            "MQ0_FRAC",
-            "strandBias",
-            "ReadPosRankSum",
-            "LOR"]
+        """ Return a list of columns that are features to use for EVS model training """
+        return ["QSI_NT",
+                "ABS_T_RR",
+                "ABS_T_SOR",
+                "IC",
+                "IHP",
+                "RC",
+                "RU_LEN",
+                "TNR",
+                "AFR",
+                "LOR"]
