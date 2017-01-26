@@ -48,7 +48,9 @@ def parseArgs():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("input", help="Strelka VCF file", nargs=1)
     parser.add_argument("-o", "--output", required=True,
-                        help="Output file CSV name")
+                        help="Output CSV filename for training data")
+    parser.add_argument("--testSet", action='append', help="Chromosome (e.g. chr20) to hold out as test data (may be specified more than once; if omitted, all data will be used for training)")
+    parser.add_argument("--testOutput", help="Output CSV filename for test data")
     parser.add_argument("-t", "--truth", help="Truth VCF file")
     parser.add_argument("-f", "--fp-regions", dest="fp_regions",
                         help="Bed file indicating regions for FPs only.")
@@ -114,7 +116,7 @@ def main():
             fp.addFromBed(aBED, lambda xe: xe[4])
 
     if args.ambi or args.fp_regions:
-        has_fp = (fp.count("FP") > 0) or (fp.count("fp") > 0 and args.ambi_fp)
+        has_fp = (fp.count("FP") > 0) or (fp.count("fp") > 0 and args.ambi)
 
         def relabeller(xx):
             if xx["tag"] == "TP" or xx["tag"] == "FN":
@@ -150,6 +152,10 @@ def main():
 
         featuretable = featuretable.apply(relabeller, axis=1)
 
+    if args.testSet is not None:
+        if args.testOutput is not None:
+            featuretable[featuretable["CHROM"].isin(args.testSet)].to_csv(args.testOutput)
+        featuretable = featuretable[~featuretable["CHROM"].isin(args.testSet)]
     featuretable.to_csv(args.output)
 
 
