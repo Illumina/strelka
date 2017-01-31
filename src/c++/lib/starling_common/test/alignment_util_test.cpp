@@ -130,4 +130,26 @@ BOOST_AUTO_TEST_CASE( test_matchify_soft_clip )
 }
 
 
+BOOST_AUTO_TEST_CASE( test_getLowestFwdReadPosForRefRange )
+{
+    alignment al;
+    al.pos = 100;
+    ALIGNPATH::cigar_to_apath("10M",al.path);
+
+    BOOST_REQUIRE_EQUAL(getLowestFwdReadPosForRefRange(al, known_pos_range(100, 101)),0);
+
+    ALIGNPATH::cigar_to_apath("2S2I2M2I2M2S",al.path);
+
+    BOOST_REQUIRE_EQUAL(getLowestFwdReadPosForRefRange(al, known_pos_range(100, 103)),4);
+    BOOST_REQUIRE_EQUAL(getLowestFwdReadPosForRefRange(al, known_pos_range(102, 103)),8);
+    BOOST_REQUIRE_EQUAL(getLowestFwdReadPosForRefRange(al, known_pos_range(99, 99)),-1);
+    BOOST_REQUIRE_EQUAL(getLowestFwdReadPosForRefRange(al, known_pos_range(110, 110)),-1);
+
+    al.is_fwd_strand = false;
+
+    BOOST_REQUIRE_EQUAL(getLowestFwdReadPosForRefRange(al, known_pos_range(100, 101)),7);
+    BOOST_REQUIRE_EQUAL(getLowestFwdReadPosForRefRange(al, known_pos_range(100, 103)),3);
+}
+
+
 BOOST_AUTO_TEST_SUITE_END()

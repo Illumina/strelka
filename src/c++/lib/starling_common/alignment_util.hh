@@ -101,10 +101,18 @@ alignment
 matchify_edge_soft_clip(
     const alignment& al);
 
-/// translate bam_record into the cooresponding alignment structure
+/// translate bam_record into the corresponding alignment structure
 ///
 void
 getAlignmentFromBamRecord(
     const bam_record& br,
     alignment& al);
 
+/// return the lowest read position on the forward strand which intersects refRange.
+///
+/// If the read alignment does not intersect refRange for any reason, return -1
+///
+pos_t
+getLowestFwdReadPosForRefRange(
+    const alignment& al,
+    const known_pos_range& refRange);

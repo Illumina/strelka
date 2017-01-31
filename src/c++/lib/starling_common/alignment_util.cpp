@@ -220,3 +220,85 @@ getAlignmentFromBamRecord(
     bam_cigar_to_apath(br.raw_cigar(),br.n_cigar(),al.path);
 }
 
+
+
+/// translate a reference offset to the corresponding read offset given this alignment
+///
+/// if ref offset is not mapped in the alignment path, return -1
+static
+pos_t
+apath_translate_ref_offset_to_read_offset(
+    const pos_t target_ref_offset,
+    const ALIGNPATH::path_t& apath)
+{
+    using namespace ALIGNPATH;
+
+    static const pos_t noTranslation(-1);
+
+    if (target_ref_offset < 0) return noTranslation;
+
+    pos_t ref_offset(0);
+    pos_t read_offset(0);
+
+    const unsigned as(apath.size());
+    for (unsigned i(0); i<as; ++i)
+    {
+        const path_segment& ps(apath[i]);
+
+        if (is_segment_type_read_length(ps.type))
+        {
+            read_offset += ps.length;
+        }
+
+        if (! is_segment_type_ref_length(ps.type)) continue;
+        ref_offset += ps.length;
+
+        if (ref_offset <= target_ref_offset) continue;
+
+        if (! is_segment_type_read_length(ps.type)) return noTranslation;
+
+        const pos_t extra(ref_offset - target_ref_offset);
+        assert(static_cast<pos_t>(ps.length) >= extra);
+        read_offset -= extra;
+
+        return read_offset;
+    }
+
+    return noTranslation;
+}
+
+
+
+pos_t
+getLowestFwdReadPosForRefRange(
+    const alignment& al,
+    const known_pos_range& refRange)
+{
+    pos_t refOffset;
+    if (al.is_fwd_strand)
+    {
+        refOffset = refRange.begin_pos;
+    }
+    else
+    {
+        refOffset = refRange.end_pos - 1;
+    }
+
+    refOffset -= al.pos;
+
+    const pos_t readOffset = apath_translate_ref_offset_to_read_offset(refOffset, al.path);
+
+    if (readOffset < 0) return readOffset;
+
+    if (al.is_fwd_strand)
+    {
+        return readOffset;
+    }
+    else
+    {
+        const pos_t readLength(static_cast<pos_t>(ALIGNPATH::apath_read_length(al.path)));
+        assert(readLength > readOffset);
+        return  readLength - (readOffset+1);
+    }
+}
+
