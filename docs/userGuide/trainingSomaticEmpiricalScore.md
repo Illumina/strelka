@@ -49,8 +49,8 @@ python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/vcf_to_fea
     ${STRELKA_INSTALL_PATH}/share/demo/strelka/data/strelka_admix_snvs_chr21_1-25000000.vcf.gz
 ```
 
-This script supports additional bed file inputs to define FP and ambiguous regions, see script usage
-for details.
+This script supports additional bed file inputs to define FP and ambiguous regions, and produces 
+separate training and test sets if test chromosomes are specified. See script usage for details. 
 
 ### Step 1b: Handle multiple training data sets
 
