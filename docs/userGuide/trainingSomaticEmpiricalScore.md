@@ -38,7 +38,7 @@ features can be reported even when scoring itself is turned off with the `--disa
 
 ### Step 1a: Process a single VCF into a labeled feature CSV file
 
-Given a strelka somatic VCF with optional EVSF output and a truth list, a CSV file with features and
+Given a strelka somatic VCF with optional EVSF output and a truth list, training and test CSV files with features and
 TP/FP/FN labeling can be produced as follows:
 
 ```
@@ -46,11 +46,13 @@ python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/vcf_to_fea
     --truth ${STRELKA_INSTALL_PATH}/share/demo/strelka/data/PG_admix_truth_snvs_chr21_1-25000000.vcf.gz \
     --features strelka.snv \
     --output admix_training_data.csv \
+    --testSet chr2 \
+    --testSet chr20 \
+    --testOutput admix_test_data.csv \
     ${STRELKA_INSTALL_PATH}/share/demo/strelka/data/strelka_admix_snvs_chr21_1-25000000.vcf.gz
 ```
 
-This script supports additional bed file inputs to define FP and ambiguous regions, see script usage
-for details.
+The above options above specify that chromosomes 2 and 20 are to be separated out as test data. If no --testSet argument is specified, the entire genome will be used for training. The script also supports additional bed file inputs to define FP and ambiguous regions &mdash; see script usage for details. 
 
 ### Step 1b: Handle multiple training data sets
 
@@ -97,22 +99,20 @@ Feature ranking:
 
 ## Step 3: Calculate Scores
 
-Given a trained model any labeled testing data can be scored. In this example
-the training data itself is used as the test data for simplicity. Independent test
-data should be used for more accurate evaluation in a real training scenario.
+Given a trained model any labeled testing data can be scored.
 
 ```
 python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/evs_evaluate.py \
     --features strelka.snv \
     --classifier admix_training_model.pickle \
     --output admix_classified.csv \
-    admix_training_data.csv
+    admix_test_data.csv
 ```
 
 =>
 
 ```
-Reading admix_training_data.csv
+Reading admix_test_data.csv
 ptag   FN     FP    TP
 tag
 FN    178      0     0

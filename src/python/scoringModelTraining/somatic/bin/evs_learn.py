@@ -41,7 +41,7 @@ sys.path.append(workflowDir)
 import evs
 import evs.tools
 import evs.features
-
+import random
 
 def parseArgs():
     import argparse
