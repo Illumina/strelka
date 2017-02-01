@@ -66,7 +66,8 @@ getAlleleGroupIntersectionReadIds(
     const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     std::set<unsigned>& readIds,
-    const bool isTier1Only)
+    const bool isTier1Only,
+    const unsigned minDistanceFromReadEdge)
 {
     const unsigned nonrefAlleleCount(alleleGroup.size());
     std::map<unsigned,unsigned> countReadIds;
@@ -76,6 +77,17 @@ getAlleleGroupIntersectionReadIds(
         for (const auto& score : isd.read_path_lnp)
         {
             if (isTier1Only && (! score.second.is_tier1_read)) continue;
+
+            if (minDistanceFromReadEdge > 0)
+            {
+                if (score.second.read_pos < 0) continue;
+
+                // read_pos is the position adjacent to the indel, add one to read_pos from this point to express the
+                // concept that the indel is "within" a certain distance from the edge.
+                const pos_t intersect_read_pos(score.second.read_pos+1);
+                if (intersect_read_pos < static_cast<pos_t>(minDistanceFromReadEdge)) continue;
+                if ((score.second.read_length - (intersect_read_pos + 1)) < static_cast<pos_t>(minDistanceFromReadEdge)) continue;
+            }
 
             const auto iter(countReadIds.find(score.first));
             if (iter==countReadIds.end())

@@ -228,6 +228,13 @@ struct starling_base_options : public blt_options
     // the given allele
     // WARNING: this value impacts several count-based EVS metrics
     PrettyFloat<double> readConfidentSupportThreshold = PrettyFloat<double>("0.9");
+
+    // this option is only used by the error counting module
+    //
+    // per STREL-401, the error counting module excludes evidence close to the beginning or ending of each read,
+    // so as to reduce systematic underestimation bias of indel error rates (or overestimation bias of SNV error rates)
+    //
+    unsigned minDistanceFromReadEdge = 0;
 };
 
 

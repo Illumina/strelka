@@ -44,7 +44,8 @@ getAlleleGroupIntersectionReadIds(
     const unsigned sampleIndex,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     std::set<unsigned>& readIds,
-    const bool isTier1Only);
+    const bool isTier1Only,
+    const unsigned minDistanceFromReadEdge = 0);
 
 
 /// find set of read ids which support the entire set of alleles in alleleGroup

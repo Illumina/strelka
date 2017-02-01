@@ -54,6 +54,8 @@ struct SequenceErrorCountsOptions : public starling_base_options
 
         tier2.is_tier2_min_mapping_quality = true;
         tier2.tier2_min_mapping_quality = 0;
+
+        minDistanceFromReadEdge = 10;
     }
 
     bool

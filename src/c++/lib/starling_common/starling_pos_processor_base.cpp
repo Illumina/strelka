@@ -1261,8 +1261,23 @@ pileup_read_segment(
                              fwd_strand_end_skip);
 
     assert(read_size>=fwd_strand_end_skip);
-    const unsigned read_begin(fwd_strand_begin_skip);
-    const unsigned read_end(read_size-fwd_strand_end_skip);
+
+    unsigned read_begin(fwd_strand_begin_skip);
+    unsigned read_end(read_size-fwd_strand_end_skip);
+
+    // don't add positions close to the read edge (this is used for error stats estimation)
+    if (_opt.minDistanceFromReadEdge > 0)
+    {
+        read_begin += _opt.minDistanceFromReadEdge;
+        if (_opt.minDistanceFromReadEdge <= read_end)
+        {
+            read_end -= _opt.minDistanceFromReadEdge;
+        }
+        else
+        {
+            read_end = 0;
+        }
+    }
 
 #ifdef DEBUG_PPOS
     log_os << "best_al: " << best_al;

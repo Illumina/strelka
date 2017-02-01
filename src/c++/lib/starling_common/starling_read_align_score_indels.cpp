@@ -963,17 +963,21 @@ score_indels(
             ///       alignment which contains the indel. If the former setting we need to do something
             ///       about handling negative positions.
             ///
-            /// TODO: this needs to be corrected to account for indels (besides the evaluationIndel in maxCandAlignment
-            const pos_t rawReadPos(evaluationIndel.pos - maxCandAlignment.al.pos);
-            const pos_t readpos(maxCandAlignment.al.is_fwd_strand ?
-                                rawReadPos : (static_cast<pos_t>(read_length) - rawReadPos -1));
+            //
+            // To make this work, the reference range is expanded by one. This is because
+            // getLowestFwdReadPosForRefRange needs to translate to  mapped read position,
+            // not a position with a deletion. So it is effectively the mapped position adjacent
+            // to the indel.
+            const pos_t readPos(getLowestFwdReadPosForRefRange(maxCandAlignment.al,
+                                                               known_pos_range(evaluationIndel.pos-1,
+                                                                               evaluationIndel.right_pos()+1)) );
 
 #ifdef DEBUG_ALIGN
             //            correct for strandedness
             log_os << "indelpos: " << evaluationIndel.pos << " readpos: + " << rseg.genome_align().pos << " rp: " << readpos << "\n";
 #endif
             ReadPathScores rps(referenceScore,evaluationIndelScore,nsite,read_length,is_tier1_read,maxCandAlignment.al.is_fwd_strand,
-                               (int16_t) readpos);
+                               (int16_t) readPos);
 
             // start adding alternate indel alleles, if present:
 

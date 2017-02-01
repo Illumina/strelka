@@ -201,15 +201,17 @@ void
 getOrthogonalHaplotypeSupportCounts(
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     const unsigned sampleId,
-    std::vector<unsigned>& support,
-    const bool isTier1Only = true)
+    const unsigned minDistanceFromReadEdge,
+    std::vector<unsigned>& support)
 {
+    static const bool isTier1Only(true);
+
     const unsigned nonrefAlleleCount(alleleGroup.size());
     assert(nonrefAlleleCount!=0);
 
     // intersection of read ids which have a likelihood evaluated over all candidate haplotypes:
     std::set<unsigned> readIds;
-    getAlleleGroupIntersectionReadIds(sampleId, alleleGroup, readIds, isTier1Only);
+    getAlleleGroupIntersectionReadIds(sampleId, alleleGroup, readIds, isTier1Only, minDistanceFromReadEdge);
 
     // count of all haplotypes including reference
     const unsigned fullAlleleCount(nonrefAlleleCount+1);
@@ -552,7 +554,8 @@ process_pos_error_counts(
 
         const unsigned nonrefAlleleCount(orthogonalVariantAlleles.size());
         std::vector<unsigned> support;
-        getOrthogonalHaplotypeSupportCounts(orthogonalVariantAlleles, sampleIndex, support);
+        getOrthogonalHaplotypeSupportCounts(
+            orthogonalVariantAlleles, sampleIndex, _opt.minDistanceFromReadEdge, support);
 
         for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<nonrefAlleleCount; ++nonrefAlleleIndex)
         {
