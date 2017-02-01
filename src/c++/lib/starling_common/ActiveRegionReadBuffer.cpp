@@ -135,23 +135,23 @@ bool ActiveRegionReadBuffer::setHaplotypeBase(const align_id_t id, const pos_t p
     const auto variant = _variantInfo[idIndex][posIndex];
     switch (variant)
     {
-        case MATCH:
-            base = _ref.get_base(pos);
-            break;
-        case MISMATCH:
-            base = std::string(1, _snvBuffer[idIndex][posIndex]);
-            break;
-        case DELETE:
-            base = "";
-            break;
-        case INSERT:
-            base = _ref.get_base(pos) + _insertSeqBuffer[idIndex][posIndex];
-            break;
-        case SOFT_CLIP:
-            base = _insertSeqBuffer[idIndex][posIndex];
-            break;
-        case MISMATCH_INSERT:
-            base = _snvBuffer[idIndex][posIndex] + _insertSeqBuffer[idIndex][posIndex];
+    case MATCH:
+        base = _ref.get_base(pos);
+        break;
+    case MISMATCH:
+        base = std::string(1, _snvBuffer[idIndex][posIndex]);
+        break;
+    case DELETE:
+        base = "";
+        break;
+    case INSERT:
+        base = _ref.get_base(pos) + _insertSeqBuffer[idIndex][posIndex];
+        break;
+    case SOFT_CLIP:
+        base = _insertSeqBuffer[idIndex][posIndex];
+        break;
+    case MISMATCH_INSERT:
+        base = _snvBuffer[idIndex][posIndex] + _insertSeqBuffer[idIndex][posIndex];
     }
 
     bool isSoftClipped = (variant == SOFT_CLIP);
@@ -174,7 +174,7 @@ void ActiveRegionReadBuffer::setEndPos(pos_t endPos)
     _readBufferRange.set_end_pos(endPos);
 }
 
-void ActiveRegionReadBuffer::getReadSegments(pos_range posRange, ReadInfo &readInfo, bool includePartialReads) const
+void ActiveRegionReadBuffer::getReadSegments(pos_range posRange, ReadInfo& readInfo, bool includePartialReads) const
 {
     std::map<align_id_t, std::string> alignIdToHaplotype;
     std::set<align_id_t> alignIdsReachingEnd;

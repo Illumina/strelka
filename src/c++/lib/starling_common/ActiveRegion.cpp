@@ -84,7 +84,7 @@ static bool isHomoPolymer(const std::string& haplotype)
     return true;
 }
 
-void ActiveRegion::processHaplotypes(IndelBuffer &indelBuffer, RangeSet &polySites)
+void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites)
 {
     // adjust the window size if not enough reads are available
     if (_readBuffer.getEndPos() < _posRange.end_pos)
@@ -196,7 +196,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
     if (_posRange.size() > MaxRefSpanToPerformAssembly)
     {
 #ifdef DEBUG_ACTIVE_REGION
-            std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << "\tAssembly"<< std::endl;
+        std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << "\tAssembly"<< std::endl;
 #endif
         return false;   // assembly fail; bypass indels later
     }
@@ -244,7 +244,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
         return false;   // assembly fail; bypass indels later
 
 #ifdef DEBUG_ACTIVE_REGION
-        std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tAssembly"<< std::endl;
+    std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tAssembly"<< std::endl;
 #endif
     AssemblyReadInput reads;
     std::vector<align_id_t> readIndexToAlignId;
@@ -358,8 +358,8 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
         auto count(alignIdList.size());
 
 #ifdef DEBUG_ACTIVE_REGION
-            if (count >= secondLargestCount)
-                std::cerr << haplotype << '\t' << count << std::endl;
+        if (count >= secondLargestCount)
+            std::cerr << haplotype << '\t' << count << std::endl;
 #endif
 
         if (count >= secondLargestCount)
@@ -374,7 +374,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
 
 // simply bypass all indels in BAM
 // The original indel candidacy method will be used.
-void ActiveRegion::bypassIndelsInBam(IndelBuffer &indelBuffer) const
+void ActiveRegion::bypassIndelsInBam(IndelBuffer& indelBuffer) const
 {
     auto it(indelBuffer.positionIterator(_posRange.begin_pos));
     const auto it_end(indelBuffer.positionIterator(_posRange.end_pos));

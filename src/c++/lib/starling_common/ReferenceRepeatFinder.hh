@@ -32,14 +32,14 @@ class ReferenceRepeatFinder
 {
 public:
     ReferenceRepeatFinder(
-            const reference_contig_segment& ref,
-            const unsigned maxRepeatUnitLength,
-            const unsigned maxBufferSize,
-            const unsigned minRepeatSpan):
-            _ref(ref), _maxRepeatUnitLength(maxRepeatUnitLength),
-            _maxBufferSize(maxBufferSize), _minRepeatSpan(minRepeatSpan),
-            _repeatSpan(maxBufferSize, std::vector<unsigned>(maxRepeatUnitLength)),
-            _isAnchor(maxBufferSize)
+        const reference_contig_segment& ref,
+        const unsigned maxRepeatUnitLength,
+        const unsigned maxBufferSize,
+        const unsigned minRepeatSpan):
+        _ref(ref), _maxRepeatUnitLength(maxRepeatUnitLength),
+        _maxBufferSize(maxBufferSize), _minRepeatSpan(minRepeatSpan),
+        _repeatSpan(maxBufferSize, std::vector<unsigned>(maxRepeatUnitLength)),
+        _isAnchor(maxBufferSize)
     {
     }
 

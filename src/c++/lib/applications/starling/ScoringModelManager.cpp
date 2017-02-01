@@ -244,13 +244,15 @@ default_classify_site(
     LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
     if (sampleInfo.max_gt().isVariant())
     {
-        if (_opt.is_min_gqx) {
+        if (_opt.is_min_gqx)
+        {
             if (sampleInfo.gqx < _opt.min_gqx) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
         }
     }
     else
     {
-        if (_opt.is_min_homref_gqx) {
+        if (_opt.is_min_homref_gqx)
+        {
             if (sampleInfo.gqx < _opt.min_homref_gqx) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
         }
     }

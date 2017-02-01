@@ -81,20 +81,20 @@ public:
     /// \param sampleCount sample count
     /// \param indelBuffer indel buffer
     ActiveRegionReadBuffer(
-            const reference_contig_segment& ref,
-            unsigned sampleCount,
-            IndelBuffer& indelBuffer)
-            :
-            _ref(ref),
-            _refRepeatFinder(ref, MaxRepeatUnitLength, MaxBufferSize, MinRepeatSpan),
-            _sampleCount(sampleCount),
-            _indelBuffer(indelBuffer),
-            _variantCounter(sampleCount, std::vector<unsigned>(MaxBufferSize)),
-            _depth(sampleCount, std::vector<unsigned>(MaxBufferSize)),
-            _positionToAlignIds(MaxBufferSize),
-            _alignIdToAlignInfo(MaxDepth),
-            _variantInfo(MaxDepth, std::vector<VariantType>(MaxBufferSize, VariantType())),
-            _insertSeqBuffer(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string()))
+        const reference_contig_segment& ref,
+        unsigned sampleCount,
+        IndelBuffer& indelBuffer)
+        :
+        _ref(ref),
+        _refRepeatFinder(ref, MaxRepeatUnitLength, MaxBufferSize, MinRepeatSpan),
+        _sampleCount(sampleCount),
+        _indelBuffer(indelBuffer),
+        _variantCounter(sampleCount, std::vector<unsigned>(MaxBufferSize)),
+        _depth(sampleCount, std::vector<unsigned>(MaxBufferSize)),
+        _positionToAlignIds(MaxBufferSize),
+        _alignIdToAlignInfo(MaxDepth),
+        _variantInfo(MaxDepth, std::vector<VariantType>(MaxBufferSize, VariantType())),
+        _insertSeqBuffer(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string()))
     {}
 
     /// insert match at position pos
@@ -133,11 +133,17 @@ public:
 
     /// Gets the beginning position
     /// \return begin position
-    pos_t getBeginPos() const { return _readBufferRange.begin_pos; }
+    pos_t getBeginPos() const
+    {
+        return _readBufferRange.begin_pos;
+    }
 
     /// Gets the end position
     /// \return end position
-    pos_t getEndPos() const { return _readBufferRange.end_pos; }
+    pos_t getEndPos() const
+    {
+        return _readBufferRange.end_pos;
+    }
 
     /// Gets sample id and indel align type
     /// \param alignId align id
@@ -151,7 +157,7 @@ public:
     /// \param posRange position range
     /// \param readInfo read info object to store read segments
     /// \param includePartialReads if true, only reads fully covering the region will be retrieved
-    void getReadSegments(pos_range posRange, ReadInfo &readInfo, bool includePartialReads) const;
+    void getReadSegments(pos_range posRange, ReadInfo& readInfo, bool includePartialReads) const;
 
     /// cache sampleId and indelAlignType corresponding to alignId
     /// \param alignId align id

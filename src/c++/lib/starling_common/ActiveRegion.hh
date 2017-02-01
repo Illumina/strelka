@@ -109,7 +109,7 @@ public:
     /// Determine indel candidacy and regiser polymorphic sites to relax MMDF.
     /// \param indelBuffer
     /// \param polySites
-    void processHaplotypes(IndelBuffer &indelBuffer, RangeSet &polySites);
+    void processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites);
 
     /// Mark a read soft-clipped
     /// \param alignId align id
@@ -144,7 +144,7 @@ private:
 
     /// Bypass indels within the region
     /// \param indelBuffer indel buffer
-    void bypassIndelsInBam(IndelBuffer &indelBuffer) const;
+    void bypassIndelsInBam(IndelBuffer& indelBuffer) const;
 
     void convertToPrimitiveAlleles(
         const unsigned sampleId,
