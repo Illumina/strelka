@@ -166,6 +166,10 @@ addKnownVariant(
 }
 
 
+/// \brief test if the given indel key has a match in the knownVariants set
+///
+/// \param overlap populated with the matching known variant(s) if any are found
+/// \return true if any known variant matches are found
 static
 bool
 isKnownVariantMatch(
@@ -189,6 +193,9 @@ isKnownVariantMatch(
 
 
 
+/// return supporting read counts for all (overlapping) alleles in alleleGroup
+///
+/// \param support supporting read counts for the reference (on index 0), and for each allele in alleleGroup thereafter
 static
 void
 getOrthogonalHaplotypeSupportCounts(
@@ -257,6 +264,11 @@ getIndelType(
 
 
 
+/// Merge indel observations for a given position and context
+///
+/// Indel observations at the same position and context might need to be summed if these are different "signal"
+/// types (where signal types are 1 base deletion, 2 base deletion, etc...)
+///
 static
 void
 mergeIndelObservations(
@@ -283,7 +295,6 @@ mergeIndelObservations(
 
         // known variant status is the maximum status within the set (e.g. if UNKNOWN
         // and VARIANT, site is variant)
-
         iter->second.variantStatus = std::max(iter->second.variantStatus, obs.variantStatus);
     }
 }
@@ -297,7 +308,7 @@ process_pos_error_counts(
 {
     const unsigned sampleCount(getSampleCount());
 
-    // note multi-sample status -- can still be called only for one sample, working on generalization:
+    // the error counts workflow can only be called for a single sample:
     //
     assert(sampleCount==1);
     const unsigned sampleIndex(0);
@@ -313,7 +324,10 @@ process_pos_error_counts(
     BaseErrorCounts& baseCounts(_counts.getBaseCounts());
     IndelErrorCounts& indelCounts(_counts.getIndelCounts());
 
-    // right now there's only one baseContext, so just set it const here and leave it
+    // right now there's only one baseContext (ie. only one context used for SNVs and basecalls), this
+    // is why we set it as const here
+    //
+    // this contrasts with the indel counting logic below which is using several contexts
     const BaseErrorContext baseContext;
 
     bool isSkipSNV(false);
@@ -321,6 +335,8 @@ process_pos_error_counts(
 
     if (_excludedRegions.isIntersectRegion(pos))
     {
+        // The workflow has the option to exclude some regions, so count the number of excluded sites.
+        // Excluded sites are recorded for QC purposes but don't impact rate estimates.
         baseCounts.addExcludedRegionSkip(baseContext);
         isSkipSNV=true;
 
@@ -336,9 +352,10 @@ process_pos_error_counts(
     }
     else if (_max_candidate_normal_sample_depth > 0.)
     {
+        // determine if SNV or indel output is going to be disabled because we're in a region of anomalously high depth
         //
-        // candidate variants are turned off above a certain depth relative to chromosome mean
-        // for basecalls we check the current position, for indels we check the previous position.
+        // Candidate variants are turned off above a certain depth relative to chromosome mean.
+        // For basecalls we check the relative depth at current position, for indels we check the relative depth at previous position.
         //
         {
             // handle SNVs
@@ -372,7 +389,7 @@ process_pos_error_counts(
     }
 
 
-    // handle base error signal
+    // handle basecall error signal
     if (! isSkipSNV)
     {
         // be relatively intolerant of anything interesting happening in the local sequence neighborhood:
@@ -390,6 +407,9 @@ process_pos_error_counts(
 
         if (filtFrac >= snvMMDRMaxFrac)
         {
+            // skip basecall stats at this position because of a noisy local environment
+            //
+            // track count of how often this happens:
             baseCounts.addNoiseSkip(baseContext);
         }
         else
@@ -445,8 +465,8 @@ process_pos_error_counts(
     // of the set.
     //
     // Once we have the largest possible allele set, we skip this locus if the total number of alleles is too
-    // large. Otherwise, read support for each allele in the overlapping set is enumberated. For all alleles that
-    // start at this position, we record the supporing counts in the indel error analysis counting structure.
+    // large. Otherwise, read support for each allele in the overlapping set is enumerated. For all alleles that
+    // start at this position, we record the supporting counts in the indel error analysis counting structure.
     //
 
     auto it(getIndelBuffer().positionIterator(pos));
@@ -490,9 +510,15 @@ process_pos_error_counts(
     // variant calling? Or do we want ot try to capture something closer to the true underlying noise
     // distribution?
     //
-    // in this case we choose the latter in principal (favor true noise vs what the germline caller seees),
+    // in this case we choose the latter in principal (favor true noise vs what the germline caller sees),
     // but still set an upper-limit on the total number of overlapping variants, recognizing that we can't
-    // handle the noise accurately as variant density goes up
+    // handle the noise accurately as variant density goes up beyond a certain point.
+    //
+    // Future design notes:
+    // This parameter might have to be revisited for long homopolymers in particular, where both mutation and
+    // sequencing error rates are high enough that greater than 4 alt alleles may be a reasonably common occurance.
+    //
+    // Alternatively -- we could take the top maxOverlap alleles instead of skipping the locus entirely, as we do now
     //
     const unsigned maxOverlap(4);
     std::vector<unsigned> callerPloidy = { maxOverlap };
@@ -504,7 +530,11 @@ process_pos_error_counts(
     RecordTracker::indel_value_t knownVariantRecords;
     _knownVariants.intersectingRecord(pos, knownVariantRecords);
 
-    // buffer observations until we get through all overlapping indels at this position:
+    // buffer observations (as IndelErrorContextObservation objects) until we get through all overlapping indels
+    // at this position, then process these into the error counts accumulation data structure:
+    //
+    // this buffering allows us to cleanly break out of this locus if we see evidence of too much noise below
+    //
     std::map<IndelErrorContext,IndelErrorContextObservation> indelObservations;
 
     if (not orthogonalVariantAlleles.empty())
@@ -544,6 +574,7 @@ process_pos_error_counts(
                 }
             }
 
+            // check to see if this indel is (likely to be) a match to a known variant
             RecordTracker::indel_value_t overlappingRecords;
             isKnownVariantMatch(knownVariantRecords, indelKey, overlappingRecords);
 
@@ -555,6 +586,8 @@ process_pos_error_counts(
             obs.refCount = support[refAlleleIndex];
             obs.assignKnownStatus(overlappingRecords);
 
+            // debug output:
+            //
             // an indel candidate can have 0 q30 indel reads when it is only supported by
             // noise reads (i.e. indel occurs outside of a read's valid alignment range,
             // see lib/starling_common/starling_read_util.cpp::get_valid_alignment_range)
@@ -571,27 +604,15 @@ process_pos_error_counts(
                 obs_os << indelKey.deletionLength << "\t" << nonrefAlleleIndex + 1 << "/" << nonrefAlleleCount << "\t";
                 obs_os << obs.signalCounts[sigIndex] << "\t" << obs.refCount << "\t";
                 obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
-            }
 
 #if 0
-            if (obs.variantStatus == GENOTYPE_STATUS::VARIANT &&
-                obs.signalCounts[sigIndex] == 0)
-            {
-                std::ostream& obs_os(std::cout);
-                obs_os << _chromName << "\t";
-                obs_os << ik.pos << "\t" << ik.pos + ik.length << "\t" << INDEL::get_index_label(ik.type) << "\t";
-                obs_os << iri.repeat_unit << "\t" << iri.ref_repeat_count << "\t";
-                obs_os << GENOTYPE_STATUS::label(obs.variantStatus) << "\t";
-                obs_os << ik.length << "\t" << nonrefHapIndex + 1 << "/" << nonrefHapCount << "\t";
-                obs_os << support[nonrefHapCount] << "\t";
-                obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
-
                 for (const auto& rec : overlappingRecords)
                 {
                     std::cout << rec << std::endl;
                 }
-            }
 #endif
+            }
+
 
             mergeIndelObservations(context,obs,indelObservations);
         }
@@ -607,7 +628,7 @@ process_pos_error_counts(
         indelCounts.addError(value.first,value.second,depth);
     }
 
-    // add all the backgrounds that haven't been covered already
+    // add all the contexts that haven't been covered already
     {
         unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
 

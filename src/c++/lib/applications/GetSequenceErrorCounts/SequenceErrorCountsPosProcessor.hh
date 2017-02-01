@@ -68,7 +68,9 @@ private:
         process_pos_error_counts(pos);
     }
 
-    void process_pos_error_counts(
+    /// enumerate all SNV and indel counts for this position
+    void
+    process_pos_error_counts(
         const pos_t pos);
 
     bool

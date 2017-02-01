@@ -308,7 +308,7 @@ struct IndelErrorContextObservation
 
     unsigned refCount;
     GENOTYPE_STATUS::genotype_t variantStatus;
-    /// note: can't get std::array to serialize correctly on clang
+    /// note: can't get std::array to serialize correctly on clang, so using boost::array instead
     boost::array<unsigned,INDEL_SIGNAL_TYPE::SIZE> signalCounts;
 };
 
