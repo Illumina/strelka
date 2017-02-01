@@ -52,7 +52,7 @@ The pattern counts are collected for many instances of the context and possibly 
 
 \subsubsection{Shared read filtration criteria}
 
-For both SNV and indels, reads are filtered from the error analysis if they
+For both SNVs and indels, reads are filtered from the error analysis if they
 
 \begin{enumerate}
 \item fail platform quality test
@@ -62,7 +62,14 @@ For both SNV and indels, reads are filtered from the error analysis if they
 \item input alignment contains more than 2 indels
 \end{enumerate}
 
-Additionally, reads are read in but not used to generate error counts, if their MAPQ score is less than 60. Note that lower MAPQ reads are still read in so that it is still possible to determine depth relative to chromosome mean for the purpose of filtering high-depth regions (details below).
+Additionally, reads are read in but not used to generate error counts if their MAPQ score is less than 60. Note that lower MAPQ reads are still read in so that it is still possible to determine depth relative to chromosome mean for the purpose of filtering high-depth regions (details below).
+
+\subsubsection{Shared observation filtration criteria}
+
+For both SNVs and indels, we attempt to filter out observations from read edges. To do so, observations at all read positions within 10 bases of the edge (cycles [1-10] and [91-100] in a 100 base read), are filtered out. This includes background (no-variant) and variant observations. For indels, the definition of the indel being "within" the excluded edge zone is: if at least one indel breakpoint falls between two excluded bases it is filtered. In the 100-base read example above a 1 base deletion at position 9 would be filtered, but a 1 base deletion at position 10 would not be.
+
+The rationale is: (1) for variants or other events which occur at high frequency, read edge artifacts are greatly reduced by Strelka's realignemnt process (2) for low-frequency noise, this is not the case -- an indel error occruing one time near the edge of read, is unlikely to be realigned to reflect the error -- this leads to systematic underestimation of indel error rates and overestimation of SNV error rates.
+
 
 \subsubsection{Producing sequence pattern counts for indels}
 
