@@ -644,19 +644,14 @@ process_pos_error_counts(
         // the variant status of any overlapping known variants,
         // regardless of whether the genotypes match
 
-        // always add hpol=1:
-        if (! indelObservations.count(context))
+        context.repeatCount = std::min(maxHpolLength,leftHpolSize);
+        // if the current bases matches the previous base, we're in the middle
+        // of a homopolymer run
+        if (refBase != _ref.get_base(pos - 1))
         {
-            indelCounts.addBackground(context,obs);
-        }
-
-        // also check for a more specific reference context
-        if (leftHpolSize>1)
-        {
-            context.repeatCount = std::min(maxHpolLength,leftHpolSize);
             if (! indelObservations.count(context))
             {
-                indelCounts.addBackground(context,obs);
+                indelCounts.addBackground(context, obs);
             }
         }
     }
