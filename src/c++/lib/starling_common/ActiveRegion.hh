@@ -151,6 +151,7 @@ private:
         const std::string& haploptypeSeq,
         const std::vector<align_id_t>& alignIdList,
         const unsigned totalReadCount,
+        const int haplotypeId,
         IndelBuffer& indelBuffer,
         RangeSet& polySites) const;
 };

@@ -456,6 +456,11 @@ struct LocusInfo : public PolymorphicObject
         return false;
     }
 
+    ActiveRegionId getActiveRegionId() const
+    {
+        return _activeRegionId;
+    }
+
 protected:
     void
     clear()
@@ -485,6 +490,7 @@ public:
 private:
     std::vector<LocusSampleInfo> _sampleInfo;
     unsigned _altAlleleCount = 0;
+    ActiveRegionId _activeRegionId = -1;
 
 protected:
     /// to sanity check input, locus must be specified by adding all alleles, and then adding all sample information, this bool enforces the allele->sample ordering

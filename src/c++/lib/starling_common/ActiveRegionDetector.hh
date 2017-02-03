@@ -77,10 +77,10 @@ public:
         _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
     {
         _isBeginning = true;
-        _activeRegionStartPos = 0;
+        _activeRegionStartPos = -1;
         _anchorPosFollowingPrevVariant = 1;
-        _prevAnchorPos = 0;
-        _prevVariantPos = 0;
+        _prevAnchorPos = -1;
+        _prevVariantPos = -1;
         _numVariants = 0;
     }
 

@@ -27,7 +27,7 @@
 #include "ActiveRegion.hh"
 
 // compile with this macro to get verbose output:
-//#define DEBUG_ACTIVE_REGION
+#define DEBUG_ACTIVE_REGION
 
 // adoptation of get_snp_hpol_size in blt_common
 static unsigned getHomoPolymerSize(const std::string& haplotype, const pos_t pos)
@@ -164,6 +164,7 @@ bool ActiveRegion::processHaplotypesWithCounting(IndelBuffer& indelBuffer, Range
     std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tCounting"<< std::endl;
 #endif
 
+    int haplotypeId(0);
     for (const auto& entry : haplotypeToAlignIdSet)
     {
         const std::string& haplotype(entry.first);
@@ -181,7 +182,7 @@ bool ActiveRegion::processHaplotypesWithCounting(IndelBuffer& indelBuffer, Range
 
         if (count >= secondLargestCount and haplotype != refStr)
         {
-            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, totalCount,
+            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, totalCount, haplotypeId++,
                                       indelBuffer, polySites);
         }
     }
@@ -350,6 +351,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
         }
     }
 
+    int haplotypeId(0);
     for (const auto& entry : haplotypeToAlignIdSet)
     {
         const std::string& haplotype(entry.first);
@@ -364,7 +366,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
 
         if (count >= secondLargestCount)
         {
-            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, totalCount,
+            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, totalCount, haplotypeId++,
                                       indelBuffer, polySites);
         }
     }
@@ -394,6 +396,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
     const std::string& haploptypeSeq,
     const std::vector<align_id_t>& alignIdList,
     const unsigned totalReadCount,
+    const int haplotypeId,
     IndelBuffer& indelBuffer,
     RangeSet& polySites) const
 {
@@ -526,6 +529,10 @@ void ActiveRegion::convertToPrimitiveAlleles(
 
             // determine whether this indel is candidate or private
             indelDataPtr->isConfirmedInActiveRegion = true;
+
+            indelDataPtr->activeRegionId = _posRange.begin_pos;
+            indelDataPtr->haplotypeIdSet.insert(haplotypeId);
+
             // TODO: perform candidacy test here
         }
     }

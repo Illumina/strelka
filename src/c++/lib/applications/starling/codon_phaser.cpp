@@ -44,63 +44,33 @@ process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr)
 {
     if (_opt.isUseCodonPhaser)
     {
-        // make one pass through to determine if this site will be buffered
-        bool isBufferSite(false);
-        const unsigned sampleCount(_sampleBlocks.size());
-        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        if (locusPtr->getActiveRegionId() != _activeRegionId)
         {
-            auto& block(_sampleBlocks[sampleIndex]);
-            if (is_phasable_locus(*locusPtr, sampleIndex))
-            {
-                // extending block with het call, update block_end position
-                isBufferSite=true;
-                if (! block.is_in_block())
-                {
-                    block.start = locusPtr->pos;
-                }
-                block.end = locusPtr->pos;
-                block.het_count++;
-
-            }
-            else if (block.is_in_block())
-            {
-                if ((locusPtr->pos - block.end + 1) < _opt.phasing_window)
-                {
-                    // extending block with non-het call based on the phasing range
-                    isBufferSite = true;
-                }
-                else
-                {
-                    // past phasing window, no phasing oppurtunity in this sample:
-                    block.clear();
-                }
-            }
+            
         }
 
-        if (isBufferSite)
-        {
-            _buffer.push_back(std::move(locusPtr));
-            for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
-            {
-                auto& block(_sampleBlocks[sampleIndex]);
-                if (block.het_count == 2)
-                {
-                    phaseRecords(sampleIndex);
-                    block.start = block.end;
-                    block.het_count = 1;
-                }
-            }
-            return;
-        }
-        else
-        {
-            output_buffer();
-        }
+
+//        LocusInfo& locus(*_buffer.at(blockStartOffset + editInfo.index));
+//        auto& sampleInfo(locus.getSample(sampleIndex));
+//        sampleInfo.phaseSetId = phaseSetId;
+//        sampleInfo.max_gt().setPhased(editInfo.isFlip);
     }
     _sink->process(std::move(locusPtr));
 }
 
+void
+Codon_phaser::
+output_buffer()
+{
+    if (not isBuffer()) return;
 
+    for (auto& siteLocus : _buffer)
+    {
+        _sink->process(std::move(siteLocus));
+    }
+
+    _buffer.clear();
+}
 
 void
 Codon_phaser::
@@ -114,99 +84,10 @@ process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr)
     _sink->process(std::move(locusPtr));
 }
 
-
-
-void
-Codon_phaser::
-flush_impl()
-{
-    if (_opt.isUseCodonPhaser)
-    {
-        output_buffer();
-    }
-}
-
-
-void
-Codon_phaser::
-output_buffer()
-{
-    if (not isBuffer()) return;
-
-    for (auto& siteLocus : _buffer)
-    {
-        _sink->process(std::move(siteLocus));
-    }
-
-    for (auto& sampleBlock : _sampleBlocks)
-    {
-        sampleBlock.clear();
-    }
-    _buffer.clear();
-}
-
-
-
-bool
-Codon_phaser::
-evaluatePhasingConsistency(
-    const BlockReadObservations& blockObs,
-    const std::array<std::pair<std::string,allele_observations>, 2>& max_alleles)
-{
-    // some ad hoc metrics to measure consistency with diploid model
-    const int allele_sum = max_alleles[0].second.count() + max_alleles[1].second.count();
-    const float max_allele_frac = (static_cast<float>(allele_sum))/blockObs.total_reads;
-    const float relative_allele_frac = static_cast<float>(max_alleles[1].second.count())/max_alleles[0].second.count();
-
-#ifdef DEBUG_CODON
-    log_os << "max alleles sum " << allele_sum << "\n";
-    log_os << "max alleles frac " << max_allele_frac << "\n";
-    log_os << "relative_allele_frac " << relative_allele_frac << "\n";
-#endif
-
-    if (max_allele_frac<0.8)
-    {
-#ifdef DEBUG_CODON
-        log_os << __FUNCTION__ << "; non-diploid\n";
-#endif
-        // non-diploid?
-        return false;
-    }
-
-    if (relative_allele_frac<0.5)
-    {
-        // allele imbalance?
-#ifdef DEBUG_CODON
-        log_os << __FUNCTION__ << "; allele imbalance\n";
-#endif
-        return false;
-    }
-
-    // sanity check that we have one het on each end of the block:
-    if (max_alleles[0].second.count() == 0) return false;
-    if (max_alleles[1].second.count() == 0) return false;
-
-    assert(! max_alleles[0].first.empty());
-    assert(max_alleles[0].first.size() == max_alleles[1].first.size());
-    if (max_alleles[0].first.front() == max_alleles[1].first.front()) return false;
-    if (max_alleles[0].first.back() == max_alleles[1].first.back()) return false;
-
-    return true;
-}
-
-
-struct PhaseEditInfo
-{
-    unsigned index;
-    bool isFlip;
-};
-
-
 void
 Codon_phaser::
 create_phased_record(
-    const unsigned sampleIndex,
-    const BlockReadObservations& blockObs)
+        const unsigned sampleIndex)
 {
     const auto& block(_sampleBlocks[sampleIndex]);
 
@@ -372,123 +253,12 @@ create_phased_record(
 }
 
 
-
-// makes the phased VCF record from the buffered sites list
 void
 Codon_phaser::
-phaseRecords(const unsigned sampleIndex)
+flush_impl()
 {
-    BlockReadObservations blockObs;
-    collect_pileup_evidence(sampleIndex, blockObs);
-    create_phased_record(sampleIndex, blockObs);
-}
-
-
-
-void
-Codon_phaser::
-collect_pileup_evidence(
-    const unsigned sampleIndex,
-    BlockReadObservations& blockObs)
-{
-    const auto& block(_sampleBlocks[sampleIndex]);
-    const pos_basecall_buffer& bc_buff(_basecallBuffers[sampleIndex]);
-
-    // build quick pileup index over phase range:
-    std::vector<const snp_pos_info*> spi;
-    for (int blockPos(block.start); blockPos<=block.end; ++blockPos)
+    if (_opt.isUseCodonPhaser)
     {
-        const snp_pos_info& pi(bc_buff.get_pos(blockPos));
-        spi.push_back(&pi);
+        output_buffer();
     }
-
-    const unsigned blockWidth(spi.size());
-    std::vector<int> callOffset(blockWidth,0);
-
-    /// traces individual read fragments from the pileup structure within the phasing block range
-    ///
-    /// Low detail summary:
-    /// If translating aligned reads into pileup columns is thought of as a sort of matrix
-    /// transpose, this function is trying to invert the transposition back to a (partial)
-    /// read. A naive pileup structure would not support this, but starling pileup information
-    /// has been supplemented with a few extra bits that allows this reconstruction.
-    ///
-    /// Given a start offset within the phasing block (startBlockIndex), return a tuple composed of:
-    ///     1. A bool indicating whether the read is good (ie. complete to the end of the
-    ///        phasing block and all basecalls pass filter) This return val is really only
-    ///        useful for startBlockIndex=0
-    ///     2. The reconstructed read fragment
-    ///
-    /// External calls should always provide startBlockIndex=0, other values of this argument
-    /// are used by internal recursive calls to the function. If the return bool indicates a
-    /// good read, this function effectively returns a single allele count for the phaser
-    ///
-    /// Important implementation detail: this function mutates the external vector 'callOffset'
-    /// over successive calls to progressively jump to the offset of the next read
-    ///
-    /// isFirstBaseCallFromMatchSeg is set for any basecall starting a continuous matching sequence in one read
-    /// isLastBaseCallFromMatchSeg is set for any basecall ending a continuous matching sequence in one read
-    // can't use auto for the return value here b/c of recursion:
-    std::function<std::pair<bool,std::string>(const unsigned)> tracePartialRead =
-        [&](const unsigned startBlockIndex)
-    {
-        bool isPass(true);
-        std::string readFrag;
-        for (unsigned blockIndex(startBlockIndex); blockIndex<blockWidth; ++blockIndex)
-        {
-            const snp_pos_info& pi(*spi[blockIndex]);
-            while (true)
-            {
-                const base_call& bc(pi.calls.at(callOffset[blockIndex]));
-                if ((! bc.isFirstBaseCallFromMatchSeg) || (blockIndex == startBlockIndex)) break;
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wuninitialized"
-                tracePartialRead(blockIndex);
-#pragma clang diagnostic pop
-            }
-            const base_call& bc(pi.calls.at(callOffset[blockIndex]));
-            // this represents the 'ordinary' advance of callOffset for a non-interrupted read segment:
-            callOffset[blockIndex]++;
-            if (bc.isLastBaseCallFromMatchSeg && ((blockIndex+1) < blockWidth))
-            {
-                isPass=false;
-                break;
-            }
-            if (bc.is_call_filter) isPass=false;
-            readFrag += id_to_base(bc.base_id);
-        }
-        return std::make_pair(isPass,readFrag);
-    };
-
-    // analyze as virtual reads -- to do so treat the first pileup column as a privileged reference point:
-    const snp_pos_info& beginPi(*spi[0]);
-    const unsigned n_calls(beginPi.calls.size());
-    for (unsigned callIndex(0); callIndex<n_calls; ++callIndex)
-    {
-        const bool is_fwd_strand(beginPi.calls[callIndex].is_fwd_strand);
-        std::pair<bool,std::string> result = tracePartialRead(0);
-#ifdef DEBUG_CODON
-        log_os << __FUNCTION__ << ": callOffset:";
-        for (const auto off : callOffset)
-        {
-            log_os << "\t" << off;
-        }
-        log_os << "\n";
-        log_os << __FUNCTION__ << ": callIndex, isPass, substr: " << callIndex << " " << result.first << " " << result.second << "\n";
-#endif
-
-        if (! result.first) continue;
-
-        if (is_fwd_strand)
-        {
-            blockObs.observations[result.second].fwd++;
-        }
-        else
-        {
-            blockObs.observations[result.second].rev++;
-        }
-        blockObs.total_reads++;
-    }
-
-    blockObs.total_reads_unused=n_calls-blockObs.total_reads;
 }

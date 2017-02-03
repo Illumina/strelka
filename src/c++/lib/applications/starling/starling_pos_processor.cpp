@@ -54,16 +54,8 @@ starling_pos_processor(
     // setup gvcf aggregator
     if (_opt.gvcf.is_gvcf_output())
     {
-        // this is hacky, but needed for the codon phaser, which we hope to eliminate ASAP, so
-        // this should be temporary:
-        std::vector<std::reference_wrapper<const pos_basecall_buffer>> basecallBuffers;
-        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
-        {
-            basecallBuffers.emplace_back(sample(sampleIndex).bc_buff);
-        }
-
         _gvcfer.reset(new gvcf_aggregator(
-                          _opt, _dopt, _streams, ref, _nocompress_regions, _targeted_regions, _callRegions, basecallBuffers));
+                          _opt, _dopt, _streams, ref, _nocompress_regions, _targeted_regions, _callRegions));
     }
 
     // setup indel buffer samples:
@@ -179,7 +171,7 @@ process_pos_snp(const pos_t pos)
         // if phaser has put a hold on buffer cleanup. This ensures that the phaser will be turned back off
         //
         // TODO: there must be a way to force correct usage into the phaser's API instead of requiring this brittle hack
-        const bool isSkippable(! (isForcedOutput || is_save_pileup_buffer()));
+        const bool isSkippable(!isForcedOutput);
 
         if (isSkippable)
         {

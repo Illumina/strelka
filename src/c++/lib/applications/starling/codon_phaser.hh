@@ -51,17 +51,17 @@ struct Codon_phaser : public variant_pipe_stage_base
 {
     Codon_phaser(
         const starling_options& opt,
-        const std::vector<std::reference_wrapper<const pos_basecall_buffer>>& initBasecallBuffers,
         std::shared_ptr<variant_pipe_stage_base> destination)
         : variant_pipe_stage_base(destination),
           _opt(opt),
-          _basecallBuffers(initBasecallBuffers),
-          _sampleBlocks(initBasecallBuffers.size())
+          _activeRegionId(-1)
     {}
 
     void process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr) override;
 
     void process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr) override;
+
+    void create_phased_record(const unsigned sampleIndex);
 
     bool
     isBuffer() const
@@ -82,16 +82,6 @@ private:
         return locus.getSample(sampleIndex).max_gt().isHet();
     }
 
-    pos_t
-    bufferStartPos() const
-    {
-        if (_buffer.empty()) return -1;
-        return _buffer.front()->pos;
-    }
-
-    /// trigger phasing cycle for a single sample+block
-    void phaseRecords(const unsigned sampleIndex);
-
     /// dump buffer contents to sink and clear object
     void output_buffer();
 
@@ -107,71 +97,8 @@ private:
         int rev=0;
     };
 
-    typedef std::map<std::string, allele_observations> allele_map_t;
-
-    /// holds short-term per-sample per-block read information used to conclude phasing status with block
-    struct BlockReadObservations
-    {
-        /// total used and unused reads spanning phasing region
-        int total_reads = 0;
-        int total_reads_unused = 0;
-
-        allele_map_t observations;
-    };
-
-    /// \returns false if block fails consistency checks for phasing
-    static
-    bool
-    evaluatePhasingConsistency(
-        const BlockReadObservations& blockObs,
-        const std::array<std::pair<std::string,allele_observations>, 2>& max_alleles);
-
-    /// fill in allele count info for once sample+block
-    void
-    collect_pileup_evidence(
-        const unsigned sampleIndex,
-        BlockReadObservations& blockObs);
-
-    /// update sample records with phasing information for one sample+block
-    void
-    create_phased_record(
-        const unsigned sampleIndex,
-        const BlockReadObservations& blockObs);
-
-    struct SampleBlockInfo
-    {
-        /// Are we currently in a phasing block?
-        bool is_in_block() const
-        {
-            return start != -1;
-        }
-
-        unsigned get_length() const
-        {
-            return (end-start+1);
-        }
-
-        void
-        clear()
-        {
-            start = -1;
-            end = -1;
-            het_count = 0;
-        }
-
-        /// position of the first and last added het site to block
-        pos_t start = -1;
-        pos_t end = -1;
-
-        /// total hets observed in block
-        unsigned het_count = 0;
-    };
-
     const starling_options& _opt;
 
-    /// pass along the relevant pileup buffer
-    const std::vector<std::reference_wrapper<const pos_basecall_buffer>> _basecallBuffers;
-
-    std::vector<SampleBlockInfo> _sampleBlocks;
+    ActiveRegionId _activeRegionId;
     std::vector<std::unique_ptr<GermlineSiteLocusInfo>> _buffer;
 };

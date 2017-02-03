@@ -45,17 +45,9 @@ public:
         const reference_contig_segment& ref,
         const RegionTracker& nocompressRegions,
         const RegionTracker& targetedRegions,
-        const RegionTracker& callRegions,
-        const std::vector<std::reference_wrapper<const pos_basecall_buffer>>& basecallBuffers);
+        const RegionTracker& callRegions);
 
     ~gvcf_aggregator();
-
-    /// provide the phasing block status, if true, pileup buffer is
-    /// preserved until the block is completed
-    bool is_phasing_block() const
-    {
-        return (_codonPhaserPtr && _codonPhaserPtr->isBuffer());
-    }
 
     void add_site(std::unique_ptr<GermlineSiteLocusInfo> si);
 

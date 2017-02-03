@@ -34,8 +34,7 @@ gvcf_aggregator(
     const reference_contig_segment& ref,
     const RegionTracker& nocompressRegions,
     const RegionTracker& targetedRegions,
-    const RegionTracker& callRegions,
-    const std::vector<std::reference_wrapper<const pos_basecall_buffer>>& basecallBuffers)
+    const RegionTracker& callRegions)
     : _scoringModels(opt, dopt.gvcf)
 {
     if (! opt.gvcf.is_gvcf_output())
@@ -46,7 +45,7 @@ gvcf_aggregator(
     if (opt.is_ploidy_prior)
     {
         std::shared_ptr<variant_pipe_stage_base> overlapper(new indel_overlapper(_scoringModels, ref, nextPipeStage));
-        _codonPhaserPtr.reset(new Codon_phaser(opt, basecallBuffers, overlapper));
+        _codonPhaserPtr.reset(new Codon_phaser(opt, overlapper));
         nextPipeStage = _codonPhaserPtr;
     }
     const bool isTargetedRegions(not opt.gvcf.targeted_regions_bedfile.empty());

@@ -339,6 +339,9 @@ public:
 
     bool isConfirmedInActiveRegion = false;
 
+    ActiveRegionId activeRegionId;
+    std::set<int> haplotypeIdSet;
+
     mutable status_t status;
 
 private:
