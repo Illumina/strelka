@@ -76,9 +76,12 @@ def main() :
     else:
         caldict = json.load(open(args.calibration))
 
-    model = evs.EVSModel.createFromFile(args.classifier)
-    model.save_json_strelka_format(args.output, args.varianttype, caldict["Coefficient"], caldict["Intercept"], args.threshold)
+    # Convert to linear domain for Strelka:
+    power = caldict["Coefficient"]
+    scale = 10**(-0.1*caldict["Intercept"])
 
+    model = evs.EVSModel.createFromFile(args.classifier)
+    model.save_json_strelka_format(args.output, args.varianttype, power, scale, args.threshold)
 
 if __name__ == '__main__':
     main()
