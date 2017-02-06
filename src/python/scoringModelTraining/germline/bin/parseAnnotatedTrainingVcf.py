@@ -170,9 +170,11 @@ def main() :
         qtype = queryVals[sampleBVTIndex]
         evsf = getKeyVal(word[VCFID.INFO],"EVSF")
         if evsf is None : 
+            # hap.py adds FN entries with no EVSF. Let hap.py decide whether these are indel or snv:
             evsf = ""
-            isSNV = (qtype==typeLabel(1))
+            isSNV = (qtype==typeLabel(True))
         else:
+            # For entries with EVSF, use presence/absence of CIGAR to decide if indel or snv. Discard variant if this is not consistent with the type assigned by hap.py:
             isSNV = (word[VCFID.INFO].find("CIGAR=") == -1)
             if (qtype != typeLabel(isSNV)) : continue
 
@@ -185,7 +187,7 @@ def main() :
         if label not in ("TP","FP","FN","UNK") :
             raise Exception("Variant label is not TP|FP|FN|UNK as expected:\n%s" % (line))
 
-        if qtype == None : 
+        if qtype is None : 
             raise Exception("No valid type in input line:\n%s" % (line))
 
         def outputStream(isSNV, isTrain) :
@@ -196,10 +198,13 @@ def main() :
                 if isSNV : return snv_test_outfp
                 else :     return indel_test_outfp
 
-        outputStream(isSNV, isTrain).write(",".join([word[VCFID.CHROM], word[VCFID.POS], qtype, evsf, label]) +"\n")
+        def writeVariant(outputlabel) :            
+            outputStream(isSNV, isTrain).write(",".join([word[VCFID.CHROM], word[VCFID.POS], qtype, evsf, outputlabel]) +"\n")
+
+        writeVariant(label)
         # Add an extra FN entry if a variant is truth FN,query FP:
         if (label == "FP" and truthVals[sampleBDIndex] == "FN") :
-            outputStream(isSNV, isTrain).write(",".join([word[VCFID.CHROM], word[VCFID.POS], qtype, evsf, "FN"]) +"\n")
+            writeVariant("FN")
 
 
 if __name__ == "__main__" :
