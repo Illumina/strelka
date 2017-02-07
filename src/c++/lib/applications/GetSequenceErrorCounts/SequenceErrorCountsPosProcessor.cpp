@@ -335,6 +335,8 @@ process_pos_error_counts(
     bool isSkipSNV(false);
     bool isSkipIndel(false);
 
+    const bool isLeftEndOfHpol(refBase != _ref.get_base(pos - 1));
+
     if (_excludedRegions.isIntersectRegion(pos))
     {
         // The workflow has the option to exclude some regions, so count the number of excluded sites.
@@ -342,12 +344,11 @@ process_pos_error_counts(
         baseCounts.addExcludedRegionSkip(baseContext);
         isSkipSNV=true;
 
-        IndelErrorContext indelContext;
-        indelCounts.addExcludedRegionSkip(indelContext);
-        const unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
-        if (leftHpolSize>1)
+        if (! isLeftEndOfHpol)
         {
-            indelContext.repeatCount = std::min(maxHpolLength,leftHpolSize);
+            IndelErrorContext indelContext;
+            const unsigned leftHpolSize(get_left_shifted_hpol_size(pos, _ref));
+            indelContext.repeatCount = std::min(maxHpolLength, leftHpolSize);
             indelCounts.addExcludedRegionSkip(indelContext);
         }
         isSkipIndel=true;
@@ -376,13 +377,11 @@ process_pos_error_counts(
             if ((estdepth+estdepth2) > _max_candidate_normal_sample_depth)
             {
                 // handle indels:
-                IndelErrorContext indelContext;
-                indelCounts.addDepthSkip(indelContext);
-
-                const unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
-                if (leftHpolSize>1)
+                if (! isLeftEndOfHpol)
                 {
-                    indelContext.repeatCount = std::min(maxHpolLength,leftHpolSize);
+                    IndelErrorContext indelContext;
+                    const unsigned leftHpolSize(get_left_shifted_hpol_size(pos, _ref));
+                    indelContext.repeatCount = std::min(maxHpolLength, leftHpolSize);
                     indelCounts.addDepthSkip(indelContext);
                 }
                 isSkipIndel=true;
@@ -453,6 +452,17 @@ process_pos_error_counts(
 
 
     if (isSkipIndel) return;
+
+    // If the current bases matches the previous base, we're in the middle
+    // of a homopolymer run. In the present scheme such positions are not counted for the purpose of indel
+    // error statistics.
+    //
+    // Note that we may want to in the future because non-homopolymer calls can occur within homopolymers, e.g.
+    // "AAAA -> AACAA", the question is, do we get a sufficiently good estimate of such activity from outside of
+    // homopolyers? Given that these are non-slippage errors, it seems reasonable to assume there's just one rate
+    // that covers these errors for now.
+    //
+    if (! isLeftEndOfHpol) return;
 
 
     // define groups of overlapping alleles to rank and then genotype.
@@ -633,26 +643,20 @@ process_pos_error_counts(
 
     // add all the contexts that haven't been covered already
     {
-        unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
-
+        const unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
         IndelErrorContext context;
         IndelBackgroundObservation obs;
         obs.depth = depth;
-        obs.assignKnownStatus(knownVariantRecords);
 
         // the assumption is that a background position should have
         // the variant status of any overlapping known variants,
         // regardless of whether the genotypes match
+        obs.assignKnownStatus(knownVariantRecords);
 
         context.repeatCount = std::min(maxHpolLength,leftHpolSize);
-        // if the current bases matches the previous base, we're in the middle
-        // of a homopolymer run
-        if (refBase != _ref.get_base(pos - 1))
+        if (! indelObservations.count(context))
         {
-            if (! indelObservations.count(context))
-            {
-                indelCounts.addBackground(context, obs);
-            }
+            indelCounts.addBackground(context, obs);
         }
     }
 }
