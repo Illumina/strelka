@@ -50,6 +50,8 @@ add_gvcf_filters(
     write_vcf_filter(os,get_label(IndelConflict),"Indel genotypes from two or more loci conflict in at least one sample");
     write_vcf_filter(os,get_label(SiteConflict),"Site is filtered due to an overlapping indel call filter");
 
+//    write_vcf_filter(os,get_label(PhasingConflict),"Phasing conflict");
+
     if (opt.is_min_gqx)
     {
         std::ostringstream oss;

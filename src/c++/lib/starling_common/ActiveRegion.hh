@@ -37,8 +37,9 @@
 #include <options/SmallAssemblerOptions.hh>
 #include <options/IterativeAssemblerOptions.hh>
 
-typedef std::vector<RangeMap<pos_t,unsigned char>> RangeSet;
+typedef std::vector<RangeMap<pos_t,uint8_t>> RangeSet;
 typedef std::map<std::string, std::vector<align_id_t>> HaplotypeToAlignIdSet;
+typedef uint8_t ComplexAlleleId;
 
 /// Represent all haplotypes found in the current active region
 class ActiveRegion
@@ -118,6 +119,49 @@ public:
         _alignIdSoftClipped.insert(alignId);
     }
 
+    static ComplexAlleleId getComplexAlleleId(const uint8_t rangeSetValue, const BASE_ID::index_t baseIndex)
+    {
+        switch (baseIndex)
+        {
+            case BASE_ID::A:
+                return (rangeSetValue & 0x03);
+            case BASE_ID::C:
+                return (rangeSetValue & 0x0c) >> 2;
+            case BASE_ID::G:
+                return (rangeSetValue & 0x30) >> 4;
+            case BASE_ID::T:
+                return (rangeSetValue & 0xc0) >> 6;
+            default:
+                assert(false);
+        }
+    }
+
+    static void addBaseId(
+            const ComplexAlleleId complexAlleleId,
+            char baseChar,
+            uint8_t& rangeSetValue)
+    {
+        assert (complexAlleleId == 1 || complexAlleleId == 2);
+        switch (baseChar)
+        {
+            case 'A':
+                rangeSetValue |= (0x01 << (complexAlleleId-1));
+                break;
+            case 'C':
+                rangeSetValue |= (0x04 << (complexAlleleId-1));
+                break;
+            case 'G':
+                rangeSetValue |= (0x10 << (complexAlleleId-1));
+                break;
+            case 'T':
+                rangeSetValue |= (0x40 << (complexAlleleId-1));
+                break;
+            default:
+                assert(false);
+        }
+    }
+
+
 private:
     pos_range _posRange;
     const reference_contig_segment& _ref;
@@ -144,14 +188,13 @@ private:
 
     /// Bypass indels within the region
     /// \param indelBuffer indel buffer
-    void bypassIndelsInBam(IndelBuffer& indelBuffer) const;
+    void bypassIndelsInBam(IndelBuffer& indelBuffer, unsigned sampleId) const;
 
     void convertToPrimitiveAlleles(
         const unsigned sampleId,
         const std::string& haploptypeSeq,
         const std::vector<align_id_t>& alignIdList,
-        const unsigned totalReadCount,
-        const int haplotypeId,
+        const uint8_t haplotypeId,
         IndelBuffer& indelBuffer,
         RangeSet& polySites) const;
 };

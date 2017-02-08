@@ -68,6 +68,11 @@ protected:
         throw std::bad_cast();
     }
 
+    template <class TDerived, class TBase>
+    inline bool isInstanceOf(TBase &Instance) {
+        return (dynamic_cast<TDerived *>(&Instance) != nullptr);
+    }
+
     std::shared_ptr<variant_pipe_stage_base> _sink;
 };
 

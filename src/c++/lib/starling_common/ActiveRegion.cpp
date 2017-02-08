@@ -27,52 +27,7 @@
 #include "ActiveRegion.hh"
 
 // compile with this macro to get verbose output:
-#define DEBUG_ACTIVE_REGION
-
-// adoptation of get_snp_hpol_size in blt_common
-static unsigned getHomoPolymerSize(const std::string& haplotype, const pos_t pos)
-{
-    // count upstream repeats:
-    bool isUpRepeat(false);
-    char upRepeat('N');
-    unsigned upSize(0);
-    for (pos_t i(pos-1); i>=0; i--)
-    {
-        if (isUpRepeat)
-        {
-            if (upRepeat != haplotype[i]) break;
-        }
-        else
-        {
-            upRepeat = haplotype[i];
-            isUpRepeat = true;
-            if (upRepeat == 'N') break;
-        }
-        upSize++;
-    }
-
-    // count downstream repeats:
-    bool isDownRepeat(false);
-    char downRepeat('N');
-    unsigned downSize(0);
-    const pos_t haplotypeLength((const pos_t) haplotype.length());
-    for (pos_t i(pos+1); i<haplotypeLength; i++)
-    {
-        if (isDownRepeat)
-        {
-            if (downRepeat != haplotype[i]) break;
-        }
-        else
-        {
-            downRepeat = haplotype[i];
-            isDownRepeat = true;
-            if (downRepeat == 'N') break;
-        }
-        downSize++;
-    }
-
-    return 1+((downRepeat==upRepeat) ? upSize+downSize : std::max(upSize,downSize) );
-}
+//#define DEBUG_ACTIVE_REGION
 
 static bool isHomoPolymer(const std::string& haplotype)
 {
@@ -103,7 +58,7 @@ void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySit
         {
             // both counting and assembly failed
             // bypass indels parsed from BAM
-            bypassIndelsInBam(indelBuffer);
+            bypassIndelsInBam(indelBuffer, sampleId);
         }
     }
 }
@@ -137,12 +92,10 @@ bool ActiveRegion::processHaplotypesWithCounting(IndelBuffer& indelBuffer, Range
     // determine threshold to select 2 haplotypes with the largest counts
     unsigned largestCount = MinHaplotypeCount;
     unsigned secondLargestCount = MinHaplotypeCount;
-    unsigned totalCount = 0;
     for (const auto& entry : haplotypeToAlignIdSet)
     {
         auto count = entry.second.size();
 
-        totalCount += count;
         if (count > secondLargestCount)
         {
             if (count > largestCount)
@@ -186,7 +139,7 @@ bool ActiveRegion::processHaplotypesWithCounting(IndelBuffer& indelBuffer, Range
         countThreshold = largestCount;
     else return true;
 
-    int haplotypeId(0);
+    uint8_t haplotypeId(0);
     for (const auto& entry : haplotypeToAlignIdSet)
     {
         const std::string& haplotype(entry.first);
@@ -204,7 +157,7 @@ bool ActiveRegion::processHaplotypesWithCounting(IndelBuffer& indelBuffer, Range
 
         if (count >= countThreshold and haplotype != refStr)
         {
-            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, totalCount, haplotypeId++,
+            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, haplotypeId++,
                                       indelBuffer, polySites);
         }
     }
@@ -354,11 +307,9 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
     // determine threshold to select 2 haplotypes with the largest counts
     unsigned largestCount = MinHaplotypeCount;
     unsigned secondLargestCount = largestCount;
-    unsigned totalCount = 0;
     for (const auto& entry : haplotypeToAlignIdSet)
     {
         auto count(entry.second.size());
-        totalCount += count;
         if (count > secondLargestCount)
         {
             if (count > largestCount)
@@ -395,7 +346,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
         countThreshold = largestCount;
     else return true;
 
-    int haplotypeId(0);
+    uint8_t haplotypeId(0);
     for (const auto& entry : haplotypeToAlignIdSet)
     {
         const std::string& haplotype(entry.first);
@@ -410,7 +361,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
 
         if (count >= countThreshold and haplotype != refStr)
         {
-            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, totalCount, haplotypeId++,
+            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, haplotypeId++,
                                       indelBuffer, polySites);
         }
     }
@@ -420,7 +371,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
 
 // simply bypass all indels in BAM
 // The original indel candidacy method will be used.
-void ActiveRegion::bypassIndelsInBam(IndelBuffer& indelBuffer) const
+void ActiveRegion::bypassIndelsInBam(IndelBuffer& indelBuffer, unsigned /*sampleId*/) const
 {
     auto it(indelBuffer.positionIterator(_posRange.begin_pos));
     const auto it_end(indelBuffer.positionIterator(_posRange.end_pos));
@@ -439,8 +390,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
     const unsigned sampleId,
     const std::string& haploptypeSeq,
     const std::vector<align_id_t>& alignIdList,
-    const unsigned totalReadCount,
-    const int haplotypeId,
+    const uint8_t haplotypeId,
     IndelBuffer& indelBuffer,
     RangeSet& polySites) const
 {
@@ -462,10 +412,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
         assert(false && "Unexpected alignment segment");
     }
 
-    std::vector<pos_t> mismatchPositions;
-    std::vector<pos_t> mismatchHaplotypePositions;
     unsigned numVariants(0);
-    bool isIndelExist(false);
     for (unsigned pathIndex(0); pathIndex<alignPath.size(); ++pathIndex)
     {
         const ALIGNPATH::path_segment& pathSegment(alignPath[pathIndex]);
@@ -481,9 +428,12 @@ void ActiveRegion::convertToPrimitiveAlleles(
         case ALIGNPATH::SEQ_MISMATCH:
             for (unsigned i(0); i<segmentLength; ++i)
             {
-                if (_posRange.is_pos_intersect(referencePos))
-                    mismatchPositions.push_back(referencePos);
-                mismatchHaplotypePositions.push_back(haplotypePosOffset);
+                if (not polySites[sampleId].isKeyPresent(referencePos))
+                    polySites[sampleId].getRef(referencePos) = 0;
+
+                ComplexAlleleId complexAlleleId(haplotypeId+1);
+                addBaseId(complexAlleleId, haploptypeSeq[haplotypePosOffset], polySites[sampleId].getRef(referencePos));
+
                 ++referencePos;
                 ++haplotypePosOffset;
             }
@@ -514,7 +464,6 @@ void ActiveRegion::convertToPrimitiveAlleles(
                 {
                     indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(insertPos, INDEL::INDEL, 0, insertSeq.c_str()));
                     ++numVariants;
-                    isIndelExist = true;
                 }
             }
             haplotypePosOffset += segmentLength;
@@ -543,7 +492,6 @@ void ActiveRegion::convertToPrimitiveAlleles(
                 {
                     indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(deletePos, INDEL::INDEL, segmentLength));
                     ++numVariants;
-                    isIndelExist = true;
                 }
             }
             referencePos += segmentLength;
@@ -574,29 +522,9 @@ void ActiveRegion::convertToPrimitiveAlleles(
             // determine whether this indel is candidate or private
             indelDataPtr->isConfirmedInActiveRegion = true;
 
-            indelDataPtr->activeRegionId = _posRange.begin_pos;
-            indelDataPtr->haplotypeIdSet.insert(sampleId*2+haplotypeId);    // 2: ploidy
+            indelDataPtr->getSampleData(sampleId).complexAlleleIndex += (haplotypeId+1);
 
             // TODO: perform candidacy test here
         }
-    }
-
-    if (mismatchPositions.empty()) return;
-
-    // relax MMDF
-    auto readCount = alignIdList.size();
-    bool isLowDepth = (readCount < HighDepth) and (readCount < (unsigned)(totalReadCount*HaplotypeFrequencyThreshold));
-    if (numVariants == 1 and isLowDepth)
-        return;
-
-    for (unsigned i(0); i<mismatchPositions.size(); ++i)
-    {
-        bool isLongHpol = getHomoPolymerSize(haploptypeSeq, mismatchHaplotypePositions[i]) > MaxSNVHpolSize;
-
-        // for SNV only haplotypes, ignore if applying the SNV makes a long homo polymer
-        if (!isIndelExist and isLongHpol) continue;
-
-        // register MMDF relax site
-        polySites[sampleId].getRef(mismatchPositions[i]) = 1;
     }
 }

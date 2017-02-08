@@ -182,6 +182,18 @@ struct VcfGenotype
     }
 
     void
+    setAllele0ComplexAlleleId(uint8_t complexAlleleId)
+    {
+        _allele0ComplexAlleleId = complexAlleleId;
+    }
+
+    void
+    setAllele1ComplexAlleleId(uint8_t complexAlleleId)
+    {
+        _allele1ComplexAlleleId = complexAlleleId;
+    }
+
+    void
     setPhased(
         const bool isFlip = false)
     {
@@ -226,6 +238,25 @@ struct VcfGenotype
         return _allele1Index;
     }
 
+    uint8_t
+    getAllele0ComplexAlleleId() const
+    {
+        assert(_ploidy >= 1);
+        return _allele0ComplexAlleleId;
+    }
+
+    uint8_t
+    getAllele1ComplexAlleleId() const
+    {
+        assert(_ploidy >= 2);
+        return _allele1ComplexAlleleId;
+    }
+
+    bool isConflict() const
+    {
+        return isHet() and (_allele0ComplexAlleleId == _allele1ComplexAlleleId);
+    }
+
     int
     getPloidy() const
     {
@@ -245,6 +276,9 @@ struct VcfGenotype
         _allele0Index = 0;
         _allele1Index = 0;
 
+        _allele0ComplexAlleleId = 0;
+        _allele1ComplexAlleleId = 0;
+
         _isPhased = false;
     }
 
@@ -263,6 +297,9 @@ private:
     int _ploidy = 2;
     uint8_t _allele0Index = 0;
     uint8_t _allele1Index = 0;
+
+    uint8_t _allele0ComplexAlleleId = 0;
+    uint8_t _allele1ComplexAlleleId = 0;
 
     bool _isPhased = false;
 };

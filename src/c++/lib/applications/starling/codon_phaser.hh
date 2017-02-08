@@ -33,22 +33,14 @@
 #include "starling_common/pos_basecall_buffer.hh"
 
 #include <iosfwd>
+#include <iostream>
 
 typedef std::vector<std::unique_ptr<GermlineSiteLocusInfo>> SiteLocusBuffer;
 typedef std::vector<std::unique_ptr<GermlineIndelLocusInfo>> IndelLocusBuffer;
+typedef std::vector<std::unique_ptr<LocusInfo>> LocusBuffer;
 
-/// short-range phasing utility for het-snps
-///
-/// requires extended preservation of the pileup buffer so that it
-/// can go back and recover phase information form a candidate phasing block
-///
-/// \TODO generally recognized development direction is to record some kind of
-///       read id in SNP pileups and indel support info so that we can go back
-///       and phase from the hets without having to keep the whole read buffer (and so
-///       read filtration, etc. is an exact match to the pileup).
-///       Will this be worth doing before we transition to a haplotype assembly model
-///       for short-range phasing?
-///
+/// short-range phasing utility for het-snvs and het-indels
+
 struct Codon_phaser : public variant_pipe_stage_base
 {
     Codon_phaser(
@@ -59,54 +51,30 @@ struct Codon_phaser : public variant_pipe_stage_base
           _opt(opt),
           _sampleCount(sampleCount),
           _activeRegionId(-1),
-          _sampleSiteLocusBuffer(sampleCount),
-          _sampleIndelLocusBuffer(sampleCount)
+          _sampleLocusBuffer(sampleCount)
     {}
 
     void process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr) override;
 
     void process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr) override;
 
-    void create_phased_record(const unsigned sampleIndex);
-
     bool
     isBuffer(unsigned sampleId) const
     {
-        return !(_sampleSiteLocusBuffer[sampleId].empty() and _sampleIndelLocusBuffer[sampleId].empty());
+        return !(_sampleLocusBuffer[sampleId].empty());
     }
 
 private:
     void flush_impl() override;
 
-    static
-    bool
-    isPhasableLocus(
-            const LocusInfo &locus,
-            const unsigned sampleIndex)
-    {
-        if (not locus.isVariantLocus()) return false;
-        return locus.getSample(sampleIndex).max_gt().isHet();
-    }
+    template <class T>
+    void processLocus(std::unique_ptr<T> locusPtr);
 
-    void addSiteLocusToBuffer(std::unique_ptr<GermlineSiteLocusInfo> locusPtr)
+    void addLocusToBuffer(std::unique_ptr<LocusInfo> locusPtr)
     {
         for (unsigned sampleId(0); sampleId < _sampleCount; ++sampleId)
         {
-            if (isPhasableLocus(*locusPtr, sampleId))
-            {
-                _sampleSiteLocusBuffer[sampleId].push_back(std::move(locusPtr));
-            }
-        }
-    }
-
-    void addIndelLocusToBuffer(std::unique_ptr<GermlineIndelLocusInfo> locusPtr)
-    {
-        for (unsigned sampleId(0); sampleId < _sampleCount; ++sampleId)
-        {
-            if (isPhasableLocus(*locusPtr, sampleId))
-            {
-                _sampleIndelLocusBuffer[sampleId].push_back(std::move(locusPtr));
-            }
+            _sampleLocusBuffer[sampleId].push_back(std::move(locusPtr));
         }
     }
 
@@ -119,6 +87,5 @@ private:
     const unsigned _sampleCount;
 
     ActiveRegionId _activeRegionId;
-    std::vector<SiteLocusBuffer> _sampleSiteLocusBuffer;
-    std::vector<IndelLocusBuffer> _sampleIndelLocusBuffer;
+    std::vector<LocusBuffer> _sampleLocusBuffer;
 };

@@ -25,13 +25,18 @@
 #include "ActiveRegionDetector.hh"
 
 void
-ActiveRegionDetector::updateStartPosition(const pos_t pos)
+ActiveRegionDetector::clearReadBuffer(const pos_t pos)
+{
+    _readBuffer.clearPos(pos);
+}
+
+void
+ActiveRegionDetector::clearPolySites(const pos_t pos)
 {
     for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
     {
         _polySites[sampleId].eraseTo(pos);
     }
-    _readBuffer.clearPos(pos);
 }
 
 void
@@ -44,6 +49,9 @@ ActiveRegionDetector::clearPosToActiveRegionMap(const pos_t pos)
 void
 ActiveRegionDetector::setPosToActiveRegionIdMap(pos_range activeRegionRange)
 {
+    if (activeRegionRange.size() > ActiveRegion::MaxRefSpanToPerformAssembly)
+        return;
+
     ActiveRegionId activeRegionId(activeRegionRange.begin_pos);
     for (pos_t pos(activeRegionRange.begin_pos); pos<activeRegionRange.end_pos; ++pos)
     {
@@ -102,6 +110,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
             pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
             _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
                                      _aligner, _readBuffer);
+
             setPosToActiveRegionIdMap(activeRegionRange);
 
             // we have no existing acive region at this point
@@ -167,4 +176,11 @@ void ActiveRegionDetector::clear()
 bool ActiveRegionDetector::isPolymorphicSite(const unsigned sampleId, const pos_t pos) const
 {
     return _polySites[sampleId].isKeyPresent(pos);
+}
+
+uint8_t ActiveRegionDetector::getComplexAlleleIndex(const unsigned sampleId, const pos_t pos, const BASE_ID::index_t baseIndex) const
+{
+    if (not isPolymorphicSite(sampleId, pos)) return 0; // reference (complex allele index 0)
+    auto value(_polySites[sampleId].getConstRef(pos));
+    return ActiveRegion::getComplexAlleleId(value, baseIndex);
 }

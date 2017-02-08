@@ -359,6 +359,7 @@ updateSnvLocusWithSampleInfo(
     const unsigned groupLocusPloidy,
     const diploid_genotype& dgt,
     const unsigned sampleIndex,
+    const ActiveRegionDetector& activeRegionDetector,
     GermlineDiploidSiteLocusInfo& locus,
     double& homRefLogProb)
 {
@@ -416,7 +417,7 @@ updateSnvLocusWithSampleInfo(
             auto alleleIndexToBaseIndex = [&](const uint8_t alleleIndex)
             {
                 if (alleleIndex == 0) return locus.refBaseIndex;
-                return static_cast<uint8_t>(siteAlleles[alleleIndex - 1].baseIndex);
+                return static_cast<uint8_t>(siteAlleles[alleleIndex-1].baseIndex);
             };
 
             // number of PL fields required:
@@ -487,6 +488,20 @@ updateSnvLocusWithSampleInfo(
     }
 
     updateSiteSampleInfo(opt, sampleIndex, cpi, isOverlappingHomAltDeletion, dgt.strand_bias, locus);
+
+    // set complex allele ids
+    auto& maxGt = sampleInfo.max_gt();
+    if (maxGt.getPloidy() == 2)
+    {
+        // diploid
+        auto allele0Index(maxGt.getAllele0Index());
+        auto allele1Index(maxGt.getAllele1Index());
+
+        if (allele0Index > 0)
+            maxGt.setAllele0ComplexAlleleId(activeRegionDetector.getComplexAlleleIndex(sampleIndex, locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex));
+        if (allele1Index > 0)
+            maxGt.setAllele1ComplexAlleleId(activeRegionDetector.getComplexAlleleIndex(sampleIndex, locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex));
+    }
 }
 
 
@@ -671,7 +686,7 @@ process_pos_snp_digt(
     {
         updateSnvLocusWithSampleInfo(
             _opt, sample(sampleIndex), callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex],
-            allDgt[sampleIndex], sampleIndex, *locusPtr, homRefLogProb);
+            allDgt[sampleIndex], sampleIndex, *_active_region_detector, *locusPtr, homRefLogProb);
     }
 
     // add sample-independent info:
@@ -1405,6 +1420,20 @@ updateIndelLocusWithSampleInfo(
 
     // set indelSampleInfo
     updateIndelSampleInfo(opt, dopt, alleleGroup, sampleIndex, basecallBuffer, locus);
+
+    // set complex allele ids
+    auto& maxGt = sampleInfo.max_gt();
+    if (maxGt.getPloidy() == 2)
+    {
+        // diploid
+        auto allele0Index(maxGt.getAllele0Index());
+        auto allele1Index(maxGt.getAllele1Index());
+
+        if (allele0Index > 0)
+            maxGt.setAllele0ComplexAlleleId(alleleGroup.data(allele0Index-1).getSampleData(sampleIndex).complexAlleleIndex);
+        if (allele1Index > 0)
+            maxGt.setAllele1ComplexAlleleId(alleleGroup.data(allele1Index-1).getSampleData(sampleIndex).complexAlleleIndex);
+    }
 }
 
 

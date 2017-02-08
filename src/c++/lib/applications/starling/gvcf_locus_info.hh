@@ -797,13 +797,6 @@ struct GermlineSiteSampleInfo
         return (isUsedReadCoverage() or (n_unused_calls != 0));
     }
 
-    uint8_t
-    getHaplotypeIds() const
-    {
-        return haplotypeId;
-    }
-
-
     void
     clear()
     {
@@ -841,9 +834,6 @@ struct GermlineSiteSampleInfo
 
     // per sample SNV bias metric:
     double strandBias = 0;
-
-    // 0: (0,0), 1: (0,1), 2: (0,2), 3: (1,1), 4: (1,2), 5: (2,2)
-    uint8_t haplotypeId;
 };
 
 

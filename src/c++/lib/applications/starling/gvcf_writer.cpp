@@ -888,6 +888,22 @@ write_indel_record_instance(
         //FORMAT
         os << "GT:GQ:GQX:DPI:AD:ADF:ADR:FT:PL";
 
+        bool isAnyPhased(false);
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        {
+            const auto& sampleInfo(locus.getSample(sampleIndex));
+            if (sampleInfo.phaseSetId >= 0)
+            {
+                isAnyPhased = true;
+                break;
+            }
+        }
+
+        if (isAnyPhased)
+        {
+            os << ":PS";
+        }
+
         //SAMPLE
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
@@ -928,6 +944,20 @@ write_indel_record_instance(
                     os << ',';
                 }
                 os << std::min(pls, maxPL);
+            }
+
+            // PS
+            if (isAnyPhased)
+            {
+                os << ':';
+                if (sampleInfo.phaseSetId < 0)
+                {
+                    os << '.';
+                }
+                else
+                {
+                    os << sampleInfo.phaseSetId;
+                }
             }
         }
     }

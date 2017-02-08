@@ -39,6 +39,7 @@
 #include <string>
 #include <set>
 #include <vector>
+#include <htsapi/vcf_util.hh>
 
 
 /// represents the data associated with a single indel observation:
@@ -234,6 +235,8 @@ struct IndelSampleData
     // to be entered into the scores list
     evidence_t suboverlap_tier1_read_ids;
     evidence_t suboverlap_tier2_read_ids;
+
+    uint8_t complexAlleleIndex;
 };
 
 
@@ -338,9 +341,6 @@ public:
     bool isForcedOutput = false;
 
     bool isConfirmedInActiveRegion = false;
-
-    ActiveRegionId activeRegionId;
-    std::set<int> haplotypeIdSet;
 
     mutable status_t status;
 

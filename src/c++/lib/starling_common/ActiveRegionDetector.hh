@@ -96,9 +96,9 @@ public:
         return _posToActiveRegionIdMap.getConstRefDefault(pos, (ActiveRegionId)(-1));
     }
 
-    /// update the active region buffer start position
-    /// \param pos reference position
-    void updateStartPosition(const pos_t pos);
+    void clearReadBuffer(const pos_t pos);
+
+    void clearPolySites(const pos_t pos);
 
     /// update the active region end position. Creates an active region if needed.
     /// \param pos reference position
@@ -109,6 +109,13 @@ public:
     /// \param pos reference position
     /// \return true if pos is a polymorphic site; false otherwise.
     bool isPolymorphicSite(const unsigned sampleId, const pos_t pos) const;
+
+    /// Checks if mismatches occur consistently at position pos
+    /// \param sampleId sample id
+    /// \param pos reference position
+    /// \param baseIndex alt base id
+    /// \return complex allele id
+    uint8_t getComplexAlleleIndex(const unsigned sampleId, const pos_t pos, const BASE_ID::index_t baseIndex) const;
 
     /// clear active region detector
     void clear();
