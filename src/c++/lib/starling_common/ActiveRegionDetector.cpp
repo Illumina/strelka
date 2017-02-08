@@ -35,6 +35,25 @@ ActiveRegionDetector::updateStartPosition(const pos_t pos)
 }
 
 void
+ActiveRegionDetector::clearPosToActiveRegionMap(const pos_t pos)
+{
+    _posToActiveRegionIdMap.eraseTo(pos);
+}
+
+
+void
+ActiveRegionDetector::setPosToActiveRegionIdMap(pos_range activeRegionRange)
+{
+    ActiveRegionId activeRegionId(activeRegionRange.begin_pos);
+    for (pos_t pos(activeRegionRange.begin_pos); pos<activeRegionRange.end_pos; ++pos)
+    {
+        _posToActiveRegionIdMap.getRef(pos) = activeRegionId;
+    }
+}
+
+
+
+void
 ActiveRegionDetector::processActiveRegion()
 {
     if (not _activeRegions.empty())
@@ -43,6 +62,7 @@ ActiveRegionDetector::processActiveRegion()
         _activeRegions.pop_front();
     }
 }
+
 
 void
 ActiveRegionDetector::updateEndPosition(const pos_t pos)
@@ -81,7 +101,9 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
             // close the existing active region
             pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
             _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
-                                        _aligner, _readBuffer);
+                                     _aligner, _readBuffer);
+            setPosToActiveRegionIdMap(activeRegionRange);
+
             // we have no existing acive region at this point
             _numVariants = 0;
             _activeRegionStartPos = 0;
@@ -131,6 +153,7 @@ void ActiveRegionDetector::clear()
         pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
         _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
                                     _aligner, _readBuffer);
+        setPosToActiveRegionIdMap(activeRegionRange);
     }
 
     processActiveRegion();

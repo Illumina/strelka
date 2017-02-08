@@ -91,6 +91,11 @@ public:
         return _readBuffer;
     }
 
+    ActiveRegionId getActiveRegionId(pos_t pos) const
+    {
+        return _posToActiveRegionIdMap.getConstRefDefault(pos, (ActiveRegionId)(-1));
+    }
+
     /// update the active region buffer start position
     /// \param pos reference position
     void updateStartPosition(const pos_t pos);
@@ -107,6 +112,8 @@ public:
 
     /// clear active region detector
     void clear();
+
+    void clearPosToActiveRegionMap(const pos_t pos);
 
 private:
     enum VariantType
@@ -142,6 +149,9 @@ private:
     // aligner to be used in active regions
     GlobalAligner<int> _aligner;
 
+    RangeMap<pos_t, ActiveRegionId> _posToActiveRegionIdMap;
+
+    void setPosToActiveRegionIdMap(pos_range activeRegionRange);
     void processActiveRegion();
 };
 

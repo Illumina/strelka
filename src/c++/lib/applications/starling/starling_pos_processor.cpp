@@ -55,7 +55,7 @@ starling_pos_processor(
     if (_opt.gvcf.is_gvcf_output())
     {
         _gvcfer.reset(new gvcf_aggregator(
-                          _opt, _dopt, _streams, ref, _nocompress_regions, _targeted_regions, _callRegions));
+                          _opt, _dopt, _streams, ref, _nocompress_regions, _targeted_regions, _callRegions, sampleCount));
     }
 
     // setup indel buffer samples:
@@ -656,7 +656,9 @@ process_pos_snp_digt(
     // -----------------------------------------------
     // create site locus object:
     //
-    std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, pos, refBaseIndex, isForcedOutput));
+    auto activeRegionId(_active_region_detector->getActiveRegionId(pos));
+    std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, activeRegionId, pos, refBaseIndex, isForcedOutput));
+
 
     // add all candidate alternate alleles:
     for (const auto baseId : altAlleles)
@@ -1520,6 +1522,8 @@ process_pos_indel_digt(const pos_t pos)
     bool isReportedLocus(false);
     OrthogonalVariantAlleleCandidateGroup topVariantAlleleGroup;
 
+    auto activeRegionId(_active_region_detector->getActiveRegionId(pos));
+
     // now check to see if we can call variant alleles at this position, we may have already found this positions alleles while
     // analyzing a locus positioned downstream. If so, skip ahead to handle the forced output alleles only:
     if (_variantLocusAlreadyOutputToPos <= pos)
@@ -1562,7 +1566,7 @@ process_pos_indel_digt(const pos_t pos)
 
             // setup new indel locus:
             std::unique_ptr<GermlineIndelLocusInfo> locusPtr(
-                new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount));
+                new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount, activeRegionId));
 
             // cycle through variant alleles and add them to locus (the locus interface requires that this is done first):
             addIndelAllelesToLocus(topVariantAlleleGroup, isForcedOutput, *locusPtr);
@@ -1671,7 +1675,7 @@ process_pos_indel_digt(const pos_t pos)
              forcedOutputAlleleIndex < forcedOutputAlleleCount; ++forcedOutputAlleleIndex)
         {
             // setup new indel locus:
-            std::unique_ptr<GermlineIndelLocusInfo> locusPtr(new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount));
+            std::unique_ptr<GermlineIndelLocusInfo> locusPtr(new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount, activeRegionId));
 
             // fake an allele group with only the forced output allele so that we can output using
             // standard data structures

@@ -955,6 +955,9 @@ process_pos(const int stage_no,
             }
         }
 
+        if (is_active_region_detector_enabled())
+            getActiveRegionDetector().clearPosToActiveRegionMap(pos);
+
         // everything else:
         post_align_clear_pos(pos);
     }

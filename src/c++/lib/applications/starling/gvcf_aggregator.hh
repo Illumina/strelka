@@ -45,7 +45,8 @@ public:
         const reference_contig_segment& ref,
         const RegionTracker& nocompressRegions,
         const RegionTracker& targetedRegions,
-        const RegionTracker& callRegions);
+        const RegionTracker& callRegions
+        const unsigned sampleCount);
 
     ~gvcf_aggregator();
 

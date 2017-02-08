@@ -34,6 +34,8 @@
 
 #include <iosfwd>
 
+typedef std::vector<std::unique_ptr<GermlineSiteLocusInfo>> SiteLocusBuffer;
+typedef std::vector<std::unique_ptr<GermlineIndelLocusInfo>> IndelLocusBuffer;
 
 /// short-range phasing utility for het-snps
 ///
@@ -51,10 +53,14 @@ struct Codon_phaser : public variant_pipe_stage_base
 {
     Codon_phaser(
         const starling_options& opt,
+        const unsigned sampleCount,
         std::shared_ptr<variant_pipe_stage_base> destination)
         : variant_pipe_stage_base(destination),
           _opt(opt),
-          _activeRegionId(-1)
+          _sampleCount(sampleCount),
+          _activeRegionId(-1),
+          _sampleSiteLocusBuffer(sampleCount),
+          _sampleIndelLocusBuffer(sampleCount)
     {}
 
     void process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr) override;
@@ -64,9 +70,9 @@ struct Codon_phaser : public variant_pipe_stage_base
     void create_phased_record(const unsigned sampleIndex);
 
     bool
-    isBuffer() const
+    isBuffer(unsigned sampleId) const
     {
-        return (not _buffer.empty());
+        return !(_sampleSiteLocusBuffer[sampleId].empty() and _sampleIndelLocusBuffer[sampleId].empty());
     }
 
 private:
@@ -74,31 +80,45 @@ private:
 
     static
     bool
-    is_phasable_locus(
-        const LocusInfo& locus,
-        const unsigned sampleIndex)
+    isPhasableLocus(
+            const LocusInfo &locus,
+            const unsigned sampleIndex)
     {
         if (not locus.isVariantLocus()) return false;
         return locus.getSample(sampleIndex).max_gt().isHet();
     }
 
-    /// dump buffer contents to sink and clear object
-    void output_buffer();
-
-    struct allele_observations
+    void addSiteLocusToBuffer(std::unique_ptr<GermlineSiteLocusInfo> locusPtr)
     {
-        int
-        count() const
+        for (unsigned sampleId(0); sampleId < _sampleCount; ++sampleId)
         {
-            return (fwd+rev);
+            if (isPhasableLocus(*locusPtr, sampleId))
+            {
+                _sampleSiteLocusBuffer[sampleId].push_back(std::move(locusPtr));
+            }
         }
+    }
 
-        int fwd=0;
-        int rev=0;
-    };
+    void addIndelLocusToBuffer(std::unique_ptr<GermlineIndelLocusInfo> locusPtr)
+    {
+        for (unsigned sampleId(0); sampleId < _sampleCount; ++sampleId)
+        {
+            if (isPhasableLocus(*locusPtr, sampleId))
+            {
+                _sampleIndelLocusBuffer[sampleId].push_back(std::move(locusPtr));
+            }
+        }
+    }
+
+    void outputBuffer();
+
+    /// dump buffer contents to sink and clear object
+    void outputBuffer(unsigned sampleId);
 
     const starling_options& _opt;
+    const unsigned _sampleCount;
 
     ActiveRegionId _activeRegionId;
-    std::vector<std::unique_ptr<GermlineSiteLocusInfo>> _buffer;
+    std::vector<SiteLocusBuffer> _sampleSiteLocusBuffer;
+    std::vector<IndelLocusBuffer> _sampleIndelLocusBuffer;
 };

@@ -406,9 +406,12 @@ struct LocusInfo : public PolymorphicObject
     explicit
     LocusInfo(
         const unsigned sampleCount,
-        const pos_t initPos = 0)
+        const ActiveRegionId activeRegionId = -1,
+        const pos_t initPos = 0
+        )
         : pos(initPos),
-          _sampleInfo(sampleCount)
+          _sampleInfo(sampleCount),
+          _activeRegionId(activeRegionId)
     {}
 
     unsigned
@@ -536,8 +539,9 @@ struct GermlineIndelLocusInfo : public LocusInfo
 {
     explicit
     GermlineIndelLocusInfo(
-        const unsigned sampleCount)
-        : LocusInfo(sampleCount),
+        const unsigned sampleCount,
+        const ActiveRegionId activeRegionId)
+        : LocusInfo(sampleCount, activeRegionId),
           _indelSampleInfo(sampleCount), _commonPrefixLength(0)
     {}
 
@@ -684,8 +688,9 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
 {
     GermlineDiploidIndelLocusInfo(
         const gvcf_deriv_options& gvcfDerivedOptions,
-        const unsigned sampleCount)
-        : GermlineIndelLocusInfo(sampleCount)
+        const unsigned sampleCount,
+        const ActiveRegionId activeRegionId)
+        : GermlineIndelLocusInfo(sampleCount, activeRegionId)
         , evsFeatures(gvcfDerivedOptions.indelFeatureSet)
         , evsDevelopmentFeatures(gvcfDerivedOptions.indelDevelopmentFeatureSet)
     {}
@@ -722,7 +727,7 @@ struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
     explicit
     GermlineContinuousIndelLocusInfo(
         const unsigned sampleCount)
-        : GermlineIndelLocusInfo(sampleCount)
+        : GermlineIndelLocusInfo(sampleCount, -1)
     {}
 };
 
@@ -792,6 +797,13 @@ struct GermlineSiteSampleInfo
         return (isUsedReadCoverage() or (n_unused_calls != 0));
     }
 
+    uint8_t
+    getHaplotypeIds() const
+    {
+        return haplotypeId;
+    }
+
+
     void
     clear()
     {
@@ -806,6 +818,7 @@ struct GermlineSiteSampleInfo
         avgBaseQ = 0;
         rawPos = 0;
         strandBias = 0;
+
     }
 
     /// count of reads which have a most likely alignment containing a deletion at the site in question
@@ -828,6 +841,9 @@ struct GermlineSiteSampleInfo
 
     // per sample SNV bias metric:
     double strandBias = 0;
+
+    // 0: (0,0), 1: (0,1), 2: (0,2), 3: (1,1), 4: (1,2), 5: (2,2)
+    uint8_t haplotypeId;
 };
 
 
@@ -839,10 +855,11 @@ struct GermlineSiteLocusInfo : public LocusInfo
 
     GermlineSiteLocusInfo(
         const unsigned sampleCount,
+        const ActiveRegionId activeRegionId,
         const pos_t initPos,
         const uint8_t initRefBaseIndex,
         const bool initIsForcedOutput = false)
-        : base_t(sampleCount, initPos),
+        : base_t(sampleCount, activeRegionId, initPos),
           refBaseIndex(initRefBaseIndex),
           _siteSampleInfo(sampleCount)
     {
@@ -981,10 +998,11 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     GermlineDiploidSiteLocusInfo(
         const gvcf_deriv_options& gvcfDerivedOptions,
         const unsigned sampleCount,
+        const ActiveRegionId activeRegionId,
         const pos_t init_pos,
         const uint8_t initRefBaseIndex,
         const bool is_forced_output = false)
-        : GermlineSiteLocusInfo(sampleCount, init_pos, initRefBaseIndex, is_forced_output),
+        : GermlineSiteLocusInfo(sampleCount, activeRegionId, init_pos, initRefBaseIndex, is_forced_output),
           evsFeatures(gvcfDerivedOptions.snvFeatureSet),
           evsDevelopmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
     {}
@@ -1056,7 +1074,7 @@ struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
         const pos_t init_pos,
         const uint8_t initRefBaseIndex,
         const bool is_forced_output = false)
-        : base_t(sampleCount, init_pos, initRefBaseIndex, is_forced_output),
+        : base_t(sampleCount, (ActiveRegionId)(-1), init_pos, initRefBaseIndex, is_forced_output),
           _continuousSiteSampleInfo(sampleCount)
     {}
 
