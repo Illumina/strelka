@@ -885,9 +885,16 @@ process_pos(const int stage_no,
     {
         if (! _opt.is_write_candidate_indels_only)
         {
-            if (is_pos_reportable(pos))
+            //
+            const bool isPosReportable(is_pos_reportable(pos));
+            bool isPosPrecedingReportableRange(false);
+            if (not isPosReportable)
             {
-                process_pos_variants(pos);
+                isPosPrecedingReportableRange = is_pos_preceding_reportable_range(pos);
+            }
+            if (isPosReportable || isPosPrecedingReportableRange)
+            {
+                process_pos_variants(pos, isPosPrecedingReportableRange);
             }
         }
 
@@ -1511,14 +1518,19 @@ pileup_read_segment(
 
 void
 starling_pos_processor_base::
-process_pos_variants(const pos_t pos)
+process_pos_variants(
+    const pos_t pos,
+    const bool isPosPrecedingReportableRange)
 {
-    const unsigned sampleCount(getSampleCount());
-    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    if (not isPosPrecedingReportableRange)
     {
-        process_pos_site_stats(pos,sampleIndex);
+        const unsigned sampleCount(getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        {
+            process_pos_site_stats(pos, sampleIndex);
+        }
     }
-    process_pos_variants_impl(pos);
+    process_pos_variants_impl(pos, isPosPrecedingReportableRange);
 }
 
 

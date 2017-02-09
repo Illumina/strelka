@@ -992,15 +992,26 @@ process_pos_snp_continuous(const pos_t pos)
 
 void
 starling_pos_processor::
-process_pos_indel(const pos_t pos)
+process_pos_indel(
+    const pos_t pos,
+    const bool isPosPrecedingReportableRange)
 {
     if (_opt.is_bsnp_diploid())
     {
+        // STREL-392 for this variant type to synchronize correctly across independent processes setup to call adjacent
+        // regions of the genome, we need to go through a dummy calling operation for approx 'max_indel_size' bases
+        // before starting to report calls, so this methods is called even when "isPosPrecedingReportableRange"
+        // is true. This helps us to correctly handle groups of large/overlapping deletions which might span the
+        // segmented genome boundary between two processes. Without this step is is possible to duplicate or drop
+        // indel calls across a segment boundary.
         process_pos_indel_digt(pos);
     }
     else
     {
-        process_pos_indel_continuous(pos);
+        if (not isPosPrecedingReportableRange)
+        {
+            process_pos_indel_continuous(pos);
+        }
     }
 }
 
@@ -1592,12 +1603,27 @@ process_pos_indel_digt(const pos_t pos)
             {
                 // finished! send this locus down the pipe:
 
-                // expand the end range of the locus by one to represent adjcent indel interference, for instance a
+                // expand the end range of the locus by one to represent adjacent indel interference, for instance a
                 // 1D at position 10 should block any indel at position 11
                 _variantLocusAlreadyOutputToPos = (locusPtr->range().end_pos() + 1);
                 isReportedLocus = true;
 
-                _gvcfer->add_indel(std::move(locusPtr));
+                // STREL-392 check if the indel can be reported given this process' reporting restrictions
+                //
+                // Note two tricky details here:
+                // 1. we need this check even though this function will not be called for "pos" values greater than
+                //    the report range, because the new indel overlap resolution rules can lead to an indel locus
+                //    begin_pos() which is higher than "pos", and thus potentially out of the report range.
+                // 2. In order to better sync across independent processes, we need to call the enclosing function on a
+                //    range of pos values before the report range, so that values like "_variantLocusAlreadyOutputToPos"
+                //    and "_forcedAllelesAlreadyOutput" are in sync with the other process at the time we hit the first
+                //    reportable position for this process, so we need to filter out indels found before report range
+                //    begins
+                //
+                if (is_pos_reportable(locusPtr->range().begin_pos()))
+                {
+                    _gvcfer->add_indel(std::move(locusPtr));
+                }
             }
         }
     }
@@ -1678,8 +1704,14 @@ process_pos_indel_digt(const pos_t pos)
             // add sample-independent info:
             locusPtr->anyVariantAlleleQuality = ln_error_prob_to_qphred(homRefLogProb);
 
-            // finished! send this locus down the pipe:
-            _gvcfer->add_indel(std::move(locusPtr));
+            // STREL-392 check if the indel can be reported given this process' reporting restrictions
+            //
+            // see additional notes above for the previous add_indel call
+            if (is_pos_reportable(locusPtr->range().begin_pos()))
+            {
+                // finished! send this locus down the pipe:
+                _gvcfer->add_indel(std::move(locusPtr));
+            }
         }
     }
 }

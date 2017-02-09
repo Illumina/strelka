@@ -75,13 +75,18 @@ private:
     }
 
     void
-    process_pos_variants_impl(const pos_t pos) override
+    process_pos_variants_impl(
+        const pos_t pos,
+        const bool isPosPrecedingReportableRange) override
     {
         /// TODO rm this legacy option:
         assert(_opt.gvcf.is_gvcf_output());
 
-        process_pos_indel(pos);
-        process_pos_snp(pos);
+        process_pos_indel(pos, isPosPrecedingReportableRange);
+        if (not isPosPrecedingReportableRange)
+        {
+            process_pos_snp(pos);
+        }
     }
 
     void
@@ -94,7 +99,9 @@ private:
     process_pos_snp_continuous(const pos_t pos);
 
     void
-    process_pos_indel(const pos_t pos);
+    process_pos_indel(
+        const pos_t pos,
+        const bool isPosPrecedingReportableRange);
 
     void process_pos_indel_digt(const pos_t pos);
     void process_pos_indel_continuous(const pos_t pos);

@@ -382,13 +382,20 @@ public:
                        const pos_range& pr,
                        std::ostream& os);
 
-private:
+protected:
     bool
     is_pos_reportable(const pos_t pos) const
     {
         return _reportRange.is_pos_intersect(pos);
     }
 
+    bool
+    is_pos_preceding_reportable_range(const pos_t pos) const
+    {
+        return (pos < _reportRange.begin_pos());
+    }
+
+private:
     void
     insert_pos_submap_count(const pos_t pos,
                             const unsigned sample_no);
@@ -482,12 +489,16 @@ private:
         const unsigned sample_no);
 
     void
-    process_pos_variants(const pos_t pos);
+    process_pos_variants(
+        const pos_t pos,
+        const bool isPosPrecedingReportableRange);
 
     //////
     virtual
     void
-    process_pos_variants_impl(const pos_t pos) = 0;
+    process_pos_variants_impl(
+        const pos_t pos,
+        const bool isPosPrecedingReportableRange) = 0;
 
     virtual
     void

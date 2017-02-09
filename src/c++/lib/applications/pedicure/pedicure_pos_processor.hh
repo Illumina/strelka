@@ -54,7 +54,9 @@ struct pedicure_pos_processor : public starling_pos_processor_base
 private:
 
     void
-    process_pos_variants_impl(const pos_t pos) override;
+    process_pos_variants_impl(
+        const pos_t pos,
+        const bool isPosProceedingReportableRange) override;
 
     void
     process_pos_snp_denovo(const pos_t pos);

@@ -274,8 +274,12 @@ process_pos_snp_somatic(const pos_t pos)
 
 void
 strelka_pos_processor::
-process_pos_variants_impl(const pos_t pos)
+process_pos_variants_impl(
+    const pos_t pos,
+    const bool isPosPrecedingReportableRange)
 {
+    if (isPosPrecedingReportableRange) return;
+
     try
     {
         process_pos_snp_somatic(pos);
