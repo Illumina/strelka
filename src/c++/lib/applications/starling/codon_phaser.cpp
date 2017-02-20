@@ -91,7 +91,25 @@ Codon_phaser::
 outputBuffer()
 {
     for (unsigned sampleId(0); sampleId < _sampleCount; ++sampleId)
-        outputBuffer(sampleId);
+        createPhasedRecord(sampleId);
+
+    for (auto& locusPtr : _locusBuffer)
+    {
+        if (isInstanceOf<GermlineSiteLocusInfo>(*locusPtr))
+        {
+            _sink->process(downcast<GermlineSiteLocusInfo>(std::move(locusPtr)));
+        }
+        else if (isInstanceOf<GermlineIndelLocusInfo>(*locusPtr))
+        {
+            _sink->process(downcast<GermlineIndelLocusInfo>(std::move(locusPtr)));
+        }
+        else
+        {
+            throw std::bad_cast();
+        }
+    }
+
+    _locusBuffer.clear();
 }
 
 static void inferComplexIds(
@@ -160,11 +178,9 @@ static void inferComplexIds(
 
 void
 Codon_phaser::
-outputBuffer(unsigned sampleId)
+createPhasedRecord(unsigned sampleId)
 {
-    if (not isBuffer(sampleId)) return;
-
-    auto& locusBuffer(_sampleLocusBuffer[sampleId]);
+    if (not isBuffer()) return;
 
     // select 2 complex allele IDs: (0,1)=>1, (0,2)=>2, (1,2)=>3, (1,1)=>4, or (2,2)=>5
 
@@ -173,7 +189,7 @@ outputBuffer(unsigned sampleId)
         possibleComplexAlleleIdPair[complexAlleleIdPairIndex] = true;
 
     unsigned numHetVariants(0);
-    for (const auto& locusPtr : locusBuffer)
+    for (const auto& locusPtr : _locusBuffer)
     {
         const auto& sampleInfo = locusPtr->getSample(sampleId);
         if (sampleInfo.isVariant())
@@ -195,8 +211,9 @@ outputBuffer(unsigned sampleId)
         }
     }
 
-    if (numHetVariants > 1)
-    {
+    if (numHetVariants <= 1)
+        return;
+
         // select 2 complex alleles: (0,1)=>1, (0,2)=>2, (1,2)=>3, (1,1)=>4, or (2,2)=>5
         uint8_t selectedComplexAllelePairIndex(0);
         if (not possibleComplexAlleleIdPair[0])
@@ -211,70 +228,49 @@ outputBuffer(unsigned sampleId)
             }
         }
 
-        uint8_t firstComplexAlleleId(0);
+    uint8_t firstComplexAlleleId(0);
 
-        for (auto& locusPtr : locusBuffer)
+    for (auto& locusPtr : _locusBuffer)
+    {
+        auto& sampleInfo = locusPtr->getSample(sampleId);
+        if (sampleInfo.isVariant())
         {
-            auto& sampleInfo = locusPtr->getSample(sampleId);
-            if (sampleInfo.isVariant())
+            sampleInfo.phaseSetId = (_activeRegionId+1);
+            auto& maxGenotype = sampleInfo.max_gt();
+            auto allele0ComplexAlleleId(maxGenotype.getAllele0ComplexAlleleId());
+            if (maxGenotype.isHet() and (not maxGenotype.isConflict()) and (maxGenotype.getAllele1ComplexAlleleId() != 4))
             {
-                sampleInfo.phaseSetId = (_activeRegionId+1);
-                auto& maxGenotype = sampleInfo.max_gt();
-                auto allele0ComplexAlleleId(maxGenotype.getAllele0ComplexAlleleId());
-                if (maxGenotype.isHet() and (not maxGenotype.isConflict()) and (maxGenotype.getAllele1ComplexAlleleId() != 4))
+                auto allele1ComplexAlleleId(maxGenotype.getAllele1ComplexAlleleId());
+
+                if (selectedComplexAllelePairIndex == 3 and firstComplexAlleleId == 0)
                 {
-                    auto allele1ComplexAlleleId(maxGenotype.getAllele1ComplexAlleleId());
-
-                    if (selectedComplexAllelePairIndex == 3 and firstComplexAlleleId == 0)
-                    {
-                        if (allele0ComplexAlleleId > 0)
-                            firstComplexAlleleId = allele0ComplexAlleleId;
-                        else if (allele1ComplexAlleleId == 1)
-                            firstComplexAlleleId = 2;
-                        else if (allele1ComplexAlleleId == 2)
-                            firstComplexAlleleId = 1;
-                    }
-
-                    bool isFlip(false);
-                    if (selectedComplexAllelePairIndex == 3)
-                    {
-                        if (allele0ComplexAlleleId == 0)
-                        {
-                            if (allele1ComplexAlleleId == firstComplexAlleleId)
-                                isFlip = true;
-                        }
-                        else
-                        {
-                            if (allele0ComplexAlleleId != firstComplexAlleleId)
-                                isFlip = true;
-                        }
-                    }
-                    maxGenotype.setPhased(isFlip);
+                    if (allele0ComplexAlleleId > 0)
+                        firstComplexAlleleId = allele0ComplexAlleleId;
+                    else if (allele1ComplexAlleleId == 1)
+                        firstComplexAlleleId = 2;
+                    else if (allele1ComplexAlleleId == 2)
+                        firstComplexAlleleId = 1;
                 }
+
+                bool isFlip(false);
+                if (selectedComplexAllelePairIndex == 3)
+                {
+                    if (allele0ComplexAlleleId == 0)
+                    {
+                        if (allele1ComplexAlleleId == firstComplexAlleleId)
+                            isFlip = true;
+                    }
+                    else
+                    {
+                        if (allele0ComplexAlleleId != firstComplexAlleleId)
+                            isFlip = true;
+                    }
+                }
+                maxGenotype.setPhased(isFlip);
             }
         }
     }
-
-    for (auto& locusPtr : locusBuffer)
-    {
-        if (isInstanceOf<GermlineSiteLocusInfo>(*locusPtr))
-        {
-            _sink->process(downcast<GermlineSiteLocusInfo>(std::move(locusPtr)));
-        }
-        else if (isInstanceOf<GermlineIndelLocusInfo>(*locusPtr))
-        {
-            _sink->process(downcast<GermlineIndelLocusInfo>(std::move(locusPtr)));
-        }
-        else
-        {
-            throw std::bad_cast();
-        }
-    }
-
-    locusBuffer.clear();
 }
-
-
 
 void
 Codon_phaser::

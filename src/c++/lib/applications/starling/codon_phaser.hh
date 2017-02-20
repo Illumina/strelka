@@ -50,8 +50,7 @@ struct Codon_phaser : public variant_pipe_stage_base
         : variant_pipe_stage_base(destination),
           _opt(opt),
           _sampleCount(sampleCount),
-          _activeRegionId(-1),
-          _sampleLocusBuffer(sampleCount)
+          _activeRegionId(-1)
     {}
 
     void process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr) override;
@@ -59,9 +58,9 @@ struct Codon_phaser : public variant_pipe_stage_base
     void process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr) override;
 
     bool
-    isBuffer(unsigned sampleId) const
+    isBuffer() const
     {
-        return !(_sampleLocusBuffer[sampleId].empty());
+        return !(_locusBuffer.empty());
     }
 
 private:
@@ -72,20 +71,17 @@ private:
 
     void addLocusToBuffer(std::unique_ptr<LocusInfo> locusPtr)
     {
-        for (unsigned sampleId(0); sampleId < _sampleCount; ++sampleId)
-        {
-            _sampleLocusBuffer[sampleId].push_back(std::move(locusPtr));
-        }
+        _locusBuffer.push_back(std::move(locusPtr));
     }
 
     void outputBuffer();
 
     /// dump buffer contents to sink and clear object
-    void outputBuffer(unsigned sampleId);
+    void createPhasedRecord(unsigned sampleId);
 
     const starling_options& _opt;
     const unsigned _sampleCount;
 
     ActiveRegionId _activeRegionId;
-    std::vector<LocusBuffer> _sampleLocusBuffer;
+    LocusBuffer _locusBuffer;
 };
