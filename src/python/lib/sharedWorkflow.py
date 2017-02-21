@@ -154,10 +154,16 @@ def runDepthFromAlignments(self, bamList, outputPath, taskPrefix="",dependencies
             group = []
             headSize = 0
 
+            isSkipEnabled = hasattr(params, 'chromIsSkipped')
+
             chromCount = len(params.chromSizes)
             assert(len(params.chromOrder) == chromCount)
             for chromIndex in range(chromCount) :
                 chromLabel = params.chromOrder[chromIndex]
+
+                if isSkipEnabled :
+                    if chromLabel in params.chromIsSkipped : continue
+
                 chromSize = params.chromSizes[chromLabel]
                 if headSize+chromSize <= minSize :
                     group.append((chromIndex,chromLabel))
@@ -178,6 +184,8 @@ def runDepthFromAlignments(self, bamList, outputPath, taskPrefix="",dependencies
             for (chromIndex,chromLabel) in chromGroup :
                 cmd.extend(["--chrom",chromLabel])
             scatterTasks.add(self.addTask(preJoin(taskPrefix,"estimateChromDepth_"+cid),cmd,dependencies=dirTask))
+
+        assert(len(tmpFiles) != 0)
 
         catCmd = [self.params.catScript,"--output",outputPath]+tmpFiles
         catTask = self.addTask(preJoin(taskPrefix,"catChromDepth"),catCmd,dependencies=scatterTasks, isForceLocal=True)

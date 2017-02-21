@@ -32,7 +32,7 @@ sys.path.append(workflowDir)
 
 from configBuildTimeInfo import workflowVersion
 from strelkaSharedOptions import StrelkaSharedWorkflowOptionsBase
-from configureUtil import BamSetChecker, groomBamList, joinFile, OptParseException, checkOptionalTabixIndexedFile
+from configureUtil import BamSetChecker, groomBamList, joinFile, OptParseException, checkFixTabixIndexedFileOption
 from makeRunScript import makeRunScript
 from strelkaGermlineWorkflow import StrelkaGermlineWorkflow
 from workflowUtil import ensureDir
@@ -57,10 +57,10 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
                               " Ploidy should be provided in records using the FORMAT/CN field, which are interpreted to span the range [POS+1, INFO/END]. Any CN value besides 1 or 0 will be treated as 2."
                               " File must be tabix indexed. (no default)")
         group.add_option("--noCompress", type="string", dest="noCompressBed", metavar="FILE",
-                         help="Provide bed file of regions where gVCF block compress is disallowed. File must be tabix indexed. (no default)")
+                         help="Provide BED file of regions where gVCF block compress is disallowed. File must be bgzip-compressed/tabix-indexed. (no default)")
         group.add_option("--targetRegions", type="string", dest="targetRegionsBed", metavar="FILE",
-                         help="Provide bed file of regions to allow variant calls. Calls outside these ares are filtered "
-                         "as OffTarget. File must be tabix indexed. (no default)")
+                         help="Provide BED file of regions to allow variant calls. Calls outside these ares are filtered "
+                         "as OffTarget. File must be bgzip-compressed/tabix-indexed. (no default)")
         group.add_option("--callContinuousVf", type="string", dest="callContinuousVf", metavar="CHROM", action="append",
                          help="Call variants on CHROM without a ploidy prior assumption, issuing calls with continuous variant frequencies (no default)")
         group.add_option("--rna", dest="isRNA", action="store_true",
@@ -94,11 +94,6 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
 
         StrelkaSharedWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
         groomBamList(options.bamList,"input")
-
-        def checkFixTabixIndexedFileOption(tabixFile,label):
-            checkOptionalTabixIndexedFile(tabixFile,label)
-            if tabixFile is None : return None
-            return os.path.abspath(tabixFile)
 
         options.ploidyFilename = checkFixTabixIndexedFileOption(options.ploidyFilename,"ploidy file")
         options.noCompressBed = checkFixTabixIndexedFileOption(options.noCompressBed,"no-compress bed")

@@ -32,7 +32,7 @@ sys.path.append(scriptDir)
 from configureOptions import ConfigureWorkflowOptions
 from configureUtil import assertOptionExists, joinFile, OptParseException, \
                           validateFixExistingDirArg, validateFixExistingFileArg, \
-                          checkFixTabixListOption
+                          checkFixTabixListOption, checkFixTabixIndexedFileOption
 from workflowUtil import exeFile, parseGenomeRegion
 
 
@@ -61,7 +61,7 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
                          help="Specify a VCF of candidate alleles. These alleles are always"
                               " evaluated and reported even if they are unlikely to exist in the sample."
                               " The VCF must be tabix indexed."
-                              " All indel alleles must be left-shifted/normalized, any unnormalized allele will trigger a"
+                              " All indel alleles must be left-shifted/normalized, any unnormalized allele will trigger"
                               " a runtime error."
                               " This option may be specified more than once, multiple input VCFs will be merged."
                               " Note that for any SNVs provided in the VCF, the SNV site will be reported (and for gVCF,"
@@ -69,6 +69,11 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
                               " (default: None)")
         group.add_option("--exome", dest="isExome", action="store_true",
                          help="Set options for WES input: turn off depth filters")
+        group.add_option("--callRegions", dest="callRegionsBed",
+                         help="Optionally provide a bgzip-compressed/tabix-indexed BED file containing the set of regions to call. "
+                              "No VCF output will be provided outside of these regions. The full genome will still be used "
+                              "to estimate statistics from the input (such as expected depth per chromosome). "
+                              "Only one file may be specified.")
         group.add_option("--runDir", type="string",metavar="DIR",
                          help="Run script and run output will be written to this directory [required] (default: %default)")
 
@@ -77,13 +82,15 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
         # cause the hidden option to always print
         group.add_option("--scanSizeMb", type="int", dest="scanSizeMb", metavar="INT",
                          help="Maximum sequence region size (in megabases) scanned by each task during "
-                         "genome variant calling. (default: %default)")
+                              "genome variant calling. (default: %default)")
         group.add_option("--region", type="string",dest="regionStrList",metavar="REGION", action="append",
-                         help="Limit the analysis to a region of the genome for debugging purposes. "
-                              "If this argument is provided multiple times all specified regions will "
-                              "be analyzed together. All regions must be non-overlapping to get a "
-                              "meaningful result. Examples: '--region chr20' (whole chromosome), "
-                              "'--region chr2:100-2000 --region chr3:2500-3000' (two regions)'")
+                         help="Limit the analysis to one or more genome region(s) for debugging purposes. "
+                              "If this argument is provided multiple times the union of all specified regions will "
+                              "be analyzed. All regions must be non-overlapping to get a meaningful result. "
+                              "Examples: '--region chr20' (whole chromosome), "
+                              "'--region chr2:100-2000 --region chr3:2500-3000' (two regions)'. If this "
+                              "option is specified (one or more times) together with the --callRegions BED file, then "
+                              "all region arguments will be intersected with the callRegions BED track.")
         group.add_option("--callMemMb",dest="callMemMbOverride",type="int",metavar="INT",
                          help="Set variant calling task memory limit (in megabytes). It is not "
                               "recommended to change the default in most cases, but this might be required "
@@ -189,6 +196,7 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         checkFixTabixListOption(options.indelCandidatesList,"candidate indel vcf")
         checkFixTabixListOption(options.forcedGTList,"forced genotype vcf")
+        options.callRegionsBed = checkFixTabixIndexedFileOption(options.callRegionsBed,"call-regions bed")
 
         if (options.regionStrList is None) or (len(options.regionStrList) == 0) :
             options.genomeRegionList = None

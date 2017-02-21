@@ -211,6 +211,16 @@ def checkOptionalTabixIndexedFile(iname,label) :
     if iname is None : return
     checkTabixIndexedFile(iname,label)
 
+def checkFixTabixIndexedFileOption(tabixFile,label):
+    """
+    Check that the file's tabix index exists, and convert input path to an absolute path.
+
+    If tabixFile is None, return None, else return the absolute file path.
+    """
+    checkOptionalTabixIndexedFile(tabixFile,label)
+    if tabixFile is None : return None
+    return os.path.abspath(tabixFile)
+
 def checkFixTabixListOption(tabixList,label) :
     """
     check a list of files which are expected to be tabix indexed

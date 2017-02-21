@@ -129,6 +129,8 @@ get_starling_base_option_parser(
      "File containing indel error models")
     ("indel-error-model-name", po::value(&opt.indel_error_model_name)->default_value(opt.indel_error_model_name),
      "Indel error model name, either 'new', 'old' or label to choose from the indel error model file")
+    ("call-regions-bed",  po::value(&opt.callRegionsBedFilename),
+     "Bed file with targeted regions. Variants outside these regions will be filtered. (must be bgzip compressed and tabix indexed).")
     ;
 
     po::options_description new_opt("Shared small-variant options");

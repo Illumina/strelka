@@ -51,6 +51,48 @@ def runCount(self, taskPrefix="", dependencies=None) :
 
 
 
+def getChromIsSkipped(self, chromOrder) :
+    """
+    determine subset of chroms from chromOrder which are completely skipped over
+
+    here "skipped" means that not a single base on the chrom is requested for calling
+
+    \return set of chromLabels which are skipped
+    """
+
+    chromIsSkipped = set()
+
+    # return empty set when no region selections have been made:
+    if ((self.params.genomeRegionList is None) and
+        (self.params.callRegionsBed is None)) :
+       return chromIsSkipped
+
+    # first check chromosome coverage of "regions" arguments
+    if self.params.genomeRegionList is not None :
+        chromIsSkipped = set(self.params.chromOrder)
+        for genomeRegion in self.params.genomeRegionList :
+            if genomeRegion["chrom"] in chromIsSkipped :
+                chromIsSkipped.remove(genomeRegion["chrom"])
+
+    # next further refine coverage based on callRegions BED file
+    if self.params.callRegionsBed is not None :
+        import subprocess
+
+        chromIsSkipped2 = set(self.params.chromOrder)
+
+        tabixCmd = [self.params.tabixBin,"-l", self.params.callRegionsBed]
+        proc=subprocess.Popen(tabixCmd,stdout=subprocess.PIPE)
+        for line in proc.stdout :
+            chrom = line.strip()
+            if chrom in chromIsSkipped2 :
+                chromIsSkipped2.remove(chrom)
+
+        chromIsSkipped = chromIsSkipped | chromIsSkipped2
+
+    return chromIsSkipped
+
+
+
 class StrelkaSharedCallWorkflow(WorkflowRunner) :
 
     def __init__(self,params) :
@@ -147,6 +189,9 @@ class StrelkaSharedCallWorkflow(WorkflowRunner) :
         addListCmdOption(self.params.indelCandidatesList, '--candidate-indel-input-vcf')
         addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
 
+        if self.params.callRegionsBed is not None :
+            segCmd.extend(['--call-regions-bed', self.params.callRegionsBed])
+
         if self.params.extraVariantCallerArguments is not None :
             for arg in self.params.extraVariantCallerArguments.strip().split() :
                 segCmd.append(arg)
@@ -232,6 +277,9 @@ class StrelkaSharedWorkflow(WorkflowRunner) :
 
         # read fasta index
         (self.params.chromOrder,self.params.chromSizes) = getFastaChromOrderSize(indexRefFasta)
+
+        # determine subset of chroms where we can skip calling entirely
+        self.params.chromIsSkipped = getChromIsSkipped(self, self.params.chromOrder)
 
         self.params.isHighDepthFilter = (not (self.params.isExome or self.params.isRNA))
 

@@ -235,6 +235,9 @@ struct starling_base_options : public blt_options
     // so as to reduce systematic underestimation bias of indel error rates (or overestimation bias of SNV error rates)
     //
     unsigned minDistanceFromReadEdge = 0;
+
+    // Optional bedfile to specify which regions should be called in the genome
+    std::string callRegionsBedFilename;
 };
 
 
