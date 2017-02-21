@@ -116,14 +116,11 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     isFirstSegment = (len(segFiles.variants) == 0)
 
     segCmd = [ self.params.strelkaGermlineBin ]
-    for gseg in gsegGroup :
-        segCmd.extend(["--region", gseg.bamRegion])
+
+    self.appendCommonGenomeSegmentCommandOptions(gsegGroup, segCmd)
 
     segCmd.extend(["-min-mapping-quality",self.params.minMapq])
-    segCmd.extend(["--ref", self.params.referenceFasta ])
     segCmd.extend(["-max-window-mismatch", "2", "20" ])
-    segCmd.extend(["-genome-size", str(self.params.knownSize)] )
-    segCmd.extend(["-max-indel-size", "50"] )
 
     segCmd.extend(["--gvcf-output-prefix", self.paths.getTmpSegmentGvcfPrefix(gid)])
     segCmd.extend(['--gvcf-min-gqx','15'])
@@ -150,14 +147,6 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
         if self.params.indelScoringModelFile is not None :
             segCmd.extend(['--indel-scoring-model-file', self.params.indelScoringModelFile])
 
-    if self.params.indelErrorModelName is not None :
-        segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
-    if self.params.inputIndelErrorModelsFile is not None :
-        segCmd.extend(['--indel-error-models-file', self.params.inputIndelErrorModelsFile])
-
-    if self.params.isReportEVSFeatures :
-        segCmd.append("--report-evs-features")
-
     for bamPath in self.params.bamList :
         segCmd.extend(["--align-file",bamPath])
 
@@ -172,14 +161,6 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     # TODO STREL-125 come up with new solution for outbams
     if self.params.isWriteRealignedBam :
         segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(gid)])
-
-    def addListCmdOption(optList,arg) :
-        if optList is None : return
-        for val in optList :
-            segCmd.extend([arg, val])
-
-    addListCmdOption(self.params.indelCandidatesList, '--candidate-indel-input-vcf')
-    addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
 
     if self.params.noCompressBed is not None :
         segCmd.extend(['--nocompress-bed', self.params.noCompressBed])
@@ -196,10 +177,6 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
         if self.params.callContinuousVf is not None and gseg.chromLabel in self.params.callContinuousVf :
             assert(len(gsegGroup) == 1)
             segCmd.append('--call-continuous-vf')
-
-    if self.params.extraVariantCallerArguments is not None :
-        for arg in self.params.extraVariantCallerArguments.strip().split() :
-            segCmd.append(arg)
 
     segTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gid)
     self.addTask(segTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)

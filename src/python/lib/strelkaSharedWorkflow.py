@@ -119,6 +119,40 @@ class StrelkaSharedCallWorkflow(WorkflowRunner) :
 
 
 
+    def appendCommonGenomeSegmentCommandOptions(self, gsegGroup, segCmd) :
+        """
+        Append cmdline components to the cmd arg list that are common to multiple strelka workflows
+        """
+
+        for gseg in gsegGroup :
+            segCmd.extend(["--region", gseg.bamRegion])
+
+        segCmd.extend(["--ref", self.params.referenceFasta ])
+        segCmd.extend(["-genome-size", str(self.params.knownSize)] )
+        segCmd.extend(["-max-indel-size", "50"] )
+
+        if self.params.indelErrorModelName is not None :
+            segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
+        if self.params.inputIndelErrorModelsFile is not None :
+            segCmd.extend(['--indel-error-models-file', self.params.inputIndelErrorModelsFile])
+
+        if self.params.isReportEVSFeatures :
+            segCmd.append("--report-evs-features")
+
+        def addListCmdOption(optList,arg) :
+            if optList is None : return
+            for val in optList :
+                segCmd.extend([arg, val])
+
+        addListCmdOption(self.params.indelCandidatesList, '--candidate-indel-input-vcf')
+        addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
+
+        if self.params.extraVariantCallerArguments is not None :
+            for arg in self.params.extraVariantCallerArguments.strip().split() :
+                segCmd.append(arg)
+
+
+
 class SharedPathInfo(object):
     """
     object to centralize shared workflow path names

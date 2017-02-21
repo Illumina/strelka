@@ -82,16 +82,13 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     isFirstSegment = (len(segFiles.snv) == 0)
 
     segCmd = [ self.params.strelkaSomaticBin ]
-    for gseg in gsegGroup :
-        segCmd.extend(["--region", gseg.bamRegion])
+
+    self.appendCommonGenomeSegmentCommandOptions(gsegGroup, segCmd)
 
     segCmd.append("-filter-unanchored")
     segCmd.extend(["-min-mapping-quality",str(self.params.minTier1Mapq)])
     segCmd.extend(["-min-qscore","0"])
-    segCmd.extend(["--ref", self.params.referenceFasta ])
     segCmd.extend(["-max-window-mismatch", "3", "20" ])
-    segCmd.extend(["-genome-size", str(self.params.knownSize)] )
-    segCmd.extend(["-max-indel-size", "50"] )
     segCmd.extend(["-indel-nonsite-match-prob", "0.5"] )
     segCmd.extend(["--somatic-snv-rate", str(self.params.ssnvPrior) ] )
     segCmd.extend(["--shared-site-error-rate", str(self.params.ssnvNoise) ] )
@@ -112,11 +109,6 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     segCmd.extend(["--strelka-indel-max-window-filtered-basecall-frac", str(self.params.indelMaxWindowFilteredBasecallFrac)])
     segCmd.extend(["--strelka-indel-min-qsi-ref", str(self.params.sindelQuality_LowerBound)])
 
-    if self.params.indelErrorModelName is not None :
-        segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
-    if self.params.inputIndelErrorModelsFile is not None :
-        segCmd.extend(['--indel-error-models-file', self.params.inputIndelErrorModelsFile])
-
     segCmd.extend(["--ssnv-contam-tolerance", str(self.params.ssnvContamTolerance) ] )
     segCmd.extend(["--indel-contam-tolerance", str(self.params.indelContamTolerance) ] )
 
@@ -125,9 +117,6 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
             segCmd.extend(['--somatic-snv-scoring-model-file', self.params.snvScoringModelFile])
         if self.params.indelScoringModelFile is not None :
             segCmd.extend(['--somatic-indel-scoring-model-file', self.params.indelScoringModelFile])
-
-    if self.params.isReportEVSFeatures :
-        segCmd.append("--report-evs-features")
 
     for bamPath in self.params.normalBamList :
         segCmd.extend(["--normal-align-file", bamPath])
@@ -156,8 +145,6 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
         for val in optList :
             segCmd.extend([arg, val])
 
-    addListCmdOption(self.params.indelCandidatesList, '--candidate-indel-input-vcf')
-    addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
     addListCmdOption(self.params.noiseVcfList, '--noise-vcf')
 
     segFiles.stats.append(self.paths.getTmpRunStatsPath(gid))
@@ -169,10 +156,6 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     if self.params.isHighDepthFilter :
         segCmd.extend(["--strelka-chrom-depth-file", self.paths.getChromDepth()])
         segCmd.extend(["--strelka-max-depth-factor", self.params.depthFilterMultiple])
-
-    if self.params.extraVariantCallerArguments is not None :
-        for arg in self.params.extraVariantCallerArguments.strip().split() :
-            segCmd.append(arg)
 
 
     nextStepWait = set()
