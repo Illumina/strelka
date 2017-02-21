@@ -86,7 +86,7 @@ def which(searchFile) :
 
 def parseGenomeRegion(regionStr) :
     """
-    parse a samtools region string and return a (chrom,start,end) tuple
+    parse a samtools region string and return a hash on keys ("chrom","start","end")
 
     missing start and end values will be entered as None
     """

@@ -167,7 +167,7 @@ class StrelkaSharedWorkflow(WorkflowRunner) :
         self.params.workDir=os.path.join(self.params.runDir,"workspace")
         ensureDir(self.params.workDir)
 
-        # all finalized pretty results get transfered to resultsDir
+        # all finalized pretty results get transferred to resultsDir
         self.params.resultsDir=os.path.join(self.params.runDir,"results")
         ensureDir(self.params.resultsDir)
         self.params.variantsDir=os.path.join(self.params.resultsDir,"variants")
