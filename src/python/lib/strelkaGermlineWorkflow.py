@@ -39,8 +39,7 @@ from pyflow import WorkflowRunner
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, runDepthFromAlignments
 from strelkaSharedWorkflow import runCount, SharedPathInfo, \
                            StrelkaSharedCallWorkflow, StrelkaSharedWorkflow
-from workflowUtil import ensureDir, preJoin, \
-                         getGenomeSegmentGroups, bamListCatCmd
+from workflowUtil import ensureDir, preJoin, bamListCatCmd
 
 
 __version__ = workflowVersion
@@ -250,7 +249,8 @@ def callGenome(self,taskPrefix="",dependencies=None):
     sampleCount = len(self.params.bamList)
 
     segFiles = TempSegmentFiles(sampleCount)
-    for gsegGroup in getGenomeSegmentGroups(self.params, excludedContigs = self.params.callContinuousVf) :
+
+    for gsegGroup in self.getStrelkaGenomeSegmentGroupIterator(excludedContigs = self.params.callContinuousVf) :
         segmentTasks |= callGenomeSegment(self, gsegGroup, segFiles, dependencies=dirTask)
 
     if len(segmentTasks) == 0 :

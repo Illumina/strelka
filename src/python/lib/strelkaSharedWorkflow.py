@@ -34,8 +34,8 @@ sys.path.append(os.path.join(scriptDir,"pyflow"))
 
 from pyflow import WorkflowRunner
 from sharedWorkflow import getMvCmd
-from workflowUtil import checkFile, ensureDir, getFastaChromOrderSize, cleanPyEnv, preJoin
-
+from workflowUtil import checkFile, cleanPyEnv, ensureDir, getFastaChromOrderSize, \
+                  getGenomeSegmentGroups, getNextGenomeSegment, preJoin
 
 
 def runCount(self, taskPrefix="", dependencies=None) :
@@ -150,6 +150,15 @@ class StrelkaSharedCallWorkflow(WorkflowRunner) :
         if self.params.extraVariantCallerArguments is not None :
             for arg in self.params.extraVariantCallerArguments.strip().split() :
                 segCmd.append(arg)
+
+    def getStrelkaGenomeSegmentGroupIterator(self, excludedContigs = None) :
+        """
+        setup genome segment iteration for germline and somatic calling,
+        including skipping segments with no coverage (due to region args or
+        bed files) and clumping together small segments into groups.
+        """
+        genomeSegmentIterator = getNextGenomeSegment(self.params)
+        return getGenomeSegmentGroups(genomeSegmentIterator, excludedContigs)
 
 
 

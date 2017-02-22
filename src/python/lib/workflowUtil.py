@@ -181,16 +181,16 @@ def getFastaChromOrderSize(faiFile) :
 
 
 
-def getChromIntervals(chromOrder,chromSizes,segmentSize, genomeRegion = None) :
+def getChromIntervals(chromOrder, chromSizes, segmentSize, genomeRegion = None) :
     """
     generate chromosome intervals no greater than segmentSize
 
-    chromOrder - iterable object of chromosome names
-    chromSizes - a hash of chrom sizes
-    genomeRegionList - optionally restrict chrom intervals to only cover a list of specified chromosome region
+    @param chromOrder - iterable object of chromosome names
+    @param chromSizes - a hash of chrom sizes
+    @param genomeRegion - optionally restrict chrom intervals to only cover a list of specified chromosome region
 
     return chromIndex,chromLabel,start,end,chromSegment
-    where start and end are formated for use with samtools
+    where start and end are formatted for use with samtools
     chromSegment is 0-indexed number of segment along each chromosome
     """
 
@@ -318,6 +318,9 @@ def getNextGenomeSegment(params) :
     """
     generator which iterates through all genomic segments and
     returns a segmentValues object for each one.
+
+    This segment generator understands and accounts for genomeRegionList but does not
+    account for any callability bed track files being used.
     """
     MEGABASE = 1000000
     scanSize = params.scanSizeMb * MEGABASE
@@ -331,10 +334,17 @@ def getNextGenomeSegment(params) :
                 yield GenomeSegment(*segval)
 
 
-
-def getGenomeSegmentGroups(params, excludedContigs = None) :
+def getGenomeSegmentGroups(genomeSegmentIterator, excludedContigs = None) :
     """
     Iterate segment groups and 'clump' small contigs together
+
+    @param genomeSegmentIterator any object which will iterate through ungrouped genome segments)
+    @param excludedContigs defines a set of contigs which are excluded from grouping
+                           (useful when a particular contig, eg. chrM, is called with contig-specific parameters)
+    @return yields a series of segment group lists
+
+    Note this function will not reorder segments. This means that grouping will be suboptimal if small segments are
+    sparsely distributed among larger ones.
     """
 
     def isGroupEligible(gseg) :
@@ -345,7 +355,7 @@ def getGenomeSegmentGroups(params, excludedContigs = None) :
     group = []
     headSize = 0
     isLastSegmentGroupEligible = True
-    for gseg in getNextGenomeSegment(params) :
+    for gseg in genomeSegmentIterator :
         isSegmentGroupEligible = isGroupEligible(gseg)
         if (isSegmentGroupEligible and isLastSegmentGroupEligible) and (headSize+gseg.size() <= minSegmentGroupSize) :
             group.append(gseg)
