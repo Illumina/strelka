@@ -91,7 +91,66 @@ getSingleIndelAlleleVcfSummaryStrings(
     }
 }
 
+// Find shortest prefix of unencoded sequence that has not been encountered in the encoded sequence: (TODO: this can be made more efficient)
+unsigned
+shortest_unencountered(
+    const reference_contig_segment& ref,
+    const pos_t pos,
+    const unsigned num_encoded,
+    const bool left = false)
+{  
+    std::string encoded;
+    std::string new_prefix;
+    // get substring encoded thus far:
+    if (left)
+    {
+        ref.get_substring(pos-num_encoded+1,num_encoded,encoded);
+    }
+    else
+    {
+        ref.get_substring(pos,num_encoded,encoded);
+    }
+    unsigned len(0);
+    do
+    {
+        ++len;
+        if (left)
+        {
+            ref.get_substring(pos-num_encoded-len+1,len,new_prefix);
+        }
+        else
+        {
+            ref.get_substring(pos+num_encoded,len,new_prefix);
+        }
+    }
+    // keep looking while string of size len has already been encountered:
+    while (encoded.find(new_prefix) != std::string::npos);
+    return len;
+}
 
+unsigned
+compute_context_compressability(
+    const reference_contig_segment& ref,
+    const pos_t left_pos,
+    const pos_t right_pos,
+    const unsigned numkeys)
+{
+    // complexity to the left:
+    unsigned num_encoded_left(1);
+    for (unsigned key(0); key<numkeys-1; ++key)
+    {
+        num_encoded_left += shortest_unencountered(ref,left_pos-1,num_encoded_left,true);
+    }
+
+    // complexity to the right:
+    unsigned num_encoded_right(1);
+    for (unsigned key(0); key<numkeys-1; ++key)
+    {
+        num_encoded_right += shortest_unencountered(ref,right_pos,num_encoded_right,false);
+    }
+
+    return std::max(num_encoded_left, num_encoded_right);
+}
 
 static
 void
@@ -100,6 +159,9 @@ set_repeat_info(
     const reference_contig_segment& ref,
     AlleleReportInfo& indelReportInfo)
 {
+    // Encoded lengths using fixed number of Zev-Lempel 1977 keywords. See http://www.lptmc.jussieu.fr/user/lesne/PRE-Short.pdf :
+    indelReportInfo.contextCompressability = compute_context_compressability(ref, indelKey.pos, indelKey.right_pos(), 5);
+
     if (! ((indelReportInfo.it == SimplifiedIndelReportType::INSERT) ||
            (indelReportInfo.it == SimplifiedIndelReportType::DELETE) ||
            (indelReportInfo.it == SimplifiedIndelReportType::SWAP))) return;

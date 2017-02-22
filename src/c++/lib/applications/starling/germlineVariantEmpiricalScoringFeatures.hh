@@ -215,6 +215,7 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
         RelativeTotalLocusDepth,
         SamplePrimaryAltAlleleDepthFraction,
         ConservativeGenotypeQuality,
+	ContextCompressability,
         SIZE
     };
 
@@ -247,6 +248,8 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
             return "SamplePrimaryAltAlleleDepthFraction";
         case ConservativeGenotypeQuality:
             return "ConservativeGenotypeQuality";
+	case ContextCompressability:
+	    return "ContextCompressability";
         default:
             assert(false && "Unknown feature");
             return nullptr;

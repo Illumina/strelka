@@ -94,6 +94,7 @@ struct AlleleReportInfo
     unsigned ref_repeat_count = 0;
     unsigned indel_repeat_count = 0;
     unsigned ihpol = 0; ///< interrupted homopolymer length
+    unsigned contextCompressability = 0; /// max adjacent sequence length encodable by 5 Ziv-Lempel-77 keywords
 
     // not directly reported, but handy to have pre-calculated:
     SimplifiedIndelReportType::index_t it = SimplifiedIndelReportType::OTHER;
