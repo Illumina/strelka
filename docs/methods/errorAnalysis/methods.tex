@@ -261,14 +261,14 @@ Model 4 is a simplified version of Model 2. It is motivated by the need to have 
 
 Although less accurate, one application for such a 2-allele model is to provide likelihoods which are directly comparable to the the model below which represents indel error as a beta-binomial process under the assumption of only 2 alleles.
 
-Compared to Model 2, insertion and deletion rates are not jointly analyzed within a single context. Instead one likelihood function is created and minimized separately for each of the two indel types for each contexts. Additionally, all instances of the chosen indel type are collapsed to a single represented allele type.
+Compared to Model 2, insertion and deletion rates are not jointly analyzed within a single context. Instead one likelihood function is created and minimized separately for each of the two indel types for each context. Additionally, all instances of the chosen indel type are collapsed to a single represented allele type.
 
 As an example, when evaluating insertion error rates, all types of insertions (length 1, 2 and 3+), are summed to together to create the alternate allele observation count at each locus, and these are compared to the reference counts. Any observations of deletion alleles are ignored. Because there is only one alt type, we no longer consider an alt-het genotype. The corresponding pattern is followed when estimating deletions.
 
 The specific genotype likelihoods used in the 2-allele model are described by introducing the two-allele space $Z = {ref,alt}$ to replace the larger allele set $Y$ discussed above:
 
 \begin{equation*}
-P ( d \vert \theta, g_{ref}) = \prod_{z \in Y} r(z)^{c(z)}
+P ( d \vert \theta, g_{ref}) = \prod_{z \in Z} r(z)^{c(z)}
 \end{equation*}
 
 ...where $c()$ and $r()$ describe allele counts and error rates as above.
