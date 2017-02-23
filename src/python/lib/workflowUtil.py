@@ -334,12 +334,12 @@ def getNextGenomeSegment(params) :
                 yield GenomeSegment(*segval)
 
 
-def getGenomeSegmentGroups(genomeSegmentIterator, excludedContigs = None) :
+def getGenomeSegmentGroups(genomeSegmentIterator, contigsExcludedFromGrouping = None) :
     """
     Iterate segment groups and 'clump' small contigs together
 
     @param genomeSegmentIterator any object which will iterate through ungrouped genome segments)
-    @param excludedContigs defines a set of contigs which are excluded from grouping
+    @param contigsExcludedFromGrouping defines a set of contigs which are excluded from grouping
                            (useful when a particular contig, eg. chrM, is called with contig-specific parameters)
     @return yields a series of segment group lists
 
@@ -348,8 +348,8 @@ def getGenomeSegmentGroups(genomeSegmentIterator, excludedContigs = None) :
     """
 
     def isGroupEligible(gseg) :
-        if excludedContigs is None : return True
-        return (gseg.chromLabel not in excludedContigs)
+        if contigsExcludedFromGrouping is None : return True
+        return (gseg.chromLabel not in contigsExcludedFromGrouping)
 
     minSegmentGroupSize=200000
     group = []

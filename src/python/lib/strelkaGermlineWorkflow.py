@@ -250,7 +250,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     segFiles = TempSegmentFiles(sampleCount)
 
-    for gsegGroup in self.getStrelkaGenomeSegmentGroupIterator(excludedContigs = self.params.callContinuousVf) :
+    for gsegGroup in self.getStrelkaGenomeSegmentGroupIterator(contigsExcludedFromGrouping = self.params.callContinuousVf) :
         segmentTasks |= callGenomeSegment(self, gsegGroup, segFiles, dependencies=dirTask)
 
     if len(segmentTasks) == 0 :
