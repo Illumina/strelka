@@ -342,11 +342,11 @@ computeEmpiricalScoringFeatures(
         features.set(RNA_SNV_SCORING_FEATURES::GT,
                      getEVSGenotypeCode(ploidy.isDiploid(), allele0Index, allele1Index));
 
-        features.set(RNA_SNV_SCORING_FEATURES::QUAL, (locus.anyVariantAlleleQuality * allSampleChromDepthFactor));
-        features.set(RNA_SNV_SCORING_FEATURES::F_DP, (siteSampleInfo.n_used_calls * allSampleChromDepthFactor));
-        features.set(RNA_SNV_SCORING_FEATURES::F_DPF, (siteSampleInfo.n_unused_calls * allSampleChromDepthFactor));
-        features.set(RNA_SNV_SCORING_FEATURES::F_GQ, (sampleInfo.genotypeQualityPolymorphic * allSampleChromDepthFactor));
-        features.set(RNA_SNV_SCORING_FEATURES::F_GQX, (sampleInfo.gqx * allSampleChromDepthFactor));
+        features.set(RNA_SNV_SCORING_FEATURES::QUAL, (locus.anyVariantAlleleQuality));
+        features.set(RNA_SNV_SCORING_FEATURES::F_DP, (siteSampleInfo.n_used_calls));
+        features.set(RNA_SNV_SCORING_FEATURES::F_DPF, (siteSampleInfo.n_unused_calls));
+        features.set(RNA_SNV_SCORING_FEATURES::F_GQ, (sampleInfo.genotypeQualityPolymorphic));
+        features.set(RNA_SNV_SCORING_FEATURES::F_GQX, (sampleInfo.gqx));
 
         features.set(RNA_SNV_SCORING_FEATURES::I_AvgBaseQ, (siteSampleInfo.avgBaseQ));
         features.set(RNA_SNV_SCORING_FEATURES::I_AvgPos, (siteSampleInfo.rawPos));
@@ -357,8 +357,8 @@ computeEmpiricalScoringFeatures(
         features.set(RNA_SNV_SCORING_FEATURES::SiteHomopolymerLength, (locus.hpol));
         features.set(RNA_SNV_SCORING_FEATURES::SampleStrandBias, (siteSampleInfo.strandBias));
 
-        features.set(RNA_SNV_SCORING_FEATURES::AD0, (confidentRefCount * allSampleChromDepthFactor));
-        features.set(RNA_SNV_SCORING_FEATURES::AD1, (confidentPrimaryAltCount * allSampleChromDepthFactor));
+        features.set(RNA_SNV_SCORING_FEATURES::AD0, (confidentRefCount));
+        features.set(RNA_SNV_SCORING_FEATURES::AD1, (confidentPrimaryAltCount));
 
         /// TODO STREL-125 generalize this to multi-alts:
         features.set(RNA_SNV_SCORING_FEATURES::ADR, safeFrac(confidentRefCount, (confidentRefCount + confidentPrimaryAltCount)));
@@ -550,16 +550,14 @@ computeEmpiricalScoringFeatures(
 
     if (isRNA)
     {
-        features.set(RNA_INDEL_SCORING_FEATURES::QUAL, (locus.anyVariantAlleleQuality * allSampleChromDepthFactor));
-        features.set(RNA_INDEL_SCORING_FEATURES::F_GQX, (sampleInfo.gqx * allSampleChromDepthFactor));
+        features.set(RNA_INDEL_SCORING_FEATURES::QUAL, (locus.anyVariantAlleleQuality));
+        features.set(RNA_INDEL_SCORING_FEATURES::F_GQX, (sampleInfo.gqx));
         features.set(RNA_INDEL_SCORING_FEATURES::REFREP1, (primaryAltAllele.indelReportInfo.ref_repeat_count));
         features.set(RNA_INDEL_SCORING_FEATURES::IndelAlleleRepeatCount, (primaryAltAllele.indelReportInfo.indel_repeat_count));
         features.set(RNA_INDEL_SCORING_FEATURES::IndelAlleleRepeatUnitSize, (primaryAltAllele.indelReportInfo.repeat_unit.length()));
-        features.set(RNA_INDEL_SCORING_FEATURES::AD0,
-                     (confidentRefCount * allSampleChromDepthFactor));
-        features.set(RNA_INDEL_SCORING_FEATURES::AD1,
-                     (confidentPrimaryAltCount * allSampleChromDepthFactor));
-        features.set(RNA_INDEL_SCORING_FEATURES::F_DPI, (indelSampleInfo.tier1Depth * allSampleChromDepthFactor));
+        features.set(RNA_INDEL_SCORING_FEATURES::AD0, (confidentRefCount));
+        features.set(RNA_INDEL_SCORING_FEATURES::AD1, (confidentPrimaryAltCount));
+        features.set(RNA_INDEL_SCORING_FEATURES::F_DPI, (indelSampleInfo.tier1Depth));
 
         features.set(RNA_INDEL_SCORING_FEATURES::SampleIndelAlleleBiasLower, SampleIndelAlleleBiasLower);
         features.set(RNA_INDEL_SCORING_FEATURES::SampleIndelAlleleBias, SampleIndelAlleleBias);
@@ -567,7 +565,7 @@ computeEmpiricalScoringFeatures(
         // compute any experimental features not currently used in production
         if (isComputeDevelopmentFeatures)
         {
-            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ, (sampleInfo.genotypeQualityPolymorphic * allSampleChromDepthFactor));
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ, (sampleInfo.genotypeQualityPolymorphic));
 
             // how unreliable are the read mappings near this locus?
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::SampleProxyRMSMappingQuality,
