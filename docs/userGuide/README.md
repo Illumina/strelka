@@ -274,11 +274,15 @@ Multiple candidate indel VCFs may be submitted to the workflow (e.g. `--indelCan
 
 ##### Forced genotypes
 
-One or more forced genotype VCFs can be provided to any Strelka workflow with the `--forcedGT` flag.  Any indel allele provided in this way will be treated as a candidate (per the `--indelCandidates` option above), and additionally must appear in the output VCF, even when there is no support for the allele in the input samples. Be aware that in certain cases where the forced allele overlaps another called allele, the forced allele may appear in the output on a VCF record with a different position and/or an additional prefix/suffix added to the REF and ALT fields compared to the allele description in the VCF input. Any SNV listed in the forced genotype VCF will prevent the corresponding site form being compressed into a homozygous reference block and ensure that a VCF site record is output for the given position, but will not provide any special treatment of the alternate base(s) listed in the VCF.
+One or more forced genotype VCFs can be provided to any Strelka workflow with the `--forcedGT` configuration option.  Any indel allele provided in this way will be treated as a candidate (per the `--indelCandidates` option above), and additionally must appear in the output VCF, even when there is no support for the allele in the input samples. Be aware that in certain cases where the forced allele overlaps another called allele, the forced allele may appear in the output on a VCF record with a different position and/or an additional prefix/suffix added to the REF and ALT fields compared to the allele description in the VCF input. Any SNV listed in the forced genotype VCF will prevent the corresponding site form being compressed into a homozygous reference block and ensure that a VCF site record is output for the given position, but will not provide any special treatment of the alternate base(s) listed in the VCF.
 
 Any forced genotype variant record which is not left-normalized will __trigger a runtime error__.
 
 Multiple forced genotype VCFs may be submitted to the workflow (e.g. `--forcedGT fgt1.vcf.gz --forcedGT fgt2.vcf.gz ...`). All input VCFs must be bgzip compressed and tabix-indexed.
+
+##### Call regions
+
+Variant calling may restricted to an arbitrary subset of the genome by providing a region file in BED format with the `--callRegions` configuration option. The BED file must be bgzip compressed and tabix-indexed. Only one such BED file may be specified.
 
 #### Advanced configuration options
 
@@ -366,15 +370,17 @@ These options are useful for workflow development and debugging:
 
 #### Exome/Targeted
 
-Supplying the `--exome` flag at configuration time will provide
-appropriate settings for WES and other regional enrichment
-analyses. At present this flag disables all high depth filters, which
-are designed to exclude pericentromeric reference compressions in the
-WGS case but cannot be applied correctly to a targeted analysis.
+Supplying the `--exome` flag at configuration time will provide appropriate settings for WES and other
+regional enrichment analyses. At present this flag disables all high depth filters, which are designed
+to exclude pericentromeric reference compressions in the WGS case but cannot be applied correctly to a
+targeted analysis.
 
-For germline analysis, this mode also disables the empirical variant scoring (EVS)
-model, falling back to a set of simple threshold based filters instead. The somatic EVS model
-remains in use for exome and targeted data.
+For germline analysis, this mode also disables the empirical variant scoring (EVS) model, falling back
+to a set of simple threshold based filters instead. The somatic EVS model remains in use for exome and
+targeted data.
+
+In an exome or targeted analysis it may be desirable to restrict calling to the targeted regions by
+providing a BED file to the `--callRegions` option. Note that this option acts independently of `--exome`.
 
 #### RNA-Seq
 
