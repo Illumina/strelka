@@ -178,9 +178,9 @@ bool ActiveRegionDetector::isPolymorphicSite(const unsigned sampleId, const pos_
     return _polySites[sampleId].isKeyPresent(pos);
 }
 
-uint8_t ActiveRegionDetector::getComplexAlleleIndex(const unsigned sampleId, const pos_t pos, const BASE_ID::index_t baseIndex) const
+uint8_t ActiveRegionDetector::getHaplotypeId(const unsigned sampleId, const pos_t pos, const BASE_ID::index_t baseIndex) const
 {
     if (not isPolymorphicSite(sampleId, pos)) return 0; // reference (complex allele index 0)
     auto value(_polySites[sampleId].getConstRef(pos));
-    return ActiveRegion::getComplexAlleleId(value, baseIndex);
+    return ActiveRegion::getHaplotypeId(value, baseIndex);
 }

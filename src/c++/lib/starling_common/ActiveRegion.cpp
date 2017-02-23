@@ -431,7 +431,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
                 if (not polySites[sampleId].isKeyPresent(referencePos))
                     polySites[sampleId].getRef(referencePos) = 0;
 
-                ComplexAlleleId complexAlleleId(haplotypeId+1);
+                HaplotypeId complexAlleleId(haplotypeId+1);
                 addBaseId(complexAlleleId, haploptypeSeq[haplotypePosOffset], polySites[sampleId].getRef(referencePos));
 
                 ++referencePos;
@@ -522,7 +522,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
             // determine whether this indel is candidate or private
             indelDataPtr->isConfirmedInActiveRegion = true;
 
-            indelDataPtr->getSampleData(sampleId).complexAlleleIndex += (haplotypeId+1);
+            indelDataPtr->getSampleData(sampleId).haplotypeId += (haplotypeId+1);
 
             // TODO: perform candidacy test here
         }

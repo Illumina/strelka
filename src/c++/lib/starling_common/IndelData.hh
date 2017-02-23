@@ -236,7 +236,7 @@ struct IndelSampleData
     evidence_t suboverlap_tier1_read_ids;
     evidence_t suboverlap_tier2_read_ids;
 
-    uint8_t complexAlleleIndex;
+    uint8_t haplotypeId;    // 0: reference; 1: haplotype 1; 2: haplotype 2; 3: haplotype 1 and 2
 };
 
 

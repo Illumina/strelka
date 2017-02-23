@@ -21,7 +21,7 @@
 #pragma once
 
 
-#include "codon_phaser.hh"
+#include "VariantPhaser.hh"
 #include "gvcf_block_site_record.hh"
 #include "gvcf_locus_info.hh"
 #include "gvcf_compressor.hh"
@@ -74,7 +74,7 @@ public:
 private:
     ScoringModelManager _scoringModels;
 
-    std::shared_ptr<Codon_phaser> _codonPhaserPtr;
+    std::shared_ptr<VariantPhaser> _codonPhaserPtr;
     std::shared_ptr<gvcf_writer> _gvcfWriterPtr;
     std::shared_ptr<variant_pipe_stage_base> _head;
 };

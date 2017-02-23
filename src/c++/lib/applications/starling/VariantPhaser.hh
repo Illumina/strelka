@@ -18,10 +18,7 @@
 //
 //
 /*
- *  Test for codon-phasing.
- *
- *  Created on: Aug 10, 2013
- *  Author: Morten Kallberg
+ *  Author: Sangtae Kim
  */
 
 #pragma once
@@ -35,15 +32,24 @@
 #include <iosfwd>
 #include <iostream>
 
-typedef std::vector<std::unique_ptr<GermlineSiteLocusInfo>> SiteLocusBuffer;
-typedef std::vector<std::unique_ptr<GermlineIndelLocusInfo>> IndelLocusBuffer;
 typedef std::vector<std::unique_ptr<LocusInfo>> LocusBuffer;
 
-/// short-range phasing utility for het-snvs and het-indels
-
-struct Codon_phaser : public variant_pipe_stage_base
+enum HaplotypeIdPair
 {
-    Codon_phaser(
+    // haplotype Id 0: reference
+    HomRef = 0,     // haplotype Id 0,0
+    HetHap1,        // haplotype Id 0,1
+    HetHap2,        // haplotype Id 0,2
+    HetHap1Hap2,    // haplotype Id 1,2
+    HomHap1,        // haplotype Id 1,1
+    HomHap2,        // haplotype Id 2,2
+    SIZE
+};
+
+/// short-range phasing utility using information from ActiveRegions
+struct VariantPhaser : public variant_pipe_stage_base
+{
+    VariantPhaser(
         const starling_options& opt,
         const unsigned sampleCount,
         std::shared_ptr<variant_pipe_stage_base> destination)
@@ -57,13 +63,15 @@ struct Codon_phaser : public variant_pipe_stage_base
 
     void process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr) override;
 
-    bool
-    isBuffer() const
-    {
-        return !(_locusBuffer.empty());
-    }
-
 private:
+    const starling_options& _opt;
+    const unsigned _sampleCount;
+
+    ActiveRegionId _activeRegionId;
+    LocusBuffer _locusBuffer;
+
+    bool _possibleHaplotypeIdPair[HaplotypeIdPair::SIZE];
+
     void flush_impl() override;
 
     template <class T>
@@ -77,11 +85,13 @@ private:
     void outputBuffer();
 
     /// dump buffer contents to sink and clear object
-    void createPhasedRecord(unsigned sampleId);
+    void createPhaseRecord(unsigned sampleId);
 
-    const starling_options& _opt;
-    const unsigned _sampleCount;
+    bool
+    isBuffer() const
+    {
+        return !(_locusBuffer.empty());
+    }
 
-    ActiveRegionId _activeRegionId;
-    LocusBuffer _locusBuffer;
+    void inferHaplotypePair(const uint8_t haplotypeId, const bool isHet);
 };

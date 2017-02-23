@@ -498,9 +498,13 @@ updateSnvLocusWithSampleInfo(
         auto allele1Index(maxGt.getAllele1Index());
 
         if (allele0Index > 0)
-            maxGt.setAllele0ComplexAlleleId(activeRegionDetector.getComplexAlleleIndex(sampleIndex, locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex));
+            maxGt.setAllele0HaplotypeId(activeRegionDetector.getHaplotypeId(sampleIndex, locus.pos,
+                                                                            locus.getSiteAlleles()[allele0Index -
+                                                                                                   1].baseIndex));
         if (allele1Index > 0)
-            maxGt.setAllele1ComplexAlleleId(activeRegionDetector.getComplexAlleleIndex(sampleIndex, locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex));
+            maxGt.setAllele1HaplotypeId(activeRegionDetector.getHaplotypeId(sampleIndex, locus.pos,
+                                                                            locus.getSiteAlleles()[allele1Index -
+                                                                                                   1].baseIndex));
     }
 }
 
@@ -1430,9 +1434,9 @@ updateIndelLocusWithSampleInfo(
         auto allele1Index(maxGt.getAllele1Index());
 
         if (allele0Index > 0)
-            maxGt.setAllele0ComplexAlleleId(alleleGroup.data(allele0Index-1).getSampleData(sampleIndex).complexAlleleIndex);
+            maxGt.setAllele0HaplotypeId(alleleGroup.data(allele0Index - 1).getSampleData(sampleIndex).haplotypeId);
         if (allele1Index > 0)
-            maxGt.setAllele1ComplexAlleleId(alleleGroup.data(allele1Index-1).getSampleData(sampleIndex).complexAlleleIndex);
+            maxGt.setAllele1HaplotypeId(alleleGroup.data(allele1Index - 1).getSampleData(sampleIndex).haplotypeId);
     }
 }
 

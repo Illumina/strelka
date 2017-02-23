@@ -115,7 +115,7 @@ public:
     /// \param pos reference position
     /// \param baseIndex alt base id
     /// \return complex allele id
-    uint8_t getComplexAlleleIndex(const unsigned sampleId, const pos_t pos, const BASE_ID::index_t baseIndex) const;
+    uint8_t getHaplotypeId(const unsigned sampleId, const pos_t pos, const BASE_ID::index_t baseIndex) const;
 
     /// clear active region detector
     void clear();

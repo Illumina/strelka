@@ -39,7 +39,7 @@
 
 typedef std::vector<RangeMap<pos_t,uint8_t>> RangeSet;
 typedef std::map<std::string, std::vector<align_id_t>> HaplotypeToAlignIdSet;
-typedef uint8_t ComplexAlleleId;
+typedef uint8_t HaplotypeId;
 
 /// Represent all haplotypes found in the current active region
 class ActiveRegion
@@ -119,7 +119,7 @@ public:
         _alignIdSoftClipped.insert(alignId);
     }
 
-    static ComplexAlleleId getComplexAlleleId(const uint8_t rangeSetValue, const BASE_ID::index_t baseIndex)
+    static HaplotypeId getHaplotypeId(const uint8_t rangeSetValue, const BASE_ID::index_t baseIndex)
     {
         switch (baseIndex)
         {
@@ -137,7 +137,7 @@ public:
     }
 
     static void addBaseId(
-            const ComplexAlleleId complexAlleleId,
+            const HaplotypeId complexAlleleId,
             char baseChar,
             uint8_t& rangeSetValue)
     {
