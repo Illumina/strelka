@@ -69,6 +69,12 @@ struct starling_base_options : public blt_options
         return (not realignedReadFilenamePrefix.empty());
     }
 
+    bool
+    isUseCallRegionsTract() const
+    {
+        return (not callRegionsBedFilename.empty());
+    }
+
     std::string referenceFilename;
 
     // list of chromosome regions to be analyzed

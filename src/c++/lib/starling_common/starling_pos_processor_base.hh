@@ -155,6 +155,11 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
         const known_pos_range2& range,
         const unsigned ploidy);
 
+    /// specify a region as eligible for variant calling output
+    void
+    insertCallRegion(
+        const known_pos_range2& range);
+
 #if 0
     starling_read*
     get_read(const align_id_t read_id,
@@ -617,6 +622,8 @@ protected:
 
     std::string _chromName;
     known_pos_range2 _reportRange;
+
+    RegionTracker _callRegions;
 
     // used to keep read id's unique across multiple samples:
     read_id_counter _ric;

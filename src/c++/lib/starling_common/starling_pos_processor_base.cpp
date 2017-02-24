@@ -497,6 +497,18 @@ insert_ploidy_region(
 
 
 
+void
+starling_pos_processor_base::
+insertCallRegion(
+    const known_pos_range2& range)
+{
+    _stagemanPtr->validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
+    _callRegions.addRegion(range);
+    _is_skip_process_pos=false;
+}
+
+
+
 bool
 starling_pos_processor_base::
 is_estimated_depth_range_ge_than(
@@ -886,15 +898,48 @@ process_pos(const int stage_no,
         if (! _opt.is_write_candidate_indels_only)
         {
             //
-            const bool isPosReportable(is_pos_reportable(pos));
-            bool isPosPrecedingReportableRange(false);
-            if (not isPosReportable)
+            const bool isPosInPrimaryReportingRegion(is_pos_reportable(pos));
+
+            /// is this position reportable in the VCF output?
+            bool isPosReportable(false);
+
+            /// is this position preceding one that is reportable in the VCF output by less than precedingRange bases?
+            ///
+            /// this is used to maintain consistency for overlapping germline indels
+            ///
+            static const pos_t precedingRange(200);
+            bool isPosPrecedingReportable(false);
+
+            if (not isPosInPrimaryReportingRegion)
             {
-                isPosPrecedingReportableRange = is_pos_preceding_reportable_range(pos);
+                isPosPrecedingReportable = (is_pos_preceding_reportable_range(pos) and is_pos_reportable(pos+precedingRange));
+                if (_opt.isUseCallRegionsTract())
+                {
+                    if (isPosPrecedingReportable)
+                    {
+                        isPosPrecedingReportable = _callRegions.isIntersectRegion(known_pos_range2((pos-precedingRange),pos));
+                    }
+                }
             }
-            if (isPosReportable || isPosPrecedingReportableRange)
+            else
             {
-                process_pos_variants(pos, isPosPrecedingReportableRange);
+                if (_opt.isUseCallRegionsTract())
+                {
+                    isPosReportable = _callRegions.isIntersectRegion(pos);
+                    if (not isPosReportable)
+                    {
+                        isPosPrecedingReportable = _callRegions.isIntersectRegion(known_pos_range2((pos-precedingRange),pos));
+                    }
+                }
+                else
+                {
+                    isPosReportable = true;
+                }
+            }
+
+            if (isPosReportable or isPosPrecedingReportable)
+            {
+                process_pos_variants(pos, isPosPrecedingReportable);
             }
         }
 

@@ -238,6 +238,13 @@ callRegion(
                 known_pos_range2 range(bedRecord.begin,bedRecord.end);
                 sppr.insert_targeted_region(range);
             }
+
+            else if (INPUT_TYPE::CALL_REGION == currentIndex)
+            {
+                known_pos_range2 range(bedRecord.begin,bedRecord.end);
+                sppr.insertCallRegion(range);
+            }
+
             else
             {
                 assert(false && "Unexpected hts index");
