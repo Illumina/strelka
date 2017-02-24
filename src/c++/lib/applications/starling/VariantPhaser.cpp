@@ -106,31 +106,37 @@ createPhaseRecord(unsigned sampleId)
 {
     if (not isBuffer()) return;
 
-    // simple hack to select 2 haplotypes assuming all variants in _locusBuffer are correct
-    for (unsigned haplotypeIdPairIndex(0); haplotypeIdPairIndex<HaplotypeIdPair::SIZE; ++haplotypeIdPairIndex)
-        _possibleHaplotypeIdPair[haplotypeIdPairIndex] = true;
-
+    // simple hack for checking whether 2 alternative haplotypes (haplotypeId 1 and 2) are selected
+    auto isHetHap1(false);
+    auto isHetHap2(false);
     unsigned numHetVariants(0);
     for (const auto& locusPtr : _locusBuffer)
     {
         const auto& sampleInfo = locusPtr->getSample(sampleId);
         if (sampleInfo.isVariant())
         {
-            _possibleHaplotypeIdPair[0] = false;
-            const auto& maxGt = sampleInfo.max_gt();
-            bool isHet = maxGt.isHet();
+            const auto& maxGenotype = sampleInfo.max_gt();
+            bool isHet = maxGenotype.isHet();
 
             // isConflict==true means that the het variant is not from the top 2 selected haplotypes
-            bool isConflict(maxGt.isConflict());
+            bool isConflict(maxGenotype.isConflict());
             if (isHet and !isConflict)
                 ++numHetVariants;
 
-            if ((not isConflict) and (locusPtr->getActiveRegionId() >= 0))
+            if (isHet and (not isConflict) and (locusPtr->getActiveRegionId() >= 0))
             {
-                inferHaplotypePair(maxGt.getAllele0HaplotypeId(), isHet);
+                if (maxGenotype.getAllele0HaplotypeId() == 1)
+                    isHetHap1 = true;
+                else if (maxGenotype.getAllele0HaplotypeId() == 2)
+                    isHetHap2 = true;
 
-                if (maxGt.getPloidy() == 2)
-                    inferHaplotypePair(maxGt.getAllele1HaplotypeId(), isHet);
+                if (maxGenotype.getPloidy() == 2)
+                {
+                    if (maxGenotype.getAllele1HaplotypeId() == 1)
+                        isHetHap1 = true;
+                    else if (maxGenotype.getAllele1HaplotypeId() == 2)
+                        isHetHap2 = true;
+                }
             }
         }
     }
@@ -138,17 +144,6 @@ createPhaseRecord(unsigned sampleId)
     // no phasing is needed if there's 0 or 1 het variant
     if (numHetVariants <= 1)
         return;
-
-    // select the most plausible haplotype id pair
-    uint8_t selectedHaplotypeIdPairIndex(0);
-    for (unsigned hapIdPairIndex(0); hapIdPairIndex<6; ++hapIdPairIndex)
-    {
-        if (_possibleHaplotypeIdPair[hapIdPairIndex])
-        {
-            selectedHaplotypeIdPairIndex = hapIdPairIndex;
-            break;
-        }
-    }
 
     // to record the haplotype id of the first nonref allele of the first variant
     // i.e. to write 0|1 instead of 1|0 for the first variant of the phase block
@@ -159,15 +154,15 @@ createPhaseRecord(unsigned sampleId)
         auto& sampleInfo = locusPtr->getSample(sampleId);
         if (not sampleInfo.isVariant()) continue;
 
-        sampleInfo.phaseSetId = (_activeRegionId+1);
         auto& maxGenotype = sampleInfo.max_gt();
 
         if ((not maxGenotype.isHet()) or maxGenotype.isConflict()) continue;
 
-        if (selectedHaplotypeIdPairIndex != HetHap1Hap2)
+        sampleInfo.phaseSetId = (_activeRegionId+1);
+        if ((not isHetHap1) or (not isHetHap2))
         {
             // simple case where there's no flipped genotype
-            sampleInfo.phaseSetId = (_activeRegionId+1);
+            // one haplotype is the reference
             maxGenotype.setPhased(false);
         }
         else
@@ -198,73 +193,6 @@ createPhaseRecord(unsigned sampleId)
             }
             maxGenotype.setPhased(isFlip);
         }
-    }
-}
-
-
-/// This method is called for each non-conflict variant
-/// \param haplotypeId 0: no variant, 1: variant is from hap1, 2: variant is from hap2, 3: variant is from both hap1 and hap2
-/// \param isHet true if the variant is heterozygous
-void
-VariantPhaser::inferHaplotypePair(const uint8_t haplotypeId, const bool isHet)
-{
-    if (haplotypeId == 0) return;
-
-
-    switch (haplotypeId)
-    {
-        case 1:
-            // the variant is lying on haplotype 1
-            if (isHet)
-            {
-                // impossible haplotype id pairs if the variant is correct
-                _possibleHaplotypeIdPair[HetHap2] = false;
-                _possibleHaplotypeIdPair[HomHap1] = false;
-                _possibleHaplotypeIdPair[HomHap2] = false;
-            }
-            else
-            {
-                _possibleHaplotypeIdPair[HetHap1] = false;
-                _possibleHaplotypeIdPair[HetHap2] = false;
-                _possibleHaplotypeIdPair[HetHap1Hap2] = false;
-                _possibleHaplotypeIdPair[HomHap2] = false;
-            }
-            break;
-        case 2:
-            // the variant is lying on haplotype 2
-            if (isHet)
-            {
-                _possibleHaplotypeIdPair[HetHap1] = false;
-                _possibleHaplotypeIdPair[HomHap1] = false;
-                _possibleHaplotypeIdPair[HomHap2] = false;
-            }
-            else
-            {
-                _possibleHaplotypeIdPair[HetHap1] = false;
-                _possibleHaplotypeIdPair[HetHap2] = false;
-                _possibleHaplotypeIdPair[HetHap1Hap2] = false;
-                _possibleHaplotypeIdPair[HomHap1] = false;
-            }
-            break;
-        case 3:
-            // the variant is lying on both haplotype 1 and 2
-            if (isHet)
-            {
-                _possibleHaplotypeIdPair[HetHap1Hap2] = false;
-                _possibleHaplotypeIdPair[HomHap1] = false;
-                _possibleHaplotypeIdPair[HomHap2] = false;
-            }
-            else
-            {
-                _possibleHaplotypeIdPair[HetHap1] = false;
-                _possibleHaplotypeIdPair[HetHap2] = false;
-            }
-            break;
-        case 4:
-            // do nothing
-            break;
-        default:
-            assert(false);
     }
 }
 

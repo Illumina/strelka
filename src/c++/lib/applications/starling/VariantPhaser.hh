@@ -34,18 +34,6 @@
 
 typedef std::vector<std::unique_ptr<LocusInfo>> LocusBuffer;
 
-enum HaplotypeIdPair
-{
-    // haplotype Id 0: reference
-    HomRef = 0,     // haplotype Id 0,0
-    HetHap1,        // haplotype Id 0,1
-    HetHap2,        // haplotype Id 0,2
-    HetHap1Hap2,    // haplotype Id 1,2
-    HomHap1,        // haplotype Id 1,1
-    HomHap2,        // haplotype Id 2,2
-    SIZE
-};
-
 /// short-range phasing utility using information from ActiveRegions
 struct VariantPhaser : public variant_pipe_stage_base
 {
@@ -70,8 +58,6 @@ private:
     ActiveRegionId _activeRegionId;
     LocusBuffer _locusBuffer;
 
-    bool _possibleHaplotypeIdPair[HaplotypeIdPair::SIZE];
-
     void flush_impl() override;
 
     template <class T>
@@ -92,6 +78,4 @@ private:
     {
         return !(_locusBuffer.empty());
     }
-
-    void inferHaplotypePair(const uint8_t haplotypeId, const bool isHet);
 };

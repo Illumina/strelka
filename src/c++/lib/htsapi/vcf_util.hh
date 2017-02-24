@@ -254,7 +254,11 @@ struct VcfGenotype
 
     bool isConflict() const
     {
-        return isHet() and (_allele0HaplotypeId == _allele1HaplotypeId);
+        // haplotypeId==3 should be hom
+        if (isHet())
+            return (_allele0HaplotypeId == _allele1HaplotypeId) or (_allele0HaplotypeId == 3) or (_allele1HaplotypeId == 3);
+
+        return _allele0HaplotypeId != _allele1HaplotypeId;
     }
 
     int
