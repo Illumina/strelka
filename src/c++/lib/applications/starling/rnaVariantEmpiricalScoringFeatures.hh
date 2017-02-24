@@ -226,7 +226,6 @@ struct RNA_INDEL_SCORING_FEATURES : public FeatureSet
         IndelAlleleRepeatUnitSize,
         AD0,
         AD1,
-        AD2,
         SampleIndelAlleleBiasLower,
         SampleIndelAlleleBias,
         F_DPI,
@@ -258,8 +257,6 @@ struct RNA_INDEL_SCORING_FEATURES : public FeatureSet
             return "AD0";
         case AD1:
             return "AD1";
-        case AD2:
-            return "AD2";
         case SampleIndelAlleleBiasLower:
             return "SampleIndelAlleleBiasLower";
         case SampleIndelAlleleBias:
@@ -305,7 +302,6 @@ struct RNA_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         F_GQ_NORM,
         AD0_NORM,
         SamplePrimaryAltAlleleDepthFraction,
-        AD2_NORM,
         QUAL_EXACT,
         ConservativeGenotypeQuality,
         F_GQ_EXACT,
@@ -341,8 +337,6 @@ struct RNA_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "AD0_NORM";
         case SamplePrimaryAltAlleleDepthFraction:
             return "SamplePrimaryAltAlleleDepthFraction";
-        case AD2_NORM:
-            return "AD2_NORM";
         case QUAL_EXACT:
             return "QUAL_EXACT";
         case ConservativeGenotypeQuality:

@@ -560,8 +560,8 @@ computeEmpiricalScoringFeatures(
                      (confidentPrimaryAltCount * allSampleChromDepthFactor));
         features.set(RNA_INDEL_SCORING_FEATURES::F_DPI, (indelSampleInfo.tier1Depth * allSampleChromDepthFactor));
 
-        developmentFeatures.set(RNA_INDEL_SCORING_FEATURES::SampleIndelAlleleBiasLower, SampleIndelAlleleBiasLower);
-        developmentFeatures.set(RNA_INDEL_SCORING_FEATURES::SampleIndelAlleleBias, SampleIndelAlleleBias);
+        features.set(RNA_INDEL_SCORING_FEATURES::SampleIndelAlleleBiasLower, SampleIndelAlleleBiasLower);
+        features.set(RNA_INDEL_SCORING_FEATURES::SampleIndelAlleleBias, SampleIndelAlleleBias);
 
         // compute any experimental features not currently used in production
         if (isComputeDevelopmentFeatures)
