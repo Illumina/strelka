@@ -1269,6 +1269,7 @@ pileup_read_segment(
 
     assert(read_size>=fwd_strand_end_skip);
 
+    // read_begin,read_end define a zero-indexed, half-open range in read-coordinates: [read_begin, read_end)
     unsigned read_begin(fwd_strand_begin_skip);
     unsigned read_end(read_size-fwd_strand_end_skip);
 
@@ -1284,6 +1285,8 @@ pileup_read_segment(
         {
             read_end = 0;
         }
+
+        if (read_end <= read_begin) return;
     }
 
 #ifdef DEBUG_PPOS
