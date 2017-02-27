@@ -78,11 +78,8 @@ struct starling_options : public starling_base_options
     std::string snv_scoring_model_filename;
     std::string indel_scoring_model_filename;
 
-    // Apply codon phasing:
-    bool isUseCodonPhaser = false;
-
-    // Size of the window we are phasing in, default is codon range (=3)
-    int phasing_window = 3;
+    // Apply variant phasing:
+    bool isUseVariantPhaser = false;
 
     // apply special behaviors for RNA-Seq analysis
     bool isRNA = false;

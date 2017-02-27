@@ -26,7 +26,7 @@
 template <class T>
 void VariantPhaser::processLocus(std::unique_ptr<T> locusPtr)
 {
-    if (not _opt.isUseCodonPhaser)
+    if (not _opt.isUseVariantPhaser)
     {
         // bypass phasing
         _sink->process(std::move(locusPtr));
@@ -200,7 +200,7 @@ void
 VariantPhaser::
 flush_impl()
 {
-    if (_opt.isUseCodonPhaser)
+    if (_opt.isUseVariantPhaser)
     {
         outputBuffer();
     }

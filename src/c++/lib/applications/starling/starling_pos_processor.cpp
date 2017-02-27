@@ -498,13 +498,15 @@ updateSnvLocusWithSampleInfo(
         auto allele1Index(maxGt.getAllele1Index());
 
         if (allele0Index > 0)
-            maxGt.setAllele0HaplotypeId(activeRegionDetector.getHaplotypeId(sampleIndex, locus.pos,
-                                                                            locus.getSiteAlleles()[allele0Index -
-                                                                                                   1].baseIndex));
+            maxGt.setAllele0HaplotypeId(
+                    activeRegionDetector.getHaplotypeId(
+                            sampleIndex, locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex)
+            );
         if (allele1Index > 0)
-            maxGt.setAllele1HaplotypeId(activeRegionDetector.getHaplotypeId(sampleIndex, locus.pos,
-                                                                            locus.getSiteAlleles()[allele1Index -
-                                                                                                   1].baseIndex));
+            maxGt.setAllele1HaplotypeId(
+                    activeRegionDetector.getHaplotypeId(
+                            sampleIndex, locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
+            );
     }
 }
 
@@ -1425,7 +1427,7 @@ updateIndelLocusWithSampleInfo(
     // set indelSampleInfo
     updateIndelSampleInfo(opt, dopt, alleleGroup, sampleIndex, basecallBuffer, locus);
 
-    // set complex allele ids
+    // set haplotype ids
     auto& maxGt = sampleInfo.max_gt();
     if (maxGt.getPloidy() == 2)
     {
@@ -1434,9 +1436,9 @@ updateIndelLocusWithSampleInfo(
         auto allele1Index(maxGt.getAllele1Index());
 
         if (allele0Index > 0)
-            maxGt.setAllele0HaplotypeId(alleleGroup.data(allele0Index - 1).getSampleData(sampleIndex).haplotypeId);
+            maxGt.setAllele0HaplotypeId(alleleGroup.data(allele0Index-1).getSampleData(sampleIndex).haplotypeId);
         if (allele1Index > 0)
-            maxGt.setAllele1HaplotypeId(alleleGroup.data(allele1Index - 1).getSampleData(sampleIndex).haplotypeId);
+            maxGt.setAllele1HaplotypeId(alleleGroup.data(allele1Index-1).getSampleData(sampleIndex).haplotypeId);
     }
 }
 
