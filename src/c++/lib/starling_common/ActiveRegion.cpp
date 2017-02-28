@@ -155,10 +155,11 @@ bool ActiveRegion::processHaplotypesWithCounting(IndelBuffer& indelBuffer, Range
             std::cerr << haplotype << '\t' << count << std::endl;
 #endif
 
-        if (count >= countThreshold and haplotype != refStr)
+        if ((count >= countThreshold) and (haplotype != refStr))
         {
-            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, haplotypeId++,
+            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, haplotypeId,
                                       indelBuffer, polySites);
+            ++haplotypeId;
         }
     }
 
@@ -359,7 +360,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(IndelBuffer& indelBuffer, Range
             std::cerr << haplotype << '\t' << count << std::endl;
 #endif
 
-        if (count >= countThreshold and haplotype != refStr)
+        if ((count >= countThreshold) and (haplotype != refStr))
         {
             convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, haplotypeId++,
                                       indelBuffer, polySites);

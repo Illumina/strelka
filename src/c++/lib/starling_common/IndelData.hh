@@ -39,7 +39,6 @@
 #include <string>
 #include <set>
 #include <vector>
-#include <htsapi/vcf_util.hh>
 
 
 /// represents the data associated with a single indel observation:

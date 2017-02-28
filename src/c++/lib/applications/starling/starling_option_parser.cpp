@@ -86,8 +86,8 @@ get_starling_option_parser(
 
     po::options_description phase_opt("Read-backed phasing options");
     phase_opt.add_options()
-    ("do-short-range-phasing", po::value(&opt.isUseVariantPhaser)->zero_tokens(),
-     "Enable short-range SNP phasing")
+    ("enable-read-backed-phasing", po::value(&opt.isUseVariantPhaser)->zero_tokens(),
+     "Enable read-backed variant phasing")
     ;
 
     po::options_description score_opt("scoring-options");

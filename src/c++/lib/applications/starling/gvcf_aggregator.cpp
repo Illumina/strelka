@@ -46,8 +46,8 @@ gvcf_aggregator(
     if (opt.is_ploidy_prior)
     {
         std::shared_ptr<variant_pipe_stage_base> overlapper(new indel_overlapper(_scoringModels, ref, nextPipeStage));
-        _codonPhaserPtr.reset(new VariantPhaser(opt, sampleCount, overlapper));
-        nextPipeStage = _codonPhaserPtr;
+        _variantPhaserPtr.reset(new VariantPhaser(opt, sampleCount, overlapper));
+        nextPipeStage = _variantPhaserPtr;
     }
     const bool isTargetedRegions(not opt.gvcf.targeted_regions_bedfile.empty());
     _head.reset(new variant_prefilter_stage(_scoringModels, isTargetedRegions, targetedRegions, nextPipeStage));

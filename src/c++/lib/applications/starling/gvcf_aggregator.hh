@@ -74,7 +74,7 @@ public:
 private:
     ScoringModelManager _scoringModels;
 
-    std::shared_ptr<VariantPhaser> _codonPhaserPtr;
+    std::shared_ptr<VariantPhaser> _variantPhaserPtr;
     std::shared_ptr<gvcf_writer> _gvcfWriterPtr;
     std::shared_ptr<variant_pipe_stage_base> _head;
 };
