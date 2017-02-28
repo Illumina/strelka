@@ -61,13 +61,14 @@ getSamtoolsRegionString(
 
 void
 getStrelkaAnalysisRegionInfo(
-    const std::string& region,
+    const std::string& chrom,
+    const int32_t beginPos,
+    const int32_t endPos,
     const unsigned maxIndelSize,
     AnalysisRegionInfo& rinfo)
 {
-    int32_t regionBeginPos(0), regionEndPos(0);
-    parse_bam_region(region.c_str(), rinfo.regionChrom, regionBeginPos, regionEndPos);
-    rinfo.regionRange.set_range(regionBeginPos, regionEndPos);
+    rinfo.regionChrom = chrom;
+    rinfo.regionRange.set_range(beginPos, endPos);
 
     rinfo.streamerRegionRange = rinfo.regionRange;
     rinfo.streamerRegionRange.expandBy(maxIndelSize);
@@ -84,28 +85,41 @@ getStrelkaAnalysisRegionInfo(
 
 
 void
+getStrelkaAnalysisRegionInfo(
+    const std::string& region,
+    const unsigned maxIndelSize,
+    AnalysisRegionInfo& rinfo)
+{
+    int32_t regionBeginPos(0), regionEndPos(0);
+    parse_bam_region(region.c_str(), rinfo.regionChrom, regionBeginPos, regionEndPos);
+    getStrelkaAnalysisRegionInfo(rinfo.regionChrom, regionBeginPos, regionEndPos, maxIndelSize, rinfo);
+}
+
+
+
+void
 getStrelkaAnalysisRegions(
     const starling_base_options& opt,
     const std::string& referenceAlignmentFilename,
     const bam_header_info& referenceHeaderInfo,
-    std::vector<AnalysisRegionInfo>& regionInfo)
+    std::vector<AnalysisRegionInfo>& regionInfoList)
 {
     /// TODO add test that regions do not intersect
     const unsigned regionCount(opt.regions.size());
-    regionInfo.resize(regionCount);
+    regionInfoList.resize(regionCount);
 
     for (unsigned regionIndex(0); regionIndex < regionCount; ++regionIndex)
     {
         const std::string& region(opt.regions[regionIndex]);
-        auto& rinfo(regionInfo[regionIndex]);
-        getStrelkaAnalysisRegionInfo(region, opt.max_indel_size, rinfo);
+        auto& regionInfo(regionInfoList[regionIndex]);
+        getStrelkaAnalysisRegionInfo(region, opt.max_indel_size, regionInfo);
 
         // check that target region chrom exists in bam headers:
-        if (not referenceHeaderInfo.chrom_to_index.count(rinfo.regionChrom))
+        if (not referenceHeaderInfo.chrom_to_index.count(regionInfo.regionChrom))
         {
             using namespace illumina::common;
             std::ostringstream oss;
-            oss << "ERROR: region contig name: '" << rinfo.regionChrom
+            oss << "ERROR: region contig name: '" << regionInfo.regionChrom
                 << "' is not found in the header of BAM/CRAM file: '" << referenceAlignmentFilename
                 << "'\n";
             BOOST_THROW_EXCEPTION(LogicException(oss.str()));

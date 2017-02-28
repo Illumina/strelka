@@ -52,14 +52,30 @@ struct AnalysisRegionInfo
 
     ///analysis range padded by indel size + extra constant pad (used for reference region)
     known_pos_range2 refRegionRange;
+
+    /// region formatted into a samtools region string, e.g. "chr20:100-200"
     std::string streamerRegion;
 };
 
 
-/// given an input region for analysis, produce various related
+/// given a genome segment for analysis described by chrom, beginPos, endPos,
+/// produce various related region objects used to manage edge-effects
+///
+/// \param[in] beginPos start position (zero-indexed, closed)
+/// \param[in] endPos end position (zero-indexed, open)
+void
+getStrelkaAnalysisRegionInfo(
+    const std::string& chrom,
+    const int32_t beginPos,
+    const int32_t endPos,
+    const unsigned maxIndelSize,
+    AnalysisRegionInfo& rinfo);
+
+
+/// given an input samtools region string for analysis, produce various related
 /// region objects used to manage edge-effects
 ///
-/// \param region[in] samtools formated analysis region string
+/// \param region[in] samtools formatted analysis region string
 void
 getStrelkaAnalysisRegionInfo(
     const std::string& region,
@@ -75,4 +91,4 @@ getStrelkaAnalysisRegions(
     const starling_base_options& opt,
     const std::string& referenceAlignmentFilename,
     const bam_header_info& referenceHeaderInfo,
-    std::vector<AnalysisRegionInfo>& regionInfo);
+    std::vector<AnalysisRegionInfo>& regionInfoList);

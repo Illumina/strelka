@@ -108,7 +108,7 @@ static
 void
 callRegion(
     const starling_options& opt,
-    const AnalysisRegionInfo& rinfo,
+    const AnalysisRegionInfo& regionInfo,
     const starling_streams& client_io,
     const std::vector<unsigned>& sampleIndexToPloidyVcfSampleIndex,
     const unsigned ploidyVcfSampleCount,
@@ -121,9 +121,9 @@ callRegion(
 
     const unsigned sampleCount(opt.alignFileOpt.alignmentFilename.size());
 
-    sppr.resetRegion(rinfo.regionChrom, rinfo.regionRange);
-    streamData.resetRegion(rinfo.streamerRegion.c_str());
-    setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
+    sppr.resetRegion(regionInfo.regionChrom, regionInfo.regionRange);
+    streamData.resetRegion(regionInfo.streamerRegion.c_str());
+    setRefSegment(opt, regionInfo.regionChrom, regionInfo.refRegionRange, ref);
 
     while (streamData.next())
     {
@@ -259,6 +259,49 @@ callRegion(
 
 
 
+/// re-segment each target region into 0-many target sub-regions, divided on each large gap
+/// in bed-region coverage
+///
+static
+void
+getSubRegionsFromBedTrack(
+    const starling_base_options& opt,
+    const AnalysisRegionInfo& regionInfo,
+    std::vector<known_pos_range2>& subRegions)
+{
+    static const pos_t maxSubRegionCallGap(5000);
+    bed_streamer callRegionStream(opt.callRegionsBedFilename.c_str(), regionInfo.streamerRegion.c_str());
+
+    subRegions.clear();
+    while (callRegionStream.next())
+    {
+        bool isStartNewSubRegion(true);
+        const bed_record& callRegion(*(callRegionStream.get_record_ptr()));
+        assert(callRegion.end > callRegion.begin);
+
+        if (not subRegions.empty())
+        {
+            const pos_t subRegionEnd(subRegions.back().end_pos());
+            assert(callRegion.begin >= subRegionEnd);
+            const pos_t callGap(callRegion.begin - subRegionEnd);
+            isStartNewSubRegion = (callGap > maxSubRegionCallGap);
+        }
+
+        const pos_t subRegionEnd = std::min(callRegion.end, regionInfo.regionRange.end_pos());
+        if (isStartNewSubRegion)
+        {
+            const pos_t subRegionBegin = std::max(callRegion.begin, regionInfo.regionRange.begin_pos());
+            subRegions.emplace_back(subRegionBegin, subRegionEnd);
+        }
+        else
+        {
+            subRegions.back().set_end_pos(subRegionEnd);
+        }
+    }
+}
+
+
+
 void
 starling_run(
     const prog_info& pinfo,
@@ -343,13 +386,30 @@ starling_run(
 
     // parse and sanity check regions
     const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilename.front());
-    std::vector<AnalysisRegionInfo> regionInfo;
-    getStrelkaAnalysisRegions(opt, referenceAlignmentFilename, referenceHeaderInfo, regionInfo);
+    std::vector<AnalysisRegionInfo> regionInfoList;
+    getStrelkaAnalysisRegions(opt, referenceAlignmentFilename, referenceHeaderInfo, regionInfoList);
 
-    for (const auto& rinfo : regionInfo)
+    for (const auto& regionInfo : regionInfoList)
     {
-        callRegion(opt, rinfo, client_io, sampleIndexToPloidyVcfSampleIndex, ploidyVcfSampleCount,
-                   brc, ref, streamData, sppr);
+        if (not opt.isUseCallRegions())
+        {
+            callRegion(opt, regionInfo, client_io, sampleIndexToPloidyVcfSampleIndex, ploidyVcfSampleCount,
+                       brc, ref, streamData, sppr);
+        }
+        else
+        {
+            std::vector<known_pos_range2> subRegions;
+            getSubRegionsFromBedTrack(opt, regionInfo, subRegions);
+
+            for (const auto& subRegion : subRegions)
+            {
+                AnalysisRegionInfo subRegionInfo;
+                getStrelkaAnalysisRegionInfo(regionInfo.regionChrom, subRegion.begin_pos(), subRegion.end_pos(),
+                                             opt.max_indel_size, subRegionInfo);
+                callRegion(opt, subRegionInfo, client_io, sampleIndexToPloidyVcfSampleIndex, ploidyVcfSampleCount,
+                           brc, ref, streamData, sppr);
+            }
+        }
     }
     sppr.reset();
 }
