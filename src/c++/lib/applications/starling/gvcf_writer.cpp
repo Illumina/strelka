@@ -54,15 +54,17 @@ gvcf_writer(
     const starling_deriv_options& dopt,
     const starling_streams& streams,
     const reference_contig_segment& ref,
-    const RegionTracker& nocompress_regions,
+    const RegionTracker& nocompressRegions,
+    const RegionTracker& callRegions,
     const ScoringModelManager& scoringModels)
     : _opt(opt)
     , _streams(streams)
     , _ref(ref)
     , _dopt(dopt.gvcf)
     , _empty_site(_dopt, streams.getSampleCount())
+    , _callRegions(callRegions)
     , _headPos(0)
-    , _gvcf_comp(opt.gvcf,nocompress_regions)
+    , _gvcf_comp(opt.gvcf,nocompressRegions)
     , _scoringModels(scoringModels)
 {
     if (! opt.gvcf.is_gvcf_output())
@@ -132,14 +134,24 @@ gvcf_writer::
 skip_to_pos(
     const pos_t target_pos)
 {
-    // advance through any indel region by adding individual sites
+    // advance through any indel or uncovered region by adding individual empty sites
     while (_headPos<target_pos)
     {
+        if (_opt.isUseCallRegions())
+        {
+            if (not _callRegions.isIntersectRegion(_headPos))
+            {
+                _headPos++;
+                continue;
+            }
+        }
+
         GermlineDiploidSiteLocusInfo si = get_empty_site(_headPos);
 
         add_site_internal(si);
+
         // Don't do compressed ranges if there is an overlapping indel
-        // filters are being applied to the overlapping positions
+        // because filters are being applied to the overlapping positions
         if (_last_indel) continue;
 
         if (_gvcf_comp.is_range_compressible(known_pos_range2(si.pos, target_pos)))
@@ -259,9 +271,6 @@ add_site_internal(
 
 
 
-/// queue site record for writing, after
-/// possibly joining it into a compressed non-variant block
-///
 void
 gvcf_writer::
 queue_site_record(
@@ -991,6 +1000,11 @@ gvcf_writer::
 write_indel_record(
     const GermlineIndelLocusInfo& locus) const
 {
+    if (_opt.isUseCallRegions())
+    {
+        if (not _callRegions.isIntersectRegion(locus.pos)) return;
+    }
+
     const unsigned sampleCount(locus.getSampleCount());
 
     write_indel_record_instance(locus, _streams.gvcfVariantsStream());

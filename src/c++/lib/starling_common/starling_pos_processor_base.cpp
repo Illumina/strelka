@@ -913,7 +913,7 @@ process_pos(const int stage_no,
             if (not isPosInPrimaryReportingRegion)
             {
                 isPosPrecedingReportable = (is_pos_preceding_reportable_range(pos) and is_pos_reportable(pos+precedingRange));
-                if (_opt.isUseCallRegionsTract())
+                if (_opt.isUseCallRegions())
                 {
                     if (isPosPrecedingReportable)
                     {
@@ -923,7 +923,7 @@ process_pos(const int stage_no,
             }
             else
             {
-                if (_opt.isUseCallRegionsTract())
+                if (_opt.isUseCallRegions())
                 {
                     isPosReportable = _callRegions.isIntersectRegion(pos);
                     if (not isPosReportable)

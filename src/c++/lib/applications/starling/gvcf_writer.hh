@@ -46,7 +46,8 @@ struct gvcf_writer : public variant_pipe_stage_base
         const starling_deriv_options& dopt,
         const starling_streams& streams,
         const reference_contig_segment& ref,
-        const RegionTracker& nocompress_regions,
+        const RegionTracker& nocompressRegions,
+        const RegionTracker& callRegions,
         const ScoringModelManager& scoringModels);
 
     void process(std::unique_ptr<GermlineSiteLocusInfo>) override;
@@ -162,6 +163,8 @@ private:
     const gvcf_deriv_options _dopt;
     std::vector<gvcf_block_site_record> _blockPerSample;
     GermlineDiploidSiteLocusInfo _empty_site;
+
+    const RegionTracker& _callRegions;
 
     std::string _chromName;
     known_pos_range2 _reportRange;

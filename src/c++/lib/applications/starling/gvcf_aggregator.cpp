@@ -34,13 +34,14 @@ gvcf_aggregator(
     const reference_contig_segment& ref,
     const RegionTracker& nocompressRegions,
     const RegionTracker& targetedRegions,
+    const RegionTracker& callRegions,
     const std::vector<std::reference_wrapper<const pos_basecall_buffer>>& basecallBuffers)
     : _scoringModels(opt, dopt.gvcf)
 {
     if (! opt.gvcf.is_gvcf_output())
         throw std::invalid_argument("gvcf_aggregator cannot be constructed with nothing to do.");
 
-    _gvcfWriterPtr.reset(new gvcf_writer(opt, dopt, streams, ref, nocompressRegions, _scoringModels));
+    _gvcfWriterPtr.reset(new gvcf_writer(opt, dopt, streams, ref, nocompressRegions, callRegions, _scoringModels));
     std::shared_ptr<variant_pipe_stage_base> nextPipeStage(_gvcfWriterPtr);
     if (opt.is_ploidy_prior)
     {

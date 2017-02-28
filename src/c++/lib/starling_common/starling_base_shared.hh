@@ -70,7 +70,7 @@ struct starling_base_options : public blt_options
     }
 
     bool
-    isUseCallRegionsTract() const
+    isUseCallRegions() const
     {
         return (not callRegionsBedFilename.empty());
     }

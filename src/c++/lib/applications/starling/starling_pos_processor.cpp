@@ -63,7 +63,7 @@ starling_pos_processor(
         }
 
         _gvcfer.reset(new gvcf_aggregator(
-                          _opt, _dopt, _streams, ref, _nocompress_regions, _targeted_regions, basecallBuffers));
+                          _opt, _dopt, _streams, ref, _nocompress_regions, _targeted_regions, _callRegions, basecallBuffers));
     }
 
     // setup indel buffer samples:

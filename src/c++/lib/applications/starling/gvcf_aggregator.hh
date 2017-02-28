@@ -32,8 +32,8 @@
 #include <iosfwd>
 
 
-/// Assembles all site and indel call information into a consistent set, blocks output
-/// and writes to a VCF stream
+/// Assembles all site and indel call information into a consistent set,
+/// compresses sites into hom-ref blocks, and writes output to several VCF streams
 ///
 class gvcf_aggregator
 {
@@ -45,6 +45,7 @@ public:
         const reference_contig_segment& ref,
         const RegionTracker& nocompressRegions,
         const RegionTracker& targetedRegions,
+        const RegionTracker& callRegions,
         const std::vector<std::reference_wrapper<const pos_basecall_buffer>>& basecallBuffers);
 
     ~gvcf_aggregator();
