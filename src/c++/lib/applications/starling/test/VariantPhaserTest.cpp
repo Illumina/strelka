@@ -237,7 +237,6 @@ BOOST_AUTO_TEST_CASE( phasingConflictTest )
     auto snvInfo2(getSnvLocusInfo(dopt, sampleCount, activeRegionId, 6, 'A', 'G', 0, 2, false));
     phaser.process(std::move(snvInfo2));
 
-
     phaser.flush();
 
     // pos: 1, A->T, hap 1, genotype: 0|1

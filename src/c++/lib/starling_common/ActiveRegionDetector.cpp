@@ -49,7 +49,7 @@ ActiveRegionDetector::clearPosToActiveRegionMap(const pos_t pos)
 void
 ActiveRegionDetector::setPosToActiveRegionIdMap(pos_range activeRegionRange)
 {
-    if (activeRegionRange.size() > ActiveRegion::MaxRefSpanToPerformAssembly)
+    if (activeRegionRange.size() > ActiveRegion::MaxRefSpanToBypassAssembly)
         return;
 
     ActiveRegionId activeRegionId(activeRegionRange.begin_pos);
@@ -66,7 +66,7 @@ ActiveRegionDetector::processActiveRegion()
 {
     if (not _activeRegions.empty())
     {
-        _activeRegions.front().processHaplotypes(_indelBuffer, _polySites);
+        _activeRegions.front().processHaplotypes();
         _activeRegions.pop_front();
     }
 }
@@ -109,7 +109,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
             // close the existing active region
             pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
             _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
-                                     _aligner, _readBuffer);
+                                     _aligner, _readBuffer, _indelBuffer, _polySites);
 
             setPosToActiveRegionIdMap(activeRegionRange);
 
@@ -161,7 +161,7 @@ void ActiveRegionDetector::clear()
             _anchorPosFollowingPrevVariant = _readBuffer.getEndPos();
         pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
         _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
-                                    _aligner, _readBuffer);
+                                    _aligner, _readBuffer, _indelBuffer, _polySites);
         setPosToActiveRegionIdMap(activeRegionRange);
     }
 
