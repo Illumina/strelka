@@ -18,9 +18,20 @@
 //
 //
 
+#include "test_config.h"
+
 #include "boost/test/unit_test.hpp"
 
 #include "starling_pos_processor_util.hh"
+
+
+static
+std::string
+getTestpath()
+{
+    static const std::string testPath(std::string(TEST_DATA_PATH) + "/subregionTest.bed.gz");
+    return testPath;
+}
 
 
 BOOST_AUTO_TEST_SUITE( sppr_util_test )
@@ -78,6 +89,19 @@ BOOST_AUTO_TEST_CASE( test_vcf_to_allele )
     }
 }
 
+
+BOOST_AUTO_TEST_CASE( test_subregions_from_bed )
+{
+    static const std::string regionChrom("chrTest");
+    static const known_pos_range2 regionRange(10000,30000);
+    std::vector<known_pos_range2> subRegionRanges;
+    getSubRegionsFromBedTrack(getTestpath(), regionChrom, regionRange, subRegionRanges);
+
+    BOOST_REQUIRE_EQUAL(subRegionRanges.size(),3);
+    BOOST_REQUIRE_EQUAL(subRegionRanges[0],known_pos_range2(10000,10200));
+    BOOST_REQUIRE_EQUAL(subRegionRanges[1],known_pos_range2(18000,22000));
+    BOOST_REQUIRE_EQUAL(subRegionRanges[2],known_pos_range2(29800,30000));
+}
+
+
 BOOST_AUTO_TEST_SUITE_END()
-
-

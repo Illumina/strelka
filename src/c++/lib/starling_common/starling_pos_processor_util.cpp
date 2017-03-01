@@ -84,15 +84,18 @@ registerAlignments(
 
 void
 getSubRegionsFromBedTrack(
-    const starling_base_options& opt,
+    const std::string& callRegionsBedFilename,
     const std::string& regionChrom,
     const known_pos_range2& regionRange,
     std::vector<known_pos_range2>& subRegionRanges)
 {
     static const pos_t maxSubRegionCallGap(5000);
 
+    assert(not callRegionsBedFilename.empty());
+    assert(not regionChrom.empty());
+
     const std::string regionString(getSamtoolsRegionString(regionChrom, regionRange));
-    bed_streamer callRegionStream(opt.callRegionsBedFilename.c_str(), regionString.c_str());
+    bed_streamer callRegionStream(callRegionsBedFilename.c_str(), regionString.c_str());
 
     subRegionRanges.clear();
     while (callRegionStream.next())
@@ -103,8 +106,12 @@ getSubRegionsFromBedTrack(
 
         if (not subRegionRanges.empty())
         {
+            {
+                // assert that the bed file is sorted (this is redundant with the tabix indexing requirement):
+                const pos_t subRegionBegin(subRegionRanges.back().begin_pos());
+                assert(std::max(callRegion.begin, regionRange.begin_pos()) >= subRegionBegin);
+            }
             const pos_t subRegionEnd(subRegionRanges.back().end_pos());
-            assert(callRegion.begin >= subRegionEnd);
             const pos_t callGap(callRegion.begin - subRegionEnd);
             isStartNewSubRegion = (callGap > maxSubRegionCallGap);
         }
@@ -117,7 +124,7 @@ getSubRegionsFromBedTrack(
         }
         else
         {
-            subRegionRanges.back().set_end_pos(subRegionEnd);
+            subRegionRanges.back().set_end_pos(std::max(subRegionRanges.back().end_pos(),subRegionEnd));
         }
     }
 }

@@ -355,7 +355,7 @@ starling_run(
         else
         {
             std::vector<known_pos_range2> subRegionRanges;
-            getSubRegionsFromBedTrack(opt, regionInfo.regionChrom, regionInfo.regionRange, subRegionRanges);
+            getSubRegionsFromBedTrack(opt.callRegionsBedFilename, regionInfo.regionChrom, regionInfo.regionRange, subRegionRanges);
 
             for (const auto& subRegionRange : subRegionRanges)
             {

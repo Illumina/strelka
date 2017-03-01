@@ -55,7 +55,7 @@ registerAlignments(
 ///
 void
 getSubRegionsFromBedTrack(
-    const starling_base_options& opt,
+    const std::string& callRegionsBedFilename,
     const std::string& regionChrom,
     const known_pos_range2& regionRange,
     std::vector<known_pos_range2>& subRegionRanges);
