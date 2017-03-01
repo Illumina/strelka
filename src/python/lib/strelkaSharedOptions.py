@@ -67,13 +67,13 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
                               " Note that for any SNVs provided in the VCF, the SNV site will be reported (and for gVCF,"
                               " excluded from block compression), but the specific SNV alleles are ignored."
                               " (default: None)")
-        group.add_option("--exome", dest="isExome", action="store_true",
-                         help="Set options for WES input: turn off depth filters")
+        group.add_option("--exome", "--targeted", dest="isExome", action="store_true",
+                         help="Set options for exome or other targeted input: note in particular that this flag turns off high-depth filters")
         group.add_option("--callRegions", dest="callRegionsBed",
                          help="Optionally provide a bgzip-compressed/tabix-indexed BED file containing the set of regions to call. "
                               "No VCF output will be provided outside of these regions. The full genome will still be used "
                               "to estimate statistics from the input (such as expected depth per chromosome). "
-                              "Only one file may be specified.")
+                              "Only one BED file may be specified. (default: call the entire genome)")
         group.add_option("--runDir", type="string",metavar="DIR",
                          help="Run script and run output will be written to this directory [required] (default: %default)")
 
