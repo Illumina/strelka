@@ -140,6 +140,19 @@ callRegion(
                 assert(false && "Unexpected hts index");
             }
         }
+        else if (HTS_TYPE::BED == currentHtsType)
+        {
+            const bed_record& bedRecord(streamData.getCurrentBed());
+            if (INPUT_TYPE::CALL_REGION == currentIndex)
+            {
+                known_pos_range2 range(bedRecord.begin,bedRecord.end);
+                sppr.insertCallRegion(range);
+            }
+            else
+            {
+                assert(false && "Unexpected hts index");
+            }
+        }
         else
         {
             assert(false && "Invalid input condition");
@@ -193,6 +206,11 @@ strelka_run(
         registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
 
         registerVcfList(opt.noise_vcf, INPUT_TYPE::NOISE_VARIANTS, referenceHeader, streamData);
+
+        if (! opt.callRegionsBedFilename.empty())
+        {
+            streamData.registerBed(opt.callRegionsBedFilename.c_str(), INPUT_TYPE::CALL_REGION);
+        }
     }
 
     const bam_hdr_t& referenceHeader(bamHeaders.front());
