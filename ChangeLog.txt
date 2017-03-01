@@ -1,3 +1,4 @@
+- STREL-356 Allow BED file to restrict variant calling regions
 - STREL-392 Fix overlap del handling across segments
 - STREL-405 Fix overcounting issue in error stats module 
 - STREL-401 Remove read edge events from error stats module

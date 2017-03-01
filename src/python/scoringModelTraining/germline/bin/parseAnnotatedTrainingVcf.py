@@ -169,7 +169,7 @@ def main() :
         sampleBVTIndex = formatVals.index("BVT")
         qtype = queryVals[sampleBVTIndex]
         evsf = getKeyVal(word[VCFID.INFO],"EVSF")
-        if evsf is None : 
+        if evsf is None :
             # hap.py adds FN entries with no EVSF. Let hap.py decide whether these are indel or snv:
             evsf = ""
             isSNV = (qtype==typeLabel(True))
@@ -181,13 +181,13 @@ def main() :
         if "NOCALL" in queryVals :
             if truthVals[sampleBDIndex] != "FN" : continue
             label = "FN"
-        else : 
+        else :
             label = queryVals[sampleBDIndex]
 
         if label not in ("TP","FP","FN","UNK") :
             raise Exception("Variant label is not TP|FP|FN|UNK as expected:\n%s" % (line))
 
-        if qtype is None : 
+        if qtype is None :
             raise Exception("No valid type in input line:\n%s" % (line))
 
         def outputStream(isSNV, isTrain) :
@@ -198,7 +198,7 @@ def main() :
                 if isSNV : return snv_test_outfp
                 else :     return indel_test_outfp
 
-        def writeVariant(outputlabel) :            
+        def writeVariant(outputlabel) :
             outputStream(isSNV, isTrain).write(",".join([word[VCFID.CHROM], word[VCFID.POS], qtype, evsf, outputlabel]) +"\n")
 
         writeVariant(label)

@@ -52,7 +52,7 @@ python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/vcf_to_fea
     ${STRELKA_INSTALL_PATH}/share/demo/strelka/data/strelka_admix_snvs_chr21_1-25000000.vcf.gz
 ```
 
-The above options above specify that chromosomes 2 and 20 are to be separated out as test data. If no --testSet argument is specified, the entire genome will be used for training. The script also supports additional bed file inputs to define FP and ambiguous regions &mdash; see script usage for details. 
+The above options above specify that chromosomes 2 and 20 are to be separated out as test data. If no --testSet argument is specified, the entire genome will be used for training. The script also supports additional bed file inputs to define FP and ambiguous regions &mdash; see script usage for details.
 
 ### Step 1b: Handle multiple training data sets
 
