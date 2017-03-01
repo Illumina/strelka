@@ -43,9 +43,108 @@ enum index_t
     CANDIDATE_INDELS,
     FORCED_GT_VARIANTS,
     NOISE_VARIANTS,
-    PLOIDY_REGION,
-    NOCOMPRESS_REGION
+    CALL_REGION
 };
+}
+
+
+
+static
+void
+callRegion(
+    const strelka_options& opt,
+    const AnalysisRegionInfo& regionInfo,
+    starling_read_counts& brc,
+    reference_contig_segment& ref,
+    HtsMergeStreamer& streamData,
+    strelka_pos_processor& sppr)
+{
+    using namespace illumina::common;
+
+    sppr.resetRegion(regionInfo.regionChrom, regionInfo.regionRange);
+    streamData.resetRegion(regionInfo.streamerRegion.c_str());
+    setRefSegment(opt, regionInfo.regionChrom, regionInfo.refRegionRange, ref);
+
+    while (streamData.next())
+    {
+        const pos_t currentPos(streamData.getCurrentPos());
+        const HTS_TYPE::index_t currentHtsType(streamData.getCurrentType());
+        const unsigned currentIndex(streamData.getCurrentIndex());
+
+        // wind sppr forward to position behind buffer head:
+        sppr.set_head_pos(currentPos - 1);
+
+        if (HTS_TYPE::BAM == currentHtsType)
+        {
+            // Remove the filter below because it's not valid for
+            // RNA-Seq case, reads should be selected for the report
+            // range by the bam reading functions
+            //
+            // /// get potential bounds of the read based only on current_pos:
+            // const known_pos_range any_read_bounds(current_pos-max_indel_size,current_pos+MAX_READ_SIZE+max_indel_size);
+            // if( sppr.is_range_outside_report_influence_zone(any_read_bounds) ) continue;
+
+            // Approximate begin range filter: (removed for RNA-Seq)
+            //if((current_pos+MAX_READ_SIZE+MAX_INDEL_SIZE) <= rlimit.begin_pos) continue;
+            processInputReadAlignment(opt, ref, streamData.getCurrentBamStreamer(),
+                                      streamData.getCurrentBam(), currentPos,
+                                      brc, sppr, currentIndex);
+        }
+        else if (HTS_TYPE::VCF == currentHtsType)
+        {
+            const vcf_record& vcfRecord(streamData.getCurrentVcf());
+            if (INPUT_TYPE::CANDIDATE_INDELS == currentIndex)     // process candidate indels input from vcf file(s)
+            {
+                if (vcfRecord.is_indel())
+                {
+                    process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
+                }
+                else
+                {
+                    log_os << "WARNING: candidate indel vcf variant record cannot be categorized as indel:\n";
+                    streamData.getCurrentVcfStreamer().report_state(log_os);
+                }
+            }
+            else if (INPUT_TYPE::FORCED_GT_VARIANTS ==
+                     currentIndex)     // process forced genotype tests from vcf file(s)
+            {
+                if (vcfRecord.is_indel())
+                {
+                    static const unsigned sample_no(0);
+                    static const bool is_forced_output(true);
+                    process_candidate_indel(opt.max_indel_size, vcfRecord, sppr, sample_no, is_forced_output);
+                }
+                else if (vcfRecord.is_snv() or vcfRecord.is_ref_site())
+                {
+                    sppr.insert_forced_output_pos(vcfRecord.pos - 1);
+                }
+                else
+                {
+                    std::ostringstream oss;
+                    oss << "ERROR: forcedGT vcf variant record cannot be categorized as SNV or indel:\n";
+                    streamData.getCurrentVcfStreamer().report_state(oss);
+                    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                }
+            }
+            else if (INPUT_TYPE::NOISE_VARIANTS == currentIndex)
+            {
+                if (vcfRecord.is_snv())
+                {
+                    SiteNoise sn;
+                    set_noise_from_vcf(vcfRecord.line, sn);
+                    sppr.insert_noise_pos(vcfRecord.pos - 1, sn);
+                }
+            }
+            else
+            {
+                assert(false && "Unexpected hts index");
+            }
+        }
+        else
+        {
+            assert(false && "Invalid input condition");
+        }
+    }
 }
 
 
@@ -104,95 +203,12 @@ strelka_run(
 
     // parse and sanity check regions
     const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilename.front());
-    std::vector<AnalysisRegionInfo> regionInfo;
-    getStrelkaAnalysisRegions(opt, referenceAlignmentFilename, referenceHeaderInfo, regionInfo);
+    std::vector<AnalysisRegionInfo> regionInfoList;
+    getStrelkaAnalysisRegions(opt, referenceAlignmentFilename, referenceHeaderInfo, regionInfoList);
 
-    for (const auto& rinfo : regionInfo)
+    for (const auto& regionInfo : regionInfoList)
     {
-        sppr.resetRegion(rinfo.regionChrom, rinfo.regionRange);
-        streamData.resetRegion(rinfo.streamerRegion.c_str());
-        setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
-
-        while (streamData.next())
-        {
-            const pos_t currentPos(streamData.getCurrentPos());
-            const HTS_TYPE::index_t currentHtsType(streamData.getCurrentType());
-            const unsigned currentIndex(streamData.getCurrentIndex());
-
-            // wind sppr forward to position behind buffer head:
-            sppr.set_head_pos(currentPos - 1);
-
-            if (HTS_TYPE::BAM == currentHtsType)
-            {
-                // Remove the filter below because it's not valid for
-                // RNA-Seq case, reads should be selected for the report
-                // range by the bam reading functions
-                //
-                // /// get potential bounds of the read based only on current_pos:
-                // const known_pos_range any_read_bounds(current_pos-max_indel_size,current_pos+MAX_READ_SIZE+max_indel_size);
-                // if( sppr.is_range_outside_report_influence_zone(any_read_bounds) ) continue;
-
-                // Approximate begin range filter: (removed for RNA-Seq)
-                //if((current_pos+MAX_READ_SIZE+MAX_INDEL_SIZE) <= rlimit.begin_pos) continue;
-                processInputReadAlignment(opt, ref, streamData.getCurrentBamStreamer(),
-                                          streamData.getCurrentBam(), currentPos,
-                                          brc, sppr, currentIndex);
-            }
-            else if (HTS_TYPE::VCF == currentHtsType)
-            {
-                const vcf_record& vcfRecord(streamData.getCurrentVcf());
-                if (INPUT_TYPE::CANDIDATE_INDELS == currentIndex)     // process candidate indels input from vcf file(s)
-                {
-                    if (vcfRecord.is_indel())
-                    {
-                        process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
-                    }
-                    else
-                    {
-                        log_os << "WARNING: candidate indel vcf variant record cannot be categorized as indel:\n";
-                        streamData.getCurrentVcfStreamer().report_state(log_os);
-                    }
-                }
-                else if (INPUT_TYPE::FORCED_GT_VARIANTS ==
-                         currentIndex)     // process forced genotype tests from vcf file(s)
-                {
-                    if (vcfRecord.is_indel())
-                    {
-                        static const unsigned sample_no(0);
-                        static const bool is_forced_output(true);
-                        process_candidate_indel(opt.max_indel_size, vcfRecord, sppr, sample_no, is_forced_output);
-                    }
-                    else if (vcfRecord.is_snv() or vcfRecord.is_ref_site())
-                    {
-                        sppr.insert_forced_output_pos(vcfRecord.pos - 1);
-                    }
-                    else
-                    {
-                        std::ostringstream oss;
-                        oss << "ERROR: forcedGT vcf variant record cannot be categorized as SNV or indel:\n";
-                        streamData.getCurrentVcfStreamer().report_state(oss);
-                        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-                    }
-                }
-                else if (INPUT_TYPE::NOISE_VARIANTS == currentIndex)
-                {
-                    if (vcfRecord.is_snv())
-                    {
-                        SiteNoise sn;
-                        set_noise_from_vcf(vcfRecord.line, sn);
-                        sppr.insert_noise_pos(vcfRecord.pos - 1, sn);
-                    }
-                }
-                else
-                {
-                    assert(false && "Unexpected hts index");
-                }
-            }
-            else
-            {
-                assert(false && "Invalid input condition");
-            }
-        }
+        callRegion(opt, regionInfo, brc, ref, streamData, sppr);
     }
     sppr.reset();
 }
