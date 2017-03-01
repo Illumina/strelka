@@ -31,6 +31,7 @@
 #include "htsapi/vcf_record.hh"
 #include "options/AlignmentFileOptions.hh"
 #include "starling_common/starling_pos_processor_base.hh"
+#include "starling_common/starling_ref_seq.hh"
 
 #include <functional>
 
@@ -42,6 +43,22 @@ registerAlignments(
     const std::vector<unsigned>& registrationIndices,
     HtsMergeStreamer& streamData);
 
+
+/// re-segment each target region into 0-many target sub-regions, divided on each large gap
+/// in bed-region coverage
+///
+/// this function assumes that call Bed region file is defined
+///
+/// \param[in] regionChrom chrom of the input genome segment
+/// \param[in] regionRange range of the input genome segment
+/// \param[out] subRegionRanges ranges for subregions of the input that clump together close bed file regions
+///
+void
+getSubRegionsFromBedTrack(
+    const starling_base_options& opt,
+    const std::string& regionChrom,
+    const known_pos_range2& regionRange,
+    std::vector<known_pos_range2>& subRegionRanges);
 
 
 /// handles mapped read alignments -- reads are parsed, their indels
@@ -69,6 +86,7 @@ convert_vcfrecord_to_indel_allele(
     const vcf_record& vcf_indel,
     const unsigned altIndex,
     IndelObservation& obs);
+
 
 /// insert a candidate indel into sppr
 ///

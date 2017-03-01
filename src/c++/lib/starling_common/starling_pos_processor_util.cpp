@@ -21,10 +21,6 @@
 ///
 /// \author Chris Saunders
 ///
-/// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the beginning of the range
-/// XXX_end_pos is zero-index position 1 step after the end of the range
-///
 
 
 #include "candidate_alignment.hh"
@@ -86,9 +82,51 @@ registerAlignments(
 
 
 
-// This means 'valid' in the sense of what the code can handle right
-// now. Specifically, '=' are not supported.
-//
+void
+getSubRegionsFromBedTrack(
+    const starling_base_options& opt,
+    const std::string& regionChrom,
+    const known_pos_range2& regionRange,
+    std::vector<known_pos_range2>& subRegionRanges)
+{
+    static const pos_t maxSubRegionCallGap(5000);
+
+    const std::string regionString(getSamtoolsRegionString(regionChrom, regionRange));
+    bed_streamer callRegionStream(opt.callRegionsBedFilename.c_str(), regionString.c_str());
+
+    subRegionRanges.clear();
+    while (callRegionStream.next())
+    {
+        bool isStartNewSubRegion(true);
+        const bed_record& callRegion(*(callRegionStream.get_record_ptr()));
+        assert(callRegion.end > callRegion.begin);
+
+        if (not subRegionRanges.empty())
+        {
+            const pos_t subRegionEnd(subRegionRanges.back().end_pos());
+            assert(callRegion.begin >= subRegionEnd);
+            const pos_t callGap(callRegion.begin - subRegionEnd);
+            isStartNewSubRegion = (callGap > maxSubRegionCallGap);
+        }
+
+        const pos_t subRegionEnd = std::min(callRegion.end, regionRange.end_pos());
+        if (isStartNewSubRegion)
+        {
+            const pos_t subRegionBegin = std::max(callRegion.begin, regionRange.begin_pos());
+            subRegionRanges.emplace_back(subRegionBegin, subRegionEnd);
+        }
+        else
+        {
+            subRegionRanges.back().set_end_pos(subRegionEnd);
+        }
+    }
+}
+
+
+
+/// This means 'valid' in the sense of what the code can handle right
+/// now. Specifically, '=' are not supported.
+///
 static
 bool
 is_valid_bam_code(const uint8_t a)

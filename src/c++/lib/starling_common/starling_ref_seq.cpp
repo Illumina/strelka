@@ -46,7 +46,6 @@ setRefSegment(
 
 
 
-static
 std::string
 getSamtoolsRegionString(
     const std::string& chromName,

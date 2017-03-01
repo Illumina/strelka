@@ -226,7 +226,23 @@ strelka_run(
 
     for (const auto& regionInfo : regionInfoList)
     {
-        callRegion(opt, regionInfo, brc, ref, streamData, sppr);
+        if (not opt.isUseCallRegions())
+        {
+            callRegion(opt, regionInfo, brc, ref, streamData, sppr);
+        }
+        else
+        {
+            std::vector<known_pos_range2> subRegionRanges;
+            getSubRegionsFromBedTrack(opt, regionInfo.regionChrom, regionInfo.regionRange, subRegionRanges);
+
+            for (const auto& subRegionRange : subRegionRanges)
+            {
+                AnalysisRegionInfo subRegionInfo;
+                getStrelkaAnalysisRegionInfo(regionInfo.regionChrom, subRegionRange.begin_pos(), subRegionRange.end_pos(),
+                                             opt.max_indel_size, subRegionInfo);
+                callRegion(opt, subRegionInfo, brc, ref, streamData, sppr);
+            }
+        }
     }
     sppr.reset();
 }

@@ -58,6 +58,13 @@ struct AnalysisRegionInfo
 };
 
 
+/// convert to string format expected by samtools/htslib
+std::string
+getSamtoolsRegionString(
+    const std::string& chromName,
+    const known_pos_range2& range);
+
+
 /// given a genome segment for analysis described by chrom, beginPos, endPos,
 /// produce various related region objects used to manage edge-effects
 ///
