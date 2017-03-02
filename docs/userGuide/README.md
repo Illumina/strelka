@@ -87,7 +87,7 @@ optimized for population analysis and may become unstable or fail to leverage po
 calls at higher sample counts.
 
 Strelka includes a short-range read-backed phasing capability for germline calls to facilitate
-the correct annotation of codon changes induced by proximal SNVs.
+the correct inference of haplotypes induced by proximal SNVs and indels.
 
 
 ### Known Limitations
