@@ -1,6 +1,6 @@
 #
 # Strelka - Small Variant Caller
-# Copyright (c) 2009-2017 Illumina, Inc.
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ import evs.tools.io as io
 from sklearn.ensemble import RandomForestClassifier
 
 
-class StrelkaRF(EVSModel):
+class RNARF(EVSModel):
 
     def train(self, tp, fp, columns, *args, **kwargs):
         """ Train model from sets of TPs and FPs
@@ -102,7 +102,7 @@ class StrelkaRF(EVSModel):
         all_trees = io.classifier_to_dict(self.clf)
         full_model = meta
         full_model["Model"] = all_trees
-        modelFile = {"CalibrationModels" : {"Germline" : { varianttype : full_model }}}
+        modelFile = {"CalibrationModels" : {"RNA" : { varianttype : full_model }}}
         json.dump(modelFile, open(filename,"wb"))
 
 
@@ -139,4 +139,4 @@ class StrelkaRF(EVSModel):
 #            images.append(Image(fname + ".png"))
 
 
-EVSModel.register("strelka.rf", StrelkaRF)
+EVSModel.register("rna.rf", RNARF)
