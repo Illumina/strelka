@@ -39,13 +39,13 @@ strelka_pos_processor(
     const strelka_options& opt,
     const strelka_deriv_options& dopt,
     const reference_contig_segment& ref,
-    const strelka_streams& streams)
-    : base_t(opt,dopt,ref,streams,STRELKA_SAMPLE_TYPE::SIZE)
+    const strelka_streams& fileStreams)
+    : base_t(opt,dopt,ref,fileStreams,STRELKA_SAMPLE_TYPE::SIZE)
     , _opt(opt)
     , _dopt(dopt)
-    , _streams(streams)
-    , _scallProcessor(streams.somatic_callable_osptr())
-    , _indelWriter(opt, dopt, streams.somatic_indel_osptr())
+    , _streams(fileStreams)
+    , _scallProcessor(fileStreams.somatic_callable_osptr())
+    , _indelWriter(opt, dopt, fileStreams.somatic_indel_osptr())
     , _indelRegionIndexNormal(0)
     , _indelRegionIndexTumor(0)
 {

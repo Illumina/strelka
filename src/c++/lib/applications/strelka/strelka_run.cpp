@@ -54,14 +54,14 @@ void
 callRegion(
     const strelka_options& opt,
     const AnalysisRegionInfo& regionInfo,
-    starling_read_counts& brc,
+    starling_read_counts& readCounts,
     reference_contig_segment& ref,
     HtsMergeStreamer& streamData,
-    strelka_pos_processor& sppr)
+    strelka_pos_processor& posProcessor)
 {
     using namespace illumina::common;
 
-    sppr.resetRegion(regionInfo.regionChrom, regionInfo.regionRange);
+    posProcessor.resetRegion(regionInfo.regionChrom, regionInfo.regionRange);
     streamData.resetRegion(regionInfo.streamerRegion.c_str());
     setRefSegment(opt, regionInfo.regionChrom, regionInfo.refRegionRange, ref);
 
@@ -71,8 +71,8 @@ callRegion(
         const HTS_TYPE::index_t currentHtsType(streamData.getCurrentType());
         const unsigned currentIndex(streamData.getCurrentIndex());
 
-        // wind sppr forward to position behind buffer head:
-        sppr.set_head_pos(currentPos - 1);
+        // wind posProcessor forward to position behind buffer head:
+        posProcessor.set_head_pos(currentPos - 1);
 
         if (HTS_TYPE::BAM == currentHtsType)
         {
@@ -82,13 +82,13 @@ callRegion(
             //
             // /// get potential bounds of the read based only on current_pos:
             // const known_pos_range any_read_bounds(current_pos-max_indel_size,current_pos+MAX_READ_SIZE+max_indel_size);
-            // if( sppr.is_range_outside_report_influence_zone(any_read_bounds) ) continue;
+            // if( posProcessor.is_range_outside_report_influence_zone(any_read_bounds) ) continue;
 
             // Approximate begin range filter: (removed for RNA-Seq)
             //if((current_pos+MAX_READ_SIZE+MAX_INDEL_SIZE) <= rlimit.begin_pos) continue;
             processInputReadAlignment(opt, ref, streamData.getCurrentBamStreamer(),
                                       streamData.getCurrentBam(), currentPos,
-                                      brc, sppr, currentIndex);
+                                      readCounts, posProcessor, currentIndex);
         }
         else if (HTS_TYPE::VCF == currentHtsType)
         {
@@ -97,7 +97,7 @@ callRegion(
             {
                 if (vcfRecord.is_indel())
                 {
-                    process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
+                    process_candidate_indel(opt.max_indel_size, vcfRecord, posProcessor);
                 }
                 else
                 {
@@ -112,11 +112,11 @@ callRegion(
                 {
                     static const unsigned sample_no(0);
                     static const bool is_forced_output(true);
-                    process_candidate_indel(opt.max_indel_size, vcfRecord, sppr, sample_no, is_forced_output);
+                    process_candidate_indel(opt.max_indel_size, vcfRecord, posProcessor, sample_no, is_forced_output);
                 }
                 else if (vcfRecord.is_snv() or vcfRecord.is_ref_site())
                 {
-                    sppr.insert_forced_output_pos(vcfRecord.pos - 1);
+                    posProcessor.insert_forced_output_pos(vcfRecord.pos - 1);
                 }
                 else
                 {
@@ -132,7 +132,7 @@ callRegion(
                 {
                     SiteNoise sn;
                     set_noise_from_vcf(vcfRecord.line, sn);
-                    sppr.insert_noise_pos(vcfRecord.pos - 1, sn);
+                    posProcessor.insert_noise_pos(vcfRecord.pos - 1, sn);
                 }
             }
             else
@@ -146,7 +146,7 @@ callRegion(
             if (INPUT_TYPE::CALL_REGION == currentIndex)
             {
                 known_pos_range2 range(bedRecord.begin,bedRecord.end);
-                sppr.insertCallRegion(range);
+                posProcessor.insertCallRegion(range);
             }
             else
             {
@@ -176,7 +176,7 @@ strelka_run(
 
     const strelka_deriv_options dopt(opt);
     const StrelkaSampleSetSummary ssi;
-    starling_read_counts brc;
+    starling_read_counts readCounts;
     reference_contig_segment ref;
 
     ////////////////////////////////////////
@@ -216,8 +216,8 @@ strelka_run(
     const bam_hdr_t& referenceHeader(bamHeaders.front());
     const bam_header_info referenceHeaderInfo(referenceHeader);
 
-    strelka_streams client_io(opt, dopt, pinfo, referenceHeader, ssi);
-    strelka_pos_processor sppr(opt, dopt, ref, client_io);
+    strelka_streams fileStreams(opt, dopt, pinfo, referenceHeader, ssi);
+    strelka_pos_processor posProcessor(opt, dopt, ref, fileStreams);
 
     // parse and sanity check regions
     const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilename.front());
@@ -228,7 +228,7 @@ strelka_run(
     {
         if (not opt.isUseCallRegions())
         {
-            callRegion(opt, regionInfo, brc, ref, streamData, sppr);
+            callRegion(opt, regionInfo, readCounts, ref, streamData, posProcessor);
         }
         else
         {
@@ -240,9 +240,9 @@ strelka_run(
                 AnalysisRegionInfo subRegionInfo;
                 getStrelkaAnalysisRegionInfo(regionInfo.regionChrom, subRegionRange.begin_pos(), subRegionRange.end_pos(),
                                              opt.max_indel_size, subRegionInfo);
-                callRegion(opt, subRegionInfo, brc, ref, streamData, sppr);
+                callRegion(opt, subRegionInfo, readCounts, ref, streamData, posProcessor);
             }
         }
     }
-    sppr.reset();
+    posProcessor.reset();
 }

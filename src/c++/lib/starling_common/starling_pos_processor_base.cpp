@@ -253,13 +253,13 @@ starling_pos_processor_base(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const reference_contig_segment& ref,
-    const starling_streams_base& streams,
+    const starling_streams_base& fileStreams,
     const unsigned sampleCount)
     : base_t()
     , _opt(opt)
     , _dopt(dopt)
     , _ref(ref)
-    , _streams(streams)
+    , _streams(fileStreams)
     , _rmi(STARLING_INIT_LARGEST_READ_SIZE)
     , _largest_indel_ref_span(opt.max_indel_size)
     , _largest_total_indel_ref_span_per_read(_largest_indel_ref_span)
@@ -697,14 +697,15 @@ init_read_segment(
     try
     {
         const unsigned total_indel_ref_span_per_read =
-            add_alignment_indels_to_sppr(_opt.max_indel_size,_ref,
-                                         al,bseq,*this,iat,rseg.id(),sampleIndex,rseg.get_segment_edge_pin(), rseg.map_qual() == 0);
+            addAlignmentIndelsToPosProcessor(_opt.max_indel_size, _ref,
+                                             al, bseq, *this, iat, rseg.id(), sampleIndex, rseg.get_segment_edge_pin(),
+                                             rseg.map_qual() == 0);
 
         update_largest_total_indel_ref_span_per_read(total_indel_ref_span_per_read);
     }
     catch (...)
     {
-        log_os << "\nException caught in add_alignment_indels_to_sppr() while processing record: " << rseg << "\n";
+        log_os << "\nException caught in addAlignmentIndelsToPosProcessor() while processing record: " << rseg << "\n";
         throw;
     }
 }
@@ -897,27 +898,38 @@ process_pos(const int stage_no,
     {
         if (! _opt.is_write_candidate_indels_only)
         {
+            static const pos_t precedingCallRegionDistance(200);
+
+            // start variant calling if pos is either:
+            // (1) in a call region
+            // (2) no more than precedingCallRegionDistance bases upstream of a call region
             //
+            // All variant callers run in case (1). In case (2) we only run variant callers which accumulate history
+            // from position to position. At this time, the only such variant caller is the germline indel caller,
+            // which stores history over muliptle calls in order to (more) correctly handle overlapping indels.
+            //
+            // Note here that "reportable range" refers the region of responsible for this variant calling process
+            // but "call region" may represent several subrgions of the reportable range if a call regions BED file
+            // is given (otherwise "call region" is equal to "reportable range")
+
             const bool isPosInPrimaryReportingRegion(is_pos_reportable(pos));
 
             /// is this position reportable in the VCF output?
             bool isPosReportable(false);
 
-            /// is this position preceding one that is reportable in the VCF output by less than precedingRange bases?
+            /// is this position upstream of one that is reportable in the VCF output by no more than
+            /// precedingCallRegionDistance bases?
             ///
-            /// this is used to maintain consistency for overlapping germline indels
-            ///
-            static const pos_t precedingRange(200);
             bool isPosPrecedingReportable(false);
 
             if (not isPosInPrimaryReportingRegion)
             {
-                isPosPrecedingReportable = (is_pos_preceding_reportable_range(pos) and is_pos_reportable(pos+precedingRange));
+                isPosPrecedingReportable = (is_pos_preceding_reportable_range(pos) and is_pos_reportable(pos+precedingCallRegionDistance));
                 if (_opt.isUseCallRegions())
                 {
                     if (isPosPrecedingReportable)
                     {
-                        isPosPrecedingReportable = _callRegions.isIntersectRegion(known_pos_range2((pos-precedingRange),pos));
+                        isPosPrecedingReportable = _callRegions.isIntersectRegion(known_pos_range2((pos-precedingCallRegionDistance),pos));
                     }
                 }
             }
@@ -928,7 +940,7 @@ process_pos(const int stage_no,
                     isPosReportable = _callRegions.isIntersectRegion(pos);
                     if (not isPosReportable)
                     {
-                        isPosPrecedingReportable = _callRegions.isIntersectRegion(known_pos_range2((pos-precedingRange),pos));
+                        isPosPrecedingReportable = _callRegions.isIntersectRegion(known_pos_range2((pos-precedingCallRegionDistance),pos));
                     }
                 }
                 else
@@ -1136,9 +1148,6 @@ get_new_read_pos(const read_segment& rseg)
 
 
 
-// adjust read buffer position so that reads are buffered in sorted
-// order after realignment:
-//
 void
 starling_pos_processor_base::
 rebuffer_pos_reads(const pos_t pos)

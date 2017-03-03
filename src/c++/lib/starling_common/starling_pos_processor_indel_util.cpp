@@ -46,10 +46,10 @@
 static
 void
 finish_indel_sppr(IndelObservation& obs,
-                  starling_pos_processor_base& sppr,
+                  starling_pos_processor_base& posProcessor,
                   const unsigned sample_no)
 {
-    sppr.insert_indel(obs,sample_no);
+    posProcessor.insert_indel(obs,sample_no);
 }
 
 
@@ -83,7 +83,7 @@ process_edge_insert(
     const unsigned max_indel_size,
     const ALIGNPATH::path_t& path,
     const bam_seq_base& bseq,
-    starling_pos_processor_base& sppr,
+    starling_pos_processor_base& posProcessor,
     IndelObservation& obs,
     const unsigned sample_no,
     const unsigned path_index,
@@ -111,7 +111,7 @@ process_edge_insert(
 
         bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.key.insertSequence);
 
-        finish_indel_sppr(obs,sppr,sample_no);
+        finish_indel_sppr(obs,posProcessor,sample_no);
     }
 }
 
@@ -126,7 +126,7 @@ void
 process_edge_delete(
     const unsigned max_indel_size,
     const ALIGNPATH::path_t& path,
-    starling_pos_processor_base& sppr,
+    starling_pos_processor_base& posProcessor,
     IndelObservation& obs,
     const unsigned sample_no,
     const unsigned path_index,
@@ -150,7 +150,7 @@ process_edge_delete(
 #ifdef SPI_DEBUG
     log_os << "FOOBAR: adding pinned edge indel: " << obs.key << "\n";
 #endif
-    finish_indel_sppr(obs,sppr,sample_no);
+    finish_indel_sppr(obs,posProcessor,sample_no);
 }
 
 
@@ -167,7 +167,7 @@ process_swap(
     const unsigned max_indel_size,
     const ALIGNPATH::path_t& path,
     const bam_seq_base& bseq,
-    starling_pos_processor_base& sppr,
+    starling_pos_processor_base& posProcessor,
     IndelObservation& obs,
     const unsigned sample_no,
     const unsigned path_index,
@@ -194,7 +194,7 @@ process_swap(
         obs.key.deletionLength=sinfo.delete_length;
         obs.key.type = INDEL::INDEL;
         bam_seq_to_str(bseq,read_offset,read_offset+sinfo.insert_length,obs.key.insertSequence);
-        finish_indel_sppr(obs,sppr,sample_no);
+        finish_indel_sppr(obs,posProcessor,sample_no);
 
     }
     else
@@ -207,7 +207,7 @@ process_swap(
             const unsigned size(bseq.size()-read_offset);
             const unsigned end(start+std::min(size,max_indel_size));
             bam_seq_to_str(bseq,start,end,obs.data.breakpointInsertionSequence);
-            finish_indel_sppr(obs,sppr,sample_no);
+            finish_indel_sppr(obs,posProcessor,sample_no);
         }
 
         // right side BP:
@@ -217,7 +217,7 @@ process_swap(
             const unsigned next_read_offset(read_offset+sinfo.insert_length);
             const unsigned start_offset(next_read_offset-std::min(next_read_offset,max_indel_size));
             bam_seq_to_str(bseq,start_offset,next_read_offset,obs.data.breakpointInsertionSequence);
-            finish_indel_sppr(obs,sppr,sample_no);
+            finish_indel_sppr(obs,posProcessor,sample_no);
         }
     }
 
@@ -226,16 +226,16 @@ process_swap(
 
 
 
-// Handle the regular ol' insertions and deletions. Reports these
-// types as breakpoints when they're too long:
-//
+/// Handle the regular ol' insertions and deletions. Reports these
+/// types as breakpoints when they're too long:
+///
 static
 void
 process_simple_indel(
     const unsigned max_indel_size,
     const ALIGNPATH::path_t& path,
     const bam_seq_base& bseq,
-    starling_pos_processor_base& sppr,
+    starling_pos_processor_base& posProcessor,
     IndelObservation& obs,
     const unsigned sample_no,
     const unsigned path_index,
@@ -268,7 +268,7 @@ process_simple_indel(
         {
             bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.key.insertSequence);
         }
-        finish_indel_sppr(obs,sppr,sample_no);
+        finish_indel_sppr(obs,posProcessor,sample_no);
     }
     else
     {
@@ -280,7 +280,7 @@ process_simple_indel(
             const unsigned size(bseq.size()-read_offset);
             const unsigned end(start+std::min(size,max_indel_size));
             bam_seq_to_str(bseq,start,end,obs.data.breakpointInsertionSequence);
-            finish_indel_sppr(obs,sppr,sample_no);
+            finish_indel_sppr(obs,posProcessor,sample_no);
         }
         // right side BP:
         {
@@ -291,27 +291,24 @@ process_simple_indel(
             const unsigned next_read_offset(read_offset+((ps.type==INSERT) ? ps.length : 0));
             const unsigned start_offset(next_read_offset-std::min(next_read_offset,max_indel_size));
             bam_seq_to_str(bseq,start_offset,next_read_offset,obs.data.breakpointInsertionSequence);
-            finish_indel_sppr(obs,sppr,sample_no);
+            finish_indel_sppr(obs,posProcessor,sample_no);
         }
     }
 }
 
-// Extract indel information from an alignment and store this
-// in the starling_pos_processor indel buffer.
-//
-// assumes that path is already validated for seq!!!
-//
+
+
 unsigned
-add_alignment_indels_to_sppr(
+addAlignmentIndelsToPosProcessor(
     const unsigned max_indel_size,
     const reference_contig_segment& ref,
     const alignment& al,
     const bam_seq_base& read_seq,
-    starling_pos_processor_base& sppr,
+    starling_pos_processor_base& posProcessor,
     const INDEL_ALIGN_TYPE::index_t iat,
     const align_id_t id,
     const unsigned sample_no,
-    const std::pair<bool,bool>& edge_pin,
+    const std::pair<bool, bool>& edge_pin,
     const bool isLowMapQuality)
 {
     using namespace ALIGNPATH;
@@ -345,8 +342,8 @@ add_alignment_indels_to_sppr(
     unsigned total_indel_ref_span_per_read(0);
     const unsigned aps(al.path.size());
 
-    auto& active_region_detector(sppr.getActiveRegionDetector());
-    if (sppr.is_active_region_detector_enabled())
+    auto& active_region_detector(posProcessor.getActiveRegionDetector());
+    if (posProcessor.is_active_region_detector_enabled())
     {
         active_region_detector.getReadBuffer().setAlignInfo(id, sample_no, iat);
     }
@@ -416,7 +413,7 @@ add_alignment_indels_to_sppr(
             if (ps.type == INSERT)
             {
                 process_edge_insert(max_indel_size,al.path,read_seq,
-                                    sppr,obs,sample_no,
+                                    posProcessor,obs,sample_no,
                                     path_index,read_offset,ref_head_pos,
                                     is_pinned_indel);
             }
@@ -424,13 +421,13 @@ add_alignment_indels_to_sppr(
             {
                 if (is_pinned_indel)
                 {
-                    process_edge_delete(max_indel_size, al.path, sppr, obs, sample_no, path_index, ref_head_pos,
+                    process_edge_delete(max_indel_size, al.path, posProcessor, obs, sample_no, path_index, ref_head_pos,
                                         is_pinned_indel);
                 }
             }
             else if (ps.type == SOFT_CLIP)
             {
-                if (sppr.is_active_region_detector_enabled() && !isLowMapQuality)
+                if (posProcessor.is_active_region_detector_enabled() && !isLowMapQuality)
                 {
                     pos_t softClipStartPos(ref_head_pos);
                     // for leading/trailing soft-clip, place the segment at the end/start position
@@ -447,7 +444,7 @@ add_alignment_indels_to_sppr(
         else if (is_swap_start)
         {
             n_seg = process_swap(max_indel_size,al.path,read_seq,
-                                 sppr,obs,sample_no,
+                                 posProcessor,obs,sample_no,
                                  path_index,read_offset,ref_head_pos);
 
         }
@@ -460,10 +457,10 @@ add_alignment_indels_to_sppr(
 
             //obs.key.addRanksumInfo(static_cast<int>(rs.mapq),static_cast<int>(rs.qual[read_offset]),true); //TODO for updateing indel ranksums
             process_simple_indel(max_indel_size,al.path,read_seq,
-                                 sppr,obs,sample_no,
+                                 posProcessor,obs,sample_no,
                                  path_index,read_offset,ref_head_pos);
         }
-        else if (sppr.is_active_region_detector_enabled() && !isLowMapQuality && is_segment_align_match(ps.type))
+        else if (posProcessor.is_active_region_detector_enabled() && !isLowMapQuality && is_segment_align_match(ps.type))
         {
             // detect active regions (match/mismatch)
             for (unsigned j(0); j < ps.length; ++j)

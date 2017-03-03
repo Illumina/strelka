@@ -41,7 +41,7 @@ struct SequenceErrorCountsPosProcessor : public starling_pos_processor_base
         const SequenceErrorCountsOptions& opt,
         const SequenceErrorCountsDerivOptions& dopt,
         const reference_contig_segment& ref,
-        const SequenceErrorCountsStreams& streams);
+        const SequenceErrorCountsStreams& fileStreams);
 
     virtual
     ~SequenceErrorCountsPosProcessor();

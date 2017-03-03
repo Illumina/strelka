@@ -37,15 +37,15 @@
 /// assumes that path is already validated for read_seq!!!
 ///
 unsigned
-add_alignment_indels_to_sppr(
+addAlignmentIndelsToPosProcessor(
     const unsigned max_indel_size,
     const reference_contig_segment& ref,
     const alignment& al,
     const bam_seq_base& read_seq,
-    starling_pos_processor_base& sppr,
+    starling_pos_processor_base& posProcessor,
     const INDEL_ALIGN_TYPE::index_t iat,
-    align_id_t id,
+    const align_id_t id,
     const unsigned sample_no,
-    const std::pair<bool,bool>& edge_pin,
+    const std::pair<bool, bool>& edge_pin,
     const bool isLowMapQuality);
 

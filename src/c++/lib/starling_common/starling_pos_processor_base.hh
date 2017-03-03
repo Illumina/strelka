@@ -92,7 +92,7 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
         const starling_base_options& opt,
         const starling_base_deriv_options& dopt,
         const reference_contig_segment& ref,
-        const starling_streams_base& streams,
+        const starling_streams_base& fileStreams,
         const unsigned sampleCount);
 
     virtual
@@ -471,6 +471,9 @@ private:
     void
     align_pos(const pos_t pos);
 
+    /// adjust read buffer position so that reads are buffered in sorted
+    /// order after realignment:
+    ///
     void
     rebuffer_pos_reads(const pos_t pos);
 

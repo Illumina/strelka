@@ -60,7 +60,7 @@ void
 processTrueIndelVariantRecord(
     const unsigned max_indel_size,
     const vcf_record& vcfr,
-    SequenceErrorCountsPosProcessor& sppr)
+    SequenceErrorCountsPosProcessor& posProcessor)
 {
     /// TODO: the actual truth logic
     ///
@@ -88,8 +88,8 @@ processTrueIndelVariantRecord(
 
             const unsigned sample_no(0); //currently, the pattern analyzer only operates on a single sample
 
-            sppr.insert_indel(obs,sample_no);
-            sppr.addKnownVariant(vcfr);
+            posProcessor.insert_indel(obs,sample_no);
+            posProcessor.addKnownVariant(vcfr);
         }
     }
 }
@@ -107,7 +107,7 @@ getSequenceErrorCountsRun(
     opt.validate();
 
     const SequenceErrorCountsDerivOptions dopt(opt);
-    starling_read_counts brc;
+    starling_read_counts readCounts;
     reference_contig_segment ref;
 
     ////////////////////////////////////////
@@ -147,8 +147,8 @@ getSequenceErrorCountsRun(
     const bam_hdr_t& referenceHeader(bamHeaders.front());
     const bam_header_info referenceHeaderInfo(referenceHeader);
 
-    SequenceErrorCountsStreams client_io(opt, pinfo, referenceHeader);
-    SequenceErrorCountsPosProcessor sppr(opt, dopt, ref, client_io);
+    SequenceErrorCountsStreams fileStreams(opt, pinfo, referenceHeader);
+    SequenceErrorCountsPosProcessor posProcessor(opt, dopt, ref, fileStreams);
 
     // parse and sanity check regions
     const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilename.front());
@@ -157,7 +157,7 @@ getSequenceErrorCountsRun(
 
     for (const auto& rinfo : regionInfo)
     {
-        sppr.resetRegion(rinfo.regionChrom, rinfo.regionRange);
+        posProcessor.resetRegion(rinfo.regionChrom, rinfo.regionRange);
         streamData.resetRegion(rinfo.streamerRegion.c_str());
         setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
 
@@ -169,8 +169,8 @@ getSequenceErrorCountsRun(
 
             if (currentPos >= rinfo.streamerRegionRange.end_pos()) break;
 
-            // wind sppr forward to position behind buffer head:
-            sppr.set_head_pos(currentPos - 1);
+            // wind posProcessor forward to position behind buffer head:
+            posProcessor.set_head_pos(currentPos - 1);
 
             if (HTS_TYPE::BAM == currentHtsType)
             {
@@ -180,7 +180,7 @@ getSequenceErrorCountsRun(
                 //
                 // /// get potential bounds of the read based only on current_pos:
                 // const known_pos_range any_read_bounds(current_pos-max_indel_size,current_pos+MAX_READ_SIZE+max_indel_size);
-                // if( sppr.is_range_outside_report_influence_zone(any_read_bounds) ) continue;
+                // if( posProcessor.is_range_outside_report_influence_zone(any_read_bounds) ) continue;
 
                 // Approximate begin range filter: (removed for RNA-Seq)
                 //if((current_pos+MAX_READ_SIZE+max_indel_size) <= rlimit.begin_pos) continue;
@@ -197,7 +197,7 @@ getSequenceErrorCountsRun(
                 }
 
                 processInputReadAlignment(opt, ref, streamData.getCurrentBamStreamer(),
-                                          read, currentPos, brc, sppr);
+                                          read, currentPos, readCounts, posProcessor);
             }
             else if (HTS_TYPE::VCF == currentHtsType)
             {
@@ -206,7 +206,7 @@ getSequenceErrorCountsRun(
                 {
                     if (vcfRecord.is_indel())
                     {
-                        process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
+                        process_candidate_indel(opt.max_indel_size, vcfRecord, posProcessor);
                     }
                 }
                 else if (INPUT_TYPE::FORCED_GT_VARIANTS ==
@@ -216,18 +216,18 @@ getSequenceErrorCountsRun(
                     {
                         static const unsigned sample_no(0);
                         static const bool is_forced_output(true);
-                        process_candidate_indel(opt.max_indel_size, vcfRecord, sppr, sample_no, is_forced_output);
+                        process_candidate_indel(opt.max_indel_size, vcfRecord, posProcessor, sample_no, is_forced_output);
                     }
                     else if (vcfRecord.is_snv())
                     {
-                        sppr.insert_forced_output_pos(vcfRecord.pos - 1);
+                        posProcessor.insert_forced_output_pos(vcfRecord.pos - 1);
                     }
                 }
                 else if (INPUT_TYPE::KNOWN_VARIANTS == currentIndex)
                 {
                     if (vcfRecord.is_indel())
                     {
-                        processTrueIndelVariantRecord(opt.max_indel_size, vcfRecord, sppr);
+                        processTrueIndelVariantRecord(opt.max_indel_size, vcfRecord, posProcessor);
                     }
                 }
 
@@ -242,7 +242,7 @@ getSequenceErrorCountsRun(
                 if (INPUT_TYPE::EXCLUDE_REGION == currentIndex)
                 {
                     const known_pos_range2 excludedRange(bedRecord.begin, bedRecord.end);
-                    sppr.insertExcludedRegion(excludedRange);
+                    posProcessor.insertExcludedRegion(excludedRange);
                 }
                 else
                 {
@@ -255,5 +255,5 @@ getSequenceErrorCountsRun(
             }
         }
     }
-    sppr.reset();
+    posProcessor.reset();
 }

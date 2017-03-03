@@ -71,8 +71,8 @@ processInputReadAlignment(
     const bam_streamer& read_stream,
     const bam_record& read,
     const pos_t base_pos,
-    starling_read_counts& brc,
-    starling_pos_processor_base& sppr,
+    starling_read_counts& readCounts,
+    starling_pos_processor_base& posProcessor,
     const unsigned sampleIndex = 0);
 
 
@@ -88,13 +88,15 @@ convert_vcfrecord_to_indel_allele(
     IndelObservation& obs);
 
 
-/// insert a candidate indel into sppr
+/// insert a candidate indel into posProcessor
+///
+/// typically used for candidate indel input from a vcf record
 ///
 /// \param is_forced_output - the results of the genotype type must be output for this indel, no matter how unlikely the variant is:
 void
 process_candidate_indel(
     const unsigned max_indel_size,
     const vcf_record& vcf_indel,
-    starling_pos_processor_base& sppr,
+    starling_pos_processor_base& posProcessor,
     const unsigned sampleIndex = 0,
     const bool is_forced_output = false);

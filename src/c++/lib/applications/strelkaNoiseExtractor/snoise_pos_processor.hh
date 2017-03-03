@@ -39,7 +39,7 @@ struct snoise_pos_processor : public starling_pos_processor_base
         const snoise_options& opt,
         const starling_base_deriv_options& dopt,
         const reference_contig_segment& ref,
-        const snoise_streams& streams);
+        const snoise_streams& fileStreams);
 
     void
     resetRegion(
@@ -62,5 +62,5 @@ private:
     void
     process_pos_snp_snoise(const pos_t pos);
 
-    const snoise_streams& _streams;
+    const snoise_streams& _fileStreams;
 };

@@ -41,12 +41,12 @@ pedicure_pos_processor(
     const pedicure_options& opt,
     const pedicure_deriv_options& dopt,
     const reference_contig_segment& ref,
-    const pedicure_streams& streams)
-    : base_t(opt,dopt,ref,streams,opt.alignFileOpt.alignmentSampleInfo.size())
+    const pedicure_streams& fileStreams)
+    : base_t(opt,dopt,ref,fileStreams,opt.alignFileOpt.alignmentSampleInfo.size())
     , _opt(opt)
     , _dopt(dopt)
-    , _streams(streams)
-    , _icallProcessor(streams.denovo_callable_osptr())
+    , _streams(fileStreams)
+    , _icallProcessor(fileStreams.denovo_callable_osptr())
     , _tier2_cpi(getSampleCount())
 {
     using namespace PEDICURE_SAMPLETYPE;

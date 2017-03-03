@@ -42,7 +42,7 @@ struct pedicure_pos_processor : public starling_pos_processor_base
         const pedicure_options& opt,
         const pedicure_deriv_options& dopt,
         const reference_contig_segment& ref,
-        const pedicure_streams& streams);
+        const pedicure_streams& fileStreams);
 
     void reset() override;
 

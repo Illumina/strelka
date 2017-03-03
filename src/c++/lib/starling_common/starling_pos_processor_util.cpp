@@ -322,7 +322,7 @@ static
 bool
 is_al_overdepth(
     const starling_base_options& opt,
-    const starling_pos_processor_base& sppr,
+    const starling_pos_processor_base& posProcessor,
     const unsigned sample_no,
     const alignment& al)
 {
@@ -336,7 +336,7 @@ is_al_overdepth(
     {
         if (is_segment_align_match(ps.type))
         {
-            if (sppr.is_estimated_depth_range_ge_than(ref_head_pos,
+            if (posProcessor.is_estimated_depth_range_ge_than(ref_head_pos,
                                                       ref_head_pos+static_cast<pos_t>(ps.length),
                                                       opt.max_input_depth,
                                                       sample_no))
@@ -359,8 +359,8 @@ processInputReadAlignment(
     const bam_streamer& read_stream,
     const bam_record& read,
     const pos_t base_pos,
-    starling_read_counts& brc,
-    starling_pos_processor_base& sppr,
+    starling_read_counts& readCounts,
+    starling_pos_processor_base& posProcessor,
     const unsigned sampleIndex)
 {
     // Read filters which are *always* on, because we
@@ -371,11 +371,11 @@ processInputReadAlignment(
     if (filterId != READ_FILTER_TYPE::NONE)
     {
         using namespace READ_FILTER_TYPE;
-        if (filterId == PRIMARY) brc.primary_filter++;
-        if (filterId == DUPLICATE) brc.duplicate++;
-        if (filterId == UNMAPPED) brc.unmapped++;
-        if (filterId == SECONDARY) brc.secondary++;
-        if (filterId == SUPPLEMENT) brc.supplement++;
+        if (filterId == PRIMARY) readCounts.primary_filter++;
+        if (filterId == DUPLICATE) readCounts.duplicate++;
+        if (filterId == UNMAPPED) readCounts.unmapped++;
+        if (filterId == SECONDARY) readCounts.secondary++;
+        if (filterId == SUPPLEMENT) readCounts.supplement++;
         return;
     }
 
@@ -417,13 +417,13 @@ processInputReadAlignment(
             // filter out reads with no match segments:
             if (ALIGNPATH::is_apath_floating(al.path))
             {
-                brc.floating++;
+                readCounts.floating++;
                 return;
             }
 
-            if (is_al_overdepth(opt,sppr,sampleIndex,al))
+            if (is_al_overdepth(opt,posProcessor,sampleIndex,al))
             {
-                brc.max_depth++;
+                readCounts.max_depth++;
                 return;
             }
 
@@ -437,11 +437,11 @@ processInputReadAlignment(
         try
         {
             const char* chrom_name(read_stream.target_id_to_name(read.target_id()));
-            sppr.insert_read(read,al,chrom_name,maplev,sampleIndex);
+            posProcessor.insert_read(read,al,chrom_name,maplev,sampleIndex);
         }
         catch (...)
         {
-            log_os << "\nException caught while inserting read alignment in sppr. Genomic read alignment record:\n";
+            log_os << "\nException caught while inserting read alignment in posProcessor. Genomic read alignment record:\n";
             read_stream.report_state(log_os);
             throw;
         }
@@ -450,9 +450,9 @@ processInputReadAlignment(
 
 
 
-// return common prefix and suffix length of two strings, where
-// suffix takes priority (this is important for left-shifting)
-//
+/// return common prefix and suffix length of two strings, where
+/// suffix takes priority (this is important for left-shifting)
+///
 static
 std::pair<unsigned,unsigned>
 common_xfix_length(
@@ -521,13 +521,11 @@ convert_vcfrecord_to_indel_allele(
 
 
 
-// handles candidate indel input from a vcf record
-//
 void
 process_candidate_indel(
     const unsigned max_indel_size,
     const vcf_record& vcf_indel,
-    starling_pos_processor_base& sppr,
+    starling_pos_processor_base& posProcessor,
     const unsigned sampleIndex,
     const bool is_forced_output)
 {
@@ -544,6 +542,6 @@ process_candidate_indel(
         obs.data.is_external_candidate = true;
         obs.data.is_forced_output = is_forced_output;
 
-        sppr.insert_indel(obs,sampleIndex);
+        posProcessor.insert_indel(obs,sampleIndex);
     }
 }

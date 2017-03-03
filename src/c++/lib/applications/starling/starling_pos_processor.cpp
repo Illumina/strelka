@@ -42,11 +42,11 @@ starling_pos_processor(
     const starling_options& opt,
     const starling_deriv_options& dopt,
     const reference_contig_segment& ref,
-    const starling_streams& streams)
-    : base_t(opt,dopt,ref,streams, opt.alignFileOpt.alignmentFilename.size()),
+    const starling_streams& fileStreams)
+    : base_t(opt,dopt,ref,fileStreams, opt.alignFileOpt.alignmentFilename.size()),
       _opt(opt),
       _dopt(dopt),
-      _streams(streams)
+      _streams(fileStreams)
 {
     const unsigned sampleCount(getSampleCount());
     assert(_streams.getSampleNames().size() == sampleCount);

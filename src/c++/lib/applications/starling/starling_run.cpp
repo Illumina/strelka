@@ -108,19 +108,19 @@ void
 callRegion(
     const starling_options& opt,
     const AnalysisRegionInfo& regionInfo,
-    const starling_streams& client_io,
+    const starling_streams& fileStreams,
     const std::vector<unsigned>& sampleIndexToPloidyVcfSampleIndex,
     const unsigned ploidyVcfSampleCount,
-    starling_read_counts& brc,
+    starling_read_counts& readCounts,
     reference_contig_segment& ref,
     HtsMergeStreamer& streamData,
-    starling_pos_processor& sppr)
+    starling_pos_processor& posProcessor)
 {
     using namespace illumina::common;
 
     const unsigned sampleCount(opt.alignFileOpt.alignmentFilename.size());
 
-    sppr.resetRegion(regionInfo.regionChrom, regionInfo.regionRange);
+    posProcessor.resetRegion(regionInfo.regionChrom, regionInfo.regionRange);
     streamData.resetRegion(regionInfo.streamerRegion.c_str());
     setRefSegment(opt, regionInfo.regionChrom, regionInfo.refRegionRange, ref);
 
@@ -130,8 +130,8 @@ callRegion(
         const HTS_TYPE::index_t currentHtsType(streamData.getCurrentType());
         const unsigned currentIndex(streamData.getCurrentIndex());
 
-        // wind sppr forward to position behind buffer head:
-        sppr.set_head_pos(currentPos-1);
+        // wind posProcessor forward to position behind buffer head:
+        posProcessor.set_head_pos(currentPos-1);
 
         if       (HTS_TYPE::BAM == currentHtsType)
         {
@@ -141,14 +141,14 @@ callRegion(
             //
             // /// get potential bounds of the read based only on current_pos:
             // const known_pos_range any_read_bounds(current_pos-max_indel_size,current_pos+MAX_READ_SIZE+max_indel_size);
-            // if( sppr.is_range_outside_report_influence_zone(any_read_bounds) ) continue;
+            // if( posProcessor.is_range_outside_report_influence_zone(any_read_bounds) ) continue;
 
             // Approximate begin range filter: (removed for RNA-Seq)
             //if((current_pos+MAX_READ_SIZE+max_indel_size) <= rlimit.begin_pos) continue;
 
             processInputReadAlignment(opt, ref, streamData.getCurrentBamStreamer(),
                                       streamData.getCurrentBam(), currentPos,
-                                      brc, sppr, currentIndex);
+                                      readCounts, posProcessor, currentIndex);
         }
         else if (HTS_TYPE::VCF == currentHtsType)
         {
@@ -157,7 +157,7 @@ callRegion(
             {
                 if (vcfRecord.is_indel())
                 {
-                    process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
+                    process_candidate_indel(opt.max_indel_size, vcfRecord, posProcessor);
                 }
                 else
                 {
@@ -171,11 +171,11 @@ callRegion(
                 {
                     static const unsigned sample_no(0);
                     static const bool is_forced_output(true);
-                    process_candidate_indel(opt.max_indel_size, vcfRecord, sppr, sample_no, is_forced_output);
+                    process_candidate_indel(opt.max_indel_size, vcfRecord, posProcessor, sample_no, is_forced_output);
                 }
                 else if (vcfRecord.is_snv() or vcfRecord.is_ref_site())
                 {
-                    sppr.insert_forced_output_pos(vcfRecord.pos - 1);
+                    posProcessor.insert_forced_output_pos(vcfRecord.pos - 1);
                 }
                 else
                 {
@@ -205,11 +205,11 @@ callRegion(
                     const unsigned ploidy(samplePloidy[sampleIndexToPloidyVcfSampleIndex[sampleIndex]]);
                     if ((ploidy == 0) || (ploidy == 1))
                     {
-                        const bool retval(sppr.insert_ploidy_region(sampleIndex, ploidyRange, ploidy));
+                        const bool retval(posProcessor.insert_ploidy_region(sampleIndex, ploidyRange, ploidy));
                         if (!retval)
                         {
                             std::ostringstream oss;
-                            const auto& sampleName(client_io.getSampleNames()[sampleIndex]);
+                            const auto& sampleName(fileStreams.getSampleNames()[sampleIndex]);
                             oss << "ERROR: ploidy vcf FORMAT/CN values conflict. Conflict detected in sample '"
                                 << sampleName << "' at:\n";
                             streamData.getCurrentVcfStreamer().report_state(oss);
@@ -229,19 +229,19 @@ callRegion(
             if (INPUT_TYPE::NOCOMPRESS_REGION == currentIndex)
             {
                 known_pos_range2 range(bedRecord.begin,bedRecord.end);
-                sppr.insert_nocompress_region(range);
+                posProcessor.insert_nocompress_region(range);
             }
 
             else if (INPUT_TYPE::TARGETED_REGION == currentIndex)
             {
                 known_pos_range2 range(bedRecord.begin,bedRecord.end);
-                sppr.insert_targeted_region(range);
+                posProcessor.insert_targeted_region(range);
             }
 
             else if (INPUT_TYPE::CALL_REGION == currentIndex)
             {
                 known_pos_range2 range(bedRecord.begin,bedRecord.end);
-                sppr.insertCallRegion(range);
+                posProcessor.insertCallRegion(range);
             }
 
             else
@@ -271,7 +271,7 @@ starling_run(
     opt.validate();
 
     const starling_deriv_options dopt(opt);
-    starling_read_counts brc;
+    starling_read_counts readCounts;
     reference_contig_segment ref;
 
     const unsigned sampleCount(opt.alignFileOpt.alignmentFilename.size());
@@ -334,8 +334,8 @@ starling_run(
         }
     }
 
-    starling_streams client_io(opt, pinfo, bamHeaders, sampleNames);
-    starling_pos_processor sppr(opt, dopt, ref, client_io);
+    starling_streams fileStreams(opt, pinfo, bamHeaders, sampleNames);
+    starling_pos_processor posProcessor(opt, dopt, ref, fileStreams);
 
     const bam_hdr_t& referenceHeader(bamHeaders.front());
     const bam_header_info referenceHeaderInfo(referenceHeader);
@@ -349,8 +349,8 @@ starling_run(
     {
         if (not opt.isUseCallRegions())
         {
-            callRegion(opt, regionInfo, client_io, sampleIndexToPloidyVcfSampleIndex, ploidyVcfSampleCount,
-                       brc, ref, streamData, sppr);
+            callRegion(opt, regionInfo, fileStreams, sampleIndexToPloidyVcfSampleIndex, ploidyVcfSampleCount,
+                       readCounts, ref, streamData, posProcessor);
         }
         else
         {
@@ -362,10 +362,10 @@ starling_run(
                 AnalysisRegionInfo subRegionInfo;
                 getStrelkaAnalysisRegionInfo(regionInfo.regionChrom, subRegionRange.begin_pos(), subRegionRange.end_pos(),
                                              opt.max_indel_size, subRegionInfo);
-                callRegion(opt, subRegionInfo, client_io, sampleIndexToPloidyVcfSampleIndex, ploidyVcfSampleCount,
-                           brc, ref, streamData, sppr);
+                callRegion(opt, subRegionInfo, fileStreams, sampleIndexToPloidyVcfSampleIndex, ploidyVcfSampleCount,
+                           readCounts, ref, streamData, posProcessor);
             }
         }
     }
-    sppr.reset();
+    posProcessor.reset();
 }

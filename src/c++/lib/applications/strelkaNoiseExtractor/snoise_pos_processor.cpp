@@ -31,9 +31,9 @@ snoise_pos_processor(
     const snoise_options& opt,
     const starling_base_deriv_options& dopt,
     const reference_contig_segment& ref,
-    const snoise_streams& streams)
-    : base_t(opt,dopt,ref,streams, opt.alignFileOpt.alignmentFilename.size()),
-      _streams(streams)
+    const snoise_streams& fileStreams)
+    : base_t(opt,dopt,ref,fileStreams, opt.alignFileOpt.alignmentFilename.size()),
+      _fileStreams(fileStreams)
 {
     // setup indel buffer:
     {
@@ -129,7 +129,7 @@ process_pos_snp_snoise(
     if (alt_ratio > max_alt_ratio) return;
 
     {
-        std::ostream& os(*_streams.snoise_osptr());
+        std::ostream& os(*_fileStreams.snoise_osptr());
 
         // CHROM POS ID:
         os << _chromName << '\t'
