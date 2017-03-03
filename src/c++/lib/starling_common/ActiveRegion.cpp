@@ -254,11 +254,11 @@ bool ActiveRegion::processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlign
     unsigned largestCount(0);
     unsigned secondLargestCount(0);
 
-    // first alt haplotype (haplotype 1)
+    // haplotype with the most count
     std::unique_ptr<std::string> bestHaplotypePtr;
 
-    // second alt haplotype (haplotype 2)
-    std::unique_ptr<std::string> secondBestHaplotypePtr;
+    // haplotype with the second most count (size >1 if there are ties)
+    std::vector<std::unique_ptr<std::string>> secondBestHaplotypePtrList(2);
 
     std::string refStr;
     _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
@@ -278,10 +278,9 @@ bool ActiveRegion::processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlign
             secondLargestCount = largestCount;
             largestCount = count;
 
+            secondBestHaplotypePtrList.clear();
             if (bestHaplotypePtr != nullptr)
-                secondBestHaplotypePtr = std::move(bestHaplotypePtr);
-            else
-                secondBestHaplotypePtr.release();
+                secondBestHaplotypePtrList.push_back(std::move(bestHaplotypePtr));
 
             if (isReference)
             {
@@ -296,26 +295,18 @@ bool ActiveRegion::processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlign
         else if (count > secondLargestCount)
         {
             secondLargestCount = count;
+            secondBestHaplotypePtrList.clear();
             if (not isReference)
             {
-                secondBestHaplotypePtr = std::unique_ptr<std::string>(new std::string(haplotype));
-            }
-            else
-            {
-                secondBestHaplotypePtr.release();
+                secondBestHaplotypePtrList.push_back(std::unique_ptr<std::string>(new std::string(haplotype)));
             }
         }
         else
         {
-            // count == secondLargestCount
-            // more than 2 haplotypes with tsecondLargestCount => make haplotype2 invalid
-            if (secondBestHaplotypePtr == nullptr)
+            // tie at secondLargestCount
+            if (not isReference)
             {
-                secondBestHaplotypePtr = std::unique_ptr<std::string>(new std::string(haplotype));
-            }
-            else
-            {
-                secondBestHaplotypePtr.release();
+                secondBestHaplotypePtrList.push_back(std::unique_ptr<std::string>(new std::string(haplotype)));
             }
         }
     }
@@ -324,23 +315,28 @@ bool ActiveRegion::processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlign
     uint8_t haplotypeId(1);
     if (bestHaplotypePtr != nullptr)
     {
-        const auto& haplotype1(*bestHaplotypePtr);
-        const auto& alignIdList1(haplotypeToAlignIdSet[haplotype1]);
-        convertToPrimitiveAlleles(sampleId, *bestHaplotypePtr, alignIdList1, haplotypeId);
+        const auto& haplotype(*bestHaplotypePtr);
+        const auto& alignIdList(haplotypeToAlignIdSet[haplotype]);
+        convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, haplotypeId);
         ++haplotypeId;
 #ifdef DEBUG_ACTIVE_REGION
-        std::cerr << haplotype1 << '\t' << alignIdList1.size() << std::endl;
+        std::cerr << haplotype << '\t' << alignIdList.size() << std::endl;
 #endif
     }
 
-    if (secondBestHaplotypePtr != nullptr)
+    if ((not secondBestHaplotypePtrList.empty()) and ((haplotypeId+secondBestHaplotypePtrList.size()-1) <= 2))
     {
-        const auto& haplotype2(*secondBestHaplotypePtr);
-        const auto& alignIdList2(haplotypeToAlignIdSet[haplotype2]);
-        convertToPrimitiveAlleles(sampleId, *secondBestHaplotypePtr, alignIdList2, haplotypeId);
+        // including second best haplotypes doesn't exceed 2 alt haplotypes
+        for (const auto& haplotypePtr : secondBestHaplotypePtrList)
+        {
+            const auto& haplotype(*haplotypePtr);
+            const auto& alignIdList(haplotypeToAlignIdSet[haplotype]);
+            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, haplotypeId);
+            ++haplotypeId;
 #ifdef DEBUG_ACTIVE_REGION
-        std::cerr << haplotype2 << '\t' << alignIdList2.size() << std::endl;
+            std::cerr << haplotype << '\t' << alignIdList.size() << std::endl;
 #endif
+        }
     }
 
     return true;
