@@ -243,6 +243,8 @@ updateSiteSampleInfo(
             siteSampleInfo.ReadPosRankSum = pi.get_read_pos_ranksum();
             siteSampleInfo.MQRankSum = pi.get_mq_ranksum();
             siteSampleInfo.BaseQRankSum = pi.get_baseq_ranksum();
+
+            siteSampleInfo.meanDistanceFromReadEdge = pi.distanceFromReadEdge.mean();
             siteSampleInfo.rawPos = pi.get_raw_pos();
             siteSampleInfo.avgBaseQ = pi.get_raw_baseQ();
         }

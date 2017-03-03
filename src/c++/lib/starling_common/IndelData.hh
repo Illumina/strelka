@@ -72,7 +72,8 @@ struct ReadPathScores
         const uint16_t rlen=0,
         const bool is_t1=true,
         const bool is_fwd=true,
-        const int16_t rp=0)
+        const int16_t rp=0,
+        const int16_t initDistanceFromClosestReadEdge=0)
         : ref(r)
         , indel(i)
         , nsite(ns)
@@ -80,6 +81,7 @@ struct ReadPathScores
         , is_tier1_read(is_t1)
         , is_fwd_strand(is_fwd)
         , read_pos(rp)
+        , distanceFromClosestReadEdge(initDistanceFromClosestReadEdge)
     {}
 
     void
@@ -97,17 +99,20 @@ struct ReadPathScores
     typedef std::vector<std::pair<IndelKey,score_t> > alt_indel_t;
     alt_indel_t alt_indel;
 
-    // used to set expected het allele ratio:
+    /// used to set expected het allele ratio:
     uint16_t read_length;
 
-    // used to filter for/against tier2 data:
+    /// used to filter for/against tier2 data:
     bool is_tier1_read;
 
     // so we're able to collect scores by strand
     bool is_fwd_strand;
 
-    // this is used in strelka to calculate read pos ranksums for indels
+    /// used to calculate read pos ranksums for indels, a somatic EVS indel feature
     int16_t read_pos;
+
+    /// used for RNA-Seq EVS indel feature
+    int16_t distanceFromClosestReadEdge;
 };
 
 

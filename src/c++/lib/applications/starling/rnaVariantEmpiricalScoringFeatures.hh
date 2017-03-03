@@ -151,6 +151,7 @@ struct RNA_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         QUAL_EXACT,
         ConservativeGenotypeQuality,
         F_GQ_EXACT,
+        SampleMeanDistanceFromReadEdge,
         SIZE
     };
 
@@ -187,6 +188,8 @@ struct RNA_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "QUAL_EXACT";
         case ConservativeGenotypeQuality:
             return "ConservativeGenotypeQuality";
+        case SampleMeanDistanceFromReadEdge:
+            return "SampleMeanDistanceFromReadEdge";
         case F_GQ_EXACT:
             return "F_GQ_EXACT";
         default:
@@ -304,6 +307,7 @@ struct RNA_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         QUAL_EXACT,
         ConservativeGenotypeQuality,
         F_GQ_EXACT,
+        SampleIndelMeanDistanceFromReadEdge,
         SIZE
     };
 
@@ -342,6 +346,8 @@ struct RNA_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "ConservativeGenotypeQuality";
         case F_GQ_EXACT:
             return "F_GQ_EXACT";
+        case SampleIndelMeanDistanceFromReadEdge:
+            return "SampleIndelMeanDistanceFromReadEdge";
         default:
             assert(false && "Unknown feature");
             return nullptr;

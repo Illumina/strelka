@@ -339,6 +339,14 @@ getAlleleSampleReportInfo(
                 }
 
                 isri.readpos_ranksum.add_observation(false, usableReadPos);
+
+                {
+                    // this may help the mean edge distance better generalize over sequencing assay read length:
+                    static const int16_t maxDistanceFromEdge(20);
+
+                    // add this read edge feature only for reads supporting the indel
+                    isri.distanceFromReadEdge.addObservation(std::min(maxDistanceFromEdge, path_lnp.distanceFromClosestReadEdge));
+                }
             }
             else
             {

@@ -25,6 +25,7 @@
 
 #include "blt_common/MapqTracker.hh"
 #include "blt_util/fastRanksum.hh"
+#include "blt_util/MeanTracker.hh"
 #include "starling_common/IndelKey.hh"
 
 #include <iosfwd>
@@ -132,6 +133,9 @@ struct AlleleSampleReportInfo
     MapqTracker mapqTracker;
 
     fastRanksum readpos_ranksum;
+
+    /// supports RNA-Seq EVS feature
+    MeanTracker distanceFromReadEdge;
 
     unsigned total_confident_reads() const
     {

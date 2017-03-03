@@ -36,12 +36,12 @@ typedef uint8_t seg_id_t;
 struct starling_read;
 
 
-// class spun-off from starling read to represent the notion of exons
-// without forcing a re-rig the entire starling design: as of now
-// read-segment captures the concept of a read (sub-)segment for the
-// purposes of realignment/pileup, etc. while starling_read aggregates
-// all information associated with the full cluster.
-//
+/// spin-off from starling read to generalize full-read alignments with exon alignments
+///
+/// read-segment captures the concept of a read (sub-)segment for the
+/// purposes of realignment/pileup, etc. while starling_read aggregates
+/// all information associated with the full read
+///
 struct read_segment
 {
     read_segment(const uint16_t size=0,
@@ -62,22 +62,39 @@ struct read_segment
     bool
     is_tier1_mapping() const;
 
-    // is this a tier1/tier2 mapping?:
+    /// is this a tier1/tier2 mapping?:
     bool
     is_tier1or2_mapping() const;
 
+    /// provides the size of the segment, not the full read
     unsigned read_size() const
     {
         return _size;
     }
+
+    /// provides the size of the full read from which the segment is aligned
+    ///
+    /// this should always equal read_size except for RNA-Seq reads with GAPed alignments
+    unsigned
+    full_read_size() const;
+
+    /// provides the offset of the segment in the full read
+    ///
+    /// this should always be zero except for RNA-Seq reads with GAPed alignments
+    unsigned
+    full_read_offset() const
+    {
+        return _offset;
+    }
+
     bam_seq get_bam_read() const;
     const uint8_t* qual() const;
 
-    // are there any alignments without indels above max_indel_size?
+    /// are there any alignments without indels above max_indel_size?
     bool
     is_any_nonovermax(const unsigned max_indel_size) const;
 
-    // check that information is valid and self-consistent;
+    /// check that object is valid and self-consistent;
     bool is_valid() const;
 
     /// original alignment before re-aligning
@@ -109,7 +126,7 @@ struct read_segment
     std::pair<bool,bool>
     get_segment_edge_pin() const;
 
-    // returns NULL for non-realigned contig reads:
+    /// \returns NULL for non-realigned contig reads
     const alignment*
     get_best_alignment() const
     {
@@ -141,7 +158,6 @@ private:
     alignment _genome_align;
 public:
     alignment realignment;
-    //    float realign_path_lnp;
     bool is_realigned;
     bool is_invalid_realignment;
     pos_t buffer_pos;

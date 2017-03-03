@@ -959,7 +959,7 @@ score_indels(
             // where is the indel in fwd_strand read coordinates wrt the most likely read alignment?
             //
             /// TODO: should this be the most-likely alignment (present setting) or the most likely
-            ///       alignment which contains the indel. If the former setting we need to do something
+            ///       alignment which contains the indel? If the former, we need to do something
             ///       about handling negative positions.
             ///
             //
@@ -975,8 +975,40 @@ score_indels(
             //            correct for strandedness
             log_os << "indelpos: " << evaluationIndel.pos << " readpos: + " << rseg.genome_align().pos << " rp: " << readpos << "\n";
 #endif
+
+            const unsigned fullReadLength(rseg.full_read_size());
+
+            // this value is required for an RNA-Seq EVS feature
+            pos_t distanceFromClosestReadEdge(fullReadLength);
+            {
+                alignment revMaxAlignment = maxCandAlignment.al;
+                revMaxAlignment.is_fwd_strand = (not revMaxAlignment.is_fwd_strand);
+                const pos_t revReadPos(getLowestFwdReadPosForRefRange(revMaxAlignment,
+                                                                      known_pos_range(evaluationIndel.pos-1,
+                                                                                      evaluationIndel.right_pos()+1)) );
+
+                const unsigned fullReadOffset(rseg.full_read_offset());
+
+                // care needs to be taken here, we want min(fullReadPos,fullRevReadPos), but if there is an error in
+                // locating the indel's read pos from either direction, readPos or revReadPos may be set to -1.
+                //
+                if (readPos >= 0)
+                {
+                    distanceFromClosestReadEdge = (readPos + fullReadOffset);
+
+                }
+                if (revReadPos >= 0)
+                {
+                    const pos_t fullRevReadPos(revReadPos + (fullReadLength-(fullReadOffset+read_length)));
+                    if (fullRevReadPos < distanceFromClosestReadEdge)
+                    {
+                        distanceFromClosestReadEdge = fullRevReadPos;
+                    }
+                }
+            }
+
             ReadPathScores rps(referenceScore,evaluationIndelScore,nsite,read_length,is_tier1_read,maxCandAlignment.al.is_fwd_strand,
-                               (int16_t) readPos);
+                               (int16_t) readPos, (int16_t) distanceFromClosestReadEdge);
 
             // start adding alternate indel alleles, if present:
 

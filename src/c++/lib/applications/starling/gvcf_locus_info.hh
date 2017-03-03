@@ -518,7 +518,6 @@ struct GermlineIndelSampleInfo
     MapqTracker mapqTracker;
 
 
-
     /// TODO STREL-125 deprecated - replaced by supportCounts in LocusSampleInfo
     double alleleFrequency() const
     {
@@ -825,6 +824,8 @@ struct GermlineSiteSampleInfo
     double ReadPosRankSum = 0;  // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
     double BaseQRankSum = 0;    // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
     double MQRankSum = 0;       // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
+
+    double meanDistanceFromReadEdge = 0;
     double avgBaseQ = 0;
     double rawPos = 0;
 

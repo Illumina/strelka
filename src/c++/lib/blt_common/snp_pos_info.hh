@@ -25,8 +25,9 @@
 
 #include "blt_common/hapscore.hh"
 #include "blt_common/MapqTracker.hh"
-#include "blt_util/qscore.hh"
 #include "blt_util/fastRanksum.hh"
+#include "blt_util/MeanTracker.hh"
+#include "blt_util/qscore.hh"
 #include "blt_util/seq_util.hh"
 
 #include <cstdint>
@@ -147,6 +148,7 @@ struct snp_pos_info
         mq_ranksum.clear();
         baseq_ranksum.clear();
         read_pos_ranksum.clear();
+        distanceFromReadEdge.clear();
         altReadPos.clear();
 
         spanningIndelPloidyModification = 0;
@@ -264,12 +266,13 @@ public:
     std::vector<base_call> calls;
     std::vector<base_call> tier2_calls; // call not passing stringent quality criteria
 
-    // number of spanning deletion reads crossing the site:
+    /// number of spanning deletion reads crossing the site
     unsigned spanningDeletionReadCount;
 
-    // number of submapped reads crossing the site.
-    // note this could be usable,filtered or spanning deletion,
-    // all submapped reads get counted here:
+    /// number of submapped reads crossing the site
+    ///
+    /// note this could be usable,filtered or spanning deletion,
+    /// all submapped reads get counted here:
     unsigned n_submapped;
 
     MapqTracker mapqTracker;
@@ -280,6 +283,9 @@ public:
     fastRanksum mq_ranksum;
     fastRanksum baseq_ranksum;
     fastRanksum read_pos_ranksum;
+
+    /// supports RNA-Seq EVS feature
+    MeanTracker distanceFromReadEdge;
 
     // for computing somatic cluster stats:
     struct ReadPosInfo

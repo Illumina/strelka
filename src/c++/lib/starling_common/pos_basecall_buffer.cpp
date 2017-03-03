@@ -42,13 +42,14 @@ dump(std::ostream& /*os*/) const
 
 void
 pos_basecall_buffer::
-update_ranksums(
-    char refchar,
+updateGermlineScoringMetrics(
+    const char refchar,
     const pos_t pos,
     const uint8_t call_id,
     const uint8_t qscore,
     const uint8_t mapq,
     const unsigned cycle,
+    const unsigned distanceFromReadEdge,
     const bool is_submapped)
 {
     const bool is_reference(refchar==id_to_base(call_id));
@@ -59,6 +60,12 @@ update_ranksums(
     {
         posdata.baseq_ranksum.add_observation(is_reference,static_cast<unsigned>(qscore));
         posdata.read_pos_ranksum.add_observation(is_reference,cycle);
+        if (not is_reference)
+        {
+            // maxDistance may help the mean edge distance better generalize over different read lengths:
+            static const unsigned maxDistanceFromEdge(20);
+            posdata.distanceFromReadEdge.addObservation(std::min(maxDistanceFromEdge, distanceFromReadEdge));
+        }
     }
 }
 
