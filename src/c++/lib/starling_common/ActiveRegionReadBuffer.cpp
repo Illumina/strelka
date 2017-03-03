@@ -128,7 +128,7 @@ void ActiveRegionReadBuffer::setInsert(const align_id_t id, const pos_t pos, con
     _insertSeqBuffer[idIndex][posIndex] = insertSeq;
 }
 
-bool ActiveRegionReadBuffer::setHaplotypeBase(const align_id_t id, const pos_t pos, std::string& base) const
+bool ActiveRegionReadBuffer::getHaplotypeBase(const align_id_t id, const pos_t pos, std::string &base) const
 {
     unsigned idIndex = id % MaxDepth;
     unsigned posIndex = pos % MaxBufferSize;
@@ -198,9 +198,9 @@ void ActiveRegionReadBuffer::getReadSegments(pos_range posRange, ReadInfo& readI
                 alignIdToHaplotype[alignId] = std::string();
 
             std::string haplotypeBase;
-            bool isSoftClipped = setHaplotypeBase(alignId, pos, haplotypeBase);
-
-            if (!includePartialReads and isSoftClipped)
+            bool isSoftClipped = getHaplotypeBase(alignId, pos, haplotypeBase);
+            bool isContainingN = (haplotypeBase.find('N') != std::string::npos);
+            if (isContainingN or (!includePartialReads and isSoftClipped))
                 invalidAlignIds.insert(alignId);
 
             if (!alignIdToHaplotype.count(alignId))

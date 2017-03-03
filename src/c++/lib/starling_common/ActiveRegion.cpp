@@ -309,7 +309,14 @@ bool ActiveRegion::processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlign
         {
             // count == secondLargestCount
             // more than 2 haplotypes with tsecondLargestCount => make haplotype2 invalid
-            secondBestHaplotypePtr.release();
+            if (secondBestHaplotypePtr == nullptr)
+            {
+                secondBestHaplotypePtr = std::unique_ptr<std::string>(new std::string(haplotype));
+            }
+            else
+            {
+                secondBestHaplotypePtr.release();
+            }
         }
     }
 
