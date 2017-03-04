@@ -77,10 +77,10 @@ public:
         _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
     {
         _isBeginning = true;
-        _activeRegionStartPos = 0;
+        _activeRegionStartPos = -1;
         _anchorPosFollowingPrevVariant = 1;
-        _prevAnchorPos = 0;
-        _prevVariantPos = 0;
+        _prevAnchorPos = -1;
+        _prevVariantPos = -1;
         _numVariants = 0;
     }
 
@@ -91,9 +91,14 @@ public:
         return _readBuffer;
     }
 
-    /// update the active region buffer start position
-    /// \param pos reference position
-    void updateStartPosition(const pos_t pos);
+    ActiveRegionId getActiveRegionId(pos_t pos) const
+    {
+        return _posToActiveRegionIdMap.getConstRefDefault(pos, (ActiveRegionId)(-1));
+    }
+
+    void clearReadBuffer(const pos_t pos);
+
+    void clearPolySites(const pos_t pos);
 
     /// update the active region end position. Creates an active region if needed.
     /// \param pos reference position
@@ -105,8 +110,17 @@ public:
     /// \return true if pos is a polymorphic site; false otherwise.
     bool isPolymorphicSite(const unsigned sampleId, const pos_t pos) const;
 
+    /// Checks if mismatches occur consistently at position pos
+    /// \param sampleId sample id
+    /// \param pos reference position
+    /// \param baseIndex alt base id
+    /// \return complex allele id
+    uint8_t getHaplotypeId(const unsigned sampleId, const pos_t pos, const BASE_ID::index_t baseIndex) const;
+
     /// clear active region detector
     void clear();
+
+    void clearPosToActiveRegionMap(const pos_t pos);
 
 private:
     enum VariantType
@@ -142,6 +156,9 @@ private:
     // aligner to be used in active regions
     GlobalAligner<int> _aligner;
 
+    RangeMap<pos_t, ActiveRegionId> _posToActiveRegionIdMap;
+
+    void setPosToActiveRegionIdMap(pos_range activeRegionRange);
     void processActiveRegion();
 };
 

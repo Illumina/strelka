@@ -25,21 +25,21 @@
 #include "ScoringModelManager.hh"
 
 
-struct dummy_variant_sink : public variant_pipe_stage_base
+struct DummyVariantSink : public variant_pipe_stage_base
 {
-    dummy_variant_sink() : variant_pipe_stage_base() {}
+    DummyVariantSink() : variant_pipe_stage_base() {}
 
     void process(std::unique_ptr<GermlineSiteLocusInfo> si) override
     {
-        the_sites.push_back(std::move(si));
+        _siteLoci.push_back(std::move(si));
     }
     void process(std::unique_ptr<GermlineIndelLocusInfo> ii) override
     {
-        the_indels.push_back(std::move(ii));
+        _indelLoci.push_back(std::move(ii));
     }
 
-    std::vector<std::unique_ptr<GermlineSiteLocusInfo>> the_sites;
-    std::vector<std::unique_ptr<GermlineIndelLocusInfo>> the_indels;
+    std::vector<std::unique_ptr<GermlineSiteLocusInfo>> _siteLoci;
+    std::vector<std::unique_ptr<GermlineIndelLocusInfo>> _indelLoci;
 };
 
 
@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE( simple_indel_test )
 
     ScoringModelManager cm(opt, dopt.gvcf);
 
-    std::shared_ptr<variant_pipe_stage_base> next(new dummy_variant_sink);
+    std::shared_ptr<variant_pipe_stage_base> next(new DummyVariantSink);
     indel_overlapper overlap(cm, rcs, next);
 
     IndelKey indelKey;
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE( simple_indel_test )
     indelKey.deletionLength=2;
 
     const unsigned sampleCount(1);
-    std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount));
+    std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, -1));
     ii->addAltIndelAllele(indelKey, indelData);
     overlap.process(std::move(ii));
 

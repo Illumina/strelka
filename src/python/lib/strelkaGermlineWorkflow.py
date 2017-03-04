@@ -129,7 +129,7 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     segCmd.extend(['-bsnp-ssd-no-mismatch', '0.35'])
     segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
     segCmd.extend(['-min-vexp', '0.25'])
-    segCmd.extend(['--do-short-range-phasing'])
+    segCmd.extend(['--enable-read-backed-phasing'])
 
     segFiles.stats.append(self.paths.getTmpRunStatsPath(gid))
     segCmd.extend(["--stats-file", segFiles.stats[-1]])

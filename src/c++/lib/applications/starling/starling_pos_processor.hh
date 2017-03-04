@@ -68,12 +68,6 @@ private:
         return (_nocompress_regions.empty() and _targeted_regions.empty());
     }
 
-    bool
-    is_save_pileup_buffer() override
-    {
-        return (_gvcfer && _gvcfer->is_phasing_block());
-    }
-
     void
     process_pos_variants_impl(
         const pos_t pos,

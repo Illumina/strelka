@@ -37,16 +37,14 @@
 #include <options/SmallAssemblerOptions.hh>
 #include <options/IterativeAssemblerOptions.hh>
 
-typedef std::vector<RangeMap<pos_t,unsigned char>> RangeSet;
+typedef std::vector<RangeMap<pos_t,uint8_t>> RangeSet;
 typedef std::map<std::string, std::vector<align_id_t>> HaplotypeToAlignIdSet;
+typedef uint8_t HaplotypeId;
 
 /// Represent all haplotypes found in the current active region
 class ActiveRegion
 {
 public:
-    // if haplotype depth is at least HighDepth, low depth filter is not applied
-    static const unsigned HighDepth = 20u;
-
     // if the number of reads is larger than MinNumReadsToBypassAssembly, assembly is not conducted
     static const unsigned MinNumReadsToBypassAssembly = 1000u;
 
@@ -54,7 +52,7 @@ public:
     float MinFracReadsCoveringRegion = 0.65f;
 
     // if the region length is larger than MaxRefSpanToPerformAssembly, do not perform assembly
-    static const unsigned MaxRefSpanToPerformAssembly = 250u;
+    static const unsigned MaxRefSpanToBypassAssembly = 250u;
 
     // assembly parameters
     const unsigned MaxAssemblyWordSize = 76u;
@@ -62,10 +60,6 @@ public:
 
     // minimum haplotype count to consider
     static const unsigned MinHaplotypeCount = 3u;
-    static const unsigned MaxSNVHpolSize = 4u;
-
-    // minimum haplotype frequency to relax MMDF
-    const float HaplotypeFrequencyThreshold = 0.4;
 
     /// Creates an active region object
     /// \param posRange position range of the active region
@@ -74,15 +68,19 @@ public:
     /// \param sampleCount sample count
     /// \param aligner aligner for aligning haplotypes to the reference
     /// \param readBuffer read buffer
+    /// \param indelBuffer indel buffer
+    /// \param polySites rangeSet to store SNV information
     /// \return active region object
     ActiveRegion(pos_range& posRange,
                  const reference_contig_segment& ref,
                  const unsigned maxIndelSize,
                  const unsigned sampleCount,
                  const GlobalAligner<int>& aligner,
-                 const ActiveRegionReadBuffer& readBuffer):
+                 const ActiveRegionReadBuffer& readBuffer,
+                 IndelBuffer& indelBuffer,
+                 RangeSet& polySites):
         _posRange(posRange), _ref(ref), _maxIndelSize(maxIndelSize), _sampleCount(sampleCount),
-        _aligner(aligner), _readBuffer(readBuffer)
+        _aligner(aligner), _readBuffer(readBuffer), _indelBuffer(indelBuffer), _polySites(polySites)
     {
     }
 
@@ -107,15 +105,57 @@ public:
 
     /// Decompose haplotypes into primitive alleles.
     /// Determine indel candidacy and regiser polymorphic sites to relax MMDF.
-    /// \param indelBuffer
-    /// \param polySites
-    void processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites);
+    void processHaplotypes();
 
     /// Mark a read soft-clipped
     /// \param alignId align id
     void setSoftClipped(const align_id_t alignId)
     {
         _alignIdSoftClipped.insert(alignId);
+    }
+
+    /// Get the haplotype Id for the given rangeSetValue and the baseIndex
+    static HaplotypeId getHaplotypeId(const uint8_t rangeSetValue, const BASE_ID::index_t baseIndex)
+    {
+        switch (baseIndex)
+        {
+            case BASE_ID::A:
+                return (rangeSetValue & 0x03);
+            case BASE_ID::C:
+                return (rangeSetValue & 0x0c) >> 2;
+            case BASE_ID::G:
+                return (rangeSetValue & 0x30) >> 4;
+            case BASE_ID::T:
+                return (rangeSetValue & 0xc0) >> 6;
+            default:
+                assert(false);
+        }
+    }
+
+    /// add haplotypeId to the rangeSet value
+    static void addBaseId(
+            const HaplotypeId haplotypeId,
+            char baseChar,
+            uint8_t& rangeSetValue)
+    {
+        assert (haplotypeId == 1 || haplotypeId == 2);
+        switch (baseChar)
+        {
+            case 'A':
+                rangeSetValue |= (0x01 << (haplotypeId-1));
+                break;
+            case 'C':
+                rangeSetValue |= (0x04 << (haplotypeId-1));
+                break;
+            case 'G':
+                rangeSetValue |= (0x10 << (haplotypeId-1));
+                break;
+            case 'T':
+                rangeSetValue |= (0x40 << (haplotypeId-1));
+                break;
+            default:
+                assert(false);
+        }
     }
 
 private:
@@ -126,31 +166,31 @@ private:
     const GlobalAligner<int> _aligner;
 
     const ActiveRegionReadBuffer& _readBuffer;
+    IndelBuffer& _indelBuffer;
+    RangeSet& _polySites;
+
     std::set<align_id_t> _alignIdSoftClipped;
 
+    bool processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlignIdSet &haplotypeToAlignIdSet);
+
     /// Create haplotypes using counting and process variants
-    /// \param indelBuffer indel buffer
-    /// \param polySites container to record polymorphic sites for MMDF relax
     /// \param sampleId sample id
     /// \return true if haplotype generation succeeds, false otherwise
-    bool processHaplotypesWithCounting(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId) const;
+    bool processHaplotypesWithCounting(unsigned sampleId);
 
     /// Create haplotypes using assembly and process variants
-    /// \param indelBuffer indel buffer
-    /// \param polySites container to record polymorphic sites for MMDF relax
     /// \param sampleId sample id
     /// \return true if haplotype generation succeeds, false otherwise
-    bool processHaplotypesWithAssembly(IndelBuffer& indelBuffer, RangeSet& polySites, unsigned sampleId) const;
+    bool processHaplotypesWithAssembly(unsigned sampleId);
 
     /// Bypass indels within the region
     /// \param indelBuffer indel buffer
-    void bypassIndelsInBam(IndelBuffer& indelBuffer) const;
+    void bypassIndelsInBam();
 
+    /// convert the haplotype into primitive alleles and update _indelBuffer and _polySites
     void convertToPrimitiveAlleles(
         const unsigned sampleId,
         const std::string& haploptypeSeq,
         const std::vector<align_id_t>& alignIdList,
-        const unsigned totalReadCount,
-        IndelBuffer& indelBuffer,
-        RangeSet& polySites) const;
+        const uint8_t haplotypeId);
 };

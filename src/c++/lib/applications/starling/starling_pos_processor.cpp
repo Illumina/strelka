@@ -54,16 +54,8 @@ starling_pos_processor(
     // setup gvcf aggregator
     if (_opt.gvcf.is_gvcf_output())
     {
-        // this is hacky, but needed for the codon phaser, which we hope to eliminate ASAP, so
-        // this should be temporary:
-        std::vector<std::reference_wrapper<const pos_basecall_buffer>> basecallBuffers;
-        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
-        {
-            basecallBuffers.emplace_back(sample(sampleIndex).bc_buff);
-        }
-
         _gvcfer.reset(new gvcf_aggregator(
-                          _opt, _dopt, _streams, ref, _nocompress_regions, _targeted_regions, _callRegions, basecallBuffers));
+                          _opt, _dopt, _streams, ref, _nocompress_regions, _targeted_regions, _callRegions, sampleCount));
     }
 
     // setup indel buffer samples:
@@ -179,7 +171,7 @@ process_pos_snp(const pos_t pos)
         // if phaser has put a hold on buffer cleanup. This ensures that the phaser will be turned back off
         //
         // TODO: there must be a way to force correct usage into the phaser's API instead of requiring this brittle hack
-        const bool isSkippable(! (isForcedOutput || is_save_pileup_buffer()));
+        const bool isSkippable(!isForcedOutput);
 
         if (isSkippable)
         {
@@ -367,6 +359,7 @@ updateSnvLocusWithSampleInfo(
     const unsigned groupLocusPloidy,
     const diploid_genotype& dgt,
     const unsigned sampleIndex,
+    const ActiveRegionDetector& activeRegionDetector,
     GermlineDiploidSiteLocusInfo& locus,
     double& homRefLogProb)
 {
@@ -424,7 +417,7 @@ updateSnvLocusWithSampleInfo(
             auto alleleIndexToBaseIndex = [&](const uint8_t alleleIndex)
             {
                 if (alleleIndex == 0) return locus.refBaseIndex;
-                return static_cast<uint8_t>(siteAlleles[alleleIndex - 1].baseIndex);
+                return static_cast<uint8_t>(siteAlleles[alleleIndex-1].baseIndex);
             };
 
             // number of PL fields required:
@@ -495,6 +488,26 @@ updateSnvLocusWithSampleInfo(
     }
 
     updateSiteSampleInfo(opt, sampleIndex, cpi, isOverlappingHomAltDeletion, dgt.strand_bias, locus);
+
+    // set complex allele ids
+    auto& maxGt = sampleInfo.max_gt();
+    if (maxGt.getPloidy() == 2)
+    {
+        // diploid
+        auto allele0Index(maxGt.getAllele0Index());
+        auto allele1Index(maxGt.getAllele1Index());
+
+        if (allele0Index > 0)
+            maxGt.setAllele0HaplotypeId(
+                    activeRegionDetector.getHaplotypeId(
+                            sampleIndex, locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex)
+            );
+        if (allele1Index > 0)
+            maxGt.setAllele1HaplotypeId(
+                    activeRegionDetector.getHaplotypeId(
+                            sampleIndex, locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
+            );
+    }
 }
 
 
@@ -664,7 +677,9 @@ process_pos_snp_digt(
     // -----------------------------------------------
     // create site locus object:
     //
-    std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, pos, refBaseIndex, isForcedOutput));
+    auto activeRegionId(_active_region_detector->getActiveRegionId(pos));
+    std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, activeRegionId, pos, refBaseIndex, isForcedOutput));
+
 
     // add all candidate alternate alleles:
     for (const auto baseId : altAlleles)
@@ -677,7 +692,7 @@ process_pos_snp_digt(
     {
         updateSnvLocusWithSampleInfo(
             _opt, sample(sampleIndex), callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex],
-            allDgt[sampleIndex], sampleIndex, *locusPtr, homRefLogProb);
+            allDgt[sampleIndex], sampleIndex, *_active_region_detector, *locusPtr, homRefLogProb);
     }
 
     // add sample-independent info:
@@ -1411,6 +1426,20 @@ updateIndelLocusWithSampleInfo(
 
     // set indelSampleInfo
     updateIndelSampleInfo(opt, dopt, alleleGroup, sampleIndex, basecallBuffer, locus);
+
+    // set haplotype ids
+    auto& maxGt = sampleInfo.max_gt();
+    if (maxGt.getPloidy() == 2)
+    {
+        // diploid
+        auto allele0Index(maxGt.getAllele0Index());
+        auto allele1Index(maxGt.getAllele1Index());
+
+        if (allele0Index > 0)
+            maxGt.setAllele0HaplotypeId(alleleGroup.data(allele0Index-1).getSampleData(sampleIndex).haplotypeId);
+        if (allele1Index > 0)
+            maxGt.setAllele1HaplotypeId(alleleGroup.data(allele1Index-1).getSampleData(sampleIndex).haplotypeId);
+    }
 }
 
 
@@ -1528,6 +1557,8 @@ process_pos_indel_digt(const pos_t pos)
     bool isReportedLocus(false);
     OrthogonalVariantAlleleCandidateGroup topVariantAlleleGroup;
 
+    auto activeRegionId(_active_region_detector->getActiveRegionId(pos));
+
     // now check to see if we can call variant alleles at this position, we may have already found this positions alleles while
     // analyzing a locus positioned downstream. If so, skip ahead to handle the forced output alleles only:
     if (_variantLocusAlreadyOutputToPos <= pos)
@@ -1570,7 +1601,7 @@ process_pos_indel_digt(const pos_t pos)
 
             // setup new indel locus:
             std::unique_ptr<GermlineIndelLocusInfo> locusPtr(
-                new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount));
+                new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount, activeRegionId));
 
             // cycle through variant alleles and add them to locus (the locus interface requires that this is done first):
             addIndelAllelesToLocus(topVariantAlleleGroup, isForcedOutput, *locusPtr);
@@ -1679,7 +1710,7 @@ process_pos_indel_digt(const pos_t pos)
              forcedOutputAlleleIndex < forcedOutputAlleleCount; ++forcedOutputAlleleIndex)
         {
             // setup new indel locus:
-            std::unique_ptr<GermlineIndelLocusInfo> locusPtr(new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount));
+            std::unique_ptr<GermlineIndelLocusInfo> locusPtr(new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount, activeRegionId));
 
             // fake an allele group with only the forced output allele so that we can output using
             // standard data structures

@@ -50,6 +50,8 @@ add_gvcf_filters(
     write_vcf_filter(os,get_label(IndelConflict),"Indel genotypes from two or more loci conflict in at least one sample");
     write_vcf_filter(os,get_label(SiteConflict),"Site is filtered due to an overlapping indel call filter");
 
+//    write_vcf_filter(os,get_label(PhasingConflict),"Phasing conflict");
+
     if (opt.is_min_gqx)
     {
         std::ostringstream oss;
@@ -176,7 +178,7 @@ finish_gvcf_header(
     os << "##FORMAT=<ID=DPI,Number=1,Type=Integer,Description=\"Read depth associated with indel, taken from the site preceding the indel\">\n";
     os << "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification\">\n";
 
-    if (opt.isUseCodonPhaser)
+    if (opt.isUseVariantPhaser)
     {
         os << "##FORMAT=<ID=PS,Number=1,Type=Integer,Description=\"Phase set identifier\">\n";
     }

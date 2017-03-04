@@ -291,6 +291,8 @@ Note that the somatic callability track is based on the core somatic variant qua
 % snv strand bias note:
 % dgt.strand_bias=std::max(lhood_fwd[tgt],lhood_rev[tgt])-lhood[tgt];
 
+\subsubsection{Germline Variant Phasing}
+As previously noted, Strelka defines an active region around dense variants and infers 2 haplotypes for the region. These haplotypes are used to phase SNVs and indels within the same active region. The phasing is conducted after scoring and genotyping. For each heterozygous variant belonging to an active region, Strelka checks which haplotype the variant is lying on. If the variant is lying on either of the two haplotypes, it is marked phased and the haplotype ID (0 or 1) is recorded to appropriately write the genotype allele order (e.g. 0|1 or 1|0). 
 
 \subsubsection{Germline Filtration and Scoring}
 

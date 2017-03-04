@@ -892,7 +892,7 @@ process_pos(const int stage_no,
         }
 
         if (is_active_region_detector_enabled())
-            getActiveRegionDetector().updateStartPosition(pos);
+            getActiveRegionDetector().clearReadBuffer(pos);
     }
     else if (stage_no==STAGE::POST_ALIGN)
     {
@@ -953,6 +953,12 @@ process_pos(const int stage_no,
             {
                 process_pos_variants(pos, isPosPrecedingReportable);
             }
+        }
+
+        if (is_active_region_detector_enabled())
+        {
+            getActiveRegionDetector().clearPolySites(pos);
+            getActiveRegionDetector().clearPosToActiveRegionMap(pos);
         }
 
         // everything else:

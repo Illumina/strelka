@@ -21,7 +21,7 @@
 #pragma once
 
 
-#include "codon_phaser.hh"
+#include "VariantPhaser.hh"
 #include "gvcf_block_site_record.hh"
 #include "gvcf_locus_info.hh"
 #include "gvcf_compressor.hh"
@@ -46,16 +46,9 @@ public:
         const RegionTracker& nocompressRegions,
         const RegionTracker& targetedRegions,
         const RegionTracker& callRegions,
-        const std::vector<std::reference_wrapper<const pos_basecall_buffer>>& basecallBuffers);
+        const unsigned sampleCount);
 
     ~gvcf_aggregator();
-
-    /// provide the phasing block status, if true, pileup buffer is
-    /// preserved until the block is completed
-    bool is_phasing_block() const
-    {
-        return (_codonPhaserPtr && _codonPhaserPtr->isBuffer());
-    }
 
     void add_site(std::unique_ptr<GermlineSiteLocusInfo> si);
 
@@ -81,7 +74,7 @@ public:
 private:
     ScoringModelManager _scoringModels;
 
-    std::shared_ptr<Codon_phaser> _codonPhaserPtr;
+    std::shared_ptr<VariantPhaser> _variantPhaserPtr;
     std::shared_ptr<gvcf_writer> _gvcfWriterPtr;
     std::shared_ptr<variant_pipe_stage_base> _head;
 };

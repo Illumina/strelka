@@ -25,24 +25,52 @@
 #include "ActiveRegionDetector.hh"
 
 void
-ActiveRegionDetector::updateStartPosition(const pos_t pos)
+ActiveRegionDetector::clearReadBuffer(const pos_t pos)
+{
+    _readBuffer.clearPos(pos);
+}
+
+void
+ActiveRegionDetector::clearPolySites(const pos_t pos)
 {
     for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
     {
         _polySites[sampleId].eraseTo(pos);
     }
-    _readBuffer.clearPos(pos);
 }
+
+void
+ActiveRegionDetector::clearPosToActiveRegionMap(const pos_t pos)
+{
+    _posToActiveRegionIdMap.eraseTo(pos);
+}
+
+
+void
+ActiveRegionDetector::setPosToActiveRegionIdMap(pos_range activeRegionRange)
+{
+    if (activeRegionRange.size() > ActiveRegion::MaxRefSpanToBypassAssembly)
+        return;
+
+    ActiveRegionId activeRegionId(activeRegionRange.begin_pos);
+    for (pos_t pos(activeRegionRange.begin_pos); pos<activeRegionRange.end_pos; ++pos)
+    {
+        _posToActiveRegionIdMap.getRef(pos) = activeRegionId;
+    }
+}
+
+
 
 void
 ActiveRegionDetector::processActiveRegion()
 {
     if (not _activeRegions.empty())
     {
-        _activeRegions.front().processHaplotypes(_indelBuffer, _polySites);
+        _activeRegions.front().processHaplotypes();
         _activeRegions.pop_front();
     }
 }
+
 
 void
 ActiveRegionDetector::updateEndPosition(const pos_t pos)
@@ -81,7 +109,10 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
             // close the existing active region
             pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
             _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
-                                        _aligner, _readBuffer);
+                                     _aligner, _readBuffer, _indelBuffer, _polySites);
+
+            setPosToActiveRegionIdMap(activeRegionRange);
+
             // we have no existing acive region at this point
             _numVariants = 0;
             _activeRegionStartPos = 0;
@@ -130,7 +161,8 @@ void ActiveRegionDetector::clear()
             _anchorPosFollowingPrevVariant = _readBuffer.getEndPos();
         pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
         _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
-                                    _aligner, _readBuffer);
+                                    _aligner, _readBuffer, _indelBuffer, _polySites);
+        setPosToActiveRegionIdMap(activeRegionRange);
     }
 
     processActiveRegion();
@@ -144,4 +176,11 @@ void ActiveRegionDetector::clear()
 bool ActiveRegionDetector::isPolymorphicSite(const unsigned sampleId, const pos_t pos) const
 {
     return _polySites[sampleId].isKeyPresent(pos);
+}
+
+uint8_t ActiveRegionDetector::getHaplotypeId(const unsigned sampleId, const pos_t pos, const BASE_ID::index_t baseIndex) const
+{
+    if (not isPolymorphicSite(sampleId, pos)) return 0; // reference (complex allele index 0)
+    auto value(_polySites[sampleId].getConstRef(pos));
+    return ActiveRegion::getHaplotypeId(value, baseIndex);
 }

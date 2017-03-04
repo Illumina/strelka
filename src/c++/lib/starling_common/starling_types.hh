@@ -30,3 +30,5 @@
 typedef uint32_t align_id_t;
 typedef int32_t sample_id_t;
 
+typedef pos_t ActiveRegionId;
+
