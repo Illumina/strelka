@@ -258,7 +258,7 @@ bool ActiveRegion::processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlign
     std::unique_ptr<std::string> bestHaplotypePtr;
 
     // haplotype with the second most count (size >1 if there are ties)
-    std::vector<std::unique_ptr<std::string>> secondBestHaplotypePtrList(2);
+    std::vector<std::unique_ptr<std::string>> secondBestHaplotypePtrList;
 
     std::string refStr;
     _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
