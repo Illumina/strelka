@@ -282,12 +282,7 @@ bool ActiveRegion::processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlign
             if (bestHaplotypePtr != nullptr)
                 secondBestHaplotypePtrList.push_back(std::move(bestHaplotypePtr));
 
-            if (isReference)
-            {
-                // nullptr means reference
-                bestHaplotypePtr.release();
-            }
-            else
+            if (not isReference)
             {
                 bestHaplotypePtr = std::unique_ptr<std::string>(new std::string(haplotype));
             }
