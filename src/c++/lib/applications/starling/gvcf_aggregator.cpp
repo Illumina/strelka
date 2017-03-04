@@ -34,7 +34,7 @@ gvcf_aggregator(
     const reference_contig_segment& ref,
     const RegionTracker& nocompressRegions,
     const RegionTracker& targetedRegions,
-    const RegionTracker& callRegions
+    const RegionTracker& callRegions,
     const unsigned sampleCount)
     : _scoringModels(opt, dopt.gvcf)
 {
