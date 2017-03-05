@@ -49,7 +49,6 @@ enum index_t
     IndelConflict,
     SiteConflict,
     PloidyConflict,
-    OffTarget,
     LowGQX,
     PhasingConflict,
     HighBaseFilt,
@@ -86,8 +85,6 @@ get_label(const unsigned idx)
         return "SiteConflict";
     case PloidyConflict:
         return "PloidyConflict";
-    case OffTarget:
-        return "OffTarget";
     default:
         assert(false && "Unknown VCF filter value");
         return nullptr;

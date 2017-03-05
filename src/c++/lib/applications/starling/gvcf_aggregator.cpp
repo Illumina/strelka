@@ -33,7 +33,6 @@ gvcf_aggregator(
     const starling_streams& streams,
     const reference_contig_segment& ref,
     const RegionTracker& nocompressRegions,
-    const RegionTracker& targetedRegions,
     const RegionTracker& callRegions,
     const unsigned sampleCount)
     : _scoringModels(opt, dopt.gvcf)
@@ -49,8 +48,7 @@ gvcf_aggregator(
         _variantPhaserPtr.reset(new VariantPhaser(opt, sampleCount, overlapper));
         nextPipeStage = _variantPhaserPtr;
     }
-    const bool isTargetedRegions(not opt.gvcf.targeted_regions_bedfile.empty());
-    _head.reset(new variant_prefilter_stage(_scoringModels, isTargetedRegions, targetedRegions, nextPipeStage));
+    _head.reset(new variant_prefilter_stage(_scoringModels, nextPipeStage));
 }
 
 gvcf_aggregator::~gvcf_aggregator()

@@ -103,16 +103,9 @@ add_gvcf_filters(
         }
     }
 
-    // even if no ploidy bed file is provided, this filter should still exist in principal, so I don't
+    // even if no ploidy bed file is provided, this filter should still exist, so I don't
     // see any reason to leave it in the header for all cases:
-    if (true)
-    {
-        write_vcf_filter(os,get_label(PloidyConflict),"Genotype call from variant caller not consistent with chromosome ploidy");
-    }
-    if (!sopt.gvcf.targeted_regions_bedfile.empty())
-    {
-        write_vcf_filter(os,get_label(OffTarget),"Variant was found in a non-targeted region");
-    }
+    write_vcf_filter(os,get_label(PloidyConflict),"Genotype call from variant caller not consistent with chromosome ploidy");
 }
 
 

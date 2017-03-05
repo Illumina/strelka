@@ -25,21 +25,6 @@
 #include "variant_prefilter_stage.hh"
 
 #include "ScoringModelManager.hh"
-#include "blt_util/RegionTracker.hh"
-
-
-
-variant_prefilter_stage::
-variant_prefilter_stage(
-    const ScoringModelManager& model,
-    const bool isTargetedRegions,
-    const RegionTracker& targetedRegions,
-    std::shared_ptr<variant_pipe_stage_base> destination)
-    : variant_pipe_stage_base(destination)
-    , _model(model)
-    , _isTargetedRegions(isTargetedRegions)
-    , _targetedRegions(targetedRegions)
-{}
 
 
 
@@ -57,12 +42,6 @@ applySharedLocusFilters(
         {
             sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
         }
-    }
-
-    // apply off target filter
-    if (_isTargetedRegions and (not _targetedRegions.isIntersectRegion(locus.pos)))
-    {
-        locus.filters.set(GERMLINE_VARIANT_VCF_FILTERS::OffTarget);
     }
 }
 

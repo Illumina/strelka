@@ -45,7 +45,6 @@ enum index_t
     FORCED_GT_VARIANTS,
     PLOIDY_REGION,
     NOCOMPRESS_REGION,
-    TARGETED_REGION,
     CALL_REGION
 };
 }
@@ -231,19 +230,11 @@ callRegion(
                 known_pos_range2 range(bedRecord.begin,bedRecord.end);
                 posProcessor.insert_nocompress_region(range);
             }
-
-            else if (INPUT_TYPE::TARGETED_REGION == currentIndex)
-            {
-                known_pos_range2 range(bedRecord.begin,bedRecord.end);
-                posProcessor.insert_targeted_region(range);
-            }
-
             else if (INPUT_TYPE::CALL_REGION == currentIndex)
             {
                 known_pos_range2 range(bedRecord.begin,bedRecord.end);
                 posProcessor.insertCallRegion(range);
             }
-
             else
             {
                 assert(false && "Unexpected hts index");
@@ -321,11 +312,6 @@ starling_run(
         if (!opt.gvcf.nocompress_region_bedfile.empty())
         {
             streamData.registerBed(opt.gvcf.nocompress_region_bedfile.c_str(), INPUT_TYPE::NOCOMPRESS_REGION);
-        }
-
-        if (! opt.gvcf.targeted_regions_bedfile.empty())
-        {
-            streamData.registerBed(opt.gvcf.targeted_regions_bedfile.c_str(), INPUT_TYPE::TARGETED_REGION);
         }
 
         if (! opt.callRegionsBedFilename.empty())

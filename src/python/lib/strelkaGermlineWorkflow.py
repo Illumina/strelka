@@ -164,9 +164,6 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     if self.params.noCompressBed is not None :
         segCmd.extend(['--nocompress-bed', self.params.noCompressBed])
 
-    if self.params.targetRegionsBed is not None :
-        segCmd.extend(['--targeted-regions-bed', self.params.targetRegionsBed])
-
     if self.params.ploidyFilename is not None :
         segCmd.extend(['--ploidy-region-vcf', self.params.ploidyFilename])
 

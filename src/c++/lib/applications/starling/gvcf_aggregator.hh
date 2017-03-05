@@ -44,7 +44,6 @@ public:
         const starling_streams& streams,
         const reference_contig_segment& ref,
         const RegionTracker& nocompressRegions,
-        const RegionTracker& targetedRegions,
         const RegionTracker& callRegions,
         const unsigned sampleCount);
 

@@ -18,8 +18,6 @@
 //
 //
 /*
- *
- *  Created on: Jun 4, 2015
  *      Author: jduddy
  */
 
@@ -34,9 +32,11 @@ struct variant_prefilter_stage : public variant_pipe_stage_base
 {
     variant_prefilter_stage(
         const ScoringModelManager& model,
-        const bool isTargetedRegions,
-        const RegionTracker& targetedRegions,
-        std::shared_ptr<variant_pipe_stage_base> destination);
+        std::shared_ptr<variant_pipe_stage_base> destination)
+        : variant_pipe_stage_base(destination)
+        , _model(model)
+    {}
+
 
     void process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr) override;
     void process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr) override;
@@ -47,6 +47,4 @@ private:
         LocusInfo& locus) const;
 
     const ScoringModelManager& _model;
-    const bool _isTargetedRegions;
-    const RegionTracker& _targetedRegions;
 };

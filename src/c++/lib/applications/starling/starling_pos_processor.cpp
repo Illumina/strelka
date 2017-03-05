@@ -55,7 +55,7 @@ starling_pos_processor(
     if (_opt.gvcf.is_gvcf_output())
     {
         _gvcfer.reset(new gvcf_aggregator(
-                          _opt, _dopt, _streams, ref, _nocompress_regions, _targeted_regions, _callRegions, sampleCount));
+                          _opt, _dopt, _streams, ref, _nocompress_regions, _callRegions, sampleCount));
     }
 
     // setup indel buffer samples:
@@ -128,18 +128,6 @@ insert_nocompress_region(
 
 void
 starling_pos_processor::
-insert_targeted_region(
-    const known_pos_range2& range)
-{
-    _stagemanPtr->validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
-    _targeted_regions.addRegion(range);
-    _is_skip_process_pos=false;
-}
-
-
-
-void
-starling_pos_processor::
 reset()
 {
     base_t::reset();
@@ -149,7 +137,6 @@ reset()
         _gvcfer->reset();
     }
     _nocompress_regions.clear();
-    _targeted_regions.clear();
     _variantLocusAlreadyOutputToPos = -1;
     _forcedAllelesAlreadyOutput.clear();
     _active_region_detector->clear();

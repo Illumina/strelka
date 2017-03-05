@@ -72,8 +72,6 @@ get_starling_option_parser(
      "Turn off block compression in gVCF output")
     ("nocompress-bed",  po::value(&opt.gvcf.nocompress_region_bedfile),
      "Bed file with sites that should not be block-compressed in gVCF (must be bgzip compressed and tabix indexed).")
-    ("targeted-regions-bed",  po::value(&opt.gvcf.targeted_regions_bedfile),
-     "Bed file with targeted regions. Variants outside these regions will be filtered. (must be bgzip compressed and tabix indexed).")
     ("call-continuous-vf",  po::value(&opt.is_ploidy_prior)->zero_tokens()->implicit_value(false),
      "Instead of a haploid/diploid prior assumption, output a continuous VF")
     ("min-het-vf",  po::value(&opt.min_het_vf)->default_value(opt.min_het_vf),

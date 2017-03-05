@@ -87,9 +87,6 @@ struct gvcf_options
     /// file specifying regions that are not compressed in the gvcf:
     std::string nocompress_region_bedfile;
 
-    /// file specifying targeted regions for calling variants. Used for filtering variants outside for Enrichment
-    std::string targeted_regions_bedfile;
-
     /// conditional header values to include
     std::vector<std::string> include_headers;
 };

@@ -65,7 +65,7 @@ private:
     bool
     derived_empty() const override
     {
-        return (_nocompress_regions.empty() and _targeted_regions.empty());
+        return (_nocompress_regions.empty());
     }
 
     void
@@ -113,7 +113,6 @@ private:
     std::unique_ptr<gvcf_aggregator> _gvcfer;
 
     RegionTracker _nocompress_regions;
-    RegionTracker _targeted_regions;
 
     /// mark the position below which indel output is excluded
     pos_t _variantLocusAlreadyOutputToPos = -1;

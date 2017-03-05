@@ -74,7 +74,7 @@ def main() :
 
         filterVals = word[VCFID.FILTER].split(';')
 
-        # Skip entries matching OffTarget in the filter field (for WES data)
+        # Skip entries matching OffTarget in the filter field (for legacy WES data)
         if "OffTarget" in filterVals : continue
 
         # Skip entries matching any type of conflict
