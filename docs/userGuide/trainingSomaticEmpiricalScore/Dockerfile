@@ -2,7 +2,7 @@
 # minimum environment required to run Strelka somatic EVS training procedures
 #
 
-FROM ubuntu 14.04
+FROM ubuntu:14.04
 
 #
 # major required packages:
@@ -28,5 +28,5 @@ RUN apt-get update -qq && \
 # - R
 # - R-ggplot2
 #
-RUN apt-get install -qq r-cran r-cran-ggplot2
+RUN apt-get install -qq r-base r-cran-ggplot2
 
