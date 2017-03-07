@@ -1,3 +1,4 @@
+- STREL-454 penalize for non-candidate indels in alignment scoring
 - STREL-443 Remove old germline caller target BED file option
 - STREL-178 replace codon phaser with variant phaser
 - STREL-356 Allow BED file to restrict variant calling regions
