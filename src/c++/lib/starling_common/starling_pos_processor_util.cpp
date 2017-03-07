@@ -337,9 +337,9 @@ is_al_overdepth(
         if (is_segment_align_match(ps.type))
         {
             if (posProcessor.is_estimated_depth_range_ge_than(ref_head_pos,
-                                                      ref_head_pos+static_cast<pos_t>(ps.length),
-                                                      opt.max_input_depth,
-                                                      sample_no))
+                                                              ref_head_pos+static_cast<pos_t>(ps.length),
+                                                              opt.max_input_depth,
+                                                              sample_no))
             {
                 return true;
             }

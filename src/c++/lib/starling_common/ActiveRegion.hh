@@ -119,42 +119,42 @@ public:
     {
         switch (baseIndex)
         {
-            case BASE_ID::A:
-                return (rangeSetValue & 0x03);
-            case BASE_ID::C:
-                return (rangeSetValue & 0x0c) >> 2;
-            case BASE_ID::G:
-                return (rangeSetValue & 0x30) >> 4;
-            case BASE_ID::T:
-                return (rangeSetValue & 0xc0) >> 6;
-            default:
-                assert(false);
+        case BASE_ID::A:
+            return (rangeSetValue & 0x03);
+        case BASE_ID::C:
+            return (rangeSetValue & 0x0c) >> 2;
+        case BASE_ID::G:
+            return (rangeSetValue & 0x30) >> 4;
+        case BASE_ID::T:
+            return (rangeSetValue & 0xc0) >> 6;
+        default:
+            assert(false);
         }
     }
 
     /// add haplotypeId to the rangeSet value
     static void addBaseId(
-            const HaplotypeId haplotypeId,
-            char baseChar,
-            uint8_t& rangeSetValue)
+        const HaplotypeId haplotypeId,
+        char baseChar,
+        uint8_t& rangeSetValue)
     {
         assert (haplotypeId == 1 || haplotypeId == 2);
         switch (baseChar)
         {
-            case 'A':
-                rangeSetValue |= (0x01 << (haplotypeId-1));
-                break;
-            case 'C':
-                rangeSetValue |= (0x04 << (haplotypeId-1));
-                break;
-            case 'G':
-                rangeSetValue |= (0x10 << (haplotypeId-1));
-                break;
-            case 'T':
-                rangeSetValue |= (0x40 << (haplotypeId-1));
-                break;
-            default:
-                assert(false);
+        case 'A':
+            rangeSetValue |= (0x01 << (haplotypeId-1));
+            break;
+        case 'C':
+            rangeSetValue |= (0x04 << (haplotypeId-1));
+            break;
+        case 'G':
+            rangeSetValue |= (0x10 << (haplotypeId-1));
+            break;
+        case 'T':
+            rangeSetValue |= (0x40 << (haplotypeId-1));
+            break;
+        default:
+            assert(false);
         }
     }
 
@@ -171,7 +171,7 @@ private:
 
     std::set<align_id_t> _alignIdSoftClipped;
 
-    bool processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlignIdSet &haplotypeToAlignIdSet);
+    bool processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlignIdSet& haplotypeToAlignIdSet);
 
     /// Create haplotypes using counting and process variants
     /// \param sampleId sample id

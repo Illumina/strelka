@@ -229,7 +229,7 @@ private:
     void setDelete(const align_id_t id, const pos_t pos);
     void setInsert(const align_id_t id, const pos_t pos, const std::string& insertSeq);
     void setSoftClipSegment(const align_id_t id, const pos_t pos, const std::string& segmentSeq);
-    bool getHaplotypeBase(const align_id_t id, const pos_t pos, std::string &base) const;
+    bool getHaplotypeBase(const align_id_t id, const pos_t pos, std::string& base) const;
 
     void resetCounter(const pos_t pos)
     {

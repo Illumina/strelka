@@ -109,7 +109,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
             // close the existing active region
             pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
             _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
-                                     _aligner, _readBuffer, _indelBuffer, _polySites);
+                                        _aligner, _readBuffer, _indelBuffer, _polySites);
 
             setPosToActiveRegionIdMap(activeRegionRange);
 

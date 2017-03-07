@@ -128,7 +128,7 @@ void ActiveRegionReadBuffer::setInsert(const align_id_t id, const pos_t pos, con
     _insertSeqBuffer[idIndex][posIndex] = insertSeq;
 }
 
-bool ActiveRegionReadBuffer::getHaplotypeBase(const align_id_t id, const pos_t pos, std::string &base) const
+bool ActiveRegionReadBuffer::getHaplotypeBase(const align_id_t id, const pos_t pos, std::string& base) const
 {
     unsigned idIndex = id % MaxDepth;
     unsigned posIndex = pos % MaxBufferSize;

@@ -74,13 +74,13 @@ struct DummyVariantSink : public variant_pipe_stage_base
 };
 
 std::unique_ptr<GermlineDiploidIndelLocusInfo> getDeletionLocusInfo(
-        const starling_deriv_options& dopt,
-        const ActiveRegionId activeRegionId,
-        const pos_t pos,
-        const unsigned indelLength,
-        const uint8_t haplotypeId,
-        bool isHom
-        )
+    const starling_deriv_options& dopt,
+    const ActiveRegionId activeRegionId,
+    const pos_t pos,
+    const unsigned indelLength,
+    const uint8_t haplotypeId,
+    bool isHom
+)
 {
     const unsigned sampleCount(1);
     const unsigned sampleIndex(0);
@@ -106,20 +106,20 @@ std::unique_ptr<GermlineDiploidIndelLocusInfo> getDeletionLocusInfo(
 }
 
 std::unique_ptr<GermlineDiploidSiteLocusInfo> getSnvLocusInfo(
-        const starling_deriv_options& dopt,
-        const unsigned sampleCount,
-        const ActiveRegionId activeRegionId,
-        const pos_t pos,
-        const char refBaseChar,
-        const char altBaseChar,
-        const uint8_t allele0HaplotypeId,
-        const uint8_t allele1HaplotypeId,
-        bool isHom)
+    const starling_deriv_options& dopt,
+    const unsigned sampleCount,
+    const ActiveRegionId activeRegionId,
+    const pos_t pos,
+    const char refBaseChar,
+    const char altBaseChar,
+    const uint8_t allele0HaplotypeId,
+    const uint8_t allele1HaplotypeId,
+    bool isHom)
 {
     const unsigned sampleIndex(0);
 
     std::unique_ptr<GermlineDiploidSiteLocusInfo> siteInfo(
-            new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, activeRegionId, pos, base_to_id(refBaseChar)));
+        new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, activeRegionId, pos, base_to_id(refBaseChar)));
 
     siteInfo->addAltSiteAllele((const BASE_ID::index_t) base_to_id(altBaseChar));
 

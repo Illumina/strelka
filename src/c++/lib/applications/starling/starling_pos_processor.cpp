@@ -486,13 +486,13 @@ updateSnvLocusWithSampleInfo(
 
         if (allele0Index > 0)
             maxGt.setAllele0HaplotypeId(
-                    activeRegionDetector.getHaplotypeId(
-                            sampleIndex, locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex)
+                activeRegionDetector.getHaplotypeId(
+                    sampleIndex, locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex)
             );
         if (allele1Index > 0)
             maxGt.setAllele1HaplotypeId(
-                    activeRegionDetector.getHaplotypeId(
-                            sampleIndex, locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
+                activeRegionDetector.getHaplotypeId(
+                    sampleIndex, locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
             );
     }
 }

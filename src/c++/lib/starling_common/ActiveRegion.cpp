@@ -248,7 +248,7 @@ void ActiveRegion::bypassIndelsInBam()
     }
 }
 
-bool ActiveRegion::processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlignIdSet &haplotypeToAlignIdSet)
+bool ActiveRegion::processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlignIdSet& haplotypeToAlignIdSet)
 {
     // determine threshold to select 2 haplotypes with the largest counts
     unsigned largestCount(0);

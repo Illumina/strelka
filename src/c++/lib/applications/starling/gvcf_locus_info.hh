@@ -405,7 +405,7 @@ struct LocusInfo : public PolymorphicObject
         const unsigned sampleCount,
         const ActiveRegionId activeRegionId = -1,
         const pos_t initPos = 0
-        )
+    )
         : pos(initPos),
           _sampleInfo(sampleCount),
           _activeRegionId(activeRegionId)
