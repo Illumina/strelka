@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Strelka - Small Variant Caller
-# Copyright (c) 2009-2016 Illumina, Inc.
+# Copyright (c) 2009-2017 Illumina, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
