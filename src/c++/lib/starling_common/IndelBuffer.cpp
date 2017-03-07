@@ -129,7 +129,7 @@ isCandidateIndelImplTestSignalNoise(
     const IndelKey& indelKey,
     const IndelData& indelData) const
 {
-    // determine if the observed counts are sig wrt the error rate for at least one sample:
+    // determine if the signal/noise ratio of the indel qualifies it for candidacy in at least one sample
     //
     const unsigned sampleCount(indelData.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
@@ -152,13 +152,27 @@ isCandidateIndelImplTestSignalNoise(
         static const unsigned min_candidate_cov_floor(2);
         if (totalReadCount < min_candidate_cov_floor) continue;
 
-        // test to see if the observed indel coverage has a binomial exact test
+#ifdef USE_SIMPLE_FREQ_FOR_INDEL_CANDIDACY
+        // Test if the observed fraction of indel allele support is above a constant
+        // threshold to determine indel candidacy
+        //
+        // This simplified backup candidacy model is maintained and often used for
+        // study/optimization of indel error rates, so that impact of rates on quality
+        // scores/genotype assignments and impact of rates on candidacy are not
+        // confounded in a way which might otherwise make optimization concusions
+        // difficult.
+        //
+        const double supportFraction(tier1ReadSupportCount/static_cast<double>(totalReadCount));
+        if (supportFraction >= 0.10) return true;
+#else
+        // Test to see if the observed indel coverage has a binomial exact test
         // p-value above the rejection threshold. If this does not occur for the
         // counts observed in any sample, the indel cannot become a candidate
         if (_countCache.isRejectNull(totalReadCount, indelData.getErrorRates().indelToRefErrorProb.getValue(), tier1ReadSupportCount))
         {
             return true;
         }
+#endif
     }
     return false;
 }
