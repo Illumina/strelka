@@ -420,14 +420,17 @@ score_candidate_alignment(
             throw blt_exception(oss.str().c_str());
         }
 
+        // If this path segment is an indel, check if it's a candidate.
+        // If it is not a candidate, add a penalty score
+        // amounting to the probability that the indel occurs by chance.
         if (indelKey.type != INDEL::NONE)
         {
-            bool isCandidate(indelBuffer.isCandidateIndel(indelKey));
+            const auto* indelDataPtr(indelBuffer.getIndelDataPtr(indelKey));
+            assert(indelDataPtr != nullptr);
+            const bool isCandidate(indelBuffer.isCandidateIndel(indelKey, *indelDataPtr));
             if (not isCandidate)
             {
                 // add penalty for non-candidate indels
-                const auto* indelDataPtr(indelBuffer.getIndelDataPtr(indelKey));
-                assert(indelDataPtr != nullptr);
                 const auto& errorRates(indelDataPtr->getErrorRates());
                 al_lnp += errorRates.refToIndelErrorProb.getLogValue();
             }
