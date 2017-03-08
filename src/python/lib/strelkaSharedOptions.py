@@ -134,10 +134,6 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
         catScript=joinFile(libexecDir,"cat.py")
         vcfCmdlineSwapper=joinFile(libexecDir,"vcfCmdlineSwapper.py")
 
-        # TODO: these aren't shared and should go into child classes:
-        strelkaGermlineBin=joinFile(libexecDir,exeFile("starling2"))
-        strelkaSomaticBin=joinFile(libexecDir,exeFile("strelka2"))
-        strelkaPedigreeBin=joinFile(libexecDir,exeFile("pedicure"))
         statsMergeBin=joinFile(libexecDir,exeFile("MergeRunStats"))
 
         # default memory request per process-type

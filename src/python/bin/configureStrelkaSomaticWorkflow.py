@@ -37,7 +37,7 @@ from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFi
                             checkFixTabixListOption, validateFixExistingFileArg
 from makeRunScript import makeRunScript
 from strelkaSomaticWorkflow import StrelkaSomaticWorkflow
-from workflowUtil import ensureDir
+from workflowUtil import ensureDir, exeFile
 
 
 
@@ -74,12 +74,15 @@ You must specify an alignment file (BAM or CRAM) for each sample of a matched tu
         self.configScriptDir=scriptDir
         defaults=StrelkaSharedWorkflowOptionsBase.getOptionDefaults(self)
 
+        libexecDir=defaults["libexecDir"]
+
         configDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_CONFIGDIR@"))
         assert os.path.isdir(configDir)
 
         defaults.update({
             'runDir' : 'StrelkaSomaticWorkflow',
-            "minTier2Mapq" : 0,
+            'strelkaSomaticBin' : joinFile(libexecDir,exeFile("strelka2")),
+            'minTier2Mapq' : 0,
             'snvScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
             #'indelScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
             'isOutputCallableRegions' : False,

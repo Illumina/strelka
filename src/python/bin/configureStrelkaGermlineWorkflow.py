@@ -35,7 +35,7 @@ from strelkaSharedOptions import StrelkaSharedWorkflowOptionsBase
 from configureUtil import BamSetChecker, groomBamList, joinFile, OptParseException, checkFixTabixIndexedFileOption
 from makeRunScript import makeRunScript
 from strelkaGermlineWorkflow import StrelkaGermlineWorkflow
-from workflowUtil import ensureDir
+from workflowUtil import ensureDir, exeFile
 
 
 
@@ -78,7 +78,8 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
 
         defaults.update({
             'runDir' : 'StrelkaGermlineWorkflow',
-            'bgzip9Bin' : joinFile(libexecDir,"bgzip9"),
+            'strelkaGermlineBin' : joinFile(libexecDir,exeFile("starling2")),
+            'bgzip9Bin' : joinFile(libexecDir, exeFile("bgzip9")),
             'configDir' : configDir,
             'snvScoringModelFile' : joinFile(configDir,'germlineSNVScoringModels.json'),
             'indelScoringModelFile' : joinFile(configDir,'germlineIndelScoringModels.json'),

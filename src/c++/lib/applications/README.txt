@@ -19,9 +19,6 @@ merges the runtime stats from individual genome segments
 MergeSequenceErrorCounts:
 merge binary error counts files from GetSequenceErrorCounts
 
-pedicure:
-de-novo variant caller
-
 starling:
 germline caller
 
@@ -30,4 +27,3 @@ somatic caller
 
 strelkaNoiseExtractor:
 strelka utiltity to develop 'panel of normal' noise profiles
-
