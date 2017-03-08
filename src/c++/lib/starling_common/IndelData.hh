@@ -347,7 +347,7 @@ private:
     std::vector<IndelSampleData> _sampleData;
     mutable BreakpointInsertSequenceManager _breakpointInsertSeq;
 
-    // indel key stored for debugging only
+    /// indel key stored for debugging only
     IndelKey _indelKey;
 
     /// cache sequencing properties and associated error rates derived from the allele

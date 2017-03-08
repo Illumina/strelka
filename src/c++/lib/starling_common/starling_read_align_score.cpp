@@ -100,12 +100,12 @@ private:
 #endif
 
 
-// score a contiguous matching alignment segment
-//
-// note that running the lnp value through as a reference creates more
-// floating point stability for ambiguous alignments which have the
-// same score by definition.
-//
+/// score a contiguous matching alignment segment
+///
+/// note that running the lnp value through as a reference creates more
+/// floating point stability for ambiguous alignments which have the
+/// same score by definition.
+///
 static
 void
 score_segment(const starling_base_options& /*opt*/,
@@ -139,6 +139,9 @@ score_segment(const starling_base_options& /*opt*/,
 
 
 
+/// convert a particular gap in the candidate alignment to the corresponding variant key to
+/// lookup the variant in strelka's variant buffer
+///
 static
 IndelKey
 getMatchingIndelKey(
@@ -254,6 +257,7 @@ score_candidate_alignment(
     const std::pair<unsigned,unsigned> ends(get_match_edge_segments(path));
     const unsigned aps(path.size());
     unsigned path_index(0);
+
     while (path_index<aps)
     {
         const bool is_swap_start(is_segment_swap_start(path,path_index));
@@ -265,13 +269,15 @@ score_candidate_alignment(
         log_os << "LLAMA: path_index: " << path_index << " read_offset: " << read_offset << " ref_head_pos: " << ref_head_pos << "\n";
 #endif
 
+        IndelKey indelKey(IndelKey::noIndel());
+
         if       (is_swap_start)
         {
             const swap_info sinfo(path,path_index);
             n_seg=sinfo.n_seg;
 
-            const IndelKey indelKey(getMatchingIndelKey(cal,ref_head_pos,sinfo.delete_length,sinfo.insert_length,
-                                                        ends,path_index));
+            indelKey = getMatchingIndelKey(cal,ref_head_pos,sinfo.delete_length,sinfo.insert_length,
+                                                        ends,path_index);
 
             // a combined insert/delete event should not produce a breakpoint:
             assert(not indelKey.is_breakpoint());
@@ -334,8 +340,8 @@ score_candidate_alignment(
         }
         else if (ps.type==INSERT)
         {
-            const IndelKey indelKey(getMatchingIndelKey(cal,ref_head_pos,0,ps.length,
-                                                        ends,path_index));
+            indelKey = getMatchingIndelKey(cal,ref_head_pos,0,ps.length,
+                                                        ends,path_index);
 
             const string_bam_seq insert_bseq(getInsertSeq(indelKey,indelBuffer,cal));
 
@@ -369,8 +375,14 @@ score_candidate_alignment(
         }
         else if ((ps.type==DELETE) || (ps.type==SKIP))
         {
-            // no read segment to worry about in this case
+            // no read segment to worry about in this case, but penalize non-candidate indels
             //
+            if (ps.type==DELETE)
+            {
+                indelKey = getMatchingIndelKey(cal,ref_head_pos,ps.length,0,
+                                                            ends,path_index);
+            }
+
 #ifdef DEBUG_SCORE
             for (unsigned ii(0); ii<ps.length; ++ii)
             {
@@ -406,6 +418,22 @@ score_candidate_alignment(
             std::ostringstream oss;
             oss << "Can't handle cigar code: " << segment_type_to_cigar_code(ps.type) << "\n";
             throw blt_exception(oss.str().c_str());
+        }
+
+        // If this path segment is an indel, check if it's a candidate.
+        // If it is not a candidate, add a penalty score
+        // amounting to the probability that the indel occurs by chance.
+        if (indelKey.type != INDEL::NONE)
+        {
+            const auto* indelDataPtr(indelBuffer.getIndelDataPtr(indelKey));
+            assert(indelDataPtr != nullptr);
+            const bool isCandidate(indelBuffer.isCandidateIndel(indelKey, *indelDataPtr));
+            if (not isCandidate)
+            {
+                // add penalty for non-candidate indels
+                const auto& errorRates(indelDataPtr->getErrorRates());
+                al_lnp += errorRates.refToIndelErrorProb.getLogValue();
+            }
         }
 
         for (unsigned i(0); i<n_seg; ++i)
