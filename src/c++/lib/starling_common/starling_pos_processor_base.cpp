@@ -1409,37 +1409,6 @@ pileup_read_segment(
                 // skip position outside of report range:
                 if (! is_pos_reportable(ref_pos)) continue;
 
-                bool isFirstBaseCallFromMatchSeg(false);
-                const bool isFirstFromMatchSeg((j==0) || (read_pos==read_begin) || (! is_pos_reportable(ref_pos-1)));
-                if (isFirstFromMatchSeg)
-                {
-                    if (i==0)
-                    {
-                        isFirstBaseCallFromMatchSeg=true;
-                    }
-                    else
-                    {
-                        const path_segment& last_ps(best_al.path[i-1]);
-                        if (! is_segment_align_match(last_ps.type)) isFirstBaseCallFromMatchSeg=true;
-                    }
-
-                }
-
-                bool isLastBaseCallFromMatchSeg(false);
-                const bool isLastFromMatchSeg(((j+1) == ps.length) || ((read_pos+1) == read_end) || (! is_pos_reportable(ref_pos+1)));
-                if (isLastFromMatchSeg)
-                {
-                    if ((i+1) == as)
-                    {
-                        isLastBaseCallFromMatchSeg=true;
-                    }
-                    else
-                    {
-                        const path_segment& next_ps(best_al.path[i+1]);
-                        if (! is_segment_align_match(next_ps.type)) isLastBaseCallFromMatchSeg=true;
-                    }
-                }
-
 #ifdef DEBUG_PPOS
                 log_os << "j,ref,read: " << j << " " << ref_pos <<  " " << read_pos << "\n";
 #endif
@@ -1528,9 +1497,7 @@ pileup_read_segment(
                 {
                     const base_call bc = base_call(call_id,qscore,best_al.is_fwd_strand,
                                                    align_strand_read_pos,end_trimmed_read_len,
-                                                   current_call_filter,is_neighbor_mismatch,is_tier_specific_filter,
-                                                   isFirstBaseCallFromMatchSeg,
-                                                   isLastBaseCallFromMatchSeg);
+                                                   current_call_filter,is_neighbor_mismatch,is_tier_specific_filter);
 
                     insert_pos_basecall(ref_pos, sampleIndex, is_tier1, bc);
                 }

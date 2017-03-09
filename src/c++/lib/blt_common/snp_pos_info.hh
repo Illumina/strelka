@@ -64,10 +64,7 @@ struct base_call
 #endif
               const bool init_is_call_filter,
               const bool init_is_neighbor_mismatch,
-              const bool init_is_tscf,
-              const bool init_isFirstBaseCallFromMatchSeg,
-              const bool init_isLastBaseCallFromMatchSeg
-             )
+              const bool init_is_tscf)
         : qscore(std::min(static_cast<unsigned>(init_qscore),qscore_max)),
 #ifdef BC_DEBUG
           read_pos(init_read_pos), read_size(init_read_size),
@@ -76,9 +73,7 @@ struct base_call
           is_fwd_strand(init_ifs),
           is_neighbor_mismatch(init_is_neighbor_mismatch),
           is_call_filter(init_is_call_filter),
-          is_tier_specific_call_filter(init_is_tscf),
-          isFirstBaseCallFromMatchSeg(init_isFirstBaseCallFromMatchSeg),
-          isLastBaseCallFromMatchSeg(init_isLastBaseCallFromMatchSeg)
+          is_tier_specific_call_filter(init_is_tscf)
     {
         qphred_cache::qscore_check(qscore,"basecall quality");
     }
@@ -121,8 +116,6 @@ public:
     uint16_t is_neighbor_mismatch:1;
     uint16_t is_call_filter:1; // filtered from snp-calling
     uint16_t is_tier_specific_call_filter:1;
-    uint16_t isFirstBaseCallFromMatchSeg:1; // used to phase from pileup
-    uint16_t isLastBaseCallFromMatchSeg:1; // used to phase from pileup
 #ifdef BC_DEBUG
     uint16_t read_pos; // zero-indexed cycle number
     uint16_t read_size;
