@@ -40,7 +40,7 @@ import argparse
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
 libDir = os.path.abspath(
-    os.path.join(scriptDir, "@THIS_RELATIVE_PYTHON_LIBDIR@"))
+    os.path.join(scriptDir, "../lib"))
 sys.path.append(libDir)
 
 

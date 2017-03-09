@@ -32,8 +32,7 @@ import json
 import pandas
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
-workflowDir = os.path.abspath(
-    os.path.join(scriptDir, "@THIS_RELATIVE_PYTHON_LIBDIR@"))
+workflowDir = os.path.abspath(os.path.join(scriptDir, "../lib"))
 
 sys.path.append(workflowDir)
 
