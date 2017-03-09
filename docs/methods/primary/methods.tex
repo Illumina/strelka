@@ -16,7 +16,7 @@
 \usepackage[noend]{algpseudocode}
 
 
-\title{'Strelka Small Variant Caller Methods'}
+\title{'Methods for Strelka Small Variant Caller'}
 
 
 % simple scientific notation:
@@ -28,15 +28,14 @@
 
 \tableofcontents
 
-\section{Overview}
+\section{Purpose}
 
-On any release branch, the methods described here should reflect the default implementation in the source repository containing this document. Methods are written to an audience and level of detail similar to that provided in a journal methods writeup. Additional \emph{design discussion} sections are added to comment on why a method was chosen or in what way it could be improved.
+On any release branch, the methods described here should reflect the default implementation in the source repository containing this document.
 
-\section{Methods}
 
-\subsection{Workflow Overview}
+\section{Workflow Overview}
 
-Strelka comprises several workflows to call small variants from mapped sequencing data. Supported small variant calling applications include detection of germline variants in a set of samples, somatic variants from matched tumor-normal sample pairs and denovo variants from parent-offspring trios.
+Strelka comprises several workflows to call small variants from mapped sequencing data. Supported small variant calling workflows include detection of germline variants in a set of samples, and somatic variants from matched tumor-normal sample pairs.
 
 The methods below describe several core components shared by all application workflows, in addition to model customizations made for each type of variant calling problem. All workflows share a common sequence of analysis steps:
 
@@ -56,11 +55,11 @@ The methods below describe several core components shared by all application wor
 The details of the shared and application specific model steps are provided below.
 
 
-\subsection{Preliminary Parameter Estimation}
+\section{Preliminary Parameter Estimation}
 
 An initial step in all workflows is the rapid estimation of the sequencing depth for each chromosome. For somatic analysis this depth is only computed for the normal sample. This information is used downstream to filter out high-depth regions (details below) when Strelka is run in its default whole genome sequencing mode. This step is skipped for exome or other targeted analyses.
 
-\subsubsection{Chromosome depth estimation}
+\subsection{Chromosome depth estimation}
 \label{sec:depth_est}
 
 For each chromosome, depth is estimated using a modified median calculation. As a first step, each chromosome is partitioned into segments of similar size to ensure the estimation process samples several chromosome regions. The chromosome is divided into the smallest number of segments no larger than $S_{max}$, where all segments have nearly equal size (all sizes must be $S$ or $S+1$, given smallest segment size of $S$). If this procedure results in more than 20 segments then $S_{max}$ is doubled until 20 or fewer segments are found. $S_{max}$ is initialized to 2 Mbase.
@@ -73,38 +72,37 @@ Depth is estimated from the resulting pileup, using a simple median over all dep
 
 The depth estimation procedure is run separately for each non-tumor sample, and all high-depth thresholds are set based on the sum of depth estimates over these samples.
 
-\subsubsection{Depth estimation design discussion}
+\subsection{Depth estimation design discussion}
 
 The objective of the depth estimation step is to find the expected depth and/or depth distribution for each copy number state or plasmid -- at present dividing this estimation to run separately on each chromosome is a reasonable approximation towards this goal. An improvement would be to estimate the depth distribution properties jointly over each copy number state and plasmid.
 
-\subsection{Small Variant Discovery}
+\section{Small Variant Discovery}
 
-
-\subsubsection{Short Haplotyping}
+\subsection{Short Haplotyping}
 
 Strelka processes dense variants using ``short haplotyping". The short haplotyping is conceptually similar to the haplotype based calling used in GATK and Platypus in that dense SNPs and indels are called simultaneously through haplotype reconstruction. But in contrast to GATK and Platypus that use local assembly to generate haplotypes longer than reads, Strelka generates short haplotypes ($\leq$ 30 bp) using simple read counting. The short haplotyping is composed of 3 steps: (1) detecting short regions with dense variants called {\em active regions}, (2) creating candidate haplotypes, and (3) aligning each haplotype to the reference to discover primitive alleles (SNVs and/or indels).
 
-\paragraph{Active region detection}
+\subsubsection{Active region detection}
 For each reference position, Strelka retains a variant counter. Variants in reads are parsed from the input BAM file and increase the variant counters in corresponding positions. A mismatch at position $i$ increases the counter at $i$ by 1. An insertion at position $i$ increases the counter at $i$ and $i+1$ by 4. A deletion at positions $[i,j]$ increases the counters in $[i-1,j]$ by 4.
 After all the reads overlapping a position $i$ are parsed, if the variant count at $i$ is equal or larger than 9, $i$ becomes a {\em candidate variant position}.
 
 Strelka employs an active region detector to detect active regions. The active region detector holds an active region start position ($i_{start}$) and a previous candidate variant position ($i_{prev}$), where both are initialized as 0. When a new candidate variant position $i$ is found, it extends the existing active region if it is not far from the previous variant (i.e. $i - i_{prev} \leq 14$) and including $i$ does not make the active region long (i.e. $i - i_{start} \leq 30$). For consecutive variants (i.e. $i - i_{prev} = 1$), $i$ extends the existing active region even if $i - i_{start} > 30$. If $i$ extends the existing active region, the active region detector simply updates $i_{prev} = i$. Otherwise a new active region is started.
 
-\paragraph{Haplotype generation}
+\subsubsection{Haplotype generation}
 Once an active region is created, the active region detector generates candidate haplotypes for the region. For this, it only considers the reads where the alignments fully span the region. From these reads, it extracts the portions aligned to the region, which become possible haplotypes. Often, multiple reads match the same haplotype and we call the number of reads generating a haplotype a read count. To select a small number of most probable haplotypes, the detector first discards haplotypes with read counts less than 3, and then for each sample it selects up to 3 haplotypes with the highest read counts as candidate haplotypes.
 
 
-\paragraph{Primitive allele discovery}
+\subsubsection{Primitive allele discovery}
 Candidate haplotypes are aligned to the reference sequence of the active region. From the alignment, primitive alleles (SNVs and indels) are identified. These primitive alleles are used to improve SNV and indel calling by (1) relaxing the mismatch density filter (described in \ref{ReadFiltration}) and (2) improving indel candidacy (described in \ref{IndelCandidacy}).
 
-\subsubsection{Read Filtration} \label{ReadFiltration}
+\subsection{Read Filtration} \label{ReadFiltration}
 
 {\tt TODO: description of the mismatch density filter (MMDF)}
 %Strelka filters out fractions of reads, where the densities of mismatches and indels are high.
 
 If short haplotyping is enabled, SNVs discovered in active regions are used to relax the MMDF. For this, the active region detector records all the SNV positions discovered in active regions separately for each sample. When the mismatch density is calculated for a read, any mismatch at position $i$ is exempted from measuring the mismatch density if $i$ is a recorded SNV position for the sample.
 
-\subsubsection{Indel Candidacy} \label{IndelCandidacy}
+\subsection{Indel Candidacy} \label{IndelCandidacy}
 
 Strelka uses indel candidacy as a preliminary filter to eliminate indel observations from consideration as variants if they are very likely to have been generated by error processes.  A candidate indel variant must minimally have 2 reads supporting it in at least one sample (this is relevant in multi-sample settings, such as somatic, trio de novo, and germline multi-sample calling). If short haplotyping is enabled, a candidate indel must also be discovered in an active region in at least one sample. If an indel observation satisfies this minimal condition, Strelka evaluates its candidacy status using a one-sided binomial exact test, with the null hypothesis being that the indel coverage is generated by indel error processes.
 
@@ -119,13 +117,13 @@ p_{error} = P(X >= n_i \mid N, e_l) = \sum_{x = n_i}^{N} P(x \mid N, e_l)
 
 \noindent The indel is considered as a candidate variant if $p_{error} < p_{reject}$, where $p_{reject}$ is the rejection threshold for the null hypothesis. The default value $p_{reject}$ is $1\e{-9}$.
 
-\subsubsection{Read Realignment}
+\subsection{Read Realignment}
 
-\subsection{Small Variant Scoring}
+\section{Small Variant Scoring}
 
-\subsubsection{Core Likelihood Function}
+\subsection{Core Likelihood Function}
 
-\paragraph{Indel Error Model}
+\subsubsection{Indel Error Model}
 \label{sec:indel_error}
 Indel errors are approximated as a process which occurs independently in each read, with some fixed probably of an indel error occurring as a function of the local sequence STR context. Strelka's indel error parameters are currently set based on empirical observation of indel calling performance for both germline and somatic indel detection.
 
@@ -140,7 +138,7 @@ P(error \mid l_{\text{STR}}) = e_{l} \exp(f_{\text{STR}}(\log(e_{h})-\log(e_{l})
 As a special case, the germline indel genotyping model uses higher error rates to heuristically account for assembly and mapping errors. This is currently a scaling factor of 100, $P(error_{\text{germline}} \mid l_{\text{STR}}) = 100 * P(error \mid l_{\text{STR}})$
 
 
-\subsubsection{Somatic Calling Model and Variant likelihoods}
+\subsection{Somatic Calling Model and Variant likelihoods}
 
 The somatic calling model assumes that the samples are from diploid individuals. For both SNVs and indels, the normal genotype state space is the set of unphased diploid genotypes, $G_n = \{ \texttt{ref}, \texttt{het}, \texttt{hom}\}$, where $\texttt{ref}$, $\texttt{het}$, and $\texttt{hom}$ refer to the normal genotype being reference, heterozygous, and homozygous, respectively. The tumor genotype has two states $G_t = \{ \texttt{nonsom}, \texttt{som} \}$, where $\texttt{nonsom}$ and $\texttt{som}$ indicate the absence and presence of somatic mutation in the tumor sample, respectively. The method approximates a posterior probability on the joint tumor and normal genotypes.
 
@@ -169,7 +167,7 @@ As previously discussed, this somatic variant probability is not ideal for detec
 
 The Strelka workflow uses two calling tiers. All somatic calls are classified according to their most-likely normal genotype if that value is the same in tiers 1 and 2, and classified as conflicts otherwise.
 
-\paragraph{Genomic prior}
+\subsubsection{Genomic prior}
 Given the expected rate of variants between two unrelated haplotypes (Watterson theta) $\theta$, the normal genomic prior $P(G_n)$ over the set of diploid genotypes is
 
 \begin{equation*}
@@ -194,7 +192,7 @@ P(G_t, G_n)=
 \noindent where $\gamma$ is set to $\gamma_{\text{SNV}} = 1\e{-3}$ and $\gamma_{\text{indel}} = 1\e{-6}$ for SNVs and indels. Note that $\gamma$ is expected to scale the somatic variant probabilities but not substantially influence their rank, thus its value was chosen empirically to provide reasonable variant probabilities and are not adjusted for different samples in practice.
 
 
-\paragraph{Joint allele-frequency prior}
+\subsubsection{Joint allele-frequency prior}
 The prior probability on the tumor and normal allele-frequencies $P(F_t, F_n \mid G_t, G_n)$ encodes the concept that the normal sample is a mixture of diploid germline variation and noise while the tumor sample is a mixture of the normal sample and somatic variation. Let $\mathcal{C} (F_n, G_n) = 1$ if $F_n$ is a {\em canonical} diploid allele frequency of $G_n$ and $\mathcal{C} (F_n, G_n) = 0$ otherwise. For example, $\mathcal{C} (F_n=0, G_n = \texttt{ref}) = 1$ and $\mathcal{C} (F_n=0.4, G_n = \texttt{ref}) = 0$. The joint frequency prior is defined as follows.
 
 % Non-somatic
@@ -229,11 +227,11 @@ P(F_t, F_n \mid G_t = \texttt{som}, G_n \neq \texttt{ref})=
 
 % The description of the strand-bias model is not included here because it is not used in the quality score calculation.
 
-\paragraph{Practical computation}
+\subsubsection{Practical computation}
 
 The continuous allele frequencies modeled above are efficiently computed by dividing each allele-pair axis into a set of equidistant points and performing the somatic probability computation over the resulting discrete point set. Several point resolutions were attempted to confirm the expected stability and convergence of results as resolution increased. A resolution of 21 points per axis is used for all computations by default. We expect that this resolution should be increased for improved detection of somatic allele frequencies lower than 5\%.
 
-\paragraph{Somatic callability track}
+\subsubsection{Somatic callability track}
 
 The somatic variant calling workflow optionally provides a somatic callability track expressing, for each reference position, whether there is sufficient sequencing evidence to confidently assert either (1) the presence of a somatic SNV or (2) the absence of a somatic SNV with somatic variant frequency of 10\% or higher. Evidence for the presence of a somatic SNV is quantified by the QSS score described above in equation \ref{eqn:somVarProb}. Evidence for the absence of a somatic SNV is quantified by the \emph{non-somatic SNV probability} (or the equivalent phred-scaled score, NQSS) described below. A reference position is marked as "callable" in the somatic callability track if QSS $\ge$ 15 or NQSS $\ge$ 15.
 
@@ -283,18 +281,20 @@ Note that the somatic callability track is based on the core somatic variant qua
 
 
 
-\subsubsection{Somatic Filtration and Scoring}
+\subsection{Somatic Filtration and Scoring}
 
-\subsubsection{Germline Calling Model and Genotype likelihoods}
+TODO
+
+\subsection{Germline Calling Model and Genotype likelihoods}
 
 
 % snv strand bias note:
 % dgt.strand_bias=std::max(lhood_fwd[tgt],lhood_rev[tgt])-lhood[tgt];
 
-\subsubsection{Germline Variant Phasing}
+\subsection{Germline Variant Phasing}
 As previously noted, Strelka defines an active region around dense variants and infers 2 haplotypes for the region. These haplotypes are used to phase SNVs and indels within the same active region. The phasing is conducted after scoring and genotyping. For each heterozygous variant belonging to an active region, Strelka checks which haplotype the variant is lying on. If the variant is lying on either of the two haplotypes, it is marked phased and the haplotype ID (0 or 1) is recorded to appropriately write the genotype allele order (e.g. 0|1 or 1|0).
 
-\subsubsection{Germline Filtration and Scoring}
+\subsection{Germline Filtration and Scoring}
 
 The germline variant calling model provides a useful representation of the sequencing data at the putative variant locus; however, there is additional information not used by the model which is predictive of call accuracy. These may be metrics such as the number of reads or alleles which are filtered out of the call quality computation, the quality of alignments in the region around the putative variant or various allele/strand/quality biases indicative of assay or mapping artifacts. As a final step in the germline variant calling process, such additional information is enumerated as a set of predictive features and used to improve call precision for a given recall level beyond what can be achieved from the core variant calling model alone. These additional features are employed in the final step of germline calling in one of two ways:
 
@@ -306,7 +306,7 @@ The germline variant calling model provides a useful representation of the seque
 \end{itemize}
 
 
-\paragraph{EVS model}
+\subsubsection{EVS model}
 
 Empirical variant scoring in Strelka uses pre-trained random forest models taking EVS features as input to produce the probability of an erroneous variant call. There is a separate trained random forest model and feature set for each of the two high-level variant categories, SNVs and indels. Strelka is intended to run with models which have been pre-trained on a combined training data set representing a wide variety of sample-prep and sequencing assays. Note that although scripts are provided to recreate the EVS model training procedure, there is no intention for the models to be retrained for each input sequencing dataset to be analyzed (this is in contrast to dynamic re-scoring systems such as the GATK VQSR procedure [CITE]).
 
@@ -347,7 +347,7 @@ Features used in each model are listed here and definitions are provided further
     \end{itemize}
 \end{itemize}
 
-\paragraph{Hard filters}
+\subsubsection{Hard filters}
 
 In this case a set of filters is defined. Each filter is triggered when a single feature exceeds some critical value. Filtration thresholds are set to remove variants which are very likely to be incorrect.
 
@@ -367,7 +367,7 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
     \end{itemize}
 \end{itemize}
 
-\paragraph{EVS/hard-filter feature descriptions}
+\subsubsection{EVS/hard-filter feature descriptions}
 
 \begin{itemize}
 
