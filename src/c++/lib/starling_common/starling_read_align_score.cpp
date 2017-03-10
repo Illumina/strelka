@@ -137,6 +137,46 @@ score_segment(const starling_base_options& /*opt*/,
     }
 }
 
+static
+void
+scoreMatchSegment(const starling_base_options& /*opt*/,
+              const unsigned seg_length,
+              const bam_seq_base& seq,
+              const uint8_t* qual,
+              const unsigned read_offset,
+              const bam_seq_base& ref,
+              const pos_t ref_head_pos,
+              const unsigned sampleId,
+              const ActiveRegionDetector& activeRegionDetector,
+              double& lnp)
+{
+    static const double lnthird(-std::log(3.));
+
+    for (unsigned i(0); i<seg_length; ++i)
+    {
+        const pos_t readi(static_cast<pos_t>(read_offset+i));
+        const uint8_t sbase(seq.get_code(readi));
+        if (sbase == BAM_BASE::ANY) continue;
+        const uint8_t qscore(qual[readi]);
+        bool is_ref(sbase == BAM_BASE::REF);
+        if (! is_ref)
+        {
+            const pos_t refi(ref_head_pos+static_cast<pos_t>(i));
+            is_ref=(sbase == ref.get_code(refi));
+
+            // Assume match if refi is a polymorphic site
+            if (! is_ref)
+            {
+                char seqChar = seq.get_char(readi);
+                auto haplotypeId = activeRegionDetector.getHaplotypeId(sampleId, refi, (BASE_ID::index_t)(base_to_id(seqChar)));
+                is_ref = (haplotypeId != 0);
+            }
+        }
+        lnp += ( is_ref ?
+                 qphred_to_ln_comp_error_prob(qscore) :
+                 qphred_to_ln_error_prob(qscore)+lnthird );
+    }
+}
 
 
 /// convert a particular gap in the candidate alignment to the corresponding variant key to
@@ -229,6 +269,8 @@ double
 score_candidate_alignment(
     const starling_base_options& opt,
     const IndelBuffer& indelBuffer,
+    const unsigned sampleId,
+    const ActiveRegionDetector& activeRegionDetector,
     const read_segment& rseg,
     const candidate_alignment& cal,
     const reference_contig_segment& ref)
@@ -320,13 +362,15 @@ score_candidate_alignment(
         }
         else if (is_segment_align_match(ps.type))
         {
-            score_segment(opt,
+            scoreMatchSegment(opt,
                           ps.length,
                           read_bseq,
                           qual,
                           read_offset,
                           ref_bseq,
                           ref_head_pos,
+                          sampleId,
+                          activeRegionDetector,
                           al_lnp);
 #ifdef DEBUG_SCORE
             for (unsigned ii(0); ii<ps.length; ++ii)

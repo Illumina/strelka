@@ -32,6 +32,7 @@
 #include "blt_util/log.hh"
 #include "blt_util/pos_range.hh"
 #include "starling_common/indel_util.hh"
+#include "ActiveRegionDetector.hh"
 
 #include <cassert>
 #include <cmath>
@@ -1132,6 +1133,8 @@ score_candidate_alignments(
     const reference_contig_segment& ref,
     read_segment& rseg,
     IndelBuffer& indelBuffer,
+    const unsigned sampleId,
+    const ActiveRegionDetector& activeRegionDetector,
     const std::set<candidate_alignment>& candAlignments,
     std::vector<double>& candAlignmentScores,
     double& maxCandAlignmentScore,
@@ -1158,7 +1161,7 @@ score_candidate_alignments(
     for (citer cal_iter(cal_set_begin); cal_iter!=cal_set_end; ++cal_iter)
     {
         const candidate_alignment& ical(*cal_iter);
-        const double path_lnp(score_candidate_alignment(opt,indelBuffer,rseg,ical,ref));
+        const double path_lnp(score_candidate_alignment(opt,indelBuffer,sampleId,activeRegionDetector,rseg,ical,ref));
 
         candAlignmentScores.push_back(path_lnp);
 
@@ -1316,6 +1319,7 @@ score_candidate_alignments_and_indels(
     read_segment& rseg,
     IndelBuffer& indelBuffer,
     const unsigned sampleId,
+    const ActiveRegionDetector& activeRegionDetector,
     std::set<candidate_alignment>& candAlignments,
     const bool is_incomplete_search)
 {
@@ -1337,7 +1341,7 @@ score_candidate_alignments_and_indels(
 
     try
     {
-        score_candidate_alignments(opt, ref, rseg, indelBuffer, candAlignments,
+        score_candidate_alignments(opt, ref, rseg, indelBuffer, sampleId, activeRegionDetector, candAlignments,
                                    candAlignmentScores, maxCandAlignmentScore, maxCandAlignmentPtr);
     }
     catch (...)
@@ -1633,6 +1637,7 @@ realign_and_score_read(
     const reference_contig_segment& ref,
     const known_pos_range& realign_buffer_range,
     const unsigned sampleId,
+    const ActiveRegionDetector& activeRegionDetector,
     read_segment& rseg,
     IndelBuffer& indelBuffer)
 {
@@ -1715,5 +1720,5 @@ realign_and_score_read(
     }
 
     score_candidate_alignments_and_indels(opt, dopt, sample_opt, ref,
-                                          rseg, indelBuffer, sampleId, cal_set, is_incomplete_search);
+                                          rseg, indelBuffer, sampleId, activeRegionDetector, cal_set, is_incomplete_search);
 }
