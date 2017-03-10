@@ -183,9 +183,8 @@ private:
     /// \return true if haplotype generation succeeds, false otherwise
     bool processHaplotypesWithAssembly(unsigned sampleId);
 
-    /// Bypass indels within the region
-    /// \param indelBuffer indel buffer
-    void bypassIndelsInBam();
+    /// Do not use haplotyping to determine indel candidacy and MMDF relax positions
+    void doNotUseHaplotyping();
 
     /// convert the haplotype into primitive alleles and update _indelBuffer and _polySites
     void convertToPrimitiveAlleles(
