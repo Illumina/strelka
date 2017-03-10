@@ -437,18 +437,14 @@ score_candidate_alignment(
         }
         else if (ps.type==SOFT_CLIP)
         {
-            // we rely on candidate alignment generator to suppress
-            // soft-clipping so this routine does not penalizing
-            // soft-clip states for now... the complication is that a
-            // soft-clip alignment will always do better than its
-            // unclipped equivalent. The rationale right now is that
-            // if a user has soft-clipping on their input reads, they
-            // want it to stay there.
+            // add a small penalty to soft-clipped states, otherwise a soft-clipped alignment
+            // will always have a higher likelihood than a non-clipped one.
             //
-
-            // static const double lnrandom(std::log(0.25));
-            // al_lnp += (ps.length*lnrandom);
-
+            // note this isn't appropriate for a scoring function which would try to optimize soft-clipping
+            // but this is helpful enough for A-B comparisons between clipped and unclipped states.
+            //
+            static const double lnrandom(std::log(0.25));
+            al_lnp += (ps.length*lnrandom);
         }
         else if (ps.type==HARD_CLIP)
         {

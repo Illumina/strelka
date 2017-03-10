@@ -621,6 +621,29 @@ add_pin_exception_info(
 
 
 
+static
+void
+addKeysToCandidateAlignment(
+    const starling_align_indel_status& indel_status_map,
+    candidate_alignment& cal)
+{
+    const auto cal_strict_pr(get_strict_alignment_range(cal.al));
+    indel_set_t calIndels;
+    for (const auto& indelVal : indel_status_map)
+    {
+        if (not indelVal.second.is_present) continue;
+        const IndelKey& indelKey(indelVal.first);
+        if (not is_range_intersect_indel_breakpoints(cal_strict_pr, indelKey)) continue;
+        calIndels.insert(indelKey);
+    }
+    if (cal.leading_indel_key.type != INDEL::NONE) calIndels.insert(cal.leading_indel_key);
+    if (cal.trailing_indel_key.type != INDEL::NONE) calIndels.insert(cal.trailing_indel_key);
+
+    cal.setIndels(calIndels);
+}
+
+
+
 /// Recursively build potential alignment paths and push them into the
 /// candidate alignment set:
 ///
@@ -692,20 +715,8 @@ candidate_alignment_search(
     // next check for recursive termination:
     if (depth == indel_order.size())
     {
-        const auto cal_strict_pr(get_strict_alignment_range(cal.al));
-        indel_set_t calIndels;
-        for (const auto& indelVal : indel_status_map)
-        {
-            if (not indelVal.second.is_present) continue;
-            const IndelKey& indelKey(indelVal.first);
-            if (not is_range_intersect_indel_breakpoints(cal_strict_pr, indelKey)) continue;
-            calIndels.insert(indelKey);
-        }
-        if (cal.leading_indel_key.type != INDEL::NONE) calIndels.insert(cal.leading_indel_key);
-        if (cal.trailing_indel_key.type != INDEL::NONE) calIndels.insert(cal.trailing_indel_key);
-
         candidate_alignment calWithKeys(cal);
-        calWithKeys.setIndels(calIndels);
+        addKeysToCandidateAlignment(indel_status_map, calWithKeys);
         cal_set.insert(std::move(calWithKeys));
         return;
     }
@@ -1123,6 +1134,69 @@ is_alignment_spanned_by_range(const known_pos_range pr,
 
 
 
+static
+void
+bam_seq_to_str(
+    const bam_seq_base& bs,
+    const unsigned start,
+    const unsigned end,
+    std::string& s)
+{
+    s.clear();
+    for (unsigned i(start); i<end; ++i) s.push_back(bs.get_char(i));
+}
+
+
+
+/// Initialize a candidate alignment from a standard alignment.
+///
+static
+void
+getCandidateAlignment(
+    const alignment& al,
+    const read_segment& rseg,
+    candidate_alignment& cal)
+{
+    using namespace ALIGNPATH;
+
+    cal.al=al;
+
+    pos_t read_pos(0);
+    pos_t ref_pos(al.pos);
+
+    const std::pair<unsigned,unsigned> ends(get_match_edge_segments(al.path));
+    const unsigned as(al.path.size());
+    for (unsigned i(0); i<as; ++i)
+    {
+        const path_segment& ps(al.path[i]);
+        if ((INSERT == ps.type) || (DELETE == ps.type))
+        {
+            IndelKey indelKey(ref_pos,INDEL::INDEL);
+            if (INSERT == ps.type)
+            {
+                bam_seq_to_str(rseg.get_bam_read(),read_pos,read_pos+ps.length,indelKey.insertSequence);
+            }
+            else
+            {
+                indelKey.deletionLength = ps.length;
+            }
+
+            if     (i<ends.first)
+            {
+                cal.leading_indel_key = indelKey;
+            }
+            else if (i>ends.second)
+            {
+                cal.trailing_indel_key = indelKey;
+            }
+        }
+        if (is_segment_type_read_length(ps.type)) read_pos += ps.length;
+        if (is_segment_type_ref_length(ps.type)) ref_pos += ps.length;
+    }
+}
+
+
+
 /// score the candidate alignments, find the most likely and the best for realignment:
 ///
 static
@@ -1137,7 +1211,9 @@ score_candidate_alignments(
     const std::set<candidate_alignment>& candAlignments,
     std::vector<double>& candAlignmentScores,
     double& maxCandAlignmentScore,
-    const candidate_alignment*& maxCandAlignmentPtr)
+    const candidate_alignment*& maxCandAlignmentPtr,
+    const bool isSoftClippedInputAlignment,
+    const alignment& softClippedInputAlignment)
 {
     // the smooth optimum alignment and alignment pool are actually
     // used for realignment, whereas the strict max_path path
@@ -1296,11 +1372,42 @@ score_candidate_alignments(
     }
 #endif
 
+    //
+    // record the read realignment which will be used for pileup and snp-calling:
+    //
+
+    // this option allows the original read alignment (with soft-clipping) to be used for the pileup
+    // if a better alignment was not found:
+    if (isSoftClippedInputAlignment)
+    {
+        // convert alignment into candidate alignment:
+        candidate_alignment softClippedCandidateAlignment;
+        {
+            getCandidateAlignment(softClippedInputAlignment, rseg, softClippedCandidateAlignment);
+            indel_set_t candidateAlignmentIndels;
+            get_alignment_indels(softClippedCandidateAlignment, rseg, opt.max_indel_size, candidateAlignmentIndels);
+            softClippedCandidateAlignment.setIndels(candidateAlignmentIndels);
+        }
+
+        // score candidate alignment:
+        const double path_lnp(score_candidate_alignment(opt, indelBuffer, sampleId, candidateSnvBuffer, rseg, softClippedCandidateAlignment, ref));
+
+        if (path_lnp >= smooth_path_lnp)
+        {
+            if (not (softClippedInputAlignment == rseg.genome_align()))
+            {
+                rseg.is_realigned = true;
+                rseg.realignment = softClippedInputAlignment;
+            }
+            return;
+        }
+    }
+
     // record "best" alignment for the purpose of re-alignment --
     // optionally clip best alignment here based on multiple best
     // candidates:
-    rseg.is_realigned=true;
-    finish_realignment(opt,rseg,smooth_cal_pool,smooth_path_lnp,smooth_cal_ptr);
+    rseg.is_realigned = true;
+    finish_realignment(opt, rseg, smooth_cal_pool, smooth_path_lnp, smooth_cal_ptr);
 }
 
 
@@ -1320,7 +1427,9 @@ score_candidate_alignments_and_indels(
     const unsigned sampleId,
     const CandidateSnvBuffer& candidateSnvBuffer,
     std::set<candidate_alignment>& candAlignments,
-    const bool is_incomplete_search)
+    const bool is_incomplete_search,
+    const bool isSoftClippedInputAlignment,
+    const alignment& softClippedInputAlignment)
 {
     assert(! candAlignments.empty());
 
@@ -1341,7 +1450,8 @@ score_candidate_alignments_and_indels(
     try
     {
         score_candidate_alignments(opt, ref, rseg, indelBuffer, sampleId, candidateSnvBuffer, candAlignments,
-                                   candAlignmentScores, maxCandAlignmentScore, maxCandAlignmentPtr);
+                                   candAlignmentScores, maxCandAlignmentScore, maxCandAlignmentPtr,
+                                   isSoftClippedInputAlignment, softClippedInputAlignment);
     }
     catch (...)
     {
@@ -1369,69 +1479,6 @@ score_candidate_alignments_and_indels(
     {
         log_os << "ERROR: exception caught while scoring indels for read segment: " << rseg;
         throw;
-    }
-}
-
-
-
-static
-void
-bam_seq_to_str(
-    const bam_seq_base& bs,
-    const unsigned start,
-    const unsigned end,
-    std::string& s)
-{
-    s.clear();
-    for (unsigned i(start); i<end; ++i) s.push_back(bs.get_char(i));
-}
-
-
-
-/// Initialize a candidate alignment from a standard alignment.
-///
-static
-void
-getCandidateAlignment(
-    const alignment& al,
-    const read_segment& rseg,
-    candidate_alignment& cal)
-{
-    using namespace ALIGNPATH;
-
-    cal.al=al;
-
-    pos_t read_pos(0);
-    pos_t ref_pos(al.pos);
-
-    const std::pair<unsigned,unsigned> ends(get_match_edge_segments(al.path));
-    const unsigned as(al.path.size());
-    for (unsigned i(0); i<as; ++i)
-    {
-        const path_segment& ps(al.path[i]);
-        if ((INSERT == ps.type) || (DELETE == ps.type))
-        {
-            IndelKey indelKey(ref_pos,INDEL::INDEL);
-            if (INSERT == ps.type)
-            {
-                bam_seq_to_str(rseg.get_bam_read(),read_pos,read_pos+ps.length,indelKey.insertSequence);
-            }
-            else
-            {
-                indelKey.deletionLength = ps.length;
-            }
-
-            if     (i<ends.first)
-            {
-                cal.leading_indel_key = indelKey;
-            }
-            else if (i>ends.second)
-            {
-                cal.trailing_indel_key = indelKey;
-            }
-        }
-        if (is_segment_type_read_length(ps.type)) read_pos += ps.length;
-        if (is_segment_type_ref_length(ps.type)) ref_pos += ps.length;
     }
 }
 
@@ -1593,13 +1640,12 @@ get_candidate_alignments(
 
 
 
-/// standardize input alignment to "matchify" edge insertion and soft-clip,
-/// and remove edge indels (with exceptions for RNA segment edges adjacent to
-/// gap segments)
+/// standardize input alignment to "matchify" edge insertion and remove edge indels
+/// (with exceptions for RNA segment edges adjacent to gap segments)
 ///
 static
 alignment
-normalizeInputAlignmnet(
+normalizeInputAlignmentIndels(
     const read_segment& rseg)
 {
     const std::pair<bool,bool> end_pin(rseg.get_segment_edge_pin());
@@ -1614,13 +1660,6 @@ normalizeInputAlignmnet(
     {
         noEdgeIndelAlignment=matchify_edge_indels(*alignmentPtr,is_remove_leading_edge_indels,is_remove_trailing_edge_indels);
         alignmentPtr=&noEdgeIndelAlignment;
-    }
-
-    alignment noEdgeSoftclipAlignment;
-    if (is_soft_clipped(inputAlignment.path))
-    {
-        noEdgeSoftclipAlignment=matchify_edge_soft_clip(*alignmentPtr);
-        alignmentPtr=&noEdgeSoftclipAlignment;
     }
 
     return *alignmentPtr;
@@ -1653,14 +1692,26 @@ realign_and_score_read(
 
     if (! check_for_candidate_indel_overlap(realign_buffer_range, rseg, indelBuffer)) return;
 
-    const alignment normedAlignment(normalizeInputAlignmnet(rseg));
+    alignment normalizedInputAlignment(normalizeInputAlignmentIndels(rseg));
 
-    // skip if normedAlignment has negative start position
+    const bool isSoftClippedInputAlignment(is_soft_clipped(normalizedInputAlignment.path));
+
+    alignment softClippedInputAlignment;
+    if (isSoftClippedInputAlignment)
+    {
+        softClippedInputAlignment = normalizedInputAlignment;
+        normalizedInputAlignment = matchify_edge_soft_clip(softClippedInputAlignment);
+
+
+    }
+
+
+    // skip if normalizedInputAlignment has negative start position
     // note this won't come from the read mapper in most cases, but rarely
     // the normalization process could do this
-    if (normedAlignment.pos<0) return;
+    if (normalizedInputAlignment.pos<0) return;
 
-    // run recursive alignment search starting from normedAlignment,
+    // run recursive alignment search starting from normalizedInputAlignment,
     // produce a list of candidate alignments from this search
     //
     // scheme:
@@ -1686,13 +1737,13 @@ realign_and_score_read(
     std::set<candidate_alignment> cal_set;
     mca_warnings warn;
 
-    get_candidate_alignments(opt, dopt, rseg, indelBuffer, sampleId, normedAlignment,
+    get_candidate_alignments(opt, dopt, rseg, indelBuffer, sampleId, normalizedInputAlignment,
                              realign_buffer_range, warn, cal_set);
 
     if ( cal_set.empty() )
     {
         std::ostringstream oss;
-        oss << "Empty candidate alignment set while realigning normed input alignment: " << normedAlignment << "\n";
+        oss << "Empty candidate alignment set while realigning normed input alignment: " << normalizedInputAlignment << "\n";
         throw blt_exception(oss.str().c_str());
     }
 
@@ -1719,5 +1770,7 @@ realign_and_score_read(
     }
 
     score_candidate_alignments_and_indels(opt, dopt, sample_opt, ref,
-                                          rseg, indelBuffer, sampleId, candidateSnvBuffer, cal_set, is_incomplete_search);
+                                          rseg, indelBuffer, sampleId, candidateSnvBuffer, cal_set, is_incomplete_search,
+                                          isSoftClippedInputAlignment, softClippedInputAlignment);
 }
+
