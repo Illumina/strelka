@@ -47,8 +47,8 @@ void ActiveRegion::processHaplotypes()
         if (not isHaplotypingSuccess)
         {
             // both counting and assembly failed
-            // bypass indels parsed from BAM
-            bypassIndelsInBam();
+            // do not use haplotyping to determine indel candidacy
+            doNotUseHaplotyping();
         }
     }
 }
@@ -222,14 +222,12 @@ bool ActiveRegion::processHaplotypesWithAssembly(unsigned sampleId)
     }
 
     if (haplotypeToAlignIdSet.empty())
-        return true;    // assembly fail; do not bypass indels
+        return false;    // assembly fail; bypass indels
 
     return processSelectedHaplotypes(sampleId, haplotypeToAlignIdSet);
 }
 
-// simply bypass all indels in BAM
-// The original indel candidacy method will be used.
-void ActiveRegion::bypassIndelsInBam()
+void ActiveRegion::doNotUseHaplotyping()
 {
 #ifdef DEBUG_ACTIVE_REGION
     std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << "\tBypass"<< std::endl;
