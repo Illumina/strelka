@@ -20,15 +20,15 @@
 from VcfFeatureSet import VcfFeatureSet
 
 
-@VcfFeatureSet.register("rna.snv")
-class RNASNVFeatures(VcfFeatureSet):
-    """Collect RNA SNV features from VCF"""
+@VcfFeatureSet.register("rna.indel")
+class RNAIndelFeatures(VcfFeatureSet):
+    """Collect RNA INDEL features from VCF"""
 
     def collect(self, vcfname):
         """ Return a data frame with features collected from the
             given VCF"""
 
-        return self.collectCore(vcfname,"snv_scoring_features")
+        return self.collectCore(vcfname,"indel_scoring_features")
 
 
     def trainingfeatures(self):
@@ -39,16 +39,15 @@ class RNASNVFeatures(VcfFeatureSet):
             src/c++/lib/applications/starling/germlineVariantEmpiricalScoringFeatures.hh
         """
         return [
-            "GT",
-            "SampleRMSMappingQuality",
-            "SiteHomopolymerLength",
-            "SampleStrandBias",
-            "SampleRMSMappingQualityRankSum",
-            "SampleReadPosRankSum",
-            "RelativeTotalLocusDepth",
-            "SampleUsedDepthFraction",
-            "ConservativeGenotypeQuality",
-            "QUAL_EXACT",
-            "SamplePrimaryAltAlleleDepthFraction",
-            "I_AvgPos",
-            "AD1"]
+#            "GT",
+            "QUAL",
+            "F_GQX",
+            "F_GQ",
+            "F_DPI",
+            "IndelAlleleRepeatCount",
+            "REFREP1",
+            "IndelAlleleRepeatUnitSize",
+            "AD0",
+            "AD1",
+            "SamplePrimaryAltAlleleDepthFraction"]
+

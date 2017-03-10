@@ -56,6 +56,7 @@ class FeatureSet(object):
         return FeatureSet.sets[name]()
 
 
-import GermlineSNV
-import GermlineIndel
-
+import GermlineSNV   # noqa
+import GermlineIndel   # noqa
+import RNASNV   # noqa
+import RNAIndel   # noqa

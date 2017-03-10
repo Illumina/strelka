@@ -98,4 +98,6 @@ class EVSModel(object):
         return cls._models.keys()
 
 
-import strelka_rf   # noqa
+import germline_rf   # noqa
+import rna_rf   # noqa
+

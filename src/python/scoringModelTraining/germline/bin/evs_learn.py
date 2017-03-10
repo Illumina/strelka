@@ -41,7 +41,7 @@ sys.path.append(workflowDir)
 import evs
 import evs.tools
 import evs.features
-
+import random
 
 def parseArgs():
     import argparse
@@ -101,8 +101,6 @@ def parseArgs():
 
 
 def getDataSet(inputs, sample_input) :
-
-    import random
 
     datasets = []
     for inputFile in inputs:
