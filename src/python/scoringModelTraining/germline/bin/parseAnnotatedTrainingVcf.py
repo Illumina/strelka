@@ -44,6 +44,10 @@ def getOptions() :
                       help="Write labeled SNV feature output for test data in csv format to this file (optional)")
     parser.add_option("--indelTestOutput", type="string", dest="indelTestOutputPath",metavar="FILE",
                       help="Write labeled indel feature output for test data in csv format to this file (optional)")
+    parser.add_option("--suppressGTMismatch", dest="suppressGTMismatch", default=False, action="store_true",
+                      help="When variant sequence matches but GT does not, treat as a true positive (recommended for RNA EVS)")
+    parser.add_option("--discardFNs", dest="discardFNs", default=False, action="store_true",
+                      help="Do not output FN variants (recommended for RNA EVS)")
 
     (options,args) = parser.parse_args()
 
@@ -184,6 +188,10 @@ def main() :
         else :
             label = queryVals[sampleBDIndex]
 
+        if options.suppressGTMismatch and label == "FP":
+            if getKeyVal(word[VCFID.INFO],"kind") == "gtmismatch":
+                label = "TP"
+
         if label not in ("TP","FP","FN","UNK") :
             raise Exception("Variant label is not TP|FP|FN|UNK as expected:\n%s" % (line))
 
@@ -199,7 +207,8 @@ def main() :
                 else :     return indel_test_outfp
 
         def writeVariant(outputlabel) :
-            outputStream(isSNV, isTrain).write(",".join([word[VCFID.CHROM], word[VCFID.POS], qtype, evsf, outputlabel]) +"\n")
+            if not(options.discardFNs and outputlabel == "FN"):
+                outputStream(isSNV, isTrain).write(",".join([word[VCFID.CHROM], word[VCFID.POS], qtype, evsf, outputlabel]) +"\n")
 
         writeVariant(label)
         # Add an extra FN entry if a variant is truth FN,query FP:
