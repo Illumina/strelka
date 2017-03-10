@@ -21,6 +21,10 @@
 
 #include "starling_read_align.cpp"
 
+// required to mock-up a read segment:
+#include "htsapi/align_path_bam_util.hh"
+#include "starling_read.hh"
+
 
 
 BOOST_AUTO_TEST_SUITE( starling_read_align )
@@ -165,9 +169,9 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
 
 
 
-/// test results of placing a single indel into a standard background:
+/// \brief Test results of placing a single indel into a standard background.
 ///
-/// return (ref_start_pos,read_start_pos)
+/// \return A pair of positions corresponding to: (ref_start_pos,read_start_pos)
 ///
 static
 std::pair<int,int>
@@ -329,5 +333,75 @@ BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
     }
 }
 
+
+BOOST_AUTO_TEST_CASE( test_realign_and_score_read )
+{
+    // the realigner normally throws away edge soft-clipping to try to produce more indel information, this
+    // is a test to ensure that in situations where it makes no sense to force an edge-softclip to the match
+    // state, that the realigner does not do so (see STREL-459)
+    //
+    // this also demos the full procedure required to mock realign_and_score_read, which suggest a number of
+    // helpful test utility functions -- in particular generating a bam_record object directly from a valid
+    // SAM string
+    {
+        starling_base_options opt;
+        opt.is_user_genome_size = true;
+        opt.user_genome_size = 1000000;
+
+        starling_base_deriv_options dopt(opt);
+        starling_sample_options sample_opt(opt);
+        reference_contig_segment ref;
+        ref.seq() = "ACGTACGTACGTACGTACGT";
+
+        known_pos_range realign_buffer_range(0, 20);
+
+        const unsigned sampleId(0);
+
+        // to mock up the indel buffer with one candidate indel, we have to initialize it with one fake sample,
+        // finalize, and then insert an indel observation
+        IndelBuffer indelBuffer(opt, dopt, ref);
+        depth_buffer db;
+        depth_buffer db2;
+        indelBuffer.registerSample(db, db2, false);
+        indelBuffer.finalizeSamples();
+        {
+            IndelObservation obs;
+            obs.key = IndelKey(4, INDEL::INDEL, 1);
+            obs.data.is_external_candidate = true;
+
+            indelBuffer.addIndelObservation(sampleId, obs);
+        }
+
+        // the read segment is the hardest piece of this to mock up:
+        // 1) mock up the underlying bam record:
+        bam_record br;
+        br.set_qname("FOOREAD");
+        const char read[] = "GTACGG";
+        const uint8_t qual[] = {40, 40, 40, 40, 40, 40};
+        br.set_readqual(read, qual);
+
+        // set alignment
+        alignment al;
+        al.pos = 2;
+        ALIGNPATH::cigar_to_apath("5M1S", al.path);
+        br.get_data()->core.pos = al.pos;
+        edit_bam_cigar(al.path, *br.get_data());
+
+        // 2) mock up the starling read
+        starling_read sread(br);
+        sread.set_genome_align(al);
+
+        // 3) finally, get read_segment from starling_read
+        read_segment& rseg(sread.get_full_segment());
+
+        // create an active region detector instance
+        static const unsigned sampleCount(1);
+        const CandidateSnvBuffer candidateSnvBuffer(sampleCount);
+
+        realign_and_score_read(opt, dopt, sample_opt, ref, realign_buffer_range, sampleId, candidateSnvBuffer, rseg, indelBuffer);
+
+        BOOST_REQUIRE(not rseg.is_realigned);
+    }
+}
 
 BOOST_AUTO_TEST_SUITE_END()
