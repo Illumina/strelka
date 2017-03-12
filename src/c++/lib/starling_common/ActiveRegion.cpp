@@ -61,7 +61,7 @@ bool ActiveRegion::processHaplotypesWithCounting(unsigned sampleId)
     unsigned numReads(readInfo.numReads);
     unsigned numReadsCoveringFullRegion((unsigned int) readInfo.readSegments.size());
 
-    // if there are not enogu reads fully covering the region, give up counting
+    // if there are not enough reads fully covering the region, give up counting
     if (numReadsCoveringFullRegion < MinFracReadsCoveringRegion*numReads)
         return false;
 

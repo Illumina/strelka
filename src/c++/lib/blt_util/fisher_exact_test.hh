@@ -41,7 +41,6 @@ enum class FISHER_EXACT : unsigned int
  *
  * We do a two-tailed test.
  */
-extern
 double
 fisher_exact_test_pval_2x2(
     const unsigned a,

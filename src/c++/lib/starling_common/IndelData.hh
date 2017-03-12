@@ -295,6 +295,12 @@ struct IndelData
         const unsigned sampleId,
         const IndelObservationData& obs_data);
 
+    /// return the consensus breakend seqeunce
+    ///
+    /// this request will trigger breakend seq consensus generation, and signals that no more breakend observations
+    /// will be added to instance
+    ///
+    /// this impacts long open-ended breakends only, short insertions do not use a consensus generation process
     const std::string&
     getBreakpointInsertSeq() const
     {
@@ -341,6 +347,10 @@ public:
 
     bool isConfirmedInActiveRegion = false;
 
+    /// status is used to facilitate effecient computation of candidate status by caching the result
+    /// after the first time canidate status is computed.
+    ///
+    /// this is only read/mutated by IndelBuffer so probably should be private/friend instead of public
     mutable status_t status;
 
 private:

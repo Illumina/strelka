@@ -44,7 +44,7 @@ struct read_id_counter
 {
     read_id_counter() : _head_read_id(0) {}
 
-    // provide the current id and increment:
+    /// provide the current id and increment:
     align_id_t next()
     {
         return _head_read_id++;
@@ -59,17 +59,18 @@ private:
 struct read_segment_iter;
 
 
-//
-// Must be able to look up reads by
-// (1) first alignment pos
-// (2) key or
-// (3) read_id_no
-//
-// multiple reads may be associated with (1) and (4), but (2) and (3)
-// can produce at most a single result.
-//
+/// Buffer to store read information
+///
+/// this can be used to look up reads by
+/// (1) first alignment pos
+/// (2) read_id (unique id created internally)
+///
+/// multiple reads may be associated with (1), but (2)
+/// should produce at most a single result.
+///
 struct starling_read_buffer : private boost::noncopyable
 {
+    explicit
     starling_read_buffer(read_id_counter* ricp = nullptr)
         : _ricp( (nullptr==ricp) ? &_ric : ricp ) {}
 
@@ -77,7 +78,7 @@ struct starling_read_buffer : private boost::noncopyable
 
     /// insert new read into read buffer
     ///
-    /// \return what is the read's internal id in Strelka's read buffer?
+    /// \return what is the read's internal id in the buffer?
     ///
     // note pos_processor is responsible for checking that the
     // position of the read is not too low -- the read_buffer itself
@@ -89,8 +90,8 @@ struct starling_read_buffer : private boost::noncopyable
         const alignment& al,
         const MAPLEVEL::index_t maplev);
 
-    // adjust read segment's buffer position to new_buffer_pos,
-    // and change buffer pos:
+    /// adjust read segment's buffer position to new_buffer_pos,
+    /// and change buffer pos:
     void
     rebuffer_read_segment(const align_id_t read_id,
                           const seg_id_t seg_id,
@@ -99,7 +100,7 @@ struct starling_read_buffer : private boost::noncopyable
     read_segment_iter
     get_pos_read_segment_iter(const pos_t pos);
 
-    // returns nullptr if read_id isn't present:
+    /// \return pointer to read, or nullptr if read_id isn't in buffer
     starling_read*
     get_read(const align_id_t read_id)
     {
@@ -108,7 +109,7 @@ struct starling_read_buffer : private boost::noncopyable
         return (k->second);
     }
 
-    // returns nullptr if read_id isn't present:
+    /// \return pointer to read, or nullptr if read_id isn't in buffer
     const starling_read*
     get_read(const align_id_t read_id) const
     {
@@ -147,7 +148,7 @@ struct starling_read_buffer : private boost::noncopyable
         }
     }
 
-    /// return total reads buffered
+    /// \return total reads buffered
     unsigned
     size() const
     {
@@ -202,22 +203,22 @@ private:
 };
 
 
-
-// not a real iterator
-//
+/// object which allows iteration over read segments
+///
+/// note this is not an STL iterator
 struct read_segment_iter
 {
     typedef std::pair<starling_read*,seg_id_t> ret_val;
 
-    // returns first=NULL if no read segments left:
-    //
+    /// \return information on the read segment that the iterator current points to
+    ///         ret_val.first is set to nullptr if no read segments are left
     ret_val get_ptr();
 
-    // returns false if no more reads
-    //
+    /// advance iterator to next read segment
+    /// \return false if no more reads
     bool next()
     {
-        if (_head!=_end) _head++;
+        if (_head!=_end) ++_head;
         return (_head!=_end);
     }
 

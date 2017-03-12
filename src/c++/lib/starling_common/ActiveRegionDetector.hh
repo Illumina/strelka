@@ -35,20 +35,21 @@
 #include <list>
 #include <set>
 
+
 /// detects active regions
 ///
-/// active regions are short genome segmetns where variation is sufficiently dense to trigger special haplotype handling methods
+/// active regions are short genome segments where variation is sufficiently dense to trigger special haplotype handling methods
 class ActiveRegionDetector
 {
 public:
 
-    // maximum buffer size in bases (must be larger than the maximum read size + max indel size
+    /// maximum buffer size in bases (must be larger than the maximum read size + max indel size
     static const unsigned MaxBufferSize = 1000u;
 
-    // max distance between two variants to be placed in the same active region
+    /// max distance between two variants to be placed in the same active region
     static const unsigned MaxDistanceBetweenTwoVariants = 13u;
 
-    // min number of variants to form an active region
+    /// min number of variants to form an active region
     static const unsigned MinNumVariantsPerRegion = 2u;
 
     // alignment scores, same as bwa default values

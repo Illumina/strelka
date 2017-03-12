@@ -157,7 +157,7 @@ public:
     /// \param posRange position range
     /// \param readInfo read info object to store read segments
     /// \param includePartialReads if true, only reads fully covering the region will be retrieved
-    void getReadSegments(pos_range posRange, ReadInfo& readInfo, bool includePartialReads) const;
+    void getReadSegments(const pos_range& posRange, ReadInfo& readInfo, const bool includePartialReads) const;
 
     /// cache sampleId and indelAlignType corresponding to alignId
     /// \param alignId align id

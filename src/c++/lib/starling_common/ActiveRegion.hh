@@ -71,7 +71,7 @@ public:
     /// \param indelBuffer indel buffer
     /// \param polySites rangeSet to store SNV information
     /// \return active region object
-    ActiveRegion(pos_range& posRange,
+    ActiveRegion(const pos_range& posRange,
                  const reference_contig_segment& ref,
                  const unsigned maxIndelSize,
                  const unsigned sampleCount,
@@ -104,7 +104,7 @@ public:
     }
 
     /// Decompose haplotypes into primitive alleles.
-    /// Determine indel candidacy and regiser polymorphic sites to relax MMDF.
+    /// Determine indel candidacy and register polymorphic sites to relax MMDF.
     void processHaplotypes();
 
     /// Mark a read soft-clipped

@@ -120,8 +120,8 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
         return (*_active_region_detector);
     }
 
-    // in range [begin,end), is the estimated depth always below
-    // depth?
+    /// in range [begin,end), is the estimated depth always below
+    /// depth?
     bool
     is_estimated_depth_range_ge_than(
         const pos_t begin,
@@ -626,9 +626,10 @@ protected:
     std::string _chromName;
     known_pos_range2 _reportRange;
 
+    /// when callRegions mode is on, calling is restricted to the regions defined in this object
     RegionTracker _callRegions;
 
-    // used to keep read id's unique across multiple samples:
+    /// used to keep read id's unique across multiple samples:
     read_id_counter _ric;
 
     std::vector<std::unique_ptr<sample_info>> _sample;

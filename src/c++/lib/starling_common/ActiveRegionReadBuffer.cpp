@@ -174,7 +174,7 @@ void ActiveRegionReadBuffer::setEndPos(pos_t endPos)
     _readBufferRange.set_end_pos(endPos);
 }
 
-void ActiveRegionReadBuffer::getReadSegments(pos_range posRange, ReadInfo& readInfo, bool includePartialReads) const
+void ActiveRegionReadBuffer::getReadSegments(const pos_range& posRange, ReadInfo& readInfo, const bool includePartialReads) const
 {
     std::map<align_id_t, std::string> alignIdToHaplotype;
     std::set<align_id_t> alignIdsReachingEnd;
