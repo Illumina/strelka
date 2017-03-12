@@ -266,7 +266,6 @@ starling_pos_processor_base(
     , _sample(sampleCount)
     , _pileupCleaner(opt)
     , _indelBuffer(opt,dopt,ref)
-    , _active_region_detector(new ActiveRegionDetector(ref, _indelBuffer, opt.max_indel_size, sampleCount))
 {
     assert(sampleCount != 0);
 
@@ -274,6 +273,9 @@ starling_pos_processor_base(
     {
         sampleVal.reset(new sample_info(_opt, ref, &_ric));
     }
+
+    // this can safely be called after initializing _sample above
+    resetActiveRegionDetector();
 
     if (_opt.is_bsnp_nploid)
     {
@@ -297,6 +299,22 @@ starling_pos_processor_base(
         }
     }
 }
+
+
+void
+starling_pos_processor_base::
+resetActiveRegionDetector()
+{
+    std::vector<std::reference_wrapper<const starling_read_buffer>> sampleReadBuffers;
+    for (const auto& sampleVal : _sample)
+    {
+        sampleReadBuffers.push_back(std::cref(sampleVal->read_buff));
+    }
+    _active_region_detector.reset(new ActiveRegionDetector(_ref, sampleReadBuffers, _indelBuffer, _opt.max_indel_size, getSampleCount()));
+}
+
+
+
 
 
 void
@@ -392,7 +410,7 @@ resetRegionBase(
 
     /// TODO, it might be better to have some kind of regionReset() on this structure
     ///  -- not clear how to do this accurately, so for now we just nuke and replace the entire object
-    _active_region_detector.reset(new ActiveRegionDetector(_ref, _indelBuffer, _opt.max_indel_size, getSampleCount()));
+    resetActiveRegionDetector();
 
     for (auto& sampleVal : _sample)
     {

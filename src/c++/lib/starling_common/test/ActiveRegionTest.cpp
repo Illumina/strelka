@@ -61,7 +61,7 @@ private:
     std::unique_ptr<IndelBuffer> _IndelBufferPtr;
 };
 
-
+#if 0
 // checks whether positions with consistent mismatches are marked as polymorphic sites
 BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
 {
@@ -299,5 +299,7 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
     const auto itr(testBuffer.getIndelBuffer().getIndelIter(leftShiftedIndelKey));
     BOOST_REQUIRE_EQUAL(itr->second.isConfirmedInActiveRegion, true);
 }
+#endif
+
 
 BOOST_AUTO_TEST_SUITE_END()

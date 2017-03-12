@@ -30,6 +30,7 @@
 #include "blt_util/align_path.hh"
 #include "IndelBuffer.hh"
 #include "ActiveRegionReadBuffer.hh"
+#include "starling_read_buffer.hh"
 
 #include <string>
 #include <map>
@@ -40,6 +41,9 @@
 typedef std::vector<RangeMap<pos_t,uint8_t>> RangeSet;
 typedef std::map<std::string, std::vector<align_id_t>> HaplotypeToAlignIdSet;
 typedef uint8_t HaplotypeId;
+
+typedef std::vector<std::reference_wrapper<const starling_read_buffer>> sampleReadBuffers_t;
+
 
 /// Represent all haplotypes found in the current active region
 class ActiveRegion
@@ -73,13 +77,14 @@ public:
     /// \return active region object
     ActiveRegion(const pos_range& posRange,
                  const reference_contig_segment& ref,
+                 const sampleReadBuffers_t& sampleReadBuffers,
                  const unsigned maxIndelSize,
                  const unsigned sampleCount,
                  const GlobalAligner<int>& aligner,
                  const ActiveRegionReadBuffer& readBuffer,
                  IndelBuffer& indelBuffer,
                  RangeSet& polySites):
-        _posRange(posRange), _ref(ref), _maxIndelSize(maxIndelSize), _sampleCount(sampleCount),
+        _posRange(posRange), _ref(ref), _sampleReadBuffers(sampleReadBuffers), _maxIndelSize(maxIndelSize), _sampleCount(sampleCount),
         _aligner(aligner), _readBuffer(readBuffer), _indelBuffer(indelBuffer), _polySites(polySites)
     {
     }
@@ -161,6 +166,7 @@ public:
 private:
     pos_range _posRange;
     const reference_contig_segment& _ref;
+    const sampleReadBuffers_t _sampleReadBuffers;
     const unsigned _maxIndelSize;
     const unsigned _sampleCount;
     const GlobalAligner<int> _aligner;

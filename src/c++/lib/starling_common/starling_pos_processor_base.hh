@@ -519,6 +519,10 @@ private:
         return false;
     }
 
+    /// (re-)initialize active region detector (this can safely be done anytime after _sample vector is initialized)
+    void
+    resetActiveRegionDetector();
+
 protected:
     virtual
     void

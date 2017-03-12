@@ -24,7 +24,10 @@
 
 #include <boost/algorithm/string.hpp>
 #include <assembly/IterativeAssembler.hh>
+#include <blt_util/math_util.hh>
 #include "ActiveRegion.hh"
+
+#include "blt_util/fisher_exact_test.hh"
 
 // compile with this macro to get verbose output:
 //#define DEBUG_ACTIVE_REGION
@@ -205,15 +208,15 @@ bool ActiveRegion::processHaplotypesWithAssembly(unsigned sampleId)
         if (haplotype.length() > maxHaplotypeLength)
             maxHaplotypeLength = (unsigned int) haplotype.length();
         haplotypeToAlignIdSet[haplotype] = std::vector<align_id_t>();
-        unsigned numPseudoReads(0);
+        //unsigned numPseudoReads(0);
         for (unsigned readIndex : contigs[i].supportReads)
         {
             if (assemblyReadOutput[readIndex].isPseudo)
             {
-                ++numPseudoReads;
+                //++numPseudoReads;
                 // TODO: how to add align id for pseudo read?
                 // for pseudo reads, assign fake align id
-                haplotypeToAlignIdSet[haplotype].push_back(10000+numPseudoReads);
+                //haplotypeToAlignIdSet[haplotype].push_back(10000+numPseudoReads);
                 continue;
             }
 
@@ -245,6 +248,30 @@ void ActiveRegion::doNotUseHaplotyping()
         indelData.isConfirmedInActiveRegion = true;
     }
 }
+
+
+
+/// \return true if haplotypes are the same length and have exactly one mismatch
+static
+bool
+doHaplotypesMeetPhasingErrorCondition1(
+    const std::string& hap1,
+    const std::string& hap2)
+{
+    // 2.
+    if ((hap1.length() == hap2.length()) and (hap1 != hap2))
+    {
+        const auto retval = std::mismatch(hap1.begin(), hap1.end(), hap2.begin());
+        const auto retval2 = std::mismatch(retval.first + 1, hap1.end(), retval.second + 1);
+        if (retval2.first == hap1.end())
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+
 
 bool ActiveRegion::processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlignIdSet& haplotypeToAlignIdSet)
 {
@@ -303,6 +330,189 @@ bool ActiveRegion::processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlign
             }
         }
     }
+
+    // now that top two haplotypes are selected we can run various haplotype noise filtration routines:
+    //
+    if ((largestCount>0) and (secondLargestCount>0))
+    {
+        // (1) get haplotype 1 and 2 strings:
+        const std::string& hap1(bestHaplotypePtr ? *bestHaplotypePtr : refStr);
+
+        std::string* hap2Ptr(nullptr);
+        if (not secondBestHaplotypePtrList.empty())
+        {
+            hap2Ptr = secondBestHaplotypePtrList.front().get();
+        }
+        const std::string& hap2(hap2Ptr != nullptr ? *hap2Ptr : refStr);
+
+        // (2) identify align-id counts shared in common between the two haplotypes
+        const auto hap1MapIter(haplotypeToAlignIdSet.find(hap1));
+        assert(hap1MapIter != haplotypeToAlignIdSet.end());
+        const auto& hap1AlignIdList(hap1MapIter->second);
+
+        const auto hap2MapIter(haplotypeToAlignIdSet.find(hap2));
+        assert(hap2MapIter != haplotypeToAlignIdSet.end());
+        const auto& hap2AlignIdList(hap2MapIter->second);
+
+        // build the dup set based on the assumption that the two align_id vectors are sorted:
+        std::set<align_id_t> dups;
+        {
+            auto hap1iter(hap1AlignIdList.begin());
+            const auto hap1end(hap1AlignIdList.end());
+            auto hap2iter(hap2AlignIdList.begin());
+            const auto hap2end(hap2AlignIdList.end());
+            while((hap1iter != hap1end) and (hap2iter != hap2end))
+            {
+                if (*hap1iter < *hap2iter)
+                {
+                    hap1iter++;
+                }
+                else if (*hap1iter > *hap2iter)
+                {
+                    hap2iter++;
+                }
+                else
+                {
+                    dups.insert(*hap1iter);
+                    hap1iter++;
+                    hap2iter++;
+                }
+            }
+        }
+
+        // get new totals counts based support for hapX given that we only consider hap1 and hap2 as possibilities:
+        const unsigned hap1UniqueCount(largestCount-dups.size());
+        const unsigned hap2UniqueCount(secondLargestCount-dups.size());
+
+#if 0
+        const unsigned hap12UniqueCount(hap1UniqueCount+hap2UniqueCount);
+
+        // trial a haplotype evidence ratio filter -- this should be helpful at high depth:
+        if (hap12UniqueCount > 10)
+        {
+            if (safeFrac(hap2UniqueCount,hap12UniqueCount) <= 0.10)
+            {
+                secondBestHaplotypePtrList.clear();
+            }
+        }
+#endif
+
+        //
+        // lambda used to get stranded read counts in downstream noise filtration functions:
+        //
+        const starling_read_buffer& globalReadBuffer(_sampleReadBuffers[sampleId]);
+        auto getHaplotypeNonDupFwdCount = [&](const std::string& haplotype) {
+                unsigned fwdCount(0);
+                const auto hapMapIter(haplotypeToAlignIdSet.find(haplotype));
+                assert(hapMapIter != haplotypeToAlignIdSet.end());
+                const auto& alignIdList(hapMapIter->second);
+
+                for (const auto alignId : alignIdList)
+                {
+                    if (dups.count(alignId) > 0) continue;
+                    const starling_read* sreadPtr(globalReadBuffer.get_read(alignId));
+                    assert(sreadPtr != nullptr);
+                    if (sreadPtr->is_fwd_strand()) fwdCount++;
+                }
+                return fwdCount;
+            };
+
+#if 0
+        //
+        // this is a more general strand bias test assuming the stranded counts are available, it doesn't appear to be specific enough to help
+        //
+        if (not secondBestHaplotypePtrList.empty())
+        {
+            // get stranded read counts:
+            const unsigned hap1UniqueFwdCount(getHaplotypeNonDupFwdCount(hap1));
+            assert(hap1UniqueFwdCount <= hap1UniqueCount);
+
+            const unsigned hap2UniqueFwdCount(getHaplotypeNonDupFwdCount(hap2));
+            assert(hap2UniqueFwdCount <= hap2UniqueCount);
+            const double biasPval = fisher_exact_test_pval_2x2(hap1UniqueFwdCount, hap2UniqueFwdCount, (hap1UniqueCount-hap1UniqueFwdCount), (hap2UniqueCount-hap2UniqueFwdCount));
+
+            if (biasPval < 0.001)
+            {
+                // determine which haplotype is the "problem"
+                const double hap1AlleleBias=std::abs(0.5-(hap1UniqueFwdCount/ static_cast<double>(hap1UniqueCount)));
+                const double hap2AlleleBias=std::abs(0.5-(hap2UniqueFwdCount/ static_cast<double>(hap2UniqueCount)));
+                if (hap1AlleleBias > hap2AlleleBias)
+                {
+                    bestHaplotypePtr.release();
+                }
+                else
+                {
+                    secondBestHaplotypePtrList.clear();
+                }
+            }
+        }
+#endif
+
+        // test specifically for a very clean sequencer phasing error appearing as haplotype2 when the
+        // sample contains a single true homozygous haplotpye which we've detected in haplotype1
+        //
+        // The error is found by testing for:
+        //
+        // 1. the top two haplotypes are the same length and differ by only one basecall
+        // 2. the second haplotype is observed exclusively on a single strand.
+        // 3. that basecall difference is found at the (begin|end) of a homopolymer track, changing the base to match
+        //    the hpol base in the hap containing onlyh (rev|fwd) support.
+        // 5. the corresponding hpol is at least minPhaseErrorHpolSize in length (this is the hpol in hap1, not reference)
+        //
+        if (not secondBestHaplotypePtrList.empty())
+        {
+            static const int minPhaseErrorHpolSize(10);
+
+            // test condition 1:
+            if (doHaplotypesMeetPhasingErrorCondition1(hap1,hap2))
+            {
+                // get stranded read counts:
+                const unsigned hap1UniqueFwdCount(getHaplotypeNonDupFwdCount(hap1));
+                assert(hap1UniqueFwdCount <= hap1UniqueCount);
+
+                const unsigned hap2UniqueFwdCount(getHaplotypeNonDupFwdCount(hap2));
+                assert(hap2UniqueFwdCount <= hap2UniqueCount);
+
+                // test condition 2.:
+                if ((hap2UniqueFwdCount == 0) or (hap2UniqueFwdCount == hap2UniqueCount))
+                {
+                    const auto retval = std::mismatch(hap1.begin(), hap1.end(), hap2.begin());
+
+                    // test conditions 3 and 4:
+                    bool isPhaseError(false);
+                    if (hap2UniqueFwdCount == 0)
+                    {
+                        auto hap2iter(retval.second);
+                        const char hap2base(*hap2iter);
+                        for (; hap2iter != hap2.end(); hap2iter++)
+                        {
+                            if (*hap2iter != hap2base) break;
+                        }
+                        if ((hap2iter - retval.second) > minPhaseErrorHpolSize) isPhaseError = true;
+                    }
+                    else
+                    {
+                        auto hap2iter(retval.second);
+                        const char hap2base(*hap2iter);
+                        while (true)
+                        {
+                            if (*hap2iter != hap2base) break;
+                            if (hap2iter == hap2.begin()) break;
+                            hap2iter--;
+                        }
+                        if ((retval.second - hap2iter) > minPhaseErrorHpolSize) isPhaseError = true;
+
+                    }
+
+                    if (isPhaseError)
+                    {
+                        secondBestHaplotypePtrList.clear();
+                    }
+                }
+            }
+        }
+    }
+
 
     // two haplotypes are selected. Now process them.
     uint8_t haplotypeId(1);
