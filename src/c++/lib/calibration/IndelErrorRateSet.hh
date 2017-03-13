@@ -60,11 +60,21 @@ getRateType(
 }
 
 
-/// helper object used by IndelErrorModel
+/// Helper object used by IndelErrorModel to store a set of error rates
 ///
-/// For ref="ATACACACAT" alt="ATACACAT",
-/// repeatingPatternSize is 2 and
-/// patternRepeatCount is 3
+/// The rate storage grows dynamically as entries are given with different repeatingPatternSize and patternRepeatCount,
+/// with the following constraints:
+/// - At least one repeatingPatternSize must be defined
+/// - If a repeatingPatternSize is defined, all values from 1..repeatingPatternSize must also be defined.
+/// - For any repeatingPatternSize which is defined, at least one patternRepeatCount must be defined.
+/// - For any repeatingPatternSize, if a patternRepeatCount value is defined, all values from 1..patternRepeatCount must
+///   also be defined before finalizing the rate set.
+///
+/// Terminology:
+///
+/// For REF="TACACAC" ALT="TACAC",
+/// repeatingPatternSize is 2 (referring to the "AC" repeat unit)
+/// patternRepeatCount is 3 (taken from the reference)
 ///
 struct IndelErrorRateSet
 {
@@ -78,24 +88,24 @@ struct IndelErrorRateSet
         assert(repeatingPatternSize>0);
         assert(patternRepeatCount>0);
 
-        // revert back to baseline if our motif size isn't covered
+        // revert back to baseline if the repeating pattern size isn't represented
         if (repeatingPatternSize > _errorRates.size())
         {
             repeatingPatternSize=1;
             patternRepeatCount=1;
         }
 
-        const unsigned maxPatternSizeIndex(_errorRates.size()-1);
-        repeatingPatternSize = std::min((repeatingPatternSize-1), maxPatternSizeIndex);
+        const unsigned maxRepeatingPatternSizeIndex(_errorRates.size()-1);
+        const unsigned repeatingPatternSizeIndex = std::min((repeatingPatternSize-1), maxRepeatingPatternSizeIndex);
 
-        const auto& patternRates(_errorRates[repeatingPatternSize]);
-        const unsigned maxRepeatCountIndex(patternRates.size()-1);
+        const auto& repeatingPatternSizeRates(_errorRates[repeatingPatternSizeIndex]);
 
-        patternRepeatCount = std::min((patternRepeatCount-1), maxRepeatCountIndex);
+        const unsigned maxPatternRepeatCountIndex(repeatingPatternSizeRates.size()-1);
+        const unsigned patternRepeatCountIndex = std::min((patternRepeatCount-1), maxPatternRepeatCountIndex);
 
-        const auto& theRates(patternRates[patternRepeatCount]);
+        const auto& indelRates(repeatingPatternSizeRates[patternRepeatCountIndex]);
 
-        return theRates.getRate(simpleIndelType);
+        return indelRates.getRate(simpleIndelType);
     }
 
     void
@@ -114,33 +124,35 @@ struct IndelErrorRateSet
             _errorRates.resize(repeatingPatternSize);
         }
 
-        auto& patternRates(_errorRates[repeatingPatternSize-1]);
+        auto& repeatingPatternSizeRates(_errorRates[repeatingPatternSize-1]);
 
-        if (patternRepeatCount > patternRates.size())
+        if (patternRepeatCount > repeatingPatternSizeRates.size())
         {
-            patternRates.resize(patternRepeatCount);
+            repeatingPatternSizeRates.resize(patternRepeatCount);
         }
 
-        IndelErrorRates& theRates(patternRates[patternRepeatCount-1]);
+        IndelErrorRates& indelRates(repeatingPatternSizeRates[patternRepeatCount-1]);
 
-        assert(! theRates.isInit);
-        theRates.isInit=true;
-        theRates.insertionErrorRate=insertionErrorRate;
-        theRates.deletionErrorRate=deletionErrorRate;
+        assert(! indelRates.isInit);
+        indelRates.isInit=true;
+        indelRates.insertionErrorRate=insertionErrorRate;
+        indelRates.deletionErrorRate=deletionErrorRate;
     }
 
-    //// this must be called before calling getRates
+    /// Check for a valid rate initialization pattern
+    ///
+    /// this must be called before calling getRates
     void
     finalizeRates()
     {
         // ensure that the (possibly jagged) matrix is complete:
         assert(_errorRates.size() > 0);
-        for (const auto& patternRates : _errorRates)
+        for (const auto& repeatingPatternSizeRates : _errorRates)
         {
-            assert(patternRates.size() > 0);
-            for (const auto& theRates : patternRates)
+            assert(repeatingPatternSizeRates.size() > 0);
+            for (const auto& indelRates : repeatingPatternSizeRates)
             {
-                assert(theRates.isInit);
+                assert(indelRates.isInit);
             }
         }
 
@@ -148,7 +160,8 @@ struct IndelErrorRateSet
     }
 
 private:
-    // these limits are for QC purposes only
+    // these limits are not used to define any data structure size bounds, rather
+    // they check against implausible input values for QC purposes
     static const unsigned maxRepeatingPatternSize = 4;
     static const unsigned maxPatternRepeatCount = 40;
 

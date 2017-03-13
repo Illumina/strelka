@@ -31,13 +31,11 @@
 
 #include <fstream>
 
-
+/// simple log-linear error ramp as a function of hpol length - default error model used in NS5/v2.7.x release series
 static
 IndelErrorRateSet
 getLogLinearIndelErrorModel()
 {
-    static const unsigned maxPatternRepeatCount = 20;
-
     static const double logLowErrorRate(std::log(5e-5));
     static const double logHighErrorRate(std::log(3e-4));
 
@@ -50,7 +48,7 @@ getLogLinearIndelErrorModel()
     // model covers homopolymers only:
     static const unsigned repeatingPatternSize(1);
 
-    for (unsigned patternRepeatCount=1; patternRepeatCount <= maxPatternRepeatCount; ++patternRepeatCount)
+    for (unsigned patternRepeatCount=1; patternRepeatCount <= (repeatCountSwitchPoint+1); ++patternRepeatCount)
     {
         const double highErrorFrac(std::min((patternRepeatCount-1),repeatCountSwitchPoint)/static_cast<double>(repeatCountSwitchPoint));
         const double logErrorRate((1.-highErrorFrac)*logLowErrorRate + highErrorFrac*logHighErrorRate);
