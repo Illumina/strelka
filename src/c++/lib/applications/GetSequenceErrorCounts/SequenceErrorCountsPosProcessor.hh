@@ -96,4 +96,6 @@ private:
 
     RegionTracker _excludedRegions;
     RecordTracker _knownVariants;
+
+    const std::vector<unsigned> _indelPatternSizeVector = {1,2};
 };

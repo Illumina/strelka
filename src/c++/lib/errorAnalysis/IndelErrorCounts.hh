@@ -129,20 +129,36 @@ assignStatus(const RecordTracker::indel_value_t& knownVariantOlap)
 
 struct IndelErrorContext
 {
-    bool
-    operator<(
-        const IndelErrorContext& rhs) const
+    IndelErrorContext(
+            unsigned initRepeatingPatternSize = 1,
+            unsigned initRepeatCount = 1)
+            : repeatPatternSize(initRepeatingPatternSize), repeatCount(initRepeatCount)
+    {}
+    bool operator<(const IndelErrorContext& rhs) const
     {
-        return (repeatCount < rhs.repeatCount);
+        if(repeatPatternSize < rhs.repeatPatternSize) {
+            return true;
+        }
+        if(repeatPatternSize != rhs.repeatPatternSize) {
+            return false;
+        }
+        return repeatCount < rhs.repeatCount;
     }
 
     template<class Archive>
     void serialize(Archive& ar, const unsigned /* version */)
     {
+        ar& repeatPatternSize;
         ar& repeatCount;
     }
 
+    unsigned getRepeatPatternSize() const{return repeatPatternSize;}
+    unsigned getRepeatCount() const{return repeatCount;}
+
+private:
+    unsigned repeatPatternSize = 1;
     unsigned repeatCount = 1;
+
 };
 
 BOOST_CLASS_IMPLEMENTATION(IndelErrorContext, boost::serialization::object_serializable)
@@ -368,6 +384,9 @@ BOOST_CLASS_IMPLEMENTATION(IndelErrorContextObservationData, boost::serializatio
 ///
 struct ExportedIndelObservations
 {
+    /// the repeat pattern size
+    unsigned repeatPatternSize;
+
     /// the number of times we observe the observation pattern below:
     unsigned repeatCount;
 

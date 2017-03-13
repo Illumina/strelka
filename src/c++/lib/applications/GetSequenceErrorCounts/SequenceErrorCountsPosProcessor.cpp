@@ -318,7 +318,7 @@ process_pos_error_counts(
     sample_info& sif(sample(sampleIndex));
 
 
-    static const unsigned maxHpolLength(20);
+    static const unsigned maxStrRepeatCount(20);
 
     const char refBase(_ref.get_base(pos));
 
@@ -336,8 +336,6 @@ process_pos_error_counts(
     bool isSkipSNV(false);
     bool isSkipIndel(false);
 
-    const bool isLeftEndOfHpol(refBase != _ref.get_base(pos - 1));
-
     if (_excludedRegions.isIntersectRegion(pos))
     {
         // The workflow has the option to exclude some regions, so count the number of excluded sites.
@@ -345,12 +343,20 @@ process_pos_error_counts(
         baseCounts.addExcludedRegionSkip(baseContext);
         isSkipSNV=true;
 
-        if (! isLeftEndOfHpol)
+        for(auto patternSize : _indelPatternSizeVector)
         {
-            IndelErrorContext indelContext;
-            const unsigned leftHpolSize(get_left_shifted_hpol_size(pos, _ref));
-            indelContext.repeatCount = std::min(maxHpolLength, leftHpolSize);
-            indelCounts.addExcludedRegionSkip(indelContext);
+            if (!is_left_end_of_str(patternSize, pos, _ref))
+            {
+                const unsigned leftStrRepeatCount(get_left_shifted_str_repeat_count(patternSize, pos, _ref));
+                IndelErrorContext indelContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
+                indelCounts.addExcludedRegionSkip(indelContext);
+
+                // break out of the STR search loop if we are already on the far left of an STR track
+                if(leftStrRepeatCount != 1)
+                {
+                    break;
+                }
+            }
         }
         isSkipIndel=true;
     }
@@ -377,13 +383,20 @@ process_pos_error_counts(
             const unsigned estdepth2(sif.estdepth_buff_tier2.val(pos-1));
             if ((estdepth+estdepth2) > _max_candidate_normal_sample_depth)
             {
-                // handle indels:
-                if (! isLeftEndOfHpol)
+                for(auto patternSize : _indelPatternSizeVector)
                 {
-                    IndelErrorContext indelContext;
-                    const unsigned leftHpolSize(get_left_shifted_hpol_size(pos, _ref));
-                    indelContext.repeatCount = std::min(maxHpolLength, leftHpolSize);
-                    indelCounts.addDepthSkip(indelContext);
+                    if (!is_left_end_of_str(patternSize, pos, _ref))
+                    {
+                        const unsigned leftStrRepeatCount(get_left_shifted_str_repeat_count(patternSize, pos, _ref));
+                        IndelErrorContext indelContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
+                        indelCounts.addExcludedRegionSkip(indelContext);
+
+                        // break out of the STR search loop if we are already on the far left of an STR track
+                        if(leftStrRepeatCount != 1)
+                        {
+                            break;
+                        }
+                    }
                 }
                 isSkipIndel=true;
             }
@@ -454,6 +467,7 @@ process_pos_error_counts(
 
     if (isSkipIndel) return;
 
+    // comments are out-of-date
     // If the current bases matches the previous base, we're in the middle
     // of a homopolymer run. In the present scheme such positions are not counted for the purpose of indel
     // error statistics.
@@ -463,7 +477,19 @@ process_pos_error_counts(
     // homopolyers? Given that these are non-slippage errors, it seems reasonable to assume there's just one rate
     // that covers these errors for now.
     //
-    if (! isLeftEndOfHpol) return;
+
+    std::vector<unsigned> patternSizeOfInterestVector(0);
+
+    for(auto patternSize : _indelPatternSizeVector) {
+        if (is_left_end_of_str(patternSize, pos, _ref))
+        {
+            patternSizeOfInterestVector.push_back(patternSize);
+        }
+    }
+    if(patternSizeOfInterestVector.size() == 0)
+    {
+        return;
+    }
 
 
     // define groups of overlapping alleles to rank and then genotype.
@@ -548,116 +574,123 @@ process_pos_error_counts(
     //
     // this buffering allows us to cleanly break out of this locus if we see evidence of too much noise below
     //
-    std::map<IndelErrorContext,IndelErrorContextObservation> indelObservations;
-
-    if (not orthogonalVariantAlleles.empty())
+    for(auto patternSize : patternSizeOfInterestVector)
     {
-        {
-            std::vector<unsigned> topVariantAlleleIndexPerSample;
-            const bool isEveryAltIncluded = addAllelesAtOtherPositions(
-                                                _ref, sampleCount, callerPloidy, pos, get_largest_total_indel_ref_span_per_read(),
-                                                getIndelBuffer(), orthogonalVariantAlleles, topVariantAlleleIndexPerSample);
-
-            if (not isEveryAltIncluded) return;
-        }
-
-        if (orthogonalVariantAlleles.size() > maxOverlap) return;
-
-        const unsigned nonrefAlleleCount(orthogonalVariantAlleles.size());
-        std::vector<unsigned> support;
-        getOrthogonalHaplotypeSupportCounts(
-            orthogonalVariantAlleles, sampleIndex, _opt.minDistanceFromReadEdge, support);
-
-        for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<nonrefAlleleCount; ++nonrefAlleleIndex)
-        {
-            const IndelKey& indelKey(orthogonalVariantAlleles.key(nonrefAlleleIndex));
-
-            if (indelKey.pos != pos) continue;
-
-            const IndelData& indelData(orthogonalVariantAlleles.data(nonrefAlleleIndex));
-            const AlleleReportInfo& indelReportInfo(indelData.getReportInfo());
-
-            IndelErrorContext context;
-            if ((indelReportInfo.repeat_unit_length==1) && (indelReportInfo.ref_repeat_count>1))
+        std::map<IndelErrorContext, IndelErrorContextObservation> indelObservations;
+        if (not orthogonalVariantAlleles.empty()) {
             {
-                // guard against the occasional non-normalized indel:
-                const unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
-                if (leftHpolSize == indelReportInfo.ref_repeat_count)
-                {
-                    context.repeatCount = std::min(maxHpolLength, indelReportInfo.ref_repeat_count);
-                }
+                std::vector<unsigned> topVariantAlleleIndexPerSample;
+                const bool isEveryAltIncluded = addAllelesAtOtherPositions(
+                        _ref, sampleCount, callerPloidy, pos, get_largest_total_indel_ref_span_per_read(),
+                        getIndelBuffer(), orthogonalVariantAlleles, topVariantAlleleIndexPerSample);
+
+                if (not isEveryAltIncluded) return;
             }
 
-            // check to see if this indel is (likely to be) a match to a known variant
-            RecordTracker::indel_value_t overlappingRecords;
-            isKnownVariantMatch(knownVariantRecords, indelKey, overlappingRecords);
+            if (orthogonalVariantAlleles.size() > maxOverlap) return;
 
-            IndelErrorContextObservation obs;
+            const unsigned nonrefAlleleCount(orthogonalVariantAlleles.size());
+            std::vector<unsigned> support;
+            getOrthogonalHaplotypeSupportCounts(
+                    orthogonalVariantAlleles, sampleIndex, _opt.minDistanceFromReadEdge, support);
 
-            const INDEL_SIGNAL_TYPE::index_t sigIndex(getIndelType(indelReportInfo));
-            obs.signalCounts[sigIndex] = support[nonrefAlleleIndex+1];
-            static const unsigned refAlleleIndex(0);
-            obs.refCount = support[refAlleleIndex];
-            obs.assignKnownStatus(overlappingRecords);
-
-            // debug output:
-            //
-            // an indel candidate can have 0 q30 indel reads when it is only supported by
-            // noise reads (i.e. indel occurs outside of a read's valid alignment range,
-            // see lib/starling_common/starling_read_util.cpp::get_valid_alignment_range)
-            // in this case, we're not going to report the incidence as noise, since it's
-            // not a read we would consider in variant calling
-            if (support[nonrefAlleleIndex+1] > 0 && _opt.is_write_observations())
+            for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex < nonrefAlleleCount; ++nonrefAlleleIndex)
             {
-                std::ostream& obs_os(*_streams.observation_bed_osptr());
-                obs_os << _chromName << "\t";
-                obs_os << indelKey.pos << "\t" << indelKey.pos + indelKey.deletionLength << "\t" << INDEL::get_index_label(indelKey.type) << "\t";
-                obs_os << indelReportInfo.repeat_unit << "\t" << indelReportInfo.ref_repeat_count << "\t";
-                obs_os << GENOTYPE_STATUS::label(obs.variantStatus) << "\t";
-                obs_os << context.repeatCount << "\t" << INDEL_SIGNAL_TYPE::label(sigIndex) << "\t";
-                obs_os << indelKey.deletionLength << "\t" << nonrefAlleleIndex + 1 << "/" << nonrefAlleleCount << "\t";
-                obs_os << obs.signalCounts[sigIndex] << "\t" << obs.refCount << "\t";
-                obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
+                const IndelKey &indelKey(orthogonalVariantAlleles.key(nonrefAlleleIndex));
+
+                if (indelKey.pos != pos) continue;
+
+                const IndelData &indelData(orthogonalVariantAlleles.data(nonrefAlleleIndex));
+                const AlleleReportInfo &indelReportInfo(indelData.getReportInfo());
+
+
+                IndelErrorContext context;
+
+                if ((indelReportInfo.repeat_unit_length == patternSize) && (indelReportInfo.ref_repeat_count > 1))
+                {
+                    // guard against the occasional non-normalized indel:
+                    const unsigned leftStrRepeatCount(get_left_shifted_str_repeat_count(patternSize, pos, _ref));
+                    if (leftStrRepeatCount == indelReportInfo.ref_repeat_count) {
+                        context = IndelErrorContext(patternSize,
+                                                    std::min(maxStrRepeatCount, indelReportInfo.ref_repeat_count));
+                    }
+                }
+
+
+                // check to see if this indel is (likely to be) a match to a known variant
+                RecordTracker::indel_value_t overlappingRecords;
+                isKnownVariantMatch(knownVariantRecords, indelKey, overlappingRecords);
+
+                IndelErrorContextObservation obs;
+
+                const INDEL_SIGNAL_TYPE::index_t sigIndex(getIndelType(indelReportInfo));
+                obs.signalCounts[sigIndex] = support[nonrefAlleleIndex + 1];
+                static const unsigned refAlleleIndex(0);
+                obs.refCount = support[refAlleleIndex];
+                obs.assignKnownStatus(overlappingRecords);
+
+                // debug output:
+                //
+                // an indel candidate can have 0 q30 indel reads when it is only supported by
+                // noise reads (i.e. indel occurs outside of a read's valid alignment range,
+                // see lib/starling_common/starling_read_util.cpp::get_valid_alignment_range)
+                // in this case, we're not going to report the incidence as noise, since it's
+                // not a read we would consider in variant calling
+                if (support[nonrefAlleleIndex + 1] > 0 && _opt.is_write_observations()) {
+                    std::ostream &obs_os(*_streams.observation_bed_osptr());
+                    obs_os << _chromName << "\t";
+                    obs_os << indelKey.pos << "\t" << indelKey.pos + indelKey.deletionLength << "\t"
+                           << INDEL::get_index_label(indelKey.type) << "\t";
+                    obs_os << indelReportInfo.repeat_unit << "\t" << indelReportInfo.ref_repeat_count << "\t";
+                    obs_os << GENOTYPE_STATUS::label(obs.variantStatus) << "\t";
+                    obs_os << context.getRepeatPatternSize() << "\t" << context.getRepeatCount() << "\t"
+                           << INDEL_SIGNAL_TYPE::label(sigIndex) << "\t";
+                    obs_os << indelKey.deletionLength << "\t" << nonrefAlleleIndex + 1 << "/" << nonrefAlleleCount
+                           << "\t";
+                    obs_os << obs.signalCounts[sigIndex] << "\t" << obs.refCount << "\t";
+                    obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
 
 #if 0
-                for (const auto& rec : overlappingRecords)
-                {
-                    std::cout << rec << std::endl;
-                }
+                    for (const auto& rec : overlappingRecords)
+                    {
+                        std::cout << rec << std::endl;
+                    }
 #endif
+                }
+
+
+                mergeIndelObservations(context, obs, indelObservations);
+            }
+        }
+
+
+        // background depth is always one minus position to be consistent with indel report:
+        const pos_t depth_pos(pos - 1);
+        const snp_pos_info &spi(sif.bc_buff.get_pos(depth_pos));
+        const unsigned depth(spi.calls.size());
+
+        for (const auto &value : indelObservations) {
+            indelCounts.addError(value.first, value.second, depth);
+        }
+
+        // add all the contexts that haven't been covered already
+        {
+
+            const unsigned leftStrRepeatCount(get_left_shifted_str_repeat_count(patternSize, pos, _ref));
+            IndelErrorContext context;
+            IndelBackgroundObservation obs;
+            obs.depth = depth;
+
+            // the assumption is that a background position should have
+            // the variant status of any overlapping known variants,
+            // regardless of whether the genotypes match
+            obs.assignKnownStatus(knownVariantRecords);
+
+            context = IndelErrorContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
+            if (!indelObservations.count(context)) {
+                indelCounts.addBackground(context, obs);
             }
 
-
-            mergeIndelObservations(context,obs,indelObservations);
-        }
-    }
-
-    // background depth is always one minus position to be consistent with indel report:
-    const pos_t depth_pos(pos-1);
-    const snp_pos_info& spi(sif.bc_buff.get_pos(depth_pos));
-    const unsigned depth(spi.calls.size());
-
-    for (const auto& value : indelObservations)
-    {
-        indelCounts.addError(value.first,value.second,depth);
-    }
-
-    // add all the contexts that haven't been covered already
-    {
-        const unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
-        IndelErrorContext context;
-        IndelBackgroundObservation obs;
-        obs.depth = depth;
-
-        // the assumption is that a background position should have
-        // the variant status of any overlapping known variants,
-        // regardless of whether the genotypes match
-        obs.assignKnownStatus(knownVariantRecords);
-
-        context.repeatCount = std::min(maxHpolLength,leftHpolSize);
-        if (! indelObservations.count(context))
-        {
-            indelCounts.addBackground(context, obs);
         }
     }
 }

@@ -82,7 +82,7 @@ operator<<(
     std::ostream& os,
     const IndelErrorContext& context)
 {
-    os << context.repeatCount;
+    os << context.getRepeatCount();
     return os;
 }
 
@@ -429,7 +429,7 @@ dump(
     os << "Total Indel Contexts: " << _data.size() << "\n";
     for (const auto& value : _data)
     {
-        os << "Indel Context: " << value.first << "\n";
+        os << "Indel Context: Repeat pattern size " << value.first.getRepeatPatternSize() << ", Repeat count " << value.first.getRepeatCount() << "\n";
         value.second.dump(os);
     }
     os << "IndelErrorCounts DUMP_OFF\n";

@@ -50,6 +50,61 @@ get_left_shifted_hpol_size(
     return size;
 }
 
+bool
+is_left_end_of_str(
+        const unsigned patternSize,
+        const pos_t pos,
+        const reference_contig_segment& ref)
+{
+    // the current position cannot be the start of an STR track
+    // if the previous base is the same as the end of the potential pattern
+    return ref.get_base(pos - 1) != ref.get_base(pos + patternSize - 1);
+}
+
+unsigned
+get_left_shifted_str_repeat_count(
+        const unsigned patternSize,
+        const pos_t startPosition,
+        const reference_contig_segment& ref)
+{
+    unsigned size(1);
+
+    if (startPosition > 0)
+    {
+        if(!is_left_end_of_str(patternSize, startPosition, ref))
+        {
+            return size;
+        }
+    }
+
+    const pos_t endOfRef(ref.end());
+    for (pos_t posInRef(startPosition + patternSize); posInRef < endOfRef; posInRef += patternSize)
+    {
+        if(!compare_repeat_pattern(patternSize, startPosition, posInRef, ref))
+        {
+            break;
+        }
+        size++;
+    }
+    return size;
+}
+
+bool
+compare_repeat_pattern(
+        const unsigned repeatPatternSize,
+        const unsigned pos1,
+        const unsigned pos2,
+        const reference_contig_segment& ref)
+{
+    for(int posInPattern(repeatPatternSize -1 ); posInPattern >= 0; posInPattern--)
+    {
+        if(ref.get_base(pos1+posInPattern) != ref.get_base(pos2 + posInPattern))
+        {
+            return false;
+        }
+    }
+    return true;
+}
 
 
 unsigned
