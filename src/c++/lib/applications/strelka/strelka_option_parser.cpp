@@ -76,18 +76,12 @@ get_strelka_option_parser(
     ("shared-site-error-strand-bias-fraction",
      po::value(&opt.shared_site_error_strand_bias_fraction)->default_value(opt.shared_site_error_strand_bias_fraction),
      "Expected fraction of site-specific errors which are single-stranded.")
-    ("site-somatic-normal-noise-rate",
-     po::value(&opt.site_somatic_normal_noise_rate),
-     "Expected rate of 'noise' in the normal sample at somatic call sites -- this allows for some degree of tumor contamination in the normal for raw somatic Q-scores (default: use shared site error instead)")
-    ("indel-somatic-normal-noise-rate",
-     po::value(&opt.indel_somatic_normal_noise_rate),
-     "Expected rate of 'noise' in the normal sample at somatic indels -- this allows for some degree of tumor contamination in the normal sample for raw somatic Q-scores (default: use shared site error instead)")
     ("ssnv-contam-tolerance",
      po::value(&opt.ssnv_contam_tolerance)->default_value(opt.ssnv_contam_tolerance),
-     "Tolerance of tumor contamination in the normal sample for SNVs (allowed range: [0-1], default: 0.15).")
+     "Tolerance of tumor contamination in the normal sample for SNVs (allowed range: [0-1]).")
     ("indel-contam-tolerance",
      po::value(&opt.indel_contam_tolerance)->default_value(opt.indel_contam_tolerance),
-     "Tolerance of tumor contamination in the normal sample for indels (allowed range: [0-1], default: 0.15).")
+     "Tolerance of tumor contamination in the normal sample for indels (allowed range: [0-1]).")
     ("somatic-callable-regions-file", po::value(&opt.somatic_callable_filename),
      "Output a bed file of regions which are confidently somatic or non-somatic for SNVs at allele frequencies of 10% or greater.")
     ("noise-vcf", po::value(&opt.noise_vcf)->multitoken(),
@@ -194,20 +188,8 @@ finalize_strelka_options(
     check_option_arg_range(pinfo,opt.somatic_snv_rate,"somatic-snv-rate",0.,1.);
     check_option_arg_range(pinfo,opt.shared_site_error_rate,"shared-site-error-rate",0.,1.);
     check_option_arg_range(pinfo,opt.shared_site_error_strand_bias_fraction,"shared-site-strand-strand-bias-fraction",0.,1.);
-    check_option_arg_range(pinfo,opt.shared_site_error_strand_bias_fraction,"site-somatic-normal-noise-rate",0.,1.);
 
     check_option_arg_range(pinfo,opt.somatic_indel_rate,"somatic-indel-rate",0.,1.);
-    check_option_arg_range(pinfo,opt.shared_site_error_strand_bias_fraction,"indel-somatic-normal-noise-rate",0.,1.);
-
-    if (vm.count("site-somatic-normal-noise-rate"))
-    {
-        opt.is_site_somatic_normal_noise_rate=true;
-    }
-
-    if (vm.count("indel-somatic-normal-noise-rate"))
-    {
-        opt.is_indel_somatic_normal_noise_rate=true;
-    }
 
     // deal with sfilter options:
     if (opt.sfilter.max_depth_factor < 0)

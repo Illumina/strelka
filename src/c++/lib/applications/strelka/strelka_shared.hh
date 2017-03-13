@@ -113,13 +113,9 @@ struct strelka_options : public starling_base_options
 
     double shared_site_error_rate = 0.000005;
     double shared_site_error_strand_bias_fraction = 0.5;
-    double site_somatic_normal_noise_rate = 0;
-    bool is_site_somatic_normal_noise_rate = false;
 
     double shared_indel_error_factor = 1.65;
     double shared_indel_error_strand_bias_fraction = 0.1;
-    double indel_somatic_normal_noise_rate = 0;
-    bool is_indel_somatic_normal_noise_rate = false;
 
     double ssnv_contam_tolerance = 0.15;
     double indel_contam_tolerance = 0.15;
