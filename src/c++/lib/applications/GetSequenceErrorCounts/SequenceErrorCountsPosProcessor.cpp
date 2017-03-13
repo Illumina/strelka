@@ -336,6 +336,15 @@ process_pos_error_counts(
     bool isSkipSNV(false);
     bool isSkipIndel(false);
 
+    std::vector<unsigned> patternSizeOfInterestVector(0);
+
+    for(auto patternSize : _indelPatternSizeVector) {
+        if (is_left_end_of_str(patternSize, pos, _ref))
+        {
+            patternSizeOfInterestVector.push_back(patternSize);
+        }
+    }
+
     if (_excludedRegions.isIntersectRegion(pos))
     {
         // The workflow has the option to exclude some regions, so count the number of excluded sites.
@@ -343,20 +352,18 @@ process_pos_error_counts(
         baseCounts.addExcludedRegionSkip(baseContext);
         isSkipSNV=true;
 
-        for(auto patternSize : _indelPatternSizeVector)
+        for(auto patternSize : patternSizeOfInterestVector)
         {
-            if (!is_left_end_of_str(patternSize, pos, _ref))
-            {
-                const unsigned leftStrRepeatCount(get_left_shifted_str_repeat_count(patternSize, pos, _ref));
-                IndelErrorContext indelContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
-                indelCounts.addExcludedRegionSkip(indelContext);
+            const unsigned leftStrRepeatCount(get_left_shifted_str_repeat_count(patternSize, pos, _ref));
+            IndelErrorContext indelContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
+            indelCounts.addExcludedRegionSkip(indelContext);
 
-                // break out of the STR search loop if we are already on the far left of an STR track
-                if(leftStrRepeatCount != 1)
-                {
-                    break;
-                }
+            // break out of the STR search loop if we are already on the far left of an STR track
+            if(leftStrRepeatCount != 1)
+            {
+                break;
             }
+
         }
         isSkipIndel=true;
     }
@@ -383,20 +390,18 @@ process_pos_error_counts(
             const unsigned estdepth2(sif.estdepth_buff_tier2.val(pos-1));
             if ((estdepth+estdepth2) > _max_candidate_normal_sample_depth)
             {
-                for(auto patternSize : _indelPatternSizeVector)
+                for(auto patternSize : patternSizeOfInterestVector)
                 {
-                    if (!is_left_end_of_str(patternSize, pos, _ref))
-                    {
-                        const unsigned leftStrRepeatCount(get_left_shifted_str_repeat_count(patternSize, pos, _ref));
-                        IndelErrorContext indelContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
-                        indelCounts.addExcludedRegionSkip(indelContext);
+                    const unsigned leftStrRepeatCount(get_left_shifted_str_repeat_count(patternSize, pos, _ref));
+                    IndelErrorContext indelContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
+                    indelCounts.addExcludedRegionSkip(indelContext);
 
-                        // break out of the STR search loop if we are already on the far left of an STR track
-                        if(leftStrRepeatCount != 1)
-                        {
-                            break;
-                        }
+                    // break out of the STR search loop if we are already on the far left of an STR track
+                    if(leftStrRepeatCount != 1)
+                    {
+                        break;
                     }
+
                 }
                 isSkipIndel=true;
             }
@@ -478,19 +483,10 @@ process_pos_error_counts(
     // that covers these errors for now.
     //
 
-    std::vector<unsigned> patternSizeOfInterestVector(0);
-
-    for(auto patternSize : _indelPatternSizeVector) {
-        if (is_left_end_of_str(patternSize, pos, _ref))
-        {
-            patternSizeOfInterestVector.push_back(patternSize);
-        }
-    }
     if(patternSizeOfInterestVector.size() == 0)
     {
         return;
     }
-
 
     // define groups of overlapping alleles to rank and then genotype.
     //
