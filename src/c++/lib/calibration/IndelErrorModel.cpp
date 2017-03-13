@@ -32,89 +32,6 @@
 #include <fstream>
 
 
-// Calculate p(error) of
-//    CASE: del
-//    FIT pars: [  1.49133831e-03   1.03348683e+01   1.13646811e+00   1.18488282e-05]
-//    Function prob(error)=0.00149133830825/ (1 + exp((10.3348683003-x)/1.13646810558))+1.18488281756e-05
-//    --------------------
-//    CASE: ins
-//    FIT pars: [  1.09573511e-03   9.82226042e+00   1.03579658e+00   8.31843836e-06]
-//    Function prob(error)=0.00109573511176/ (1 + exp((9.82226041538-x)/1.03579658224))+8.31843836296e-06
-//    --------------------
-static
-IndelErrorRateSet
-getNewIndelErrorModel()
-{
-    static const unsigned maxPatternRepeatCount = 40;
-
-    static const double insert_A(1.49133831e-03);
-    static const double insert_B(1.03348683e+01);
-    static const double insert_C(1.13646811e+00);
-    static const double insert_D(1.18488282e-05);
-
-    static const double delete_A(1.09573511e-03);
-    static const double delete_B(9.82226042e+00);
-    static const double delete_C(1.03579658e+00);
-    static const double delete_D(8.31843836e-06);
-
-    IndelErrorRateSet rates;
-
-    // model covers homopolymers only:
-    static const unsigned repeatingPatternSize(1);
-
-    for (unsigned patternRepeatCount=1; patternRepeatCount <= maxPatternRepeatCount; ++patternRepeatCount)
-    {
-        const double insert_g(insert_A/ (1 + std::exp((insert_B-patternRepeatCount)/insert_C))+insert_D);
-        const double insert_error_prob(1.-std::exp(-insert_g/patternRepeatCount));
-        const double delete_g(delete_A/ (1 + std::exp((delete_B-patternRepeatCount)/delete_C))+delete_D);
-        const double delete_error_prob(1.-std::exp(-delete_g/patternRepeatCount));
-
-        rates.addRate(repeatingPatternSize, patternRepeatCount, insert_error_prob, delete_error_prob);
-    }
-    return rates;
-}
-
-
-
-static
-IndelErrorRateSet
-getOldIndelErrorModel()
-{
-    static const unsigned maxPatternRepeatCount = 40;
-
-    static const double insert_A(5.03824e-7);
-    static const double insert_B(3.30572e-10);
-    static const double insert_C(6.99777);
-
-    static const double delete_hpol1_err(5.00057e-5);
-    static const double delete_A(1.09814e-5);
-    static const double delete_B(5.19742e-10);
-    static const double delete_C(6.99256);
-
-    IndelErrorRateSet rates;
-
-    // model covers homopolymers only:
-    static const unsigned repeatingPatternSize(1);
-
-    for (unsigned patternRepeatCount=1; patternRepeatCount <= maxPatternRepeatCount; ++patternRepeatCount)
-    {
-        const double insert_g(insert_A*patternRepeatCount+insert_B*std::pow(patternRepeatCount,insert_C));
-        const double insert_error_prob(1.-std::exp(-insert_g));
-
-        double delete_g(delete_hpol1_err);
-        if (patternRepeatCount>1)
-        {
-            delete_g = delete_A*patternRepeatCount+delete_B*std::pow(patternRepeatCount,delete_C);
-        }
-        const double delete_error_prob(1.-std::exp(-delete_g));
-
-        rates.addRate(repeatingPatternSize, patternRepeatCount, insert_error_prob, delete_error_prob);
-    }
-    return rates;
-}
-
-
-
 static
 IndelErrorRateSet
 getLogLinearIndelErrorModel()
@@ -195,15 +112,7 @@ IndelErrorModel(
 {
     if (modelFilename.empty())
     {
-        if     (modelName == "old")
-        {
-            _errorRates = getOldIndelErrorModel();
-        }
-        else if (modelName == "new")
-        {
-            _errorRates = getNewIndelErrorModel();
-        }
-        else if (modelName == "logLinear")
+        if (modelName == "logLinear")
         {
             _errorRates = getLogLinearIndelErrorModel();
         }

@@ -127,7 +127,7 @@ get_starling_base_option_parser(
     ("indel-error-models-file", po::value(&opt.indel_error_models_filename),
      "File containing indel error models")
     ("indel-error-model-name", po::value(&opt.indel_error_model_name)->default_value(opt.indel_error_model_name),
-     "Indel error model name, either 'new', 'old' or label to choose from the indel error model file")
+     "Static indel error model name. If no indel error model file is provided a hard-coded model can be selected with this argument instead. Current options are ('logLinear'). This option is ignored when an indel error model file is provided.")
     ("call-regions-bed",  po::value(&opt.callRegionsBedFilename),
      "Bed file describing regions to call. No output will be provided outside of these regions. (must be bgzip compressed and tabix indexed).")
     ;
