@@ -116,19 +116,47 @@ struct ContextGenotypePriors
 struct GenotypePriorSet
 {
     GenotypePriorSet(
-        const double lowRepeatTheta,
-        const double highRepeatTheta,
+        const double /*lowRepeatTheta*/,
+        const double /*highRepeatTheta*/,
         const unsigned highRepeatCount)
         : _priors(highRepeatCount)
     {
-        assert(highRepeatCount>0);
+        //assert(highRepeatCount>0);
 
+        static const double hcTheta[20] = {
+            0.000201862,
+            8.39671E-05,
+            0.000176544,
+            0.000373521,
+            0.000758292,
+            0.002983495,
+            0.008187847,
+            0.024767686,
+            0.050121542,
+            0.085374715,
+            0.125859325,
+            0.146490196,
+            0.166084861,
+            0.188590783,
+            0.203576753,
+            0.22295768,
+            0.251476097,
+            0.271175382,
+            0.2860939,
+            0.3
+        };
+
+#if 0
         const unsigned highRepeatCountIndex(highRepeatCount-1);
+#endif
         for (unsigned patternRepeatCount=1; patternRepeatCount <= highRepeatCount; ++patternRepeatCount)
         {
             const unsigned patternRepeatCountIndex(patternRepeatCount-1);
+            const double theta(hcTheta[patternRepeatCountIndex]);
+#if 0
             const double highValueFraction(std::min(patternRepeatCountIndex,highRepeatCountIndex)/static_cast<double>(highRepeatCountIndex));
             const double theta((1.-highValueFraction)*lowRepeatTheta + highValueFraction*highRepeatTheta);
+#endif
             _priors[patternRepeatCountIndex].initialize(theta);
         }
     }
