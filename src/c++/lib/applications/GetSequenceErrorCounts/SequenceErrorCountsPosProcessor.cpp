@@ -612,7 +612,8 @@ process_pos_error_counts(
                 if ((indelReportInfo.repeat_unit_length == patternSize) && (indelReportInfo.ref_repeat_count > 1)) {
                     // guard against the occasional non-normalized indel:
                     const unsigned leftStrRepeatCount(get_left_shifted_str_repeat_count(patternSize, pos, _ref));
-                    if (leftStrRepeatCount == indelReportInfo.ref_repeat_count) {
+                    if (leftStrRepeatCount == indelReportInfo.ref_repeat_count)
+                    {
                         context = IndelErrorContext(patternSize,
                                                     std::min(maxStrRepeatCount, indelReportInfo.ref_repeat_count));
                     }
@@ -676,9 +677,24 @@ process_pos_error_counts(
     }
 
     // add all the contexts that haven't been covered already
-    for(auto patternSize : leftEndOfPatternVector)
     {
-        const unsigned leftStrRepeatCount(get_left_shifted_str_repeat_count(patternSize, pos, _ref));
+        // set to default context
+        unsigned leftStrRepeatCountSelected = 1;
+        unsigned patternSizeSelected = 1;
+
+        for (auto patternSize : leftEndOfPatternVector)
+        {
+            const unsigned  leftStrRepeatCount = get_left_shifted_str_repeat_count(patternSize, pos, _ref);
+            // only add the context once if it actually has a repetition
+            // this is kind of hacky and only works if the leftEndOfPatternVector is sorted
+            if(leftStrRepeatCount > 1)
+            {
+                leftStrRepeatCountSelected = leftStrRepeatCount;
+                patternSizeSelected = patternSize;
+                break;
+            }
+        }
+
         IndelErrorContext context;
         IndelBackgroundObservation obs;
         obs.depth = depth;
@@ -688,17 +704,9 @@ process_pos_error_counts(
         // regardless of whether the genotypes match
         obs.assignKnownStatus(knownVariantRecords);
 
-        context = IndelErrorContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
-        if (!indelObservations.count(context))
-        {
+        context = IndelErrorContext(patternSizeSelected, std::min(maxStrRepeatCount, leftStrRepeatCountSelected));
+        if (!indelObservations.count(context)) {
             indelCounts.addBackground(context, obs);
-        }
-
-        // only add the context once if it actually has a repetition
-        // this is kind of hacky and only works if the leftEndOfPatternVector is sorted
-        if(leftStrRepeatCount > 1)
-        {
-            break;
         }
     }
 
