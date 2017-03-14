@@ -362,8 +362,8 @@ process_pos_error_counts(
             IndelErrorContext indelContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
             indelCounts.addExcludedRegionSkip(indelContext);
 
-            // break out of the STR search loop if we are already on the far left of an STR track
-            if(leftStrRepeatCount != 1)
+            // break out of the STR search loop if we are already on the far left of a valid STR track
+            if(leftStrRepeatCount > 1)
             {
                 break;
             }
@@ -400,8 +400,8 @@ process_pos_error_counts(
                     IndelErrorContext indelContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
                     indelCounts.addExcludedRegionSkip(indelContext);
 
-                    // break out of the STR search loop if we are already on the far left of an STR track
-                    if(leftStrRepeatCount != 1)
+                    // break out of the STR search loop if we are already on the far left of a valid STR track
+                    if(leftStrRepeatCount > 1)
                     {
                         break;
                     }
@@ -604,8 +604,8 @@ process_pos_error_counts(
             const IndelData &indelData(orthogonalVariantAlleles.data(nonrefAlleleIndex));
             const AlleleReportInfo &indelReportInfo(indelData.getReportInfo());
 
-
-            IndelErrorContext context;
+            // set to default context
+            IndelErrorContext context(1, 1);
 
             for(auto patternSize : leftEndOfPatternVector)
             {
@@ -679,9 +679,7 @@ process_pos_error_counts(
     // add all the contexts that haven't been covered already
     {
         // set to default context
-        unsigned leftStrRepeatCountSelected = 1;
-        unsigned patternSizeSelected = 1;
-
+        IndelErrorContext context(1, 1);
         for (auto patternSize : leftEndOfPatternVector)
         {
             const unsigned  leftStrRepeatCount = get_left_shifted_str_repeat_count(patternSize, pos, _ref);
@@ -689,13 +687,11 @@ process_pos_error_counts(
             // this is kind of hacky and only works if the leftEndOfPatternVector is sorted
             if(leftStrRepeatCount > 1)
             {
-                leftStrRepeatCountSelected = leftStrRepeatCount;
-                patternSizeSelected = patternSize;
+                context = IndelErrorContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
                 break;
             }
         }
 
-        IndelErrorContext context;
         IndelBackgroundObservation obs;
         obs.depth = depth;
 
@@ -704,7 +700,6 @@ process_pos_error_counts(
         // regardless of whether the genotypes match
         obs.assignKnownStatus(knownVariantRecords);
 
-        context = IndelErrorContext(patternSizeSelected, std::min(maxStrRepeatCount, leftStrRepeatCountSelected));
         if (!indelObservations.count(context)) {
             indelCounts.addBackground(context, obs);
         }

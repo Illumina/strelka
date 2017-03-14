@@ -97,5 +97,6 @@ private:
     RegionTracker _excludedRegions;
     RecordTracker _knownVariants;
 
+    // indel pattern sizes to be counted
     const std::vector<unsigned> _indelPatternSizeVector = {1,2};
 };

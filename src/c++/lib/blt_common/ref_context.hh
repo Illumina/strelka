@@ -36,6 +36,7 @@ get_left_shifted_hpol_size(
     const reference_contig_segment& ref);
 
 /// checks whether the current position is the left end of an STR track
+/// includes shorter repeat sizes which have valid [patternSize] repetitions
 bool
 is_left_end_of_str(
         const unsigned patternSize,
@@ -44,6 +45,7 @@ is_left_end_of_str(
 
 /// get repeat count of the STR from the current position, given that this
 /// is the left-most position in the STR track, otherwise, return 1
+/// includes shorter repeat sizes which have valid [patternSize] repetitions
 unsigned
 get_left_shifted_str_repeat_count(
         const unsigned patternSize,
