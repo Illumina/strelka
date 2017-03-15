@@ -271,8 +271,6 @@ doHaplotypesMeetPhasingErrorCondition1(
     return false;
 }
 
-
-
 bool ActiveRegion::processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlignIdSet& haplotypeToAlignIdSet)
 {
     // determine threshold to select 2 haplotypes with the largest counts
@@ -453,7 +451,7 @@ bool ActiveRegion::processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlign
         // 1. the top two haplotypes are the same length and differ by only one basecall
         // 2. the second haplotype is observed exclusively on a single strand.
         // 3. that basecall difference is found at the (begin|end) of a homopolymer track, changing the base to match
-        //    the hpol base in the hap containing onlyh (rev|fwd) support.
+        //    the hpol base in the hap containing only (rev|fwd) support.
         // 5. the corresponding hpol is at least minPhaseErrorHpolSize in length (this is the hpol in hap1, not reference)
         //
         if (not secondBestHaplotypePtrList.empty())
