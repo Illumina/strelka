@@ -69,7 +69,7 @@ get_left_shifted_str_repeat_count(
 {
     unsigned size(1);
 
-    if (startPosition > 0)
+    if (startPosition > (int) patternSize - 1)
     {
         if(!is_left_end_of_str(patternSize, startPosition, ref))
         {
