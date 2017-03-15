@@ -277,7 +277,7 @@ score_candidate_alignment(
             n_seg=sinfo.n_seg;
 
             indelKey = getMatchingIndelKey(cal,ref_head_pos,sinfo.delete_length,sinfo.insert_length,
-                                                        ends,path_index);
+                                           ends,path_index);
 
             // a combined insert/delete event should not produce a breakpoint:
             assert(not indelKey.is_breakpoint());
@@ -341,7 +341,7 @@ score_candidate_alignment(
         else if (ps.type==INSERT)
         {
             indelKey = getMatchingIndelKey(cal,ref_head_pos,0,ps.length,
-                                                        ends,path_index);
+                                           ends,path_index);
 
             const string_bam_seq insert_bseq(getInsertSeq(indelKey,indelBuffer,cal));
 
@@ -380,7 +380,7 @@ score_candidate_alignment(
             if (ps.type==DELETE)
             {
                 indelKey = getMatchingIndelKey(cal,ref_head_pos,ps.length,0,
-                                                            ends,path_index);
+                                               ends,path_index);
             }
 
 #ifdef DEBUG_SCORE

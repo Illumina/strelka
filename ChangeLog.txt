@@ -1,3 +1,4 @@
+- STREL-465 Filter germline haplotypes with phasing error signature
 - STREL-460 do not assess indel candidacy in active regions if assembly fails
 - STREL-454 penalize for non-candidate indels in alignment scoring
 - STREL-443 Remove old germline caller target BED file option

@@ -258,7 +258,7 @@ getDuplicatesInSortedInput(
 {
     typedef typename std::iterator_traits<Iter>::value_type vtype;
     std::set<vtype> dups;
-    while((begin1 != end1) and (begin2 != end2))
+    while ((begin1 != end1) and (begin2 != end2))
     {
         if (*begin1 < *begin2)
         {
@@ -354,15 +354,16 @@ isFilterSecondHaplotypeAsSequencerPhasingNoise(
     // 2d: identify stranded counts:
 
     /// \return unique fwd-strand counts
-    auto getHaplotypeNonDupFwdCount = [&](const std::vector<align_id_t>& alignIdList) {
-            unsigned fwdCount(0);
-            for (const auto alignId : alignIdList)
-            {
-                if (dups.count(alignId) > 0) continue;
-                if (readBuffer.getAlignInfo(alignId).isForwardStrand) fwdCount++;
-            }
-            return fwdCount;
-        };
+    auto getHaplotypeNonDupFwdCount = [&](const std::vector<align_id_t>& alignIdList)
+    {
+        unsigned fwdCount(0);
+        for (const auto alignId : alignIdList)
+        {
+            if (dups.count(alignId) > 0) continue;
+            if (readBuffer.getAlignInfo(alignId).isForwardStrand) fwdCount++;
+        }
+        return fwdCount;
+    };
 
     const unsigned hap2UniqueFwdCount(getHaplotypeNonDupFwdCount(hap2AlignIdList));
     assert(hap2UniqueFwdCount <= hap2UniqueCount);
