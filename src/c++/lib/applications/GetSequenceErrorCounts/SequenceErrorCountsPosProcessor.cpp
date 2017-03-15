@@ -340,7 +340,7 @@ process_pos_error_counts(
     std::vector<unsigned> leftEndOfPatternVector(0);
     std::vector<unsigned> notLeftEndOfPatternVector(0);
     for(auto patternSize : _indelPatternSizeVector) {
-        if (is_left_end_of_str(patternSize, pos, _ref))
+        if (isLeftEndOfStr(patternSize, pos, _ref))
         {
             leftEndOfPatternVector.push_back(patternSize);
         } else
@@ -358,7 +358,7 @@ process_pos_error_counts(
 
         for(auto patternSize : notLeftEndOfPatternVector)
         {
-            const unsigned leftStrRepeatCount(get_left_shifted_str_repeat_count(patternSize, pos, _ref));
+            const unsigned leftStrRepeatCount(getLeftShiftedStrRepeatCount(patternSize, pos, _ref));
             IndelErrorContext indelContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
             indelCounts.addExcludedRegionSkip(indelContext);
 
@@ -396,7 +396,7 @@ process_pos_error_counts(
             {
                 for(auto patternSize : notLeftEndOfPatternVector)
                 {
-                    const unsigned leftStrRepeatCount(get_left_shifted_str_repeat_count(patternSize, pos, _ref));
+                    const unsigned leftStrRepeatCount(getLeftShiftedStrRepeatCount(patternSize, pos, _ref));
                     IndelErrorContext indelContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
                     indelCounts.addExcludedRegionSkip(indelContext);
 
@@ -611,7 +611,7 @@ process_pos_error_counts(
             {
                 if ((indelReportInfo.repeat_unit_length == patternSize) && (indelReportInfo.ref_repeat_count > 1)) {
                     // guard against the occasional non-normalized indel:
-                    const unsigned leftStrRepeatCount(get_left_shifted_str_repeat_count(patternSize, pos, _ref));
+                    const unsigned leftStrRepeatCount(getLeftShiftedStrRepeatCount(patternSize, pos, _ref));
                     if (leftStrRepeatCount == indelReportInfo.ref_repeat_count)
                     {
                         context = IndelErrorContext(patternSize,
@@ -682,7 +682,7 @@ process_pos_error_counts(
         IndelErrorContext context(1, 1);
         for (auto patternSize : leftEndOfPatternVector)
         {
-            const unsigned  leftStrRepeatCount = get_left_shifted_str_repeat_count(patternSize, pos, _ref);
+            const unsigned  leftStrRepeatCount = getLeftShiftedStrRepeatCount(patternSize, pos, _ref);
             // only add the context once if it actually has a repetition
             // this is kind of hacky and only works if the leftEndOfPatternVector is sorted
             if(leftStrRepeatCount > 1)

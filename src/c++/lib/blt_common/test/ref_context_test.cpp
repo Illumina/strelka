@@ -83,6 +83,30 @@ BOOST_AUTO_TEST_CASE( test_interrupted_hpol_size )
     single_ihpol_test(1,ref,4);
 }
 
+BOOST_AUTO_TEST_CASE( testLeftShiftedStrSize )
+{
+    reference_contig_segment ref;
+    ref.seq() = "TTGTTTGAGAGATTTTGATGATGAA";
+
+    const std::vector<unsigned> repeatPatternSizeVector = {1,2,3};
+    const std::vector<std::vector<unsigned>> expectedResultVector = {
+            {2,1,1,3,1,1,1,1,1,1,1,1,4,1,1,1,1,1,1,1,1,1,1,2,1},
+            {1,1,1,1,1,1,3,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1},
+            {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1},
+    };
+
+    const pos_t seqEnd = ref.end();
+
+    for(unsigned r = 0; r < repeatPatternSizeVector.size(); r++)
+    {
+
+        for(pos_t position = 0; position < seqEnd; position++)
+        {
+            BOOST_REQUIRE_EQUAL(getLeftShiftedStrRepeatCount(repeatPatternSizeVector[r], position, ref), expectedResultVector[r][position]);
+        }
+    }
+}
+
 
 BOOST_AUTO_TEST_SUITE_END()
 

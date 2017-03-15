@@ -51,10 +51,10 @@ get_left_shifted_hpol_size(
 }
 
 bool
-is_left_end_of_str(
+isLeftEndOfStr(
         const unsigned patternSize,
         const pos_t pos,
-        const reference_contig_segment& ref)
+        const reference_contig_segment &ref)
 {
     // the current position cannot be the start of an STR track
     // if the previous base is the same as the end of the potential pattern
@@ -62,16 +62,16 @@ is_left_end_of_str(
 }
 
 unsigned
-get_left_shifted_str_repeat_count(
+getLeftShiftedStrRepeatCount(
         const unsigned patternSize,
         const pos_t startPosition,
-        const reference_contig_segment& ref)
+        const reference_contig_segment &ref)
 {
     unsigned size(1);
 
     if (startPosition > (int) patternSize - 1)
     {
-        if(!is_left_end_of_str(patternSize, startPosition, ref))
+        if(!isLeftEndOfStr(patternSize, startPosition, ref))
         {
             return size;
         }
@@ -80,7 +80,7 @@ get_left_shifted_str_repeat_count(
     const pos_t endOfRef(ref.end());
     for (pos_t posInRef(startPosition + patternSize); posInRef < endOfRef; posInRef += patternSize)
     {
-        if(!compare_repeat_pattern(patternSize, startPosition, posInRef, ref))
+        if(!compareRepeatPattern(patternSize, startPosition, posInRef, ref))
         {
             break;
         }
@@ -90,11 +90,11 @@ get_left_shifted_str_repeat_count(
 }
 
 bool
-compare_repeat_pattern(
+compareRepeatPattern(
         const unsigned repeatPatternSize,
         const unsigned pos1,
         const unsigned pos2,
-        const reference_contig_segment& ref)
+        const reference_contig_segment &ref)
 {
     for(int posInPattern(repeatPatternSize -1 ); posInPattern >= 0; posInPattern--)
     {
