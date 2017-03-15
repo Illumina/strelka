@@ -106,6 +106,36 @@ compareRepeatPattern(
     return true;
 }
 
+void searchForStr(
+        const unsigned patternSize,
+        const unsigned pos,
+        bool &isBaseInStr,
+        bool &isBaseLeftEndOfStr,
+        const reference_contig_segment &ref)
+{
+    isBaseInStr = false;
+    isBaseLeftEndOfStr = false;
+
+    // start from the k-mer at pos vs. k-mer at pos+k
+    // end at k-mer at pos-k-patternSize+1 vs. k-mer at pos-patternSize+1
+    for(unsigned p = 0; p < patternSize; p++)
+    {
+        if(compareRepeatPattern(patternSize, pos - p, pos + patternSize - p, ref))
+        {
+            if(0 == p && isLeftEndOfStr(patternSize, pos, ref))
+            {
+                isBaseLeftEndOfStr = true;
+            }
+            isBaseInStr = true;
+            return;
+        }
+        if(compareRepeatPattern(patternSize, pos - p, pos - patternSize - p, ref))
+        {
+            isBaseInStr = true;
+            return;
+        }
+    }
+}
 
 unsigned
 get_snp_hpol_size(const pos_t pos,

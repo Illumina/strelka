@@ -60,6 +60,14 @@ compareRepeatPattern(
         const unsigned pos2,
         const reference_contig_segment &ref);
 
+/// searches for an STR track around the base
+void searchForStr(
+        const unsigned patternSize,
+        const unsigned pos,
+        bool &isBaseInStr,
+        bool &isBaseLeftEndOfStr,
+        const reference_contig_segment &ref);
+
 /// Get the length of the longest homopolymer containing the current
 /// position if this position can be treated as any base.
 ///

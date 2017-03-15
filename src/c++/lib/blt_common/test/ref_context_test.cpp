@@ -107,6 +107,40 @@ BOOST_AUTO_TEST_CASE( testLeftShiftedStrSize )
     }
 }
 
+BOOST_AUTO_TEST_CASE( testSearchForStr )
+{
+    reference_contig_segment ref;
+    ref.seq() = "TTGTTTGAGAGATTTTGATGATGAA";
+//                 0123456789012345
+    const std::vector<unsigned> repeatPatternSizeVector = {1,2,3};
+
+    const std::vector<std::vector<unsigned>> expectedResultVectorInStr = {
+            {1,1,0,1,1,1,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,1,1},
+            {0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0},
+    };
+    const std::vector<std::vector<unsigned>> expectedResultVectorLeftEndOfStr = {
+            {1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0},
+            {0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0},
+    };
+
+    const pos_t seqEnd = ref.end();
+
+    bool isBaseInStr(false);
+    bool isBaseLeftEndOfStr(false);
+
+    for(unsigned r = 0; r < repeatPatternSizeVector.size(); r++)
+    {
+        for(pos_t position = 0; position < seqEnd; position++)
+        {
+            searchForStr(repeatPatternSizeVector[r], position, isBaseInStr, isBaseLeftEndOfStr, ref);
+            BOOST_REQUIRE_EQUAL(isBaseInStr, expectedResultVectorInStr[r][position]);
+            BOOST_REQUIRE_EQUAL(isBaseLeftEndOfStr, expectedResultVectorLeftEndOfStr[r][position]);
+        }
+    }
+
+}
 
 BOOST_AUTO_TEST_SUITE_END()
 

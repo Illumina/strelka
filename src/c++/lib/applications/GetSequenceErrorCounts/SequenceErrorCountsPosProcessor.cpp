@@ -302,8 +302,6 @@ mergeIndelObservations(
     }
 }
 
-
-
 void
 SequenceErrorCountsPosProcessor::
 process_pos_error_counts(
@@ -336,18 +334,22 @@ process_pos_error_counts(
     bool isSkipSNV(false);
     bool isSkipIndel(false);
 
+    bool isBaseInStr(false);
+    bool isBaseLeftEndOfStr(false);
+    unsigned patternSize(1); // defaults to 1 if the base is not in an STR track
 
-    std::vector<unsigned> leftEndOfPatternVector(0);
-    std::vector<unsigned> notLeftEndOfPatternVector(0);
-    for(auto patternSize : _indelPatternSizeVector) {
-        if (isLeftEndOfStr(patternSize, pos, _ref))
+    // find the pattern size of the STR track the current base is in
+    // use the smaller pattern size if the base is in two STR tracks (e.g., pos 2 in AAAGAG is in the hpol track
+    for(auto p : _indelPatternSizeVector)
+    {
+        searchForStr(p, pos, isBaseInStr, isBaseLeftEndOfStr, _ref);
+        if (isBaseInStr)
         {
-            leftEndOfPatternVector.push_back(patternSize);
-        } else
-        {
-            notLeftEndOfPatternVector.push_back(patternSize);
+            patternSize = p;
+            break;
         }
     }
+
 
     if (_excludedRegions.isIntersectRegion(pos))
     {
@@ -356,18 +358,12 @@ process_pos_error_counts(
         baseCounts.addExcludedRegionSkip(baseContext);
         isSkipSNV=true;
 
-        for(auto patternSize : notLeftEndOfPatternVector)
+        // add only if the base is in an STR track but not the left end of it
+        if(isBaseInStr && !isBaseLeftEndOfStr)
         {
             const unsigned leftStrRepeatCount(getLeftShiftedStrRepeatCount(patternSize, pos, _ref));
             IndelErrorContext indelContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
             indelCounts.addExcludedRegionSkip(indelContext);
-
-            // break out of the STR search loop if we are already on the far left of a valid STR track
-            if(leftStrRepeatCount > 1)
-            {
-                break;
-            }
-
         }
         isSkipIndel=true;
     }
@@ -394,18 +390,12 @@ process_pos_error_counts(
             const unsigned estdepth2(sif.estdepth_buff_tier2.val(pos-1));
             if ((estdepth+estdepth2) > _max_candidate_normal_sample_depth)
             {
-                for(auto patternSize : notLeftEndOfPatternVector)
+                // add only if the base is in an STR track but not the left end of it
+                if(isBaseInStr && !isBaseLeftEndOfStr)
                 {
                     const unsigned leftStrRepeatCount(getLeftShiftedStrRepeatCount(patternSize, pos, _ref));
                     IndelErrorContext indelContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
                     indelCounts.addExcludedRegionSkip(indelContext);
-
-                    // break out of the STR search loop if we are already on the far left of a valid STR track
-                    if(leftStrRepeatCount > 1)
-                    {
-                        break;
-                    }
-
                 }
                 isSkipIndel=true;
             }
@@ -487,7 +477,8 @@ process_pos_error_counts(
     // that covers these errors for now.
     //
 
-    if(leftEndOfPatternVector.size() == 0)
+    // return if the base is within an STR but not the left most base
+    if(isBaseInStr && !isBaseLeftEndOfStr)
     {
         return;
     }
@@ -604,21 +595,18 @@ process_pos_error_counts(
             const IndelData &indelData(orthogonalVariantAlleles.data(nonrefAlleleIndex));
             const AlleleReportInfo &indelReportInfo(indelData.getReportInfo());
 
-            // set to default context
-            IndelErrorContext context(1, 1);
+            IndelErrorContext context;
 
-            for(auto patternSize : leftEndOfPatternVector)
-            {
-                if ((indelReportInfo.repeat_unit_length == patternSize) && (indelReportInfo.ref_repeat_count > 1)) {
-                    // guard against the occasional non-normalized indel:
-                    const unsigned leftStrRepeatCount(getLeftShiftedStrRepeatCount(patternSize, pos, _ref));
-                    if (leftStrRepeatCount == indelReportInfo.ref_repeat_count)
-                    {
-                        context = IndelErrorContext(patternSize,
-                                                    std::min(maxStrRepeatCount, indelReportInfo.ref_repeat_count));
-                    }
+            if ((indelReportInfo.repeat_unit_length == patternSize) && (indelReportInfo.ref_repeat_count > 1)) {
+                // guard against the occasional non-normalized indel:
+                const unsigned leftStrRepeatCount(getLeftShiftedStrRepeatCount(patternSize, pos, _ref));
+                if (leftStrRepeatCount == indelReportInfo.ref_repeat_count)
+                {
+                    context = IndelErrorContext(patternSize,
+                                                std::min(maxStrRepeatCount, indelReportInfo.ref_repeat_count));
                 }
             }
+
 
 
             // check to see if this indel is (likely to be) a match to a known variant
@@ -678,19 +666,15 @@ process_pos_error_counts(
 
     // add all the contexts that haven't been covered already
     {
-        // set to default context
-        IndelErrorContext context(1, 1);
-        for (auto patternSize : leftEndOfPatternVector)
+        IndelErrorContext context;
+
+        if(isBaseInStr)
         {
-            const unsigned  leftStrRepeatCount = getLeftShiftedStrRepeatCount(patternSize, pos, _ref);
-            // only add the context once if it actually has a repetition
-            // this is kind of hacky and only works if the leftEndOfPatternVector is sorted
-            if(leftStrRepeatCount > 1)
-            {
-                context = IndelErrorContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
-                break;
-            }
+            const unsigned leftStrRepeatCount = getLeftShiftedStrRepeatCount(patternSize, pos, _ref);
+            context = IndelErrorContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
         }
+
+
 
         IndelBackgroundObservation obs;
         obs.depth = depth;
