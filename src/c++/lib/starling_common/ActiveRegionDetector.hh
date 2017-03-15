@@ -66,12 +66,10 @@ public:
     /// \param sampleCount sample count
     ActiveRegionDetector(
         const reference_contig_segment& ref,
-        const sampleReadBuffers_t& sampleReadBuffers,
         IndelBuffer& indelBuffer,
         unsigned maxIndelSize,
         unsigned sampleCount) :
         _ref(ref),
-        _sampleReadBuffers(sampleReadBuffers),
         _readBuffer(ref, sampleCount, indelBuffer),
         _indelBuffer(indelBuffer),
         _maxIndelSize(maxIndelSize),
@@ -137,7 +135,6 @@ private:
     };
 
     const reference_contig_segment& _ref;
-    const sampleReadBuffers_t _sampleReadBuffers;
     ActiveRegionReadBuffer _readBuffer;
 
     IndelBuffer& _indelBuffer;

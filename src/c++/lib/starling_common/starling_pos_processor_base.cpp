@@ -305,12 +305,7 @@ void
 starling_pos_processor_base::
 resetActiveRegionDetector()
 {
-    std::vector<std::reference_wrapper<const starling_read_buffer>> sampleReadBuffers;
-    for (const auto& sampleVal : _sample)
-    {
-        sampleReadBuffers.push_back(std::cref(sampleVal->read_buff));
-    }
-    _active_region_detector.reset(new ActiveRegionDetector(_ref, sampleReadBuffers, _indelBuffer, _opt.max_indel_size, getSampleCount()));
+    _active_region_detector.reset(new ActiveRegionDetector(_ref, _indelBuffer, _opt.max_indel_size, getSampleCount()));
 }
 
 

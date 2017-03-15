@@ -400,7 +400,6 @@ bool ActiveRegion::processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlign
         //
         // lambda used to get stranded read counts in downstream noise filtration functions:
         //
-        const starling_read_buffer& globalReadBuffer(_sampleReadBuffers[sampleId]);
         auto getHaplotypeNonDupFwdCount = [&](const std::string& haplotype) {
                 unsigned fwdCount(0);
                 const auto hapMapIter(haplotypeToAlignIdSet.find(haplotype));
@@ -410,9 +409,7 @@ bool ActiveRegion::processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlign
                 for (const auto alignId : alignIdList)
                 {
                     if (dups.count(alignId) > 0) continue;
-                    const starling_read* sreadPtr(globalReadBuffer.get_read(alignId));
-                    assert(sreadPtr != nullptr);
-                    if (sreadPtr->is_fwd_strand()) fwdCount++;
+                    if (_readBuffer.getAlignInfo(alignId).isForwardStrand) fwdCount++;
                 }
                 return fwdCount;
             };

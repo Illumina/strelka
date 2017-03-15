@@ -345,7 +345,7 @@ addAlignmentIndelsToPosProcessor(
     auto& active_region_detector(posProcessor.getActiveRegionDetector());
     if (posProcessor.is_active_region_detector_enabled())
     {
-        active_region_detector.getReadBuffer().setAlignInfo(id, sample_no, iat);
+        active_region_detector.getReadBuffer().setAlignInfo(id, sample_no, iat, al.is_fwd_strand);
     }
 
     while (path_index<aps)

@@ -37,6 +37,7 @@ struct AlignInfo
 {
     unsigned sampleId;
     INDEL_ALIGN_TYPE::index_t indelAlignType;
+    bool isForwardStrand;
 };
 
 struct ReadInfo
@@ -163,11 +164,12 @@ public:
     /// \param alignId align id
     /// \param sampleId sample id
     /// \param indelAlignType indel align type
-    void setAlignInfo(const align_id_t alignId, unsigned sampleId, INDEL_ALIGN_TYPE::index_t indelAlignType)
+    void setAlignInfo(const align_id_t alignId, unsigned sampleId, INDEL_ALIGN_TYPE::index_t indelAlignType, const bool isForwardStrand)
     {
         AlignInfo& alignInfo = _alignIdToAlignInfo[alignId % MaxDepth];
         alignInfo.sampleId = sampleId;
         alignInfo.indelAlignType = indelAlignType;
+        alignInfo.isForwardStrand = isForwardStrand;
     }
 
     /// Gets sample id
