@@ -25,7 +25,7 @@
 #include "ActiveRegion.hh"
 
 #include "assembly/IterativeAssembler.hh"
-#include "blt_util/math_util.hh"
+#include "blt_util/algo_util.hh"
 
 #include "boost/algorithm/string.hpp"
 
@@ -244,38 +244,6 @@ void ActiveRegion::doNotUseHaplotyping()
         if (indelKey.is_breakpoint()) continue;
         indelData.isConfirmedInActiveRegion = true;
     }
-}
-
-
-/// return the duplicate set from two sorted streams
-///
-/// TODO: add an assertion that inputs are sorted?
-template <typename Iter>
-std::set<typename std::iterator_traits<Iter>::value_type>
-getDuplicatesInSortedInput(
-    Iter begin1, const Iter end1,
-    Iter begin2, const Iter end2)
-{
-    typedef typename std::iterator_traits<Iter>::value_type vtype;
-    std::set<vtype> dups;
-    while ((begin1 != end1) and (begin2 != end2))
-    {
-        if (*begin1 < *begin2)
-        {
-            begin1++;
-        }
-        else if (*begin2 < *begin1)
-        {
-            begin2++;
-        }
-        else
-        {
-            dups.insert(*begin1);
-            begin1++;
-            begin2++;
-        }
-    }
-    return std::move(dups);
 }
 
 
