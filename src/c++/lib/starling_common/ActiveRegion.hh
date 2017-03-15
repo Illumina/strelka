@@ -30,7 +30,6 @@
 #include "blt_util/align_path.hh"
 #include "IndelBuffer.hh"
 #include "ActiveRegionReadBuffer.hh"
-#include "starling_read_buffer.hh"
 
 #include <string>
 #include <map>
