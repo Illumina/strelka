@@ -120,7 +120,8 @@ void searchForStr(
     // end at k-mer at pos-k-patternSize+1 vs. k-mer at pos-patternSize+1
     for(unsigned p = 0; p < patternSize; p++)
     {
-        if(compareRepeatPattern(patternSize, pos - p, pos + patternSize - p, ref))
+        if(compareRepeatPattern(patternSize, pos - p, pos + patternSize - p, ref) ||
+           compareRepeatPattern(patternSize, pos - p, pos - patternSize - p, ref))
         {
             if(0 == p && isLeftEndOfStr(patternSize, pos, ref))
             {
@@ -129,12 +130,8 @@ void searchForStr(
             isBaseInStr = true;
             return;
         }
-        if(compareRepeatPattern(patternSize, pos - p, pos - patternSize - p, ref))
-        {
-            isBaseInStr = true;
-            return;
-        }
     }
+
 }
 
 unsigned
