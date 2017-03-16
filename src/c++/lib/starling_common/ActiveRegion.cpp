@@ -38,20 +38,28 @@ void ActiveRegion::processHaplotypes()
     if (_readBuffer.getEndPos() < _posRange.end_pos)
         _posRange.set_end_pos(_readBuffer.getEndPos());
 
-    for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
+    // if reference span is too large, give up haplotyping
+    if (_posRange.size() > MaxRefSpanToBypassAssembly)
     {
-        bool isHaplotypingSuccess = processHaplotypesWithCounting(sampleId);
-        if (not isHaplotypingSuccess)
+        doNotUseHaplotyping();
+    }
+    else
+    {
+        for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
         {
-            // counting failed. Try assembly.
-            isHaplotypingSuccess = processHaplotypesWithAssembly(sampleId);
-        }
+            bool isHaplotypingSuccess = processHaplotypesWithCounting(sampleId);
+            if (not isHaplotypingSuccess)
+            {
+                // counting failed. Try assembly.
+                isHaplotypingSuccess = processHaplotypesWithAssembly(sampleId);
+            }
 
-        if (not isHaplotypingSuccess)
-        {
-            // both counting and assembly failed
-            // do not use haplotyping to determine indel candidacy
-            doNotUseHaplotyping();
+            if (not isHaplotypingSuccess)
+            {
+                // both counting and assembly failed
+                // do not use haplotyping to determine indel candidacy
+                doNotUseHaplotyping();
+            }
         }
     }
 }
@@ -65,7 +73,7 @@ bool ActiveRegion::processHaplotypesWithCounting(unsigned sampleId)
     unsigned numReadsCoveringFullRegion((unsigned int) readInfo.readSegments.size());
 
     // if there are not enough reads fully covering the region, give up counting
-    if (numReadsCoveringFullRegion < MinFracReadsCoveringRegion*numReads)
+    if ((numReads == 0) or (numReadsCoveringFullRegion < MinFracReadsCoveringRegion*numReads))
         return false;
 
     HaplotypeToAlignIdSet haplotypeToAlignIdSet;
@@ -94,12 +102,6 @@ bool ActiveRegion::processHaplotypesWithCounting(unsigned sampleId)
 
 bool ActiveRegion::processHaplotypesWithAssembly(unsigned sampleId)
 {
-    // if reference span is too large, give up assembly
-    if (_posRange.size() > MaxRefSpanToBypassAssembly)
-    {
-        return false;   // assembly fail; bypass indels
-    }
-
     // Expand the region to include left/right anchors.
     // TODO: anchors may be too short if there are SNVs close to anchors
     // prefix anchor
@@ -122,9 +124,6 @@ bool ActiveRegion::processHaplotypesWithAssembly(unsigned sampleId)
     {
         if (_readBuffer.isCandidateVariant(endPos)) break;
     }
-
-    std::string refStr;
-    _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
 
     // prefix anchor ends with the first base of the active region
     std::string prefixAnchor;
@@ -185,6 +184,11 @@ bool ActiveRegion::processHaplotypesWithAssembly(unsigned sampleId)
 
     HaplotypeToAlignIdSet haplotypeToAlignIdSet;
     unsigned maxHaplotypeLength(0);
+    unsigned isNonRefHaplotype(false);
+
+    std::string refStr;
+    _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
+
     for (unsigned i(0); i<contigs.size(); ++i)
     {
         const std::string& contig(contigs[i].seq);
@@ -205,6 +209,8 @@ bool ActiveRegion::processHaplotypesWithAssembly(unsigned sampleId)
 
         const std::string haplotype(contig.substr(start, end-start));
 
+        if (haplotype != refStr)
+            isNonRefHaplotype = true;
         if (haplotype.length() > maxHaplotypeLength)
             maxHaplotypeLength = (unsigned int) haplotype.length();
         haplotypeToAlignIdSet[haplotype] = std::vector<align_id_t>();
@@ -221,6 +227,8 @@ bool ActiveRegion::processHaplotypesWithAssembly(unsigned sampleId)
         }
     }
 
+    if (not isNonRefHaplotype)
+        return false;
     if (haplotypeToAlignIdSet.empty())
         return false;    // assembly fail; bypass indels
 
