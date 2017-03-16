@@ -61,84 +61,31 @@ get_het_observed_allele_ratio(
     double& log_ref_prob,
     double& log_indel_prob);
 
+/// get heterozygous indel likelihoods for non-canonical allele ratios
+void
+get_high_low_het_ratio_lhood(
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
+    const starling_sample_options& sample_opt,
+    const IndelKey& indelKey,
+    const IndelSampleData& indelSampleData,
+    const double het_ratio,
+    const bool is_include_tier2,
+    const bool is_use_alt_indel,
+    double& het_lhood_high,
+    double& het_lhood_low);
 
-/// precalculates prior distributions based on theta value:
+/// get diploid indel likelihoods
 ///
-struct indel_digt_caller : private boost::noncopyable
-{
-    explicit
-    indel_digt_caller(const double theta);
-
-#if 0
-    /// \brief call an indel @ pos by calculating the posterior probability
-    /// of all possible genotypes for a diploid individual.
-    ///
-    void
-    starling_indel_call_pprob_digt(
-        const starling_base_options& client_opt,
-        const starling_base_deriv_options& client_dopt,
-        const starling_sample_options& sample_opt,
-        const IndelKey& indelKey,
-        const IndelSampleData& indelSampleData,
-        const bool is_use_alt_indel,
-        starling_diploid_indel& dindel) const;
-#endif
-
-    const double*
-    lnprior_genomic(const bool is_haploid = false) const
-    {
-        return get_prior(is_haploid).genome;
-    }
-
-    // this prior isn't current used for single-sample indel calling
-    // itself, but is available for indel_digt_caller clients:
-    //
-    const double*
-    lnprior_polymorphic(const bool is_haploid = false) const
-    {
-        return get_prior(is_haploid).poly;
-    }
-
-    static
-    void
-    get_high_low_het_ratio_lhood(
-        const starling_base_options& opt,
-        const starling_base_deriv_options& dopt,
-        const starling_sample_options& sample_opt,
-        const IndelKey& indelKey,
-        const IndelSampleData& indelSampleData,
-        const double het_ratio,
-        const bool is_include_tier2,
-        const bool is_use_alt_indel,
-        double& het_lhood_high,
-        double& het_lhood_low);
-
-    static
-    void
-    get_indel_digt_lhood(
-        const starling_base_options& opt,
-        const starling_base_deriv_options& dopt,
-        const starling_sample_options& sample_opt,
-        const IndelKey& indelKey,
-        const IndelSampleData& indelSampleData,
-        const bool is_include_tier2,
-        const bool is_use_alt_indel,
-        double* const lhood);
-
-    struct prior_group
-    {
-        double genome[STAR_DIINDEL::SIZE];
-        double poly[STAR_DIINDEL::SIZE];
-    };
-
-private:
-
-    const prior_group&
-    get_prior(const bool is_haploid) const
-    {
-        return (is_haploid ? _lnprior_haploid : _lnprior);
-    }
-
-    prior_group _lnprior;
-    prior_group _lnprior_haploid;
-};
+/// this is the old function for diploid likelihoods, which assumes we're evaluating one indel at a time without
+/// considering overlap.
+void
+get_indel_digt_lhood(
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
+    const starling_sample_options& sample_opt,
+    const IndelKey& indelKey,
+    const IndelSampleData& indelSampleData,
+    const bool is_include_tier2,
+    const bool is_use_alt_indel,
+    double* const lhood);

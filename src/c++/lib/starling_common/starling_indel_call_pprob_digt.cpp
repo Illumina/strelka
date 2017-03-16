@@ -22,17 +22,10 @@
 ///
 
 #include "blt_util/math_util.hh"
-#include "blt_util/prob_util.hh"
 #include "starling_common/AlleleReportInfoUtil.hh"
-#include "starling_common/indel_util.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 
-#include <cassert>
-#include <cmath>
-#include <cstdlib>
-
 #include <iostream>
-#include <iomanip>
 
 
 //#define DEBUG_INDEL_CALL
@@ -40,55 +33,6 @@
 #ifdef DEBUG_INDEL_CALL
 #include "blt_util/log.hh"
 #endif
-
-
-
-static
-void
-set_diploid_prior(
-    const double theta,
-    indel_digt_caller::prior_group& prior)
-{
-    using namespace STAR_DIINDEL;
-
-    prior.genome[NOINDEL]=log1p_switch(-(3.*theta)/2.);
-    prior.genome[HOM]=std::log(theta/2.);
-    prior.genome[HET]=std::log(theta);
-
-    prior.poly[NOINDEL]=std::log(0.25);
-    prior.poly[HOM]=std::log(0.25);
-    prior.poly[HET]=std::log(0.5);
-}
-
-
-
-static
-void
-set_haploid_prior(
-    const double theta,
-    indel_digt_caller::prior_group& prior)
-{
-    static const double log0(-std::numeric_limits<double>::infinity());
-
-    using namespace STAR_DIINDEL;
-
-    prior.genome[NOINDEL]=log1p_switch(-theta);
-    prior.genome[HOM]=std::log(theta);
-    prior.genome[HET]=log0;
-
-    prior.poly[NOINDEL]=std::log(0.5);
-    prior.poly[HOM]=std::log(0.5);
-    prior.poly[HET]=log0;
-}
-
-
-
-indel_digt_caller::
-indel_digt_caller(const double theta)
-{
-    set_diploid_prior(theta,_lnprior);
-    set_haploid_prior(theta,_lnprior_haploid);
-}
 
 
 
@@ -141,7 +85,6 @@ get_het_observed_allele_ratio(
 
 
 void
-indel_digt_caller::
 get_high_low_het_ratio_lhood(
     const starling_base_options& /*opt*/,
     const starling_base_deriv_options& dopt,
@@ -243,10 +186,10 @@ increment_het_ratio_lhood(
     double het_lhood_high;
     double het_lhood_low;
 
-    indel_digt_caller::get_high_low_het_ratio_lhood(opt,dopt,sample_opt,
-                                                    indelKey,indelSampleData,het_ratio,is_tier2_pass,
-                                                    is_use_alt_indel,
-                                                    het_lhood_high,het_lhood_low);
+    get_high_low_het_ratio_lhood(opt,dopt,sample_opt,
+                                 indelKey,indelSampleData,het_ratio,is_tier2_pass,
+                                 is_use_alt_indel,
+                                 het_lhood_high,het_lhood_low);
 
     lhood[STAR_DIINDEL::HET] = log_sum(lhood[STAR_DIINDEL::HET],het_lhood_low);
     lhood[STAR_DIINDEL::HET] = log_sum(lhood[STAR_DIINDEL::HET],het_lhood_high);
@@ -254,8 +197,6 @@ increment_het_ratio_lhood(
 
 
 
-/// total the path likelihoods of ref,indel and alt_indel states
-///
 void
 get_sum_path_pprob(
     const starling_base_deriv_options& dopt,
@@ -310,7 +251,6 @@ get_sum_path_pprob(
 
 
 void
-indel_digt_caller::
 get_indel_digt_lhood(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
@@ -405,74 +345,3 @@ get_indel_digt_lhood(
         lhood[STAR_DIINDEL::HET] -= subgt_log_prior;
     }
 }
-
-
-#if 0
-///
-///
-void
-indel_digt_caller::
-starling_indel_call_pprob_digt(
-    const starling_base_options& opt,
-    const starling_base_deriv_options& dopt,
-    const starling_sample_options& sample_opt,
-    const IndelKey& indelKey,
-    const IndelSampleData& indelSampleData,
-    const bool is_use_alt_indel,
-    starling_diploid_indel& dindel) const
-{
-    // no immediate plans to include this for regular indel-calling:
-    static const bool is_tier2_pass(false);
-
-    const bool is_haploid(dindel.ploidy.isHaploid());
-
-    // get likelihood of each genotype:
-    double lhood[STAR_DIINDEL::SIZE];
-    get_indel_digt_lhood(opt,dopt,sample_opt,indelKey,indelSampleData,
-                         is_tier2_pass,is_use_alt_indel,lhood);
-
-    // mult by prior distro to get unnormalized pprob:
-    {
-        const double* indel_lnprior(lnprior_genomic(is_haploid));
-        for (unsigned gt(0); gt<STAR_DIINDEL::SIZE; ++gt)
-        {
-            dindel.pprob[gt] = lhood[gt] + indel_lnprior[gt];
-        }
-    }
-
-    normalize_ln_distro(dindel.pprob.begin(),dindel.pprob.end(),dindel.max_gt);
-
-#ifdef DEBUG_INDEL_CALL
-    log_os << "INDEL_CALL pprob(noindel),pprob(hom),pprob(het): " << dindel.pprob[STAR_DIINDEL::NOINDEL] << " " << dindel.pprob[STAR_DIINDEL::HOM] << " " << dindel.pprob[STAR_DIINDEL::HET] << "\n";
-#endif
-
-    dindel.indel_qphred=error_prob_to_qphred(dindel.pprob[STAR_DIINDEL::NOINDEL]);
-    dindel.max_gt_qphred=error_prob_to_qphred(prob_comp(dindel.pprob.begin(),dindel.pprob.end(),dindel.max_gt));
-
-    // set phredLoghood:
-    {
-        unsigned gtcount(STAR_DIINDEL::SIZE);
-        if (is_haploid) gtcount=2;
-        unsigned maxIndex(0);
-        for (unsigned gt(1); gt<gtcount; ++gt)
-        {
-            if (lhood[gt] > lhood[maxIndex]) maxIndex = gt;
-        }
-        for (unsigned gt(0); gt<gtcount; ++gt)
-        {
-            dindel.phredLoghood[gt] = std::min(dindel.maxQ,ln_error_prob_to_qphred(lhood[gt]-lhood[maxIndex]));
-        }
-    }
-
-    // add new poly calls (this trashes lhood):
-    {
-        const double* indel_lnprior(lnprior_polymorphic(is_haploid));
-        for (unsigned gt(0); gt<STAR_DIINDEL::SIZE; ++gt)
-        {
-            lhood[gt] += indel_lnprior[gt];
-        }
-    }
-    normalize_ln_distro(lhood,lhood+STAR_DIINDEL::SIZE,dindel.max_gt_poly);
-    dindel.max_gt_poly_qphred=error_prob_to_qphred(prob_comp(lhood,lhood+STAR_DIINDEL::SIZE,dindel.max_gt_poly));
-}
-#endif

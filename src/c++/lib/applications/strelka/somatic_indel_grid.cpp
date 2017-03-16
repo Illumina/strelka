@@ -80,12 +80,12 @@ get_indel_het_grid_lhood(const starling_base_options& opt,
     for (unsigned i(0); i<DIGT_GRID::HET_RES; ++i)
     {
         const double het_ratio((i+1)*DIGT_GRID::RATIO_INCREMENT);
-        indel_digt_caller::get_high_low_het_ratio_lhood(opt,dopt,
-                                                        sample_opt,
-                                                        indelKey,indelSampleData,het_ratio,
-                                                        is_include_tier2,is_use_alt_indel,
-                                                        lhood[lsize-(i+1)],
-                                                        lhood[i]);
+        get_high_low_het_ratio_lhood(opt,dopt,
+                                     sample_opt,
+                                     indelKey,indelSampleData,het_ratio,
+                                     is_include_tier2,is_use_alt_indel,
+                                     lhood[lsize-(i+1)],
+                                     lhood[i]);
     }
 }
 
@@ -233,14 +233,14 @@ get_somatic_indel(
             }
         }
 
-        indel_digt_caller::get_indel_digt_lhood(opt,dopt,normal_opt,
-                                                indelKey,normalIndelSampleData,
-                                                is_include_tier2,is_use_alt_indel,
-                                                normal_lhood);
-        indel_digt_caller::get_indel_digt_lhood(opt,dopt,tumor_opt,
-                                                indelKey,tumorIndelSampleData,
-                                                is_include_tier2,is_use_alt_indel,
-                                                tumor_lhood);
+        get_indel_digt_lhood(opt,dopt,normal_opt,
+                             indelKey,normalIndelSampleData,
+                             is_include_tier2,is_use_alt_indel,
+                             normal_lhood);
+        get_indel_digt_lhood(opt,dopt,tumor_opt,
+                             indelKey,tumorIndelSampleData,
+                             is_include_tier2,is_use_alt_indel,
+                             tumor_lhood);
 
         get_indel_het_grid_lhood(opt,dopt,normal_opt,
                                  indelKey,normalIndelSampleData,

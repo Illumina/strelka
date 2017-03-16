@@ -27,7 +27,6 @@
 #include "calibration/IndelErrorModel.hh"
 #include "htsapi/bam_streamer.hh"
 #include "starling_common/AlleleGroupGenotype.hh"
-#include "starling_common/starling_indel_call_pprob_digt.hh"
 
 #include <cmath>
 
@@ -45,7 +44,6 @@ starling_base_deriv_options(const starling_base_options& opt)
     , logIndelErrorRateFactor(std::log(opt.indelErrorRateFactor))
     , logIndelRefErrorFactor(std::log(opt.indelRefErrorFactor))
     , _indelErrorModel(new IndelErrorModel(opt.indel_error_model_name,opt.indel_error_models_filename))
-    , _incaller(new indel_digt_caller(opt.bindel_diploid_theta))
     , _indelGenotypePriors(new GenotypePriorSet(opt.bindel_diploid_theta, opt.indelHighRepeatTheta, opt.indelHighRepeatCount))
 {
     indel_nonsite_match_lnp=std::log(opt.indel_nonsite_match_prob);

@@ -263,7 +263,6 @@ struct starling_sample_options
 
 
 struct IndelErrorModel;
-struct indel_digt_caller;
 struct GenotypePriorSet;
 
 
@@ -280,12 +279,6 @@ struct starling_base_deriv_options : public blt_deriv_options, private boost::no
     starling_base_deriv_options(const starling_base_options& opt);
 
     ~starling_base_deriv_options();
-
-    const indel_digt_caller&
-    incaller() const
-    {
-        return *(_incaller.get());
-    }
 
     double
     get_nonsite_path_lnp(const bool is_tier2_pass,
@@ -344,7 +337,6 @@ public:
 
 private:
     std::unique_ptr<IndelErrorModel> _indelErrorModel;
-    std::unique_ptr<indel_digt_caller> _incaller; // object to precalculate bindel_diploid priors..
     std::unique_ptr<GenotypePriorSet> _indelGenotypePriors;
 
     std::vector<unsigned> _postCallStage;
