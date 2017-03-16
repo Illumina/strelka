@@ -52,6 +52,9 @@ snoise_run(
     const prog_info& pinfo,
     const snoise_options& opt)
 {
+    // ensure that this object is created first for runtime benchmark
+    RunStatsManager statsManager(opt.segmentStatsFilename);
+
     opt.validate();
 
     const starling_base_deriv_options dopt(opt);
@@ -82,7 +85,7 @@ snoise_run(
 
     const unsigned sampleCount(1);
     snoise_streams fileStreams(opt, pinfo, referenceHeader, sampleCount);
-    snoise_pos_processor posProcessor(opt, dopt, ref, fileStreams);
+    snoise_pos_processor posProcessor(opt, dopt, ref, fileStreams, statsManager);
 
     // parse and sanity check regions
     const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilename.front());

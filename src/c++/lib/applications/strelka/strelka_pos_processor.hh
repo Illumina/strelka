@@ -46,7 +46,8 @@ struct strelka_pos_processor : public starling_pos_processor_base
         const strelka_options& opt,
         const strelka_deriv_options& dopt,
         const reference_contig_segment& ref,
-        const strelka_streams& fileStreams);
+        const strelka_streams& fileStreams,
+        RunStatsManager& statsManager);
 
     void reset() override;
 

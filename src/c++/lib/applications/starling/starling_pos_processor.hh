@@ -41,7 +41,8 @@ struct starling_pos_processor : public starling_pos_processor_base
         const starling_options& opt,
         const starling_deriv_options& dopt,
         const reference_contig_segment& ref,
-        const starling_streams& fileStreams);
+        const starling_streams& fileStreams,
+        RunStatsManager& statsManager);
 
     void
     resetRegion(

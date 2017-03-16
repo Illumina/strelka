@@ -254,12 +254,14 @@ starling_pos_processor_base(
     const starling_base_deriv_options& dopt,
     const reference_contig_segment& ref,
     const starling_streams_base& fileStreams,
-    const unsigned sampleCount)
+    const unsigned sampleCount,
+    RunStatsManager& statsManager)
     : base_t()
     , _opt(opt)
     , _dopt(dopt)
     , _ref(ref)
     , _streams(fileStreams)
+    , _statsManager(statsManager)
     , _rmi(STARLING_INIT_LARGEST_READ_SIZE)
     , _largest_indel_ref_span(opt.max_indel_size)
     , _largest_total_indel_ref_span_per_read(_largest_indel_ref_span)
@@ -1567,10 +1569,12 @@ process_pos_variants(
 {
     if (not isPosPrecedingReportableRange)
     {
+        process_pos_stats(pos);
+
         const unsigned sampleCount(getSampleCount());
         for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
-            process_pos_site_stats(pos, sampleIndex);
+            process_pos_sample_stats(pos, sampleIndex);
         }
     }
     process_pos_variants_impl(pos, isPosPrecedingReportableRange);
@@ -1580,7 +1584,30 @@ process_pos_variants(
 
 void
 starling_pos_processor_base::
-process_pos_site_stats(
+process_pos_stats(
+    const pos_t pos)
+{
+    {
+        // update indel stats
+        auto it(getIndelBuffer().positionIterator(pos));
+        const auto it_end(getIndelBuffer().positionIterator(pos + 1));
+
+        for (; it != it_end; ++it)
+        {
+            const IndelKey& indelKey(it->first);
+            const IndelData& indelData(getIndelData(it));
+
+            const bool isCandidate(getIndelBuffer().isCandidateIndel(indelKey, indelData));
+            _statsManager.addCallRegionIndel(isCandidate);
+        }
+    }
+}
+
+
+
+void
+starling_pos_processor_base::
+process_pos_sample_stats(
     const pos_t pos,
     const unsigned sample_no)
 {

@@ -32,16 +32,6 @@
 
 
 
-template <typename A,typename B>
-double
-safeFrac(
-    const A num,
-    const B den)
-{
-    if (den == 0) return 0;
-    return (static_cast<double>(num)/den);
-}
-
 void
 RunStatsData::
 report(std::ostream& os) const
@@ -49,6 +39,9 @@ report(std::ostream& os) const
     os << "TotalHours\t";
     lifeTime.reportHr(os);
     os << "\n";
+    os << "\n";
+    os << "CallRegionCandidateIndels\t" << candidateIndels << "\n";
+    os << "CallRegionNonCandidateIndels\t" << nonCandidateIndels << "\n";
 }
 
 

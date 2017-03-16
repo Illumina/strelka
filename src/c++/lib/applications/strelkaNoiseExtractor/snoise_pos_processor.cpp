@@ -31,8 +31,9 @@ snoise_pos_processor(
     const snoise_options& opt,
     const starling_base_deriv_options& dopt,
     const reference_contig_segment& ref,
-    const snoise_streams& fileStreams)
-    : base_t(opt,dopt,ref,fileStreams, opt.alignFileOpt.alignmentFilename.size()),
+    const snoise_streams& fileStreams,
+    RunStatsManager& statsManager)
+    : base_t(opt, dopt, ref, fileStreams, opt.alignFileOpt.alignmentFilename.size(), statsManager),
       _fileStreams(fileStreams)
 {
     // setup indel buffer:

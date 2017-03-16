@@ -157,10 +157,12 @@ see the [somatic callability](#somatic-callability) section below for details.
 
 ### Statistics
 
-Additional secondary output is provided in ${STRELKA_ANALYSIS_PATH}/results/stats
+Additional diagnostic output is provided in `${STRELKA_ANALYSIS_PATH}/results/stats`
 
 * __genomeCallStats.tsv__
-    * This file provides runtime information accumulated for each genome segment, excluding auxiliary steps such as BAM indexing and vcf merging.
+    * A tab-delimited report of various internal statistics from the variant calling process:
+        * Runtime information accumulated for each genome segment, excluding auxiliary steps such as BAM indexing and vcf merging.
+        * Indel candidatacy statistics
 
 * __genomeCallStats.xml__
     * xml data backing the genomeCallStats.tsv report

@@ -44,6 +44,8 @@ struct RunStatsData
     merge(const RunStatsData& rhs)
     {
         lifeTime.merge(rhs.lifeTime);
+        candidateIndels += rhs.candidateIndels;
+        nonCandidateIndels += rhs.nonCandidateIndels;
     }
 
     void
@@ -52,10 +54,19 @@ struct RunStatsData
     template<class Archive>
     void serialize(Archive& ar, const unsigned /* version */)
     {
-        ar& BOOST_SERIALIZATION_NVP(lifeTime);
+        ar& BOOST_SERIALIZATION_NVP(lifeTime)
+           & BOOST_SERIALIZATION_NVP(candidateIndels)
+           & BOOST_SERIALIZATION_NVP(nonCandidateIndels);
     }
 
+    /// total wall-time of each (single-thread) process, summed together
     CpuTimes lifeTime;
+
+    /// total indels reaching candidate status in the report range and (if defined) call regions
+    unsigned long candidateIndels = 0;
+
+    /// total indels failing to reach candidate status in the report range and (if defined) call regions
+    unsigned long nonCandidateIndels = 0;
 };
 
 BOOST_CLASS_IMPLEMENTATION(RunStatsData, boost::serialization::object_serializable)

@@ -24,7 +24,6 @@
 #include "blt_common/ref_context.hh"
 #include "blt_util/log.hh"
 #include "blt_util/prob_util.hh"
-#include "blt_util/sort_util.hh"
 #include "common/Exceptions.hh"
 #include "starling_common/AlleleGroupGenotype.hh"
 #include "starling_common/AlleleReportInfoUtil.hh"
@@ -42,8 +41,9 @@ starling_pos_processor(
     const starling_options& opt,
     const starling_deriv_options& dopt,
     const reference_contig_segment& ref,
-    const starling_streams& fileStreams)
-    : base_t(opt,dopt,ref,fileStreams, opt.alignFileOpt.alignmentFilename.size()),
+    const starling_streams& fileStreams,
+    RunStatsManager& statsManager)
+    : base_t(opt, dopt, ref, fileStreams, opt.alignFileOpt.alignmentFilename.size(), statsManager),
       _opt(opt),
       _dopt(dopt),
       _streams(fileStreams)

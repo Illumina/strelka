@@ -102,7 +102,7 @@ getSequenceErrorCountsRun(
     const SequenceErrorCountsOptions& opt)
 {
     // ensure that this object is created first for runtime benchmark
-    RunStatsManager segmentStatMan(opt.segmentStatsFilename);
+    RunStatsManager statsManager(opt.segmentStatsFilename);
 
     opt.validate();
 
@@ -148,7 +148,7 @@ getSequenceErrorCountsRun(
     const bam_header_info referenceHeaderInfo(referenceHeader);
 
     SequenceErrorCountsStreams fileStreams(opt, pinfo, referenceHeader);
-    SequenceErrorCountsPosProcessor posProcessor(opt, dopt, ref, fileStreams);
+    SequenceErrorCountsPosProcessor posProcessor(opt, dopt, ref, fileStreams, statsManager);
 
     // parse and sanity check regions
     const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilename.front());

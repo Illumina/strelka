@@ -44,8 +44,26 @@ struct RunStatsManager : private boost::noncopyable
 
     ~RunStatsManager();
 
+    void
+    addCallRegionIndel(const bool isCandidate)
+    {
+        if (isCandidate)
+        {
+            runStats.runStatsData.candidateIndels++;
+        }
+        else
+        {
+            runStats.runStatsData.nonCandidateIndels++;
+        }
+    }
+
 private:
     std::ostream* _osPtr;
+
+    /// this object tracks its own lifetime from ctor-to-dtor here, this is used to approximate
+    /// program lifetime when RunStatsManager is appropriately scoped
     TimeTracker lifeTime;
+
+    /// runStats is the primary stats data store
     RunStats runStats;
 };

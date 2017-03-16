@@ -257,7 +257,7 @@ starling_run(
     using namespace illumina::common;
 
     // ensure that this object is created first for runtime benchmark
-    RunStatsManager segmentStatMan(opt.segmentStatsFilename);
+    RunStatsManager statsManager(opt.segmentStatsFilename);
 
     opt.validate();
 
@@ -321,7 +321,7 @@ starling_run(
     }
 
     starling_streams fileStreams(opt, pinfo, bamHeaders, sampleNames);
-    starling_pos_processor posProcessor(opt, dopt, ref, fileStreams);
+    starling_pos_processor posProcessor(opt, dopt, ref, fileStreams, statsManager);
 
     const bam_hdr_t& referenceHeader(bamHeaders.front());
     const bam_header_info referenceHeaderInfo(referenceHeader);

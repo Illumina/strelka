@@ -39,8 +39,9 @@ strelka_pos_processor(
     const strelka_options& opt,
     const strelka_deriv_options& dopt,
     const reference_contig_segment& ref,
-    const strelka_streams& fileStreams)
-    : base_t(opt,dopt,ref,fileStreams,STRELKA_SAMPLE_TYPE::SIZE)
+    const strelka_streams& fileStreams,
+    RunStatsManager& statsManager)
+    : base_t(opt, dopt, ref, fileStreams, STRELKA_SAMPLE_TYPE::SIZE, statsManager)
     , _opt(opt)
     , _dopt(dopt)
     , _streams(fileStreams)

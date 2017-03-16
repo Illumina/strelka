@@ -170,7 +170,7 @@ strelka_run(
     using namespace illumina::common;
 
     // ensure that this object is created first for runtime benchmark
-    RunStatsManager segmentStatMan(opt.segmentStatsFilename);
+    RunStatsManager statsManager(opt.segmentStatsFilename);
 
     opt.validate();
 
@@ -217,7 +217,7 @@ strelka_run(
     const bam_header_info referenceHeaderInfo(referenceHeader);
 
     strelka_streams fileStreams(opt, dopt, pinfo, referenceHeader, ssi);
-    strelka_pos_processor posProcessor(opt, dopt, ref, fileStreams);
+    strelka_pos_processor posProcessor(opt, dopt, ref, fileStreams, statsManager);
 
     // parse and sanity check regions
     const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilename.front());

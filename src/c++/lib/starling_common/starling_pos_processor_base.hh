@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "appstats/RunStatsManager.hh"
 #include "blt_common/map_level.hh"
 #include "blt_util/depth_buffer.hh"
 #include "blt_util/depth_stream_stat_range.hh"
@@ -88,12 +89,14 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
 {
     typedef pos_processor_base base_t;
 
+    /// \param[in] statsManager used to track aggregate pos/read/variant stats
     starling_pos_processor_base(
         const starling_base_options& opt,
         const starling_base_deriv_options& dopt,
         const reference_contig_segment& ref,
         const starling_streams_base& fileStreams,
-        const unsigned sampleCount);
+        const unsigned sampleCount,
+        RunStatsManager& statsManager);
 
     virtual
     ~starling_pos_processor_base();
@@ -492,7 +495,12 @@ private:
 
     /// maintain stats for depth, etc...
     void
-    process_pos_site_stats(
+    process_pos_stats(
+        const pos_t pos);
+
+    /// maintain per-sample stats for depth, etc...
+    void
+    process_pos_sample_stats(
         const pos_t pos,
         const unsigned sample_no);
 
@@ -615,6 +623,7 @@ protected:
     const starling_base_deriv_options& _dopt;
     const reference_contig_segment& _ref;
     const starling_streams_base& _streams;
+    RunStatsManager& _statsManager;
 
     // read-length data structure used to compute mismatch density filter:
     read_mismatch_info _rmi;
