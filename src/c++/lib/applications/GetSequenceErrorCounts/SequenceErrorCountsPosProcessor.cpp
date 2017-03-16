@@ -328,7 +328,7 @@ getReferenceSTRContext(
 
     // find the pattern size of the STR track the current base is in
     // use the smaller pattern size if the base is in two STR tracks (e.g., pos 2 in AAAGAG is in the hpol track
-    for(const auto patternSize : referenceSTRPatternSizeVector)
+    for (const auto patternSize : referenceSTRPatternSizeVector)
     {
         searchForSTR(patternSize, pos, refSTRContext.isBaseInSTR, refSTRContext.isBaseLeftEndOfSTR, ref);
         if (refSTRContext.isBaseInSTR)
@@ -592,8 +592,8 @@ process_pos_error_counts(
         {
             std::vector<unsigned> topVariantAlleleIndexPerSample;
             const bool isEveryAltIncluded = addAllelesAtOtherPositions(
-                    _ref, sampleCount, callerPloidy, pos, get_largest_total_indel_ref_span_per_read(),
-                    getIndelBuffer(), orthogonalVariantAlleles, topVariantAlleleIndexPerSample);
+                                                _ref, sampleCount, callerPloidy, pos, get_largest_total_indel_ref_span_per_read(),
+                                                getIndelBuffer(), orthogonalVariantAlleles, topVariantAlleleIndexPerSample);
 
             if (not isEveryAltIncluded) return;
         }
@@ -603,20 +603,21 @@ process_pos_error_counts(
         const unsigned nonrefAlleleCount(orthogonalVariantAlleles.size());
         std::vector<unsigned> support;
         getOrthogonalHaplotypeSupportCounts(
-                orthogonalVariantAlleles, sampleIndex, _opt.minDistanceFromReadEdge, support);
+            orthogonalVariantAlleles, sampleIndex, _opt.minDistanceFromReadEdge, support);
 
         for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex < nonrefAlleleCount; ++nonrefAlleleIndex)
         {
-            const IndelKey &indelKey(orthogonalVariantAlleles.key(nonrefAlleleIndex));
+            const IndelKey& indelKey(orthogonalVariantAlleles.key(nonrefAlleleIndex));
 
             if (indelKey.pos != pos) continue;
 
-            const IndelData &indelData(orthogonalVariantAlleles.data(nonrefAlleleIndex));
-            const AlleleReportInfo &indelReportInfo(indelData.getReportInfo());
+            const IndelData& indelData(orthogonalVariantAlleles.data(nonrefAlleleIndex));
+            const AlleleReportInfo& indelReportInfo(indelData.getReportInfo());
 
             IndelErrorContext context;
 
-            if ((indelReportInfo.repeat_unit_length == refSTRContext.patternSize) && (indelReportInfo.ref_repeat_count > 1)) {
+            if ((indelReportInfo.repeat_unit_length == refSTRContext.patternSize) && (indelReportInfo.ref_repeat_count > 1))
+            {
                 // guard against the occasional non-normalized indel:
                 const unsigned leftSTRRepeatCount(getLeftShiftedSTRRepeatCount(refSTRContext.patternSize, pos, _ref));
                 if (leftSTRRepeatCount == indelReportInfo.ref_repeat_count)
@@ -646,8 +647,9 @@ process_pos_error_counts(
             // see lib/starling_common/starling_read_util.cpp::get_valid_alignment_range)
             // in this case, we're not going to report the incidence as noise, since it's
             // not a read we would consider in variant calling
-            if (support[nonrefAlleleIndex + 1] > 0 && _opt.is_write_observations()) {
-                std::ostream &obs_os(*_streams.observation_bed_osptr());
+            if (support[nonrefAlleleIndex + 1] > 0 && _opt.is_write_observations())
+            {
+                std::ostream& obs_os(*_streams.observation_bed_osptr());
                 obs_os << _chromName << "\t";
                 obs_os << indelKey.pos << "\t" << indelKey.pos + indelKey.deletionLength << "\t"
                        << INDEL::get_index_label(indelKey.type) << "\t";
@@ -675,10 +677,11 @@ process_pos_error_counts(
 
     // background depth is always one minus position to be consistent with indel report:
     const pos_t depth_pos(pos - 1);
-    const snp_pos_info &spi(sif.bc_buff.get_pos(depth_pos));
+    const snp_pos_info& spi(sif.bc_buff.get_pos(depth_pos));
     const unsigned depth(spi.calls.size());
 
-    for (const auto &value : indelObservations) {
+    for (const auto& value : indelObservations)
+    {
         indelCounts.addError(value.first, value.second, depth);
     }
 
@@ -686,7 +689,7 @@ process_pos_error_counts(
     {
         IndelErrorContext context;
 
-        if(refSTRContext.isBaseInSTR)
+        if (refSTRContext.isBaseInSTR)
         {
             const unsigned leftSTRRepeatCount = getLeftShiftedSTRRepeatCount(refSTRContext.patternSize, pos, _ref);
             context = IndelErrorContext(refSTRContext.patternSize, std::min(maxSTRRepeatCount, leftSTRRepeatCount));
@@ -700,7 +703,8 @@ process_pos_error_counts(
         // regardless of whether the genotypes match
         obs.assignKnownStatus(knownVariantRecords);
 
-        if (!indelObservations.count(context)) {
+        if (!indelObservations.count(context))
+        {
             indelCounts.addBackground(context, obs);
         }
     }

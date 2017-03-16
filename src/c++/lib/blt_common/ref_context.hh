@@ -55,10 +55,10 @@ getLeftShiftedSTRRepeatCount(
 /// compare repeatPatternSize number of bases between two positions in the ref
 bool
 compareRepeatPattern(
-        const unsigned repeatPatternSize,
-        const unsigned pos1,
-        const unsigned pos2,
-        const reference_contig_segment &ref);
+    const unsigned repeatPatternSize,
+    const unsigned pos1,
+    const unsigned pos2,
+    const reference_contig_segment& ref);
 
 /// searches for an STR track around the base
 void searchForSTR(

@@ -71,7 +71,7 @@ getLeftShiftedSTRRepeatCount(
 
     if (startPosition > (int) patternSize - 1)
     {
-        if(!isLeftEndOfSTR(patternSize, startPosition, ref))
+        if (!isLeftEndOfSTR(patternSize, startPosition, ref))
         {
             return size;
         }
@@ -80,7 +80,7 @@ getLeftShiftedSTRRepeatCount(
     const pos_t endOfRef(ref.end());
     for (pos_t posInRef(startPosition + patternSize); posInRef < endOfRef; posInRef += patternSize)
     {
-        if(!compareRepeatPattern(patternSize, startPosition, posInRef, ref))
+        if (!compareRepeatPattern(patternSize, startPosition, posInRef, ref))
         {
             break;
         }
@@ -91,14 +91,14 @@ getLeftShiftedSTRRepeatCount(
 
 bool
 compareRepeatPattern(
-        const unsigned repeatPatternSize,
-        const unsigned pos1,
-        const unsigned pos2,
-        const reference_contig_segment &ref)
+    const unsigned repeatPatternSize,
+    const unsigned pos1,
+    const unsigned pos2,
+    const reference_contig_segment& ref)
 {
-    for(int posInPattern(repeatPatternSize -1 ); posInPattern >= 0; posInPattern--)
+    for (int posInPattern(repeatPatternSize -1 ); posInPattern >= 0; posInPattern--)
     {
-        if(ref.get_base(pos1+posInPattern) != ref.get_base(pos2 + posInPattern))
+        if (ref.get_base(pos1+posInPattern) != ref.get_base(pos2 + posInPattern))
         {
             return false;
         }
@@ -118,12 +118,12 @@ void searchForSTR(
 
     // start from the k-mer at pos vs. k-mer at pos+k
     // end at k-mer at pos-k-patternSize+1 vs. k-mer at pos-patternSize+1
-    for(unsigned p = 0; p < patternSize; p++)
+    for (unsigned p = 0; p < patternSize; p++)
     {
-        if(compareRepeatPattern(patternSize, pos - p, pos + patternSize - p, ref) ||
-           compareRepeatPattern(patternSize, pos - p, pos - patternSize - p, ref))
+        if (compareRepeatPattern(patternSize, pos - p, pos + patternSize - p, ref) ||
+            compareRepeatPattern(patternSize, pos - p, pos - patternSize - p, ref))
         {
-            if(0 == p && isLeftEndOfSTR(patternSize, pos, ref))
+            if (0 == p && isLeftEndOfSTR(patternSize, pos, ref))
             {
                 isBaseLeftEndOfStr = true;
             }

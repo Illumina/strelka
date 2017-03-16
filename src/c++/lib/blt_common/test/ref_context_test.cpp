@@ -89,18 +89,19 @@ BOOST_AUTO_TEST_CASE( testLeftShiftedStrSize )
     ref.seq() = "TTGTTTGAGAGATTTTGATGATGAA";
 
     const std::vector<unsigned> repeatPatternSizeVector = {1,2,3};
-    const std::vector<std::vector<unsigned>> expectedResultVector = {
-            {2,1,1,3,1,1,1,1,1,1,1,1,4,1,1,1,1,1,1,1,1,1,1,2,1},
-            {1,1,1,1,1,1,3,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1},
-            {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1},
+    const std::vector<std::vector<unsigned>> expectedResultVector =
+    {
+        {2,1,1,3,1,1,1,1,1,1,1,1,4,1,1,1,1,1,1,1,1,1,1,2,1},
+        {1,1,1,1,1,1,3,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1},
+        {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1},
     };
 
     const pos_t seqEnd = ref.end();
 
-    for(unsigned r = 0; r < repeatPatternSizeVector.size(); r++)
+    for (unsigned r = 0; r < repeatPatternSizeVector.size(); r++)
     {
 
-        for(pos_t position = 0; position < seqEnd; position++)
+        for (pos_t position = 0; position < seqEnd; position++)
         {
             BOOST_REQUIRE_EQUAL(getLeftShiftedSTRRepeatCount(repeatPatternSizeVector[r], position, ref), expectedResultVector[r][position]);
         }
@@ -114,15 +115,17 @@ BOOST_AUTO_TEST_CASE( testSearchForStr )
 //                 0123456789012345
     const std::vector<unsigned> repeatPatternSizeVector = {1,2,3};
 
-    const std::vector<std::vector<unsigned>> expectedResultVectorInStr = {
-            {1,1,0,1,1,1,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,1,1},
-            {0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0},
-            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0},
+    const std::vector<std::vector<unsigned>> expectedResultVectorInStr =
+    {
+        {1,1,0,1,1,1,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,1,1},
+        {0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0},
     };
-    const std::vector<std::vector<unsigned>> expectedResultVectorLeftEndOfStr = {
-            {1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0},
-            {0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0},
-            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0},
+    const std::vector<std::vector<unsigned>> expectedResultVectorLeftEndOfStr =
+    {
+        {1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0},
+        {0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0},
     };
 
     const pos_t seqEnd = ref.end();
@@ -130,9 +133,9 @@ BOOST_AUTO_TEST_CASE( testSearchForStr )
     bool isBaseInStr(false);
     bool isBaseLeftEndOfStr(false);
 
-    for(unsigned r = 0; r < repeatPatternSizeVector.size(); r++)
+    for (unsigned r = 0; r < repeatPatternSizeVector.size(); r++)
     {
-        for(pos_t position = 0; position < seqEnd; position++)
+        for (pos_t position = 0; position < seqEnd; position++)
         {
             searchForSTR(repeatPatternSizeVector[r], position, isBaseInStr, isBaseLeftEndOfStr, ref);
             BOOST_REQUIRE_EQUAL(isBaseInStr, expectedResultVectorInStr[r][position]);

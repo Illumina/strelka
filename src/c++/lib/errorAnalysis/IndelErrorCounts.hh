@@ -130,16 +130,18 @@ assignStatus(const RecordTracker::indel_value_t& knownVariantOlap)
 struct IndelErrorContext
 {
     IndelErrorContext(
-            unsigned initRepeatingPatternSize = 1,
-            unsigned initRepeatCount = 1)
-            : repeatPatternSize(initRepeatingPatternSize), repeatCount(initRepeatCount)
+        unsigned initRepeatingPatternSize = 1,
+        unsigned initRepeatCount = 1)
+        : repeatPatternSize(initRepeatingPatternSize), repeatCount(initRepeatCount)
     {}
     bool operator<(const IndelErrorContext& rhs) const
     {
-        if(repeatPatternSize < rhs.repeatPatternSize) {
+        if (repeatPatternSize < rhs.repeatPatternSize)
+        {
             return true;
         }
-        if(repeatPatternSize != rhs.repeatPatternSize) {
+        if (repeatPatternSize != rhs.repeatPatternSize)
+        {
             return false;
         }
         return repeatCount < rhs.repeatCount;
@@ -152,8 +154,14 @@ struct IndelErrorContext
         ar& repeatCount;
     }
 
-    unsigned getRepeatPatternSize() const{return repeatPatternSize;}
-    unsigned getRepeatCount() const{return repeatCount;}
+    unsigned getRepeatPatternSize() const
+    {
+        return repeatPatternSize;
+    }
+    unsigned getRepeatCount() const
+    {
+        return repeatCount;
+    }
 
 private:
     unsigned repeatPatternSize = 1;
