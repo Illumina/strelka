@@ -32,8 +32,6 @@ def getOptions() :
     usage = "usage: %prog [options] < annotated.vcf"
     parser = OptionParser(usage=usage)
 
-    parser.add_option("--scoringFeatures", type="string", dest="scoringFeaturesPath",metavar="FILE",
-                      help="Scoring feature lists extracted from the EVS feature variant VCF")
     parser.add_option("--snvOutput", type="string", dest="snvOutputPath", metavar="FILE",
                       help="Write labeled SNV feature output for training data (default: all of it) in csv format to this file (required)")
     parser.add_option("--indelOutput", type="string", dest="indelOutputPath", metavar="FILE",
@@ -48,6 +46,8 @@ def getOptions() :
                       help="When variant sequence matches but GT does not, treat as a true positive (recommended for RNA EVS)")
     parser.add_option("--discardFNs", dest="discardFNs", default=False, action="store_true",
                       help="Do not output FN variants (recommended for RNA EVS)")
+    parser.add_option("--removeRNAEditing", dest="removeRNAEditing", default=False, action="store_true",
+                      help="Label potential RNA editing sites (variants with A->G or T->C) as unknown (recommended for RNA EVS)")
 
     (options,args) = parser.parse_args()
 
@@ -55,10 +55,6 @@ def getOptions() :
         parser.print_help()
         sys.exit(2)
 
-    if options.scoringFeaturesPath is None :
-        parser.error("Scoring features filename is required")
-    if not os.path.isfile(options.scoringFeaturesPath) :
-        parser.error("Can't find scoring features file: '%s'" % (options.scoringFeaturesPath))
     if options.snvOutputPath is None :
         parser.error("SNV output filename is required")
     if options.indelOutputPath is None :
@@ -136,11 +132,12 @@ def main() :
             writeCsvHeader(indel_test_outfp, HeaderData.indelFeatures, "indel")
 
 
-    for line in open(options.scoringFeaturesPath) :
+    for line in infp :
         if line[0] == "#" :
             processHeaderLine(line)
-
-    finalizeHeader()
+        if HeaderData.snvFeatures is not None and HeaderData.indelFeatures is not None :
+            finalizeHeader()
+            break
 
     for line in infp :
         if line[0] == "#" :
@@ -191,6 +188,11 @@ def main() :
         if options.suppressGTMismatch and label == "FP":
             if getKeyVal(word[VCFID.INFO],"kind") == "gtmismatch":
                 label = "TP"
+
+        if options.removeRNAEditing and isSNV:
+            if ((word[VCFID.REF] == "A" and word[VCFID.ALT] == "G") or 
+                (word[VCFID.REF] == "T" and word[VCFID.ALT] == "C")):
+                label = "UNK"
 
         if label not in ("TP","FP","FN","UNK") :
             raise Exception("Variant label is not TP|FP|FN|UNK as expected:\n%s" % (line))
