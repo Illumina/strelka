@@ -310,7 +310,14 @@ struct ReferenceSTRContext
     bool isBaseInSTR = false;
     bool isBaseLeftEndOfSTR = false;
     unsigned patternSize = 1;
+
+    // not computed unless isBaseInSTR and isBaseLeftEndOfSTR
+    unsigned STRRepeatCount = 1;
 };
+
+
+
+static const unsigned maxSTRRepeatCount(20);
 
 
 
@@ -334,6 +341,11 @@ getReferenceSTRContext(
         if (refSTRContext.isBaseInSTR)
         {
             refSTRContext.patternSize = patternSize;
+            if (refSTRContext.isBaseLeftEndOfSTR)
+            {
+                refSTRContext.STRRepeatCount =
+                    std::min(maxSTRRepeatCount, getLeftShiftedSTRRepeatCount(patternSize, pos, ref));
+            }
             break;
         }
     }
@@ -357,7 +369,6 @@ process_pos_error_counts(
     sample_info& sif(sample(sampleIndex));
 
 
-    static const unsigned maxSTRRepeatCount(20);
 
 
     const char refBase(_ref.get_base(pos));
@@ -381,7 +392,7 @@ process_pos_error_counts(
     // For consistency, we don't take any indel counts information from an STR track except for the left-most position
     //
     // Note that we may want to change this in the future because calls can occur within STRs which are not expansions
-    // or contractions for the STR pattern, and thus will not be left-shifted, e.g. "AAAA -> AACAA"
+    // or contractions of the STR pattern, and thus will not be left-shifted, e.g. "AAAA -> AACAA"
     //
     isSkipIndel = (refSTRContext.isBaseInSTR and (not refSTRContext.isBaseLeftEndOfSTR));
 
@@ -396,8 +407,7 @@ process_pos_error_counts(
         // record the excluded region count only for positions where we would have counted indel evidence anyway:
         if (not isSkipIndel)
         {
-            const unsigned leftSTRRepeatCount(getLeftShiftedSTRRepeatCount(refSTRContext.patternSize, pos, _ref));
-            IndelErrorContext indelContext(refSTRContext.patternSize, std::min(maxSTRRepeatCount, leftSTRRepeatCount));
+            IndelErrorContext indelContext(refSTRContext.patternSize, refSTRContext.STRRepeatCount);
             indelCounts.addExcludedRegionSkip(indelContext);
             isSkipIndel=true;
         }
@@ -428,8 +438,7 @@ process_pos_error_counts(
                 // record the high-depth bypass count only for positions where we would have counted indel evidence anyway:
                 if (not isSkipIndel)
                 {
-                    const unsigned leftSTRRepeatCount(getLeftShiftedSTRRepeatCount(refSTRContext.patternSize, pos, _ref));
-                    IndelErrorContext indelContext(refSTRContext.patternSize, std::min(maxSTRRepeatCount, leftSTRRepeatCount));
+                    IndelErrorContext indelContext(refSTRContext.patternSize, refSTRContext.STRRepeatCount);
                     indelCounts.addDepthSkip(indelContext);
                     isSkipIndel=true;
                 }
@@ -619,11 +628,9 @@ process_pos_error_counts(
             if ((indelReportInfo.repeat_unit_length == refSTRContext.patternSize) && (indelReportInfo.ref_repeat_count > 1))
             {
                 // guard against the occasional non-normalized indel:
-                const unsigned leftSTRRepeatCount(getLeftShiftedSTRRepeatCount(refSTRContext.patternSize, pos, _ref));
-                if (leftSTRRepeatCount == indelReportInfo.ref_repeat_count)
+                if (refSTRContext.STRRepeatCount == std::min(maxSTRRepeatCount, indelReportInfo.ref_repeat_count))
                 {
-                    context = IndelErrorContext(refSTRContext.patternSize,
-                                                std::min(maxSTRRepeatCount, indelReportInfo.ref_repeat_count));
+                    context = IndelErrorContext(refSTRContext.patternSize, refSTRContext.STRRepeatCount);
                 }
             }
 
@@ -691,8 +698,7 @@ process_pos_error_counts(
 
         if (refSTRContext.isBaseInSTR)
         {
-            const unsigned leftSTRRepeatCount = getLeftShiftedSTRRepeatCount(refSTRContext.patternSize, pos, _ref);
-            context = IndelErrorContext(refSTRContext.patternSize, std::min(maxSTRRepeatCount, leftSTRRepeatCount));
+            context = IndelErrorContext(refSTRContext.patternSize, refSTRContext.STRRepeatCount);
         }
 
         IndelBackgroundObservation obs;
