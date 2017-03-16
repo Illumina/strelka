@@ -302,6 +302,47 @@ mergeIndelObservations(
     }
 }
 
+
+
+/// all STR context information derived from a specific reference position
+struct ReferenceSTRContext
+{
+    bool isBaseInSTR = false;
+    bool isBaseLeftEndOfSTR = false;
+    unsigned patternSize = 1;
+};
+
+
+
+/// derive the STR context for a given position in the reference
+static
+ReferenceSTRContext
+getReferenceSTRContext(
+    const reference_contig_segment& ref,
+    const pos_t pos)
+{
+    // STR pattern sizes to be counted
+    static const std::vector<unsigned> referenceSTRPatternSizeVector = {1,2};
+
+    ReferenceSTRContext refSTRContext;
+
+    // find the pattern size of the STR track the current base is in
+    // use the smaller pattern size if the base is in two STR tracks (e.g., pos 2 in AAAGAG is in the hpol track
+    for(const auto patternSize : referenceSTRPatternSizeVector)
+    {
+        searchForSTR(patternSize, pos, refSTRContext.isBaseInSTR, refSTRContext.isBaseLeftEndOfSTR, ref);
+        if (refSTRContext.isBaseInSTR)
+        {
+            refSTRContext.patternSize = patternSize;
+            break;
+        }
+    }
+
+    return refSTRContext;
+}
+
+
+
 void
 SequenceErrorCountsPosProcessor::
 process_pos_error_counts(
@@ -316,7 +357,8 @@ process_pos_error_counts(
     sample_info& sif(sample(sampleIndex));
 
 
-    static const unsigned maxStrRepeatCount(20);
+    static const unsigned maxSTRRepeatCount(20);
+
 
     const char refBase(_ref.get_base(pos));
 
@@ -334,21 +376,14 @@ process_pos_error_counts(
     bool isSkipSNV(false);
     bool isSkipIndel(false);
 
-    bool isBaseInStr(false);
-    bool isBaseLeftEndOfStr(false);
-    unsigned patternSize(1); // defaults to 1 if the base is not in an STR track
+    const ReferenceSTRContext refSTRContext(getReferenceSTRContext(_ref,pos));
 
-    // find the pattern size of the STR track the current base is in
-    // use the smaller pattern size if the base is in two STR tracks (e.g., pos 2 in AAAGAG is in the hpol track
-    for(auto p : _indelPatternSizeVector)
-    {
-        searchForStr(p, pos, isBaseInStr, isBaseLeftEndOfStr, _ref);
-        if (isBaseInStr)
-        {
-            patternSize = p;
-            break;
-        }
-    }
+    // For consistency, we don't take any indel counts information from an STR track except for the left-most position
+    //
+    // Note that we may want to change this in the future because calls can occur within STRs which are not expansions
+    // or contractions for the STR pattern, and thus will not be left-shifted, e.g. "AAAA -> AACAA"
+    //
+    isSkipIndel = (refSTRContext.isBaseInSTR and (not refSTRContext.isBaseLeftEndOfSTR));
 
 
     if (_excludedRegions.isIntersectRegion(pos))
@@ -358,14 +393,14 @@ process_pos_error_counts(
         baseCounts.addExcludedRegionSkip(baseContext);
         isSkipSNV=true;
 
-        // add only if the base is in an STR track but not the left end of it
-        if(isBaseInStr && !isBaseLeftEndOfStr)
+        // record the excluded region count only for positions where we would have counted indel evidence anyway:
+        if (not isSkipIndel)
         {
-            const unsigned leftStrRepeatCount(getLeftShiftedStrRepeatCount(patternSize, pos, _ref));
-            IndelErrorContext indelContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
+            const unsigned leftSTRRepeatCount(getLeftShiftedSTRRepeatCount(refSTRContext.patternSize, pos, _ref));
+            IndelErrorContext indelContext(refSTRContext.patternSize, std::min(maxSTRRepeatCount, leftSTRRepeatCount));
             indelCounts.addExcludedRegionSkip(indelContext);
+            isSkipIndel=true;
         }
-        isSkipIndel=true;
     }
     else if (_max_candidate_normal_sample_depth > 0.)
     {
@@ -390,14 +425,14 @@ process_pos_error_counts(
             const unsigned estdepth2(sif.estdepth_buff_tier2.val(pos-1));
             if ((estdepth+estdepth2) > _max_candidate_normal_sample_depth)
             {
-                // add only if the base is in an STR track but not the left end of it
-                if(isBaseInStr && !isBaseLeftEndOfStr)
+                // record the high-depth bypass count only for positions where we would have counted indel evidence anyway:
+                if (not isSkipIndel)
                 {
-                    const unsigned leftStrRepeatCount(getLeftShiftedStrRepeatCount(patternSize, pos, _ref));
-                    IndelErrorContext indelContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
-                    indelCounts.addExcludedRegionSkip(indelContext);
+                    const unsigned leftSTRRepeatCount(getLeftShiftedSTRRepeatCount(refSTRContext.patternSize, pos, _ref));
+                    IndelErrorContext indelContext(refSTRContext.patternSize, std::min(maxSTRRepeatCount, leftSTRRepeatCount));
+                    indelCounts.addDepthSkip(indelContext);
+                    isSkipIndel=true;
                 }
-                isSkipIndel=true;
             }
         }
     }
@@ -466,22 +501,6 @@ process_pos_error_counts(
 
     if (isSkipIndel) return;
 
-    // comments are out-of-date
-    // If the current bases matches the previous base, we're in the middle
-    // of a homopolymer run. In the present scheme such positions are not counted for the purpose of indel
-    // error statistics.
-    //
-    // Note that we may want to in the future because non-homopolymer calls can occur within homopolymers, e.g.
-    // "AAAA -> AACAA", the question is, do we get a sufficiently good estimate of such activity from outside of
-    // homopolyers? Given that these are non-slippage errors, it seems reasonable to assume there's just one rate
-    // that covers these errors for now.
-    //
-
-    // return if the base is within an STR but not the left most base
-    if(isBaseInStr && !isBaseLeftEndOfStr)
-    {
-        return;
-    }
 
     // define groups of overlapping alleles to rank and then genotype.
     //
@@ -597,16 +616,15 @@ process_pos_error_counts(
 
             IndelErrorContext context;
 
-            if ((indelReportInfo.repeat_unit_length == patternSize) && (indelReportInfo.ref_repeat_count > 1)) {
+            if ((indelReportInfo.repeat_unit_length == refSTRContext.patternSize) && (indelReportInfo.ref_repeat_count > 1)) {
                 // guard against the occasional non-normalized indel:
-                const unsigned leftStrRepeatCount(getLeftShiftedStrRepeatCount(patternSize, pos, _ref));
-                if (leftStrRepeatCount == indelReportInfo.ref_repeat_count)
+                const unsigned leftSTRRepeatCount(getLeftShiftedSTRRepeatCount(refSTRContext.patternSize, pos, _ref));
+                if (leftSTRRepeatCount == indelReportInfo.ref_repeat_count)
                 {
-                    context = IndelErrorContext(patternSize,
-                                                std::min(maxStrRepeatCount, indelReportInfo.ref_repeat_count));
+                    context = IndelErrorContext(refSTRContext.patternSize,
+                                                std::min(maxSTRRepeatCount, indelReportInfo.ref_repeat_count));
                 }
             }
-
 
 
             // check to see if this indel is (likely to be) a match to a known variant
@@ -668,13 +686,11 @@ process_pos_error_counts(
     {
         IndelErrorContext context;
 
-        if(isBaseInStr)
+        if(refSTRContext.isBaseInSTR)
         {
-            const unsigned leftStrRepeatCount = getLeftShiftedStrRepeatCount(patternSize, pos, _ref);
-            context = IndelErrorContext(patternSize, std::min(maxStrRepeatCount, leftStrRepeatCount));
+            const unsigned leftSTRRepeatCount = getLeftShiftedSTRRepeatCount(refSTRContext.patternSize, pos, _ref);
+            context = IndelErrorContext(refSTRContext.patternSize, std::min(maxSTRRepeatCount, leftSTRRepeatCount));
         }
-
-
 
         IndelBackgroundObservation obs;
         obs.depth = depth;
@@ -688,5 +704,4 @@ process_pos_error_counts(
             indelCounts.addBackground(context, obs);
         }
     }
-
 }

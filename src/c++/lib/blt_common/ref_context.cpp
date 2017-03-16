@@ -51,10 +51,10 @@ get_left_shifted_hpol_size(
 }
 
 bool
-isLeftEndOfStr(
-        const unsigned patternSize,
-        const pos_t pos,
-        const reference_contig_segment &ref)
+isLeftEndOfSTR(
+    const unsigned patternSize,
+    const pos_t pos,
+    const reference_contig_segment& ref)
 {
     // the current position cannot be the start of an STR track
     // if the previous base is the same as the end of the potential pattern
@@ -62,16 +62,16 @@ isLeftEndOfStr(
 }
 
 unsigned
-getLeftShiftedStrRepeatCount(
-        const unsigned patternSize,
-        const pos_t startPosition,
-        const reference_contig_segment &ref)
+getLeftShiftedSTRRepeatCount(
+    const unsigned patternSize,
+    const pos_t startPosition,
+    const reference_contig_segment& ref)
 {
     unsigned size(1);
 
     if (startPosition > (int) patternSize - 1)
     {
-        if(!isLeftEndOfStr(patternSize, startPosition, ref))
+        if(!isLeftEndOfSTR(patternSize, startPosition, ref))
         {
             return size;
         }
@@ -106,12 +106,12 @@ compareRepeatPattern(
     return true;
 }
 
-void searchForStr(
-        const unsigned patternSize,
-        const unsigned pos,
-        bool &isBaseInStr,
-        bool &isBaseLeftEndOfStr,
-        const reference_contig_segment &ref)
+void searchForSTR(
+    const unsigned patternSize,
+    const unsigned pos,
+    bool& isBaseInStr,
+    bool& isBaseLeftEndOfStr,
+    const reference_contig_segment& ref)
 {
     isBaseInStr = false;
     isBaseLeftEndOfStr = false;
@@ -123,7 +123,7 @@ void searchForStr(
         if(compareRepeatPattern(patternSize, pos - p, pos + patternSize - p, ref) ||
            compareRepeatPattern(patternSize, pos - p, pos - patternSize - p, ref))
         {
-            if(0 == p && isLeftEndOfStr(patternSize, pos, ref))
+            if(0 == p && isLeftEndOfSTR(patternSize, pos, ref))
             {
                 isBaseLeftEndOfStr = true;
             }

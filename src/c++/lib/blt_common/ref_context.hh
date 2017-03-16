@@ -38,19 +38,19 @@ get_left_shifted_hpol_size(
 /// checks whether the current position is the left end of an STR track
 /// includes shorter repeat sizes which have valid [patternSize] repetitions
 bool
-isLeftEndOfStr(
-        const unsigned patternSize,
-        const pos_t pos,
-        const reference_contig_segment &ref);
+isLeftEndOfSTR(
+    const unsigned patternSize,
+    const pos_t pos,
+    const reference_contig_segment& ref);
 
 /// get repeat count of the STR from the current position, given that this
 /// is the left-most position in the STR track, otherwise, return 1
 /// includes shorter repeat sizes which have valid [patternSize] repetitions
 unsigned
-getLeftShiftedStrRepeatCount(
-        const unsigned patternSize,
-        const pos_t startPosition,
-        const reference_contig_segment &ref);
+getLeftShiftedSTRRepeatCount(
+    const unsigned patternSize,
+    const pos_t startPosition,
+    const reference_contig_segment& ref);
 
 /// compare repeatPatternSize number of bases between two positions in the ref
 bool
@@ -61,12 +61,12 @@ compareRepeatPattern(
         const reference_contig_segment &ref);
 
 /// searches for an STR track around the base
-void searchForStr(
-        const unsigned patternSize,
-        const unsigned pos,
-        bool &isBaseInStr,
-        bool &isBaseLeftEndOfStr,
-        const reference_contig_segment &ref);
+void searchForSTR(
+    const unsigned patternSize,
+    const unsigned pos,
+    bool& isBaseInStr,
+    bool& isBaseLeftEndOfStr,
+    const reference_contig_segment& ref);
 
 /// Get the length of the longest homopolymer containing the current
 /// position if this position can be treated as any base.

@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE( testLeftShiftedStrSize )
 
         for(pos_t position = 0; position < seqEnd; position++)
         {
-            BOOST_REQUIRE_EQUAL(getLeftShiftedStrRepeatCount(repeatPatternSizeVector[r], position, ref), expectedResultVector[r][position]);
+            BOOST_REQUIRE_EQUAL(getLeftShiftedSTRRepeatCount(repeatPatternSizeVector[r], position, ref), expectedResultVector[r][position]);
         }
     }
 }
@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE( testSearchForStr )
     {
         for(pos_t position = 0; position < seqEnd; position++)
         {
-            searchForStr(repeatPatternSizeVector[r], position, isBaseInStr, isBaseLeftEndOfStr, ref);
+            searchForSTR(repeatPatternSizeVector[r], position, isBaseInStr, isBaseLeftEndOfStr, ref);
             BOOST_REQUIRE_EQUAL(isBaseInStr, expectedResultVectorInStr[r][position]);
             BOOST_REQUIRE_EQUAL(isBaseLeftEndOfStr, expectedResultVectorLeftEndOfStr[r][position]);
         }
