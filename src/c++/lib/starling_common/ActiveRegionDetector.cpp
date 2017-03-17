@@ -102,12 +102,14 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
 //    std::cout << (posToProcess+1) << "\t" << isCurrentPosCandidateVariant << '\t' << isAnchor << std::endl;
 
     unsigned distanceFromPrevVariant = (unsigned) (posToProcess - _prevVariantPos);
-    if (distanceFromPrevVariant > MaxDistanceBetweenTwoVariants and _anchorPosFollowingPrevVariant > 0)
+    if (distanceFromPrevVariant > MaxDistanceBetweenTwoVariants and _anchorPosFollowingPrevVariant >= 0)
     {
         if (_numVariants >= MinNumVariantsPerRegion )
         {
             // close the existing active region
-            const pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
+            if (_activeRegionStartPos < _readBuffer.getBeginPos())
+                _activeRegionStartPos = _readBuffer.getBeginPos();
+            pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
             _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
                                         _aligner, _readBuffer, _indelBuffer, _polySites);
 
@@ -132,7 +134,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
             _activeRegionStartPos = posToProcess;
         }
 
-        if (not _anchorPosFollowingPrevVariant)
+        if (_anchorPosFollowingPrevVariant < 0)
         {
             _anchorPosFollowingPrevVariant = posToProcess;
         }
@@ -146,7 +148,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
         // extend the existing active region
         ++_numVariants;
         _prevVariantPos = posToProcess;
-        _anchorPosFollowingPrevVariant = 0;
+        _anchorPosFollowingPrevVariant = -1;
     }
 }
 
@@ -157,7 +159,9 @@ void ActiveRegionDetector::clear()
     if (_numVariants >= MinNumVariantsPerRegion)
     {
         // close the existing active region
-        if (not _anchorPosFollowingPrevVariant)
+        if (_activeRegionStartPos < _readBuffer.getBeginPos())
+            _activeRegionStartPos = _readBuffer.getBeginPos();
+        if (_anchorPosFollowingPrevVariant < 0)
             _anchorPosFollowingPrevVariant = _readBuffer.getEndPos();
         pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
         _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
@@ -167,9 +171,9 @@ void ActiveRegionDetector::clear()
 
     processActiveRegion();
 
-    _activeRegionStartPos = 0;
-    _anchorPosFollowingPrevVariant = 1;
-    _prevVariantPos = 0;
+    _activeRegionStartPos = -1;
+    _anchorPosFollowingPrevVariant = -1;
+    _prevVariantPos = -1;
     _numVariants = 0;
 }
 

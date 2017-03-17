@@ -141,9 +141,6 @@ bool ActiveRegion::processHaplotypesWithAssembly(unsigned sampleId)
     if (readInfo.numReads > MinNumReadsToBypassAssembly)
         return false;   // assembly fail; bypass indels later
 
-#ifdef DEBUG_ACTIVE_REGION
-    std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tAssembly"<< std::endl;
-#endif
     AssemblyReadInput reads;
     std::vector<align_id_t> readIndexToAlignId;
 
@@ -188,6 +185,10 @@ bool ActiveRegion::processHaplotypesWithAssembly(unsigned sampleId)
 
     std::string refStr;
     _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
+
+#ifdef DEBUG_ACTIVE_REGION
+    std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tAssembly"<< std::endl;
+#endif
 
     for (unsigned i(0); i<contigs.size(); ++i)
     {
