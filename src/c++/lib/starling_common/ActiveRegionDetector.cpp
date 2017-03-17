@@ -177,14 +177,15 @@ void ActiveRegionDetector::clear()
     _numVariants = 0;
 }
 
-bool ActiveRegionDetector::isPolymorphicSite(const unsigned sampleId, const pos_t pos) const
+bool ActiveRegionDetector::isCandidateSnv(const unsigned sampleId, const pos_t pos, const char baseChar) const
 {
-    return _polySites[sampleId].isKeyPresent(pos);
+    auto baseIndex(static_cast<BASE_ID::index_t>(base_to_id(baseChar)));
+    if (baseIndex == BASE_ID::ANY) return false;
+    return (getHaplotypeId(sampleId, pos, baseIndex) != 0);
 }
 
 uint8_t ActiveRegionDetector::getHaplotypeId(const unsigned sampleId, const pos_t pos, const BASE_ID::index_t baseIndex) const
 {
-    if (not isPolymorphicSite(sampleId, pos)) return 0; // reference (complex allele index 0)
-    auto value(_polySites[sampleId].getConstRef(pos));
+    auto value(_polySites[sampleId].getConstRefDefault(pos, 0));
     return ActiveRegion::getHaplotypeId(value, baseIndex);
 }

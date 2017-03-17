@@ -117,12 +117,12 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
             if ((sampleId == 1) and (snvPos.find(pos) != snvPos.end()))
             {
                 // SNV
-                BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, pos), true);
+                BOOST_REQUIRE_EQUAL(detector.isCandidateSnv(sampleId, pos, 'A'), true);
             }
             else
             {
                 // No SNV
-                BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, pos), false);
+                BOOST_REQUIRE_EQUAL(detector.isCandidateSnv(sampleId, pos, 'A'), false);
             }
         }
     }
@@ -243,8 +243,8 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
         detector.clear();
 
         // check if polySites are correctly set
-        BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, startPosition+snvOffsets[0]), true);
-        BOOST_REQUIRE_EQUAL(detector.isPolymorphicSite(sampleId, startPosition+snvOffsets[1]), true);
+        BOOST_REQUIRE_EQUAL(detector.isCandidateSnv(sampleId, startPosition + snvOffsets[0], 'G'), true);
+        BOOST_REQUIRE_EQUAL(detector.isCandidateSnv(sampleId, startPosition + snvOffsets[1], 'G'), true);
     }
 }
 

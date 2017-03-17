@@ -105,11 +105,12 @@ public:
     /// \param pos reference position
     void updateEndPosition(const pos_t pos);
 
-    /// Checks if mismatches occur consistently at position pos
+    /// Checks if it's a candidate SNV
     /// \param sampleId sample id
     /// \param pos reference position
+    /// \param baseChar read base
     /// \return true if pos is a polymorphic site; false otherwise.
-    bool isPolymorphicSite(const unsigned sampleId, const pos_t pos) const;
+    bool isCandidateSnv(const unsigned sampleId, const pos_t pos, const char baseChar) const;
 
     /// Checks if mismatches occur consistently at position pos
     /// \param sampleId sample id

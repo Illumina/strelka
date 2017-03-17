@@ -137,6 +137,7 @@ score_segment(const starling_base_options& /*opt*/,
     }
 }
 
+/// score match segment
 static
 void
 scoreMatchSegment(const starling_base_options& /*opt*/,
@@ -164,12 +165,10 @@ scoreMatchSegment(const starling_base_options& /*opt*/,
             const pos_t refi(ref_head_pos+static_cast<pos_t>(i));
             is_ref=(sbase == ref.get_code(refi));
 
-            // Assume match if refi is a polymorphic site
             if (! is_ref)
             {
-                char seqChar = seq.get_char(readi);
-                auto haplotypeId = activeRegionDetector.getHaplotypeId(sampleId, refi, (BASE_ID::index_t)(base_to_id(seqChar)));
-                is_ref = (haplotypeId != 0);
+                // Don't penalize for the mismatch if it is a SNV found in an active region
+                is_ref = activeRegionDetector.isCandidateSnv(sampleId, refi, seq.get_char(readi));
             }
         }
         lnp += ( is_ref ?

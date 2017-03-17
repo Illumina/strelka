@@ -181,7 +181,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(unsigned sampleId)
 
     HaplotypeToAlignIdSet haplotypeToAlignIdSet;
     unsigned maxHaplotypeLength(0);
-    unsigned isNonRefHaplotype(false);
+    unsigned isAltHaplotypeFound(false);
 
     std::string refStr;
     _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
@@ -211,7 +211,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(unsigned sampleId)
         const std::string haplotype(contig.substr(start, end-start));
 
         if (haplotype != refStr)
-            isNonRefHaplotype = true;
+            isAltHaplotypeFound = true;
         if (haplotype.length() > maxHaplotypeLength)
             maxHaplotypeLength = (unsigned int) haplotype.length();
         haplotypeToAlignIdSet[haplotype] = std::vector<align_id_t>();
@@ -228,10 +228,9 @@ bool ActiveRegion::processHaplotypesWithAssembly(unsigned sampleId)
         }
     }
 
-    if (not isNonRefHaplotype)
+    // assembly fails if no alt haplotype is found
+    if (not isAltHaplotypeFound)
         return false;
-    if (haplotypeToAlignIdSet.empty())
-        return false;    // assembly fail; bypass indels
 
     return processSelectedHaplotypes(sampleId, haplotypeToAlignIdSet);
 }

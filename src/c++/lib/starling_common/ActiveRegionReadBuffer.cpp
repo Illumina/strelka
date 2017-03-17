@@ -160,11 +160,11 @@ bool ActiveRegionReadBuffer::getHaplotypeBase(const align_id_t id, const pos_t p
 
 void ActiveRegionReadBuffer::setEndPos(pos_t endPos)
 {
-    bool isJump((_readBufferRange.end_pos+1) != endPos);
+    bool isPosJumped((_readBufferRange.end_pos+1) != endPos);
 
     auto pos(endPos-1);
 
-    if ((not _readBufferRange.is_begin_pos) or isJump)
+    if ((not _readBufferRange.is_begin_pos) or isPosJumped)
     {
         // initialization
         _readBufferRange.set_begin_pos(pos);

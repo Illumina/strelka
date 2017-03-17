@@ -181,11 +181,15 @@ create_mismatch_filter_map(const blt_options& client_opt,
                 if ((read_pos < read_begin) || (read_pos >= read_end)) continue; // allow for read end trimming
                 const pos_t ref_pos(ref_head_pos+static_cast<pos_t>(j));
 
-                if (read_seq.get_char(read_pos) != ref_seq.get_char(ref_pos))
+                char readChar(read_seq.get_char(read_pos));
+                if (readChar != ref_seq.get_char(ref_pos))
                 {
-                    rmi[read_pos].is_mismatch=true;
-                    if (!activeRegionDetector.isPolymorphicSite(sampleIndex, ref_pos))
+                    // if the mismatch is a SNV found in an active region, don't increase the counter
+                    if (not activeRegionDetector.isCandidateSnv(sampleIndex, ref_pos, readChar))
+                    {
+                        rmi[read_pos].is_mismatch=true;
                         dd.inc(read_pos,1);
+                    }
                 }
             }
             read_head_pos += ps.length;

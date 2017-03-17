@@ -1495,15 +1495,6 @@ process_pos_indel_digt(const pos_t pos)
             {
                 const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
 
-//                if (pos == 43852637)
-//                {
-//                    // debugging
-//                    for (const auto& entry : indelSampleData.read_path_lnp)
-//                    {
-//                        std::cerr << "readid: " << entry.first << " ref_lnp " << entry.second.ref << " indel_lnp: " << entry.second.indel << "\n";
-//                    }
-//                }
-
                 if (not indelSampleData.read_path_lnp.empty())
                 {
                     isZeroCoverage = false;
