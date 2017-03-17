@@ -1,3 +1,4 @@
+- STREL-462 Do not penalize candidate SNVs in alignment scoring
 - STREL-450 Add dinucs to indel error stats module
 - STREL-465 Filter germline haplotypes with phasing error signature
 - STREL-460 do not assess indel candidacy in active regions if assembly fails

@@ -100,7 +100,7 @@ private:
 #endif
 
 
-/// score a contiguous matching alignment segment
+/// score an insertion segment
 ///
 /// note that running the lnp value through as a reference creates more
 /// floating point stability for ambiguous alignments which have the
@@ -108,14 +108,14 @@ private:
 ///
 static
 void
-score_segment(const starling_base_options& /*opt*/,
-              const unsigned seg_length,
-              const bam_seq_base& seq,
-              const uint8_t* qual,
-              const unsigned read_offset,
-              const bam_seq_base& ref,
-              const pos_t ref_head_pos,
-              double& lnp)
+scoreInsertSegment(const starling_base_options & /*opt*/,
+                   const unsigned seg_length,
+                   const bam_seq_base &seq,
+                   const uint8_t *qual,
+                   const unsigned read_offset,
+                   const bam_seq_base &ref,
+                   const pos_t ref_head_pos,
+                   double &lnp)
 {
     static const double lnthird(-std::log(3.));
 
@@ -137,7 +137,7 @@ score_segment(const starling_base_options& /*opt*/,
     }
 }
 
-/// score match segment
+/// score a match segment
 static
 void
 scoreMatchSegment(const starling_base_options& /*opt*/,
@@ -334,14 +334,14 @@ score_candidate_alignment(
                 insert_seq_head_pos=static_cast<int>(insert_bseq.size())-static_cast<int>(ps.length);
             }
 
-            score_segment(opt,
-                          sinfo.insert_length,
-                          read_bseq,
-                          qual,
-                          read_offset,
-                          insert_bseq,
-                          insert_seq_head_pos,
-                          al_lnp);
+            scoreInsertSegment(opt,
+                               sinfo.insert_length,
+                               read_bseq,
+                               qual,
+                               read_offset,
+                               insert_bseq,
+                               insert_seq_head_pos,
+                               al_lnp);
 
 #ifdef DEBUG_SCORE
             for (unsigned ii(0); ii<sinfo.insert_length; ++ii)
@@ -397,14 +397,14 @@ score_candidate_alignment(
                 insert_seq_head_pos=static_cast<int>(insert_bseq.size())-static_cast<int>(ps.length);
             }
 
-            score_segment(opt,
-                          ps.length,
-                          read_bseq,
-                          qual,
-                          read_offset,
-                          insert_bseq,
-                          insert_seq_head_pos,
-                          al_lnp);
+            scoreInsertSegment(opt,
+                               ps.length,
+                               read_bseq,
+                               qual,
+                               read_offset,
+                               insert_bseq,
+                               insert_seq_head_pos,
+                               al_lnp);
 
 #ifdef DEBUG_SCORE
             for (unsigned ii(0); ii<ps.length; ++ii)
