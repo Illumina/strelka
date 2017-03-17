@@ -134,6 +134,7 @@ struct IndelErrorContext
         unsigned initRepeatCount = 1)
         : repeatPatternSize(initRepeatingPatternSize), repeatCount(initRepeatCount)
     {}
+
     bool operator<(const IndelErrorContext& rhs) const
     {
         if (repeatPatternSize < rhs.repeatPatternSize)

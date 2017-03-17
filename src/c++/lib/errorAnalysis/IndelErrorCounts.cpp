@@ -82,7 +82,9 @@ operator<<(
     std::ostream& os,
     const IndelErrorContext& context)
 {
-    os << context.getRepeatCount();
+    os << context.getRepeatPatternSize()
+       << "x"
+       << context.getRepeatCount();
     return os;
 }
 
