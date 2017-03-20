@@ -25,13 +25,7 @@
 #pragma once
 
 #include "somatic_result_set.hh"
-#include "strelka_shared.hh"
-#include "strelka_digt_states.hh"
-
-#include "blt_util/math_util.hh"
-#include "blt_common/position_snp_call_pprob_digt.hh"
-
-#include <cmath>
+#include "blt_util/blt_types.hh"
 
 
 // calculates diploid prior probabilities

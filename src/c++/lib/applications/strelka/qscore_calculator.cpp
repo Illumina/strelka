@@ -25,19 +25,12 @@
 
 
 #include "qscore_calculator.hh"
-#include "somatic_call_shared.hh"
+
+#include "strelka_digt_states.hh"
 #include "blt_common/snp_util.hh"
-#include "blt_util/log.hh"
 #include "blt_util/math_util.hh"
-#include "blt_util/prob_util.hh"
-#include "blt_util/seq_util.hh"
-#include "strelka_common/position_snp_call_grid_lhood_cached.hh"
 
-#include <cassert>
-#include <cmath>
-#include <cstdlib>
 
-#include <map>
 
 void
 calculate_bare_lnprior(const double theta,

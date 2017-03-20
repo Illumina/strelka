@@ -18,21 +18,12 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
 #include "alignment_util.hh"
 #include "starling_read_util.hh"
-
-#include "blt_util/blt_exception.hh"
-#include "starling_common/starling_base_shared.hh"
-#include "ActiveRegionDetector.hh"
-
-#include <cassert>
-
-#include <sstream>
 
 
 

@@ -20,11 +20,6 @@
 
 #pragma once
 
-#include "starling_common/starling_base_shared.hh"
-#include "blt_common/snp_pos_info.hh"
-
-#include "gvcf_locus_info.hh"
-
 
 struct starling_continuous_variant_caller
 {

@@ -26,7 +26,6 @@
 
 #include "ScoringModelManager.hh"
 #include "starling_shared.hh"
-#include "blt_common/blt_shared.hh"
 #include "blt_util/chrom_depth_map.hh"
 
 #include <iosfwd>

@@ -19,6 +19,7 @@
 //
 
 #include "starling_continuous_variant_caller.hh"
+#include "blt_util/math_util.hh"
 #include "blt_util/qscore.hh"
 
 #include <boost/math/special_functions/gamma.hpp>

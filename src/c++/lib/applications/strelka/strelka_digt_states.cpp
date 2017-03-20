@@ -24,6 +24,9 @@
 
 #include "strelka_digt_states.hh"
 
+#include <iostream>
+
+
 
 namespace DIGT_GRID
 {

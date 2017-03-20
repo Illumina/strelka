@@ -25,13 +25,14 @@
 
 #pragma once
 
-#include "somatic_result_set.hh"
-#include "strelka_shared.hh"
-#include "strelka_digt_states.hh"
+//#include "somatic_result_set.hh"
 
-#include "starling_common/starling_indel_call_pprob_digt.hh"
+//#include "starling_common/starling_indel_call_pprob_digt.hh"
+#include "blt_util/blt_types.hh"
 
-#include "boost/utility.hpp"
+#include <iosfwd>
+#include <vector>
+
 
 namespace SOMATIC_DIGT
 {

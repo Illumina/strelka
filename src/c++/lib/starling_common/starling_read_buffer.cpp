@@ -26,9 +26,7 @@
 #include "candidate_alignment.hh"
 #include "starling_read_util.hh"
 
-#include "blt_util/log.hh"
 #include "starling_common/starling_read_buffer.hh"
-#include "starling_common/starling_base_shared.hh"
 
 #include <cassert>
 

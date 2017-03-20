@@ -29,7 +29,6 @@
 #include "blt_util/log.hh"
 #include "common/Exceptions.hh"
 #include "htsapi/bam_header_info.hh"
-#include "starling_common/starling_base_shared.hh"
 #include "starling_common/HtsMergeStreamerUtil.hh"
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
