@@ -100,7 +100,7 @@ private:
 #endif
 
 
-/// score a contiguous matching alignment segment
+/// score an insertion segment
 ///
 /// note that running the lnp value through as a reference creates more
 /// floating point stability for ambiguous alignments which have the
@@ -108,28 +108,28 @@ private:
 ///
 static
 void
-score_segment(const starling_base_options& /*opt*/,
-              const unsigned seg_length,
-              const bam_seq_base& seq,
-              const uint8_t* qual,
-              const unsigned read_offset,
-              const bam_seq_base& ref,
-              const pos_t ref_head_pos,
-              double& lnp)
+scoreInsertSegment(const starling_base_options & /*opt*/,
+                   const unsigned seg_length,
+                   const bam_seq_base &seq,
+                   const uint8_t *qual,
+                   const unsigned read_offset,
+                   const bam_seq_base &ref,
+                   const pos_t ref_head_pos,
+                   double &lnp)
 {
     static const double lnthird(-std::log(3.));
 
     for (unsigned i(0); i<seg_length; ++i)
     {
-        const pos_t readi(static_cast<pos_t>(read_offset+i));
-        const uint8_t sbase(seq.get_code(readi));
+        const pos_t readPos(static_cast<pos_t>(read_offset+i));
+        const uint8_t sbase(seq.get_code(readPos));
         if (sbase == BAM_BASE::ANY) continue;
-        const uint8_t qscore(qual[readi]);
+        const uint8_t qscore(qual[readPos]);
         bool is_ref(sbase == BAM_BASE::REF);
         if (! is_ref)
         {
-            const pos_t refi(ref_head_pos+static_cast<pos_t>(i));
-            is_ref=(sbase == ref.get_code(refi));
+            const pos_t refPos(ref_head_pos+static_cast<pos_t>(i));
+            is_ref=(sbase == ref.get_code(refPos));
         }
         lnp += ( is_ref ?
                  qphred_to_ln_comp_error_prob(qscore) :
@@ -137,6 +137,45 @@ score_segment(const starling_base_options& /*opt*/,
     }
 }
 
+/// score a match segment
+static
+void
+scoreMatchSegment(const starling_base_options& opt,
+              const unsigned seg_length,
+              const bam_seq_base& seq,
+              const uint8_t* qual,
+              const unsigned read_offset,
+              const bam_seq_base& ref,
+              const pos_t ref_head_pos,
+              const unsigned sampleId,
+              const ActiveRegionDetector& activeRegionDetector,
+              double& lnp)
+{
+    static const double lnthird(-std::log(3.));
+
+    for (unsigned i(0); i<seg_length; ++i)
+    {
+        const pos_t readPos(static_cast<pos_t>(read_offset+i));
+        const uint8_t sbase(seq.get_code(readPos));
+        if (sbase == BAM_BASE::ANY) continue;
+        const uint8_t qscore(qual[readPos]);
+        bool is_ref(sbase == BAM_BASE::REF);
+        if (! is_ref)
+        {
+            const pos_t refPos(ref_head_pos+static_cast<pos_t>(i));
+            is_ref=(sbase == ref.get_code(refPos));
+
+            if (opt.is_short_haplotyping_enabled and (not is_ref))
+            {
+                // Don't penalize for the mismatch if it is a SNV found in an active region
+                is_ref = activeRegionDetector.isCandidateSnv(sampleId, refPos, seq.get_char(readPos));
+            }
+        }
+        lnp += ( is_ref ?
+                 qphred_to_ln_comp_error_prob(qscore) :
+                 qphred_to_ln_error_prob(qscore)+lnthird );
+    }
+}
 
 
 /// convert a particular gap in the candidate alignment to the corresponding variant key to
@@ -229,6 +268,8 @@ double
 score_candidate_alignment(
     const starling_base_options& opt,
     const IndelBuffer& indelBuffer,
+    const unsigned sampleId,
+    const ActiveRegionDetector& activeRegionDetector,
     const read_segment& rseg,
     const candidate_alignment& cal,
     const reference_contig_segment& ref)
@@ -293,14 +334,14 @@ score_candidate_alignment(
                 insert_seq_head_pos=static_cast<int>(insert_bseq.size())-static_cast<int>(ps.length);
             }
 
-            score_segment(opt,
-                          sinfo.insert_length,
-                          read_bseq,
-                          qual,
-                          read_offset,
-                          insert_bseq,
-                          insert_seq_head_pos,
-                          al_lnp);
+            scoreInsertSegment(opt,
+                               sinfo.insert_length,
+                               read_bseq,
+                               qual,
+                               read_offset,
+                               insert_bseq,
+                               insert_seq_head_pos,
+                               al_lnp);
 
 #ifdef DEBUG_SCORE
             for (unsigned ii(0); ii<sinfo.insert_length; ++ii)
@@ -320,13 +361,15 @@ score_candidate_alignment(
         }
         else if (is_segment_align_match(ps.type))
         {
-            score_segment(opt,
+            scoreMatchSegment(opt,
                           ps.length,
                           read_bseq,
                           qual,
                           read_offset,
                           ref_bseq,
                           ref_head_pos,
+                          sampleId,
+                          activeRegionDetector,
                           al_lnp);
 #ifdef DEBUG_SCORE
             for (unsigned ii(0); ii<ps.length; ++ii)
@@ -354,14 +397,14 @@ score_candidate_alignment(
                 insert_seq_head_pos=static_cast<int>(insert_bseq.size())-static_cast<int>(ps.length);
             }
 
-            score_segment(opt,
-                          ps.length,
-                          read_bseq,
-                          qual,
-                          read_offset,
-                          insert_bseq,
-                          insert_seq_head_pos,
-                          al_lnp);
+            scoreInsertSegment(opt,
+                               ps.length,
+                               read_bseq,
+                               qual,
+                               read_offset,
+                               insert_bseq,
+                               insert_seq_head_pos,
+                               al_lnp);
 
 #ifdef DEBUG_SCORE
             for (unsigned ii(0); ii<ps.length; ++ii)

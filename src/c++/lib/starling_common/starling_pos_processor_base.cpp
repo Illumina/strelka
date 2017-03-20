@@ -816,7 +816,7 @@ align_pos(const pos_t pos)
 
             try
             {
-                realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,sampleIndex,rseg,
+                realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,sampleIndex, *_active_region_detector, rseg,
                                        getIndelBuffer());
             }
             catch (...)

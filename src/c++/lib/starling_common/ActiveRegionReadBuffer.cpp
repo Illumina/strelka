@@ -31,7 +31,7 @@ void ActiveRegionReadBuffer::insertMatch(const align_id_t alignId, const pos_t p
     addAlignIdToPos(alignId, pos);
 }
 
-void ActiveRegionReadBuffer::insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string& segmentSeq, bool isBeginEdge)
+void ActiveRegionReadBuffer::insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string& segmentSeq, const bool isBeginEdge)
 {
     // For invariant counting
     addVariantCount(getSampleId(alignId), pos, IndelWeight);
@@ -61,10 +61,10 @@ ActiveRegionReadBuffer::insertMismatch(const align_id_t alignId, const pos_t pos
 void
 ActiveRegionReadBuffer::insertIndel(const unsigned sampleId, const IndelObservation& indelObservation)
 {
-    auto pos = indelObservation.key.pos;
+    const auto pos = indelObservation.key.pos;
 
-    auto alignId = indelObservation.data.id;
-    auto indelKey = indelObservation.key;
+    const auto alignId = indelObservation.data.id;
+    const auto indelKey = indelObservation.key;
 
     if (!indelObservation.data.is_low_map_quality)
     {
@@ -99,7 +99,7 @@ void ActiveRegionReadBuffer::setMatch(const align_id_t id, const pos_t pos)
     _variantInfo[id % MaxDepth][pos % MaxBufferSize] = MATCH;
 }
 
-void ActiveRegionReadBuffer::setMismatch(const align_id_t id, const pos_t pos, char baseChar)
+void ActiveRegionReadBuffer::setMismatch(const align_id_t id, const pos_t pos, const char baseChar)
 {
     unsigned idIndex = id % MaxDepth;
     unsigned posIndex = pos % MaxBufferSize;
@@ -154,15 +154,17 @@ bool ActiveRegionReadBuffer::getHaplotypeBase(const align_id_t id, const pos_t p
         base = _snvBuffer[idIndex][posIndex] + _insertSeqBuffer[idIndex][posIndex];
     }
 
-    bool isSoftClipped = (variant == SOFT_CLIP);
+    const bool isSoftClipped = (variant == SOFT_CLIP);
     return isSoftClipped;
 }
 
-void ActiveRegionReadBuffer::setEndPos(pos_t endPos)
+void ActiveRegionReadBuffer::setEndPos(const pos_t endPos)
 {
-    auto pos(endPos-1);
+    const bool isPosJumped((_readBufferRange.end_pos+1) != endPos);
 
-    if (not _readBufferRange.is_begin_pos)
+    const auto pos(endPos-1);
+
+    if ((not _readBufferRange.is_begin_pos) or isPosJumped)
     {
         // initialization
         _readBufferRange.set_begin_pos(pos);
@@ -198,8 +200,8 @@ void ActiveRegionReadBuffer::getReadSegments(const pos_range& posRange, ReadInfo
                 alignIdToHaplotype[alignId] = std::string();
 
             std::string haplotypeBase;
-            bool isSoftClipped = getHaplotypeBase(alignId, pos, haplotypeBase);
-            bool isContainingN = (haplotypeBase.find('N') != std::string::npos);
+            const bool isSoftClipped = getHaplotypeBase(alignId, pos, haplotypeBase);
+            const bool isContainingN = (haplotypeBase.find('N') != std::string::npos);
             if (isContainingN or (!includePartialReads and isSoftClipped))
                 invalidAlignIds.insert(alignId);
 
@@ -243,7 +245,7 @@ bool ActiveRegionReadBuffer::isCandidateVariant(const pos_t pos) const
     {
         if (_ref.get_base(pos) == 'N')
             return false;
-        auto count = getVariantCount(sampleId, pos);
+        const auto count = getVariantCount(sampleId, pos);
         if ((count >= MinNumVariantsPerPosition and count >= (MinAlternativeAlleleFraction*getDepth(sampleId, pos)))
             or count >= (MinAlternativeAlleleFractionLowDepth*getDepth(sampleId, pos)))
             return true;

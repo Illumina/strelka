@@ -94,20 +94,22 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
     pos_t posToProcess(pos-1);
     if (posToProcess < 0) return;
 
-    bool isCurrentPosCandidateVariant = _readBuffer.isCandidateVariant(posToProcess);
-    bool isAnchor = _readBuffer.isAnchor(posToProcess) and (not isCurrentPosCandidateVariant);
+    const bool isCurrentPosCandidateVariant = _readBuffer.isCandidateVariant(posToProcess);
+    const bool isAnchor = _readBuffer.isAnchor(posToProcess) and (not isCurrentPosCandidateVariant);
 
     if (!isCurrentPosCandidateVariant and !isAnchor) return;
 
 //    std::cout << (posToProcess+1) << "\t" << isCurrentPosCandidateVariant << '\t' << isAnchor << std::endl;
 
     unsigned distanceFromPrevVariant = (unsigned) (posToProcess - _prevVariantPos);
-    if (distanceFromPrevVariant > MaxDistanceBetweenTwoVariants and _anchorPosFollowingPrevVariant > 0)
+    if (distanceFromPrevVariant > MaxDistanceBetweenTwoVariants and _anchorPosFollowingPrevVariant >= 0)
     {
         if (_numVariants >= MinNumVariantsPerRegion )
         {
             // close the existing active region
-            const pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
+            if (_activeRegionStartPos < _readBuffer.getBeginPos())
+                _activeRegionStartPos = _readBuffer.getBeginPos();
+            pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
             _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
                                         _aligner, _readBuffer, _indelBuffer, _polySites);
 
@@ -132,7 +134,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
             _activeRegionStartPos = posToProcess;
         }
 
-        if (not _anchorPosFollowingPrevVariant)
+        if (_anchorPosFollowingPrevVariant < 0)
         {
             _anchorPosFollowingPrevVariant = posToProcess;
         }
@@ -146,7 +148,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
         // extend the existing active region
         ++_numVariants;
         _prevVariantPos = posToProcess;
-        _anchorPosFollowingPrevVariant = 0;
+        _anchorPosFollowingPrevVariant = -1;
     }
 }
 
@@ -157,7 +159,9 @@ void ActiveRegionDetector::clear()
     if (_numVariants >= MinNumVariantsPerRegion)
     {
         // close the existing active region
-        if (not _anchorPosFollowingPrevVariant)
+        if (_activeRegionStartPos < _readBuffer.getBeginPos())
+            _activeRegionStartPos = _readBuffer.getBeginPos();
+        if (_anchorPosFollowingPrevVariant < 0)
             _anchorPosFollowingPrevVariant = _readBuffer.getEndPos();
         pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
         _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
@@ -167,20 +171,21 @@ void ActiveRegionDetector::clear()
 
     processActiveRegion();
 
-    _activeRegionStartPos = 0;
-    _anchorPosFollowingPrevVariant = 1;
-    _prevVariantPos = 0;
+    _activeRegionStartPos = -1;
+    _anchorPosFollowingPrevVariant = -1;
+    _prevVariantPos = -1;
     _numVariants = 0;
 }
 
-bool ActiveRegionDetector::isPolymorphicSite(const unsigned sampleId, const pos_t pos) const
+bool ActiveRegionDetector::isCandidateSnv(const unsigned sampleId, const pos_t pos, const char baseChar) const
 {
-    return _polySites[sampleId].isKeyPresent(pos);
+    const auto baseIndex(static_cast<BASE_ID::index_t>(base_to_id(baseChar)));
+    if (baseIndex == BASE_ID::ANY) return false;
+    return (getHaplotypeId(sampleId, pos, baseIndex) != 0);
 }
 
 uint8_t ActiveRegionDetector::getHaplotypeId(const unsigned sampleId, const pos_t pos, const BASE_ID::index_t baseIndex) const
 {
-    if (not isPolymorphicSite(sampleId, pos)) return 0; // reference (complex allele index 0)
-    auto value(_polySites[sampleId].getConstRef(pos));
+    const auto value(_polySites[sampleId].getConstRefDefault(pos, 0));
     return ActiveRegion::getHaplotypeId(value, baseIndex);
 }

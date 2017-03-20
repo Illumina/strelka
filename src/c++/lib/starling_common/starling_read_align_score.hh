@@ -29,6 +29,7 @@
 #include "starling_common/IndelBuffer.hh"
 #include "starling_common/starling_read.hh"
 #include "starling_common/starling_base_shared.hh"
+#include "ActiveRegionDetector.hh"
 
 
 /// return score of candidate alignment cal for read segment rseg
@@ -39,6 +40,8 @@ double
 score_candidate_alignment(
     const starling_base_options& opt,
     const IndelBuffer& indelBuffer,
+    const unsigned sampleId,
+    const ActiveRegionDetector& activeRegionDetector,
     const read_segment& rseg,
     const candidate_alignment& cal,
     const reference_contig_segment& ref);

@@ -98,7 +98,7 @@ public:
 
     /// \param pos reference position
     /// \return true if pos belongs to this active region; false otherwise
-    bool contains(pos_t pos) const
+    bool contains(const pos_t pos) const
     {
         return _posRange.is_pos_intersect(pos);
     }
@@ -130,12 +130,13 @@ public:
         default:
             assert(false);
         }
+        return 0;
     }
 
     /// add haplotypeId to the rangeSet value
     static void addBaseId(
         const HaplotypeId haplotypeId,
-        char baseChar,
+        const char baseChar,
         uint8_t& rangeSetValue)
     {
         assert (haplotypeId == 1 || haplotypeId == 2);
@@ -171,17 +172,17 @@ private:
 
     std::set<align_id_t> _alignIdSoftClipped;
 
-    bool processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlignIdSet& haplotypeToAlignIdSet);
+    bool processSelectedHaplotypes(const unsigned sampleId, HaplotypeToAlignIdSet& haplotypeToAlignIdSet);
 
     /// Create haplotypes using counting and process variants
     /// \param sampleId sample id
     /// \return true if haplotype generation succeeds, false otherwise
-    bool processHaplotypesWithCounting(unsigned sampleId);
+    bool processHaplotypesWithCounting(const unsigned sampleId);
 
     /// Create haplotypes using assembly and process variants
     /// \param sampleId sample id
     /// \return true if haplotype generation succeeds, false otherwise
-    bool processHaplotypesWithAssembly(unsigned sampleId);
+    bool processHaplotypesWithAssembly(const unsigned sampleId);
 
     /// Do not use haplotyping to determine indel candidacy and MMDF relax positions
     void doNotUseHaplotyping();

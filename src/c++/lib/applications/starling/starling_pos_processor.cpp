@@ -1494,6 +1494,7 @@ process_pos_indel_digt(const pos_t pos)
             for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
             {
                 const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
+
                 if (not indelSampleData.read_path_lnp.empty())
                 {
                     isZeroCoverage = false;
