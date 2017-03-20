@@ -64,7 +64,7 @@ void ActiveRegion::processHaplotypes()
     }
 }
 
-bool ActiveRegion::processHaplotypesWithCounting(unsigned sampleId)
+bool ActiveRegion::processHaplotypesWithCounting(const unsigned sampleId)
 {
     ReadInfo readInfo;
     _readBuffer.getReadSegments(_posRange, readInfo, false);
@@ -100,7 +100,7 @@ bool ActiveRegion::processHaplotypesWithCounting(unsigned sampleId)
 }
 
 
-bool ActiveRegion::processHaplotypesWithAssembly(unsigned sampleId)
+bool ActiveRegion::processHaplotypesWithAssembly(const unsigned sampleId)
 {
     // Expand the region to include left/right anchors.
     // TODO: anchors may be too short if there are SNVs close to anchors
@@ -181,7 +181,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(unsigned sampleId)
 
     HaplotypeToAlignIdSet haplotypeToAlignIdSet;
     unsigned maxHaplotypeLength(0);
-    unsigned isAltHaplotypeFound(false);
+    unsigned isNonRefHaplotypeFound(false);
 
     std::string refStr;
     _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
@@ -211,7 +211,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(unsigned sampleId)
         const std::string haplotype(contig.substr(start, end-start));
 
         if (haplotype != refStr)
-            isAltHaplotypeFound = true;
+            isNonRefHaplotypeFound = true;
         if (haplotype.length() > maxHaplotypeLength)
             maxHaplotypeLength = (unsigned int) haplotype.length();
         haplotypeToAlignIdSet[haplotype] = std::vector<align_id_t>();
@@ -229,7 +229,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(unsigned sampleId)
     }
 
     // assembly fails if no alt haplotype is found
-    if (not isAltHaplotypeFound)
+    if (not isNonRefHaplotypeFound)
         return false;
 
     return processSelectedHaplotypes(sampleId, haplotypeToAlignIdSet);
@@ -378,7 +378,7 @@ isFilterSecondHaplotypeAsSequencerPhasingNoise(
 
 
 
-bool ActiveRegion::processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlignIdSet& haplotypeToAlignIdSet)
+bool ActiveRegion::processSelectedHaplotypes(const unsigned sampleId, HaplotypeToAlignIdSet& haplotypeToAlignIdSet)
 {
     // determine threshold to select 2 haplotypes with the largest counts
     unsigned largestCount(0);
@@ -396,7 +396,7 @@ bool ActiveRegion::processSelectedHaplotypes(unsigned sampleId, HaplotypeToAlign
     for (const auto& entry : haplotypeToAlignIdSet)
     {
         const std::string& haplotype(entry.first);
-        bool isReference = (haplotype == refStr);
+        const bool isReference = (haplotype == refStr);
         unsigned count = (unsigned)entry.second.size();
 
         // count should be no less than MinHaplotypeCount
@@ -609,7 +609,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
 
         if (indelKeyPtr != nullptr)
         {
-            for (auto alignId : alignIdList)
+            for (const auto alignId : alignIdList)
             {
                 IndelObservationData indelObservationData;
                 const auto& alignInfo(_readBuffer.getAlignInfo(alignId));

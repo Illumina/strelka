@@ -121,15 +121,15 @@ scoreInsertSegment(const starling_base_options & /*opt*/,
 
     for (unsigned i(0); i<seg_length; ++i)
     {
-        const pos_t readi(static_cast<pos_t>(read_offset+i));
-        const uint8_t sbase(seq.get_code(readi));
+        const pos_t readPos(static_cast<pos_t>(read_offset+i));
+        const uint8_t sbase(seq.get_code(readPos));
         if (sbase == BAM_BASE::ANY) continue;
-        const uint8_t qscore(qual[readi]);
+        const uint8_t qscore(qual[readPos]);
         bool is_ref(sbase == BAM_BASE::REF);
         if (! is_ref)
         {
-            const pos_t refi(ref_head_pos+static_cast<pos_t>(i));
-            is_ref=(sbase == ref.get_code(refi));
+            const pos_t refPos(ref_head_pos+static_cast<pos_t>(i));
+            is_ref=(sbase == ref.get_code(refPos));
         }
         lnp += ( is_ref ?
                  qphred_to_ln_comp_error_prob(qscore) :
@@ -140,7 +140,7 @@ scoreInsertSegment(const starling_base_options & /*opt*/,
 /// score a match segment
 static
 void
-scoreMatchSegment(const starling_base_options& /*opt*/,
+scoreMatchSegment(const starling_base_options& opt,
               const unsigned seg_length,
               const bam_seq_base& seq,
               const uint8_t* qual,
@@ -155,20 +155,20 @@ scoreMatchSegment(const starling_base_options& /*opt*/,
 
     for (unsigned i(0); i<seg_length; ++i)
     {
-        const pos_t readi(static_cast<pos_t>(read_offset+i));
-        const uint8_t sbase(seq.get_code(readi));
+        const pos_t readPos(static_cast<pos_t>(read_offset+i));
+        const uint8_t sbase(seq.get_code(readPos));
         if (sbase == BAM_BASE::ANY) continue;
-        const uint8_t qscore(qual[readi]);
+        const uint8_t qscore(qual[readPos]);
         bool is_ref(sbase == BAM_BASE::REF);
         if (! is_ref)
         {
-            const pos_t refi(ref_head_pos+static_cast<pos_t>(i));
-            is_ref=(sbase == ref.get_code(refi));
+            const pos_t refPos(ref_head_pos+static_cast<pos_t>(i));
+            is_ref=(sbase == ref.get_code(refPos));
 
-            if (! is_ref)
+            if (opt.is_short_haplotyping_enabled and (not is_ref))
             {
                 // Don't penalize for the mismatch if it is a SNV found in an active region
-                is_ref = activeRegionDetector.isCandidateSnv(sampleId, refi, seq.get_char(readi));
+                is_ref = activeRegionDetector.isCandidateSnv(sampleId, refPos, seq.get_char(readPos));
             }
         }
         lnp += ( is_ref ?

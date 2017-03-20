@@ -105,18 +105,20 @@ public:
     /// \param pos reference position
     void updateEndPosition(const pos_t pos);
 
-    /// Checks if it's a candidate SNV
+    /// Checks if baseChar is a candidate SNV allele at this position
     /// \param sampleId sample id
     /// \param pos reference position
     /// \param baseChar read base
-    /// \return true if pos is a polymorphic site; false otherwise.
+    /// \return true if the base matches a candidate SNV allele at this position
     bool isCandidateSnv(const unsigned sampleId, const pos_t pos, const char baseChar) const;
 
-    /// Checks if mismatches occur consistently at position pos
+    /// Gets the haplotype ID for the input single base allele
     /// \param sampleId sample id
     /// \param pos reference position
-    /// \param baseIndex alt base id
-    /// \return complex allele id
+    /// \param baseIndex base index of the allele
+    /// \return 0 if it's not apprearing in non-ref haplotype.
+    /// 1 or 2 if it appears in one non-ref haplotype
+    /// 3 if it appears in both non-ref haplotype (i.e. hetalt SNV)
     uint8_t getHaplotypeId(const unsigned sampleId, const pos_t pos, const BASE_ID::index_t baseIndex) const;
 
     /// clear active region detector

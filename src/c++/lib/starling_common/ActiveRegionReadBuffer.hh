@@ -83,7 +83,7 @@ public:
     /// \param indelBuffer indel buffer
     ActiveRegionReadBuffer(
         const reference_contig_segment& ref,
-        unsigned sampleCount,
+        const unsigned sampleCount,
         IndelBuffer& indelBuffer)
         :
         _ref(ref),
@@ -112,8 +112,9 @@ public:
     /// insert soft-clipped segment
     /// \param alignId align id
     /// \param pos reference position
-    /// \param baseChar soft-clipped segment sequence
-    void insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string& segmentSeq, bool isBeginEdge);
+    /// \param segmentSeq the soft-clip segment sequence
+    /// \param isBeginEdge true if the soft-clip is at the beginning
+    void insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string& segmentSeq, const bool isBeginEdge);
 
     /// insert indel
     /// \param sampleId sample id
@@ -123,14 +124,14 @@ public:
     /// checks if pos is an anchor position
     /// \param pos reference position
     /// \return true if pos is an anchor position, false otherwise
-    bool isAnchor(pos_t pos) const
+    bool isAnchor(const pos_t pos) const
     {
         return _refRepeatFinder.isAnchor(pos);
     }
 
     /// Set end position of the buffer
     /// \param endPos end position (exclusive)
-    void setEndPos(pos_t endPos);
+    void setEndPos(const pos_t endPos);
 
     /// Gets the beginning position
     /// \return begin position
@@ -149,7 +150,7 @@ public:
     /// Gets sample id and indel align type
     /// \param alignId align id
     /// \return sample id and indel align type
-    const AlignInfo& getAlignInfo(align_id_t alignId) const
+    const AlignInfo& getAlignInfo(const align_id_t alignId) const
     {
         return _alignIdToAlignInfo[alignId % MaxDepth];
     }
@@ -164,7 +165,7 @@ public:
     /// \param alignId align id
     /// \param sampleId sample id
     /// \param indelAlignType indel align type
-    void setAlignInfo(const align_id_t alignId, unsigned sampleId, INDEL_ALIGN_TYPE::index_t indelAlignType, const bool isForwardStrand)
+    void setAlignInfo(const align_id_t alignId, const unsigned sampleId, const INDEL_ALIGN_TYPE::index_t indelAlignType, const bool isForwardStrand)
     {
         AlignInfo& alignInfo = _alignIdToAlignInfo[alignId % MaxDepth];
         alignInfo.sampleId = sampleId;
@@ -182,7 +183,7 @@ public:
 
     /// Clear buffer
     /// \param pos position
-    void clearPos(pos_t pos)
+    void clearPos(const pos_t pos)
     {
         _positionToAlignIds[pos % MaxBufferSize].clear();
         resetCounter(pos);
@@ -227,7 +228,7 @@ private:
     char _snvBuffer[MaxDepth][MaxBufferSize];
 
     void setMatch(const align_id_t id, const pos_t pos);
-    void setMismatch(const align_id_t id, const pos_t pos, char baseChar);
+    void setMismatch(const align_id_t id, const pos_t pos, const char baseChar);
     void setDelete(const align_id_t id, const pos_t pos);
     void setInsert(const align_id_t id, const pos_t pos, const std::string& insertSeq);
     void setSoftClipSegment(const align_id_t id, const pos_t pos, const std::string& segmentSeq);
@@ -244,14 +245,14 @@ private:
         }
     }
 
-    void addVariantCount(const unsigned sampleId, const pos_t pos, unsigned count)
+    void addVariantCount(const unsigned sampleId, const pos_t pos, const unsigned count)
     {
         int index = pos % MaxBufferSize;
         _variantCounter[sampleId][index] += count;
         ++_depth[sampleId][index];
     }
 
-    void addSoftClipCount(const unsigned sampleId, const pos_t pos, unsigned count)
+    void addSoftClipCount(const unsigned sampleId, const pos_t pos, const unsigned count)
     {
         int index = pos % MaxBufferSize;
         _variantCounter[sampleId][index] += count;

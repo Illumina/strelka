@@ -94,8 +94,8 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
     pos_t posToProcess(pos-1);
     if (posToProcess < 0) return;
 
-    bool isCurrentPosCandidateVariant = _readBuffer.isCandidateVariant(posToProcess);
-    bool isAnchor = _readBuffer.isAnchor(posToProcess) and (not isCurrentPosCandidateVariant);
+    const bool isCurrentPosCandidateVariant = _readBuffer.isCandidateVariant(posToProcess);
+    const bool isAnchor = _readBuffer.isAnchor(posToProcess) and (not isCurrentPosCandidateVariant);
 
     if (!isCurrentPosCandidateVariant and !isAnchor) return;
 
@@ -179,13 +179,13 @@ void ActiveRegionDetector::clear()
 
 bool ActiveRegionDetector::isCandidateSnv(const unsigned sampleId, const pos_t pos, const char baseChar) const
 {
-    auto baseIndex(static_cast<BASE_ID::index_t>(base_to_id(baseChar)));
+    const auto baseIndex(static_cast<BASE_ID::index_t>(base_to_id(baseChar)));
     if (baseIndex == BASE_ID::ANY) return false;
     return (getHaplotypeId(sampleId, pos, baseIndex) != 0);
 }
 
 uint8_t ActiveRegionDetector::getHaplotypeId(const unsigned sampleId, const pos_t pos, const BASE_ID::index_t baseIndex) const
 {
-    auto value(_polySites[sampleId].getConstRefDefault(pos, 0));
+    const auto value(_polySites[sampleId].getConstRefDefault(pos, 0));
     return ActiveRegion::getHaplotypeId(value, baseIndex);
 }
