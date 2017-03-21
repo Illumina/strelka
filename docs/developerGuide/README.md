@@ -131,7 +131,7 @@ libraries but not linked or run.
 
 C++11 features in use require at least VS2013. Windows
 installations of cmake and zlib are also required to configure and compile.
-Note that the minimum cmake version is 3.1.0 for Windows. Windows zlib is provided by the [gnuwin32 package] [gnuwin32] among others.
+Note that the minimum cmake version is 3.1.0 for Windows. Windows zlib is provided by the [gnuwin32 package][gnuwin32] among others.
 
 [gnuwin32]:http://gnuwin32.sourceforge.net/packages/zlib.htm
 

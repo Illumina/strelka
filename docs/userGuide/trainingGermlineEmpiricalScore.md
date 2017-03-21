@@ -32,9 +32,9 @@ specific training and truth data sets shown here are just small examples provide
 
 Strelka germline EVS training has additional dependencies which are not included
 in the primary build system. All packages required to retrain the EVS model and
-run the steps in this guide are provided in the [training environment Dockerfile]
-(trainingSomaticEmpiricalScore/Dockerfile) (shared with the somatic EVS training procedure),
-which can be used to either setup an EVS training docker image or as a guideline to install
+run the steps in this guide are provided in the
+[training environment Dockerfile](trainingSomaticEmpiricalScore/Dockerfile)
+(shared with the somatic EVS training procedure), which can be used to either setup an EVS training docker image or as a guideline to install
 dependencies on another system.
 
 ## Step 1: Build snv and indel training data sets

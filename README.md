@@ -5,7 +5,7 @@ Strelka calls somatic and germline small variants from mapped sequencing reads. 
 Strelka accepts input read mappings from BAM or CRAM
 files and input alleles from VCF. It reports all small variant predictions in VCF 4.1 format. Germline variant reporting
 uses the [gVCF conventions][gvcfPage] to represent both variant and reference
-call confidence. See the [user guide] [UserGuide] for a full description of capabilities and limitations.
+call confidence. See the [user guide][UserGuide] for a full description of capabilities and limitations.
 
 [manta]:https://github.com/Illumina/manta
 [gvcfPage]:https://sites.google.com/site/gvcftools/home/about-gvcf
@@ -24,9 +24,9 @@ Note that the somatic calling model in Strelka2 has been extensively updated sin
 License
 -------
 
-Strelka source code is provided under the [GPLv3 license] (LICENSE.txt).
+Strelka source code is provided under the [GPLv3 license](LICENSE.txt).
 Strelka includes several third party packages provided under other
-open source licenses, please see [COPYRIGHT.txt] (COPYRIGHT.txt)
+open source licenses, please see [COPYRIGHT.txt](COPYRIGHT.txt)
 for additional details.
 
 
@@ -34,7 +34,7 @@ Getting Started
 ---------------
 
 For Linux users, it is recommended to start from the most recent
-[binary distribution on the Strelka releases page] [releases], this
+[binary distribution on the Strelka releases page][releases], this
 distribution can be unpacked, moved to any convenient directory and
 tested by [running a small demo](docs/userGuide/installation.md#demo)
 included with the release distribution. Strelka can also be installed
@@ -47,7 +47,7 @@ for full build and installation details of all supported cases.
 Data Analysis and Interpretation
 --------------------------------
 
-After completing installation, see the [Strelka user guide] [UserGuide]
+After completing installation, see the [Strelka user guide][UserGuide]
 for instructions on how to run Strelka, interpret results and estimate
 hardware requirements/compute cost, in addition to a high-level methods
 overview.
@@ -57,7 +57,7 @@ Strelka Code Development
 ------------------------
 
 For strelka code development and debugging details, see the
-[Strelka developer guide] [DeveloperGuide]. This includes details
+[Strelka developer guide][DeveloperGuide]. This includes details
 on Strelka's development protocols, special build instructions,
 recommended workflows for investigating
 calls, and internal documentation details.

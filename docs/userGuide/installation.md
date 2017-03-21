@@ -29,14 +29,14 @@ release distributions of the source code. Acquiring the source via a
 git clone or archive could result in missing version number entries,
 undesirably stringent build requirements, or an unstable development
 version between releases. Additional build notes for Strelka developers
-can be found in the [strelka developer guide] [developerGuide].
+can be found in the [strelka developer guide][developerGuide].
 
 [DeveloperGuide]:../developerGuide/README.md
 
 
 ### Prerequisites to build from source
 
-[![Build Status] [tcistatus]] [tcihome]
+[![Build Status][tcistatus]][tcihome]
 
 [tcistatus]:https://travis-ci.org/Illumina/strelka.svg?branch=master
 [tcihome]:https://travis-ci.org/Illumina/strelka
@@ -66,7 +66,7 @@ Strelka is known to build and run on the following linux distributions
 ##### Windows
 
 Manta does not build or run on windows. Library-level compilation is
-possible for Visual Studio users. See the the [strelka developer guide] [DeveloperGuide] for details.
+possible for Visual Studio users. See the the [strelka developer guide][DeveloperGuide] for details.
 
 ### Linux Package Additions
 
@@ -152,6 +152,6 @@ above, the somatic demo can be run as follows:
     bash ${STRELKA_INSTALL_PATH}/bin/runStrelkaSomaticWorkflowDemo.bash
 
 This script creates a `StrelkaSomaticDemoAnalysis` directory under the current
-working directory, runs the Strelka somatic worklfow on a small demo dataset,
+working directory, runs the Strelka somatic workflow on a small demo dataset,
 and compares the somatic small variant output to an expected result. A similar
 script is provided for the germline analysis workflow.
