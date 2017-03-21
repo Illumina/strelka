@@ -108,14 +108,14 @@ private:
 ///
 static
 void
-scoreInsertSegment(const starling_base_options & /*opt*/,
+scoreInsertSegment(const starling_base_options& /*opt*/,
                    const unsigned seg_length,
-                   const bam_seq_base &seq,
-                   const uint8_t *qual,
+                   const bam_seq_base& seq,
+                   const uint8_t* qual,
                    const unsigned read_offset,
-                   const bam_seq_base &ref,
+                   const bam_seq_base& ref,
                    const pos_t ref_head_pos,
-                   double &lnp)
+                   double& lnp)
 {
     static const double lnthird(-std::log(3.));
 
@@ -141,15 +141,15 @@ scoreInsertSegment(const starling_base_options & /*opt*/,
 static
 void
 scoreMatchSegment(const starling_base_options& opt,
-              const unsigned seg_length,
-              const bam_seq_base& seq,
-              const uint8_t* qual,
-              const unsigned read_offset,
-              const bam_seq_base& ref,
-              const pos_t ref_head_pos,
-              const unsigned sampleId,
-              const ActiveRegionDetector& activeRegionDetector,
-              double& lnp)
+                  const unsigned seg_length,
+                  const bam_seq_base& seq,
+                  const uint8_t* qual,
+                  const unsigned read_offset,
+                  const bam_seq_base& ref,
+                  const pos_t ref_head_pos,
+                  const unsigned sampleId,
+                  const ActiveRegionDetector& activeRegionDetector,
+                  double& lnp)
 {
     static const double lnthird(-std::log(3.));
 
@@ -362,15 +362,15 @@ score_candidate_alignment(
         else if (is_segment_align_match(ps.type))
         {
             scoreMatchSegment(opt,
-                          ps.length,
-                          read_bseq,
-                          qual,
-                          read_offset,
-                          ref_bseq,
-                          ref_head_pos,
-                          sampleId,
-                          activeRegionDetector,
-                          al_lnp);
+                              ps.length,
+                              read_bseq,
+                              qual,
+                              read_offset,
+                              ref_bseq,
+                              ref_head_pos,
+                              sampleId,
+                              activeRegionDetector,
+                              al_lnp);
 #ifdef DEBUG_SCORE
             for (unsigned ii(0); ii<ps.length; ++ii)
             {

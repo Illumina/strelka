@@ -54,9 +54,9 @@ struct RunStatsData
     template<class Archive>
     void serialize(Archive& ar, const unsigned /* version */)
     {
-        ar& BOOST_SERIALIZATION_NVP(lifeTime)
-           & BOOST_SERIALIZATION_NVP(candidateIndels)
-           & BOOST_SERIALIZATION_NVP(nonCandidateIndels);
+        ar& BOOST_SERIALIZATION_NVP(lifeTime);
+        ar& BOOST_SERIALIZATION_NVP(candidateIndels);
+        ar& BOOST_SERIALIZATION_NVP(nonCandidateIndels);
     }
 
     /// total wall-time of each (single-thread) process, summed together
