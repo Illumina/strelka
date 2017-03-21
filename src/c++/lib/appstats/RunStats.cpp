@@ -1,4 +1,3 @@
-// -*- mode: c++; indent-tabs-mode: nil; -*-
 //
 // Strelka - Small Variant Caller
 // Copyright (c) 2009-2017 Illumina, Inc.
