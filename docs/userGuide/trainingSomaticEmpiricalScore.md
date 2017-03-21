@@ -3,7 +3,9 @@
 [User Guide Home](README.md)
 
 ## Table of Contents
-[] (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
+
+[//]: # (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
+
 * [Introduction](#introduction)
 * [Requirements](#requirements)
 * [Step 1: Build a training data set](#step-1-build-a-training-data-set)
@@ -13,7 +15,9 @@
 * [Step 3: Calculate Scores](#step-3-calculate-scores)
 * [Step 4: Evaluate Precision / Recall for the model](#step-4-evaluate-precision--recall-for-the-model)
 * [Step 5: Export the model for use in Strelka](#step-5-export-the-model-for-use-in-strelka)
-[] (END automated TOC section, any edits will be overwritten on next source refresh)
+
+[//]: # (END automated TOC section, any edits will be overwritten on next source refresh)
+
 
 ## Introduction
 

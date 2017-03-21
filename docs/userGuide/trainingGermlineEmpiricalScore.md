@@ -3,7 +3,9 @@
 [User Guide Home](README.md)
 
 ## Table of Contents
-[] (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
+
+[//]: # (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
+
 * [Introduction](#introduction)
 * [Requirements](#requirements)
 * [Step 1: Build snv and indel training data sets](#step-1-build-snv-and-indel-training-data-sets)
@@ -16,7 +18,9 @@
 * [Step 4: Evaluate Precision / Recall for the model](#step-4-evaluate-precision--recall-for-the-model)
 * [Step 5: Calibrate the model](#step-5-calibrate-the-model)
 * [Step 6: Export the model for use in Strelka](#step-6-export-the-model-for-use-in-strelka)
-[] (END automated TOC section, any edits will be overwritten on next source refresh)
+
+[//]: # (END automated TOC section, any edits will be overwritten on next source refresh)
+
 
 ## Introduction
 

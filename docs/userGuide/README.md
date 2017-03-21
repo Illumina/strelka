@@ -2,7 +2,9 @@ Strelka User Guide
 ==================
 
 ## Table of Contents
-[] (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
+
+[//]: # (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
+
 * [Introduction](#introduction)
 * [Installation](#installation)
 * [Method Overview](#method-overview)
@@ -28,7 +30,9 @@ Strelka User Guide
     * [Heteroplasmic/pooled calling](#heteroplasmicpooled-calling)
     * [Somatic callability](#somatic-callability)
 * [Special Topics](#special-topics)
-[] (END automated TOC section, any edits will be overwritten on next source refresh)
+
+[//]: # (END automated TOC section, any edits will be overwritten on next source refresh)
+
 
 ## Introduction
 

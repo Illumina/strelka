@@ -2,7 +2,9 @@ Error Pattern Analyzer User Guide
 =================================
 
 ## Table of Contents
-[] (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
+
+[//]: # (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
+
 * [Introduction](#introduction)
 * [Installation](#installation)
 * [Method overview](#method-overview)
@@ -23,7 +25,9 @@ Error Pattern Analyzer User Guide
   * [Excluding basecalls/indels](#excluding-basecallsindels)
   * [Extended output (for model development)](#extended-output-for-model-development)
 * [Error model parameter estimation](#error-model-parameter-estimation)
-[] (END automated TOC section, any edits will be overwritten on next source refresh)
+
+[//]: # (END automated TOC section, any edits will be overwritten on next source refresh)
+
 
 ## Introduction
 

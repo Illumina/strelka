@@ -2,7 +2,9 @@ Strelka Developer Guide
 =======================
 
 ## Table of Contents
-[] (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
+
+[//]: # (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
+
 * [Scope](#scope)
   * [Developer Build Notes](#developer-build-notes)
     * [Building from source repository vs. versioned code distribution:](#building-from-source-repository-vs-versioned-code-distribution)
@@ -22,7 +24,9 @@ Strelka Developer Guide
     * [Unit tests](#unit-tests)
   * [IDE support](#ide-support)
     * [Clion](#clion)
-[] (END automated TOC section, any edits will be overwritten on next source refresh)
+
+[//]: # (END automated TOC section, any edits will be overwritten on next source refresh)
+
 
 # Scope
 

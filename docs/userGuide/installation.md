@@ -4,7 +4,9 @@ Strelka User Guide - Installation
 [User Guide Home](README.md)
 
 ## Table of Contents
-[] (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
+
+[//]: # (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
+
 * [Prerequisites to build from source](#prerequisites-to-build-from-source)
 * [Runtime prerequisites](#runtime-prerequisites)
 * [Operating System Guidelines](#operating-system-guidelines)
@@ -18,7 +20,9 @@ Strelka User Guide - Installation
 * [Build procedure](#build-procedure)
     * [Workflow relocation](#workflow-relocation)
 * [Demo](#demo)
-[] (END automated TOC section, any edits will be overwritten on next source refresh)
+
+[//]: # (END automated TOC section, any edits will be overwritten on next source refresh)
+
 
 For Strelka users it is strongly recommended to start from one of the
 release distributions of the source code. Acquiring the source via a
