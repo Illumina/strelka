@@ -46,6 +46,8 @@ def parseArgs():
 
     parser.add_argument("-N", "--max-qual-values", dest="max_qual", type=int, default=1000,
                         help="Maximum number of distinct quality values to calculate P/R for.")
+    parser.add_argument("-s", "--stratify-by-coverage", dest="stratify", action="store_true", default=False,
+                        help="Stratify by read depth of alternative allele (AD1) as high (>=3) or low (<3). Intended for RNA only.")
 
     args = parser.parse_args()
 
@@ -108,6 +110,39 @@ def main():
                 data_remaining[f] <= q)].shape[0] + strelka_f_fps
             rec["na"] = data_remaining[(data_remaining["tag"] == "UNK") & (data_remaining[f] > q)].shape[0]
             rec["na_filtered"] = data_remaining[(data_remaining["tag"] == "UNK") & (data_remaining[f] <= q)].shape[0]
+            if args.stratify :
+                rec["tp_low"] = data_remaining[
+                    (data_remaining["tag"] == "TP") & 
+                    (data_remaining[f] > q) & 
+                    (data_remaining["AD1"] < 3)].shape[0]
+                rec["fp_low"] = data_remaining[
+                    (data_remaining["tag"] == "FP") & 
+                    (data_remaining[f] > q) & 
+                    (data_remaining["AD1"] < 3)].shape[0]
+                rec["tp_filtered_low"] = data_remaining[
+                    (data_remaining["tag"] == "TP") & 
+                    (data_remaining[f] <= q) & 
+                    (data_remaining["AD1"] < 3)].shape[0]
+                rec["na_low"] = data_remaining[
+                    (data_remaining["tag"] == "UNK") & 
+                    (data_remaining[f] > q) & 
+                    (data_remaining["AD1"] < 3)].shape[0]
+                rec["tp_high"] = data_remaining[
+                    (data_remaining["tag"] == "TP") & 
+                    (data_remaining[f] > q) & 
+                    (data_remaining["AD1"] >= 3)].shape[0]
+                rec["fp_high"] = data_remaining[
+                    (data_remaining["tag"] == "FP") & 
+                    (data_remaining[f] > q) & 
+                    (data_remaining["AD1"] >= 3)].shape[0]
+                rec["tp_filtered_high"] = data_remaining[
+                    (data_remaining["tag"] == "TP") & 
+                    (data_remaining[f] <= q) & 
+                    (data_remaining["AD1"] >= 3)].shape[0]
+                rec["na_high"] = data_remaining[
+                    (data_remaining["tag"] == "UNK") & 
+                    (data_remaining[f] > q) & 
+                    (data_remaining["AD1"] >= 3)].shape[0]
 
             try:
                 rec["recall"] = rec["tp"] / float(rec["tp"] + rec["fn"])
@@ -121,17 +156,45 @@ def main():
                 rec["fracNA"] = rec["na"] / float(rec["tp"] + rec["fp"] + rec["na"])
             except:
                 rec["fracNA"] = None
+            if args.stratify :
+                try:
+# Filtered recall ignores FNs not seen by EVS. This should be the same as 
+# (unfiltered) recall because we ought to be running with FNs suppressed 
+# when using this stratification option.
+                    rec["filtered_recall_low"] = rec["tp_low"] / float(rec["tp_low"] + rec["tp_filtered_low"])
+                except:
+                    rec["filtered_recall_low"] = None
+                try:
+                    rec["precision_low"] = rec["tp_low"] / float(rec["tp_low"] + rec["fp_low"])
+                except:
+                    rec["precision_low"] = None
+                try:
+                    rec["fracNA_low"] = rec["na_low"] / float(rec["tp_low"] + rec["fp_low"] + rec["na_low"])
+                except:
+                    rec["fracNA_low"] = None
+                try:
+                    rec["filtered_recall_high"] = rec["tp_high"] / float(rec["tp_high"] + rec["tp_filtered_high"])
+                except:
+                    rec["filtered_recall_high"] = None
+                try:
+                    rec["precision_high"] = rec["tp_high"] / float(rec["tp_high"] + rec["fp_high"])
+                except:
+                    rec["precision_high"] = None
+                try:
+                    rec["fracNA_high"] = rec["na_high"] / float(rec["tp_high"] + rec["fp_high"] + rec["na_high"])
+                except:
+                    rec["fracNA_high"] = None
+
             result.append(rec)
 
             counter += 1
             if counter % 10 == 0:
                 print "Processed %i / %i qual values for %s" % (counter, len(qual_vals), f)
 
-    pandas.DataFrame(result, columns=[
-        "field", "qual", "tp", "fp", "fn",
-        "tp_filtered", "fp_filtered", "na", "na_filtered", "precision", "recall", "fracNA"]
-    ).to_csv(args.output)
-
+    cols=["field", "qual", "tp", "fp", "fn","tp_filtered", "fp_filtered", "na", "na_filtered", "precision", "recall", "fracNA"]
+    if args.stratify :
+        cols.extend(["precision_low", "filtered_recall_low", "fracNA_low", "precision_high", "filtered_recall_high", "fracNA_high"])
+    pandas.DataFrame(result, columns=cols).to_csv(args.output)
 
 if __name__ == '__main__':
     main()
