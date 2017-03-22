@@ -30,8 +30,10 @@
 #include <vector>
 
 
-/// holds floating-point values with exact control over pretty-print based on inital
-/// string input
+/// Holds floating-point values with exact control over pretty-print based on initial string input
+///
+/// Designed to prevent writing '0.499999999999999999999' where we entered '0.5', in contexts
+/// where the output is being read by humans.
 ///
 template <typename FLOAT_TYPE>
 struct PrettyFloat
@@ -93,4 +95,3 @@ void validate(boost::any& v,
 
     tv->update(values[0].c_str());
 }
-
