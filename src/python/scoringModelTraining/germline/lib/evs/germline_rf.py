@@ -59,7 +59,7 @@ class GermlineRF(EVSModel):
 
         self.clf = RandomForestClassifier(**kwargs)
 
-        self.clf.fit(allrows[columns].values, allrows["tag"].values)
+        self.clf.fit(allrows[columns].values, allrows["tag"].values, allrows["weight"].values)
 
         # add audit trail into the model output:
         self.clf.columns = columns

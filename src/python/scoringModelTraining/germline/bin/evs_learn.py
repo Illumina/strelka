@@ -114,6 +114,7 @@ def getDataSet(inputs, sample_input) :
             p_rows_selected = random.sample(df.index, p_rows)
             df = pandas.DataFrame(df.ix[p_rows_selected])
 
+        df["weight"] = 1
         datasets.append(df)
 
     if len(datasets) > 1:
