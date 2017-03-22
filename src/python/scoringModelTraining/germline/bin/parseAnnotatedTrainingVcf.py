@@ -36,8 +36,8 @@ def getOptions() :
                       help="Write labeled SNV feature output for training data (default: all of it) in csv format to this file (required)")
     parser.add_option("--indelOutput", type="string", dest="indelOutputPath", metavar="FILE",
                       help="Write labeled indel feature output for training data (default: all of it) in csv format to this file (required)")
-    parser.add_option("--traintest", dest="traintest", default=False, action="store_true",
-                      help="Divide data into training (chr1 and chr10-chr19) and test (chr2-chr9 and chr20-chr22) sets")
+    parser.add_option("--testSet", type="string", action='append', 
+                      help="Chromosome (e.g. chr20) to hold out as test data (may be specified more than once; if omitted, all data will be used for training)")
     parser.add_option("--snvTestOutput", type="string", dest="snvTestOutputPath",metavar="FILE",
                       help="Write labeled SNV feature output for test data in csv format to this file (optional)")
     parser.add_option("--indelTestOutput", type="string", dest="indelTestOutputPath",metavar="FILE",
@@ -59,10 +59,10 @@ def getOptions() :
         parser.error("SNV output filename is required")
     if options.indelOutputPath is None :
         parser.error("Indel output filename is required")
-    if options.traintest and (options.snvTestOutputPath is None) :
-        parser.error("SNV test output filename is required when using traintest option")
-    if options.traintest and (options.indelTestOutputPath is None) :
-        parser.error("Indel test output filename is required when using traintest option")
+    if options.testSet and (options.snvTestOutputPath is None) :
+        parser.error("SNV test output filename is required when specifying a test set")
+    if options.testSet and (options.indelTestOutputPath is None) :
+        parser.error("Indel test output filename is required when specifying a test set")
 
     return (options,args)
 
@@ -96,7 +96,7 @@ def main() :
 
     snv_outfp = open(options.snvOutputPath,"w")
     indel_outfp = open(options.indelOutputPath,"w")
-    if options.traintest :
+    if options.testSet :
         snv_test_outfp = open(options.snvTestOutputPath,"w")
         indel_test_outfp = open(options.indelTestOutputPath,"w")
 
@@ -127,7 +127,7 @@ def main() :
 
         writeCsvHeader(snv_outfp, HeaderData.snvFeatures, "snv")
         writeCsvHeader(indel_outfp, HeaderData.indelFeatures, "indel")
-        if options.traintest :
+        if options.testSet :
             writeCsvHeader(snv_test_outfp, HeaderData.snvFeatures, "snv")
             writeCsvHeader(indel_test_outfp, HeaderData.indelFeatures, "indel")
 
@@ -149,10 +149,8 @@ def main() :
         assert(len(word) == (VCFID.SAMPLE+2))
 
         isTrain = True
-        if options.traintest :
-            if not re.match("chr1", word[VCFID.CHROM]) :
-                isTrain = False
-
+        if word[VCFID.CHROM] in options.testSet :
+            isTrain = False
 
         filterVals = word[VCFID.FILTER].split(';')
 
