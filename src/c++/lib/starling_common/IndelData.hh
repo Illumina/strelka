@@ -247,11 +247,12 @@ struct IndelSampleData
 
 struct IndelErrorRates
 {
-    LogValuePair indelToRefErrorProb;
     LogValuePair refToIndelErrorProb;
+    LogValuePair indelToRefErrorProb;
 
-    LogValuePair scaledIndelToRefErrorProb;
-    LogValuePair scaledRefToIndelErrorProb;
+    /// These rates are only used by the indel candidacy model
+    LogValuePair candidateRefToIndelErrorProb;
+    LogValuePair candidateIndelToRefErrorProb;
 };
 
 

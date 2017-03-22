@@ -144,25 +144,19 @@ initializeAuxInfo(
     double refToIndelErrorProb;
     double indelToRefErrorProb;
     dopt.getIndelErrorModel().getIndelErrorRate(_indelKey, _reportInfo, refToIndelErrorProb, indelToRefErrorProb);
-    _errorRates.refToIndelErrorProb.updateValue(refToIndelErrorProb);
-    _errorRates.indelToRefErrorProb.updateValue(indelToRefErrorProb);
-
-    // compute scaled rates:
-    double scaledRefToIndelErrorProb = _errorRates.refToIndelErrorProb.getValue();
-    double scaledIndelToRefErrorProb = _errorRates.indelToRefErrorProb.getValue();
-    if (opt.isIndelErrorRateFactor)
-    {
-        scaleIndelErrorRate(dopt.logIndelErrorRateFactor, scaledRefToIndelErrorProb);
-        scaleIndelErrorRate(dopt.logIndelErrorRateFactor, scaledIndelToRefErrorProb);
-    }
 
     if (opt.isIndelRefErrorFactor)
     {
-        scaleIndelErrorRate(dopt.logIndelRefErrorFactor, scaledIndelToRefErrorProb);
+        scaleIndelErrorRate(dopt.logIndelRefErrorFactor, indelToRefErrorProb);
     }
 
-    _errorRates.scaledRefToIndelErrorProb.updateValue(scaledRefToIndelErrorProb);
-    _errorRates.scaledIndelToRefErrorProb.updateValue(scaledIndelToRefErrorProb);
+    _errorRates.refToIndelErrorProb.updateValue(refToIndelErrorProb);
+    _errorRates.indelToRefErrorProb.updateValue(indelToRefErrorProb);
+
+    dopt.getIndelErrorModel().getIndelErrorRate(_indelKey, _reportInfo, refToIndelErrorProb, indelToRefErrorProb, true);
+
+    _errorRates.candidateRefToIndelErrorProb.updateValue(refToIndelErrorProb);
+    _errorRates.candidateIndelToRefErrorProb.updateValue(indelToRefErrorProb);
 }
 
 

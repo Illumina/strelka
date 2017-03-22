@@ -39,18 +39,20 @@ struct starling_options : public starling_base_options
         is_min_vexp = true;
         min_vexp = 0.25;
 
-        // In practice we find that simple binomial error rates need to be heuristically scaled up in the germline model for good performance
-        // This scaling is not used for (1) indel candidate selection (2) somatic calling, or any other models outside of diploid genotyping
-        isIndelErrorRateFactor = true;
-        indelErrorRateFactor = 100.;
-
         // In practice, we find that increasing the indel -> ref error rate relative to baseline improves performance
-        // Its use cases are similar to those of indelErrorRateFactor
+        // of the germline model. This is likely due to various forms of reference bias in the realignment and
+        // scoring processes.
+        //
+        // Setting this factor above 1 acts to compensate against this reference allele bias.
+        //
         isIndelRefErrorFactor = true;
-        indelRefErrorFactor = 2.;
+        indelRefErrorFactor = 1.8;
 
         // turn on short haplotyping
         is_short_haplotyping_enabled = true;
+
+        // the germline indel error model defaults to a static version of the adaptive indel error estimation values
+        indel_error_model_name = "adaptiveDefault";
     }
 
     bool

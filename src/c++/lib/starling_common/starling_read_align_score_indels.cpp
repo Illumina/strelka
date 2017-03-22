@@ -729,7 +729,7 @@ score_indels(
                     //
                     // this represents the score of the read arising from the reference haplotype, as explained by a single indel error
                     //
-                    updateIndelScoringInfo(indelScoringInfo,evaluationIndel,false,evaluationIndel,score+ep.scaledRefToIndelErrorProb.getLogValue(),&candAlignment);
+                    updateIndelScoringInfo(indelScoringInfo,evaluationIndel,false,evaluationIndel,score+ep.refToIndelErrorProb.getLogValue(),&candAlignment);
 
                     // mark this as an alternate indel score for orthogonal indels:
                     for (const IndelKey& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
@@ -739,7 +739,7 @@ score_indels(
                         // same number as above, but provided in a format so that it is easily accessed from orthogonalIndel
                         //
                         updateIndelScoringInfo(indelScoringInfo, orthogonalIndel, false, orthogonalIndel,
-                                               score + ep.scaledRefToIndelErrorProb.getLogValue(), &candAlignment);
+                                               score + ep.refToIndelErrorProb.getLogValue(), &candAlignment);
 
                         {
                             // Note that this entry is designed to support the legacy "alt_indels" enumeration attached to ReadScoreData below, once that system is retired
@@ -789,7 +789,7 @@ score_indels(
                         // this represents the score of the read arising from the evaluationIndel haplotype
                         // but with a single indel error reverting it to reference:
                         //
-                        updateIndelScoringInfo(indelScoringInfo,evaluationIndel,true,evaluationIndel,score+ep.scaledIndelToRefErrorProb.getLogValue(),&candAlignment);
+                        updateIndelScoringInfo(indelScoringInfo,evaluationIndel,true,evaluationIndel,score+ep.indelToRefErrorProb.getLogValue(),&candAlignment);
                     }
                     else
                     {
@@ -800,7 +800,7 @@ score_indels(
                         //
                         // note in the absence of and indel->indel2 error rate, we use the indel->ref rate as a proxy
                         //
-                        updateIndelScoringInfo(indelScoringInfo,evaluationIndel,true,evaluationIndel,score+ep.scaledIndelToRefErrorProb.getLogValue(),&candAlignment);
+                        updateIndelScoringInfo(indelScoringInfo,evaluationIndel,true,evaluationIndel,score+ep.indelToRefErrorProb.getLogValue(),&candAlignment);
                     }
                 }
             }
@@ -831,10 +831,9 @@ score_indels(
                     // this represents the score of the read arising from the reference haplotype
                     // but with a single indel error leading to an observation of the noncandidateIndel
                     //
-                    updateIndelScoringInfo(indelScoringInfo,evaluationIndel,false,evaluationIndel,score+ep.scaledRefToIndelErrorProb.getLogValue(),&candAlignment);
+                    updateIndelScoringInfo(indelScoringInfo,evaluationIndel,false,evaluationIndel,score+ep.refToIndelErrorProb.getLogValue(),&candAlignment);
                 }
             }
-
         }
     }
 

@@ -117,12 +117,12 @@ struct starling_base_options : public blt_options
     // it is turned off for specialized indel noise estimation routines
     bool is_candidate_indel_signal_test = true;
 
-    // Observed indels are promoted to candidate indels based on a one-sided
-    // binomial exact test, which incorporates expected per-read indel error rate,
-    // total coverage, and observed indel coverage.
-    //
-    // this sets the p-value threshold for determining indel candidacy, a lower value
-    // means that relatively more observations are required to create any indel candidate
+    /// Observed indels are promoted to candidate indels based on a one-sided
+    /// binomial exact test, which incorporates expected per-read indel error rate,
+    /// total coverage, and observed indel coverage.
+    ///
+    /// this sets the p-value threshold for determining indel candidacy, a lower value
+    /// means that relatively more observations are required to create any indel candidate
     const double indel_candidate_signal_test_alpha = 1e-9;
 
     int max_read_indel_toggle = 5; // if a read samples more than max indel changes, we skip realignment
@@ -220,18 +220,16 @@ struct starling_base_options : public blt_options
     std::string indel_error_models_filename;
     std::string indel_error_model_name = "logLinear";
 
-    // temporary indel erorr rate hack applied to germline only
-    bool isIndelErrorRateFactor = false;
-    double indelErrorRateFactor = 1.;
-
-    // scalar multiple modifying the likelihood of observing a ref->alt indel
-    // error relative to the baseline indel error rate
+    // Scalar multiple modifying the prob of observing an indel->reference error relative to reference->indel
+    // This can be used to compensate for reference bias in the model.
     bool isIndelRefErrorFactor = false;
     double indelRefErrorFactor = 1.;
 
-    // when P(read | allele) is >= this value the read counts as "supporting"
-    // the given allele
-    // WARNING: this value impacts several count-based EVS metrics
+    /// When P(read | allele) is greater than or equal to this value, then the read counts as "supporting"
+    /// the given allele
+    ///
+    /// WARNING: This value does not just change superficial AD count output in the VCF, but also impacts
+    /// several count-based EVS metrics. An EVS retrain may be required when it is changed.
     PrettyFloat<double> readConfidentSupportThreshold = PrettyFloat<double>("0.9");
 
     // this option is only used by the error counting module
@@ -241,7 +239,7 @@ struct starling_base_options : public blt_options
     //
     unsigned minDistanceFromReadEdge = 0;
 
-    // Optional bedfile to specify which regions should be called in the genome
+    /// Optional bedfile to specify which regions should be called in the genome
     std::string callRegionsBedFilename;
 
     /// If true, the original read alignment with soft-clipped edges is scored and chosen as the
@@ -338,8 +336,7 @@ public:
 
     const min_count_binom_gte_cache countCache;
 
-    // cache the log of options->indelErrorRateFactor and opt->indelRefErrorFactor
-    const double logIndelErrorRateFactor;
+    // cache some frequently used log(rate) values
     const double logIndelRefErrorFactor;
 
 private:

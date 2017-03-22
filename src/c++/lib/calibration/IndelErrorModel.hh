@@ -40,16 +40,22 @@ struct IndelErrorModel
         const std::string& modelFilename);
 
     /// Retrieve indel error rates for a specific indel type
+    ///
+    /// \param isCandidateRates if true retrieve rates to be used for indel candidate testing
     void
     getIndelErrorRate(
         const IndelKey& indelKey,
         const AlleleReportInfo& indelReportInfo,
         double& refToIndelErrorProb,
-        double& indelToRefErrorProb) const;
+        double& indelToRefErrorProb,
+        const bool isCandidateRates = false) const;
 
 private:
     IndelErrorModelMetadata _meta;
     IndelErrorRateSet _errorRates;
+
+    /// error rates used for candidate indel selection only
+    IndelErrorRateSet _candidateErrorRates;
 
 #if 0
     const std::string&

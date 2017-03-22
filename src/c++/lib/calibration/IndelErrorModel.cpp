@@ -31,6 +31,7 @@
 
 #include <fstream>
 
+
 /// simple log-linear error ramp as a function of hpol length - default error model used in NS5/v2.7.x release series
 static
 IndelErrorRateSet
@@ -53,6 +54,44 @@ getLogLinearIndelErrorModel()
         const double highErrorFrac(std::min((patternRepeatCount-1),repeatCountSwitchPoint)/static_cast<double>(repeatCountSwitchPoint));
         const double logErrorRate((1.-highErrorFrac)*logLowErrorRate + highErrorFrac*logHighErrorRate);
         const double errorRate(std::exp(repeatingPatternSize==1 ? logErrorRate : logLowErrorRate));
+
+        rates.addRate(repeatingPatternSize, patternRepeatCount, errorRate, errorRate);
+    }
+    return rates;
+}
+
+
+
+/// this uses a single value for the non-STR state (hpol1) and a log-linear ramp for homopolymer lengths 2-16
+///
+/// the parameters are averages between typical Nano and PCR-free estimates
+///
+static
+IndelErrorRateSet
+getSimplifiedAdaptiveParameters()
+{
+    static const double nonStrRate(1e-2);
+    static const double logLowHpolErrorRate(std::log(4.9e-3));
+    static const double logHighHpolErrorRate(std::log(4.5e-2));
+
+    // this is the zero-indexed endpoint of the ramp, so we hit the
+    // constant high error rate at an hpol length of repeatCountSwitchPoint+1
+    static const unsigned repeatCountSwitchPoint(15);
+
+    IndelErrorRateSet rates;
+
+    // model covers homopolymers only:
+    static const unsigned repeatingPatternSize(1);
+
+    // add non-STR rate:
+    rates.addRate(repeatingPatternSize, 1, nonStrRate, nonStrRate);
+
+    // add homopolymer rates:
+    for (unsigned patternRepeatCount=2; patternRepeatCount <= (repeatCountSwitchPoint+1); ++patternRepeatCount)
+    {
+        const double highErrorFrac(std::min((patternRepeatCount-2),repeatCountSwitchPoint-1)/static_cast<double>(repeatCountSwitchPoint-1));
+        const double logErrorRate((1.-highErrorFrac)*logLowHpolErrorRate + highErrorFrac*logHighHpolErrorRate);
+        const double errorRate(std::exp(logErrorRate));
 
         rates.addRate(repeatingPatternSize, patternRepeatCount, errorRate, errorRate);
     }
@@ -114,6 +153,10 @@ IndelErrorModel(
         {
             _errorRates = getLogLinearIndelErrorModel();
         }
+        else if (modelName == "adaptiveDefault")
+        {
+            _errorRates = getSimplifiedAdaptiveParameters();
+        }
         else
         {
             using namespace illumina::common;
@@ -152,6 +195,10 @@ IndelErrorModel(
     }
 
     _errorRates.finalizeRates();
+
+    // the indel candidate model always uses the v2.7.x log-linear indel error ramp:
+    _candidateErrorRates = getLogLinearIndelErrorModel();
+    _candidateErrorRates.finalizeRates();
 }
 
 
@@ -163,9 +210,13 @@ getIndelErrorRate(
     const IndelKey& indelKey,
     const AlleleReportInfo& indelReportInfo,
     double& refToIndelErrorProb,
-    double& indelToRefErrorProb) const
+    double& indelToRefErrorProb,
+    const bool isCandidateRates) const
 {
     using namespace IndelErrorRateType;
+
+    // tmp transition step:
+    const IndelErrorRateSet& errorRates(isCandidateRates ? _candidateErrorRates : _errorRates);
 
     const index_t indelType(getRateType(indelKey));
     // determine simple case
@@ -175,8 +226,8 @@ getIndelErrorRate(
     {
         // complex indels use baseline indel error rates
         /// TODO - provide estimates for complex indels
-        const double baselineInsertionErrorRate(_errorRates.getRate(1,1,INSERT));
-        const double baselineDeletionErrorRate(_errorRates.getRate(1,1,DELETE));
+        const double baselineInsertionErrorRate(errorRates.getRate(1,1,INSERT));
+        const double baselineDeletionErrorRate(errorRates.getRate(1,1,DELETE));
 
         refToIndelErrorProb=std::max(baselineInsertionErrorRate,baselineDeletionErrorRate);
         indelToRefErrorProb=refToIndelErrorProb;
@@ -194,7 +245,7 @@ getIndelErrorRate(
 
         const index_t reverseIndelType((indelType == DELETE) ? INSERT : DELETE);
 
-        refToIndelErrorProb = _errorRates.getRate(repeatingPatternSize, refPatternRepeatCount, indelType);
-        indelToRefErrorProb = _errorRates.getRate(repeatingPatternSize, indelPatternRepeatCount, reverseIndelType);
+        refToIndelErrorProb = errorRates.getRate(repeatingPatternSize, refPatternRepeatCount, indelType);
+        indelToRefErrorProb = errorRates.getRate(repeatingPatternSize, indelPatternRepeatCount, reverseIndelType);
     }
 }
