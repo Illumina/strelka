@@ -1,6 +1,7 @@
+// -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Strelka - Small Variant Caller
-// Copyright (c) 2009-2017 Illumina, Inc.
+// Manta - Structural Variant and Indel Caller
+// Copyright (c) 2013-2017 Illumina, Inc.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -63,7 +64,7 @@ print_readSet(
 
 // maps kmers to positions in read
 typedef std::unordered_map<std::string,unsigned> str_uint_map_t;
-// maps kmers to support reads
+// maps kmers to supporting reads
 typedef std::unordered_map<std::string,std::set<unsigned> > str_set_uint_map_t;
 
 typedef std::unordered_set<std::string> str_set_t;
@@ -665,7 +666,7 @@ buildContigs(
         if (contig.supportReads.find(readIndex) != contig.supportReads.end())
         {
             rinfo.isUsed = true;
-            rinfo.contigId = contigs.size();
+            rinfo.contigIds.push_back(contigs.size());
 
             assert(unusedReads != 0);
             --unusedReads;
