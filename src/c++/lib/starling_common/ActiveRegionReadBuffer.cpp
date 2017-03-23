@@ -67,7 +67,15 @@ ActiveRegionReadBuffer::insertIndel(const unsigned sampleId, const IndelObservat
 
     if (!indelObservation.data.is_low_map_quality)
     {
-        if (indelKey.isPrimitiveInsertionAllele())
+        if (indelObservation.data.is_external_candidate)
+        {
+            // make sure an active region is created around the external candidate indel
+            for (pos_t refPos(pos-1); refPos<indelKey.right_pos(); ++refPos)
+            {
+                addVariantCount(sampleId, refPos, MinNumVariantsPerPosition);
+            }
+        }
+        else if (indelKey.isPrimitiveInsertionAllele())
         {
             addVariantCount(sampleId, pos - 1, IndelWeight);
             addVariantCount(sampleId, pos, IndelWeight);
