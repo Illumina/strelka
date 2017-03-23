@@ -42,6 +42,7 @@ enum index_t
 }
 
 
+/// Useful genotype priors generated for a given theta value
 struct ContextGenotypePriors
 {
     void
@@ -49,6 +50,8 @@ struct ContextGenotypePriors
         const double theta)
     {
         static const double log0(-std::numeric_limits<double>::infinity());
+
+        _isInitialized = true;
 
         priorNAlleleDiploid[AG_GENOTYPE::HOMREF] = std::log(1. - (theta * 3. / 2.));
         priorNAlleleDiploid[AG_GENOTYPE::HOM0] = std::log(theta / 2.);
@@ -82,6 +85,8 @@ struct ContextGenotypePriors
     const double*
     getNAllele(const bool isHaploid) const
     {
+        assert(_isInitialized);
+
         if (isHaploid)
         {
             return priorNAlleleHaploid;
@@ -95,6 +100,8 @@ struct ContextGenotypePriors
     const double*
     getNAllelePolymorphic(const bool isHaploid) const
     {
+        assert(_isInitialized);
+
         if (isHaploid)
         {
             return priorNAlleleHaploidPolymorphic;
@@ -109,6 +116,8 @@ struct ContextGenotypePriors
     double priorNAlleleHaploid[AG_GENOTYPE::SIZE];
     double priorNAlleleDiploidPolymorphic[AG_GENOTYPE::SIZE];
     double priorNAlleleHaploidPolymorphic[AG_GENOTYPE::SIZE];
+private:
+    bool _isInitialized = false;
 };
 
 
@@ -118,60 +127,117 @@ struct GenotypePriorSet
     GenotypePriorSet(
         const double /*lowRepeatTheta*/,
         const double /*highRepeatTheta*/,
-        const unsigned highRepeatCount)
-        : _priors(highRepeatCount)
+        const unsigned /*highRepeatCount*/)
     {
-        //assert(highRepeatCount>0);
-
-        static const double hcTheta[20] = {
-            0.000201862,
-            8.39671E-05,
-            0.000176544,
-            0.000373521,
-            0.000758292,
-            0.002983495,
-            0.008187847,
-            0.024767686,
-            0.050121542,
-            0.085374715,
-            0.125859325,
-            0.146490196,
-            0.166084861,
-            0.188590783,
-            0.203576753,
-            0.22295768,
-            0.251476097,
-            0.271175382,
-            0.2860939,
-            0.3
+        static const unsigned highHpolRepeatCount(16);
+        static const double hpolTheta[] = {
+            0.000120268,
+            5.97777E-05,
+            0.000124648,
+            0.000260759,
+            0.000589544,
+            0.002394583,
+            0.007417864,
+            0.022660355,
+            0.04670561,
+            0.082031233,
+            0.124548518,
+            0.149765438,
+            0.168051826,
+            0.187346626,
+            0.207339703,
+            0.225843098,
+            0.248849306,
+            0.27106361,
+            0.334718891,
+            0.348811678
         };
 
-#if 0
-        const unsigned highRepeatCountIndex(highRepeatCount-1);
-#endif
-        for (unsigned patternRepeatCount=1; patternRepeatCount <= highRepeatCount; ++patternRepeatCount)
+        static const unsigned hpolThetaSize = sizeof(hpolTheta)/sizeof(double);
+        assert(hpolThetaSize >= highHpolRepeatCount);
+
+        static const unsigned highDinucRepeatCount(9);
+        static const double dinucTheta[] = {
+            0.000120268,
+            8.73757E-05,
+            0.000479319,
+            0.002678401,
+            0.012194565,
+            0.03162284,
+            0.060846617,
+            0.108263861,
+            0.163510548,
+            0.204456064,
+            0.23462438,
+            0.267919304,
+            0.290588942,
+            0.355588567,
+            0.369478351,
+            0.378290471,
+            0.38555006,
+            0.393439865,
+            0.395844077,
+            0.4
+        };
+
+        static const unsigned dinucThetaSize = sizeof(dinucTheta)/sizeof(double);
+        assert(dinucThetaSize >= highDinucRepeatCount);
+
+        static const unsigned maxRepeatingPatternSize(2);
+
+        _priors.resize(maxRepeatingPatternSize);
+        for (unsigned repeatingPatternSize(1); repeatingPatternSize <= maxRepeatingPatternSize; ++repeatingPatternSize)
         {
-            const unsigned patternRepeatCountIndex(patternRepeatCount-1);
-            const double theta(hcTheta[patternRepeatCountIndex]);
-#if 0
-            const double highValueFraction(std::min(patternRepeatCountIndex,highRepeatCountIndex)/static_cast<double>(highRepeatCountIndex));
-            const double theta((1.-highValueFraction)*lowRepeatTheta + highValueFraction*highRepeatTheta);
-#endif
-            _priors[patternRepeatCountIndex].initialize(theta);
+            const unsigned repeatingPatternSizeIndex(repeatingPatternSize-1);
+            auto& STRPatternPriors(_priors[repeatingPatternSizeIndex]);
+
+            if (repeatingPatternSize == 1)
+            {
+                STRPatternPriors.resize(highHpolRepeatCount);
+                for (unsigned patternRepeatCount(1); patternRepeatCount <= highHpolRepeatCount; ++patternRepeatCount)
+                {
+                    const unsigned patternRepeatCountIndex(patternRepeatCount - 1);
+                    const double theta(hpolTheta[patternRepeatCountIndex]);
+                    STRPatternPriors[patternRepeatCountIndex].initialize(theta);
+                }
+            }
+            else if (repeatingPatternSize == 2)
+            {
+                STRPatternPriors.resize(highDinucRepeatCount);
+                for (unsigned patternRepeatCount(1); patternRepeatCount <= highDinucRepeatCount; ++patternRepeatCount)
+                {
+                    const unsigned patternRepeatCountIndex(patternRepeatCount - 1);
+                    const double theta(dinucTheta[patternRepeatCountIndex]);
+                    STRPatternPriors[patternRepeatCountIndex].initialize(theta);
+                }
+            }
         }
     }
 
     const ContextGenotypePriors&
     getContextSpecificPriorSet(
+        unsigned repeatingPatternSize,
         const unsigned patternRepeatCount) const
     {
+        assert(repeatingPatternSize>0);
         assert(patternRepeatCount>0);
-        const unsigned patternRepeatCountIndex(std::min(patternRepeatCount,static_cast<unsigned>(_priors.size()))-1);
-        return _priors[patternRepeatCountIndex];
+
+        // STR pattern lengths that we don't represent are treated as the homopolymer length
+        if (repeatingPatternSize > _priors.size())
+        {
+            repeatingPatternSize = 1;
+        }
+
+        const unsigned repeatingPatternSizeIndex(repeatingPatternSize-1);
+
+        // STR repeat counts we don't represent are treated as the highest repeat value that we do represent:
+        const auto& STRPatternPriors(_priors[repeatingPatternSizeIndex]);
+        const unsigned patternRepeatCountIndex(std::min(patternRepeatCount,static_cast<unsigned>(STRPatternPriors.size()))-1);
+        return STRPatternPriors[patternRepeatCountIndex];
     }
 
 private:
-    std::vector<ContextGenotypePriors> _priors;
+    std::vector<std::vector<ContextGenotypePriors>> _priors;
 };
 
 

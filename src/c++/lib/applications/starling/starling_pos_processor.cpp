@@ -1328,9 +1328,10 @@ updateIndelLocusWithSampleInfo(
     // if more than one alt allele then base this off of the most likely allele per sample
     const IndelData& allele0Data(alleleGroup.data(topAlleleIndexInSample));
     const AlleleReportInfo& indelReportInfo(allele0Data.getReportInfo());
-    const unsigned patternRepeatCount=std::max(1u,indelReportInfo.ref_repeat_count);
+    const unsigned repeatingPatternSize(std::max(1u,indelReportInfo.repeat_unit_length));
+    const unsigned patternRepeatCount(std::max(1u,indelReportInfo.ref_repeat_count));
 
-    const ContextGenotypePriors& genotypePriors(dopt.getIndelGenotypePriors().getContextSpecificPriorSet(patternRepeatCount));
+    const ContextGenotypePriors& genotypePriors(dopt.getIndelGenotypePriors().getContextSpecificPriorSet(repeatingPatternSize, patternRepeatCount));
 
     const uint8_t nonRefAlleleCount(alleleGroup.size());
     const uint8_t fullAlleleCount(nonRefAlleleCount+1);
