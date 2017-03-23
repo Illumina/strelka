@@ -36,7 +36,7 @@ def getOptions() :
                       help="Write labeled SNV feature output for training data (default: all of it) in csv format to this file (required)")
     parser.add_option("--indelOutput", type="string", dest="indelOutputPath", metavar="FILE",
                       help="Write labeled indel feature output for training data (default: all of it) in csv format to this file (required)")
-    parser.add_option("--testSet", type="string", action='append', 
+    parser.add_option("--testSet", type="string", action='append',
                       help="Chromosome (e.g. chr20) to hold out as test data (may be specified more than once; if omitted, all data will be used for training)")
     parser.add_option("--snvTestOutput", type="string", dest="snvTestOutputPath",metavar="FILE",
                       help="Write labeled SNV feature output for test data in csv format to this file (optional)")
@@ -188,7 +188,7 @@ def main() :
                 label = "TP"
 
         if options.removeRNAEditing and isSNV:
-            if ((word[VCFID.REF] == "A" and word[VCFID.ALT] == "G") or 
+            if ((word[VCFID.REF] == "A" and word[VCFID.ALT] == "G") or
                 (word[VCFID.REF] == "T" and word[VCFID.ALT] == "C")):
                 label = "UNK"
 

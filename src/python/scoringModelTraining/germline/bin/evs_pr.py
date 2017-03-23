@@ -112,36 +112,36 @@ def main():
             rec["na_filtered"] = data_remaining[(data_remaining["tag"] == "UNK") & (data_remaining[f] <= q)].shape[0]
             if args.stratify :
                 rec["tp_low"] = data_remaining[
-                    (data_remaining["tag"] == "TP") & 
-                    (data_remaining[f] > q) & 
+                    (data_remaining["tag"] == "TP") &
+                    (data_remaining[f] > q) &
                     (data_remaining["AD1"] < 3)].shape[0]
                 rec["fp_low"] = data_remaining[
-                    (data_remaining["tag"] == "FP") & 
-                    (data_remaining[f] > q) & 
+                    (data_remaining["tag"] == "FP") &
+                    (data_remaining[f] > q) &
                     (data_remaining["AD1"] < 3)].shape[0]
                 rec["tp_filtered_low"] = data_remaining[
-                    (data_remaining["tag"] == "TP") & 
-                    (data_remaining[f] <= q) & 
+                    (data_remaining["tag"] == "TP") &
+                    (data_remaining[f] <= q) &
                     (data_remaining["AD1"] < 3)].shape[0]
                 rec["na_low"] = data_remaining[
-                    (data_remaining["tag"] == "UNK") & 
-                    (data_remaining[f] > q) & 
+                    (data_remaining["tag"] == "UNK") &
+                    (data_remaining[f] > q) &
                     (data_remaining["AD1"] < 3)].shape[0]
                 rec["tp_high"] = data_remaining[
-                    (data_remaining["tag"] == "TP") & 
-                    (data_remaining[f] > q) & 
+                    (data_remaining["tag"] == "TP") &
+                    (data_remaining[f] > q) &
                     (data_remaining["AD1"] >= 3)].shape[0]
                 rec["fp_high"] = data_remaining[
-                    (data_remaining["tag"] == "FP") & 
-                    (data_remaining[f] > q) & 
+                    (data_remaining["tag"] == "FP") &
+                    (data_remaining[f] > q) &
                     (data_remaining["AD1"] >= 3)].shape[0]
                 rec["tp_filtered_high"] = data_remaining[
-                    (data_remaining["tag"] == "TP") & 
-                    (data_remaining[f] <= q) & 
+                    (data_remaining["tag"] == "TP") &
+                    (data_remaining[f] <= q) &
                     (data_remaining["AD1"] >= 3)].shape[0]
                 rec["na_high"] = data_remaining[
-                    (data_remaining["tag"] == "UNK") & 
-                    (data_remaining[f] > q) & 
+                    (data_remaining["tag"] == "UNK") &
+                    (data_remaining[f] > q) &
                     (data_remaining["AD1"] >= 3)].shape[0]
 
             try:
@@ -158,8 +158,8 @@ def main():
                 rec["fracNA"] = None
             if args.stratify :
                 try:
-# Filtered recall ignores FNs not seen by EVS. This should be the same as 
-# (unfiltered) recall because we ought to be running with FNs suppressed 
+# Filtered recall ignores FNs not seen by EVS. This should be the same as
+# (unfiltered) recall because we ought to be running with FNs suppressed
 # when using this stratification option.
                     rec["filtered_recall_low"] = rec["tp_low"] / float(rec["tp_low"] + rec["tp_filtered_low"])
                 except:
