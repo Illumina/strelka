@@ -205,6 +205,7 @@ isCandidateIndelImplTest(
 {
     const bool isHaplotypingEnabled(_opt.is_short_haplotyping_enabled);
     // check whether the candidate has been externally specified:
+    // if haplotyping is not enabled, the external indel automatically becomes candidate
     if (!isHaplotypingEnabled and indelData.is_external_candidate) return true;
 
     // if short haplotyping is enabled, any indels not confirmed in active region are not candidate

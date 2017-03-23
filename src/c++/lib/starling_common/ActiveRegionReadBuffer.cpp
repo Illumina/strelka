@@ -64,10 +64,11 @@ ActiveRegionReadBuffer::insertIndel(const unsigned sampleId, const IndelObservat
 
     const auto alignId = indelObservation.data.id;
     const auto indelKey = indelObservation.key;
+    const auto isExternalCandidate(indelObservation.data.is_external_candidate);
 
     if (!indelObservation.data.is_low_map_quality)
     {
-        if (indelObservation.data.is_external_candidate)
+        if (isExternalCandidate)
         {
             // make sure an active region is created around the external candidate indel
             for (pos_t refPos(pos-1); refPos<indelKey.right_pos(); ++refPos)
@@ -98,7 +99,8 @@ ActiveRegionReadBuffer::insertIndel(const unsigned sampleId, const IndelObservat
             // ignore BP_LEFT, BP_RIGHT, SWAP
         }
     }
-    _indelBuffer.addIndelObservation(sampleId, indelObservation);
+    if (not isExternalCandidate)
+        _indelBuffer.addIndelObservation(sampleId, indelObservation);
 }
 
 void ActiveRegionReadBuffer::setMatch(const align_id_t id, const pos_t pos)
