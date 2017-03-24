@@ -63,7 +63,7 @@ ActiveRegionReadBuffer::insertIndel(const unsigned sampleId, const IndelObservat
     const auto pos = indelObservation.key.pos;
 
     const auto alignId = indelObservation.data.id;
-    const auto indelKey = indelObservation.key;
+    const auto& indelKey = indelObservation.key;
     const auto isExternalCandidate(indelObservation.data.is_external_candidate);
 
     if (!indelObservation.data.is_low_map_quality)
@@ -80,12 +80,12 @@ ActiveRegionReadBuffer::insertIndel(const unsigned sampleId, const IndelObservat
         {
             addVariantCount(sampleId, pos - 1, IndelWeight);
             addVariantCount(sampleId, pos, IndelWeight);
-            setInsert(alignId, pos - 1, indelObservation.key.insert_seq());
+            setInsert(alignId, pos - 1, indelKey.insert_seq());
             addAlignIdToPos(alignId, pos - 1);
         }
         else if (indelKey.isPrimitiveDeletionAllele())
         {
-            unsigned length = indelObservation.key.deletionLength;
+            unsigned length = indelKey.deletionLength;
             for (unsigned i(0); i<length; ++i)
             {
                 addVariantCount(sampleId, pos + i, IndelWeight);
