@@ -63,20 +63,29 @@ ActiveRegionReadBuffer::insertIndel(const unsigned sampleId, const IndelObservat
     const auto pos = indelObservation.key.pos;
 
     const auto alignId = indelObservation.data.id;
-    const auto indelKey = indelObservation.key;
+    const auto& indelKey = indelObservation.key;
+    const auto isExternalCandidate(indelObservation.data.is_external_candidate);
 
     if (!indelObservation.data.is_low_map_quality)
     {
-        if (indelKey.isPrimitiveInsertionAllele())
+        if (isExternalCandidate)
+        {
+            // make sure an active region is created around the external candidate indel
+            for (pos_t refPos(pos-1); refPos<indelKey.right_pos(); ++refPos)
+            {
+                addVariantCount(sampleId, refPos, MinNumVariantsPerPosition);
+            }
+        }
+        else if (indelKey.isPrimitiveInsertionAllele())
         {
             addVariantCount(sampleId, pos - 1, IndelWeight);
             addVariantCount(sampleId, pos, IndelWeight);
-            setInsert(alignId, pos - 1, indelObservation.key.insert_seq());
+            setInsert(alignId, pos - 1, indelKey.insert_seq());
             addAlignIdToPos(alignId, pos - 1);
         }
         else if (indelKey.isPrimitiveDeletionAllele())
         {
-            unsigned length = indelObservation.key.deletionLength;
+            unsigned length = indelKey.deletionLength;
             for (unsigned i(0); i<length; ++i)
             {
                 addVariantCount(sampleId, pos + i, IndelWeight);
@@ -90,7 +99,8 @@ ActiveRegionReadBuffer::insertIndel(const unsigned sampleId, const IndelObservat
             // ignore BP_LEFT, BP_RIGHT, SWAP
         }
     }
-    _indelBuffer.addIndelObservation(sampleId, indelObservation);
+    if (not isExternalCandidate)
+        _indelBuffer.addIndelObservation(sampleId, indelObservation);
 }
 
 void ActiveRegionReadBuffer::setMatch(const align_id_t id, const pos_t pos)
