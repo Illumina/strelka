@@ -114,6 +114,26 @@ featureMapError(
 
 
 
+static
+void
+featureMapOrderError(
+		const VariantScoringModelMetadata::featureMap_t& featureMap,
+		const std::string& fname)
+{
+  using namespace illumina::common;
+
+  std::ostringstream oss;
+  oss << "ERROR: Found requested scoring model feature '" << fname << "' in unexpected position in candidate feature map containing:\n";
+  for (const auto& val : featureMap)
+    {
+      oss << val.first << "\n";
+    }
+  oss << "\nCheck that feature order in model file corresponds to order in {calltype}VariantEmpiricalScoringFeatures.hh\n";
+  BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+}
+
+
+
 void
 VariantScoringModelMetadata::
 Deserialize(
@@ -148,7 +168,10 @@ Deserialize(
         {
             featureMapError(featureMap,fname);
         }
-        assert(expectedIndex == fiter->second);
+	if (expectedIndex != fiter->second)
+	{
+	    featureMapOrderError(featureMap,fname);
+	}
         expectedIndex++;
     }
 
