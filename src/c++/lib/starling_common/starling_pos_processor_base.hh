@@ -411,14 +411,20 @@ private:
     insert_pos_spandel_count(const pos_t pos,
                              const unsigned sample_no);
 
+    /// update (basecall) data used to compute germline variant scoring
+    /// features
+    ///
+    /// \param distanceFromReadEdge distance of base call from the closest read edge
+    ///
     void
-    update_ranksums(
+    updateGermlineScoringMetrics(
         const pos_t pos,
         const unsigned sample_no,
         const uint8_t call_id,
         const uint8_t qscore,
         const uint8_t mapq,
         const unsigned cycle,
+        const unsigned distanceFromReadEdge,
         const bool is_submapped);
 
     void

@@ -1053,18 +1053,19 @@ insert_pos_spandel_count(const pos_t pos,
 
 void
 starling_pos_processor_base::
-update_ranksums(
+updateGermlineScoringMetrics(
     const pos_t pos,
     const unsigned sample_no,
     const uint8_t call_id,
     const uint8_t qscore,
     const uint8_t mapq,
     const unsigned cycle,
+    const unsigned distanceFromReadEdge,
     const bool is_submapped)
 {
     // assume pos is already valid:
     auto& bcbuff(sample(sample_no).bc_buff);
-    bcbuff.update_ranksums(_ref.get_base(pos),pos,call_id,qscore,mapq,cycle,is_submapped);
+    bcbuff.updateGermlineScoringMetrics(_ref.get_base(pos), pos, call_id, qscore, mapq, cycle, distanceFromReadEdge, is_submapped);
 }
 
 
@@ -1314,6 +1315,10 @@ pileup_read_segment(
     const bam_seq bseq(rseg.get_bam_read());
     const uint8_t* qual(rseg.qual());
 
+    // these values are only required for special RNA scoring features:
+    const unsigned full_read_size(rseg.full_read_size());
+    const unsigned full_read_offset(rseg.full_read_offset());
+
     static const uint8_t min_adjust_mapq(5);
     const uint8_t mapq(rseg.map_qual());
     const uint8_t adjustedMapq(std::max(min_adjust_mapq,mapq));
@@ -1484,7 +1489,12 @@ pileup_read_segment(
                 // update extended feature metrics (including submapped reads):
                 if (_opt.is_compute_germline_scoring_metrics())
                 {
-                    update_ranksums(ref_pos, sampleIndex, call_id, qscore, mapq, align_strand_read_pos, is_submapped);
+                    const unsigned full_read_pos(read_pos+full_read_offset);
+                    /// zero-indexed distance from the edge of the full read
+                    const unsigned distanceFromReadEdge(std::min(full_read_pos, full_read_size-(full_read_pos+1)));
+
+                    updateGermlineScoringMetrics(ref_pos, sampleIndex, call_id, qscore, mapq, align_strand_read_pos,
+                                                 distanceFromReadEdge, is_submapped);
                 }
                 else if (_opt.is_compute_somatic_scoring_metrics)
                 {

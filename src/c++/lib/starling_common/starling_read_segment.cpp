@@ -17,7 +17,6 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -37,6 +36,7 @@ is_tier1_mapping() const
 }
 
 
+
 bool
 read_segment::
 is_tier1or2_mapping() const
@@ -45,15 +45,13 @@ is_tier1or2_mapping() const
 }
 
 
-#if 0
-MAPLEVEL::index_t
-read_segment::
-effective_maplevel() const
-{
-    return sread().effective_maplevel();
-}
-#endif
 
+unsigned
+read_segment::
+full_read_size() const
+{
+    return sread()._read_rec.read_size();
+}
 
 
 bam_seq

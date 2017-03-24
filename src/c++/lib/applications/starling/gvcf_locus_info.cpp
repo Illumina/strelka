@@ -390,6 +390,8 @@ computeEmpiricalScoringFeatures(
                                     (locus.anyVariantAlleleQuality));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::ConservativeGenotypeQuality, (sampleInfo.gqx));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (sampleInfo.genotypeQualityPolymorphic));
+
+            developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::SampleMeanDistanceFromReadEdge, (siteSampleInfo.meanDistanceFromReadEdge));
         }
     }
     else
@@ -594,6 +596,9 @@ computeEmpiricalScoringFeatures(
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (locus.anyVariantAlleleQuality));
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::ConservativeGenotypeQuality, (sampleInfo.gqx));
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (sampleInfo.genotypeQualityPolymorphic));
+
+            // note this feature's behavior hasn't been figured out for an overlapping indel locus
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::SampleIndelMeanDistanceFromReadEdge, (indelSampleInfo.legacyReportInfo.distanceFromReadEdge.mean()));
         }
     }
     else

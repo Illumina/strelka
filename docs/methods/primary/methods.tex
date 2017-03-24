@@ -405,6 +405,19 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
 \end{itemize}
 
 
+\paragraph{EVS/hard-filter experimental feature descriptions}
+
+Strelka includes a number of other experimental variant classification features. Although not currently used they are described here for reference. This list is not comprehensive.
+
+\begin{itemize}
+
+\item \texttt{SampleMeanDistanceFromReadEdge} ~ (RNA-Seq feature) For all non-reference basecall observations in one sample at a candidate SNV site, report the mean distance to the closest edge of each alternate basecall's read. Distance is measured in read-coordinates, zero-indexed, and is allowed to have a maximum value of 20.
+
+\item \texttt{SampleIndelMeanDistanceFromReadEdge} ~ (RNA-Seq feature) For all indel allele observations in one sample at a candidate indel locus, report the mean distance to the closest edge of each indel allele's read. Distance is measured in read-coordinates, zero-indexed, and is allowed to have a maximum value of 20. The left or right side of the indel may be used to provide the shortest distance, but the indel will only be considered in its left-aligned position.
+
+\end{itemize}
+
+
 \bibliographystyle{alpha}
 \bibliography{methods}
 

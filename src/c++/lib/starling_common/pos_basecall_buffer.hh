@@ -93,15 +93,18 @@ struct pos_basecall_buffer
         posdata.altReadPos.push_back({readPos,readLength});
     }
 
-    // add single base meta-data to rank-sum pile-up data-structures
+    /// add associated basecall data to pileup at position pos which
+    /// can be used to compute variant scoring metrics
+    ///
     void
-    update_ranksums(
-        char refpos,
+    updateGermlineScoringMetrics(
+        const char refpos,
         const pos_t pos,
         const uint8_t call_id,
         const uint8_t qscore,
         const uint8_t mapq,
         const unsigned cycle,
+        const unsigned distanceFromReadEdge,
         const bool is_submapped);
 
     void
