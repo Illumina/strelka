@@ -386,8 +386,8 @@ class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
             self.params.isEVS = False
 
         if self.params.isRNA :
-            self.params.snvScoringModelFile = joinFile(self.params.configDir,'RNAVariantScoringModels.json')
-            self.params.indelScoringModelFile = None
+            self.params.snvScoringModelFile = joinFile(self.params.configDir,'RNASNVScoringModels.json')
+            self.params.indelScoringModelFile = joinFile(self.params.configDir,'RNAIndelScoringModels.json')
 
 
     def getSuccessMessage(self) :
