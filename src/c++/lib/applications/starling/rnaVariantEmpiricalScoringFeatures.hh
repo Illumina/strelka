@@ -56,7 +56,7 @@ struct RNA_SNV_SCORING_FEATURES : public FeatureSet
         QUAL_EXACT,
         SampleMeanDistanceFromReadEdge,
         SamplePrimaryAltAlleleDepthFraction,
-        SIZE    
+        SIZE
     };
 
     unsigned
@@ -79,9 +79,9 @@ struct RNA_SNV_SCORING_FEATURES : public FeatureSet
             case SamplePrimaryAltAlleleDepthFraction:
                 return "SamplePrimaryAltAlleleDepthFraction";
             case QUAL_EXACT:
-                return "QUAL_EXACT";      
+                return "QUAL_EXACT";
             case SampleMeanDistanceFromReadEdge:
-                return "SampleMeanDistanceFromReadEdge";                  
+                return "SampleMeanDistanceFromReadEdge";
             default:
                 assert(false && "Unknown feature");
                 return nullptr;
@@ -115,14 +115,14 @@ struct RNA_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     {
         GT,
         QUAL,
-        I_AvgBaseQ,  
-        I_BaseQRankSum,              
+        I_AvgBaseQ,
+        I_BaseQRankSum,
         F_DP,
         F_DPF,
         F_GQ,
-        F_GQX,    
+        F_GQX,
         SampleReadPosRankSum,
-        AD0,       
+        AD0,
         SampleRMSMappingQuality,
         SampleRMSMappingQualityRankSum,
         mapqZeroFraction,
@@ -320,9 +320,9 @@ struct RNA_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             case QUAL:
                 return "QUAL";
             case F_GQX:
-                return "F_GQX";            
+                return "F_GQX";
             case F_DPI:
-                return "F_DPI";            
+                return "F_DPI";
             case F_GQ:
                 return "F_GQ";
             case SampleProxyRMSMappingQuality:
@@ -342,7 +342,7 @@ struct RNA_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             case ConservativeGenotypeQuality:
                 return "ConservativeGenotypeQuality";
             case F_GQ_EXACT:
-                return "F_GQ_EXACT";            
+                return "F_GQ_EXACT";
             default:
                 assert(false && "Unknown feature");
                 return nullptr;

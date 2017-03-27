@@ -1,7 +1,5 @@
 - STREL-469 Add RNAseq EVS models
 - STREL-479 External candidate indels create active regions
-- STREL-483 Do not normalize RNA EVS features by ChromDepth. Widen allele
-  balance range
 - STREL-462 Do not penalize candidate SNVs in alignment scoring
 - STREL-450 Add dinucs to indel error stats module
 - STREL-465 Filter germline haplotypes with phasing error signature

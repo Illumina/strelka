@@ -350,7 +350,7 @@ computeEmpiricalScoringFeatures(
         //
         if (isComputeDevelopmentFeatures)
         {
-            developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::GT, getEVSGenotypeCode(ploidy.isDiploid(), allele0Index, allele1Index));            
+            developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::GT, getEVSGenotypeCode(ploidy.isDiploid(), allele0Index, allele1Index));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::AD0, (confidentRefCount));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL, (locus.anyVariantAlleleQuality));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_DP, (siteSampleInfo.n_used_calls));
