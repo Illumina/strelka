@@ -39,16 +39,9 @@ class RNASNVFeatures(VcfFeatureSet):
             src/c++/lib/applications/starling/germlineVariantEmpiricalScoringFeatures.hh
         """
         return [
-            "GT",
-            "SampleRMSMappingQuality",
             "SiteHomopolymerLength",
             "SampleStrandBias",
-            "SampleRMSMappingQualityRankSum",
-            "SampleReadPosRankSum",
-#            "RelativeTotalLocusDepth",
-            "SampleUsedDepthFraction",
-            "ConservativeGenotypeQuality",
+            "AD1",
             "QUAL_EXACT",
-            "SamplePrimaryAltAlleleDepthFraction",
-            "I_AvgPos",
-            "AD1"]
+            "SampleMeanDistanceFromReadEdge",
+            "SamplePrimaryAltAlleleDepthFraction"]

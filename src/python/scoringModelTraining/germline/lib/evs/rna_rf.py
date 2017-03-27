@@ -101,7 +101,7 @@ class RNARF(EVSModel):
         all_trees = io.classifier_to_dict(self.clf)
         full_model = meta
         full_model["Model"] = all_trees
-        modelFile = {"CalibrationModels" : {"RNA" : { varianttype : full_model }}}
+        modelFile = {"CalibrationModels" : {"RNAseq" : { varianttype : full_model }}}
         json.dump(modelFile, open(filename,"wb"))
 
 

@@ -39,15 +39,12 @@ class RNAIndelFeatures(VcfFeatureSet):
             src/c++/lib/applications/starling/germlineVariantEmpiricalScoringFeatures.hh
         """
         return [
-#            "GT",
-            "QUAL",
-            "F_GQX",
-            "F_GQ",
-            "F_DPI",
-            "IndelAlleleRepeatCount",
-            "REFREP1",
-            "IndelAlleleRepeatUnitSize",
             "AD0",
             "AD1",
+            "IndelAlleleRepeatCount",
+            "IndelAlleleRepeatUnitSize",
+            "QUAL_EXACT",
+            "SampleIndelMeanDistanceFromReadEdge",
+            "REFREP1",
             "SamplePrimaryAltAlleleDepthFraction"]
 
