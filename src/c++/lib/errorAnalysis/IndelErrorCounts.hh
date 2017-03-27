@@ -418,7 +418,10 @@ struct IndelErrorData
     void
     exportObservations(
         std::vector<ExportedIndelObservations>& counts) const;
-
+    void
+    addToObservations(
+            const IndelErrorContext& context,
+            std::vector<ExportedIndelObservations>& observations) const;
     void
     merge(const IndelErrorData& in);
 
