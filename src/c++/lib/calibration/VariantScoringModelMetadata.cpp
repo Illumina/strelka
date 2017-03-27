@@ -114,6 +114,22 @@ featureMapError(
 
 
 
+static
+void
+featureMapOrderError(
+    const std::string& fname,
+    const unsigned expectedIdx,
+    const unsigned foundIdx)
+{
+  using namespace illumina::common;
+
+  std::ostringstream oss;
+  oss << "ERROR: Scoring model feature '" << fname << "' is at position " << foundIdx << " in {calltype}VariantEmpiricalScoringFeatures.hh but at position " << expectedIdx << " in json model file. Check that feature order in the two sources correspond.\n";
+  BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+}
+
+
+
 void
 VariantScoringModelMetadata::
 Deserialize(
@@ -148,7 +164,10 @@ Deserialize(
         {
             featureMapError(featureMap,fname);
         }
-        assert(expectedIndex == fiter->second);
+	if (expectedIndex != fiter->second)
+	{
+	    featureMapOrderError(fname,expectedIndex,fiter->second);
+	}
         expectedIndex++;
     }
 

@@ -135,8 +135,7 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     segCmd.extend(["--stats-file", segFiles.stats[-1]])
 
     if self.params.isRNA:
-        # RNA-Seq het calls are considered over a wider frequency range:
-        segCmd.extend(['-bsnp-diploid-het-bias', '0.40'])
+        segCmd.extend(['-bsnp-diploid-het-bias', '0.45'])
         segCmd.extend(['--use-rna-scoring'])
 
     # Empirical Variant Scoring(EVS):
@@ -387,8 +386,8 @@ class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
             self.params.isEVS = False
 
         if self.params.isRNA :
-            self.params.snvScoringModelFile = joinFile(self.params.configDir,'RNAVariantScoringModels.json')
-            self.params.indelScoringModelFile = None
+            self.params.snvScoringModelFile = joinFile(self.params.configDir,'RNASNVScoringModels.json')
+            self.params.indelScoringModelFile = joinFile(self.params.configDir,'RNAIndelScoringModels.json')
 
 
     def getSuccessMessage(self) :
