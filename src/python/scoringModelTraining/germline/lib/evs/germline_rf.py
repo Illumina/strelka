@@ -86,7 +86,7 @@ class GermlineRF(EVSModel):
         return instances
 
 
-    def save_json_strelka_format(self, filename, varianttype, power, scale, threshold):
+    def save_json_strelka_format(self, filename, calltype, varianttype, power, scale, threshold):
         """ Save to json including all strelka scoring model meta-data """
         import datetime
         import json
@@ -102,7 +102,7 @@ class GermlineRF(EVSModel):
         all_trees = io.classifier_to_dict(self.clf)
         full_model = meta
         full_model["Model"] = all_trees
-        modelFile = {"CalibrationModels" : {"Germline" : { varianttype : full_model }}}
+        modelFile = {"CalibrationModels" : {calltype : { varianttype : full_model }}}
         json.dump(modelFile, open(filename,"wb"))
 
 
@@ -122,21 +122,24 @@ class GermlineRF(EVSModel):
                                                     importances[indices[f]],
                                                     std[indices[f]])
 
-#        from sklearn.tree import export_graphviz
-#        import subprocess
-#
-#        images = []
-#        for i, tree in enumerate(self.clf.estimators_):
+    def draw_trees(self):
+        """ Draw trees in png files """
+
+        from sklearn.tree import export_graphviz
+        import subprocess
+
+        images = []
+        for i, tree in enumerate(self.clf.estimators_):
             # creates indel_tree_...dot files
-#            fname = 'trees112/tree_' + str(i) + '.dot'
-#            with open(fname, 'w') as dotfile:
-#                export_graphviz(
-#                    tree,
-#                    dotfile,
-#                    feature_names=featurenames)
+            fname = 'trees/tree_' + str(i) + '.dot'
+            with open(fname, 'w') as dotfile:
+                export_graphviz(
+                    tree,
+                    dotfile,
+                    feature_names=featurenames)
             # run dot
-#            subprocess.check_call(["dot -Tpng " + fname + " > " + fname + ".png"], shell=True)
-#            images.append(Image(fname + ".png"))
+            subprocess.check_call(["dot -Tpng " + fname + " > " + fname + ".png"], shell=True)
+            images.append(Image(fname + ".png"))
 
 
 EVSModel.register("germline.rf", GermlineRF)

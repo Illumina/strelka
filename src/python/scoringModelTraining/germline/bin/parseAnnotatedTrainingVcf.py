@@ -135,7 +135,7 @@ def main() :
     for line in infp :
         if line[0] == "#" :
             processHeaderLine(line)
-        if HeaderData.snvFeatures is not None and HeaderData.indelFeatures is not None :
+        if (HeaderData.snvFeatures is not None) and (HeaderData.indelFeatures is not None) :
             finalizeHeader()
             break
 
@@ -148,9 +148,7 @@ def main() :
         # expecting standard happy annotation with truth/query samples:
         assert(len(word) == (VCFID.SAMPLE+2))
 
-        isTrain = True
-        if word[VCFID.CHROM] in options.testSet :
-            isTrain = False
+        isTrain = (word[VCFID.CHROM] not in options.testSet)
 
         filterVals = word[VCFID.FILTER].split(';')
 

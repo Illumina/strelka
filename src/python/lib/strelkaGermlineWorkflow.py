@@ -385,11 +385,6 @@ class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
         if self.params.isExome :
             self.params.isEVS = False
 
-        if self.params.isRNA :
-            self.params.snvScoringModelFile = joinFile(self.params.configDir,'RNASNVScoringModels.json')
-            self.params.indelScoringModelFile = joinFile(self.params.configDir,'RNAIndelScoringModels.json')
-
-
     def getSuccessMessage(self) :
         "Message to be included in email for successful runs"
 

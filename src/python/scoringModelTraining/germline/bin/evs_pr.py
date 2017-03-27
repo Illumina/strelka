@@ -46,7 +46,7 @@ def parseArgs():
 
     parser.add_argument("-N", "--max-qual-values", dest="max_qual", type=int, default=1000,
                         help="Maximum number of distinct quality values to calculate P/R for.")
-    parser.add_argument("-s", "--stratify-by-coverage", dest="stratify", action="store_true", default=False,
+    parser.add_argument("-s", "--stratifyByCoverage", dest="stratify", action="store_true", default=False,
                         help="Stratify by read depth of alternative allele (AD1) as high (>=3) or low (<3). Intended for RNA only.")
 
     args = parser.parse_args()

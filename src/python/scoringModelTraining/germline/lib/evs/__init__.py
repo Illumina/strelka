@@ -99,5 +99,4 @@ class EVSModel(object):
 
 
 import germline_rf   # noqa
-import rna_rf   # noqa
 
