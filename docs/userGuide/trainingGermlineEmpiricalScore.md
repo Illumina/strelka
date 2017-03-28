@@ -106,7 +106,7 @@ python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/germline/bin/parseAnno
 
 ...generates the labeled snv and indel feature files `snv_training_data.csv` and `indel_training_data.csv` for use in subsequent training steps along with `snv_test_data.csv` and `indel_test_data.csv` for use in testing/evaluation steps, with the test data containing all variants from chromosomes 2 and 20 and the training data containing the remaining variants.
 
-### 1d (optional): Handling multiple training data sets
+### Step 1d (optional): Handling multiple training data sets
 
 If multiple vcfs are to be combined for training/testing, process each
 VCF to a labeled CSV feature file using the procedure described above. These training data may
