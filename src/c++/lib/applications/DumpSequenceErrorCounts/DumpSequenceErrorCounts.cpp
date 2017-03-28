@@ -79,7 +79,7 @@ reportExtendedContext(
                << alt_counts.str() << sep
                << obs.refObservations << sep
                << totalAltObservations << sep
-               << obs.repeatCount << "\n"
+               << obs.observationCount << "\n"
                ;
         }
     }

@@ -40,10 +40,8 @@ namespace MIN_PARAMS3_SIMPLE
 {
 enum index_t
 {
-    LN_INSERT_ERROR_RATE_MIN,
-    LN_INSERT_ERROR_RATE_MAX,
-    LN_DELETE_ERROR_RATE_MIN,
-    LN_DELETE_ERROR_RATE_MAX,
+    LN_INDEL_ERROR_RATE_MIN,
+    LN_INDEL_ERROR_RATE_MAX,
     LN_NOISY_LOCUS_RATE_MIN,
     LN_NOISY_LOCUS_RATE_MAX,
     LN_THETA,
@@ -234,7 +232,7 @@ contextLogLhood(
         log_os << "MODEL3: loghood obs: noisy/clean/mix/delta: " << noisyMix << " " << cleanMix << " " << mix << " " << (mix*obs.repeatCount) << "\n";
 #endif
 
-        logLikelihood += (mix*obs.repeatCount);
+        logLikelihood += (mix*obs.observationCount);
     }
 
 #ifdef DEBUG_MODEL3
@@ -266,10 +264,10 @@ struct errorMinfuncModel3Simple : public codemin::minfunc_interface<double>
         argToParameters(in,_params);
 
         const auto diffX = (double)(_maxSTRLength - _minSTRLength);
-        const double logInsertErrorRateSlope = (_params[MIN_PARAMS3_SIMPLE::LN_INSERT_ERROR_RATE_MAX] - _params[MIN_PARAMS3_SIMPLE::LN_INSERT_ERROR_RATE_MIN])/diffX;
-        const double logInsertErrorRateIntercept = _params[MIN_PARAMS3_SIMPLE::LN_INSERT_ERROR_RATE_MIN] - logInsertErrorRateSlope * _minSTRLength;
-        const double logDeleteErrorRateSlope = (_params[MIN_PARAMS3_SIMPLE::LN_DELETE_ERROR_RATE_MAX] - _params[MIN_PARAMS3_SIMPLE::LN_DELETE_ERROR_RATE_MIN])/diffX;
-        const double logDeleteErrorRateIntercept = _params[MIN_PARAMS3_SIMPLE::LN_DELETE_ERROR_RATE_MIN] - logDeleteErrorRateSlope * _minSTRLength;
+        const double logInsertErrorRateSlope = (_params[MIN_PARAMS3_SIMPLE::LN_INDEL_ERROR_RATE_MAX] - _params[MIN_PARAMS3_SIMPLE::LN_INDEL_ERROR_RATE_MIN])/diffX;
+        const double logInsertErrorRateIntercept = _params[MIN_PARAMS3_SIMPLE::LN_INDEL_ERROR_RATE_MIN] - logInsertErrorRateSlope * _minSTRLength;
+        const double logDeleteErrorRateSlope = (_params[MIN_PARAMS3_SIMPLE::LN_INDEL_ERROR_RATE_MAX] - _params[MIN_PARAMS3_SIMPLE::LN_INDEL_ERROR_RATE_MIN])/diffX;
+        const double logDeleteErrorRateIntercept = _params[MIN_PARAMS3_SIMPLE::LN_INDEL_ERROR_RATE_MIN] - logDeleteErrorRateSlope * _minSTRLength;
         const double logNoisyLocusRateSlope = (_params[MIN_PARAMS3_SIMPLE::LN_NOISY_LOCUS_RATE_MAX] - _params[MIN_PARAMS3_SIMPLE::LN_NOISY_LOCUS_RATE_MIN])/diffX;
         const double logNoisyLocusRateIntercept = _params[MIN_PARAMS3_SIMPLE::LN_NOISY_LOCUS_RATE_MIN] - logNoisyLocusRateSlope * _minSTRLength;
 
@@ -336,7 +334,7 @@ struct errorMinfuncModel3Simple : public codemin::minfunc_interface<double>
         };
 
         // this shouldn't really work yet
-        for (unsigned paramIndex(MIN_PARAMS3_SIMPLE::LN_INSERT_ERROR_RATE_MIN); paramIndex<=MIN_PARAMS3_SIMPLE::LN_DELETE_ERROR_RATE_MAX; ++paramIndex)
+        for (unsigned paramIndex(MIN_PARAMS3_SIMPLE::LN_INDEL_ERROR_RATE_MIN); paramIndex<=MIN_PARAMS3_SIMPLE::LN_INDEL_ERROR_RATE_MAX; ++paramIndex)
         {
             out[paramIndex] = rateSmoother(in[paramIndex]);
         }
@@ -407,9 +405,9 @@ getAltSigTotal(
             totalAltObservations += obs.altObservations[altIndex];
         }
 
-        sigTotal.ref += (obs.refObservations*obs.repeatCount);
-        sigTotal.alt += (totalAltObservations*obs.repeatCount);
-        sigTotal.locus += obs.repeatCount;
+        sigTotal.ref += (obs.refObservations*obs.observationCount);
+        sigTotal.alt += (totalAltObservations*obs.observationCount);
+        sigTotal.locus += obs.observationCount;
     }
 }
 
@@ -469,10 +467,8 @@ estimateParameters(
         static const unsigned max_iter(40);
 
         // initialize parameter search
-        minParams[MIN_PARAMS3_SIMPLE::LN_INSERT_ERROR_RATE_MIN] = std::log(1e-3);
-        minParams[MIN_PARAMS3_SIMPLE::LN_INSERT_ERROR_RATE_MAX] = std::log(1e-3);
-        minParams[MIN_PARAMS3_SIMPLE::LN_DELETE_ERROR_RATE_MIN] = std::log(1e-3);
-        minParams[MIN_PARAMS3_SIMPLE::LN_DELETE_ERROR_RATE_MAX] = std::log(1e-3);
+        minParams[MIN_PARAMS3_SIMPLE::LN_INDEL_ERROR_RATE_MIN] = std::log(1e-3);
+        minParams[MIN_PARAMS3_SIMPLE::LN_INDEL_ERROR_RATE_MAX] = std::log(1e-3);
         minParams[MIN_PARAMS3_SIMPLE::LN_NOISY_LOCUS_RATE_MIN] = std::log(1e-3);
         minParams[MIN_PARAMS3_SIMPLE::LN_NOISY_LOCUS_RATE_MAX] = std::log(1e-3);
         minParams[MIN_PARAMS3_SIMPLE::LN_THETA] = errorMinfuncModel3Simple::defaultLogTheta;
@@ -502,22 +498,26 @@ estimateParameters(
         errorMinfuncModel3Simple::argToParameters(minParams,normalizedParams);
         const double theta(std::exp(normalizedParams[MIN_PARAMS3_SIMPLE::LN_THETA]));
         const auto diffX = (maxSTRLength - minSTRLength);
-        const double logInsertErrorRateSlope = (normalizedParams[MIN_PARAMS3_SIMPLE::LN_INSERT_ERROR_RATE_MAX] - normalizedParams[MIN_PARAMS3_SIMPLE::LN_INSERT_ERROR_RATE_MIN])/diffX;
-        const double logInsertErrorRateIntercept = normalizedParams[MIN_PARAMS3_SIMPLE::LN_INSERT_ERROR_RATE_MIN] - logInsertErrorRateSlope * minSTRLength;
-        const double logDeleteErrorRateSlope = (normalizedParams[MIN_PARAMS3_SIMPLE::LN_DELETE_ERROR_RATE_MAX] - normalizedParams[MIN_PARAMS3_SIMPLE::LN_DELETE_ERROR_RATE_MIN])/diffX;
-        const double logDeleteErrorRateIntercept = normalizedParams[MIN_PARAMS3_SIMPLE::LN_DELETE_ERROR_RATE_MIN] - logDeleteErrorRateSlope * minSTRLength;
+        const double logInsertErrorRateSlope = (normalizedParams[MIN_PARAMS3_SIMPLE::LN_INDEL_ERROR_RATE_MAX] - normalizedParams[MIN_PARAMS3_SIMPLE::LN_INDEL_ERROR_RATE_MIN])/diffX;
+        const double logInsertErrorRateIntercept = normalizedParams[MIN_PARAMS3_SIMPLE::LN_INDEL_ERROR_RATE_MIN] - logInsertErrorRateSlope * minSTRLength;
+        const double logDeleteErrorRateSlope = (normalizedParams[MIN_PARAMS3_SIMPLE::LN_INDEL_ERROR_RATE_MAX] - normalizedParams[MIN_PARAMS3_SIMPLE::LN_INDEL_ERROR_RATE_MIN])/diffX;
+        const double logDeleteErrorRateIntercept = normalizedParams[MIN_PARAMS3_SIMPLE::LN_INDEL_ERROR_RATE_MIN] - logDeleteErrorRateSlope * minSTRLength;
         const double logNoisyLocusRateSlope = (normalizedParams[MIN_PARAMS3_SIMPLE::LN_NOISY_LOCUS_RATE_MAX] - normalizedParams[MIN_PARAMS3_SIMPLE::LN_NOISY_LOCUS_RATE_MIN])/diffX;
         const double logNoisyLocusRateIntercept = normalizedParams[MIN_PARAMS3_SIMPLE::LN_NOISY_LOCUS_RATE_MIN] - logNoisyLocusRateSlope * minSTRLength;
 
         log_os << "INFO: logInsertErrorRateSlope: " << logInsertErrorRateSlope << "\n";
         log_os << "INFO: logInsertErrorRateIntercept: " << logInsertErrorRateIntercept << "\n";
 
+        log_os << "INFO: logDeleteErrorRateSlope: " << logDeleteErrorRateSlope << "\n";
+        log_os << "INFO: logDeleteErrorRateIntercept: " << logDeleteErrorRateIntercept << "\n";
+
+        log_os << "INFO: logNoisyLocusRateSlope: " << logNoisyLocusRateSlope << "\n";
+        log_os << "INFO: logNoisyLocusRateIntercept: " << logNoisyLocusRateIntercept << "\n";
+
         for (unsigned repeatCount = minSTRLength; repeatCount <= maxSTRLength; repeatCount++)
         {
 
-            const IndelErrorContext context(2, repeatCount);
-
-
+            const IndelErrorContext context(observations.front().repeatPatternSize, repeatCount);
 
             const auto insertErrorRate(std::exp(repeatCount * logInsertErrorRateSlope + logInsertErrorRateIntercept));
             const auto deleteErrorRate(std::exp(repeatCount * logDeleteErrorRateSlope + logDeleteErrorRateIntercept));
@@ -541,11 +541,11 @@ void
 indelModelVariantAndBinomialMixtureErrorSimple(
         const SequenceErrorCounts& counts)
 {
-    const std::vector<unsigned> referenceSTRPatternSizeVector = {2};
+    const std::vector<unsigned> referenceSTRPatternSizeVector = {1,2};
     std::ostream& ros(std::cout);
 
-    const std::vector<unsigned> minSTRLengthVector = {2};
-    const std::vector<unsigned> maxSTRLengthVector = {16};
+    const std::vector<unsigned> minSTRLengthVector = {2, 2};
+    const std::vector<unsigned> maxSTRLengthVector = {16, 8};
 
     assert(referenceSTRPatternSizeVector.size() == minSTRLengthVector.size() && referenceSTRPatternSizeVector.size() == maxSTRLengthVector.size());
 
@@ -569,12 +569,7 @@ indelModelVariantAndBinomialMixtureErrorSimple(
             {
                 const auto& context(contextInfo.first);
                 const auto& data(contextInfo.second);
-                log_os << "INFO: adding contexts for parameter estimation: " << context << "\n";
-                log_os << "INFO: getRepeatPatternSize: " << contextInfo.first.getRepeatPatternSize() << "\n";
-                log_os << "INFO: getRepeatCount: " << contextInfo.first.getRepeatCount() << "\n";
-
                 data.addToObservations(context, observations);
-
             }
         }
 
