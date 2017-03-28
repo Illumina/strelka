@@ -28,7 +28,7 @@ import evs.tools.io as io
 from sklearn.ensemble import RandomForestClassifier
 
 
-class StrelkaRF(EVSModel):
+class SomaticRF(EVSModel):
 
     def train(self, tp, fp, columns, *args, **kwargs):
         """ Train model from sets of TPs and FPs
@@ -42,15 +42,9 @@ class StrelkaRF(EVSModel):
 
         tdf = pandas.DataFrame(tp)
         fdf = pandas.DataFrame(fp)
-
-        # TODO try numeric labels
         tdf["tag"] = "TP"
         fdf["tag"] = "FP"
-
         allrows = pandas.concat([tdf, fdf])
-
-        # TODO: parameters to try
-        # {'max_depth' : range(1,20,1), 'n_estimators' : range(5, 30+1,5)},
 
         if not kwargs:
             kwargs = {"n_jobs": 8,
@@ -87,7 +81,7 @@ class StrelkaRF(EVSModel):
 
         return instances
 
-    def save_json_strelka_format(self, filename):
+    def save_json_strelka_format(self, filename, varianttype, threshold):
         """ Save to json including all strelka scoring model meta-data """
         import datetime
         import json
@@ -97,13 +91,13 @@ class StrelkaRF(EVSModel):
                 "Date" : "%sZ" % (date),
                 "Features" : self.clf.columns,
                 "ModelType" : "RandomForest",
-                "FilterCutoff" : 0.5
-                }
+                "FilterCutoff" : threshold,
+                "Calibration" : {"Power" : 1, "Scale" : 1}
+                 }
         all_trees = io.classifier_to_dict(self.clf)
-        #full_model = {"Meta" : meta, "Model" : all_trees }
         full_model = meta
         full_model["Model"] = all_trees
-        modelFile = {"CalibrationModels" : {"Somatic" : { "SNV" : full_model }}}
+        modelFile = {"CalibrationModels" : {"Somatic" : { varianttype : full_model }}}
         json.dump(modelFile, open(filename,"wb"))
 
     def plots(self, prefix, featurenames):
@@ -122,4 +116,4 @@ class StrelkaRF(EVSModel):
                                                     importances[indices[f]],
                                                     std[indices[f]])
 
-EVSModel.register("strelka.rf", StrelkaRF)
+EVSModel.register("somatic.rf", SomaticRF)

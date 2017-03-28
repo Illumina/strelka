@@ -98,5 +98,4 @@ class EVSModel(object):
         return cls._models.keys()
 
 
-import strelka_rf   # noqa
-import strelka_rf_indel   # noqa
+import somatic_rf   # noqa
