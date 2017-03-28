@@ -248,11 +248,16 @@ Note that if the model's feature set has been changed, additional steps are requ
 ## Additional instructions for training an RNA-Seq variant scoring model
 
 For RNA-Seq models, the following additional options are recommended for parseAnnotatedTrainingVcf (Step 1c):
+
 `--suppressGTMismatch` labels candidate variants as correct if the allele agrees with the truth set but the genotype does not (by default, genotype mismatch causes variants to be labeled as incorrect).
+
 `--discardFNs` omits false negative variants from the training and test sets. This means that reported recall will be relative to the set of candidate variants rather than reflective of Strelka's overall recall.
+
 `--removeRNAEditing` labels variants that potentially arose via RNA editing (A->G and T->C changes) as having unknown truth status (the truth set is based on DNA, so will be incorrect where RNA editing occurs).
 
-Current practice for RNA-seq model training (Step 2) is to use the `--balance` option (downsamples the positive or negative training samples so as to use an equal number of both). For evaluating precision and recall (Step 4), the `--stratifyByCoverage` option is useful to output results for low-coverage (AD1<3) and high-coverage (AD1>=3) variants, as the majority of candidate RNA SNVs have low coverage.
+Current practice for RNA-seq model training (Step 2) is to use the `--balance` option (downsamples the positive or negative training samples so as to use an equal number of both). 
+
+For evaluating precision and recall (Step 4), the `--stratifyByCoverage` option is useful to output results for low-coverage (AD1<3) and high-coverage (AD1>=3) variants, as the majority of candidate RNA SNVs have low coverage.
 
 Finally, evs_exportmodel (Step 6) must be run with `--calltype RNAseq`.
 
