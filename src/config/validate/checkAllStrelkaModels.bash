@@ -29,7 +29,7 @@ scriptDir=$(rel2abs $(dirname $0))
 
 # check all EVS models
 EVSDir=$scriptDir/../empiricalVariantScoring
-for modelPrefix in germline somatic; do
+for modelPrefix in germline RNA somatic; do
     for modelFilePath in $(ls ${EVSDir}/models/${modelPrefix}*ScoringModels.json); do
         if ! [ -f $modelFilePath ]; then continue; fi
         echo "checking $(basename $modelFilePath)"

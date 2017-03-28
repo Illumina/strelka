@@ -32,18 +32,22 @@ def getOptions() :
     usage = "usage: %prog [options] < annotated.vcf"
     parser = OptionParser(usage=usage)
 
-    parser.add_option("--scoringFeatures", type="string", dest="scoringFeaturesPath",metavar="FILE",
-                      help="Scoring feature lists extracted from the EVS feature variant VCF")
     parser.add_option("--snvOutput", type="string", dest="snvOutputPath", metavar="FILE",
                       help="Write labeled SNV feature output for training data (default: all of it) in csv format to this file (required)")
     parser.add_option("--indelOutput", type="string", dest="indelOutputPath", metavar="FILE",
                       help="Write labeled indel feature output for training data (default: all of it) in csv format to this file (required)")
-    parser.add_option("--traintest", dest="traintest", default=False, action="store_true",
-                      help="Divide data into training (chr1 and chr10-chr19) and test (chr2-chr9 and chr20-chr22) sets")
+    parser.add_option("--testSet", type="string", action='append',
+                      help="Chromosome (e.g. chr20) to hold out as test data (may be specified more than once; if omitted, all data will be used for training)")
     parser.add_option("--snvTestOutput", type="string", dest="snvTestOutputPath",metavar="FILE",
                       help="Write labeled SNV feature output for test data in csv format to this file (optional)")
     parser.add_option("--indelTestOutput", type="string", dest="indelTestOutputPath",metavar="FILE",
                       help="Write labeled indel feature output for test data in csv format to this file (optional)")
+    parser.add_option("--suppressGTMismatch", dest="suppressGTMismatch", default=False, action="store_true",
+                      help="When variant sequence matches but GT does not, treat as a true positive (recommended for RNA EVS)")
+    parser.add_option("--discardFNs", dest="discardFNs", default=False, action="store_true",
+                      help="Do not output FN variants (recommended for RNA EVS)")
+    parser.add_option("--removeRNAEditing", dest="removeRNAEditing", default=False, action="store_true",
+                      help="Label potential RNA editing sites (variants with A->G or T->C) as unknown (recommended for RNA EVS)")
 
     (options,args) = parser.parse_args()
 
@@ -51,18 +55,14 @@ def getOptions() :
         parser.print_help()
         sys.exit(2)
 
-    if options.scoringFeaturesPath is None :
-        parser.error("Scoring features filename is required")
-    if not os.path.isfile(options.scoringFeaturesPath) :
-        parser.error("Can't find scoring features file: '%s'" % (options.scoringFeaturesPath))
     if options.snvOutputPath is None :
         parser.error("SNV output filename is required")
     if options.indelOutputPath is None :
         parser.error("Indel output filename is required")
-    if options.traintest and (options.snvTestOutputPath is None) :
-        parser.error("SNV test output filename is required when using traintest option")
-    if options.traintest and (options.indelTestOutputPath is None) :
-        parser.error("Indel test output filename is required when using traintest option")
+    if options.testSet and (options.snvTestOutputPath is None) :
+        parser.error("SNV test output filename is required when specifying a test set")
+    if options.testSet and (options.indelTestOutputPath is None) :
+        parser.error("Indel test output filename is required when specifying a test set")
 
     return (options,args)
 
@@ -96,7 +96,7 @@ def main() :
 
     snv_outfp = open(options.snvOutputPath,"w")
     indel_outfp = open(options.indelOutputPath,"w")
-    if options.traintest :
+    if options.testSet :
         snv_test_outfp = open(options.snvTestOutputPath,"w")
         indel_test_outfp = open(options.indelTestOutputPath,"w")
 
@@ -127,16 +127,17 @@ def main() :
 
         writeCsvHeader(snv_outfp, HeaderData.snvFeatures, "snv")
         writeCsvHeader(indel_outfp, HeaderData.indelFeatures, "indel")
-        if options.traintest :
+        if options.testSet :
             writeCsvHeader(snv_test_outfp, HeaderData.snvFeatures, "snv")
             writeCsvHeader(indel_test_outfp, HeaderData.indelFeatures, "indel")
 
 
-    for line in open(options.scoringFeaturesPath) :
+    for line in infp :
         if line[0] == "#" :
             processHeaderLine(line)
-
-    finalizeHeader()
+        if (HeaderData.snvFeatures is not None) and (HeaderData.indelFeatures is not None) :
+            finalizeHeader()
+            break
 
     for line in infp :
         if line[0] == "#" :
@@ -147,11 +148,7 @@ def main() :
         # expecting standard happy annotation with truth/query samples:
         assert(len(word) == (VCFID.SAMPLE+2))
 
-        isTrain = True
-        if options.traintest :
-            if not re.match("chr1", word[VCFID.CHROM]) :
-                isTrain = False
-
+        isTrain = (word[VCFID.CHROM] not in options.testSet)
 
         filterVals = word[VCFID.FILTER].split(';')
 
@@ -184,6 +181,15 @@ def main() :
         else :
             label = queryVals[sampleBDIndex]
 
+        if options.suppressGTMismatch and label == "FP":
+            if getKeyVal(word[VCFID.INFO],"kind") == "gtmismatch":
+                label = "TP"
+
+        if options.removeRNAEditing and isSNV:
+            if ((word[VCFID.REF] == "A" and word[VCFID.ALT] == "G") or
+                (word[VCFID.REF] == "T" and word[VCFID.ALT] == "C")):
+                label = "UNK"
+
         if label not in ("TP","FP","FN","UNK") :
             raise Exception("Variant label is not TP|FP|FN|UNK as expected:\n%s" % (line))
 
@@ -199,7 +205,8 @@ def main() :
                 else :     return indel_test_outfp
 
         def writeVariant(outputlabel) :
-            outputStream(isSNV, isTrain).write(",".join([word[VCFID.CHROM], word[VCFID.POS], qtype, evsf, outputlabel]) +"\n")
+            if not(options.discardFNs and outputlabel == "FN"):
+                outputStream(isSNV, isTrain).write(",".join([word[VCFID.CHROM], word[VCFID.POS], qtype, evsf, outputlabel]) +"\n")
 
         writeVariant(label)
         # Add an extra FN entry if a variant is truth FN,query FP:

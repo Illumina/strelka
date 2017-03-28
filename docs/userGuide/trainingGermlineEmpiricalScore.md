@@ -12,19 +12,20 @@
   * [Step 1a: Preliminary filtering of the VCF file](#step-1a-preliminary-filtering-of-the-vcf-file)
   * [Step 1b: Assigning truth labels using hap.py](#step-1b-assigning-truth-labels-using-happy)
   * [Step 1c: Convert the annotated variant output into a CSV feature file](#step-1c-convert-the-annotated-variant-output-into-a-csv-feature-file)
-  * [Step 1d (optional): Handle multiple training data sets](#step-1d-optional-handle-multiple-training-data-sets)
+  * [Step 1d (optional): Handling multiple training data sets](#1d-optional-handling-multiple-training-data-sets)
 * [Step 2: Training an EVS model](#step-2-training-an-evs-model)
 * [Step 3: Calculate Scores](#step-3-calculate-scores)
 * [Step 4: Evaluate Precision / Recall for the model](#step-4-evaluate-precision--recall-for-the-model)
 * [Step 5: Calibrate the model](#step-5-calibrate-the-model)
 * [Step 6: Export the model for use in Strelka](#step-6-export-the-model-for-use-in-strelka)
+* [Additional instructions for training an RNA-Seq variant scoring model](#additional-instructions-for-training-an-rna-seq-variant-scoring-model)
 
 [//]: # (END automated TOC section, any edits will be overwritten on next source refresh)
 
 
 ## Introduction
 
-This document outlines the Empirical Variant Score (EVS) model training process for Strelka germline variants. This is
+This document outlines the Empirical Variant Score (EVS) model training process for Strelka germline variants (also used to produce the models for RNA variants). This is
 the same method used to train the default SNV and indel EVS re-scoring models which come with Strelka, although the
 specific training and truth data sets shown here are just small examples provided for demonstration purposes.
 
@@ -67,8 +68,7 @@ gzip -dc filtered.vcf.gz | awk '/^#/ && /scoring_features/' >| scoringFeatures.t
 
 ### Step 1b: Assigning truth labels using hap.py
 
-Next, the haplotype comparison tool [hap.py](https://github.com/Illumina/hap.py) is used to assign training labels to
-the strelka output. The truth set will be used to label strelka calls as true positive (TP) or false positive (FP), and
+Next, the haplotype comparison tool [hap.py](https://github.com/Illumina/hap.py) is used to assign training labels to the strelka output (this guide assumes hap.py v0.3.7 or greater). The truth set will be used to label strelka calls as true positive (TP) or false positive (FP), and
 if confident regions are provided to the labeling scheme, then calls in non-confident regions will be labeled as unknown
 (UNK). False negatives are disregarded in the subsequent training steps. In the example below the
 [Platinum Genomes](http://www.illumina.com/platinumgenomes/)
@@ -96,15 +96,17 @@ indel calls. The example command-line:
 ```
 gzip -dc happy_PG_annotated.vcf.gz |\
 python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/germline/bin/parseAnnotatedTrainingVcf.py \
-    --scoringFeatures scoringFeatures.txt \
+    --testSet chr2 \
+    --testSet chr20 \
     --snvOutput snv_training_data.csv \
     --indelOutput indel_training_data.csv
+    --snvTestOutput snv_test_data.csv \
+    --indelTestOutput indel_test_data.csv
 ```
 
-...generates the labeled snv and indel feature files `snv_training_data.csv` and `indel_training_data.csv` for use in
-subsequent training steps.
+...generates the labeled snv and indel feature files `snv_training_data.csv` and `indel_training_data.csv` for use in subsequent training steps along with `snv_test_data.csv` and `indel_test_data.csv` for use in testing/evaluation steps, with the test data containing all variants from chromosomes 2 and 20 and the training data containing the remaining variants.
 
-### Step 1d (optional): Handle multiple training data sets
+### Step 1d (optional): Handling multiple training data sets
 
 If multiple vcfs are to be combined for training/testing, process each
 VCF to a labeled CSV feature file using the procedure described above. These training data may
@@ -114,17 +116,15 @@ be combined as required for the model learning and/or evaluation procedures desc
 ## Step 2: Training an EVS model
 
 The next step is to train a model given one or more labeled feature datasets produced in Step 1.
-An example is shown below; the `--features` argument below must by germline.snv or germline.indel for snv and indel features respectively. Specifying the --ambig argument (recommended) causes unknown calls (i.e. calls in ambiguous regions) to be used as negative examples; leaving it off will avoid using unknown calls.
+An example is shown below; the `--features` argument below can be selected from germline.snv, germline.indel, rna.snv and rna.indel for snv or indel features in germline or rna models.
 
 ```
 python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/germline/bin/evs_learn.py \
     --features germline.snv \
-    --ambig \
-    --model strelka.rf \
+    --model germline.rf \
     --output snv_model.pickle \
     snv_training_data.csv
 ```
-
 
 ## Step 3: Calculate Scores
 
@@ -244,3 +244,20 @@ To use in Strelka, point it to the new model files by adding
 to the options supplied to configureStrelkaGermlineWorkflow.py.
 
 Note that if the model's feature set has been changed, additional steps are required to use this file in Strelka. This operation is outside of user guide scope at present.
+
+## Additional instructions for training an RNA-Seq variant scoring model
+
+For RNA-Seq models, the following additional options are recommended for parseAnnotatedTrainingVcf (Step 1c):
+
+`--suppressGTMismatch` labels candidate variants as correct if the allele agrees with the truth set but the genotype does not (by default, genotype mismatch causes variants to be labeled as incorrect).
+
+`--discardFNs` omits false negative variants from the training and test sets. This means that reported recall will be relative to the set of candidate variants rather than reflective of Strelka's overall recall.
+
+`--removeRNAEditing` labels variants that potentially arose via RNA editing (A->G and T->C changes) as having unknown truth status (the truth set is based on DNA, so will be incorrect where RNA editing occurs).
+
+Current practice for RNA-seq model training (Step 2) is to use the `--balance` option (downsamples the positive or negative training samples so as to use an equal number of both). 
+
+For evaluating precision and recall (Step 4), the `--stratifyByCoverage` option is useful to output results for low-coverage (AD1<3) and high-coverage (AD1>=3) variants, as the majority of candidate RNA SNVs have low coverage.
+
+Finally, evs_exportmodel (Step 6) must be run with `--calltype RNAseq`.
+

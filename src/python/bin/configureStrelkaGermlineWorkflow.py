@@ -81,8 +81,11 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
             'strelkaGermlineBin' : joinFile(libexecDir,exeFile("starling2")),
             'bgzip9Bin' : joinFile(libexecDir, exeFile("bgzip9")),
             'configDir' : configDir,
-            'snvScoringModelFile' : joinFile(configDir,'germlineSNVScoringModels.json'),
-            'indelScoringModelFile' : joinFile(configDir,'germlineIndelScoringModels.json'),
+            'germlineSnvScoringModelFile' : joinFile(configDir,'germlineSNVScoringModels.json'),
+            'germlineIndelScoringModelFile' : joinFile(configDir,'germlineIndelScoringModels.json'),
+            'rnaSnvScoringModelFile' : joinFile(configDir,'RNASNVScoringModels.json'),
+            'rnaIndelScoringModelFile' : joinFile(configDir,'RNAIndelScoringModels.json'),
+
             'callContinuousVf' : []
             })
         return defaults
@@ -95,6 +98,17 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
 
         options.ploidyFilename = checkFixTabixIndexedFileOption(options.ploidyFilename,"ploidy file")
         options.noCompressBed = checkFixTabixIndexedFileOption(options.noCompressBed,"no-compress bed")
+        if options.snvScoringModelFile is None :
+            if options.isRNA :
+                options.snvScoringModelFile = options.rnaSnvScoringModelFile
+            else :
+                options.snvScoringModelFile = options.germlineSnvScoringModelFile
+
+        if options.indelScoringModelFile is None :
+            if options.isRNA :
+                options.indelScoringModelFile = options.rnaIndelScoringModelFile
+            else :
+                options.indelScoringModelFile = options.germlineIndelScoringModelFile
 
 
     def validateOptionExistence(self,options) :

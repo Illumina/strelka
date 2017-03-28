@@ -49,6 +49,8 @@ def parseArgs():
                         help="Classifier pickle file name")
     parser.add_argument("-o", "--output", required=True,
                         help="Output file name")
+    parser.add_argument("--calltype", default="Germline",
+                        help="Call type (Germline/RNAseq)")
     parser.add_argument("-v", "--varianttype", default="SNV",
                         help="Variant type (SNV/INDEL)")
     parser.add_argument("-C", "--calibration",
@@ -81,7 +83,7 @@ def main() :
     scale = 10**(-0.1*caldict["Intercept"])
 
     model = evs.EVSModel.createFromFile(args.classifier)
-    model.save_json_strelka_format(args.output, args.varianttype, power, scale, args.threshold)
+    model.save_json_strelka_format(args.output, args.calltype, args.varianttype, power, scale, args.threshold)
 
 if __name__ == '__main__':
     main()
