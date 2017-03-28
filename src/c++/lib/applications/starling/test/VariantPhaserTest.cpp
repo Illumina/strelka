@@ -72,7 +72,11 @@ struct DummyVariantSink : public variant_pipe_stage_base
     std::vector<std::unique_ptr<GermlineIndelLocusInfo>> _indelLoci;
 };
 
-std::unique_ptr<GermlineDiploidIndelLocusInfo> getDeletionLocusInfo(
+
+
+static
+std::unique_ptr<GermlineDiploidIndelLocusInfo>
+getDeletionLocusInfo(
     const starling_deriv_options& dopt,
     const ActiveRegionId activeRegionId,
     const pos_t pos,
@@ -101,10 +105,14 @@ std::unique_ptr<GermlineDiploidIndelLocusInfo> getDeletionLocusInfo(
         indelInfo->getSample(sampleIndex).max_gt().setGenotypeFromAlleleIndices(1,1);
 
     indelInfo->getSample(sampleIndex).max_gt().setAllele1HaplotypeId(haplotypeId);
-    return std::move(indelInfo);
+    return indelInfo;
 }
 
-std::unique_ptr<GermlineDiploidSiteLocusInfo> getSnvLocusInfo(
+
+
+static
+std::unique_ptr<GermlineDiploidSiteLocusInfo>
+getSnvLocusInfo(
     const starling_deriv_options& dopt,
     const unsigned sampleCount,
     const ActiveRegionId activeRegionId,
@@ -131,7 +139,7 @@ std::unique_ptr<GermlineDiploidSiteLocusInfo> getSnvLocusInfo(
     maxGenotype.setAllele0HaplotypeId(allele0HaplotypeId);
     maxGenotype.setAllele1HaplotypeId(allele1HaplotypeId);
 
-    return std::move(siteInfo);
+    return siteInfo;
 }
 
 
