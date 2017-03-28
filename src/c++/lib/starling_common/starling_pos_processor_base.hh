@@ -115,11 +115,11 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
         return _opt.is_short_haplotyping_enabled;
     }
 
-    ActiveRegionDetector&
-    getActiveRegionDetector()
+    /// \return reference to the read buffer from the active region detector
+    ActiveRegionReadBuffer&
+    getActiveRegionReadBuffer()
     {
-        assert(_active_region_detector);
-        return (*_active_region_detector);
+        return _getActiveRegionDetector().getReadBuffer();
     }
 
     /// in range [begin,end), is the estimated depth always below
@@ -402,7 +402,21 @@ protected:
         return (pos < _reportRange.begin_pos());
     }
 
+    const ActiveRegionDetector&
+    getActiveRegionDetector() const
+    {
+        assert (_active_region_detector);
+        return *_active_region_detector;
+    }
+
 private:
+    ActiveRegionDetector&
+    _getActiveRegionDetector()
+    {
+        assert (_active_region_detector);
+        return *_active_region_detector;
+    }
+
     void
     insert_pos_submap_count(const pos_t pos,
                             const unsigned sample_no);
@@ -485,6 +499,9 @@ private:
     void
     rebuffer_pos_reads(const pos_t pos);
 
+    /// convert reads buffered at position into a position basecall
+    /// "pileup" to allow for downstream depth and snp calculations
+    ///
     void
     pileup_pos_reads(const pos_t pos);
 
@@ -661,8 +678,5 @@ protected:
 
 private:
     IndelBuffer _indelBuffer;
-
-protected:
     std::unique_ptr<ActiveRegionDetector> _active_region_detector;
-
 };

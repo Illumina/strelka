@@ -341,10 +341,11 @@ addAlignmentIndelsToPosProcessor(
     unsigned total_indel_ref_span_per_read(0);
     const unsigned aps(al.path.size());
 
-    auto& active_region_detector(posProcessor.getActiveRegionDetector());
-    if (posProcessor.is_active_region_detector_enabled())
+    const bool isUsingActiveRegionDetector(posProcessor.is_active_region_detector_enabled());
+    ActiveRegionReadBuffer& activeRegionReadBuffer(posProcessor.getActiveRegionReadBuffer());
+    if (isUsingActiveRegionDetector)
     {
-        active_region_detector.getReadBuffer().setAlignInfo(id, sample_no, iat, al.is_fwd_strand);
+        activeRegionReadBuffer.setAlignInfo(id, sample_no, iat, al.is_fwd_strand);
     }
 
     while (path_index<aps)
@@ -426,7 +427,7 @@ addAlignmentIndelsToPosProcessor(
             }
             else if (ps.type == SOFT_CLIP)
             {
-                if (posProcessor.is_active_region_detector_enabled() && !isLowMapQuality)
+                if (isUsingActiveRegionDetector && !isLowMapQuality)
                 {
                     pos_t softClipStartPos(ref_head_pos);
                     // for leading/trailing soft-clip, place the segment at the end/start position
@@ -436,7 +437,7 @@ addAlignmentIndelsToPosProcessor(
                     const pos_t refPos(softClipStartPos);
                     std::string segmentSeq;
                     bam_seq_to_str(read_seq, read_offset, read_offset+ps.length, segmentSeq);
-                    active_region_detector.getReadBuffer().insertSoftClipSegment(id, refPos, segmentSeq, is_begin_edge);
+                    activeRegionReadBuffer.insertSoftClipSegment(id, refPos, segmentSeq, is_begin_edge);
                 }
             }
         }
@@ -459,7 +460,7 @@ addAlignmentIndelsToPosProcessor(
                                  posProcessor,obs,sample_no,
                                  path_index,read_offset,ref_head_pos);
         }
-        else if (posProcessor.is_active_region_detector_enabled() && !isLowMapQuality && is_segment_align_match(ps.type))
+        else if (isUsingActiveRegionDetector && !isLowMapQuality && is_segment_align_match(ps.type))
         {
             // detect active regions (match/mismatch)
             for (unsigned j(0); j < ps.length; ++j)
@@ -471,11 +472,11 @@ addAlignmentIndelsToPosProcessor(
 
                 if (ref.get_base(ref_pos) != base_char)
                 {
-                    active_region_detector.getReadBuffer().insertMismatch(id, ref_pos, base_char);
+                    activeRegionReadBuffer.insertMismatch(id, ref_pos, base_char);
                 }
                 else
                 {
-                    active_region_detector.getReadBuffer().insertMatch(id, ref_pos);
+                    activeRegionReadBuffer.insertMatch(id, ref_pos);
                 }
             }
         }

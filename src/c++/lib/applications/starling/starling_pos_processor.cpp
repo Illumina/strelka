@@ -138,7 +138,6 @@ reset()
     _nocompress_regions.clear();
     _variantLocusAlreadyOutputToPos = -1;
     _forcedAllelesAlreadyOutput.clear();
-    _active_region_detector->clear();
 }
 
 
@@ -665,7 +664,7 @@ process_pos_snp_digt(
     // -----------------------------------------------
     // create site locus object:
     //
-    auto activeRegionId(_active_region_detector->getActiveRegionId(pos));
+    const auto activeRegionId(getActiveRegionDetector().getActiveRegionId(pos));
     std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, activeRegionId, pos, refBaseIndex, isForcedOutput));
 
 
@@ -680,7 +679,7 @@ process_pos_snp_digt(
     {
         updateSnvLocusWithSampleInfo(
             _opt, sample(sampleIndex), callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex],
-            allDgt[sampleIndex], sampleIndex, _active_region_detector->getCandidateSnvBuffer(), *locusPtr, homRefLogProb);
+            allDgt[sampleIndex], sampleIndex, getActiveRegionDetector().getCandidateSnvBuffer(), *locusPtr, homRefLogProb);
     }
 
     // add sample-independent info:
@@ -1546,7 +1545,7 @@ process_pos_indel_digt(const pos_t pos)
     bool isReportedLocus(false);
     OrthogonalVariantAlleleCandidateGroup topVariantAlleleGroup;
 
-    auto activeRegionId(_active_region_detector->getActiveRegionId(pos));
+    const auto activeRegionId(getActiveRegionDetector().getActiveRegionId(pos));
 
     // now check to see if we can call variant alleles at this position, we may have already found this positions alleles while
     // analyzing a locus positioned downstream. If so, skip ahead to handle the forced output alleles only:

@@ -97,9 +97,10 @@ public:
         return _candidateSnvBuffer;
     }
 
-    ActiveRegionId getActiveRegionId(pos_t pos) const
+    ActiveRegionId getActiveRegionId(const pos_t pos) const
     {
-        return _posToActiveRegionIdMap.getConstRefDefault(pos, (ActiveRegionId)(-1));
+        static const ActiveRegionId defaultActiveRegionId(-1);
+        return _posToActiveRegionIdMap.getConstRefDefault(pos, defaultActiveRegionId);
     }
 
     void clearReadBuffer(const pos_t pos);

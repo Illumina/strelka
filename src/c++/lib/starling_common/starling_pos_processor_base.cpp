@@ -377,6 +377,7 @@ reset()
     {
         _stagemanPtr->reset();
     }
+    _active_region_detector->clear();
 }
 
 
@@ -466,9 +467,10 @@ insert_indel(
         const unsigned len(std::min(static_cast<unsigned>((obs.key.delete_length())),_opt.max_indel_size));
         update_largest_indel_ref_span(len);
 
+
         if (is_active_region_detector_enabled())
         {
-            getActiveRegionDetector().getReadBuffer().insertIndel(sampleId, obs);
+            getActiveRegionReadBuffer().insertIndel(sampleId, obs);
         }
         else
         {
@@ -869,7 +871,7 @@ process_pos(const int stage_no,
         init_read_segment_pos(pos);
         if (is_active_region_detector_enabled())
         {
-            getActiveRegionDetector().updateEndPosition(pos);
+            _getActiveRegionDetector().updateEndPosition(pos);
         }
 
         if (_opt.is_write_candidate_indels())
@@ -905,7 +907,7 @@ process_pos(const int stage_no,
         }
 
         if (is_active_region_detector_enabled())
-            getActiveRegionDetector().clearReadBuffer(pos);
+            _getActiveRegionDetector().clearReadBuffer(pos);
     }
     else if (stage_no==STAGE::POST_ALIGN)
     {
@@ -970,7 +972,7 @@ process_pos(const int stage_no,
 
         if (is_active_region_detector_enabled())
         {
-            getActiveRegionDetector().clearUpToPos(pos);
+            _getActiveRegionDetector().clearUpToPos(pos);
         }
 
         // everything else:
@@ -1240,9 +1242,6 @@ write_reads(const pos_t pos)
 
 
 
-// convert reads buffered at position into a position basecall
-// "pileup" to allow for downstream depth and snp calculations
-//
 void
 starling_pos_processor_base::
 pileup_pos_reads(const pos_t pos)
