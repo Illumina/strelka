@@ -83,8 +83,8 @@ You must specify an alignment file (BAM or CRAM) for each sample of a matched tu
             'runDir' : 'StrelkaSomaticWorkflow',
             'strelkaSomaticBin' : joinFile(libexecDir,exeFile("strelka2")),
             'minTier2Mapq' : 0,
-            'snvScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
-            #'indelScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
+            'snvScoringModelFile' : joinFile(configDir,'somaticSNVScoringModels.json'),
+            'indelScoringModelFile' : joinFile(configDir,'somaticIndelScoringModels.json'),
             'isOutputCallableRegions' : False,
             'noiseVcfList' : None
             })
