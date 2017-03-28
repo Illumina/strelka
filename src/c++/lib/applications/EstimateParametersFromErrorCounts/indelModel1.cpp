@@ -61,7 +61,7 @@ reportExtendedContext(
 
     for (const ExportedIndelObservations& obs : observations)
     {
-        sigTotal.locus += obs.repeatCount;
+        sigTotal.locus += obs.observationCount;
         unsigned totalAltObservations(0);
         for (unsigned altIndex(altBeginIndex); altIndex<altEndIndex; ++altIndex)
         {
@@ -71,9 +71,9 @@ reportExtendedContext(
         const double altFrac(static_cast<double>(totalAltObservations)/total);
         if ( (total<minDepth) || (altFrac > maxAltFrac)) continue;
 
-        sigTotal.ref += (obs.refObservations*obs.repeatCount);
-        sigTotal.alt += (totalAltObservations*obs.repeatCount);
-        sigTotal.noiseLocus += obs.repeatCount;
+        sigTotal.ref += (obs.refObservations*obs.observationCount);
+        sigTotal.alt += (totalAltObservations*obs.observationCount);
+        sigTotal.noiseLocus += obs.observationCount;
     }
 
     {
