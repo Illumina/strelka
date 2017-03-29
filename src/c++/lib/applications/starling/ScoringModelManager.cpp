@@ -43,7 +43,7 @@ ScoringModelManager(
 {
     if (opt.isReportEVSFeatures)
     {
-        /// EVS feature output is contrained to the single-sample input case right now:
+        // EVS feature output is constrained to the single-sample input case right now:
         const unsigned sampleCount(opt.alignFileOpt.alignmentFilename.size());
         assert(1 == sampleCount);
     }
@@ -170,7 +170,7 @@ ScoringModelManager::
 classify_indel(
     GermlineDiploidIndelLocusInfo& locus) const
 {
-    /// locus must have at least one variant and no breakpoints
+    // locus must have at least one variant and no breakpoints
     const bool isVariantUsableInEVSModel(locus.isVariantLocus() and (not locus.isAnyBreakpointAlleles()));
 
     const unsigned sampleCount(locus.getSampleCount());
@@ -222,7 +222,6 @@ classify_indel(
             {
                 sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
             }
-
         }
     }
     else

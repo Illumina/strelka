@@ -122,7 +122,7 @@ finish_gvcf_header(
 
     {
         const StreamScoper ss(os);// scope precision changes for output to not affect high DP/GQX values in variant records
-        os << "##INFO=<ID=" << dopt.block_label << ",Number=0,Type=Flag,Description=\"Non-variant site block. All sites in a block are constrained to be non-variant, have the same filter value, and have all sample values in range [x,y], y <= max(x+" << opt.gvcf.block_abs_tol << ",(x*" << std::setprecision(2) << static_cast<double>(100+opt.gvcf.block_percent_tol)/100. << ")). All printed site block sample values are the minimum observed in the region spanned by the block\">\n";
+        os << "##INFO=<ID=" << dopt.block_label << ",Number=0,Type=Flag,Description=\"Non-variant multi-site block. Non-variant blocks are defined independently for each sample. All sites in such a block are constrained to be non-variant, have the same filter value, and have sample values {GQX,DP,DPF} in range [x,y], y <= max(x+" << opt.gvcf.block_abs_tol << ",(x*" << std::setprecision(2) << static_cast<double>(100+opt.gvcf.block_percent_tol)/100. << ")).\">\n";
     }
 
     os << "##INFO=<ID=SNVHPOL,Number=1,Type=Integer,Description=\"SNV contextual homopolymer length\">\n";
@@ -151,10 +151,10 @@ finish_gvcf_header(
     //FORMAT:
     os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
     os << "##FORMAT=<ID=GQ,Number=1,Type=Float,Description=\"Genotype Quality\">\n";
-    os << "##FORMAT=<ID=GQX,Number=1,Type=Integer,Description=\"Empirically calibrated variant quality score for variant sites, otherwise Minimum of {Genotype quality assuming variant position,Genotype quality assuming non-variant position}\">\n";
-//    os << "##FORMAT=<ID=GQX,Number=1,Type=Integer,Description=\"Minimum of {Genotype quality assuming variant position,Genotype quality assuming non-variant position}\">\n";
-    os << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Filtered basecall depth used for site genotyping\">\n";
-    os << "##FORMAT=<ID=DPF,Number=1,Type=Integer,Description=\"Basecalls filtered from input prior to site genotyping\">\n";
+    os << "##FORMAT=<ID=GQX,Number=1,Type=Integer,Description=\"Empirically calibrated genotype quality score for variant sites, otherwise minimum of {Genotype quality assuming variant position,Genotype quality assuming non-variant position}\">\n";
+    os << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Filtered basecall depth used for site genotyping. In a non-variant multi-site block this value represents the average of all sites in the block.\">\n";
+    os << "##FORMAT=<ID=DPF,Number=1,Type=Integer,Description=\"Basecalls filtered from input prior to site genotyping. In a non-variant multi-site block this value represents the average of all sites in the block.\">\n";
+    os << "##FORMAT=<ID=MIN_DP,Number=1,Type=Integer,Description=\"Minimum filtered basecall depth used for site genotyping within a non-variant multi-site block\">\n";
 
     os << "##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"Allelic depths for the ref and alt alleles in the order listed. For indels this value only includes reads which confidently support each allele (posterior prob " << opt.readConfidentSupportThreshold.strval() << " or higher that read contains indicated allele vs all other intersecting indel alleles)\">\n";
     os << "##FORMAT=<ID=ADF,Number=.,Type=Integer,Description=\"Allelic depths on the forward strand\">\n";

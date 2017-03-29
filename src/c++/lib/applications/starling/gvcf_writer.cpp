@@ -737,7 +737,7 @@ write_site_record(
 
     //FORMAT
     os << "GT";
-    os << ":GQX:DP:DPF";
+    os << ":GQX:DP:DPF:MIN_DP";
     os << '\t';
 
     //SAMPLE
@@ -747,6 +747,10 @@ write_site_record(
     os << sampleInfo.max_gt() << ':';
     if (locus.isBlockGqxDefined)
     {
+        // The value we want here is the genotype confidence of the entire block. Instead we only have the GT
+        // probabilities from each site in the block, so an approximation is used: The minimum site genotype
+        // confidence from all sites in the block provides a reasonable upper-bound on our confidence that
+        // the block as a whole is 0/0 (in all cases, completely neglecting possible indel evidence in the block)
         os << locus.block_gqx.min();
     }
     else
@@ -754,9 +758,10 @@ write_site_record(
         os << '.';
     }
     os << ':';
-    //print DP:DPF
-    os << locus.block_dpu.min() << ':'
-       << locus.block_dpf.min();
+    //print DP:DPF:MIN_DP
+    os << std::round(locus.block_dpu.mean()) << ':'
+       << std::round(locus.block_dpf.mean()) << ':'
+       << locus.block_dpu.min();
     os << '\n';
 }
 
