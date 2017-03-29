@@ -40,7 +40,7 @@ score_candidate_alignment(
     const starling_base_options& opt,
     const IndelBuffer& indelBuffer,
     const unsigned sampleId,
-    const ActiveRegionDetector& activeRegionDetector,
+    const CandidateSnvBuffer& candidateSnvBuffer,
     const read_segment& rseg,
     const candidate_alignment& cal,
     const reference_contig_segment& ref);

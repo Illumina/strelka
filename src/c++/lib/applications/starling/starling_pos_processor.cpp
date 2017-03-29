@@ -347,7 +347,7 @@ updateSnvLocusWithSampleInfo(
     const unsigned groupLocusPloidy,
     const diploid_genotype& dgt,
     const unsigned sampleIndex,
-    const ActiveRegionDetector& activeRegionDetector,
+    const CandidateSnvBuffer& candidateSnvBuffer,
     GermlineDiploidSiteLocusInfo& locus,
     double& homRefLogProb)
 {
@@ -487,12 +487,12 @@ updateSnvLocusWithSampleInfo(
 
         if (allele0Index > 0)
             maxGt.setAllele0HaplotypeId(
-                activeRegionDetector.getHaplotypeId(
+                    candidateSnvBuffer.getHaplotypeId(
                     sampleIndex, locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex)
             );
         if (allele1Index > 0)
             maxGt.setAllele1HaplotypeId(
-                activeRegionDetector.getHaplotypeId(
+                    candidateSnvBuffer.getHaplotypeId(
                     sampleIndex, locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
             );
     }
@@ -680,7 +680,7 @@ process_pos_snp_digt(
     {
         updateSnvLocusWithSampleInfo(
             _opt, sample(sampleIndex), callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex],
-            allDgt[sampleIndex], sampleIndex, *_active_region_detector, *locusPtr, homRefLogProb);
+            allDgt[sampleIndex], sampleIndex, _active_region_detector->getCandidateSnvBuffer(), *locusPtr, homRefLogProb);
     }
 
     // add sample-independent info:

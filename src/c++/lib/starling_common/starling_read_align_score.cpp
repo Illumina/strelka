@@ -147,7 +147,7 @@ scoreMatchSegment(const starling_base_options& opt,
                   const bam_seq_base& ref,
                   const pos_t ref_head_pos,
                   const unsigned sampleId,
-                  const ActiveRegionDetector& activeRegionDetector,
+                  const CandidateSnvBuffer& candidateSnvBuffer,
                   double& lnp)
 {
     static const double lnthird(-std::log(3.));
@@ -167,7 +167,7 @@ scoreMatchSegment(const starling_base_options& opt,
             if (opt.is_short_haplotyping_enabled and (not is_ref))
             {
                 // Don't penalize for the mismatch if it is a SNV found in an active region
-                is_ref = activeRegionDetector.isCandidateSnv(sampleId, refPos, seq.get_char(readPos));
+                is_ref = candidateSnvBuffer.isCandidateSnv(sampleId, refPos, seq.get_char(readPos));
             }
         }
         lnp += ( is_ref ?
@@ -268,7 +268,7 @@ score_candidate_alignment(
     const starling_base_options& opt,
     const IndelBuffer& indelBuffer,
     const unsigned sampleId,
-    const ActiveRegionDetector& activeRegionDetector,
+    const CandidateSnvBuffer& candidateSnvBuffer,
     const read_segment& rseg,
     const candidate_alignment& cal,
     const reference_contig_segment& ref)
@@ -368,7 +368,7 @@ score_candidate_alignment(
                               ref_bseq,
                               ref_head_pos,
                               sampleId,
-                              activeRegionDetector,
+                              candidateSnvBuffer,
                               al_lnp);
 #ifdef DEBUG_SCORE
             for (unsigned ii(0); ii<ps.length; ++ii)

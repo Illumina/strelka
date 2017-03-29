@@ -29,6 +29,7 @@
 #include "blt_util/align_path.hh"
 #include "IndelBuffer.hh"
 #include "ActiveRegionReadBuffer.hh"
+#include "CandidateSnvBuffer.hh"
 
 #include <string>
 #include <map>
@@ -68,7 +69,7 @@ public:
     /// \param aligner aligner for aligning haplotypes to the reference
     /// \param readBuffer read buffer
     /// \param indelBuffer indel buffer
-    /// \param polySites rangeSet to store SNV information
+    /// \param candidateSnvBuffer candidate SNV buffer
     /// \return active region object
     ActiveRegion(const pos_range& posRange,
                  const reference_contig_segment& ref,
@@ -77,9 +78,9 @@ public:
                  const GlobalAligner<int>& aligner,
                  const ActiveRegionReadBuffer& readBuffer,
                  IndelBuffer& indelBuffer,
-                 RangeSet& polySites):
+                 CandidateSnvBuffer& candidateSnvBuffer):
         _posRange(posRange), _ref(ref), _maxIndelSize(maxIndelSize), _sampleCount(sampleCount),
-        _aligner(aligner), _readBuffer(readBuffer), _indelBuffer(indelBuffer), _polySites(polySites)
+        _aligner(aligner), _readBuffer(readBuffer), _indelBuffer(indelBuffer), _candidateSnvBuffer(candidateSnvBuffer)
     {
     }
 
@@ -113,51 +114,6 @@ public:
         _alignIdSoftClipped.insert(alignId);
     }
 
-    /// Get the haplotype Id for the given rangeSetValue and the baseIndex
-    static HaplotypeId getHaplotypeId(const uint8_t rangeSetValue, const BASE_ID::index_t baseIndex)
-    {
-        switch (baseIndex)
-        {
-        case BASE_ID::A:
-            return (rangeSetValue & 0x03);
-        case BASE_ID::C:
-            return (rangeSetValue & 0x0c) >> 2;
-        case BASE_ID::G:
-            return (rangeSetValue & 0x30) >> 4;
-        case BASE_ID::T:
-            return (rangeSetValue & 0xc0) >> 6;
-        default:
-            assert(false);
-        }
-        return 0;
-    }
-
-    /// add haplotypeId to the rangeSet value
-    static void addBaseId(
-        const HaplotypeId haplotypeId,
-        const char baseChar,
-        uint8_t& rangeSetValue)
-    {
-        assert (haplotypeId == 1 || haplotypeId == 2);
-        switch (baseChar)
-        {
-        case 'A':
-            rangeSetValue |= (0x01 << (haplotypeId-1));
-            break;
-        case 'C':
-            rangeSetValue |= (0x04 << (haplotypeId-1));
-            break;
-        case 'G':
-            rangeSetValue |= (0x10 << (haplotypeId-1));
-            break;
-        case 'T':
-            rangeSetValue |= (0x40 << (haplotypeId-1));
-            break;
-        default:
-            assert(false);
-        }
-    }
-
 private:
     pos_range _posRange;
     const reference_contig_segment& _ref;
@@ -167,7 +123,7 @@ private:
 
     const ActiveRegionReadBuffer& _readBuffer;
     IndelBuffer& _indelBuffer;
-    RangeSet& _polySites;
+    CandidateSnvBuffer& _candidateSnvBuffer;
 
     std::set<align_id_t> _alignIdSoftClipped;
 

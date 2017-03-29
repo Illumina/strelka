@@ -589,6 +589,7 @@ private:
                 if (! sif.bc_buff.empty()) return false;
             }
             if (! _indelBuffer.empty()) return false;
+            if (! _candidateSnvBuffer.empty()) return false;
             if (! _forced_output_pos.empty()) return false;
             if (! derived_empty()) return false;
             _is_skip_process_pos=true;
@@ -661,6 +662,7 @@ protected:
 
 private:
     IndelBuffer _indelBuffer;
+    CandidateSnvBuffer _candidateSnvBuffer;
 
 protected:
     std::unique_ptr<ActiveRegionDetector> _active_region_detector;

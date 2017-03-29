@@ -29,6 +29,7 @@
 #include "indel.hh"
 #include "IndelBuffer.hh"
 #include "ActiveRegionReadBuffer.hh"
+#include "CandidateSnvBuffer.hh"
 
 #include <vector>
 #include <list>
@@ -66,14 +67,15 @@ public:
     ActiveRegionDetector(
         const reference_contig_segment& ref,
         IndelBuffer& indelBuffer,
+        CandidateSnvBuffer& candidateSnvBuffer,
         unsigned maxIndelSize,
         unsigned sampleCount) :
         _ref(ref),
         _readBuffer(ref, sampleCount, indelBuffer),
         _indelBuffer(indelBuffer),
+        _candidateSnvBuffer(candidateSnvBuffer),
         _maxIndelSize(maxIndelSize),
         _sampleCount(sampleCount),
-        _polySites(sampleCount),
         _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
     {
         _isBeginning = true;
@@ -91,6 +93,11 @@ public:
         return _readBuffer;
     }
 
+    CandidateSnvBuffer& getCandidateSnvBuffer()
+    {
+        return _candidateSnvBuffer;
+    }
+
     ActiveRegionId getActiveRegionId(pos_t pos) const
     {
         return _posToActiveRegionIdMap.getConstRefDefault(pos, (ActiveRegionId)(-1));
@@ -98,27 +105,9 @@ public:
 
     void clearReadBuffer(const pos_t pos);
 
-    void clearPolySites(const pos_t pos);
-
     /// update the active region end position. Creates an active region if needed.
     /// \param pos reference position
     void updateEndPosition(const pos_t pos);
-
-    /// Checks if baseChar is a candidate SNV allele at this position
-    /// \param sampleId sample id
-    /// \param pos reference position
-    /// \param baseChar read base
-    /// \return true if the base matches a candidate SNV allele at this position
-    bool isCandidateSnv(const unsigned sampleId, const pos_t pos, const char baseChar) const;
-
-    /// Gets the haplotype ID for the input single base allele
-    /// \param sampleId sample id
-    /// \param pos reference position
-    /// \param baseIndex base index of the allele
-    /// \return 0 if it's not apprearing in non-ref haplotype.
-    /// 1 or 2 if it appears in one non-ref haplotype
-    /// 3 if it appears in both non-ref haplotype (i.e. hetalt SNV)
-    uint8_t getHaplotypeId(const unsigned sampleId, const pos_t pos, const BASE_ID::index_t baseIndex) const;
 
     /// clear active region detector
     void clear();
@@ -140,6 +129,7 @@ private:
     ActiveRegionReadBuffer _readBuffer;
 
     IndelBuffer& _indelBuffer;
+    CandidateSnvBuffer& _candidateSnvBuffer;
 
     const unsigned _maxIndelSize;
     const unsigned _sampleCount;
@@ -152,9 +142,6 @@ private:
     unsigned _numVariants;
 
     std::list<ActiveRegion> _activeRegions;
-
-    // record polymorphic sites
-    RangeSet _polySites;
 
     // aligner to be used in active regions
     GlobalAligner<int> _aligner;
