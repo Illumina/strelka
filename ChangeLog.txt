@@ -1,4 +1,3 @@
-- STREL-481 Add CandidateSnvBuffer to store SNVs discovered in active regions
 - STREL-478 Change gVCF non-variant blocks to use mean depth
 - STREL-469 Add RNAseq EVS models
 - STREL-479 External candidate indels create active regions

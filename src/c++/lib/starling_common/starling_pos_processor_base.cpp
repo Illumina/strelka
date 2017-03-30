@@ -267,7 +267,6 @@ starling_pos_processor_base(
     , _sample(sampleCount)
     , _pileupCleaner(opt)
     , _indelBuffer(opt,dopt,ref)
-    , _candidateSnvBuffer(sampleCount)
 {
     assert(sampleCount != 0);
 
@@ -307,7 +306,7 @@ void
 starling_pos_processor_base::
 resetActiveRegionDetector()
 {
-    _active_region_detector.reset(new ActiveRegionDetector(_ref, _indelBuffer, _candidateSnvBuffer, _opt.max_indel_size, getSampleCount()));
+    _active_region_detector.reset(new ActiveRegionDetector(_ref, _indelBuffer, _opt.max_indel_size, getSampleCount()));
 }
 
 
@@ -404,7 +403,6 @@ resetRegionBase(
 
     _forced_output_pos.clear();
     _indelBuffer.clearIndels();
-    _candidateSnvBuffer.clearSnvs();
 
     /// TODO, it might be better to have some kind of regionReset() on this structure
     ///  -- not clear how to do this accurately, so for now we just nuke and replace the entire object
@@ -973,8 +971,7 @@ process_pos(const int stage_no,
 
         if (is_active_region_detector_enabled())
         {
-            getActiveRegionDetector().getCandidateSnvBuffer().clearUpToPos(pos);
-            getActiveRegionDetector().clearPosToActiveRegionMap(pos);
+            getActiveRegionDetector().clearUpToPos(pos);
         }
 
         // everything else:

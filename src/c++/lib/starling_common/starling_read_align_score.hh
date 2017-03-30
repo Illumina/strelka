@@ -28,7 +28,7 @@
 #include "starling_common/IndelBuffer.hh"
 #include "starling_common/starling_read.hh"
 #include "starling_common/starling_base_shared.hh"
-#include "ActiveRegionDetector.hh"
+#include "CandidateSnvBuffer.hh"
 
 
 /// return score of candidate alignment cal for read segment rseg

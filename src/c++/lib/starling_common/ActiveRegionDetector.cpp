@@ -30,8 +30,9 @@ ActiveRegionDetector::clearReadBuffer(const pos_t pos)
 }
 
 void
-ActiveRegionDetector::clearPosToActiveRegionMap(const pos_t pos)
+ActiveRegionDetector::clearUpToPos(const pos_t pos)
 {
+    _candidateSnvBuffer.clearUpToPos(pos);
     _posToActiveRegionIdMap.eraseTo(pos);
 }
 

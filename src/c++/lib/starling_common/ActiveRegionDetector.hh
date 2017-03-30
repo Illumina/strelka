@@ -67,13 +67,12 @@ public:
     ActiveRegionDetector(
         const reference_contig_segment& ref,
         IndelBuffer& indelBuffer,
-        CandidateSnvBuffer& candidateSnvBuffer,
         unsigned maxIndelSize,
         unsigned sampleCount) :
         _ref(ref),
         _readBuffer(ref, sampleCount, indelBuffer),
         _indelBuffer(indelBuffer),
-        _candidateSnvBuffer(candidateSnvBuffer),
+        _candidateSnvBuffer(sampleCount),
         _maxIndelSize(maxIndelSize),
         _sampleCount(sampleCount),
         _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
@@ -93,7 +92,7 @@ public:
         return _readBuffer;
     }
 
-    CandidateSnvBuffer& getCandidateSnvBuffer()
+    const CandidateSnvBuffer& getCandidateSnvBuffer() const
     {
         return _candidateSnvBuffer;
     }
@@ -112,7 +111,7 @@ public:
     /// clear active region detector
     void clear();
 
-    void clearPosToActiveRegionMap(const pos_t pos);
+    void clearUpToPos(const pos_t pos);
 
 private:
     enum VariantType
@@ -129,7 +128,7 @@ private:
     ActiveRegionReadBuffer _readBuffer;
 
     IndelBuffer& _indelBuffer;
-    CandidateSnvBuffer& _candidateSnvBuffer;
+    CandidateSnvBuffer _candidateSnvBuffer;
 
     const unsigned _maxIndelSize;
     const unsigned _sampleCount;

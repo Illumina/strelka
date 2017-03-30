@@ -27,7 +27,7 @@
 #include "starling_common/IndelBuffer.hh"
 #include "starling_common/starling_read.hh"
 #include "starling_common/starling_base_shared.hh"
-#include "ActiveRegionDetector.hh"
+#include "CandidateSnvBuffer.hh"
 
 
 /// search for most likely realignments of the read and score alternate
