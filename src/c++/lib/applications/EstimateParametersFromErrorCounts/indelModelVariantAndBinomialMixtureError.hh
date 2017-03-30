@@ -22,7 +22,7 @@
 ///
 
 #pragma once
-
+#include "json/json.h"
 #include "errorAnalysis/SequenceErrorCounts.hh"
 
 
@@ -35,3 +35,19 @@ indelModelVariantAndBinomialMixtureError(
 void
 indelModelVariantAndBinomialMixtureErrorSimple(
         const SequenceErrorCounts& counts);
+
+Json::Value
+generateMotifNodeJson(
+        const IndelErrorContext context,
+        const double indelRate,
+        const double noisyLocusRate
+);
+
+Json::Value
+generateIndelErrorModelJson(
+        const double theta,
+        const Json::Value& motifs);
+
+void exportIndelErrorModelJson(
+        std::string filename,
+        Json::Value jsonModel);
