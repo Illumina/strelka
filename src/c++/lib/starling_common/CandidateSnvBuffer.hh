@@ -30,6 +30,7 @@
 
 typedef uint8_t HaplotypeId;
 
+/// stores haplotype id for A, C, T, G
 struct HaplotypeIdForBase
 {
     HaplotypeId a;
@@ -38,6 +39,7 @@ struct HaplotypeIdForBase
     HaplotypeId t;
 };
 
+/// for cleaning HaplotypeIdForBase
 struct ClearHaplotypeIdForBase
 {
     void
@@ -80,7 +82,11 @@ public:
 
     bool empty() const;
 
+    /// Clear all candidate SNVs
     void clearSnvs();
+
+    /// Clear all candidate SNVs up to the specified position
+    /// \param pos position
     void clearUpToPos(pos_t pos);
 private:
     SampleCandidateSnvMap _candidateSnvBuffer;

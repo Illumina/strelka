@@ -58,7 +58,7 @@ HaplotypeId CandidateSnvBuffer::getHaplotypeId(unsigned sampleId, pos_t pos, BAS
 {
     if (not _candidateSnvBuffer[sampleId].isKeyPresent(pos))
     {
-        return static_cast<HaplotypeId>(0);
+        return static_cast<HaplotypeId>(0); // haplotype ID 0 means there's no candidate SNV at the position
     }
 
     const auto haplotypeIdForBase(_candidateSnvBuffer[sampleId].getConstRef(pos));
