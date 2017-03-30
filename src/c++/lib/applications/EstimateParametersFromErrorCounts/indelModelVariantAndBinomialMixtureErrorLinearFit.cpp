@@ -24,7 +24,7 @@
 #include "blt_util/log.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
-#include "indelModelVariantAndBinomialMixtureErrorSimple.hh"
+#include "indelModelVariantAndBinomialMixtureErrorLinearFit.hh"
 
 //#define CODEMIN_DEBUG
 #define CODEMIN_USE_BOOST
@@ -538,8 +538,8 @@ estimateParameters(
 
 
 void
-indelModelVariantAndBinomialMixtureErrorSimple(
-        const SequenceErrorCounts& counts)
+indelModelVariantAndBinomialMixtureErrorLinearFit(
+        const SequenceErrorCounts &counts)
 {
     const std::vector<unsigned> referenceSTRPatternSizeVector = {1,2};
     std::ostream& ros(std::cout);

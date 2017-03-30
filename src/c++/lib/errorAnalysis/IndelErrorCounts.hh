@@ -502,6 +502,12 @@ public:
         return _data.end();
     }
 
+    const_iterator
+    find(const IndelErrorContext& key) const
+    {
+        return _data.find(key);
+    }
+
     /// debug output
     void
     dump(std::ostream& os) const;

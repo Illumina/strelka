@@ -31,3 +31,7 @@
 void
 indelModelVariantAndBinomialMixtureError(
     const SequenceErrorCounts& counts);
+
+void
+indelModelVariantAndBinomialMixtureErrorSimple(
+        const SequenceErrorCounts& counts);

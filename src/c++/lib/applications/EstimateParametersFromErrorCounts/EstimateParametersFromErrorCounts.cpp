@@ -35,7 +35,7 @@
 #include "indelModelVariantAndBinomialMixtureError.hh"
 #include "indelModelVariantAndBinomialMixtureErrorNoOverlap.hh"
 #include "snvModelVariantAndBinomialMixtureError.hh"
-#include "indelModelVariantAndBinomialMixtureErrorSimple.hh"
+#include "indelModelVariantAndBinomialMixtureErrorLinearFit.hh"
 
 
 
@@ -74,6 +74,10 @@ runEPEC(
             indelModelVariantAndBetaBinomialError(counts);
         }
         else if (opt.modelIndex == 7)
+        {
+            indelModelVariantAndBinomialMixtureErrorLinearFit(counts);
+        }
+        else if (opt.modelIndex == 8)
         {
             indelModelVariantAndBinomialMixtureErrorSimple(counts);
         }
