@@ -29,5 +29,5 @@
 /// model data as a mixture of variants and a two stage error process
 ///
 void
-indelModelVariantAndBinomialMixtureErrorSimple(
-        const SequenceErrorCounts& counts);
+indelModelVariantAndBinomialMixtureErrorLinearFit(
+        const SequenceErrorCounts &counts);

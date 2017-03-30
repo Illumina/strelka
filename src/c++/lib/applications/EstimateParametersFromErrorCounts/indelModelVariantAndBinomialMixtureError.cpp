@@ -508,3 +508,37 @@ indelModelVariantAndBinomialMixtureError(
         reportExtendedContext(isLockTheta, context, observations, data, ros);
     }
 }
+
+void
+indelModelVariantAndBinomialMixtureErrorSimple(
+        const SequenceErrorCounts& counts)
+{
+    const bool isLockTheta(true);
+
+    const std::vector<std::pair<unsigned, unsigned>> contextInfoVector{{1,1},{1,2},{1,16},{2,2},{2,8}};
+    std::ostream& ros(std::cout);
+
+    ros << "context, excludedLoci, nonExcludedLoci, usedLoci, refReads, altReads, iter, lhood, errorRate, theta, noisyLocusRate\n";
+
+    std::vector<ExportedIndelObservations> observations;
+    for (auto contextInfo :contextInfoVector)
+    {
+        const IndelErrorContext targetContext(contextInfo.first, contextInfo.second);
+        const auto contextIt = counts.getIndelCounts().find(targetContext);
+        if(contextIt != counts.getIndelCounts().end())
+        {
+            const auto &data(contextIt->second);
+
+            data.exportObservations(observations);
+
+            if (observations.empty()) continue;
+
+            log_os << "INFO: computing rates for context: " << targetContext << "\n";
+            reportExtendedContext(isLockTheta, targetContext, observations, data, ros);
+        } else
+        {
+            log_os << "INFO: no context found in counts file for context: " << targetContext << "\n";
+        }
+    }
+
+}
