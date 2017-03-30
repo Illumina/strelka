@@ -71,9 +71,8 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
     const int depth = 50;
 
     TestIndelBuffer testBuffer(ref);
-    CandidateSnvBuffer testSnvBuffer(sampleCount);
 
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), testSnvBuffer, maxIndelSize, sampleCount);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
 
     const auto snvPos = std::set<pos_t>({2, 4, 5});
 
@@ -138,9 +137,8 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
     const unsigned sampleCount = 1;
 
     TestIndelBuffer testBuffer(ref);
-    CandidateSnvBuffer testSnvBuffer(sampleCount);
 
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), testSnvBuffer, maxIndelSize, sampleCount);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
 
     const int sampleId = 0;
     const int depth = 50;
@@ -208,9 +206,8 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
     const unsigned sampleCount = 1;
 
     TestIndelBuffer testBuffer(ref);
-    CandidateSnvBuffer testSnvBuffer(sampleCount);
 
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), testSnvBuffer, maxIndelSize, sampleCount);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
 
     // fake reading reads
     const int depth = 50;
@@ -262,9 +259,8 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
     const unsigned sampleCount = 1;
 
     TestIndelBuffer testBuffer(ref);
-    CandidateSnvBuffer testSnvBuffer(sampleCount);
 
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), testSnvBuffer, maxIndelSize, sampleCount);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
 
     const int sampleId = 0;
     const int depth = 50;
