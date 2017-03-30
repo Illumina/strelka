@@ -21,6 +21,10 @@
 /// \author Chris Saunders
 ///
 
+#include <iomanip>
+#include <iostream>
+#include <fstream>
+
 #include "blt_util/log.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
@@ -30,8 +34,7 @@
 #define CODEMIN_USE_BOOST
 #include "minimize_conj_direction.h"
 
-#include <iomanip>
-#include <iostream>
+
 
 namespace
 {
@@ -419,6 +422,7 @@ reportExtendedContext(
     const IndelErrorContext& context,
     const std::vector<ExportedIndelObservations>& observations,
     const IndelErrorData& data,
+    double normalizedParams[MIN_PARAMS3::SIZE],
     std::ostream& os)
 {
     // Get summary counts for QC purposes. Note these are unrelated to minimization or model:
@@ -466,7 +470,6 @@ reportExtendedContext(
 
     // report:
     {
-        double normalizedParams[MIN_PARAMS3::SIZE];
         error_minfunc_model3::argToParameters(minParams,normalizedParams);
 
         const double theta(std::exp(normalizedParams[MIN_PARAMS3::LN_THETA]));
@@ -505,7 +508,8 @@ indelModelVariantAndBinomialMixtureError(
         if (observations.empty()) continue;
 
         log_os << "INFO: computing rates for context: " << context << "\n";
-        reportExtendedContext(isLockTheta, context, observations, data, ros);
+        double normalizedParams[MIN_PARAMS3::SIZE];
+        reportExtendedContext(isLockTheta, context, observations, data, normalizedParams, ros);
     }
 }
 
@@ -520,13 +524,17 @@ indelModelVariantAndBinomialMixtureErrorSimple(
 
     ros << "context, excludedLoci, nonExcludedLoci, usedLoci, refReads, altReads, iter, lhood, errorRate, theta, noisyLocusRate\n";
 
+    Json::Value motifs;
     std::vector<ExportedIndelObservations> observations;
+    double normalizedParams[MIN_PARAMS3::SIZE];
+
     for (auto contextInfo :contextInfoVector)
     {
         const IndelErrorContext targetContext(contextInfo.first, contextInfo.second);
         const auto contextIt = counts.getIndelCounts().find(targetContext);
         if(contextIt != counts.getIndelCounts().end())
         {
+
             const auto &data(contextIt->second);
 
             data.exportObservations(observations);
@@ -534,11 +542,57 @@ indelModelVariantAndBinomialMixtureErrorSimple(
             if (observations.empty()) continue;
 
             log_os << "INFO: computing rates for context: " << targetContext << "\n";
-            reportExtendedContext(isLockTheta, targetContext, observations, data, ros);
+
+            reportExtendedContext(isLockTheta, targetContext, observations, data, normalizedParams, ros);
+
+            const double indelRate = (normalizedParams[MIN_PARAMS3::LN_INSERT_ERROR_RATE]+normalizedParams[MIN_PARAMS3::LN_DELETE_ERROR_RATE])/2;
+            const double noisyLocusRate = normalizedParams[MIN_PARAMS3::LN_NOISY_LOCUS_RATE];
+
+
+
+            motifs.append(generateMotifNodeJson(targetContext, indelRate, noisyLocusRate));
+
         } else
         {
             log_os << "INFO: no context found in counts file for context: " << targetContext << "\n";
         }
     }
 
+    exportIndelErrorModelJson("indelModel.json", generateIndelErrorModelJson(normalizedParams[MIN_PARAMS3::LN_THETA], motifs));
+
 }
+
+Json::Value
+generateMotifNodeJson(
+        const IndelErrorContext context,
+        const double indelRate,
+        const double noisyLocusRate
+)
+{
+    Json::Value motif;
+    motif["repeatPatternSize"] = context.getRepeatPatternSize();
+    motif["repeatCount"] = context.getRepeatCount();
+    motif["indelRate"] = indelRate;
+    motif["noisyLocusRate"] = noisyLocusRate;
+    return motif;
+}
+
+Json::Value
+generateIndelErrorModelJson(
+        const double theta,
+        const Json::Value& motifs)
+{
+    Json::Value jsonRoot;
+    jsonRoot["theta"] = theta;
+    jsonRoot["motifs"] = motifs;
+    return jsonRoot;
+}
+
+void exportIndelErrorModelJson(std::string filename, Json::Value jsonModel)
+{
+    Json::StyledWriter writer;
+    std::string str = writer.write(jsonModel);
+    std::ofstream out(filename);
+    out << str << std::endl << std::endl;
+}
+
