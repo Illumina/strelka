@@ -114,16 +114,6 @@ public:
     void clearUpToPos(const pos_t pos);
 
 private:
-    enum VariantType
-    {
-        MATCH,
-        MISMATCH,
-        SOFT_CLIP,
-        DELETE,
-        INSERT,
-        MISMATCH_INSERT
-    };
-
     const reference_contig_segment& _ref;
     ActiveRegionReadBuffer _readBuffer;
 
