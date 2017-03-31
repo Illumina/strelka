@@ -34,7 +34,11 @@ indelModelVariantAndBinomialMixtureError(
 
 void
 indelModelVariantAndBinomialMixtureErrorSimple(
-        const SequenceErrorCounts& counts);
+        const SequenceErrorCounts& counts,
+        const std::string& thetaFilename);
+
+double importLogTheta(
+        std::string filename);
 
 // move these to a more appropriate place later
 // TODO: these classes can be automatically serialized with cereal
