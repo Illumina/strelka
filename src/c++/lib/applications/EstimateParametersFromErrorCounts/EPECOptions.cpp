@@ -69,6 +69,8 @@ parseEPECOptions(
      modelTypeHelp.str().c_str())
     ("model", po::value(&opt.modelIndex)->default_value(opt.modelIndex),
      "select which model of a given type to run")
+     ("theta-file", po::value(&opt.thetaFilename),
+     "select a json file with theta values")
     ;
 
     po::options_description help("help");

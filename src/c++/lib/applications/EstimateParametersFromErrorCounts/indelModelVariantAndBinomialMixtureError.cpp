@@ -237,11 +237,12 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
 {
     explicit
     error_minfunc_model3(
-        const std::vector<ExportedIndelObservations>& observations,
+        const std::vector<ExportedIndelObservations>& observations, const double theta,
         const bool isLockTheta = false)
-        : _obs(observations), _isLockTheta(isLockTheta)
+        : defaultLogTheta(theta),
+            _obs(observations),
+          _isLockTheta(isLockTheta)
     {}
-
     unsigned dim() const override
     {
         return (_isLockTheta ? (MIN_PARAMS3::SIZE-1) : MIN_PARAMS3::SIZE);
@@ -331,7 +332,8 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
     }
 #endif
 
-    static const double defaultLogTheta;
+    const double defaultLogTheta;
+    static const double initLogTheta;
     static const double maxLogTheta;
     static const double maxLogRate;
     static const double maxLogLocusRate;
@@ -342,7 +344,7 @@ private:
     double _params[MIN_PARAMS3::SIZE];
 };
 
-const double error_minfunc_model3::defaultLogTheta = std::log(1e-4);
+const double error_minfunc_model3::initLogTheta = std::log(1e-04);
 const double error_minfunc_model3::maxLogTheta = std::log(0.4);
 const double error_minfunc_model3::maxLogRate = std::log(0.5);
 const double error_minfunc_model3::maxLogLocusRate = std::log(1.0);
@@ -419,6 +421,7 @@ static
 void
 reportExtendedContext(
     const bool isLockTheta,
+    const double logTheta,
     const IndelErrorContext& context,
     const std::vector<ExportedIndelObservations>& observations,
     const IndelErrorData& data,
@@ -444,11 +447,12 @@ reportExtendedContext(
         static const double end_tol(1e-10);
         static const unsigned max_iter(40);
 
+        error_minfunc_model3 errFunc(observations, logTheta, isLockTheta);
         // initialize parameter search
         minParams[MIN_PARAMS3::LN_INSERT_ERROR_RATE] = std::log(1e-3);
         minParams[MIN_PARAMS3::LN_DELETE_ERROR_RATE] = std::log(1e-3);
         minParams[MIN_PARAMS3::LN_NOISY_LOCUS_RATE] = std::log(0.4);
-        minParams[MIN_PARAMS3::LN_THETA] = error_minfunc_model3::defaultLogTheta;
+        minParams[MIN_PARAMS3::LN_THETA] = errFunc.defaultLogTheta;
 
         static const unsigned SIZE2(MIN_PARAMS3::SIZE*MIN_PARAMS3::SIZE);
         double conjDir[SIZE2];
@@ -462,7 +466,7 @@ reportExtendedContext(
 
         double start_tol(end_tol);
         double final_dlh;
-        error_minfunc_model3 errFunc(observations,isLockTheta);
+
 
         codemin::minimize_conj_direction(minParams,conjDir,errFunc,start_tol,end_tol,line_tol,
                                          x_all_loghood,iter,final_dlh,max_iter);
@@ -509,15 +513,18 @@ indelModelVariantAndBinomialMixtureError(
 
         log_os << "INFO: computing rates for context: " << context << "\n";
         double normalizedParams[MIN_PARAMS3::SIZE];
-        reportExtendedContext(isLockTheta, context, observations, data, normalizedParams, ros);
+        reportExtendedContext(isLockTheta, error_minfunc_model3::initLogTheta, context, observations, data, normalizedParams, ros);
     }
 }
 
 void
 indelModelVariantAndBinomialMixtureErrorSimple(
-        const SequenceErrorCounts& counts)
+        const SequenceErrorCounts& counts,
+        const std::string& thetaFilename)
 {
     const bool isLockTheta(true);
+
+    double logTheta = importLogTheta(thetaFilename);
 
     const std::vector<std::pair<unsigned, unsigned>> contextInfoVector{{1,1},{1,2},{1,16},{2,2},{2,8}};
     std::ostream& ros(std::cout);
@@ -543,12 +550,13 @@ indelModelVariantAndBinomialMixtureErrorSimple(
 
             log_os << "INFO: computing rates for context: " << targetContext << "\n";
 
-            reportExtendedContext(isLockTheta, targetContext, observations, data, normalizedParams, ros);
+            reportExtendedContext(isLockTheta, logTheta, targetContext, observations, data, normalizedParams, ros);
 
             const double indelRate = (normalizedParams[MIN_PARAMS3::LN_INSERT_ERROR_RATE]+normalizedParams[MIN_PARAMS3::LN_DELETE_ERROR_RATE])/2;
             const double noisyLocusRate = normalizedParams[MIN_PARAMS3::LN_NOISY_LOCUS_RATE];
 
             indelModelJson.addMotif(targetContext.getRepeatPatternSize(), targetContext.getRepeatCount(), indelRate, noisyLocusRate);
+            indelModelJson.model.theta = normalizedParams[MIN_PARAMS3::LN_THETA]; // theta should be read in from a json file
 
         } else
         {
@@ -556,9 +564,24 @@ indelModelVariantAndBinomialMixtureErrorSimple(
         }
     }
 
-    indelModelJson.model.theta = normalizedParams[MIN_PARAMS3::LN_THETA];
     indelModelJson.exportIndelErrorModelToJsonFile("indelModel2.json");
 
+}
+
+// example: {"theta" : 0.0001}
+double importLogTheta(std::string filename)
+{
+    std::string jsonString;
+    Json::Value root;
+    {
+        std::ifstream ifs(filename , std::ifstream::binary);
+        std::stringstream buffer;
+        buffer << ifs.rdbuf();
+        jsonString = buffer.str();
+    }
+    Json::Reader reader;
+    reader.parse(jsonString, root);
+    return std::log(root["theta"].asDouble());
 }
 
 
