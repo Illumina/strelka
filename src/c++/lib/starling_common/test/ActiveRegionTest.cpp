@@ -66,11 +66,11 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
 {
     reference_contig_segment ref;
     ref.seq() = "GATCTGT";
-    TestIndelBuffer testBuffer(ref);
-
     const unsigned maxIndelSize = 50;
     const int sampleCount = 3;
     const int depth = 50;
+
+    TestIndelBuffer testBuffer(ref);
 
     ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
 
@@ -116,12 +116,12 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
             if ((sampleId == 1) and (snvPos.find(pos) != snvPos.end()))
             {
                 // SNV
-                BOOST_REQUIRE_EQUAL(detector.isCandidateSnv(sampleId, pos, 'A'), true);
+                BOOST_REQUIRE_EQUAL(detector.getCandidateSnvBuffer().isCandidateSnv(sampleId, pos, 'A'), true);
             }
             else
             {
                 // No SNV
-                BOOST_REQUIRE_EQUAL(detector.isCandidateSnv(sampleId, pos, 'A'), false);
+                BOOST_REQUIRE_EQUAL(detector.getCandidateSnvBuffer().isCandidateSnv(sampleId, pos, 'A'), false);
             }
         }
     }
@@ -133,10 +133,11 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
     reference_contig_segment ref;
     ref.seq() = "TCTCT";
 
-    TestIndelBuffer testBuffer(ref);
-
     const unsigned maxIndelSize = 50;
     const unsigned sampleCount = 1;
+
+    TestIndelBuffer testBuffer(ref);
+
     ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
 
     const int sampleId = 0;
@@ -201,10 +202,11 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
     reference_contig_segment ref;
     ref.seq() = refSeq;
 
-    TestIndelBuffer testBuffer(ref);
-
     const unsigned maxIndelSize = 50;
     const unsigned sampleCount = 1;
+
+    TestIndelBuffer testBuffer(ref);
+
     ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
 
     // fake reading reads
@@ -242,8 +244,8 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
         detector.clear();
 
         // check if polySites are correctly set
-        BOOST_REQUIRE_EQUAL(detector.isCandidateSnv(sampleId, startPosition + snvOffsets[0], 'G'), true);
-        BOOST_REQUIRE_EQUAL(detector.isCandidateSnv(sampleId, startPosition + snvOffsets[1], 'G'), true);
+        BOOST_REQUIRE_EQUAL(detector.getCandidateSnvBuffer().isCandidateSnv(sampleId, startPosition + snvOffsets[0], 'G'), true);
+        BOOST_REQUIRE_EQUAL(detector.getCandidateSnvBuffer().isCandidateSnv(sampleId, startPosition + snvOffsets[1], 'G'), true);
     }
 }
 
@@ -253,10 +255,11 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
     reference_contig_segment ref;
     ref.seq() = "GTCC";
 
-    TestIndelBuffer testBuffer(ref);
-
     const unsigned maxIndelSize = 50;
     const unsigned sampleCount = 1;
+
+    TestIndelBuffer testBuffer(ref);
+
     ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
 
     const int sampleId = 0;

@@ -30,17 +30,9 @@ ActiveRegionDetector::clearReadBuffer(const pos_t pos)
 }
 
 void
-ActiveRegionDetector::clearPolySites(const pos_t pos)
+ActiveRegionDetector::clearUpToPos(const pos_t pos)
 {
-    for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
-    {
-        _polySites[sampleId].eraseTo(pos);
-    }
-}
-
-void
-ActiveRegionDetector::clearPosToActiveRegionMap(const pos_t pos)
-{
+    _candidateSnvBuffer.clearUpToPos(pos);
     _posToActiveRegionIdMap.eraseTo(pos);
 }
 
@@ -110,7 +102,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
                 _activeRegionStartPos = _readBuffer.getBeginPos();
             pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
             _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
-                                        _aligner, _readBuffer, _indelBuffer, _polySites);
+                                        _aligner, _readBuffer, _indelBuffer, _candidateSnvBuffer);
 
             setPosToActiveRegionIdMap(activeRegionRange);
 
@@ -164,7 +156,7 @@ void ActiveRegionDetector::clear()
             _anchorPosFollowingPrevVariant = _readBuffer.getEndPos();
         pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
         _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
-                                    _aligner, _readBuffer, _indelBuffer, _polySites);
+                                    _aligner, _readBuffer, _indelBuffer, _candidateSnvBuffer);
         setPosToActiveRegionIdMap(activeRegionRange);
     }
 
@@ -174,17 +166,4 @@ void ActiveRegionDetector::clear()
     _anchorPosFollowingPrevVariant = -1;
     _prevVariantPos = -1;
     _numVariants = 0;
-}
-
-bool ActiveRegionDetector::isCandidateSnv(const unsigned sampleId, const pos_t pos, const char baseChar) const
-{
-    const auto baseIndex(static_cast<BASE_ID::index_t>(base_to_id(baseChar)));
-    if (baseIndex == BASE_ID::ANY) return false;
-    return (getHaplotypeId(sampleId, pos, baseIndex) != 0);
-}
-
-uint8_t ActiveRegionDetector::getHaplotypeId(const unsigned sampleId, const pos_t pos, const BASE_ID::index_t baseIndex) const
-{
-    const auto value(_polySites[sampleId].getConstRefDefault(pos, 0));
-    return ActiveRegion::getHaplotypeId(value, baseIndex);
 }

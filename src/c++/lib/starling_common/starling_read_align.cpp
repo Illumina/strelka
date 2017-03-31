@@ -1133,7 +1133,7 @@ score_candidate_alignments(
     read_segment& rseg,
     IndelBuffer& indelBuffer,
     const unsigned sampleId,
-    const ActiveRegionDetector& activeRegionDetector,
+    const CandidateSnvBuffer& candidateSnvBuffer,
     const std::set<candidate_alignment>& candAlignments,
     std::vector<double>& candAlignmentScores,
     double& maxCandAlignmentScore,
@@ -1160,7 +1160,7 @@ score_candidate_alignments(
     for (citer cal_iter(cal_set_begin); cal_iter!=cal_set_end; ++cal_iter)
     {
         const candidate_alignment& ical(*cal_iter);
-        const double path_lnp(score_candidate_alignment(opt,indelBuffer,sampleId,activeRegionDetector,rseg,ical,ref));
+        const double path_lnp(score_candidate_alignment(opt,indelBuffer,sampleId,candidateSnvBuffer,rseg,ical,ref));
 
         candAlignmentScores.push_back(path_lnp);
 
@@ -1318,7 +1318,7 @@ score_candidate_alignments_and_indels(
     read_segment& rseg,
     IndelBuffer& indelBuffer,
     const unsigned sampleId,
-    const ActiveRegionDetector& activeRegionDetector,
+    const CandidateSnvBuffer& candidateSnvBuffer,
     std::set<candidate_alignment>& candAlignments,
     const bool is_incomplete_search)
 {
@@ -1340,7 +1340,7 @@ score_candidate_alignments_and_indels(
 
     try
     {
-        score_candidate_alignments(opt, ref, rseg, indelBuffer, sampleId, activeRegionDetector, candAlignments,
+        score_candidate_alignments(opt, ref, rseg, indelBuffer, sampleId, candidateSnvBuffer, candAlignments,
                                    candAlignmentScores, maxCandAlignmentScore, maxCandAlignmentPtr);
     }
     catch (...)
@@ -1636,7 +1636,7 @@ realign_and_score_read(
     const reference_contig_segment& ref,
     const known_pos_range& realign_buffer_range,
     const unsigned sampleId,
-    const ActiveRegionDetector& activeRegionDetector,
+    const CandidateSnvBuffer& candidateSnvBuffer,
     read_segment& rseg,
     IndelBuffer& indelBuffer)
 {
@@ -1719,5 +1719,5 @@ realign_and_score_read(
     }
 
     score_candidate_alignments_and_indels(opt, dopt, sample_opt, ref,
-                                          rseg, indelBuffer, sampleId, activeRegionDetector, cal_set, is_incomplete_search);
+                                          rseg, indelBuffer, sampleId, candidateSnvBuffer, cal_set, is_incomplete_search);
 }

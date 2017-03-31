@@ -815,7 +815,7 @@ align_pos(const pos_t pos)
 
             try
             {
-                realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,sampleIndex, *_active_region_detector, rseg,
+                realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,sampleIndex, _active_region_detector->getCandidateSnvBuffer(), rseg,
                                        getIndelBuffer());
             }
             catch (...)
@@ -971,8 +971,7 @@ process_pos(const int stage_no,
 
         if (is_active_region_detector_enabled())
         {
-            getActiveRegionDetector().clearPolySites(pos);
-            getActiveRegionDetector().clearPosToActiveRegionMap(pos);
+            getActiveRegionDetector().clearUpToPos(pos);
         }
 
         // everything else:
@@ -1386,7 +1385,7 @@ pileup_read_segment(
     if ((! is_submapped) && _opt.is_max_win_mismatch)
     {
         const rc_segment_bam_seq ref_bseq(_ref);
-        create_mismatch_filter_map(_opt,best_al,ref_bseq,sampleIndex,bseq,read_begin,read_end, getActiveRegionDetector(), _rmi);
+        create_mismatch_filter_map(_opt,best_al,ref_bseq,sampleIndex,bseq,read_begin,read_end, getActiveRegionDetector().getCandidateSnvBuffer(), _rmi);
         if (_opt.tier2.is_tier2_mismatch_density_filter_count)
         {
             const int max_pass(_opt.tier2.tier2_mismatch_density_filter_count);

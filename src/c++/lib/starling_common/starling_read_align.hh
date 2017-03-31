@@ -27,7 +27,7 @@
 #include "starling_common/IndelBuffer.hh"
 #include "starling_common/starling_read.hh"
 #include "starling_common/starling_base_shared.hh"
-#include "ActiveRegionDetector.hh"
+#include "CandidateSnvBuffer.hh"
 
 
 /// search for most likely realignments of the read and score alternate
@@ -48,6 +48,6 @@ realign_and_score_read(
     const reference_contig_segment& ref,
     const known_pos_range& realign_buffer_range,
     const unsigned sampleId,
-    const ActiveRegionDetector& activeRegionDetector,
+    const CandidateSnvBuffer& candidateSnvBuffer,
     read_segment& rseg,
     IndelBuffer& indelBuffer);

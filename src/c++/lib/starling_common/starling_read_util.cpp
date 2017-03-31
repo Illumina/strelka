@@ -125,7 +125,7 @@ create_mismatch_filter_map(const blt_options& client_opt,
                            const bam_seq_base& read_seq,
                            const unsigned read_begin,
                            const unsigned read_end,
-                           const ActiveRegionDetector& activeRegionDetector,
+                           const CandidateSnvBuffer& candidateSnvBuffer,
                            read_mismatch_info& rmi)
 {
 
@@ -175,7 +175,7 @@ create_mismatch_filter_map(const blt_options& client_opt,
                 if (readChar != ref_seq.get_char(ref_pos))
                 {
                     // if the mismatch is a SNV found in an active region, don't increase the counter
-                    if (not activeRegionDetector.isCandidateSnv(sampleIndex, ref_pos, readChar))
+                    if (not candidateSnvBuffer.isCandidateSnv(sampleIndex, ref_pos, readChar))
                     {
                         rmi[read_pos].is_mismatch=true;
                         dd.inc(read_pos,1);
