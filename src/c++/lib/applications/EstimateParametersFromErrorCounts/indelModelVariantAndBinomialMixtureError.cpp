@@ -524,7 +524,7 @@ indelModelVariantAndBinomialMixtureErrorSimple(
 
     ros << "context, excludedLoci, nonExcludedLoci, usedLoci, refReads, altReads, iter, lhood, errorRate, theta, noisyLocusRate\n";
 
-    Json::Value motifs;
+    IndelModelJson indelModelJson;
     std::vector<ExportedIndelObservations> observations;
     double normalizedParams[MIN_PARAMS3::SIZE];
 
@@ -548,9 +548,7 @@ indelModelVariantAndBinomialMixtureErrorSimple(
             const double indelRate = (normalizedParams[MIN_PARAMS3::LN_INSERT_ERROR_RATE]+normalizedParams[MIN_PARAMS3::LN_DELETE_ERROR_RATE])/2;
             const double noisyLocusRate = normalizedParams[MIN_PARAMS3::LN_NOISY_LOCUS_RATE];
 
-
-
-            motifs.append(generateMotifNodeJson(targetContext, indelRate, noisyLocusRate));
+            indelModelJson.addMotif(targetContext.getRepeatPatternSize(), targetContext.getRepeatCount(), indelRate, noisyLocusRate);
 
         } else
         {
@@ -558,41 +556,51 @@ indelModelVariantAndBinomialMixtureErrorSimple(
         }
     }
 
-    exportIndelErrorModelJson("indelModel.json", generateIndelErrorModelJson(normalizedParams[MIN_PARAMS3::LN_THETA], motifs));
+    indelModelJson.model.theta = normalizedParams[MIN_PARAMS3::LN_THETA];
+    indelModelJson.exportIndelErrorModelToJsonFile("indelModel2.json");
 
 }
 
+
+// move these to a more appropriate place later
 Json::Value
-generateMotifNodeJson(
-        const IndelErrorContext context,
-        const double indelRate,
-        const double noisyLocusRate
-)
+IndelModelJson::generateMotifsNode()
 {
-    Json::Value motif;
-    motif["repeatPatternSize"] = context.getRepeatPatternSize();
-    motif["repeatCount"] = context.getRepeatCount();
-    motif["indelRate"] = indelRate;
-    motif["noisyLocusRate"] = noisyLocusRate;
-    return motif;
+    Json::Value motifs;
+    for(auto motifIt:model.motifs)
+    {
+        Json::Value motif;
+        motif["repeatPatternSize"] = motifIt.repeatPatternSize;
+        motif["repeatCount"] = motifIt.repeatCount;
+        motif["indelRate"] = motifIt.indelRate;
+        motif["noisyLocusRate"] = motifIt.noisyLocusRate;
+        motifs.append(motif);
+    }
+    return motifs;
 }
 
-Json::Value
-generateIndelErrorModelJson(
-        const double theta,
-        const Json::Value& motifs)
-{
-    Json::Value jsonRoot;
-    jsonRoot["theta"] = theta;
-    jsonRoot["motifs"] = motifs;
-    return jsonRoot;
-}
-
-void exportIndelErrorModelJson(std::string filename, Json::Value jsonModel)
+void IndelModelJson::exportIndelErrorModelToJsonFile(std::string filename)
 {
     Json::StyledWriter writer;
-    std::string str = writer.write(jsonModel);
+    Json::Value jsonRoot;
+    jsonRoot["theta"] = model.theta;
+    jsonRoot["motifs"] = generateMotifsNode();
+    std::string str = writer.write(jsonRoot);
     std::ofstream out(filename);
     out << str << std::endl << std::endl;
 }
+
+void IndelModelJson::addMotif(unsigned repeatPatternSize,
+                              unsigned repeatCount,
+                              double indelRate,
+                              double noisyLocusRate)
+{
+    IndelMotifBinomialMixture motif;
+    motif.repeatPatternSize = repeatPatternSize;
+    motif.repeatCount = repeatCount;
+    motif.indelRate = indelRate;
+    motif.noisyLocusRate = noisyLocusRate;
+    model.motifs.push_back(motif);
+}
+
 

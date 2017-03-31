@@ -36,18 +36,39 @@ void
 indelModelVariantAndBinomialMixtureErrorSimple(
         const SequenceErrorCounts& counts);
 
-Json::Value
-generateMotifNodeJson(
-        const IndelErrorContext context,
-        const double indelRate,
-        const double noisyLocusRate
-);
+// move these to a more appropriate place later
+// TODO: these classes can be automatically serialized with cereal
+class IndelMotifBinomialMixture
+{
+public:
+    unsigned repeatPatternSize = 0;
+    unsigned repeatCount = 0;
+    double indelRate = 0;
+    double noisyLocusRate = 0;
+};
 
-Json::Value
-generateIndelErrorModelJson(
-        const double theta,
-        const Json::Value& motifs);
+class IndelModelBinomialMixture
+{
+public:
+    std::vector<IndelMotifBinomialMixture> motifs;
+    double theta = 0;
+};
 
-void exportIndelErrorModelJson(
-        std::string filename,
-        Json::Value jsonModel);
+class IndelModelJson
+{
+public:
+    IndelModelBinomialMixture model;
+
+    void addMotif(
+            unsigned repeatPatternSize,
+            unsigned repeatCount,
+            double indelRate,
+            double noisyLocusRate);
+
+    void exportIndelErrorModelToJsonFile(
+            std::string filename);
+
+    Json::Value
+    generateMotifsNode();
+
+};
