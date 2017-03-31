@@ -48,7 +48,7 @@ foreach(THIS_PROGRAM_SOURCE ${THIS_PROGRAM_SOURCE_LIST})
         set(THIS_LIBSUFFIX "strelka")
     endif ()
     set(THIS_APPLICATION_LIB ${THIS_PROJECT_NAME}_${THIS_LIBSUFFIX})
-    add_executable        (${THIS_PROGRAM} ${THIS_PROGRAM_SOURCE} ../lib/applications/EstimateParametersFromErrorCounts/indelModelVariantAndBinomialMixtureErrorLinearFit.cpp ../lib/applications/EstimateParametersFromErrorCounts/indelModelVariantAndBinomialMixtureErrorLinearFit.hh)
+    add_executable        (${THIS_PROGRAM} ${THIS_PROGRAM_SOURCE})
     target_link_libraries (${THIS_PROGRAM}  ${THIS_APPLICATION_LIB} ${THIS_AVAILABLE_LIBRARIES}
                            ${HTSLIB_LIBRARY} ${JSONCPP_LIBRARY} ${Boost_LIBRARIES}
                            ${THIS_ADDITIONAL_LIB})
