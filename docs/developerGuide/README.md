@@ -101,6 +101,8 @@ To avoid the extra time associated with this step, ensure that (1)
 cmake 2.8.5+ is in your PATH and (2) BOOST\_ROOT is defined to point
 to boost 1.53.0 or newer.
 
+## General Debugging Notes
+
 ### General Debugging: Address Sanitizer
 
 The build system offers first-class support for google address sanitizer
@@ -109,6 +111,25 @@ installation process with the additional configure option `--build-type=ASan`,
 for example:
 
     ../configure --jobs=4 --prefix=/path/to/install --build-type=ASan
+
+### General Debugging: valgrind
+
+If address sanitizer is not an option (or does not find the issue), valgrind can be used to debug suspected strelka
+memory issues, but it is not generally recommended unless the random forest variant scoring model can be disabled.
+In more detail:
+
+Strelka's empirical variant scoring (EVS) currently uses random forest (RF) models. These RF models are static -- they
+are trained for each major release and read in from a json model parameter file. This RF model initialization is one of
+the first thing strelka does on startup, and the implementation of the RF model in memory creates a huge number of
+small allocations. When the EVS model is initialized under valgrind, runtime and memory usage may be impractically
+high.
+
+The recommended workaround is:
+1) Determine if the bug in question can be replicated by re-running strelka with EVS disabled. To do so at the workflow
+configuration level this requires the `--disableEVS` switch. At the binary variant calling level, remove options
+following the pattern `--*scoring-model-file`.
+2) If the bug is reproduced with EVS, proceed to use valgrind with the EVS disabled command-line
+3) If not, another debugging technique is recommended.
 
 ### General Debugging: Inspecting temporary files
 
