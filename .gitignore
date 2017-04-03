@@ -51,3 +51,7 @@ tags
 *.sublime-workspace
 src/.idea
 *.tocbak
+
+# directory for visual studio auxiliary project info created for the new VS 'build-from-cmake' option:
+/.vs
+

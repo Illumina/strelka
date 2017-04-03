@@ -114,13 +114,13 @@ BOOST_AUTO_TEST_CASE( testSearchForStr )
 //                 0123456789012345
     const std::vector<unsigned> repeatPatternSizeVector = {1,2,3};
 
-    const std::vector<std::vector<unsigned>> expectedResultVectorInStr =
+    const std::vector<std::vector<bool>> expectedResultVectorInStr =
     {
         {1,1,0,1,1,1,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,1,1},
         {0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0},
         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0},
     };
-    const std::vector<std::vector<unsigned>> expectedResultVectorLeftEndOfStr =
+    const std::vector<std::vector<bool>> expectedResultVectorLeftEndOfStr =
     {
         {1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0},
         {0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -141,7 +141,6 @@ BOOST_AUTO_TEST_CASE( testSearchForStr )
             BOOST_REQUIRE_EQUAL(isBaseLeftEndOfStr, expectedResultVectorLeftEndOfStr[r][position]);
         }
     }
-
 }
 
 BOOST_AUTO_TEST_SUITE_END()
