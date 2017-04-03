@@ -420,6 +420,9 @@ endif()
 if (MSVC)
     add_definitions(/D_CRT_SECURE_NO_WARNINGS)
 
+    # disable deprecated iterator warnings first noted in VS2017:
+    add_definitions(/D_SCL_SECURE_NO_WARNINGS)
+
     # allow us to use standard c++ logical keywords
     append_args (CMAKE_CXX_FLAGS "/FI\"ciso646\"")
 endif()
