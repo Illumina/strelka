@@ -12,7 +12,7 @@
   * [Step 1a: Preliminary filtering of the VCF file](#step-1a-preliminary-filtering-of-the-vcf-file)
   * [Step 1b: Assigning truth labels using hap.py](#step-1b-assigning-truth-labels-using-happy)
   * [Step 1c: Convert the annotated variant output into a CSV feature file](#step-1c-convert-the-annotated-variant-output-into-a-csv-feature-file)
-  * [Step 1d (optional): Handling multiple training data sets](#1d-optional-handling-multiple-training-data-sets)
+  * [Step 1d (optional): Handling multiple training data sets](#step-1d-optional-handling-multiple-training-data-sets)
 * [Step 2: Training an EVS model](#step-2-training-an-evs-model)
 * [Step 3: Calculate Scores](#step-3-calculate-scores)
 * [Step 4: Evaluate Precision / Recall for the model](#step-4-evaluate-precision--recall-for-the-model)
@@ -255,7 +255,7 @@ For RNA-Seq models, the following additional options are recommended for parseAn
 
 `--removeRNAEditing` labels variants that potentially arose via RNA editing (A->G and T->C changes) as having unknown truth status (the truth set is based on DNA, so will be incorrect where RNA editing occurs).
 
-Current practice for RNA-seq model training (Step 2) is to use the `--balance` option (downsamples the positive or negative training samples so as to use an equal number of both). 
+Current practice for RNA-seq model training (Step 2) is to use the `--balance` option (downsamples the positive or negative training samples so as to use an equal number of both).
 
 For evaluating precision and recall (Step 4), the `--stratifyByCoverage` option is useful to output results for low-coverage (AD1<3) and high-coverage (AD1>=3) variants, as the majority of candidate RNA SNVs have low coverage.
 

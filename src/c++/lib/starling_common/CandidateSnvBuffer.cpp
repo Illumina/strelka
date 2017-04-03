@@ -27,23 +27,23 @@
 void CandidateSnvBuffer::addCandidateSnv(unsigned sampleId, pos_t pos, char baseChar, HaplotypeId haplotypeId)
 {
     assert (haplotypeId == 1 || haplotypeId == 2);
-    HaplotypeIdForBase &haplotypeIdForBase = _candidateSnvBuffer[sampleId].getRef(pos);
+    HaplotypeIdForBase& haplotypeIdForBase = _candidateSnvBuffer[sampleId].getRef(pos);
     switch (baseChar)
     {
-        case 'A':
-            haplotypeIdForBase.a += haplotypeId;
-            break;
-        case 'C':
-            haplotypeIdForBase.c += haplotypeId;
-            break;
-        case 'G':
-            haplotypeIdForBase.g += haplotypeId;
-            break;
-        case 'T':
-            haplotypeIdForBase.t += haplotypeId;
-            break;
-        default:
-            assert(false);
+    case 'A':
+        haplotypeIdForBase.a += haplotypeId;
+        break;
+    case 'C':
+        haplotypeIdForBase.c += haplotypeId;
+        break;
+    case 'G':
+        haplotypeIdForBase.g += haplotypeId;
+        break;
+    case 'T':
+        haplotypeIdForBase.t += haplotypeId;
+        break;
+    default:
+        assert(false);
     }
 }
 
@@ -64,16 +64,16 @@ HaplotypeId CandidateSnvBuffer::getHaplotypeId(unsigned sampleId, pos_t pos, BAS
     const auto haplotypeIdForBase(_candidateSnvBuffer[sampleId].getConstRef(pos));
     switch (baseIndex)
     {
-        case BASE_ID::A:
-            return haplotypeIdForBase.a;
-        case BASE_ID::C:
-            return haplotypeIdForBase.c;
-        case BASE_ID::G:
-            return haplotypeIdForBase.g;
-        case BASE_ID::T:
-            return haplotypeIdForBase.t;
-        default:
-            assert(false);
+    case BASE_ID::A:
+        return haplotypeIdForBase.a;
+    case BASE_ID::C:
+        return haplotypeIdForBase.c;
+    case BASE_ID::G:
+        return haplotypeIdForBase.g;
+    case BASE_ID::T:
+        return haplotypeIdForBase.t;
+    default:
+        assert(false);
     }
     return static_cast<HaplotypeId>(0);
 }

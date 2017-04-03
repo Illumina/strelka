@@ -70,21 +70,21 @@ struct RNA_SNV_SCORING_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-            case SiteHomopolymerLength:
-                return "SiteHomopolymerLength";
-            case SampleStrandBias:
-                return "SampleStrandBias";
-            case AD1:
-                return "AD1";
-            case SamplePrimaryAltAlleleDepthFraction:
-                return "SamplePrimaryAltAlleleDepthFraction";
-            case QUAL_EXACT:
-                return "QUAL_EXACT";
-            case SampleMeanDistanceFromReadEdge:
-                return "SampleMeanDistanceFromReadEdge";
-            default:
-                assert(false && "Unknown feature");
-                return nullptr;
+        case SiteHomopolymerLength:
+            return "SiteHomopolymerLength";
+        case SampleStrandBias:
+            return "SampleStrandBias";
+        case AD1:
+            return "AD1";
+        case SamplePrimaryAltAlleleDepthFraction:
+            return "SamplePrimaryAltAlleleDepthFraction";
+        case QUAL_EXACT:
+            return "QUAL_EXACT";
+        case SampleMeanDistanceFromReadEdge:
+            return "SampleMeanDistanceFromReadEdge";
+        default:
+            assert(false && "Unknown feature");
+            return nullptr;
         }
     }
 };
@@ -147,49 +147,49 @@ struct RNA_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-            case GT:
-                return "GT";
-            case QUAL:
-                return "QUAL";
-            case F_DP:
-                return "F_DP";
-            case F_DPF:
-                return "F_DPF";
-            case F_GQ:
-                return "F_GQ";
-            case F_GQX:
-                return "F_GQX";
-            case I_AvgBaseQ:
-                return "I_AvgBaseQ";
-            case I_BaseQRankSum:
-                return "I_BaseQRankSum";
-            case SampleReadPosRankSum:
-                return "SampleReadPosRankSum";
-            case AD0:
-                return "AD0";
-            case SampleRMSMappingQuality:
-                return "SampleRMSMappingQuality";
-            case SampleRMSMappingQualityRankSum:
-                return "SampleRMSMappingQualityRankSum";
-            case mapqZeroFraction:
-                return "mapqZeroFraction";
-            case SampleUsedDepthFraction:
-                return "SampleUsedDepthFraction";
-            case QUAL_NORM:
-                return "QUAL_NORM";
-            case F_GQX_NORM:
-                return "F_GQX_NORM";
-            case F_GQ_NORM:
-                return "F_GQ_NORM";
-            case AD0_NORM:
-                return "AD0_NORM";
-            case ConservativeGenotypeQuality:
-                return "ConservativeGenotypeQuality";
-            case F_GQ_EXACT:
-                return "F_GQ_EXACT";
-            default:
-                assert(false && "Unknown feature");
-                return nullptr;
+        case GT:
+            return "GT";
+        case QUAL:
+            return "QUAL";
+        case F_DP:
+            return "F_DP";
+        case F_DPF:
+            return "F_DPF";
+        case F_GQ:
+            return "F_GQ";
+        case F_GQX:
+            return "F_GQX";
+        case I_AvgBaseQ:
+            return "I_AvgBaseQ";
+        case I_BaseQRankSum:
+            return "I_BaseQRankSum";
+        case SampleReadPosRankSum:
+            return "SampleReadPosRankSum";
+        case AD0:
+            return "AD0";
+        case SampleRMSMappingQuality:
+            return "SampleRMSMappingQuality";
+        case SampleRMSMappingQualityRankSum:
+            return "SampleRMSMappingQualityRankSum";
+        case mapqZeroFraction:
+            return "mapqZeroFraction";
+        case SampleUsedDepthFraction:
+            return "SampleUsedDepthFraction";
+        case QUAL_NORM:
+            return "QUAL_NORM";
+        case F_GQX_NORM:
+            return "F_GQX_NORM";
+        case F_GQ_NORM:
+            return "F_GQ_NORM";
+        case AD0_NORM:
+            return "AD0_NORM";
+        case ConservativeGenotypeQuality:
+            return "ConservativeGenotypeQuality";
+        case F_GQ_EXACT:
+            return "F_GQ_EXACT";
+        default:
+            assert(false && "Unknown feature");
+            return nullptr;
         }
     }
 };
@@ -238,25 +238,25 @@ struct RNA_INDEL_SCORING_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-            case REFREP1:
-                return "REFREP1";
-            case IndelAlleleRepeatCount:
-                return "IndelAlleleRepeatCount";
-            case IndelAlleleRepeatUnitSize:
-                return "IndelAlleleRepeatUnitSize";
-            case AD0:
-                return "AD0";
-            case AD1:
-                return "AD1";
-            case SampleIndelMeanDistanceFromReadEdge:
-                return "SampleIndelMeanDistanceFromReadEdge";
-            case SamplePrimaryAltAlleleDepthFraction:
-                return "SamplePrimaryAltAlleleDepthFraction";
-            case QUAL_EXACT:
-                return "QUAL_EXACT";
-            default:
-                assert(false && "Unknown feature");
-                return nullptr;
+        case REFREP1:
+            return "REFREP1";
+        case IndelAlleleRepeatCount:
+            return "IndelAlleleRepeatCount";
+        case IndelAlleleRepeatUnitSize:
+            return "IndelAlleleRepeatUnitSize";
+        case AD0:
+            return "AD0";
+        case AD1:
+            return "AD1";
+        case SampleIndelMeanDistanceFromReadEdge:
+            return "SampleIndelMeanDistanceFromReadEdge";
+        case SamplePrimaryAltAlleleDepthFraction:
+            return "SamplePrimaryAltAlleleDepthFraction";
+        case QUAL_EXACT:
+            return "QUAL_EXACT";
+        default:
+            assert(false && "Unknown feature");
+            return nullptr;
         }
     }
 };
@@ -313,39 +313,39 @@ struct RNA_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-            case SampleIndelAlleleBiasLower:
-                return "SampleIndelAlleleBiasLower";
-            case SampleIndelAlleleBias:
-                return "SampleIndelAlleleBias";
-            case QUAL:
-                return "QUAL";
-            case F_GQX:
-                return "F_GQX";
-            case F_DPI:
-                return "F_DPI";
-            case F_GQ:
-                return "F_GQ";
-            case SampleProxyRMSMappingQuality:
-                return "SampleProxyRMSMappingQuality";
-            case mapqZeroFraction:
-                return "mapqZeroFraction";
-            case F_DPI_NORM:
-                return "F_DPI_NORM";
-            case QUAL_NORM:
-                return "QUAL_NORM";
-            case F_GQX_NORM:
-                return "F_GQX_NORM";
-            case F_GQ_NORM:
-                return "F_GQ_NORM";
-            case AD0_NORM:
-                return "AD0_NORM";
-            case ConservativeGenotypeQuality:
-                return "ConservativeGenotypeQuality";
-            case F_GQ_EXACT:
-                return "F_GQ_EXACT";
-            default:
-                assert(false && "Unknown feature");
-                return nullptr;
+        case SampleIndelAlleleBiasLower:
+            return "SampleIndelAlleleBiasLower";
+        case SampleIndelAlleleBias:
+            return "SampleIndelAlleleBias";
+        case QUAL:
+            return "QUAL";
+        case F_GQX:
+            return "F_GQX";
+        case F_DPI:
+            return "F_DPI";
+        case F_GQ:
+            return "F_GQ";
+        case SampleProxyRMSMappingQuality:
+            return "SampleProxyRMSMappingQuality";
+        case mapqZeroFraction:
+            return "mapqZeroFraction";
+        case F_DPI_NORM:
+            return "F_DPI_NORM";
+        case QUAL_NORM:
+            return "QUAL_NORM";
+        case F_GQX_NORM:
+            return "F_GQX_NORM";
+        case F_GQ_NORM:
+            return "F_GQ_NORM";
+        case AD0_NORM:
+            return "AD0_NORM";
+        case ConservativeGenotypeQuality:
+            return "ConservativeGenotypeQuality";
+        case F_GQ_EXACT:
+            return "F_GQ_EXACT";
+        default:
+            assert(false && "Unknown feature");
+            return nullptr;
         }
     }
 };
