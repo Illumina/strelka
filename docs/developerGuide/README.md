@@ -122,16 +122,17 @@ In more detail:
 
 Strelka's empirical variant scoring (EVS) currently uses random forest (RF) models. These RF models are static -- they
 are trained for each major release and read in from a json model parameter file. This RF model initialization is one of
-the first thing strelka does on startup, and the implementation of the RF model in memory creates a huge number of
+the first things strelka does on startup, and the implementation of the RF model in memory creates a huge number of
 small allocations. When the EVS model is initialized under valgrind, runtime and memory usage may be impractically
 high.
 
 The recommended workaround is:
-1) Determine if the bug in question can be replicated by re-running strelka with EVS disabled. To do so at the workflow
+
+1. Determine if the bug in question can be replicated by re-running strelka with EVS disabled. To do so at the workflow
 configuration level this requires the `--disableEVS` switch. At the binary variant calling level, remove options
 following the pattern `--*scoring-model-file`.
-2) If the bug is reproduced with EVS, proceed to use valgrind with the EVS disabled command-line
-3) If not, another debugging technique is recommended.
+2. If the bug is reproduced with EVS, proceed to use valgrind with the EVS disabled command-line
+3. If not, another debugging technique is recommended.
 
 ### General Debugging: Inspecting temporary files
 
