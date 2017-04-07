@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -30,10 +30,13 @@
 #include "starling_common/starling_base_shared.hh"
 #include "CandidateSnvBuffer.hh"
 
-
-/// return score of candidate alignment cal for read segment rseg
+/// \return Score of candidate alignment \p cal for read segment \p rseg
 ///
-/// essentially this is P(read | haplotype), where read=rseg and haplotype=ref+candidate alignment
+/// The score is essentially `P(read | haplotype)`, where read=rseg and haplotype=ref+candidate alignment. This
+/// is 'essentially' instead of 'exactly' becuase Strelka's haplotype model is not fully carried forward to
+/// this point, so we have a collection of candidate indels and SNV positions rather than strict haplotype (set)
+/// that the read is scored against. It is also an approximation because we're only considering a single alignment
+/// of the read to the target haplotype.
 ///
 double
 score_candidate_alignment(

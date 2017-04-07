@@ -65,7 +65,7 @@ Strelka is known to build and run on the following linux distributions
 
 ##### Windows
 
-Manta does not build or run on windows. Library-level compilation is
+Strelka does not build or run on windows. Library-level compilation is
 possible for Visual Studio users. See the the [strelka developer guide][DeveloperGuide] for details.
 
 ### Linux Package Additions

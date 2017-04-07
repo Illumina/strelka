@@ -82,7 +82,7 @@ additional "doc" target for the makefile:
 There is no installation for the documentation outside of the build
 directory, the root doxygen page after completing this target will be:
 
-    ${STRELKA_BUILD_PATH}/c++/doxygen/html/index.html
+    ${STRELKA_BUILD_PATH}/src/c++/doxygen/html/index.html
 
 ### Improving build time
 

@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -99,11 +99,11 @@ private:
 #endif
 
 
-/// score an insertion segment
+/// \breif Score an insertion segment.
 ///
-/// note that running the lnp value through as a reference creates more
-/// floating point stability for ambiguous alignments which have the
-/// same score by definition.
+/// Note that running the \p lnp parameter through as a reference creates more
+/// floating point stability compared to returning the score of the insertion segment only.
+/// This stability helps us identify ambiguous alignments which have exactly the same score.
 ///
 static
 void
@@ -136,7 +136,9 @@ scoreInsertSegment(const starling_base_options& /*opt*/,
     }
 }
 
-/// score a match segment
+
+
+/// \brief Score a match segment.
 static
 void
 scoreMatchSegment(const starling_base_options& opt,
@@ -177,8 +179,9 @@ scoreMatchSegment(const starling_base_options& opt,
 }
 
 
-/// convert a particular gap in the candidate alignment to the corresponding variant key to
-/// lookup the variant in strelka's variant buffer
+
+/// Convert a particular gap in the candidate alignment to the corresponding variant key to
+/// lookup the variant in strelka's variant buffer.
 ///
 static
 IndelKey
@@ -235,7 +238,7 @@ getMatchingIndelKey(
 
 
 
-/// retrieve insertion sequence from either a breakpoint or a regular insertion
+/// Retrieve insertion sequence from either a breakpoint or a regular insertion.
 static
 const std::string&
 getInsertSeq(
@@ -280,7 +283,7 @@ score_candidate_alignment(
     align_printer ap;
 #endif
 
-    double al_lnp(0.);
+    double alignmentLogProb(0.);
     const rc_segment_bam_seq ref_bseq(ref);
     const bam_seq read_bseq(rseg.get_bam_read());
     const uint8_t* qual(rseg.qual());
@@ -340,7 +343,7 @@ score_candidate_alignment(
                                read_offset,
                                insert_bseq,
                                insert_seq_head_pos,
-                               al_lnp);
+                               alignmentLogProb);
 
 #ifdef DEBUG_SCORE
             for (unsigned ii(0); ii<sinfo.insert_length; ++ii)
@@ -369,7 +372,7 @@ score_candidate_alignment(
                               ref_head_pos,
                               sampleId,
                               candidateSnvBuffer,
-                              al_lnp);
+                              alignmentLogProb);
 #ifdef DEBUG_SCORE
             for (unsigned ii(0); ii<ps.length; ++ii)
             {
@@ -403,7 +406,7 @@ score_candidate_alignment(
                                read_offset,
                                insert_bseq,
                                insert_seq_head_pos,
-                               al_lnp);
+                               alignmentLogProb);
 
 #ifdef DEBUG_SCORE
             for (unsigned ii(0); ii<ps.length; ++ii)
@@ -437,14 +440,20 @@ score_candidate_alignment(
         }
         else if (ps.type==SOFT_CLIP)
         {
-            // add a small penalty to soft-clipped states, otherwise a soft-clipped alignment
-            // will always have a higher likelihood than a non-clipped one.
+            // Add a small penalty to soft-clipped segments. If this was not done, a soft-clipped alignment
+            // would always have a higher likelihood than a non-clipped one, which doesn't support our intent.
             //
-            // note this isn't appropriate for a scoring function which would try to optimize soft-clipping
-            // but this is helpful enough for A-B comparisons between clipped and unclipped states.
+            // To restate: In this function we're approximately computing log of P( read | reference ) -- this
+            // would be true if no candidate haplotype information was used here. Soft-clipping represents the
+            // absence of an alignment between read and reference, so if the entire read were soft-clipped, then
+            // P (read | reference) would be just P (read). If we assume equiprobable bases in the 'reference-vacuum'
+            // case, then P(read) = 0.25^{read_length}
             //
-            static const double lnrandom(std::log(0.25));
-            al_lnp += (ps.length*lnrandom);
+            // The soft-clipping penalty below approximates this unaligned prior on the read for the unaligned portion
+            // of the read.
+            //
+            static const double unalignedBasecallLogLikelihood(std::log(0.25));
+            alignmentLogProb += (ps.length*unalignedBasecallLogLikelihood);
         }
         else if (ps.type==HARD_CLIP)
         {
@@ -470,7 +479,7 @@ score_candidate_alignment(
             {
                 // add penalty for non-candidate indels
                 const auto& errorRates(indelDataPtr->getErrorRates());
-                al_lnp += errorRates.refToIndelErrorProb.getLogValue();
+                alignmentLogProb += errorRates.refToIndelErrorProb.getLogValue();
             }
         }
 
@@ -483,5 +492,5 @@ score_candidate_alignment(
 #ifdef DEBUG_SCORE
     ap.dump(log_os);
 #endif
-    return al_lnp;
+    return alignmentLogProb;
 }

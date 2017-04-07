@@ -78,6 +78,14 @@ The objective of the depth estimation step is to find the expected depth and/or 
 
 \section{Small Variant Discovery}
 
+\subsection{Input Read Filtration}
+
+TODO. Outright filtration of unmappped, anomolous, etc. Note additional category of reads that are marked for special processing but not actually filtered (low MAPQ, etc.)
+
+\subsection{Input Read Processing}
+
+TODO. Left-shifting and other normalizing transformations of all indels present in the reads input alignments.
+
 \subsection{Short Haplotyping}
 
 Strelka processes dense variants using ``short haplotyping". The short haplotyping is conceptually similar to the haplotype based calling used in GATK and Platypus in that dense SNPs and indels are called simultaneously through haplotype reconstruction. But in contrast to GATK and Platypus that use local assembly to generate haplotypes longer than reads, Strelka generates short haplotypes ($\leq$ 30 bp) using simple read counting. The short haplotyping is composed of 3 steps: (1) detecting short regions with dense variants called {\em active regions}, (2) creating candidate haplotypes, and (3) aligning each haplotype to the reference to discover primitive alleles (SNVs and/or indels).
@@ -93,9 +101,9 @@ Once an active region is created, the active region detector generates candidate
 
 
 \subsubsection{Primitive allele discovery}
-Candidate haplotypes are aligned to the reference sequence of the active region. From the alignment, primitive alleles (SNVs and indels) are identified. These primitive alleles are used to improve SNV and indel calling by (1) relaxing the mismatch density filter (described in \ref{ReadFiltration}) and (2) improving indel candidacy (described in \ref{IndelCandidacy}).
+Candidate haplotypes are aligned to the reference sequence of the active region. From the alignment, primitive alleles (SNVs and indels) are identified. These primitive alleles are used to improve SNV and indel calling by (1) relaxing the mismatch density filter (described in \ref{BasecallFiltrationFromContext}) and (2) improving indel candidacy (described in \ref{IndelCandidacy}).
 
-\subsection{Read Filtration} \label{ReadFiltration}
+\subsection{Basecall filtration from local read context} \label{BasecallFiltrationFromContext}
 
 {\tt TODO: description of the mismatch density filter (MMDF)}
 %Strelka filters out fractions of reads, where the densities of mismatches and indels are high.
@@ -118,6 +126,13 @@ p_{error} = P(X >= n_i \mid N, e_l) = \sum_{x = n_i}^{N} P(x \mid N, e_l)
 \noindent The indel is considered as a candidate variant if $p_{error} < p_{reject}$, where $p_{reject}$ is the rejection threshold for the null hypothesis. The default value $p_{reject}$ is $1\e{-9}$.
 
 \subsection{Read Realignment}
+
+\subsubsection{Handling of soft-clipped segments during realignment}
+
+By default, prior to a read is being realigned, any soft-cliped segment on the leading and trailing edge is unrolled to assume the segment has a matching alignment to the refernece. This treatment assumes that most soft-clipping reflects an indel which hasn't yet been incorporated into the read's alignment.
+
+During RNA-Seq analysis, a similar soft-clipping approach is taken, except that at the end of the realignment process, the highest scoring alignment found after unrolling all soft-clipping is compared to the original alignment. If the original alignment has a higher score, then the realignment procedure reverts to the original.
+
 
 \section{Small Variant Scoring}
 
