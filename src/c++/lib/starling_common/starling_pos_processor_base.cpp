@@ -38,7 +38,6 @@
 #include "starling_common/AlleleReportInfo.hh"
 
 #include <iomanip>
-#include <applications/starling/starling_shared.hh>
 
 
 //#define DEBUG_PPOS
