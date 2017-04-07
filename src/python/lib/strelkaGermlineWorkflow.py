@@ -319,6 +319,19 @@ class CallWorkflow(StrelkaSharedCallWorkflow) :
 
         callGenome(self)
 
+class EstimateIndelErrorWorkflow(WorkflowRunner) :
+    """
+    A separate call workflow is setup so that we can delay the workflow execution until
+    the ref count file exists
+    """
+
+    def __init__(self,params,paths) :
+        self.paths = paths
+
+    def workflow(self) :
+        self.paths
+        pass
+
 
 
 class PathInfo(SharedPathInfo):
@@ -399,7 +412,14 @@ class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
         self.setCallMemMb()
 
         callPreReqs = set()
-        callPreReqs |= runCount(self)
+        estimatePreReqs = set()
+        estimatePreReqs |= runCount(self)
         if self.params.isHighDepthFilter :
-            callPreReqs |= strelkaGermlineRunDepthFromAlignments(self)
+            estimatePreReqs |= strelkaGermlineRunDepthFromAlignments(self)
+
+        if self.params.isDoEstimateIndelError :
+            callPreReqs.add(self.addWorkflowTask("EstimateIndelError", EstimateIndelErrorWorkflow(self.params, self.paths), dependencies=estimatePreReqs))
+        else :
+            callPreReqs = estimatePreReqs
+
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)
