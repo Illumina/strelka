@@ -105,6 +105,8 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
                          help="Provide a custom empirical scoring model file for SNVs (default: %default)")
         group.add_option("--indelScoringModelFile", type="string", dest="indelScoringModelFile", metavar="FILE",
                          help="Provide a custom empirical scoring model file for indels (default: %default)")
+        group.add_option("--doEstimateIndelError", dest="isDoEstimateIndelError", action="store_true",
+                         help="Enable indel estimation.")
 
         ConfigureWorkflowOptions.addExtendedGroupOptions(self,group)
 
@@ -173,6 +175,8 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         snvScoringModelFile = None
         indelScoringModelFile = None
+
+        isDoEstimateIndelError = False
 
         return cleanLocals(locals())
 
