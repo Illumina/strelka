@@ -217,6 +217,7 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
         ConservativeGenotypeQuality,
 	InterruptedHomopolymerLength,
 	ContextCompressability,
+	IndelCategory,
         SIZE
     };
 
@@ -253,6 +254,8 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
 	    return "InterruptedHomopolymerLength";
 	case ContextCompressability:
 	    return "ContextCompressability";
+        case IndelCategory:
+	  return "IndelCategory";
         default:
             assert(false && "Unknown feature");
             return nullptr;

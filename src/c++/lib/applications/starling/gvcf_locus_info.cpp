@@ -611,6 +611,7 @@ computeEmpiricalScoringFeatures(
         features.set(GERMLINE_INDEL_SCORING_FEATURES::ConservativeGenotypeQuality, (sampleInfo.gqx));
 	features.set(GERMLINE_INDEL_SCORING_FEATURES::InterruptedHomopolymerLength, (primaryAltAllele.indelReportInfo.ihpol));
 	features.set(GERMLINE_INDEL_SCORING_FEATURES::ContextCompressability, (primaryAltAllele.indelReportInfo.contextCompressability));
+	features.set(GERMLINE_INDEL_SCORING_FEATURES::IndelCategory, (primaryAltAllele.indelKey.isPrimitiveDeletionAllele()));
         // compute any experimental features not currently used in production
         if (isComputeDevelopmentFeatures)
         {
