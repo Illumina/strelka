@@ -93,7 +93,7 @@ def main():
     print "tp: %d" % len(dataset[dataset["tag"] == "TP"])
     print "fp: %d" % len(dataset[dataset["tag"] == "FP"])
     print "unk: %d" % len(dataset[dataset["tag"] == "UNK"])
-    dataset = pandas.DataFrame(dataset[dataset["tag"] != "FN"])
+    dataset = pandas.DataFrame(dataset[dataset["tag"].isin(["TP", "FP"])])
     data = pandas.DataFrame(dataset.dropna(subset=["qual"]))
     data = data.iloc[numpy.random.permutation(len(data))] # shuffle before sorting: this ensures random order within tied groups
     data = data.sort("qual")

@@ -30,6 +30,7 @@ import sys
 import random
 
 import pandas
+import numpy
 
 
 def parseArgs():
@@ -89,7 +90,7 @@ def main():
 
         qual_vals = sorted(set(allquals[f].values))
         if len(qual_vals) > args.max_qual:
-            qual_vals = random.sample(qual_vals, args.max_qual)
+            qual_vals = numpy.linspace(qual_vals[0], qual_vals[-1], args.max_qual+1)
 
         data_remaining = dataset
 
@@ -97,7 +98,7 @@ def main():
         strelka_f_fps = 0
 
         counter = 0
-        for q in qual_vals:
+        for q in qual_vals[:-1]:
             rec = {"field": f, "qual": q}
             rec["tp"] = data_remaining[
                 (data_remaining["tag"] == "TP") & (data_remaining[f] > q)].shape[0]

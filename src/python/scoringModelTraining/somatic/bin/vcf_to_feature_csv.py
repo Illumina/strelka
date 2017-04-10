@@ -32,7 +32,7 @@ import pandas
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
 scriptName = os.path.basename(__file__)
-workflowDir = os.path.abspath(os.path.join(scriptDir, "@THIS_RELATIVE_PYTHON_LIBDIR@"))
+workflowDir = os.path.abspath(os.path.join(scriptDir, "../lib"))
 
 sys.path.append(workflowDir)
 
@@ -87,13 +87,12 @@ def main():
     fset = evs.features.FeatureSet.make(args.features)
 
     featuretable = fset.collect(args.input[0])
-    featuretable["tag"] = ""
+    featuretable["tag"] = "FP" # If no truth set is specified, label all variants as FP. Useful for normal-normal.
 
     if args.truth:
         fset2 = evs.features.FeatureSet.make("posandalleles")
         truth_alleles = fset2.collect(args.truth)
         truth_alleles["tag"] = "TP"
-        featuretable["tag"] = "FP"
         featuretable = pandas.merge(featuretable, truth_alleles, how="outer", on=["CHROM", "POS", "REF", "ALT"],
                                     suffixes=(".query", ".truth"))
 

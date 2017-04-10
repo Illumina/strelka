@@ -29,8 +29,7 @@ import os
 import sys
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
-workflowDir = os.path.abspath(
-    os.path.join(scriptDir, "@THIS_RELATIVE_PYTHON_LIBDIR@"))
+workflowDir = os.path.abspath(os.path.join(scriptDir, "../lib"))
 
 sys.path.append(workflowDir)
 
@@ -46,6 +45,10 @@ def parseArgs():
                         help="Classifier pickle file name")
     parser.add_argument("-o", "--output", required=True,
                         help="Output file name")
+    parser.add_argument("-v", "--varianttype", default="SNV",
+                        help="Variant type (SNV/INDEL)")
+    parser.add_argument("-t", "--threshold", type = int, default = 15,
+                        help="Q-score threshold")
 
     args = parser.parse_args()
 
@@ -62,7 +65,7 @@ def main() :
     args = parseArgs()
 
     model = evs.EVSModel.createFromFile(args.classifier)
-    model.save_json_strelka_format(args.output)
+    model.save_json_strelka_format(args.output, args.varianttype, args.threshold)
 
 
 if __name__ == '__main__':
