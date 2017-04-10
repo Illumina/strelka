@@ -79,7 +79,7 @@ runEPEC(
         }
         else if (opt.modelIndex == 8)
         {
-            indelModelVariantAndBinomialMixtureErrorSimple(counts, opt.thetaFilename);
+            indelModelVariantAndBinomialMixtureErrorSimple(counts, opt.thetaFilename, opt.outputFilename);
         }
         else
         {

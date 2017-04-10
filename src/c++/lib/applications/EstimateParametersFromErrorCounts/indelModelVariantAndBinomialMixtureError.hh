@@ -35,7 +35,8 @@ indelModelVariantAndBinomialMixtureError(
 void
 indelModelVariantAndBinomialMixtureErrorSimple(
         const SequenceErrorCounts& counts,
-        const std::string& thetaFilename);
+        const std::string& thetaFilename,
+        const std::string& outputFilename);
 
 double importLogTheta(
         std::string filename);
