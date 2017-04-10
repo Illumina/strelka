@@ -71,7 +71,7 @@ parseEPECOptions(
      "select which model of a given type to run")
      ("theta-file", po::value(&opt.thetaFilename)->default_value(""),
      "select a json file with theta values")
-     ("output-file", po::value(&opt.outputFilename)->default_value("IndelModel8.json"),
+     ("output-file", po::value(&opt.outputFilename)->default_value("IndelModel.json"),
       "select the location and name of the output json file")
     ;
 
