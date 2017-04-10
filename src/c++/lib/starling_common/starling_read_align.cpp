@@ -1212,7 +1212,7 @@ score_candidate_alignments(
     std::vector<double>& candAlignmentScores,
     double& maxCandAlignmentScore,
     const candidate_alignment*& maxCandAlignmentPtr,
-    const bool isSoftClippedInputAlignment,
+    const bool isTestSoftClippedInputAligned,
     const alignment& softClippedInputAlignment)
 {
     // the smooth optimum alignment and alignment pool are actually
@@ -1378,7 +1378,7 @@ score_candidate_alignments(
 
     // this option allows the original read alignment (with soft-clipping) to be used for the pileup
     // if a better alignment was not found:
-    if (isSoftClippedInputAlignment)
+    if (isTestSoftClippedInputAligned)
     {
         // convert alignment into candidate alignment:
         candidate_alignment softClippedCandidateAlignment;
@@ -1428,7 +1428,7 @@ score_candidate_alignments_and_indels(
     const CandidateSnvBuffer& candidateSnvBuffer,
     std::set<candidate_alignment>& candAlignments,
     const bool is_incomplete_search,
-    const bool isSoftClippedInputAlignment,
+    const bool isTestSoftClippedInputAligned,
     const alignment& softClippedInputAlignment)
 {
     assert(! candAlignments.empty());
@@ -1451,7 +1451,7 @@ score_candidate_alignments_and_indels(
     {
         score_candidate_alignments(opt, ref, rseg, indelBuffer, sampleId, candidateSnvBuffer, candAlignments,
                                    candAlignmentScores, maxCandAlignmentScore, maxCandAlignmentPtr,
-                                   isSoftClippedInputAlignment, softClippedInputAlignment);
+                                   isTestSoftClippedInputAligned, softClippedInputAlignment);
     }
     catch (...)
     {
@@ -1640,7 +1640,7 @@ get_candidate_alignments(
 
 
 
-/// standardize input alignment to "matchify" edge insertion and remove edge indels
+/// standardize input alignment to "unroll" edge insertion and remove edge indels
 /// (with exceptions for RNA segment edges adjacent to gap segments)
 ///
 static
@@ -1695,16 +1695,12 @@ realign_and_score_read(
     alignment normalizedInputAlignment(normalizeInputAlignmentIndels(rseg));
 
     const bool isSoftClippedInputAlignment(is_soft_clipped(normalizedInputAlignment.path));
-
     alignment softClippedInputAlignment;
     if (isSoftClippedInputAlignment)
     {
         softClippedInputAlignment = normalizedInputAlignment;
         normalizedInputAlignment = matchify_edge_soft_clip(softClippedInputAlignment);
-
-
     }
-
 
     // skip if normalizedInputAlignment has negative start position
     // note this won't come from the read mapper in most cases, but rarely
@@ -1769,8 +1765,8 @@ realign_and_score_read(
         if (is_max_toggle_warn) writeSkipWarning("exceeded max number of indel switches");
     }
 
+    const bool isTestSoftClippedInputAligned(opt.isRetainOptimalSoftClipping && isSoftClippedInputAlignment);
     score_candidate_alignments_and_indels(opt, dopt, sample_opt, ref,
                                           rseg, indelBuffer, sampleId, candidateSnvBuffer, cal_set, is_incomplete_search,
-                                          isSoftClippedInputAlignment, softClippedInputAlignment);
+                                          isTestSoftClippedInputAligned, softClippedInputAlignment);
 }
-

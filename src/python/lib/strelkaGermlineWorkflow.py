@@ -137,6 +137,7 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     if self.params.isRNA:
         segCmd.extend(['-bsnp-diploid-het-bias', '0.45'])
         segCmd.extend(['--use-rna-scoring'])
+        segCmd.extend(['--retain-optimal-soft-clipping'])
 
     # Empirical Variant Scoring(EVS):
     if self.params.isEVS :

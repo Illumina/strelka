@@ -345,6 +345,7 @@ BOOST_AUTO_TEST_CASE( test_realign_and_score_read )
     // SAM string
     {
         starling_base_options opt;
+        opt.isRetainOptimalSoftClipping = true;
         opt.is_user_genome_size = true;
         opt.user_genome_size = 1000000;
 

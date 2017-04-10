@@ -82,6 +82,8 @@ get_starling_base_option_parser(
     realign_opt.add_options()
     ("max-indel-toggle-depth", po::value(&opt.max_read_indel_toggle)->default_value(opt.max_read_indel_toggle),
      "Controls the realignment stringency. Lowering this value will increase the realignment speed at the expense of indel-call quality")
+    ("retain-optimal-soft-clipping", po::value(&opt.isRetainOptimalSoftClipping)->zero_tokens(),
+     "Retain input alignment soft-clipping if it outscores realignment with soft-clipping unrolled.")
     ;
 
     po::options_description indel_opt("indel-options");

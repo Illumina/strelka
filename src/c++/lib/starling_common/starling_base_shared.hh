@@ -35,7 +35,7 @@
 #include <cmath>
 
 
-/// this limit is set as an arbitrary sanity-check
+/// This max read size is used as a QC check.
 enum { STRELKA_MAX_READ_SIZE = 25000 };
 
 
@@ -243,6 +243,13 @@ struct starling_base_options : public blt_options
 
     // Optional bedfile to specify which regions should be called in the genome
     std::string callRegionsBedFilename;
+
+    /// If true, the original read alignment with soft-clipped edges is scored and chosen as the
+    /// final alignment if it has the highest score.
+    ///
+    /// This should only be relevant when unrolling of soft-clipped read edges is used to improve indel calling,
+    /// which is currently the case in Strelka.
+    bool isRetainOptimalSoftClipping = false;
 };
 
 
