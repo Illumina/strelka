@@ -149,7 +149,7 @@ struct snp_pos_info
         baseq_ranksum.clear();
         read_pos_ranksum.clear();
         distanceFromReadEdge.clear();
-        altReadPos.clear();
+        nonReferenceAlleleReadPositionInfo.clear();
 
         spanningIndelPloidyModification = 0;
     }
@@ -284,16 +284,21 @@ public:
     fastRanksum baseq_ranksum;
     fastRanksum read_pos_ranksum;
 
-    /// supports RNA-Seq EVS feature
+    /// Track summary stats for the distance of the variant locus from the edge of the read.
+    ///
+    /// This is used to support an RNA-Seq EVS feature.
     MeanTracker distanceFromReadEdge;
 
-    // for computing somatic cluster stats:
-    struct ReadPosInfo
+    /// Utility to store read position and total read length.
+    struct ReadPositionInfo
     {
         uint16_t readPos;
         uint16_t readPosLength;
     };
-    std::vector<ReadPosInfo> altReadPos;
+
+    /// Read position of all non-reference allele observations.
+    //  This is used to compute an allele position bias features in the somatic model.
+    std::vector<ReadPositionInfo> nonReferenceAlleleReadPositionInfo;
 
     int spanningIndelPloidyModification = 0;
 };

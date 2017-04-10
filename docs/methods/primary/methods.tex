@@ -298,7 +298,48 @@ Note that the somatic callability track is based on the core somatic variant qua
 
 \subsection{Somatic Filtration and Scoring}
 
-TODO
+\paragraph{Features used by the EVS model}
+
+Features used in each model are listed here and definitions are provided further below.
+
+\begin{itemize}
+    \item SNV features:
+    \begin{itemize}
+        \item \texttt{SomaticSNVQualityGivenGermlineGenotype}
+        \item \texttt{NormalSampleRelativeTotalLocusDepth}
+        \item \texttt{TumorSampleAltAlleleFraction}
+        \item \texttt{RMSMappingQuality}
+        \item \texttt{ZeroMappingQualityFraction}
+        \item \texttt{TumorSampleStrandBias}
+        \item \texttt{TumorSampleReadPosRankSum}
+        \item \texttt{AlleleCountLogOddsRatio}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{EVS/hard-filter feature descriptions}
+
+    Note that for somatic features "all samples" refers to the tumor and matched normal samples together.
+
+\begin{itemize}
+
+    \item \texttt{SomaticSNVQualityGivenGermlineGenotype} ~ Posterior probability of a somatic basecall variant conditioned on given germline genotype. This is the same value provided as INFO/QSS\_NT in the VCF output.
+
+    \item \texttt{NormalSampleRelativeTotalLocusDepth} ~ Locus depth relative to expectation: this is the ratio of total read depth at the variant locus in the normal sample over the total expected depth for the normal sample. Depth at the variant locus includes reads at any mapping quality. Expected depth is taken from the preliminary depth estimation step defined above in ``\nameref{sec:depth_est}''. This value is set to 1 in exome and targeted analyses, because it is problematic to define expected depth in this case.
+
+    \item \texttt{TumorSampleAltAlleleFraction} ~ Fraction of the tumor sample's tier1 observations which are not the reference allele. This is restricted to a maximum of 0.5 to prevent the model from overtraining against high somatic allele freqeuncies (these might be common e.g. for LOH regions from liquid tumors).
+
+    \item \texttt{RMSMappingQuality} ~ Root mean square read mapping quality of all reads spanning the variant in all samples. This feature matches the INFO/MQ value defined in the VCF spec.
+
+    \item \texttt{ZeroMappingQualityFraction} ~ Fraction of read mapping qualities equal to zero, for all reads spanning the variant in all samples.
+
+    \item \texttt{TumorSampleStrandBias} ~ Log ratio of the tumor-sample somatic allele likelihood computed assuming the somatic allele occurs on only one strand vs both strands
+    (thus higher values indicate greater bias).
+
+    \item \texttt{TumorSampleReadPosRankSum} ~ Z-score of Mann-Whitney U test for reference vs non-reference allele read positions in the tumor sample's tier1 observations.
+
+    \item \texttt{AlleleCountLogOddsRatio} ~ The log odds ratio of allele counts $log_{10}{\frac{r_t a_n} {r_n a_t}}$, given reference $(r_t,r_n)$ and non-reference $(a_t,a_n)$ allele counts for the tumor and normal sample pair.
+
+\end{itemize}
 
 \subsection{Germline Calling Model and Genotype likelihoods}
 

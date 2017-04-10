@@ -52,7 +52,8 @@ write_vcf_somatic_snv_genotype_strand_grid(
 ///                               		                N_REF N_ALT)
 ///
 double
-calculateLogOddsRatio(  const CleanedPileup& n1_cpi,
-                        const CleanedPileup& t1_cpi,
-                        const blt_options& opt);
+calculateLogOddsRatio(
+    const CleanedPileup& n1_cpi,
+    const CleanedPileup& t1_cpi,
+    const blt_options& opt);
 

@@ -442,7 +442,7 @@ private:
         const bool is_submapped);
 
     void
-    update_somatic_features(
+    updateSomaticScoringMetrics(
         const pos_t pos,
         const unsigned sample_no,
         const bool is_teir1,

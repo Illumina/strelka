@@ -1071,7 +1071,7 @@ updateGermlineScoringMetrics(
 
 void
 starling_pos_processor_base::
-update_somatic_features(
+updateSomaticScoringMetrics(
     const pos_t pos,
     const unsigned sample_no,
     const bool is_tier1,
@@ -1495,8 +1495,8 @@ pileup_read_segment(
                 }
                 else if (_opt.is_compute_somatic_scoring_metrics)
                 {
-                    update_somatic_features(ref_pos, sampleIndex, is_tier1, call_id, current_call_filter, read_pos,
-                                            read_size);
+                    updateSomaticScoringMetrics(ref_pos, sampleIndex, is_tier1, call_id, current_call_filter, read_pos,
+                                                read_size);
                 }
 
                 if (is_submapped)

@@ -51,14 +51,14 @@ struct SOMATIC_SNV_SCORING_FEATURES : public FeatureSet
      */
     enum index_t
     {
-        QSS_NT,
-        N_DP_RATE,
-        TIER1_ALT_RATE,
-        MQ,
-        MQ0_FRAC,
-        strandBias,
-        ReadPosRankSum,
-        LOR,
+        SomaticSNVQualityGivenGermlineGenotype,
+        NormalSampleRelativeTotalLocusDepth,
+        TumorSampleAltAlleleFraction,
+        RMSMappingQuality,
+        ZeroMappingQualityFraction,
+        TumorSampleStrandBias,
+        TumorSampleReadPosRankSum,
+        AlleleCountLogOddsRatio,
         SIZE
     };
 
@@ -68,22 +68,22 @@ struct SOMATIC_SNV_SCORING_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-        case QSS_NT:
-            return "QSS_NT";
-        case TIER1_ALT_RATE:
-            return "TIER1_ALT_RATE";
-        case MQ:
-            return "MQ";
-        case MQ0_FRAC:
-            return "MQ0_FRAC";
-        case strandBias:
-            return "strandBias";
-        case ReadPosRankSum:
-            return "ReadPosRankSum";
-        case N_DP_RATE:
-            return "N_DP_RATE";
-        case LOR:
-            return "LOR";
+        case SomaticSNVQualityGivenGermlineGenotype:
+            return "SomaticSNVQualityGivenGermlineGenotype";
+        case TumorSampleAltAlleleFraction:
+            return "TumorSampleAltAlleleFraction";
+        case RMSMappingQuality:
+            return "RMSMappingQuality";
+        case ZeroMappingQualityFraction:
+            return "ZeroMappingQualityFraction";
+        case TumorSampleStrandBias:
+            return "TumorSampleStrandBias";
+        case TumorSampleReadPosRankSum:
+            return "TumorSampleReadPosRankSum";
+        case NormalSampleRelativeTotalLocusDepth:
+            return "NormalSampleRelativeTotalLocusDepth";
+        case AlleleCountLogOddsRatio:
+            return "AlleleCountLogOddsRatio";
         default:
             assert(false && "Unknown feature");
             return nullptr;

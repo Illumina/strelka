@@ -71,7 +71,7 @@ struct pos_basecall_buffer
         _pdata.getRef(pos).spanningDeletionReadCount++;
     }
 
-    // update mapQ sum for MQ calculation
+    // update mapQ sum for RMSMappingQuality calculation
     void
     insert_mapq_count(
         const pos_t pos,
@@ -90,7 +90,7 @@ struct pos_basecall_buffer
         snp_pos_info& posdata(_pdata.getRef(pos));
         if (posdata.get_ref_base() == id_to_base(call_id)) return;
 
-        posdata.altReadPos.push_back({readPos,readLength});
+        posdata.nonReferenceAlleleReadPositionInfo.push_back({readPos,readLength});
     }
 
     /// add associated basecall data to pileup at position pos which

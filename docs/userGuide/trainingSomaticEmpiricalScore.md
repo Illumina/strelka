@@ -86,19 +86,13 @@ python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/evs_learn.
 Reading admix_training_data.csv
 Using default parameters.
 Feature ranking:
-1. feature 0:QSS_NT (0.341969 +- 0.040246)
-2. feature 6:TIER1_ALT_RATE (0.190468 +- 0.123727)
-3. feature 5:N_DP_RATE (0.154801 +- 0.068986)
-4. feature 11:altmap (0.058069 +- 0.062328)
-5. feature 8:n_mapq0 (0.056272 +- 0.051838)
-6. feature 7:MQ (0.051763 +- 0.043005)
-7. feature 12:altpos (0.047467 +- 0.053393)
-8. feature 10:ReadPosRankSum (0.032803 +- 0.020241)
-9. feature 9:strandBias (0.032238 +- 0.056309)
-10. feature 1:N_FDP_RATE (0.018251 +- 0.013008)
-11. feature 2:T_FDP_RATE (0.014174 +- 0.007238)
-12. feature 4:T_SDP_RATE (0.000968 +- 0.000762)
-13. feature 3:N_SDP_RATE (0.000757 +- 0.000641)
+1. feature 0:SomaticSNVQualityGivenGermlineGenotype (0.341969 +- 0.040246)
+2. feature 2:TumorSampleAltAlleleFraction (0.190468 +- 0.123727)
+3. feature 1:NormalSampleRelativeTotalLocusDepth (0.154801 +- 0.068986)
+5. feature 4:ZeroMappingQualityFraction (0.056272 +- 0.051838)
+6. feature 3:RMSMappingQuality (0.051763 +- 0.043005)
+8. feature 6:TumorSampleReadPosRankSum (0.032803 +- 0.020241)
+9. feature 5:TumorSampleStrandBias (0.032238 +- 0.056309)
 ```
 
 ## Step 3: Calculate Scores

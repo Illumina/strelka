@@ -94,14 +94,14 @@ def main():
 
         data_remaining = dataset
 
-        if f == "QSS_NT":
+        if f == "SomaticSNVQualityGivenGermlineGenotype":
             strelka_f = (dataset["NT"] == "ref") & \
                         (dataset["N_FDP_RATE"] < 0.4) & \
                         (dataset["T_FDP_RATE"] < 0.4) & \
                         (dataset["N_SDP_RATE"] < 0.75) & \
                         (dataset["T_SDP_RATE"] < 0.75) & \
                         (dataset[
-                         "N_DP_RATE"] < 0.3333)  # -> N_DP_RATE = N_DP / chr_depth < 1 -> N_DP < chr_depth
+                         "NormalSampleRelativeTotalLocusDepth"] < 0.3333)  # -> NormalSampleRelativeTotalLocusDepth = N_DP / chr_depth < 1 -> N_DP < chr_depth
             strelka_def_f = dataset[True != strelka_f]
             strelka_f_tps = strelka_def_f[
                 strelka_def_f["tag"] == "TP"].shape[0]

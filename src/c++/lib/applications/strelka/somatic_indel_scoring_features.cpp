@@ -147,12 +147,13 @@ calculateLogOddsRatio(
     const AlleleSampleReportInfo& normalIndelSampleReportInfo,
     const AlleleSampleReportInfo& tumorIndelSampleReportInfo)
 {
-    const double n_ref_reads = normalIndelSampleReportInfo.n_confident_ref_reads + .5;
-    const double n_alt_reads = normalIndelSampleReportInfo.n_confident_indel_reads + .5;
-    const double t_ref_reads = tumorIndelSampleReportInfo.n_confident_ref_reads + .5;
-    const double t_alt_reads = tumorIndelSampleReportInfo.n_confident_indel_reads + .5;
+    static const double pseudoCount(0.5);
+    const double normalRefCount = normalIndelSampleReportInfo.n_confident_ref_reads + pseudoCount;
+    const double normalAltCount = normalIndelSampleReportInfo.n_confident_indel_reads + pseudoCount;
+    const double tumorRefCount = tumorIndelSampleReportInfo.n_confident_ref_reads + pseudoCount;
+    const double tumorAltCount = tumorIndelSampleReportInfo.n_confident_indel_reads + pseudoCount;
 
-    return log10(t_ref_reads*n_alt_reads / t_alt_reads / n_ref_reads);
+    return std::log10((tumorRefCount*normalAltCount) / (tumorAltCount*normalRefCount));
 }
 
 
