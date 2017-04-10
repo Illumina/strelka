@@ -64,6 +64,7 @@ struct EPECOptions
     MODEL_TYPE::index_t modelType = MODEL_TYPE::NONE;
     int modelIndex = 1;
     std::string thetaFilename;
+    std::string outputFilename;
 };
 
 

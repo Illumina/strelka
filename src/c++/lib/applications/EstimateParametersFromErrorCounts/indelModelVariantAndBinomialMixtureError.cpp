@@ -520,14 +520,20 @@ indelModelVariantAndBinomialMixtureError(
 void
 indelModelVariantAndBinomialMixtureErrorSimple(
         const SequenceErrorCounts& counts,
-        const std::string& thetaFilename)
+        const std::string& thetaFilename,
+        const std::string& outputFilename)
 {
     const bool isLockTheta(true);
 
-    double logTheta = importLogTheta(thetaFilename);
+    std::ostream& ros(std::cout);
+    ros << thetaFilename;
+    double logTheta(log(1e-4));
+    if(!thetaFilename.empty()) {
+        logTheta = importLogTheta(thetaFilename);
+    }
 
     const std::vector<std::pair<unsigned, unsigned>> contextInfoVector{{1,1},{1,2},{1,16},{2,2},{2,8}};
-    std::ostream& ros(std::cout);
+
 
     ros << "context, excludedLoci, nonExcludedLoci, usedLoci, refReads, altReads, iter, lhood, errorRate, theta, noisyLocusRate\n";
 
@@ -564,7 +570,7 @@ indelModelVariantAndBinomialMixtureErrorSimple(
         }
     }
 
-    indelModelJson.exportIndelErrorModelToJsonFile("indelModel2.json");
+    indelModelJson.exportIndelErrorModelToJsonFile(outputFilename);
 
 }
 

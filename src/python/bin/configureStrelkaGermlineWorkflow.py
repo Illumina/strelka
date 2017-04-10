@@ -87,7 +87,8 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
             'rnaIndelScoringModelFile' : joinFile(configDir,'RNAIndelScoringModels.json'),
             'callContinuousVf' : []
             'getCountsBin' : joinFile(libexecDir,exeFile("GetSequenceErrorCounts")),
-            'mergeCountsBin' : joinFile(libexecDir,exeFile("MergeSequenceErrorCounts"))
+            'mergeCountsBin' : joinFile(libexecDir,exeFile("MergeSequenceErrorCounts")),
+            'estimateParametersFromErrorCountsBin' : joinFile(libexecDir,exeFile("EstimateParametersFromErrorCounts"))
             })
         return defaults
 
