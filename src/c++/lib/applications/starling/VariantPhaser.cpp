@@ -149,7 +149,7 @@ createPhaseRecord(unsigned sampleId)
     uint8_t haplotypeIdOfFirstNonRefAllele(0);
 
     // to record the first het variant within the phasing set
-    pos_t posFirstVariantInPhaseSet(0);
+    pos_t posFirstVariantInPhaseSet(-1);
 
     for (auto& locusPtr : _locusBuffer)
     {
@@ -160,12 +160,25 @@ createPhaseRecord(unsigned sampleId)
 
         if ((not maxGenotype.isHet()) or maxGenotype.isConflict()) continue;
 
-        if (posFirstVariantInPhaseSet == 0)
+        if (posFirstVariantInPhaseSet < 0)
         {
-            posFirstVariantInPhaseSet = locusPtr->pos;
+            if (isInstanceOf<GermlineSiteLocusInfo>(*locusPtr))
+            {
+                // convert to 1-base position
+                posFirstVariantInPhaseSet = locusPtr->pos+1;
+            }
+            else if (isInstanceOf<GermlineIndelLocusInfo>(*locusPtr))
+            {
+                // for indels no need to add 1 because locusPtr->pos is +1 of the padding base
+                posFirstVariantInPhaseSet = locusPtr->pos;
+            }
+            else
+            {
+                throw std::bad_cast();
+            }
         }
 
-        // phaset set id is the position of the first variant in the set
+        // phase set id is the 1-based position of the first variant in the set
         sampleInfo.phaseSetId = posFirstVariantInPhaseSet;
 
         if ((not isHetHap1) or (not isHetHap2))
