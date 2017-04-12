@@ -52,8 +52,8 @@ struct RNA_SNV_SCORING_FEATURES : public FeatureSet
 
         SiteHomopolymerLength,
         SampleStrandBias,
-        AD1,
-        QUAL_EXACT,
+        ConfidentPrimaryAltCount,
+        VariantAlleleQuality,
         SampleMeanDistanceFromReadEdge,
         SamplePrimaryAltAlleleDepthFraction,
         SIZE
@@ -74,12 +74,12 @@ struct RNA_SNV_SCORING_FEATURES : public FeatureSet
             return "SiteHomopolymerLength";
         case SampleStrandBias:
             return "SampleStrandBias";
-        case AD1:
-            return "AD1";
+        case ConfidentPrimaryAltCount:
+            return "ConfidentPrimaryAltCount";
         case SamplePrimaryAltAlleleDepthFraction:
             return "SamplePrimaryAltAlleleDepthFraction";
-        case QUAL_EXACT:
-            return "QUAL_EXACT";
+        case VariantAlleleQuality:
+            return "VariantAlleleQuality";
         case SampleMeanDistanceFromReadEdge:
             return "SampleMeanDistanceFromReadEdge";
         default:
@@ -114,15 +114,12 @@ struct RNA_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     enum index_t
     {
         GT,
-        QUAL,
         I_AvgBaseQ,
         I_BaseQRankSum,
         F_DP,
         F_DPF,
-        F_GQ,
-        F_GQX,
         SampleReadPosRankSum,
-        AD0,
+        ConfidentRefCount,
         SampleRMSMappingQuality,
         SampleRMSMappingQualityRankSum,
         mapqZeroFraction,
@@ -130,9 +127,9 @@ struct RNA_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         QUAL_NORM,
         F_GQX_NORM,
         F_GQ_NORM,
-        AD0_NORM,
+        ConfidentRefCount_NORM,
         ConservativeGenotypeQuality,
-        F_GQ_EXACT,
+        F_GQ,
         SIZE
     };
 
@@ -149,24 +146,18 @@ struct RNA_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         {
         case GT:
             return "GT";
-        case QUAL:
-            return "QUAL";
         case F_DP:
             return "F_DP";
         case F_DPF:
             return "F_DPF";
-        case F_GQ:
-            return "F_GQ";
-        case F_GQX:
-            return "F_GQX";
         case I_AvgBaseQ:
             return "I_AvgBaseQ";
         case I_BaseQRankSum:
             return "I_BaseQRankSum";
         case SampleReadPosRankSum:
             return "SampleReadPosRankSum";
-        case AD0:
-            return "AD0";
+        case ConfidentRefCount:
+            return "ConfidentRefCount";
         case SampleRMSMappingQuality:
             return "SampleRMSMappingQuality";
         case SampleRMSMappingQualityRankSum:
@@ -181,12 +172,12 @@ struct RNA_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "F_GQX_NORM";
         case F_GQ_NORM:
             return "F_GQ_NORM";
-        case AD0_NORM:
-            return "AD0_NORM";
+        case ConfidentRefCount_NORM:
+            return "ConfidentRefCount_NORM";
         case ConservativeGenotypeQuality:
             return "ConservativeGenotypeQuality";
-        case F_GQ_EXACT:
-            return "F_GQ_EXACT";
+        case F_GQ:
+            return "F_GQ";
         default:
             assert(false && "Unknown feature");
             return nullptr;
@@ -216,13 +207,13 @@ struct RNA_INDEL_SCORING_FEATURES : public FeatureSet
      */
     enum index_t
     {
-        AD0,
-        AD1,
+        ConfidentRefCount,
+        ConfidentPrimaryAltCount,
         IndelAlleleRepeatCount,
         IndelAlleleRepeatUnitSize,
-        QUAL_EXACT,
+        VariantAlleleQuality,
         SampleIndelMeanDistanceFromReadEdge,
-        REFREP1,
+        ReferenceAlleleRepeatCount,
         SamplePrimaryAltAlleleDepthFraction,
         SIZE
     };
@@ -238,22 +229,22 @@ struct RNA_INDEL_SCORING_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-        case REFREP1:
-            return "REFREP1";
+        case ReferenceAlleleRepeatCount:
+            return "ReferenceAlleleRepeatCount";
         case IndelAlleleRepeatCount:
             return "IndelAlleleRepeatCount";
         case IndelAlleleRepeatUnitSize:
             return "IndelAlleleRepeatUnitSize";
-        case AD0:
-            return "AD0";
-        case AD1:
-            return "AD1";
+        case ConfidentRefCount:
+            return "ConfidentRefCount";
+        case ConfidentPrimaryAltCount:
+            return "ConfidentPrimaryAltCount";
         case SampleIndelMeanDistanceFromReadEdge:
             return "SampleIndelMeanDistanceFromReadEdge";
         case SamplePrimaryAltAlleleDepthFraction:
             return "SamplePrimaryAltAlleleDepthFraction";
-        case QUAL_EXACT:
-            return "QUAL_EXACT";
+        case VariantAlleleQuality:
+            return "VariantAlleleQuality";
         default:
             assert(false && "Unknown feature");
             return nullptr;
@@ -284,21 +275,18 @@ struct RNA_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
 
     enum index_t
     {
-        QUAL,
-        F_GQX,
         SampleIndelAlleleBiasLower,
         SampleIndelAlleleBias,
         F_DPI,
-        F_GQ,
         SampleProxyRMSMappingQuality,
         mapqZeroFraction,
         F_DPI_NORM,
         QUAL_NORM,
         F_GQX_NORM,
         F_GQ_NORM,
-        AD0_NORM,
+        ConfidentRefCount_NORM,
         ConservativeGenotypeQuality,
-        F_GQ_EXACT,
+        F_GQ,
         SIZE
     };
 
@@ -317,14 +305,8 @@ struct RNA_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "SampleIndelAlleleBiasLower";
         case SampleIndelAlleleBias:
             return "SampleIndelAlleleBias";
-        case QUAL:
-            return "QUAL";
-        case F_GQX:
-            return "F_GQX";
         case F_DPI:
             return "F_DPI";
-        case F_GQ:
-            return "F_GQ";
         case SampleProxyRMSMappingQuality:
             return "SampleProxyRMSMappingQuality";
         case mapqZeroFraction:
@@ -337,12 +319,12 @@ struct RNA_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "F_GQX_NORM";
         case F_GQ_NORM:
             return "F_GQ_NORM";
-        case AD0_NORM:
-            return "AD0_NORM";
+        case ConfidentRefCount_NORM:
+            return "ConfidentRefCount_NORM";
         case ConservativeGenotypeQuality:
             return "ConservativeGenotypeQuality";
-        case F_GQ_EXACT:
-            return "F_GQ_EXACT";
+        case F_GQ:
+            return "F_GQ";
         default:
             assert(false && "Unknown feature");
             return nullptr;
