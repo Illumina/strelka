@@ -127,7 +127,7 @@ private:
 
     std::set<align_id_t> _alignIdSoftClipped;
 
-    bool processSelectedHaplotypes(const unsigned sampleId, HaplotypeToAlignIdSet& haplotypeToAlignIdSet);
+    bool processSelectedHaplotypes(const unsigned sampleId, HaplotypeToAlignIdSet& haplotypeToAlignIdSet, const unsigned totalNumReads);
 
     /// Create haplotypes using counting and process variants
     /// \param sampleId sample id
@@ -147,5 +147,6 @@ private:
         const unsigned sampleId,
         const std::string& haploptypeSeq,
         const std::vector<align_id_t>& alignIdList,
+        const unsigned totalNumReads,
         const uint8_t haplotypeId);
 };

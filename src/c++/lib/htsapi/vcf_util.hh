@@ -181,15 +181,21 @@ struct VcfGenotype
     }
 
     void
-    setAllele0HaplotypeId(uint8_t complexAlleleId)
+    setAllele0HaplotypeId(uint8_t haplotypeId)
     {
-        _allele0HaplotypeId = complexAlleleId;
+        _allele0HaplotypeId = haplotypeId;
     }
 
     void
     setAllele1HaplotypeId(uint8_t complexAlleleId)
     {
         _allele1HaplotypeId = complexAlleleId;
+    }
+
+    void
+    addAltAlleleHaplotypeCountRatio(const float altAlleleHaplotypeCountRatio)
+    {
+        _altAlleleHaplotypeCountRatio += altAlleleHaplotypeCountRatio;
     }
 
     void
@@ -251,6 +257,12 @@ struct VcfGenotype
         return _allele1HaplotypeId;
     }
 
+    float
+    getAltHaplotypeCountRatio() const
+    {
+        return _altAlleleHaplotypeCountRatio;
+    }
+
     bool isConflict() const
     {
         // haplotypeId==3 should be hom
@@ -303,6 +315,8 @@ private:
 
     uint8_t _allele0HaplotypeId = 0;
     uint8_t _allele1HaplotypeId = 0;
+
+    float _altAlleleHaplotypeCountRatio = 0.0;
 
     bool _isPhased = false;
 };

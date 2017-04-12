@@ -403,7 +403,6 @@ computeEmpiricalScoringFeatures(
         //
         if (isComputeDevelopmentFeatures)
         {
-
             // BaseQRankSum
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::I_BaseQRankSum, (siteSampleInfo.BaseQRankSum));
 
@@ -445,6 +444,9 @@ computeEmpiricalScoringFeatures(
 
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::SamplePrimaryAltAlleleDepthFraction,
                                     (confidentPrimaryAltCount * filteredLocusDepthFactor));
+
+            // haplotype count ratio
+            features.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AltHaplotypeCountRatio, maxGt.getAltHaplotypeCountRatio());
         }
     }
 }

@@ -24,7 +24,12 @@
 
 #include "CandidateSnvBuffer.hh"
 
-void CandidateSnvBuffer::addCandidateSnv(unsigned sampleId, pos_t pos, char baseChar, HaplotypeId haplotypeId)
+void CandidateSnvBuffer::addCandidateSnv(
+        const unsigned sampleId,
+        const pos_t pos,
+        const char baseChar,
+        const HaplotypeId haplotypeId,
+        const float altHaplotypeCountRatio)
 {
     assert (haplotypeId == 1 || haplotypeId == 2);
     HaplotypeIdForBase& haplotypeIdForBase = _candidateSnvBuffer[sampleId].getRef(pos);
@@ -45,16 +50,17 @@ void CandidateSnvBuffer::addCandidateSnv(unsigned sampleId, pos_t pos, char base
     default:
         assert(false);
     }
+    haplotypeIdForBase.altHaplotypeCountRatio += altHaplotypeCountRatio;
 }
 
-bool CandidateSnvBuffer::isCandidateSnv(unsigned sampleId, pos_t pos, char baseChar) const
+bool CandidateSnvBuffer::isCandidateSnv(const unsigned sampleId, const pos_t pos, const char baseChar) const
 {
     const auto baseIndex(static_cast<BASE_ID::index_t>(base_to_id(baseChar)));
     if (baseIndex == BASE_ID::ANY) return false;
     return (getHaplotypeId(sampleId, pos, baseIndex) != 0);
 }
 
-HaplotypeId CandidateSnvBuffer::getHaplotypeId(unsigned sampleId, pos_t pos, BASE_ID::index_t baseIndex) const
+HaplotypeId CandidateSnvBuffer::getHaplotypeId(const unsigned sampleId, const pos_t pos, const BASE_ID::index_t baseIndex) const
 {
     if (not _candidateSnvBuffer[sampleId].isKeyPresent(pos))
     {
@@ -78,20 +84,21 @@ HaplotypeId CandidateSnvBuffer::getHaplotypeId(unsigned sampleId, pos_t pos, BAS
     return static_cast<HaplotypeId>(0);
 }
 
+float CandidateSnvBuffer::getAltHaplotypeCountRatio(const unsigned sampleId, const pos_t pos) const
+{
+    if (not _candidateSnvBuffer[sampleId].isKeyPresent(pos))
+    {
+        return 0.0f;
+    }
+    return _candidateSnvBuffer[sampleId].getConstRef(pos).altHaplotypeCountRatio;
+}
+
 bool CandidateSnvBuffer::empty() const
 {
     return _candidateSnvBuffer.empty();
 }
 
-void CandidateSnvBuffer::clearSnvs()
-{
-    for (unsigned sampleId(0); sampleId<_candidateSnvBuffer.size(); ++sampleId)
-    {
-        _candidateSnvBuffer[sampleId].clear();
-    }
-}
-
-void CandidateSnvBuffer::clearUpToPos(pos_t pos)
+void CandidateSnvBuffer::clearUpToPos(const pos_t pos)
 {
     for (unsigned sampleId(0); sampleId<_candidateSnvBuffer.size(); ++sampleId)
     {

@@ -188,7 +188,11 @@ void ActiveRegionReadBuffer::setEndPos(const pos_t endPos)
     _readBufferRange.set_end_pos(endPos);
 }
 
-void ActiveRegionReadBuffer::getReadSegments(const pos_range& posRange, ReadInfo& readInfo, const bool includePartialReads) const
+void ActiveRegionReadBuffer::getReadSegments(
+        const pos_range& posRange,
+        ReadInfo& readInfo,
+        const bool includePartialReads,
+        const unsigned minReadSegmentLength) const
 {
     std::map<align_id_t, std::string> alignIdToHaplotype;
     std::set<align_id_t> alignIdsReachingEnd;
@@ -243,7 +247,7 @@ void ActiveRegionReadBuffer::getReadSegments(const pos_range& posRange, ReadInfo
         }
 
         const auto& haplotype(entry.second);
-        if (haplotype.empty()) continue;
+        if (haplotype.length() < minReadSegmentLength) continue;
 
         readInfo.readSegments.push_back(entry);
     }

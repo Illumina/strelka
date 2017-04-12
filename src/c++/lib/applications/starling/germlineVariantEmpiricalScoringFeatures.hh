@@ -132,6 +132,7 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         VariantAlleleQuality,
         F_GQ,
         SamplePrimaryAltAlleleDepthFraction,
+        AltHaplotypeCountRatio,
         SIZE
     };
 
@@ -172,6 +173,8 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "F_GQ";
         case SamplePrimaryAltAlleleDepthFraction:
             return "SamplePrimaryAltAlleleDepthFraction";
+        case AltHaplotypeCountRatio:
+            return "AltHaplotypeCountRatio";
         default:
             assert(false && "Unknown feature");
             return nullptr;

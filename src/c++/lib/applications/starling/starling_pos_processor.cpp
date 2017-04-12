@@ -485,15 +485,20 @@ updateSnvLocusWithSampleInfo(
         auto allele1Index(maxGt.getAllele1Index());
 
         if (allele0Index > 0)
+        {
             maxGt.setAllele0HaplotypeId(
-                candidateSnvBuffer.getHaplotypeId(
-                    sampleIndex, locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex)
+                    candidateSnvBuffer.getHaplotypeId(
+                            sampleIndex, locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex)
             );
+        }
         if (allele1Index > 0)
+        {
             maxGt.setAllele1HaplotypeId(
-                candidateSnvBuffer.getHaplotypeId(
-                    sampleIndex, locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
+                    candidateSnvBuffer.getHaplotypeId(
+                            sampleIndex, locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
             );
+        }
+        maxGt.addAltAlleleHaplotypeCountRatio(candidateSnvBuffer.getAltHaplotypeCountRatio(sampleIndex, locus.pos));
     }
 }
 
@@ -1423,9 +1428,17 @@ updateIndelLocusWithSampleInfo(
         auto allele1Index(maxGt.getAllele1Index());
 
         if (allele0Index > 0)
-            maxGt.setAllele0HaplotypeId(alleleGroup.data(allele0Index-1).getSampleData(sampleIndex).haplotypeId);
+        {
+            const auto& indelSampleData(alleleGroup.data(allele0Index-1).getSampleData(sampleIndex));
+            maxGt.setAllele0HaplotypeId(indelSampleData.haplotypeId);
+            maxGt.addAltAlleleHaplotypeCountRatio(indelSampleData.altAlleleHaplotypeCountRatio);
+        }
         if (allele1Index > 0)
-            maxGt.setAllele1HaplotypeId(alleleGroup.data(allele1Index-1).getSampleData(sampleIndex).haplotypeId);
+        {
+            const auto& indelSampleData(alleleGroup.data(allele1Index-1).getSampleData(sampleIndex));
+            maxGt.setAllele0HaplotypeId(indelSampleData.haplotypeId);
+            maxGt.addAltAlleleHaplotypeCountRatio(indelSampleData.altAlleleHaplotypeCountRatio);
+        }
     }
 }
 
