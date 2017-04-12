@@ -260,7 +260,9 @@ struct VcfGenotype
     float
     getAltHaplotypeCountRatio() const
     {
-        return _altAlleleHaplotypeCountRatio;
+        // _altAlleleHaplotypeCountRatio may exceed 1.0
+        // because some reads can be double counted if haplotypes are reconstructed by assembly
+        return _altAlleleHaplotypeCountRatio > 1.0f ? 1.0f : _altAlleleHaplotypeCountRatio;
     }
 
     bool isConflict() const

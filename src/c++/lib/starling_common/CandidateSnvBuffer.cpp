@@ -32,7 +32,7 @@ void CandidateSnvBuffer::addCandidateSnv(
         const float altHaplotypeCountRatio)
 {
     assert (haplotypeId == 1 || haplotypeId == 2);
-    HaplotypeIdForBase& haplotypeIdForBase = _candidateSnvBuffer[sampleId].getRef(pos);
+    HaplotypeIdAndCountRatio& haplotypeIdForBase = _candidateSnvBuffer[sampleId].getRef(pos);
     switch (baseChar)
     {
     case 'A':

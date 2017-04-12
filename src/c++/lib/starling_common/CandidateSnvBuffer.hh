@@ -31,7 +31,7 @@
 typedef uint8_t HaplotypeId;
 
 /// stores haplotype id for A, C, T, G
-struct HaplotypeIdForBase
+struct HaplotypeIdAndCountRatio
 {
     HaplotypeId a;
     HaplotypeId c;
@@ -44,16 +44,17 @@ struct HaplotypeIdForBase
 struct ClearHaplotypeIdForBase
 {
     void
-    operator()(HaplotypeIdForBase& val) const
+    operator()(HaplotypeIdAndCountRatio& val) const
     {
         val.a = 0;
         val.c = 0;
         val.t = 0;
         val.g = 0;
+        val.altHaplotypeCountRatio = 0.0f;
     }
 };
 
-typedef std::vector<RangeMap<pos_t,HaplotypeIdForBase, ClearHaplotypeIdForBase>> SampleCandidateSnvMap;
+typedef std::vector<RangeMap<pos_t,HaplotypeIdAndCountRatio, ClearHaplotypeIdForBase>> SampleCandidateSnvMap;
 
 /// Stores candidate SNVs discovered in active regions
 ///

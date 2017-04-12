@@ -160,8 +160,6 @@ bool ActiveRegion::processHaplotypesWithAssembly(const unsigned sampleId)
         }
     }
 
-    const unsigned totalNumReads(reads.size());
-
     AssemblyReadOutput assemblyReadOutput;
     Assembly contigs;
 
@@ -181,8 +179,14 @@ bool ActiveRegion::processHaplotypesWithAssembly(const unsigned sampleId)
     // perform assembly
     runIterativeAssembler(assembleOption, reads, assemblyReadOutput, contigs);
 
+    unsigned totalNumReads(0);
+    for (auto assemblyReadInfo : assemblyReadOutput)
+    {
+        if (assemblyReadInfo.isUsed and (not assemblyReadInfo.isPseudo))
+            ++totalNumReads;
+    }
+
     HaplotypeToAlignIdSet haplotypeToAlignIdSet;
-    unsigned maxHaplotypeLength(0);
     unsigned isNonRefHaplotypeFound(false);
 
     std::string refStr;
@@ -211,22 +215,27 @@ bool ActiveRegion::processHaplotypesWithAssembly(const unsigned sampleId)
 
         const std::string haplotype(contig.substr(start, end-start));
 
-        if (haplotype != refStr)
-            isNonRefHaplotypeFound = true;
-        if (haplotype.length() > maxHaplotypeLength)
-            maxHaplotypeLength = (unsigned int) haplotype.length();
-        haplotypeToAlignIdSet[haplotype] = std::vector<align_id_t>();
+        auto alignIds = std::vector<align_id_t>();
+        bool isContainingUniqueRead(false);
         for (unsigned readIndex : contigs[i].supportReads)
         {
-            if (assemblyReadOutput[readIndex].isPseudo)
+            const auto& assemblyReadInfo(assemblyReadOutput[readIndex]);
+            if (assemblyReadInfo.isPseudo)
             {
-                /// TODO: What should we do with pseudo reads? should they be tracked in haplotype support counts,
-                ///       and if so, how?
+                // pseudo reads are ignored
                 continue;
             }
-
-            haplotypeToAlignIdSet[haplotype].push_back(readIndexToAlignId[readIndex]);
+            if ((not isContainingUniqueRead) and (assemblyReadInfo.contigIds.size() == 1))
+                isContainingUniqueRead = true;
+            alignIds.push_back(readIndexToAlignId[readIndex]);
         }
+
+        // ignore if there's no read uniquely supporting the contig
+        if (not isContainingUniqueRead) continue;
+
+        if (haplotype != refStr)
+            isNonRefHaplotypeFound = true;
+        haplotypeToAlignIdSet[haplotype] = alignIds;
     }
 
     // assembly fails if no alt haplotype is found

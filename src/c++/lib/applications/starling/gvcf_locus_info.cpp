@@ -445,8 +445,8 @@ computeEmpiricalScoringFeatures(
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::SamplePrimaryAltAlleleDepthFraction,
                                     (confidentPrimaryAltCount * filteredLocusDepthFactor));
 
-            // haplotype count ratio
-            features.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AltHaplotypeCountRatio, maxGt.getAltHaplotypeCountRatio());
+            auto altHaplotypeCountRatio(maxGt.getAltHaplotypeCountRatio());
+            developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AltHaplotypeCountRatio, altHaplotypeCountRatio);
         }
     }
 }
@@ -626,6 +626,7 @@ computeEmpiricalScoringFeatures(
 
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::VariantAlleleQuality, (locus.anyVariantAlleleQuality));
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ, (sampleInfo.genotypeQualityPolymorphic));
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AltHaplotypeCountRatio, maxGt.getAltHaplotypeCountRatio());
         }
     }
 }
