@@ -80,21 +80,6 @@ python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/evs_learn.
     admix_training_data.csv
 ```
 
-=>
-
-```
-Reading admix_training_data.csv
-Using default parameters.
-Feature ranking:
-1. feature 0:SomaticSNVQualityGivenGermlineGenotype (0.341969 +- 0.040246)
-2. feature 2:TumorSampleAltAlleleFraction (0.190468 +- 0.123727)
-3. feature 1:NormalSampleRelativeTotalLocusDepth (0.154801 +- 0.068986)
-5. feature 4:ZeroMappingQualityFraction (0.056272 +- 0.051838)
-6. feature 3:RMSMappingQuality (0.051763 +- 0.043005)
-8. feature 6:TumorSampleReadPosRankSum (0.032803 +- 0.020241)
-9. feature 5:TumorSampleStrandBias (0.032238 +- 0.056309)
-```
-
 ## Step 3: Calculate Scores
 
 Given a trained model any labeled testing data can be scored.

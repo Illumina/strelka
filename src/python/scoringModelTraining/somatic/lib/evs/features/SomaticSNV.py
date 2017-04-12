@@ -39,11 +39,11 @@ class StrelkaSNVFeatures(VcfFeatureSet):
             "${STRELKA_REPO_PATH}/src/c++/lib/applications/strelka/somaticVariantEmpiricalScoringFeatures.hh"
         """
         return [
-            "QSS_NT",
-            "N_DP_RATE",
-            "TIER1_ALT_RATE",
-            "MQ",
-            "MQ0_FRAC",
-            "strandBias",
-            "ReadPosRankSum",
-            "LOR"]
+            "SomaticSNVQualityGivenGermlineGenotype",
+            "NormalSampleRelativeTotalLocusDepth",
+            "TumorSampleAltAlleleFraction",
+            "RMSMappingQuality",
+            "ZeroMappingQualityFraction",
+            "TumorSampleStrandBias",
+            "TumorSampleReadPosRankSum",
+            "AlleleCountLogOddsRatio"]
