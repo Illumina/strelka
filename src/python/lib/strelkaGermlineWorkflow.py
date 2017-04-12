@@ -380,7 +380,7 @@ def estimateParametersFromErrorCounts(self, taskPrefix, dependencies, runStatsLo
     runEstimateCmd.extend(["--counts-file",self.paths.getCountsOutputPath()])
     runEstimateCmd.extend(["--model-type","indel"])
     runEstimateCmd.extend(["--model","8"])
-    #runEstimateCmd.extend(["--theta-file","theta.json"])
+    runEstimateCmd.extend(["--theta-file",self.params.indelDefaultParamFile])
     runEstimateCmd.extend(["--output-file",self.paths.getIndelEstimationJsonPath()])
     return self.addTask(runEstimateLabel, runEstimateCmd, dependencies=dependencies, isForceLocal=True)
 

@@ -88,7 +88,8 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
             'callContinuousVf' : []
             'getCountsBin' : joinFile(libexecDir,exeFile("GetSequenceErrorCounts")),
             'mergeCountsBin' : joinFile(libexecDir,exeFile("MergeSequenceErrorCounts")),
-            'estimateParametersFromErrorCountsBin' : joinFile(libexecDir,exeFile("EstimateParametersFromErrorCounts"))
+            'estimateParametersFromErrorCountsBin' : joinFile(libexecDir,exeFile("EstimateParametersFromErrorCounts")),
+            'indelDefaultParamFile' : joinFile(configDir,'indelDefaultParam.json'),
             })
         return defaults
 
