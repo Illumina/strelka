@@ -52,7 +52,7 @@ struct RNA_SNV_SCORING_FEATURES : public FeatureSet
 
         SiteHomopolymerLength,
         SampleStrandBias,
-        ConfidentPrimaryAltCount,
+        SamplePrimaryAltAlleleDepth,
         VariantAlleleQuality,
         SampleMeanDistanceFromReadEdge,
         SamplePrimaryAltAlleleDepthFraction,
@@ -74,8 +74,8 @@ struct RNA_SNV_SCORING_FEATURES : public FeatureSet
             return "SiteHomopolymerLength";
         case SampleStrandBias:
             return "SampleStrandBias";
-        case ConfidentPrimaryAltCount:
-            return "ConfidentPrimaryAltCount";
+        case SamplePrimaryAltAlleleDepth:
+            return "SamplePrimaryAltAlleleDepth";
         case SamplePrimaryAltAlleleDepthFraction:
             return "SamplePrimaryAltAlleleDepthFraction";
         case VariantAlleleQuality:
@@ -119,7 +119,7 @@ struct RNA_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         F_DP,
         F_DPF,
         SampleReadPosRankSum,
-        ConfidentRefCount,
+        SampleRefAlleleDepth,
         SampleRMSMappingQuality,
         SampleRMSMappingQualityRankSum,
         mapqZeroFraction,
@@ -127,7 +127,7 @@ struct RNA_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         QUAL_NORM,
         F_GQX_NORM,
         F_GQ_NORM,
-        ConfidentRefCount_NORM,
+        SampleRefAlleleDepthFraction,
         ConservativeGenotypeQuality,
         F_GQ,
         SIZE
@@ -156,8 +156,8 @@ struct RNA_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "I_BaseQRankSum";
         case SampleReadPosRankSum:
             return "SampleReadPosRankSum";
-        case ConfidentRefCount:
-            return "ConfidentRefCount";
+        case SampleRefAlleleDepth:
+            return "SampleRefAlleleDepth";
         case SampleRMSMappingQuality:
             return "SampleRMSMappingQuality";
         case SampleRMSMappingQualityRankSum:
@@ -172,8 +172,8 @@ struct RNA_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "F_GQX_NORM";
         case F_GQ_NORM:
             return "F_GQ_NORM";
-        case ConfidentRefCount_NORM:
-            return "ConfidentRefCount_NORM";
+        case SampleRefAlleleDepthFraction:
+            return "SampleRefAlleleDepthFraction";
         case ConservativeGenotypeQuality:
             return "ConservativeGenotypeQuality";
         case F_GQ:
@@ -207,13 +207,13 @@ struct RNA_INDEL_SCORING_FEATURES : public FeatureSet
      */
     enum index_t
     {
-        ConfidentRefCount,
-        ConfidentPrimaryAltCount,
-        IndelAlleleRepeatCount,
-        IndelAlleleRepeatUnitSize,
+        SampleRefAlleleDepth,
+        SamplePrimaryAltAlleleDepth,
+        SampleIndelRepeatCount,
+        SampleIndelRepeatUnitSize,
         VariantAlleleQuality,
         SampleIndelMeanDistanceFromReadEdge,
-        ReferenceAlleleRepeatCount,
+        SampleRefRepeatCount,
         SamplePrimaryAltAlleleDepthFraction,
         SIZE
     };
@@ -229,16 +229,16 @@ struct RNA_INDEL_SCORING_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-        case ReferenceAlleleRepeatCount:
-            return "ReferenceAlleleRepeatCount";
-        case IndelAlleleRepeatCount:
-            return "IndelAlleleRepeatCount";
-        case IndelAlleleRepeatUnitSize:
-            return "IndelAlleleRepeatUnitSize";
-        case ConfidentRefCount:
-            return "ConfidentRefCount";
-        case ConfidentPrimaryAltCount:
-            return "ConfidentPrimaryAltCount";
+        case SampleRefRepeatCount:
+            return "SampleRefRepeatCount";
+        case SampleIndelRepeatCount:
+            return "SampleIndelRepeatCount";
+        case SampleIndelRepeatUnitSize:
+            return "SampleIndelRepeatUnitSize";
+        case SampleRefAlleleDepth:
+            return "SampleRefAlleleDepth";
+        case SamplePrimaryAltAlleleDepth:
+            return "SamplePrimaryAltAlleleDepth";
         case SampleIndelMeanDistanceFromReadEdge:
             return "SampleIndelMeanDistanceFromReadEdge";
         case SamplePrimaryAltAlleleDepthFraction:
@@ -284,7 +284,7 @@ struct RNA_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         QUAL_NORM,
         F_GQX_NORM,
         F_GQ_NORM,
-        ConfidentRefCount_NORM,
+        SampleRefAlleleDepthFraction,
         ConservativeGenotypeQuality,
         F_GQ,
         SIZE
@@ -319,8 +319,8 @@ struct RNA_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "F_GQX_NORM";
         case F_GQ_NORM:
             return "F_GQ_NORM";
-        case ConfidentRefCount_NORM:
-            return "ConfidentRefCount_NORM";
+        case SampleRefAlleleDepthFraction:
+            return "SampleRefAlleleDepthFraction";
         case ConservativeGenotypeQuality:
             return "ConservativeGenotypeQuality";
         case F_GQ:

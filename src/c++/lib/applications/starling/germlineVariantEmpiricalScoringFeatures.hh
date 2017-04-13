@@ -128,7 +128,7 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         QUAL_NORM,
         F_GQX_NORM,
         F_GQ_NORM,
-        ConfidentRefCount_NORM,
+        SampleRefAlleleDepthFraction,
         VariantAlleleQuality,
         F_GQ,
         SamplePrimaryAltAlleleDepthFraction,
@@ -164,8 +164,8 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "F_GQX_NORM";
         case F_GQ_NORM:
             return "F_GQ_NORM";
-        case ConfidentRefCount_NORM:
-            return "ConfidentRefCount_NORM";
+        case SampleRefAlleleDepthFraction:
+            return "SampleRefAlleleDepthFraction";
         case VariantAlleleQuality:
             return "VariantAlleleQuality";
         case F_GQ:
@@ -204,8 +204,8 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
     enum index_t
     {
         GenotypeCategory,
-        IndelAlleleRepeatCount,
-        IndelAlleleRepeatUnitSize,
+        SampleIndelRepeatCount,
+        SampleIndelRepeatUnitSize,
         SampleIndelAlleleBiasLower,
         SampleIndelAlleleBias,
         SampleProxyRMSMappingQuality,
@@ -228,10 +228,10 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
         {
         case GenotypeCategory:
             return "GenotypeCategory";
-        case IndelAlleleRepeatCount:
-            return "IndelAlleleRepeatCount";
-        case IndelAlleleRepeatUnitSize:
-            return "IndelAlleleRepeatUnitSize";
+        case SampleIndelRepeatCount:
+            return "SampleIndelRepeatCount";
+        case SampleIndelRepeatUnitSize:
+            return "SampleIndelRepeatUnitSize";
         case SampleIndelAlleleBiasLower:
             return "SampleIndelAlleleBiasLower";
         case SampleIndelAlleleBias:
@@ -274,13 +274,13 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
 
     enum index_t
     {
-        ReferenceAlleleRepeatCount,
+        SampleRefRepeatCount,
         mapqZeroFraction,
         F_DPI_NORM,
         QUAL_NORM,
         F_GQX_NORM,
         F_GQ_NORM,
-        ConfidentRefCount_NORM,
+        SampleRefAlleleDepthFraction,
         VariantAlleleQuality,
         F_GQ,
         SIZE
@@ -297,8 +297,8 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-        case ReferenceAlleleRepeatCount:
-            return "ReferenceAlleleRepeatCount";
+        case SampleRefRepeatCount:
+            return "SampleRefRepeatCount";
         case mapqZeroFraction:
             return "mapqZeroFraction";
         case F_DPI_NORM:
@@ -309,8 +309,8 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "F_GQX_NORM";
         case F_GQ_NORM:
             return "F_GQ_NORM";
-        case ConfidentRefCount_NORM:
-            return "ConfidentRefCount_NORM";
+        case SampleRefAlleleDepthFraction:
+            return "SampleRefAlleleDepthFraction";
         case VariantAlleleQuality:
             return "VariantAlleleQuality";
         case F_GQ:
