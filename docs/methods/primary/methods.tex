@@ -101,28 +101,18 @@ TODO. Left-shifting and other normalizing transformations of all indels present 
 
 Strelka processes dense variants using ``short haplotyping". The short haplotyping is conceptually similar to the haplotype based calling used in GATK and Platypus in that dense SNPs and indels are called simultaneously through haplotype reconstruction. But in contrast to GATK and Platypus that use local assembly to generate haplotypes longer than reads, Strelka generates short haplotypes ($\leq$ 30 bp) using simple read counting. The short haplotyping is composed of 3 steps: (1) detecting short regions with dense variants called {\em active regions}, (2) creating candidate haplotypes, and (3) aligning each haplotype to the reference to discover primitive alleles (SNVs and/or indels).
 
-TODO: mention that short haplotyping is optional and describe behaviour when short haplotyping is not used
-
 \subsubsection{Active region detection}
 For each reference position, Strelka retains a variant counter. Variants in reads are parsed from the input BAM file and increase the variant counters in corresponding positions. A mismatch at position $i$ increases the counter at $i$ by 1. An insertion at position $i$ increases the counter at $i$ and $i+1$ by 4. A deletion at positions $[i,j]$ increases the counters in $[i-1,j]$ by 4.
 After all the reads overlapping a position $i$ are parsed, if the variant count at $i$ is equal or larger than 9, $i$ becomes a {\em candidate variant position}.
-
-TODO: clarify indexing convention above: is $[i,j]$ the interval such that i is the first deleted base and j the last deleted base? If so, why not also increase at position j+1?
 
 Strelka employs an active region detector to detect active regions. The active region detector holds an active region start position ($i_{start}$) and a previous candidate variant position ($i_{prev}$), where both are initialized as 0. When a new candidate variant position $i$ is found, it extends the existing active region if it is not far from the previous variant (i.e. $i - i_{prev} \leq 14$) and including $i$ does not make the active region long (i.e. $i - i_{start} \leq 30$). For consecutive variants (i.e. $i - i_{prev} = 1$), $i$ extends the existing active region even if $i - i_{start} > 30$. If $i$ extends the existing active region, the active region detector simply updates $i_{prev} = i$. Otherwise a new active region is started.
 
 \subsubsection{Haplotype generation}
 Once an active region is created, the active region detector generates candidate haplotypes for the region. For this, it only considers the reads where the alignments fully span the region. From these reads, it extracts the portions aligned to the region, which become possible haplotypes. Often, multiple reads match the same haplotype and we call the number of reads generating a haplotype a read count. To select a small number of most probable haplotypes, the detector first discards haplotypes with read counts less than 3, and then for each sample it selects up to 3 haplotypes with the highest read counts as candidate haplotypes.
 
-TODO: up to 3 haplotypes distinct from REF, not 2?
-
-TODO: do I understand correctly that a read is only considered if (after alignment) it fully spans the region? (Just expressing surprise that reads partially covering the region are not considered informative here. Plus there is the technically possible edge case where the region is longer than all reads in it.)
 
 \subsubsection{Primitive allele discovery}
 Candidate haplotypes are aligned to the reference sequence of the active region. From the alignment, primitive alleles (SNVs and indels) are identified. These primitive alleles are used to improve SNV and indel calling by (1) relaxing the mismatch density filter (described in \ref{sec:BasecallFiltrationFromContext}) and (2) improving indel candidacy (described in \ref{sec:IndelCandidacy}).
-
-TODO: how are they aligned?
-TODO: definition of a primitive allele
 
 \subsection{Basecall filtration from local read context}
 \label{sec:BasecallFiltrationFromContext}
@@ -232,8 +222,6 @@ TODO
 The Strelka workflow uses two calling tiers. All somatic calls are classified according to their most-likely normal genotype if that value is the same in tiers 1 and 2, and classified as conflicts otherwise.
 
 \subsubsection{Genomic prior}
-TODO: this is also used in germline, move out of somatic section?
-
 Given the expected rate of variants between two unrelated haplotypes (Watterson theta) $\theta$, the normal genomic prior $P(G_n)$ over the set of diploid genotypes is
 
 \begin{equation*}
@@ -392,8 +380,8 @@ Features used in each model are listed here and definitions are provided further
     \item Germline Indel features:
     \begin{itemize}
         \item \texttt{GenotypeCategory}
-        \item \texttt{SampleIndelAlleleRepeatCount}
-        \item \texttt{SampleIndelAlleleRepeatUnitSize}
+        \item \texttt{SampleIndelRepeatCount}
+        \item \texttt{SampleIndelRepeatUnitSize}
         \item \texttt{SampleIndelAlleleBiasLower}
         \item \texttt{SampleIndelAlleleBias}
         \item \texttt{SampleProxyRMSMappingQuality}
@@ -405,20 +393,20 @@ Features used in each model are listed here and definitions are provided further
     \begin{itemize}
         \item \texttt{SiteHomopolymerLength}
         \item \texttt{SampleStrandBias}
-        \item \texttt{ConfidentPrimaryAltCount}
+        \item \texttt{SamplePrimaryAltAlleleDepth}
         \item \texttt{VariantAlleleQuality}
         \item \texttt{SampleMeanDistanceFromReadEdge}
         \item \texttt{SamplePrimaryAltAlleleDepthFraction}
     \end{itemize}
     \item RNA-seq Indel features:
     \begin{itemize}
-        \item \texttt{ConfidentRefCount}
-        \item \texttt{ConfidentPrimaryAltCount}
-        \item \texttt{SampleIndelAlleleRepeatCount}
-        \item \texttt{SampleIndelAlleleRepeatUnitSize}
+        \item \texttt{SampleRefAlleleDepth}
+        \item \texttt{SamplePrimaryAltAlleleDepth}
+        \item \texttt{SampleIndelRepeatCount}
+        \item \texttt{SampleIndelRepeatUnitSize}
         \item \texttt{VariantAlleleQuality}
         \item \texttt{SampleIndelMeanDistanceFromReadEdge}
-        \item \texttt{ReferenceAlleleRepeatCount}
+        \item \texttt{SampleRefRepeatCount}
         \item \texttt{SamplePrimaryAltAlleleDepthFraction}
     \end{itemize}
 \end{itemize}
@@ -464,20 +452,11 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
 
 \item \texttt{SampleUsedDepthFraction} ~ The ratio of reads used to genotype the locus over the total number of reads at the variant locus in one sample. Reads are not used if the mapping quality is less than the minimum threshold, if the local read alignment fails the mismatch density filter or if the basecall is ambiguous.
 
-\item \texttt{ConfidentRefCount} ~ The number of used reads supporting the reference allele.
-
-\item \texttt{ConfidentPrimaryAltCount} ~ The number of used reads supporting the best-supported non-reference allele.
-
 \item \texttt{ConservativeGenotypeQuality} ~ The model-based ConservativeGenotypeQuality (GQX) value for one sample, reflecting the conservative confidence of the called genotype.
 
-\item \texttt{VariantAlleleQuality} ~ The model-based variant quality value for one sample, reflecting the confidence of the called variant regardless of genotype.
+\item \texttt{SampleIndelRepeatCount} ~ The number of times the primary indel allele's \emph{repeat unit} occurs in a haplotype containing the indel allele. The primary indel allele's \emph{repeat unit} is the smallest possible sequence such that the inserted/deleted sequence can be formed by concatenating multiple copies of it. The primary indel allele is the best supported allele among all overlapping indel alleles at the locus of interest in one sample.
 
-\item \texttt{ReferenceAlleleRepeatCount} ~ The number of times the primary indel allele's \emph{repeat unit} occurs in the reference sequence. The primary indel allele's \emph{repeat unit} is the smallest possible sequence such that the inserted/deleted sequence can be formed by concatenating multiple copies of it. The primary indel allele is the best supported allele among all overlapping indel alleles at the locus of interest in one sample.
-
-\item \texttt{IndelAlleleRepeatCount} ~ The number of times the primary indel allele's \emph{repeat unit} occurs in a
-haplotype containing the indel allele.
-
-\item \texttt{IndelAlleleRepeatUnitSize} ~ Length of the primary indel allele's \emph{repeat unit}, as defined for feature \texttt{IndelAlleleRepeatCount}.
+\item \texttt{SampleIndelRepeatUnitSize} ~ Length of the primary indel allele's \emph{repeat unit}, as defined for feature \texttt{SampleIndelRepeatCount}.
 
 \item \texttt{SampleIndelAlleleBiasLower} ~ For one sample, this is the negative log probability of seeing N or fewer observations of one allele in a heterozygous variant out of the total observations from both alleles. N is typically the observation count of the reference allele. If the heterozygous variant does not include the reference allele, the first indel allele is used instead.
 
@@ -487,9 +466,17 @@ haplotype containing the indel allele.
 
 \item \texttt{SamplePrimaryAltAlleleDepthFraction} ~ For one sample, this is the ratio of the confident observation count of the best-supported non-reference allele at the variant locus, over all confident allele observation counts.
 
-\item \texttt{SampleMeanDistanceFromReadEdge} ~ (RNA-Seq feature) For all non-reference basecall observations in one sample at a candidate SNV site, report the mean distance to the closest edge of each alternate basecall's read. Distance is measured in read-coordinates, zero-indexed, and is allowed to have a maximum value of 20.
+\item \texttt{SamplePrimaryAltAlleleDepth} ~ The confident observation count of the best-supported non-reference allele at the variant locus.
 
-\item \texttt{SampleIndelMeanDistanceFromReadEdge} ~ (RNA-Seq feature) For all indel allele observations in one sample at a candidate indel locus, report the mean distance to the closest edge of each indel allele's read. Distance is measured in read-coordinates, zero-indexed, and is allowed to have a maximum value of 20. The left or right side of the indel may be used to provide the shortest distance, but the indel will only be considered in its left-aligned position.
+\item \texttt{VariantAlleleQuality} ~ The model-based variant quality value, reflecting the confidence that the called variant is present in at least one sample, regardless of genotype.
+
+\item \texttt{SampleMeanDistanceFromReadEdge} ~ For all non-reference basecall observations in one sample at a candidate SNV site, report the mean distance to the closest edge of each alternate basecall's read. Distance is measured in read-coordinates, zero-indexed, and is allowed to have a maximum value of 20.
+
+\item \texttt{SampleRefAlleleDepth} ~ The confident observation count of the reference allele at the variant locus.
+
+\item \texttt{SampleIndelMeanDistanceFromReadEdge} ~ For all indel allele observations in one sample at a candidate indel locus, report the mean distance to the closest edge of each indel allele's read. Distance is measured in read-coordinates, zero-indexed, and is allowed to have a maximum value of 20. The left or right side of the indel may be used to provide the shortest distance, but the indel will only be considered in its left-aligned position.
+
+\item \texttt{SampleRefRepeatCount} ~ The number of times the primary indel allele's \emph{repeat unit} occurs in the reference sequence.
 
 \end{itemize}
 
