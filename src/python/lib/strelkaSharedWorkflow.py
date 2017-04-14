@@ -92,35 +92,6 @@ def getChromIsSkipped(self, chromOrder) :
     return chromIsSkipped
 
 
-def filterUncoveredGenomeSegments(params, genomeSegmentIterator) :
-    """
-    yields filtered genome segment stream
-    """
-
-    class Constants :
-        import os
-        devnull = open(os.devnull, 'wb')
-
-
-    isCallRegionBed = params.callRegionsBed is not None
-
-    for gseg in genomeSegmentIterator :
-
-        def isRegionEmpty(region) :
-            if not isCallRegionBed : return False
-
-            import subprocess
-            tabixCmd = [params.tabixBin, params.callRegionsBed, region]
-            proc=subprocess.Popen(tabixCmd, stdout=subprocess.PIPE, stderr=Constants.devnull)
-            for _ in proc.stdout :
-                proc.stdout.close()
-                return False
-            return True
-
-        if isRegionEmpty(gseg.bamRegion) : continue
-        yield gseg
-
-
 
 class StrelkaSharedCallWorkflow(WorkflowRunner) :
 
@@ -228,16 +199,10 @@ class StrelkaSharedCallWorkflow(WorkflowRunner) :
     def getStrelkaGenomeSegmentGroupIterator(self, contigsExcludedFromGrouping = None) :
         """
         setup genome segment iteration for germline and somatic calling,
-        including skipping segments with no coverage (due to region args or
-        bed files) and clumping together small segments into groups.
+        including  clumping together small segments into groups.
         """
         genomeSegmentIterator = getNextGenomeSegment(self.params)
-
-        # in case a call region bed file is being used, filter genome segments to remove segments with no coverage
-        # in the BED track
-        nonEmptyGenomeSegmentIterator = filterUncoveredGenomeSegments(self.params, genomeSegmentIterator)
-
-        return getGenomeSegmentGroups(nonEmptyGenomeSegmentIterator, contigsExcludedFromGrouping)
+        return getGenomeSegmentGroups(genomeSegmentIterator, contigsExcludedFromGrouping)
 
 
 
