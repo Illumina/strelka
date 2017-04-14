@@ -40,8 +40,8 @@ class GermlineSNVFeatures(VcfFeatureSet):
         """
         return [
             "GenotypeCategory",
-            "IndelAlleleRepeatCount",
-            "IndelAlleleRepeatUnitSize",
+            "SampleIndelRepeatCount",
+            "SampleIndelRepeatUnitSize",
             "SampleIndelAlleleBiasLower",
             "SampleIndelAlleleBias",
             "SampleProxyRMSMappingQuality",

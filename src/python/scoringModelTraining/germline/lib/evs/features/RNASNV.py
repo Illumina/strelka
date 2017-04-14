@@ -41,7 +41,7 @@ class RNASNVFeatures(VcfFeatureSet):
         return [
             "SiteHomopolymerLength",
             "SampleStrandBias",
-            "AD1",
-            "QUAL_EXACT",
+            "SamplePrimaryAltAlleleDepth",
+            "VariantAlleleQuality",
             "SampleMeanDistanceFromReadEdge",
             "SamplePrimaryAltAlleleDepthFraction"]

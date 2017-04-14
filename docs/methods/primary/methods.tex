@@ -89,7 +89,7 @@ The objective of the depth estimation step is to find the expected depth and/or 
 
 \subsection{Input Read Filtration}
 
-TODO. Outright filtration of unmappped, anomolous, etc. Note additional category of reads that are marked for special processing but not actually filtered (low MAPQ, etc.)
+TODO. Outright filtration of unmapped, anomalous, etc. Note additional category of reads that are marked for special processing but not actually filtered (low MAPQ, etc.)
 
 
 \subsection{Input Read Processing}
@@ -113,7 +113,6 @@ Once an active region is created, the active region detector generates candidate
 
 \subsubsection{Primitive allele discovery}
 Candidate haplotypes are aligned to the reference sequence of the active region. From the alignment, primitive alleles (SNVs and indels) are identified. These primitive alleles are used to improve SNV and indel calling by (1) relaxing the mismatch density filter (described in \ref{sec:BasecallFiltrationFromContext}) and (2) improving indel candidacy (described in \ref{sec:IndelCandidacy}).
-
 
 \subsection{Basecall filtration from local read context}
 \label{sec:BasecallFiltrationFromContext}
@@ -145,7 +144,7 @@ p_{error} = P(X >= n_i \mid N, e_l) = \sum_{x = n_i}^{N} P(x \mid N, e_l)
 
 \subsubsection{Handling of soft-clipped segments during realignment}
 
-By default, prior to a read is being realigned, any soft-cliped segment on the leading and trailing edge is unrolled to assume the segment has a matching alignment to the refernece. This treatment assumes that most soft-clipping reflects an indel which hasn't yet been incorporated into the read's alignment.
+By default, prior to a read being realigned, any soft-clipped segment on the leading and trailing edge is unrolled to force the segment to be aligned to the reference. This treatment assumes that most soft-clipping reflects an indel which has not yet been incorporated into the read's alignment.
 
 During RNA-Seq analysis, a similar soft-clipping approach is taken, except that at the end of the realignment process, the highest scoring alignment found after unrolling all soft-clipping is compared to the original alignment. If the original alignment has a higher score, then the realignment procedure reverts to the original.
 
@@ -156,11 +155,11 @@ During RNA-Seq analysis, a similar soft-clipping approach is taken, except that 
 
 \subsection{Shared}
 
-This section describes components of the probably model shared by all calling modes.
+This section describes components of the probability model shared by all calling modes.
 
 \subsubsection{Indel Error Model}
 \label{sec:indel_error}
-Indel errors are approximated as a process which occurs independently in each read, with some fixed probably of an indel error occurring as a function of the local sequence STR context. Strelka's indel error parameters are currently set based on empirical observation of indel calling performance for both germline and somatic indel detection.
+Indel errors are approximated as a process which occurs independently in each read, with some fixed probably of an indel error occurring as a function of the local sequence STR context. Strelka's indel error parameters are currently set to pre-estimated values based on empirical observation of indel calling performance for both germline and somatic indel detection.
 
 The default indel error rates used by strelka are a function of the local homopolymer context length $l_{\text{STR}}$, so any expansion or contraction of a homopolymer sequence has an error rate indexed on the homopolymer length in the presumed source haplotype upon which the indel error process occurred. All other types of indels, including dinucleotide tract indels and mutations of homopolymers which do not represent simple expansion/contraction events, have $l_{\text{STR}}$ set to one. By observation, the indel error rates are set to a log-linear ramp as a function of $l_{\text{STR}}$
 
@@ -187,6 +186,8 @@ As previously noted, Strelka defines an active region around dense variants and 
 
 \subsection{Somatic Model}
 
+TODO: update quality score names in this section
+
 The somatic calling model assumes that the samples are from diploid individuals. For both SNVs and indels, the normal genotype state space is the set of unphased diploid genotypes, $G_n = \{ \texttt{ref}, \texttt{het}, \texttt{hom}\}$, where $\texttt{ref}$, $\texttt{het}$, and $\texttt{hom}$ refer to the normal genotype being reference, heterozygous, and homozygous, respectively. The tumor genotype has two states $G_t = \{ \texttt{nonsom}, \texttt{som} \}$, where $\texttt{nonsom}$ and $\texttt{som}$ indicate the absence and presence of somatic mutation in the tumor sample, respectively. The method approximates a posterior probability on the joint tumor and normal genotypes.
 
 \begin{align*}
@@ -211,6 +212,7 @@ The posterior probability over tumor and normal genotypes $P(G_t,G_n \mid D)$ is
 \end{equation}
 
 As previously discussed, this somatic variant probability is not ideal for detecting variants of interest because it does not distinguish somatic variant types. We therefore associate somatic calls with the probability of somatic variation {\em and} the normal sample genotype being $\texttt{ref}$ (QSS\_NT for SNVs and QSI\_NT for indels), i.e., $P(G_t = \texttt{som}, G_n = \texttt{ref} \mid D)$. All Strelka quality scores discussed below express these values.
+
 
 \subsubsection{Tiered observations}
 \label{sec:somatic_tiers}
@@ -336,7 +338,7 @@ Note that the somatic callability track is based on the core somatic variant qua
 \section{Filtration and Empirical Scoring}
 
 
-\subsection{Germline Model}
+\subsection{Germline and RNA-seq Models}
 
 The germline variant calling model provides a useful representation of the sequencing data at the putative variant locus; however, there is additional information not used by the model which is predictive of call accuracy. These may be metrics such as the number of reads or alleles which are filtered out of the call quality computation, the quality of alignments in the region around the putative variant or various allele/strand/quality biases indicative of assay or mapping artifacts. As a final step in the germline variant calling process, such additional information is enumerated as a set of predictive features and used to improve call precision for a given recall level beyond what can be achieved from the core variant calling model alone. These additional features are employed in the final step of germline calling in one of two ways:
 
@@ -363,7 +365,7 @@ The output scores produced by the random forest classifier are well calibrated u
 Features used in each model are listed here and definitions are provided further below.
 
 \begin{itemize}
-    \item SNV features:
+    \item Germline SNV features:
     \begin{itemize}
         \item \texttt{GenotypeCategory}
         \item \texttt{SampleRMSMappingQuality}
@@ -375,17 +377,37 @@ Features used in each model are listed here and definitions are provided further
         \item \texttt{SampleUsedDepthFraction}
         \item \texttt{ConservativeGenotypeQuality}
     \end{itemize}
-    \item Indel features:
+    \item Germline Indel features:
     \begin{itemize}
         \item \texttt{GenotypeCategory}
-        \item \texttt{SampleIndelAlleleRepeatCount}
-        \item \texttt{SampleIndelAlleleRepeatUnitSize}
+        \item \texttt{SampleIndelRepeatCount}
+        \item \texttt{SampleIndelRepeatUnitSize}
         \item \texttt{SampleIndelAlleleBiasLower}
         \item \texttt{SampleIndelAlleleBias}
         \item \texttt{SampleProxyRMSMappingQuality}
         \item \texttt{RelativeTotalLocusDepth}
-        \item \texttt{SampleIndelAlleleDepthFraction}
+        \item \texttt{SamplePrimaryAltAlleleDepthFraction}
         \item \texttt{ConservativeGenotypeQuality}
+    \end{itemize}
+    \item RNA-seq SNV features:
+    \begin{itemize}
+        \item \texttt{SiteHomopolymerLength}
+        \item \texttt{SampleStrandBias}
+        \item \texttt{SamplePrimaryAltAlleleDepth}
+        \item \texttt{VariantAlleleQuality}
+        \item \texttt{SampleMeanDistanceFromReadEdge}
+        \item \texttt{SamplePrimaryAltAlleleDepthFraction}
+    \end{itemize}
+    \item RNA-seq Indel features:
+    \begin{itemize}
+        \item \texttt{SampleRefAlleleDepth}
+        \item \texttt{SamplePrimaryAltAlleleDepth}
+        \item \texttt{SampleIndelRepeatCount}
+        \item \texttt{SampleIndelRepeatUnitSize}
+        \item \texttt{VariantAlleleQuality}
+        \item \texttt{SampleIndelMeanDistanceFromReadEdge}
+        \item \texttt{SampleRefRepeatCount}
+        \item \texttt{SamplePrimaryAltAlleleDepthFraction}
     \end{itemize}
 \end{itemize}
 
@@ -432,9 +454,9 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
 
 \item \texttt{ConservativeGenotypeQuality} ~ The model-based ConservativeGenotypeQuality (GQX) value for one sample, reflecting the conservative confidence of the called genotype.
 
-\item \texttt{SampleIndelAlleleRepeatCount} ~ The number of times the primary indel allele's \emph{repeat unit} occurs in a haplotype containing the indel allele. The primary indel allele's \emph{repeat unit} is found by comparing the reference and primary indel alleles to find the smallest possible repeating sequence unit shared between the two alleles. The primary indel allele is the best supported allele among all overlapping indel alleles at the locus of interest in one sample.
+\item \texttt{SampleIndelRepeatCount} ~ The number of times the primary indel allele's \emph{repeat unit} occurs in a haplotype containing the indel allele. The primary indel allele's \emph{repeat unit} is the smallest possible sequence such that the inserted/deleted sequence can be formed by concatenating multiple copies of it. The primary indel allele is the best supported allele among all overlapping indel alleles at the locus of interest in one sample.
 
-\item \texttt{SampleIndelAlleleRepeatUnitSize} ~ Length of the primary indel allele's \emph{repeat unit}, as defined for feature \texttt{SampleIndelAlleleRepeatCount}.
+\item \texttt{SampleIndelRepeatUnitSize} ~ Length of the primary indel allele's \emph{repeat unit}, as defined for feature \texttt{SampleIndelRepeatCount}.
 
 \item \texttt{SampleIndelAlleleBiasLower} ~ For one sample, this is the negative log probability of seeing N or fewer observations of one allele in a heterozygous variant out of the total observations from both alleles. N is typically the observation count of the reference allele. If the heterozygous variant does not include the reference allele, the first indel allele is used instead.
 
@@ -442,20 +464,19 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
 
 \item \texttt{SampleProxyRMSMappingQuality} ~ RMS mapping quality of all reads spanning the position immediately proceeding the indel in one sample. This feature approximates the SAMPLE/MQ value defined in the VCF spec.
 
-\item \texttt{SampleIndelAlleleDepthFraction} ~ For one sample, this is the ratio of the confident observation count of the best-supported non-reference indel allele at the variant locus, over all confident allele observation counts.
+\item \texttt{SamplePrimaryAltAlleleDepthFraction} ~ For one sample, this is the ratio of the confident observation count of the best-supported non-reference allele at the variant locus, over all confident allele observation counts.
 
-\end{itemize}
+\item \texttt{SamplePrimaryAltAlleleDepth} ~ The confident observation count of the best-supported non-reference allele at the variant locus.
 
+\item \texttt{VariantAlleleQuality} ~ The model-based variant quality value (QUAL as defined in the VCF specification), reflecting the confidence that the called variant is present in at least one sample, regardless of genotype.
 
-\paragraph{EVS/hard-filter experimental feature descriptions}
+\item \texttt{SampleMeanDistanceFromReadEdge} ~ For all non-reference basecall observations in one sample at a candidate SNV site, report the mean distance to the closest edge of each alternate basecall's read. Distance is measured in read-coordinates, zero-indexed, and is allowed to have a maximum value of 20.
 
-Strelka includes a number of other experimental variant classification features. Although not currently used they are described here for reference. This list is not comprehensive.
+\item \texttt{SampleRefAlleleDepth} ~ The confident observation count of the reference allele at the variant locus.
 
-\begin{itemize}
+\item \texttt{SampleIndelMeanDistanceFromReadEdge} ~ For all indel allele observations in one sample at a candidate indel locus, report the mean distance to the closest edge of each indel allele's read. Distance is measured in read-coordinates, zero-indexed, and is allowed to have a maximum value of 20. The left or right side of the indel may be used to provide the shortest distance, but the indel will only be considered in its left-aligned position.
 
-\item \texttt{SampleMeanDistanceFromReadEdge} ~ (RNA-Seq feature) For all non-reference basecall observations in one sample at a candidate SNV site, report the mean distance to the closest edge of each alternate basecall's read. Distance is measured in read-coordinates, zero-indexed, and is allowed to have a maximum value of 20.
-
-\item \texttt{SampleIndelMeanDistanceFromReadEdge} ~ (RNA-Seq feature) For all indel allele observations in one sample at a candidate indel locus, report the mean distance to the closest edge of each indel allele's read. Distance is measured in read-coordinates, zero-indexed, and is allowed to have a maximum value of 20. The left or right side of the indel may be used to provide the shortest distance, but the indel will only be considered in its left-aligned position.
+\item \texttt{SampleRefRepeatCount} ~ The number of times the primary indel allele's \emph{repeat unit} occurs in the reference sequence.
 
 \end{itemize}
 
@@ -506,8 +527,6 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
     \item \texttt{AlleleCountLogOddsRatio} ~ The log odds ratio of allele counts $log_{10}{\frac{r_t a_n} {r_n a_t}}$, given reference $(r_t,r_n)$ and non-reference $(a_t,a_n)$ allele counts for the tumor and normal sample pair.
 
 \end{itemize}
-
-
 
 \bibliographystyle{alpha}
 \bibliography{methods}

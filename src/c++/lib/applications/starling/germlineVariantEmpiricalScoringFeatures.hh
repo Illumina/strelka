@@ -128,9 +128,9 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         QUAL_NORM,
         F_GQX_NORM,
         F_GQ_NORM,
-        AD0_NORM,
-        QUAL_EXACT,
-        F_GQ_EXACT,
+        SampleRefAlleleDepthFraction,
+        VariantAlleleQuality,
+        F_GQ,
         SamplePrimaryAltAlleleDepthFraction,
         SIZE
     };
@@ -164,12 +164,12 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "F_GQX_NORM";
         case F_GQ_NORM:
             return "F_GQ_NORM";
-        case AD0_NORM:
-            return "AD0_NORM";
-        case QUAL_EXACT:
-            return "QUAL_EXACT";
-        case F_GQ_EXACT:
-            return "F_GQ_EXACT";
+        case SampleRefAlleleDepthFraction:
+            return "SampleRefAlleleDepthFraction";
+        case VariantAlleleQuality:
+            return "VariantAlleleQuality";
+        case F_GQ:
+            return "F_GQ";
         case SamplePrimaryAltAlleleDepthFraction:
             return "SamplePrimaryAltAlleleDepthFraction";
         default:
@@ -204,8 +204,8 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
     enum index_t
     {
         GenotypeCategory,
-        IndelAlleleRepeatCount,
-        IndelAlleleRepeatUnitSize,
+        SampleIndelRepeatCount,
+        SampleIndelRepeatUnitSize,
         SampleIndelAlleleBiasLower,
         SampleIndelAlleleBias,
         SampleProxyRMSMappingQuality,
@@ -228,10 +228,10 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
         {
         case GenotypeCategory:
             return "GenotypeCategory";
-        case IndelAlleleRepeatCount:
-            return "IndelAlleleRepeatCount";
-        case IndelAlleleRepeatUnitSize:
-            return "IndelAlleleRepeatUnitSize";
+        case SampleIndelRepeatCount:
+            return "SampleIndelRepeatCount";
+        case SampleIndelRepeatUnitSize:
+            return "SampleIndelRepeatUnitSize";
         case SampleIndelAlleleBiasLower:
             return "SampleIndelAlleleBiasLower";
         case SampleIndelAlleleBias:
@@ -274,15 +274,15 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
 
     enum index_t
     {
-        REFREP1,
+        SampleRefRepeatCount,
         mapqZeroFraction,
         F_DPI_NORM,
         QUAL_NORM,
         F_GQX_NORM,
         F_GQ_NORM,
-        AD0_NORM,
-        QUAL_EXACT,
-        F_GQ_EXACT,
+        SampleRefAlleleDepthFraction,
+        VariantAlleleQuality,
+        F_GQ,
         SIZE
     };
 
@@ -297,8 +297,8 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-        case REFREP1:
-            return "REFREP1";
+        case SampleRefRepeatCount:
+            return "SampleRefRepeatCount";
         case mapqZeroFraction:
             return "mapqZeroFraction";
         case F_DPI_NORM:
@@ -309,12 +309,12 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "F_GQX_NORM";
         case F_GQ_NORM:
             return "F_GQ_NORM";
-        case AD0_NORM:
-            return "AD0_NORM";
-        case QUAL_EXACT:
-            return "QUAL_EXACT";
-        case F_GQ_EXACT:
-            return "F_GQ_EXACT";
+        case SampleRefAlleleDepthFraction:
+            return "SampleRefAlleleDepthFraction";
+        case VariantAlleleQuality:
+            return "VariantAlleleQuality";
+        case F_GQ:
+            return "F_GQ";
         default:
             assert(false && "Unknown feature");
             return nullptr;
