@@ -468,7 +468,7 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
 
 \item \texttt{SamplePrimaryAltAlleleDepth} ~ The confident observation count of the best-supported non-reference allele at the variant locus.
 
-\item \texttt{VariantAlleleQuality} ~ The model-based variant quality value, reflecting the confidence that the called variant is present in at least one sample, regardless of genotype.
+\item \texttt{VariantAlleleQuality} ~ The model-based variant quality value (QUAL as defined in the VCF specification), reflecting the confidence that the called variant is present in at least one sample, regardless of genotype.
 
 \item \texttt{SampleMeanDistanceFromReadEdge} ~ For all non-reference basecall observations in one sample at a candidate SNV site, report the mean distance to the closest edge of each alternate basecall's read. Distance is measured in read-coordinates, zero-indexed, and is allowed to have a maximum value of 20.
 
