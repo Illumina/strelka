@@ -286,7 +286,6 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         SampleRefAlleleDepthFraction,
         VariantAlleleQuality,
         F_GQ,
-        SamplePrimaryAltAlleleDepthFraction,
         AltHaplotypeCountRatio,
         SIZE
     };
@@ -320,8 +319,6 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "VariantAlleleQuality";
         case F_GQ:
             return "F_GQ";
-        case SamplePrimaryAltAlleleDepthFraction:
-            return "SamplePrimaryAltAlleleDepthFraction";
         case AltHaplotypeCountRatio:
             return "AltHaplotypeCountRatio";
         default:
