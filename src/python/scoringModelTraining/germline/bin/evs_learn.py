@@ -164,6 +164,11 @@ def main():
         tpdata = tpdata2.ix[tp_rows_selected]
         fpdata = fpdata2.ix[fp_rows_selected]
 
+    if args.ambig:
+        fpcounts = fpdata["tag"].value_counts()
+        fpdata.loc[fpdata.tag == "UNK", "weight"] = 0.5*fpcounts["FP"]/fpcounts["UNK"]
+
+
     model.train(tpdata, fpdata, features, **pars)
     model.save(args.output)
 
