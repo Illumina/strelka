@@ -181,15 +181,21 @@ struct VcfGenotype
     }
 
     void
-    setAllele0HaplotypeId(uint8_t complexAlleleId)
+    setAllele0HaplotypeId(uint8_t haplotypeId)
     {
-        _allele0HaplotypeId = complexAlleleId;
+        _allele0HaplotypeId = haplotypeId;
     }
 
     void
     setAllele1HaplotypeId(uint8_t complexAlleleId)
     {
         _allele1HaplotypeId = complexAlleleId;
+    }
+
+    void
+    addAltAlleleHaplotypeCountRatio(const float altAlleleHaplotypeCountRatio)
+    {
+        _altAlleleHaplotypeCountRatio += altAlleleHaplotypeCountRatio;
     }
 
     void
@@ -223,6 +229,17 @@ struct VcfGenotype
         return (getAllele0Index() != getAllele1Index());
     }
 
+    bool
+    containsReference() const
+    {
+        bool containsReference = (getAllele0Index() == 0);
+        if (!containsReference and (getPloidy() == 2))
+        {
+            containsReference = (getAllele1Index() == 0);
+        }
+        return containsReference;
+    }
+
     uint8_t
     getAllele0Index() const
     {
@@ -249,6 +266,14 @@ struct VcfGenotype
     {
         assert(_ploidy >= 2);
         return _allele1HaplotypeId;
+    }
+
+    float
+    getAltHaplotypeCountRatio() const
+    {
+        // _altAlleleHaplotypeCountRatio may exceed 1.0
+        // because some reads can be double counted if haplotypes are reconstructed by assembly
+        return _altAlleleHaplotypeCountRatio > 1.0f ? 1.0f : _altAlleleHaplotypeCountRatio;
     }
 
     bool isConflict() const
@@ -303,6 +328,8 @@ private:
 
     uint8_t _allele0HaplotypeId = 0;
     uint8_t _allele1HaplotypeId = 0;
+
+    float _altAlleleHaplotypeCountRatio = 0.0f;
 
     bool _isPhased = false;
 };

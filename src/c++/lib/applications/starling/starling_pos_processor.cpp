@@ -478,23 +478,29 @@ updateSnvLocusWithSampleInfo(
 
     // set complex allele ids
     auto& maxGt = sampleInfo.max_gt();
-    if (maxGt.getPloidy() == 2)
+    if (maxGt.getPloidy() >= 1)
     {
-        // diploid
         auto allele0Index(maxGt.getAllele0Index());
-        auto allele1Index(maxGt.getAllele1Index());
-
         if (allele0Index > 0)
+        {
             maxGt.setAllele0HaplotypeId(
                 candidateSnvBuffer.getHaplotypeId(
                     sampleIndex, locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex)
             );
-        if (allele1Index > 0)
-            maxGt.setAllele1HaplotypeId(
-                candidateSnvBuffer.getHaplotypeId(
-                    sampleIndex, locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
-            );
+        }
     }
+    if (maxGt.getPloidy() == 2)
+    {
+        auto allele1Index(maxGt.getAllele1Index());
+        if (allele1Index > 0)
+        {
+            maxGt.setAllele1HaplotypeId(
+                    candidateSnvBuffer.getHaplotypeId(
+                            sampleIndex, locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
+            );
+        }
+    }
+    maxGt.addAltAlleleHaplotypeCountRatio(candidateSnvBuffer.getAltHaplotypeCountRatio(sampleIndex, locus.pos));
 }
 
 
@@ -1414,18 +1420,27 @@ updateIndelLocusWithSampleInfo(
     // set indelSampleInfo
     updateIndelSampleInfo(opt, dopt, alleleGroup, sampleIndex, basecallBuffer, locus);
 
-    // set haplotype ids
+    // set haplotype ids and alt allele haplotype count ratio
     auto& maxGt = sampleInfo.max_gt();
+    if (maxGt.getPloidy() >= 1)
+    {
+        auto allele0Index(maxGt.getAllele0Index());
+        if (allele0Index > 0)
+        {
+            const auto& indelSampleData(alleleGroup.data(allele0Index-1).getSampleData(sampleIndex));
+            maxGt.setAllele0HaplotypeId(indelSampleData.haplotypeId);
+            maxGt.addAltAlleleHaplotypeCountRatio(indelSampleData.altAlleleHaplotypeCountRatio);
+        }
+    }
     if (maxGt.getPloidy() == 2)
     {
-        // diploid
-        auto allele0Index(maxGt.getAllele0Index());
         auto allele1Index(maxGt.getAllele1Index());
-
-        if (allele0Index > 0)
-            maxGt.setAllele0HaplotypeId(alleleGroup.data(allele0Index-1).getSampleData(sampleIndex).haplotypeId);
         if (allele1Index > 0)
-            maxGt.setAllele1HaplotypeId(alleleGroup.data(allele1Index-1).getSampleData(sampleIndex).haplotypeId);
+        {
+            const auto& indelSampleData(alleleGroup.data(allele1Index-1).getSampleData(sampleIndex));
+            maxGt.setAllele1HaplotypeId(indelSampleData.haplotypeId);
+            maxGt.addAltAlleleHaplotypeCountRatio(indelSampleData.altAlleleHaplotypeCountRatio);
+        }
     }
 }
 

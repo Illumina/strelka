@@ -95,7 +95,7 @@ bool ActiveRegion::processHaplotypesWithCounting(const unsigned sampleId)
     std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tCounting"<< std::endl;
 #endif
 
-    return processSelectedHaplotypes(sampleId, haplotypeToAlignIdSet);
+    return processSelectedHaplotypes(sampleId, haplotypeToAlignIdSet, numReads);
 }
 
 
@@ -132,9 +132,11 @@ bool ActiveRegion::processHaplotypesWithAssembly(const unsigned sampleId)
     std::string suffixAnchor;
     _ref.get_substring(_posRange.end_pos-1, endPos-_posRange.end_pos + 1, suffixAnchor);
 
+    unsigned minReadSegmentLength((unsigned int) (prefixAnchor.size() + suffixAnchor.size()));
+
     // get read segments
     ReadInfo readInfo;
-    _readBuffer.getReadSegments(pos_range(beginPos, endPos), readInfo, true);
+    _readBuffer.getReadSegments(pos_range(beginPos, endPos), readInfo, true, minReadSegmentLength);
 
     // too many reads; do not perform assembly (too time-consuming)
     if (readInfo.numReads > MinNumReadsToBypassAssembly)
@@ -167,19 +169,24 @@ bool ActiveRegion::processHaplotypesWithAssembly(const unsigned sampleId)
     // So, the minimum size of legitimate haplotypes is prefixAnchor.size() + suffixAnchor.size().
     // For most regions, minWordLength will be 20.
     // If there are SNVs closer to anchors, minWordLength may be smaller than 20.
-    unsigned minWordLength((unsigned int) (prefixAnchor.size() + suffixAnchor.size()));
-    assembleOption.minWordLength = minWordLength;
+    assembleOption.minWordLength = minReadSegmentLength;
 
     // maxWordLength must not be smaller than minWordLength.
-    unsigned maxWordLength(std::max(minWordLength, ActiveRegion::MaxAssemblyWordSize));
+    unsigned maxWordLength(std::max(minReadSegmentLength, ActiveRegion::MaxAssemblyWordSize));
     assembleOption.maxWordLength = maxWordLength;
     assembleOption.minCoverage = MinAssemblyCoverage;
 
     // perform assembly
     runIterativeAssembler(assembleOption, reads, assemblyReadOutput, contigs);
 
+    unsigned totalNumReads(0);
+    for (auto assemblyReadInfo : assemblyReadOutput)
+    {
+        if (assemblyReadInfo.isUsed and (not assemblyReadInfo.isPseudo))
+            ++totalNumReads;
+    }
+
     HaplotypeToAlignIdSet haplotypeToAlignIdSet;
-    unsigned maxHaplotypeLength(0);
     unsigned isNonRefHaplotypeFound(false);
 
     std::string refStr;
@@ -192,7 +199,6 @@ bool ActiveRegion::processHaplotypesWithAssembly(const unsigned sampleId)
     for (unsigned i(0); i<contigs.size(); ++i)
     {
         const std::string& contig(contigs[i].seq);
-
         // ignore if the contig does not contain prefix anchor
         auto start(contig.find(prefixAnchor));
         if (start == std::string::npos) continue;
@@ -209,29 +215,34 @@ bool ActiveRegion::processHaplotypesWithAssembly(const unsigned sampleId)
 
         const std::string haplotype(contig.substr(start, end-start));
 
-        if (haplotype != refStr)
-            isNonRefHaplotypeFound = true;
-        if (haplotype.length() > maxHaplotypeLength)
-            maxHaplotypeLength = (unsigned int) haplotype.length();
-        haplotypeToAlignIdSet[haplotype] = std::vector<align_id_t>();
+        auto alignIds = std::vector<align_id_t>();
+        bool containsUniqueRead(false);
         for (unsigned readIndex : contigs[i].supportReads)
         {
-            if (assemblyReadOutput[readIndex].isPseudo)
+            const auto& assemblyReadInfo(assemblyReadOutput[readIndex]);
+            if (assemblyReadInfo.isPseudo)
             {
-                /// TODO: What should we do with pseudo reads? should they be tracked in haplotype support counts,
-                ///       and if so, how?
+                // pseudo reads are ignored
                 continue;
             }
-
-            haplotypeToAlignIdSet[haplotype].push_back(readIndexToAlignId[readIndex]);
+            if ((not containsUniqueRead) and (assemblyReadInfo.contigIds.size() == 1))
+                containsUniqueRead = true;
+            alignIds.push_back(readIndexToAlignId[readIndex]);
         }
+
+        // ignore if there's no read uniquely supporting the contig
+        if (not containsUniqueRead) continue;
+
+        if (haplotype != refStr)
+            isNonRefHaplotypeFound = true;
+        haplotypeToAlignIdSet[haplotype] = alignIds;
     }
 
     // assembly fails if no alt haplotype is found
     if (not isNonRefHaplotypeFound)
         return false;
 
-    return processSelectedHaplotypes(sampleId, haplotypeToAlignIdSet);
+    return processSelectedHaplotypes(sampleId, haplotypeToAlignIdSet, totalNumReads);
 }
 
 void ActiveRegion::doNotUseHaplotyping()
@@ -377,7 +388,10 @@ isFilterSecondHaplotypeAsSequencerPhasingNoise(
 
 
 
-bool ActiveRegion::processSelectedHaplotypes(const unsigned sampleId, HaplotypeToAlignIdSet& haplotypeToAlignIdSet)
+bool ActiveRegion::processSelectedHaplotypes(
+        const unsigned sampleId,
+        HaplotypeToAlignIdSet& haplotypeToAlignIdSet,
+        const unsigned totalNumReads)
 {
     // determine threshold to select 2 haplotypes with the largest counts
     unsigned largestCount(0);
@@ -464,7 +478,7 @@ bool ActiveRegion::processSelectedHaplotypes(const unsigned sampleId, HaplotypeT
     {
         const auto& haplotype(*bestHaplotypePtr);
         const auto& alignIdList(haplotypeToAlignIdSet[haplotype]);
-        convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, haplotypeId);
+        convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, totalNumReads, haplotypeId);
         ++haplotypeId;
 #ifdef DEBUG_ACTIVE_REGION
         std::cerr << haplotype << '\t' << alignIdList.size() << std::endl;
@@ -478,7 +492,7 @@ bool ActiveRegion::processSelectedHaplotypes(const unsigned sampleId, HaplotypeT
         {
             const auto& haplotype(*haplotypePtr);
             const auto& alignIdList(haplotypeToAlignIdSet[haplotype]);
-            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, haplotypeId);
+            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, totalNumReads, haplotypeId);
             ++haplotypeId;
 #ifdef DEBUG_ACTIVE_REGION
             std::cerr << haplotype << '\t' << alignIdList.size() << std::endl;
@@ -493,6 +507,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
     const unsigned sampleId,
     const std::string& haploptypeSeq,
     const std::vector<align_id_t>& alignIdList,
+    const unsigned totalNumReads,
     const uint8_t haplotypeId)
 {
     std::string reference;
@@ -514,6 +529,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
     }
 
     unsigned numVariants(0);
+    const float altHaplotypeCountRatio(alignIdList.size()/static_cast<float>(totalNumReads));
     for (unsigned pathIndex(0); pathIndex<alignPath.size(); ++pathIndex)
     {
         const ALIGNPATH::path_segment& pathSegment(alignPath[pathIndex]);
@@ -529,7 +545,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
         case ALIGNPATH::SEQ_MISMATCH:
             for (unsigned i(0); i<segmentLength; ++i)
             {
-                _candidateSnvBuffer.addCandidateSnv(sampleId, referencePos, haploptypeSeq[haplotypePosOffset], haplotypeId);
+                _candidateSnvBuffer.addCandidateSnv(sampleId, referencePos, haploptypeSeq[haplotypePosOffset], haplotypeId, altHaplotypeCountRatio);
 
                 ++referencePos;
                 ++haplotypePosOffset;
@@ -620,6 +636,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
             indelDataPtr->isConfirmedInActiveRegion = true;
 
             indelDataPtr->getSampleData(sampleId).haplotypeId += haplotypeId;
+            indelDataPtr->getSampleData(sampleId).altAlleleHaplotypeCountRatio += altHaplotypeCountRatio;
 
             // TODO: perform candidacy test here
         }
