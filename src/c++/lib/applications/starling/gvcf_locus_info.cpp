@@ -445,11 +445,15 @@ computeEmpiricalScoringFeatures(
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::SamplePrimaryAltAlleleDepthFraction,
                                     (confidentPrimaryAltCount * filteredLocusDepthFactor));
 
-            // normalize altHaplotypeCountRatio by multiplying 2 for het variant
-            if (maxGt.isHet())
-                developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::NormalizedAltHaplotypeCountRatio, maxGt.getAltHaplotypeCountRatio()*2.0f);
+
+            float normalizedAltHaplotypeCountRatio;
+            if (locus.getActiveRegionId() < 0)
+                normalizedAltHaplotypeCountRatio = -1.0f;   // not in active region
+            else if (maxGt.isHet())
+                normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply 2 for het
             else
-                developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::NormalizedAltHaplotypeCountRatio, maxGt.getAltHaplotypeCountRatio());
+                normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio();
+            developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::NormalizedAltHaplotypeCountRatio, normalizedAltHaplotypeCountRatio);
         }
     }
 }
@@ -630,11 +634,14 @@ computeEmpiricalScoringFeatures(
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::VariantAlleleQuality, (locus.anyVariantAlleleQuality));
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ, (sampleInfo.genotypeQualityPolymorphic));
 
-            // normalize altHaplotypeCountRatio by multiplying 2 for het variant
-            if (maxGt.isHet())
-                developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::NormalizedAltHaplotypeCountRatio, maxGt.getAltHaplotypeCountRatio()*2.0f);
+            float normalizedAltHaplotypeCountRatio;
+            if (locus.getActiveRegionId() < 0)
+                normalizedAltHaplotypeCountRatio = -1.0f;   // not in active region
+            else if (maxGt.isHet())
+                normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply 2 for het
             else
-                developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::NormalizedAltHaplotypeCountRatio, maxGt.getAltHaplotypeCountRatio());
+                normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio();
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::NormalizedAltHaplotypeCountRatio, normalizedAltHaplotypeCountRatio);
         }
     }
 }

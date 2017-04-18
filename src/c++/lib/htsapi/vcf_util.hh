@@ -318,7 +318,7 @@ private:
     uint8_t _allele0HaplotypeId = 0;
     uint8_t _allele1HaplotypeId = 0;
 
-    float _altAlleleHaplotypeCountRatio = 0.0;
+    float _altAlleleHaplotypeCountRatio = 0.0f;
 
     bool _isPhased = false;
 };
