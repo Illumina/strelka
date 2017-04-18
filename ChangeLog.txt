@@ -1,4 +1,3 @@
-- STREL-512 Create EVS feature AltHaplotypeCountRatio
 - STREL-459 Retain optimal soft-clipping for RNA analysis
 - STREL-451 Enable somatic indel EVS and retrain somatic SNV EVS
 - STREL-478 Change gVCF non-variant blocks to use mean depth

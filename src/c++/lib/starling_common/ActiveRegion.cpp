@@ -216,7 +216,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(const unsigned sampleId)
         const std::string haplotype(contig.substr(start, end-start));
 
         auto alignIds = std::vector<align_id_t>();
-        bool isContainingUniqueRead(false);
+        bool containsUniqueRead(false);
         for (unsigned readIndex : contigs[i].supportReads)
         {
             const auto& assemblyReadInfo(assemblyReadOutput[readIndex]);
@@ -225,13 +225,13 @@ bool ActiveRegion::processHaplotypesWithAssembly(const unsigned sampleId)
                 // pseudo reads are ignored
                 continue;
             }
-            if ((not isContainingUniqueRead) and (assemblyReadInfo.contigIds.size() == 1))
-                isContainingUniqueRead = true;
+            if ((not containsUniqueRead) and (assemblyReadInfo.contigIds.size() == 1))
+                containsUniqueRead = true;
             alignIds.push_back(readIndexToAlignId[readIndex]);
         }
 
         // ignore if there's no read uniquely supporting the contig
-        if (not isContainingUniqueRead) continue;
+        if (not containsUniqueRead) continue;
 
         if (haplotype != refStr)
             isNonRefHaplotypeFound = true;
