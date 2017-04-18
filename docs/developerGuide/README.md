@@ -6,31 +6,37 @@ Strelka Developer Guide
 [//]: # (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
 
 * [Scope](#scope)
-  * [Developer Build Notes](#developer-build-notes)
-    * [Building from source repository vs. versioned code distribution:](#building-from-source-repository-vs-versioned-code-distribution)
-    * [Static code analysis](#static-code-analysis)
-    * [Source auto-documentation](#source-auto-documentation)
-    * [Improving build time](#improving-build-time)
-  * [General Debugging Notes](#general-debugging-notes)
-    * [General Debugging: Address Sanitizer](#general-debugging-address-sanitizer)
-    * [General Debugging: valgrind](#general-debugging-valgrind)
-    * [General Debugging: Inspecting temporary files](#general-debugging-inspecting-temporary-files)
-    * [Windows development support](#windows-development-support)
-    * [Automating Portable Binary Builds for Linux](#automating-portable-binary-builds-for-linux)
-  * [Coding Guidelines](#coding-guidelines)
-    * [Source formatting](#source-formatting)
-    * [Git conventions](#git-conventions)
-    * [Commit consolidation](#commit-consolidation)
-    * [Changelog conventions](#changelog-conventions)
-    * [Error handling](#error-handling)
-    * [Unit tests](#unit-tests)
-  * [IDE support](#ide-support)
-    * [Clion](#clion)
+* [Developer Build Notes](#developer-build-notes)
+  * [Building from source repository vs. versioned code distribution](#building-from-source-repository-vs-versioned-code-distribution)
+  * [Static analysis](#static-analysis)
+  * [Source auto-documentation](#source-auto-documentation)
+  * [Improving build time](#improving-build-time)
+    * [ccache](#ccache)
+    * [Bundled dependencies](#bundled-dependencies)
+* [General Debugging Notes](#general-debugging-notes)
+  * [General Debugging: Address Sanitizer](#general-debugging-address-sanitizer)
+  * [General Debugging: valgrind](#general-debugging-valgrind)
+  * [General Debugging: Inspecting temporary files](#general-debugging-inspecting-temporary-files)
+  * [Windows development support](#windows-development-support)
+  * [Automating Portable Binary Builds for Linux](#automating-portable-binary-builds-for-linux)
+* [Coding Guidelines](#coding-guidelines)
+  * [Source formatting](#source-formatting)
+  * [Git conventions](#git-conventions)
+    * [Commit messages](#commit-messages)
+  * [Commit consolidation](#commit-consolidation)
+  * [Changelog conventions](#changelog-conventions)
+  * [Error handling](#error-handling)
+    * [General Policies](#general-policies)
+    * [Exception Details](#exception-details)
+    * [Logging](#logging)
+  * [Unit tests](#unit-tests)
+* [IDE support](#ide-support)
+  * [Clion](#clion)
 
 [//]: # (END automated TOC section, any edits will be overwritten on next source refresh)
 
 
-# Scope
+## Scope
 
 This guide provides:
 * protocols for contributing new or modified methods
@@ -50,26 +56,26 @@ The following section provides a supplement to the standard build
 instructions including additional details of interest to methods
 developers.
 
-### Building from source repository vs. versioned code distribution:
+### Building from source repository vs. versioned code distribution
 
 When the source repository is cloned from github, it is configured for development
 rather than user distribution. In this configuration all builds are strict
 such that:
 * all warnings are treated as errors
-* if cppcheck is found any detected cppcheck issue is converted to a build error
+* if cppcheck is found any detected cppcheck issue is converted to a build error (see details below)
 
 Note that all unit tests are always run and required to pass for the build
 procedure to complete.
 
-### Static code analysis
+### Static analysis
 
-As described above, if the c++ static analyzer cppcheck is found in the users `PATH`
-during configuration, then it will be run against the entire c++ portion of the
-source tree as part of the build process, and any cppcheck warning will be treated
-as a build error. Execution of cppcheck is managed by [run_cppcheck.py](../../src/srcqc/run_cppcheck.py)
-
-The Strelka source code is currently maintained to screen against all warnings
-from cppcheck v1.69 only.
+When the build is configured for development, static analysis is run on all project c++ source using cppcheck, so long
+as an appropriate cppcheck version can be found in the user's path. This static analysis step is configured as follows:
+* cppcheck will be used if it can be found in the user's path and the version found is at least 1.69
+* The script which runs and interprets cppcheck is [run_cppcheck.py](../../src/srcqc/run_cppcheck.py).
+* Any cppcheck warning will be treated as an error. A few warnings are suppressed, depending on the cppcheck version.
+* All cppcheck warnings are reformatted to follow standard gcc/clang error message style to work correctly in most IDEs.
+* All project c++ code will be analyzed, but third-party/redistributed packages are ignored.
 
 ### Source auto-documentation
 
@@ -146,14 +152,14 @@ files may be helpful in various debugging scenarios. To turn on this option, add
 ### Windows development support
 
 Strelka does not link or run on windows. However, the build system does
-facilitate Visual Studio (VS) developers. When cmake configuration is run
+facilitate Visual Studio (VS) users. When cmake configuration is run
 on windows, all linking is disabled and most third party libraries are
 unpacked for header include access, but are not compiled. Cmake VS
 solutions allow the c++ code to be browsed, analyzed and compiled to
 the library level.  Note that unit test codes are compiled to
-libraries but not linked or run.
+libraries but cannot be run.
 
-C++11 features in use require at least VS2013. Windows
+C++11 features in use require at least VS2013. A Windows
 installations of cmake and zlib are also required to configure and compile.
 Note that the minimum cmake version is 3.1.0 for Windows. Windows zlib is provided by the [gnuwin32 package][gnuwin32] among others.
 
@@ -167,18 +173,18 @@ have permission to `docker run` on the current system and execute the
 following script:
 
 ```
-${STRELKA_ROOT_PATH}/scratch/docker/deployment/dockerBuildBinaryTarball.bash ${STRELKA_ROOT_PATH2} ${BINARY_BUILD_PREFIX}
+${SOURCE_PATH}/scratch/docker/deployment/dockerBuildBinaryTarball.bash ${SOURCE_PATH2} ${BINARY_BUILD_PREFIX}
 ```
 
-The term `${STRELKA_ROOT_PATH2}` can point to the current git repo (ie. `${STRELKA_ROOT_PATH}`),
-or to an extracted Strelka source tarball previously created using the script:
+The term `${SOURCE_PATH2}` can point to the current git repository (ie. `${SOURCE_PATH}`),
+or to an extracted source release tarball previously created using the script:
 
 ```
-${STRELKA_ROOT_PATH}/scratch/make_release_tarball.bash
+${SOURCE_PATH}/scratch/make_release_tarball.bash
 ```
 
 The choice of virtualized build environment is hard-coded in the deploy script for the time being,
-specified by `builderImage`.
+see the `builderImage` variable.
 
 ## Coding Guidelines
 
@@ -229,6 +235,7 @@ Changelog entries should typically be made for any major branch merge, bug fix, 
 ### Error handling
 
 #### General Policies
+
 * Exceptions with informative contextual details are encouraged whenever possible.
 * To quickly express invariants it is acceptable to add `assert()`'s first, and transition to exceptions as code stabilizes.
 * Note that the build process will never define `NDEBUG` to compile out assert statements, even in release code.
@@ -238,6 +245,7 @@ Changelog entries should typically be made for any major branch merge, bug fix, 
 * Warnings are discouraged. If considering a warning you should probably just fail per the above policy.
 
 #### Exception Details
+
 * Preferred exception pattern is to use an internal class derived from `boost::exception`:
 
 ```c++
@@ -284,6 +292,7 @@ self.flowLog("Initiating Starling workflow version: %s" % (__version__)
 * At the binary (c++) layer, there is no logger at present. Direct all error messaging to `std::cerr`.
 
 ### Unit tests
+
 * Unit tests are enabled for a subset of the c++ code
 * All tests use the boost unit test framework
 * All unit tests are required to run and pass as part of every build (including end-user builds)
@@ -293,7 +302,7 @@ self.flowLog("Initiating Starling workflow version: %s" % (__version__)
 
 ## IDE support
 
-Strelka includes little support for any specific IDE except as made available by cmake generators, and the maintenance of a partial windows build capability for Visual Studio users. IDE-specific configuration files maintained in the project are described below.
+Little support for any specific IDE is provided, except as made available by cmake generators. IDE-specific configuration files maintained in the project are described below.
 
 ### Clion
 
@@ -301,4 +310,4 @@ A subset of code formatting settings which can be imported into Clion are availa
 
 `${STRELKA_REPO_PATH}/scratch/ideConfiguration/CLion/referenceCodeStyleSettings.xml`
 
-..note that the automated `asytle` formatting settings still define the project defaults, the above configuration simply provides a starting point for CLion which is closer to the project's formatting norms.
+..note that the automated `astyle` formatting settings still define the project defaults, the above configuration simply provides a starting point for CLion which is closer to the project's formatting norms.
