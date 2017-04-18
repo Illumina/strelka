@@ -232,12 +232,12 @@ struct VcfGenotype
     bool
     containsReference() const
     {
-        bool containsReference = (getAllele0Index() == 0);
-        if (!containsReference and (getPloidy() == 2))
+        bool isReferenceContained = (getAllele0Index() == 0);
+        if (!isReferenceContained and (getPloidy() == 2))
         {
-            containsReference = (getAllele1Index() == 0);
+            isReferenceContained = (getAllele1Index() == 0);
         }
-        return containsReference;
+        return isReferenceContained;
     }
 
     uint8_t
