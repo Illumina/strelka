@@ -84,7 +84,6 @@ reheader_file() {
 project_base_dir=$(rel2abs $thisdir/../../..)
 cxx_base_dir=$project_base_dir/src/c++
 python_base_dir=$project_base_dir/src
-python_scratch_dir=$project_base_dir/scratch/error_fitting
 cmake_base_dir=$project_base_dir/src
 shell_base_dir=$project_base_dir/src
 
@@ -98,7 +97,6 @@ done
 get_script_files() {
     #echo $(find_python_source $python_base_dir | grep -v $python_exclude_dir) \
     echo $(find_python_source $python_base_dir) \
-        $(find_python_source $python_scratch_dir) \
         $(find_python_source $util_base_dir) \
         $(find_cmake_source $cmake_base_dir) \
         $(find_shell_source $shell_base_dir) \

@@ -49,4 +49,4 @@ sample_uniform_range(const blt_float_t min_x,
                      Func& f);
 
 
-#include "sample_range.hpp"
+#include "sample_range_impl.hh"
