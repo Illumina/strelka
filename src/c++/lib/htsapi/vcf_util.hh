@@ -229,6 +229,16 @@ struct VcfGenotype
         return (getAllele0Index() != getAllele1Index());
     }
 
+    bool
+    isHetAlt() const
+    {
+        if (getPloidy() != 2)
+        {
+            return false;
+        }
+        return static_cast<bool>(getAllele0Index()*getAllele1Index());
+    }
+
     uint8_t
     getAllele0Index() const
     {

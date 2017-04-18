@@ -445,14 +445,16 @@ computeEmpiricalScoringFeatures(
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::SamplePrimaryAltAlleleDepthFraction,
                                     (confidentPrimaryAltCount * filteredLocusDepthFactor));
 
-
             float normalizedAltHaplotypeCountRatio;
             if (locus.getActiveRegionId() < 0)
                 normalizedAltHaplotypeCountRatio = -1.0f;   // not in active region
-            else if (maxGt.isHet())
-                normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply 2 for het
+            else if (maxGt.getPloidy() == 1)
+                normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply 2 for ploidy=1
+            else if (maxGt.isHet() and !maxGt.isHetAlt())
+                normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply 2 for het (but not hetalt)
             else
                 normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio();
+
             developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::NormalizedAltHaplotypeCountRatio, normalizedAltHaplotypeCountRatio);
         }
     }
@@ -637,8 +639,10 @@ computeEmpiricalScoringFeatures(
             float normalizedAltHaplotypeCountRatio;
             if (locus.getActiveRegionId() < 0)
                 normalizedAltHaplotypeCountRatio = -1.0f;   // not in active region
-            else if (maxGt.isHet())
-                normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply 2 for het
+            else if (maxGt.getPloidy() == 1)
+                normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply 2 for ploidy=1
+            else if (maxGt.isHet() and !maxGt.isHetAlt())
+                normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply 2 for het (but not hetalt)
             else
                 normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio();
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::NormalizedAltHaplotypeCountRatio, normalizedAltHaplotypeCountRatio);
