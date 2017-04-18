@@ -178,6 +178,9 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
             assert(len(gsegGroup) == 1)
             segCmd.append('--call-continuous-vf')
 
+    if self.params.isDoEstimateIndelError :
+        segCmd.extend(['--indel-error-models-file', self.paths.getIndelEstimationJsonPath()])
+
     segTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gid)
     self.addTask(segTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
 
