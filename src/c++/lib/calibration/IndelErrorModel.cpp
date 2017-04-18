@@ -27,6 +27,7 @@
 #include <cassert>
 
 #include <fstream>
+#include <iostream>
 
 
 /// \brief Provide simple static indel error rates.
@@ -164,6 +165,71 @@ deserializeRateSet(
 }
 
 
+void
+IndelErrorModel::deserializeLegacyIndelModels
+        (const std::string& modelName,
+         const std::string& modelFilename,
+         const Json::Value& root)
+{
+    Json::Value models = root["IndelModels"];
+    if (! models.isNull())
+    {
+        for (const auto& modelValue : models)
+        {
+            _meta.deserialize(modelValue);
+            if (_meta.name != modelName) continue;
+            _errorRates = deserializeRateSet(modelValue);
+            break;
+        }
+    }
+
+    if (_meta.name != modelName)
+    {
+        using namespace illumina::common;
+
+        std::ostringstream oss;
+        oss << "ERROR: unrecognized indel error model name: '" << modelName << "' in model file '" << modelFilename << "'\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
+}
+
+void
+IndelErrorModel::deserializeIndelModels
+        (const std::string& modelFilename,
+         const Json::Value& root)
+{
+
+    Json::Value motifs = root["motifs"];
+    if (motifs.isNull())
+    {
+        using namespace illumina::common;
+        std::ostringstream oss;
+        oss << "ERROR: no motifs in model file '" << modelFilename << "'\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
+
+    for (const auto& motifValue : motifs)
+    {
+        const double indelRate = motifValue["indelRate"].asDouble();
+        const double noisyLocusRate = motifValue["noisyLocusRate"].asDouble();
+        const unsigned repeatCount = motifValue["repeatCount"].asInt();
+        const unsigned repeatPatternSize = motifValue["repeatPatternSize"].asInt();
+        _errorRates.addRate(repeatPatternSize, repeatCount, indelRate, indelRate, noisyLocusRate);
+    }
+
+    Json::Value thetaValue = root["theta"];
+    if (thetaValue.isNull())
+    {
+        using namespace illumina::common;
+        std::ostringstream oss;
+        oss << "ERROR: no motifs in model file '" << modelFilename << "'\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
+
+    const double theta = thetaValue.asDouble();
+    _errorRates.setTheta(theta);
+}
+
 
 IndelErrorModel::
 IndelErrorModel(
@@ -191,30 +257,24 @@ IndelErrorModel(
     }
     else
     {
+        std::string jsonString;
         Json::Value root;
-        std::ifstream file(modelFilename , std::ifstream::binary);
-        file >> root;
-
-        Json::Value models = root["IndelModels"];
-        if (! models.isNull())
         {
-            for (const auto& modelValue : models)
-            {
-                _meta.deserialize(modelValue);
-                if (_meta.name != modelName) continue;
-                _errorRates = deserializeRateSet(modelValue);
-                break;
-            }
+            std::ifstream ifs(modelFilename , std::ifstream::binary);
+            std::stringstream buffer;
+            buffer << ifs.rdbuf();
+            jsonString = buffer.str();
         }
-
-        if (_meta.name != modelName)
+        Json::Reader reader;
+        if(reader.parse(jsonString, root))
         {
-            using namespace illumina::common;
-
+            deserializeIndelModels(modelFilename, root);
+        }
+        else {
             std::ostringstream oss;
-            oss << "ERROR: unrecognized indel error model name: '" << modelName << "' in model file '" << modelFilename << "'\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+            oss << "Failed to parse JSON" << reader.getFormattedErrorMessages() << "'\n";
         }
+
     }
 
     _errorRates.finalizeRates();

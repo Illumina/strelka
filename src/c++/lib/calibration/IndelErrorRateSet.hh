@@ -36,6 +36,7 @@ enum index_t
 {
     INSERT,
     DELETE,
+    NOISYLOCUS,
     OTHER
 };
 
@@ -108,6 +109,8 @@ struct IndelErrorRateSet
         return indelRates.getRate(simpleIndelType);
     }
 
+    double getTheta() const {return theta;}
+
     void
     addRate(
         const unsigned repeatingPatternSize,
@@ -137,6 +140,46 @@ struct IndelErrorRateSet
         indelRates.isInit=true;
         indelRates.insertionErrorRate=insertionErrorRate;
         indelRates.deletionErrorRate=deletionErrorRate;
+    }
+
+    void
+    addRate(
+            const unsigned repeatingPatternSize,
+            const unsigned patternRepeatCount,
+            const double insertionErrorRate,
+            const double deletionErrorRate,
+            const double noisyLocusRate)
+    {
+        assert(repeatingPatternSize>0);
+        assert(patternRepeatCount>0);
+        assert(repeatingPatternSize <= maxRepeatingPatternSize);
+        assert(patternRepeatCount <= maxPatternRepeatCount);
+        if (repeatingPatternSize > _errorRates.size())
+        {
+            _errorRates.resize(repeatingPatternSize);
+        }
+
+        auto& repeatingPatternSizeRates(_errorRates[repeatingPatternSize-1]);
+
+        if (patternRepeatCount > repeatingPatternSizeRates.size())
+        {
+            repeatingPatternSizeRates.resize(patternRepeatCount);
+        }
+
+        IndelErrorRates& indelRates(repeatingPatternSizeRates[patternRepeatCount-1]);
+
+        assert(! indelRates.isInit);
+        indelRates.isInit=true;
+        indelRates.insertionErrorRate=insertionErrorRate;
+        indelRates.deletionErrorRate=deletionErrorRate;
+        indelRates.noisyLocusRate=noisyLocusRate;
+    }
+
+    void
+    setTheta(
+            const double thetaIn)
+    {
+        theta = thetaIn;
     }
 
     /// Check for a valid rate initialization pattern
@@ -183,6 +226,8 @@ private:
                 return deletionErrorRate;
             case INSERT:
                 return insertionErrorRate;
+            case NOISYLOCUS:
+                return noisyLocusRate;
             default:
                 assert(false && "Unexpected indel type");
                 return 0.;
@@ -192,8 +237,10 @@ private:
         bool isInit = false;
         double insertionErrorRate = 0;
         double deletionErrorRate = 0;
+        double noisyLocusRate = 0;
     };
 
     bool _isFinalized = false;
     std::vector<std::vector<IndelErrorRates>> _errorRates;
+    double theta = 0;
 };
