@@ -234,7 +234,7 @@ struct error_minfunc : public codemin::minfunc_interface<double>
             static const double logLimitVal(std::log(limitVal));
             if (a>logTriggerVal)
             {
-                a = std::log(1+(a-logTriggerVal)) + logTriggerVal;
+                a = std::log1p(a-logTriggerVal) + logTriggerVal;
             }
             return (a>logLimitVal ? logLimitVal-std::abs(a-logLimitVal) : a);
         };
@@ -254,7 +254,7 @@ struct error_minfunc : public codemin::minfunc_interface<double>
             static const double logLimitVal(std::log(limitVal));
             if (a>logTriggerVal)
             {
-                a = std::log(1+(a-logTriggerVal)) + logTriggerVal;
+                a = std::log1p(a-logTriggerVal) + logTriggerVal;
             }
             return (a>logLimitVal ? logLimitVal-std::abs(a-logLimitVal) : a);
         };

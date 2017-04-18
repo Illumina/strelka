@@ -31,7 +31,7 @@ struct variant_prefilter_stage : public variant_pipe_stage_base
 {
     variant_prefilter_stage(
         const ScoringModelManager& model,
-        std::shared_ptr<variant_pipe_stage_base> destination)
+        const std::shared_ptr<variant_pipe_stage_base>& destination)
         : variant_pipe_stage_base(destination)
         , _model(model)
     {}

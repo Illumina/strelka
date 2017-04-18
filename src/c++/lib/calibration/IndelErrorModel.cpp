@@ -171,7 +171,7 @@ getIndelErrorRate(
     // determine simple case
     const bool isSimpleIndel(indelType==INSERT || indelType==DELETE);
 
-    if (not isSimpleIndel)
+    if (! isSimpleIndel)
     {
         // complex indels use baseline indel error rates
         /// TODO - provide estimates for complex indels

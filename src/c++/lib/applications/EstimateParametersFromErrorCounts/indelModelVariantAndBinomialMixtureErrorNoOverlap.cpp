@@ -202,7 +202,7 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
             static const double logTriggerVal(std::log(triggerVal));
             if (a>logTriggerVal)
             {
-                a = std::log(1+(a-logTriggerVal)) + logTriggerVal;
+                a = std::log1p(a-logTriggerVal) + logTriggerVal;
             }
             return (a>maxLogRate ? maxLogRate-std::abs(a-maxLogRate) : a);
         };
@@ -213,7 +213,7 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
             static const double logTriggerVal(std::log(triggerVal));
             if (a>logTriggerVal)
             {
-                a = std::log(1+(a-logTriggerVal)) + logTriggerVal;
+                a = std::log1p(a-logTriggerVal) + logTriggerVal;
             }
             return (a>maxLogLocusRate ? maxLogLocusRate-std::abs(a-maxLogLocusRate) : a);
         };
@@ -232,7 +232,7 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
 
             if (a>logTriggerVal)
             {
-                a = std::log(1+(a-logTriggerVal)) + logTriggerVal;
+                a = std::log1p(a-logTriggerVal) + logTriggerVal;
             }
             return (a>maxLogTheta ? maxLogTheta-std::abs(a-maxLogTheta) : a);
         };

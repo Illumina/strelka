@@ -23,11 +23,12 @@
  ** \author Come Raczy
  **/
 
+#include "Exceptions.hh"
+
 #include <cstring>
 #include <cerrno>
 #include <ctime>
 
-#include "common/Exceptions.hh"
 
 namespace illumina
 {
@@ -41,10 +42,13 @@ ExceptionData::ExceptionData(int errorNumber, const std::string& message) : boos
 
 std::string ExceptionData::getContext() const
 {
-    const time_t result(time(0));
-    const std::string now(asctime(localtime(&result)));
+    static const unsigned bufferSize(256);
+    char timeBuffer[bufferSize];
 
-    return now + ": " + std::string(strerror(errorNumber_)) + ": " + boost::diagnostic_information(*this);
+    const time_t result(time(nullptr));
+    strftime(timeBuffer, bufferSize, "%c", localtime(&result));
+
+    return std::string(timeBuffer) + ": " + std::string(strerror(errorNumber_)) + ": " + boost::diagnostic_information(*this);
 }
 
 IoException::IoException(int errorNumber, const std::string& message)

@@ -39,7 +39,7 @@ struct VariantPhaser : public variant_pipe_stage_base
     VariantPhaser(
         const starling_options& opt,
         const unsigned sampleCount,
-        std::shared_ptr<variant_pipe_stage_base> destination)
+        const std::shared_ptr<variant_pipe_stage_base>& destination)
         : variant_pipe_stage_base(destination),
           _opt(opt),
           _sampleCount(sampleCount),

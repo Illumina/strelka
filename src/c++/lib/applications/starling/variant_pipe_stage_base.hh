@@ -47,7 +47,7 @@ public:
             _sink->flush();
     }
 
-    explicit variant_pipe_stage_base(std::shared_ptr<variant_pipe_stage_base> sink) : _sink(sink) {}
+    explicit variant_pipe_stage_base(const std::shared_ptr<variant_pipe_stage_base>& sink) : _sink(sink) {}
 
     virtual ~variant_pipe_stage_base() {}
 

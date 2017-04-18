@@ -69,8 +69,14 @@ write_audit(const blt_options& opt,
     if (opt.is_write_variable_metadata)
     {
         if (prefix) os << prefix;
-        const time_t result(time(0));
-        os << "START_TIME " << asctime(localtime(&result));
+
+        static const unsigned bufferSize(256);
+        char timeBuffer[bufferSize];
+
+        const time_t result(time(nullptr));
+        strftime(timeBuffer, bufferSize, "%c", localtime(&result));
+
+        os << "START_TIME " << timeBuffer << "\n";
     }
 }
 
@@ -85,13 +91,17 @@ write_vcf_audit(
     const bam_hdr_t& header,
     std::ostream& os)
 {
-    const time_t t(time(NULL));
+    static const unsigned bufferSize(256);
+    char timeBuffer[bufferSize];
+
+    const time_t result(time(nullptr));
+    strftime(timeBuffer, bufferSize, "%c", localtime(&result));
 
     os << "##fileformat=VCFv4.1\n";
     os << "##fileDate=" << vcf_fileDate << "\n";
     os << "##source=" << pinfo.name() << "\n";
     os << "##source_version=" << pinfo.version() << "\n";
-    os << "##startTime=" << asctime(localtime(&t));
+    os << "##startTime=" << timeBuffer << "\n";
     os << "##cmdline=" << cmdline << "\n";
     if (not opt.referenceFilename.empty())
     {
