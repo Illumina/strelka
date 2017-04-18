@@ -230,13 +230,14 @@ struct VcfGenotype
     }
 
     bool
-    isHetAlt() const
+    containsReference() const
     {
-        if (getPloidy() != 2)
+        bool containsReference = (getAllele0Index() == 0);
+        if (!containsReference and (getPloidy() == 2))
         {
-            return false;
+            containsReference = (getAllele1Index() == 0);
         }
-        return static_cast<bool>(getAllele0Index()*getAllele1Index());
+        return containsReference;
     }
 
     uint8_t

@@ -450,7 +450,7 @@ computeEmpiricalScoringFeatures(
                 normalizedAltHaplotypeCountRatio = -1.0f;   // not in active region
             else if (maxGt.getPloidy() == 1)
                 normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply 2 for ploidy=1
-            else if (maxGt.isHet() and !maxGt.isHetAlt())
+            else if (maxGt.isHet() and maxGt.containsReference())
                 normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply 2 for het (but not hetalt)
             else
                 normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio();
@@ -641,7 +641,7 @@ computeEmpiricalScoringFeatures(
                 normalizedAltHaplotypeCountRatio = -1.0f;   // not in active region
             else if (maxGt.getPloidy() == 1)
                 normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply 2 for ploidy=1
-            else if (maxGt.isHet() and !maxGt.isHetAlt())
+            else if (maxGt.isHet() and maxGt.containsReference())
                 normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply 2 for het (but not hetalt)
             else
                 normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio();
