@@ -416,7 +416,7 @@ reportIndelErrorRateSet(
 }
 
 
-
+// TODO: code duplication. combine with the new reportExtendedContext below
 static
 void
 reportExtendedContext(
@@ -487,6 +487,56 @@ reportExtendedContext(
     }
 }
 
+static
+void
+computeExtendedContext(
+        const bool isLockTheta,
+        const double logTheta,
+        const IndelErrorData& data,
+        double normalizedParams[MIN_PARAMS3::SIZE])
+{
+    std::vector<ExportedIndelObservations> observations;
+    data.exportObservations(observations);
+    // initialize conjugate direction minimizer settings and minimize lhood...
+    //
+    double minParams[MIN_PARAMS3::SIZE];
+
+    unsigned iter;
+    double x_all_loghood;
+    {
+        static const double line_tol(1e-10);
+        static const double end_tol(1e-10);
+        static const unsigned max_iter(40);
+
+        error_minfunc_model3 errFunc(observations, logTheta, isLockTheta);
+        // initialize parameter search
+        minParams[MIN_PARAMS3::LN_INSERT_ERROR_RATE] = std::log(1e-3);
+        minParams[MIN_PARAMS3::LN_DELETE_ERROR_RATE] = std::log(1e-3);
+        minParams[MIN_PARAMS3::LN_NOISY_LOCUS_RATE] = std::log(0.4);
+        minParams[MIN_PARAMS3::LN_THETA] = errFunc.defaultLogTheta;
+
+        static const unsigned SIZE2(MIN_PARAMS3::SIZE*MIN_PARAMS3::SIZE);
+        double conjDir[SIZE2];
+
+        std::fill(conjDir,conjDir+SIZE2,0.);
+        const unsigned dim(isLockTheta ? MIN_PARAMS3::SIZE-1 : MIN_PARAMS3::SIZE);
+        for (unsigned i(0); i<dim; ++i)
+        {
+            conjDir[i*(dim+1)] = 0.0005;
+        }
+
+        double start_tol(end_tol);
+        double final_dlh;
+
+
+        codemin::minimize_conj_direction(minParams,conjDir,errFunc,start_tol,end_tol,line_tol,
+                                         x_all_loghood,iter,final_dlh,max_iter);
+    }
+
+    error_minfunc_model3::argToParameters(minParams,normalizedParams);
+
+}
+
 }
 
 
@@ -523,50 +573,52 @@ indelModelVariantAndBinomialMixtureErrorSimple(
         const std::string& thetaFilename,
         const std::string& outputFilename)
 {
-    const bool isLockTheta(true);
-
+    IndelModelJson indelModelJson;
     std::ostream& ros(std::cout);
-    ros << thetaFilename;
-    double logTheta(log(1e-4));
+
+    double theta(log(1e-4));
     if(!thetaFilename.empty()) {
-        logTheta = importLogTheta(thetaFilename);
+        theta = importTheta(thetaFilename);
     }
 
-    const std::vector<std::pair<unsigned, unsigned>> contextInfoVector{{1,1},{1,2},{1,16},{2,2},{2,8}};
+    indelModelJson.model.theta = theta;
 
+    const double logTheta = std::log(theta);
+    std::vector<SimpleIndelErrorModel> simpleIndelErrorModels;
+    std::vector<unsigned> repeatPatterns = {1,2};
+    std::vector<unsigned> maxRepeatCounts = {16,8};
+    assert(repeatPatterns.size() == maxRepeatCounts.size());
+
+    for(unsigned repeatPatternIx = 0; repeatPatternIx < repeatPatterns.size(); repeatPatternIx++)
+    {
+        simpleIndelErrorModels.push_back(SimpleIndelErrorModel(counts, logTheta, repeatPatterns[repeatPatternIx], maxRepeatCounts[repeatPatternIx]));
+    }
 
     ros << "context, excludedLoci, nonExcludedLoci, usedLoci, refReads, altReads, iter, lhood, errorRate, theta, noisyLocusRate\n";
 
-    IndelModelJson indelModelJson;
-    std::vector<ExportedIndelObservations> observations;
-    double normalizedParams[MIN_PARAMS3::SIZE];
-
-    for (auto contextInfo :contextInfoVector)
+    // estimate error rates for contexts with repeatCount == 1
+    for (auto repeatPattern : repeatPatterns)
     {
-        const IndelErrorContext targetContext(contextInfo.first, contextInfo.second);
-        const auto contextIt = counts.getIndelCounts().find(targetContext);
-        if(contextIt != counts.getIndelCounts().end())
+        IndelErrorContext targetContext(repeatPattern, 1);
+        log_os << "INFO: computing rates for context: " << targetContext << "\n";
+        const auto estimatedParams = SimpleIndelErrorModel::estimateModelParams(counts, targetContext, logTheta);
+        indelModelJson.addMotif(targetContext.getRepeatPatternSize(),
+                                targetContext.getRepeatCount(),
+                                std::exp(estimatedParams.logErrorRate),
+                                std::exp(estimatedParams.logNoisyLocusRate));
+    }
+
+    // add motif to json for all contexts
+    for(unsigned repeatPatternIx = 0; repeatPatternIx < repeatPatterns.size(); repeatPatternIx++)
+    {
+        auto errorModel = simpleIndelErrorModels[repeatPatternIx];
+
+        for(unsigned repeatCount = errorModel.getLowRepeatCount();repeatCount <=errorModel.getHighRepeatCount();repeatCount++)
         {
-
-            const auto &data(contextIt->second);
-
-            data.exportObservations(observations);
-
-            if (observations.empty()) continue;
-
-            log_os << "INFO: computing rates for context: " << targetContext << "\n";
-
-            reportExtendedContext(isLockTheta, logTheta, targetContext, observations, data, normalizedParams, ros);
-
-            const double indelRate = (normalizedParams[MIN_PARAMS3::LN_INSERT_ERROR_RATE]+normalizedParams[MIN_PARAMS3::LN_DELETE_ERROR_RATE])/2;
-            const double noisyLocusRate = normalizedParams[MIN_PARAMS3::LN_NOISY_LOCUS_RATE];
-
-            indelModelJson.addMotif(targetContext.getRepeatPatternSize(), targetContext.getRepeatCount(), indelRate, noisyLocusRate);
-            indelModelJson.model.theta = normalizedParams[MIN_PARAMS3::LN_THETA]; // theta should be read in from a json file
-
-        } else
-        {
-            log_os << "INFO: no context found in counts file for context: " << targetContext << "\n";
+            indelModelJson.addMotif(errorModel.getRepeatPatternSize(),
+                                    repeatCount,
+                                    errorModel.getErrorRate(repeatCount),
+                                    errorModel.getNoisyLocusRate(repeatCount));
         }
     }
 
@@ -575,7 +627,7 @@ indelModelVariantAndBinomialMixtureErrorSimple(
 }
 
 // example: {"theta" : 0.0001}
-double importLogTheta(std::string filename)
+double importTheta(std::string filename)
 {
     std::string jsonString;
     Json::Value root;
@@ -587,9 +639,79 @@ double importLogTheta(std::string filename)
     }
     Json::Reader reader;
     reader.parse(jsonString, root);
-    return std::log(root["theta"].asDouble());
+    return root["theta"].asDouble();
 }
 
+SimpleIndelErrorModel::SimpleIndelErrorModel(
+        const SequenceErrorCounts& counts,
+        const double logTheta,
+        unsigned repeatPatternSizeIn,
+        unsigned highRepeatCountIn):
+    repeatPatternSize(repeatPatternSizeIn),
+    highRepeatCount(highRepeatCountIn)
+{
+    // estimate low repeat count params
+    IndelErrorContext lowCountContext(repeatPatternSize, lowRepeatCount);
+    log_os << "INFO: computing rates for context: " << lowCountContext << "\n";
+    lowLogParams = estimateModelParams(counts, lowCountContext, logTheta);
+
+    // estimate high repeat count params
+    IndelErrorContext highCountContext(repeatPatternSize, highRepeatCount);
+    log_os << "INFO: computing rates for context: " << highCountContext << "\n";
+    highLogParams = estimateModelParams(counts, highCountContext, logTheta);
+}
+
+SimpleIndelErrorModelLogParams
+SimpleIndelErrorModel::estimateModelParams(
+        const SequenceErrorCounts& counts,
+        const IndelErrorContext context,
+        const double logTheta)
+{
+    // setup the optimizer settings to the model assumption
+    const bool isLockTheta = true;
+    double normalizedParams[MIN_PARAMS3::SIZE];
+
+    SimpleIndelErrorModelLogParams estimatedParams;
+    auto contextIt = counts.getIndelCounts().find(context);
+    if (contextIt != counts.getIndelCounts().end()) {
+
+        const auto &data(contextIt->second);
+
+        computeExtendedContext(isLockTheta, logTheta, data, normalizedParams);
+
+        estimatedParams.logErrorRate = (normalizedParams[MIN_PARAMS3::LN_INSERT_ERROR_RATE] +
+                            normalizedParams[MIN_PARAMS3::LN_DELETE_ERROR_RATE]) / 2;
+        estimatedParams.logNoisyLocusRate = normalizedParams[MIN_PARAMS3::LN_NOISY_LOCUS_RATE];
+    }
+    return estimatedParams;
+}
+
+double SimpleIndelErrorModel::getErrorRate(const unsigned repeatCount) const
+{
+    assert(repeatCount > 1);
+    if(repeatCount>=highRepeatCount)
+    {
+        return std::exp(highLogParams.logErrorRate);
+    }
+    return std::exp(linearFit(repeatCount, lowRepeatCount, lowLogParams.logErrorRate, highRepeatCount, highLogParams.logErrorRate));
+}
+
+double SimpleIndelErrorModel::getNoisyLocusRate(const unsigned repeatCount) const
+{
+    assert(repeatCount > 1);
+    if(repeatCount>=highRepeatCount)
+    {
+        return std::exp(highLogParams.logNoisyLocusRate);
+    }
+    return std::exp(
+            linearFit(repeatCount, lowRepeatCount, lowLogParams.logNoisyLocusRate, highRepeatCount, highLogParams.logNoisyLocusRate));
+}
+
+double SimpleIndelErrorModel::linearFit(const double x, const double x1, const double y1, const double x2, const double y2)
+{
+    assert(x1!=x2);
+    return ((y2-y1)*x +(x2*y1-x1*y2))/(x2-x1);
+}
 
 // move these to a more appropriate place later
 Json::Value
@@ -631,5 +753,3 @@ void IndelModelJson::addMotif(unsigned repeatPatternSize,
     motif.noisyLocusRate = noisyLocusRate;
     model.motifs.push_back(motif);
 }
-
-
