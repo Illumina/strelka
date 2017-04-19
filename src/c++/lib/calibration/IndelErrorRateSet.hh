@@ -109,8 +109,6 @@ struct IndelErrorRateSet
         return indelRates.getRate(simpleIndelType);
     }
 
-    double getTheta() const {return theta;}
-
     void
     addRate(
         const unsigned repeatingPatternSize,
@@ -175,13 +173,6 @@ struct IndelErrorRateSet
         indelRates.noisyLocusRate=noisyLocusRate;
     }
 
-    void
-    setTheta(
-            const double thetaIn)
-    {
-        theta = thetaIn;
-    }
-
     /// Check for a valid rate initialization pattern
     ///
     /// this must be called before calling getRates
@@ -242,5 +233,4 @@ private:
 
     bool _isFinalized = false;
     std::vector<std::vector<IndelErrorRates>> _errorRates;
-    double theta = 0;
 };

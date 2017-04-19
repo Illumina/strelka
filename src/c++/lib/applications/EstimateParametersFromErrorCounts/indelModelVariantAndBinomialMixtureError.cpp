@@ -25,6 +25,7 @@
 #include <iostream>
 #include <fstream>
 
+#include "common/Exceptions.hh"
 #include "blt_util/log.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
@@ -576,22 +577,23 @@ indelModelVariantAndBinomialMixtureErrorSimple(
     IndelModelJson indelModelJson;
     std::ostream& ros(std::cout);
 
-    double theta(log(1e-4));
+    std::vector<double> theta;
     if(!thetaFilename.empty()) {
         theta = importTheta(thetaFilename);
     }
 
-    indelModelJson.model.theta = theta;
-
-    const double logTheta = std::log(theta);
     std::vector<SimpleIndelErrorModel> simpleIndelErrorModels;
     std::vector<unsigned> repeatPatterns = {1,2};
     std::vector<unsigned> maxRepeatCounts = {16,8};
     assert(repeatPatterns.size() == maxRepeatCounts.size());
+    assert(theta.size() >= *std::max_element(maxRepeatCounts.begin(), maxRepeatCounts.end()));
 
     for(unsigned repeatPatternIx = 0; repeatPatternIx < repeatPatterns.size(); repeatPatternIx++)
     {
-        simpleIndelErrorModels.push_back(SimpleIndelErrorModel(counts, logTheta, repeatPatterns[repeatPatternIx], maxRepeatCounts[repeatPatternIx]));
+        simpleIndelErrorModels.push_back(SimpleIndelErrorModel(counts,
+                                                               theta,
+                                                               repeatPatterns[repeatPatternIx],
+                                                               maxRepeatCounts[repeatPatternIx]));
     }
 
     ros << "context, excludedLoci, nonExcludedLoci, usedLoci, refReads, altReads, iter, lhood, errorRate, theta, noisyLocusRate\n";
@@ -601,7 +603,7 @@ indelModelVariantAndBinomialMixtureErrorSimple(
     {
         IndelErrorContext targetContext(repeatPattern, 1);
         log_os << "INFO: computing rates for context: " << targetContext << "\n";
-        const auto estimatedParams = SimpleIndelErrorModel::estimateModelParams(counts, targetContext, logTheta);
+        const auto estimatedParams = SimpleIndelErrorModel::estimateModelParams(counts, targetContext, std::log(theta[0]));
         indelModelJson.addMotif(targetContext.getRepeatPatternSize(),
                                 targetContext.getRepeatCount(),
                                 std::exp(estimatedParams.logErrorRate),
@@ -626,8 +628,10 @@ indelModelVariantAndBinomialMixtureErrorSimple(
 
 }
 
-// example: {"theta" : 0.0001}
-double importTheta(std::string filename)
+// example: {"theta" : [0.0001, 0.0002, 0.0003]}
+std::vector<double>
+importTheta(
+        std::string filename)
 {
     std::string jsonString;
     Json::Value root;
@@ -639,12 +643,26 @@ double importTheta(std::string filename)
     }
     Json::Reader reader;
     reader.parse(jsonString, root);
-    return root["theta"].asDouble();
+    Json::Value thetaValues = root["theta"];
+    if (thetaValues.isNull())
+    {
+        using namespace illumina::common;
+        std::ostringstream oss;
+        oss << "ERROR: no theta values in theta file '" << filename << "'\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
+
+    std::vector<double> theta;
+    for (const auto &thetaValue : thetaValues)
+    {
+        theta.push_back(thetaValue.asDouble());
+    }
+    return theta;
 }
 
 SimpleIndelErrorModel::SimpleIndelErrorModel(
         const SequenceErrorCounts& counts,
-        const double logTheta,
+        const std::vector<double>& thetaVector,
         unsigned repeatPatternSizeIn,
         unsigned highRepeatCountIn):
     repeatPatternSize(repeatPatternSizeIn),
@@ -653,12 +671,12 @@ SimpleIndelErrorModel::SimpleIndelErrorModel(
     // estimate low repeat count params
     IndelErrorContext lowCountContext(repeatPatternSize, lowRepeatCount);
     log_os << "INFO: computing rates for context: " << lowCountContext << "\n";
-    lowLogParams = estimateModelParams(counts, lowCountContext, logTheta);
+    lowLogParams = estimateModelParams(counts, lowCountContext, std::log(thetaVector[lowRepeatCount-1]));
 
     // estimate high repeat count params
     IndelErrorContext highCountContext(repeatPatternSize, highRepeatCount);
     log_os << "INFO: computing rates for context: " << highCountContext << "\n";
-    highLogParams = estimateModelParams(counts, highCountContext, logTheta);
+    highLogParams = estimateModelParams(counts, highCountContext, std::log(thetaVector[highRepeatCount-1]));
 }
 
 SimpleIndelErrorModelLogParams
@@ -734,7 +752,6 @@ void IndelModelJson::exportIndelErrorModelToJsonFile(std::string filename)
 {
     Json::StyledWriter writer;
     Json::Value jsonRoot;
-    jsonRoot["theta"] = model.theta;
     jsonRoot["motifs"] = generateMotifsNode();
     std::string str = writer.write(jsonRoot);
     std::ofstream out(filename);

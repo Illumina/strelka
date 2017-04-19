@@ -38,7 +38,8 @@ indelModelVariantAndBinomialMixtureErrorSimple(
         const std::string& thetaFilename,
         const std::string& outputFilename);
 
-double importTheta(
+std::vector<double>
+importTheta(
         std::string filename);
 
 // move these to a more appropriate place later
@@ -56,7 +57,6 @@ class IndelModelBinomialMixture
 {
 public:
     std::vector<IndelMotifBinomialMixture> motifs;
-    double theta = 0;
 };
 
 
@@ -73,7 +73,7 @@ class SimpleIndelErrorModel
 public:
     SimpleIndelErrorModel(
             const SequenceErrorCounts& counts,
-            const double logTheta,
+            const std::vector<double>& thetaVector,
             unsigned repeatPatternSize,
             unsigned highRepeatCount);
 private:
@@ -83,11 +83,6 @@ private:
 
     SimpleIndelErrorModelLogParams lowLogParams;
     SimpleIndelErrorModelLogParams highLogParams;
-    //double lowLogErrorRate = 0;
-    //double highLogErrorRate = 0;
-
-   // double lowLogNoisyLocusRate = 0;
-    //double highLogNoisyLocusRate = 0;
 
 public:
     unsigned

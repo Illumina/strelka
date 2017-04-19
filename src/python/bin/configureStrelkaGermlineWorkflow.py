@@ -90,6 +90,7 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
             'mergeCountsBin' : joinFile(libexecDir,exeFile("MergeSequenceErrorCounts")),
             'estimateParametersFromErrorCountsBin' : joinFile(libexecDir,exeFile("EstimateParametersFromErrorCounts")),
             'indelDefaultParamFile' : joinFile(configDir,'indelDefaultParam.json'),
+            'thetaParamFile' : joinFile(configDir,'theta.json')
             })
         return defaults
 
