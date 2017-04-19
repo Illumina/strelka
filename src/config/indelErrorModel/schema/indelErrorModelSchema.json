@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "IndelErrorModel",
+  "description": "JSON schema describing the indel error model used for small variants in Strelka",
+  "type": "object",
+  "properties": {
+    "motifs": {
+      "description": "An array which is the collection of all motifs estimated from the model",
+      "comment": "There shouldn't be any gaps between the min repeat count and max repeat count for a given repeat pattern size",
+      "type": "array",
+      "items": {
+        "description": "This object describes the params for a given motif",
+        "comment": "A given motif consists of a repeat pattern size and the repeat count",
+        "type": "object",
+        "properties": {
+          "indelRate": {
+            "description": "The likelihood that a indel will occur",
+            "type": "number"
+          },
+          "noisyLocusRate": {
+            "description": "The likelihood that we are in a noisy state",
+            "type": "number"
+          },
+          "repeatCount": {
+            "description": "The repeat count for the given motif",
+            "type": "integer"
+          },
+          "repeatPatternSize": {
+            "description": "The repeat pattern size for the given motif",
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "theta": {
+      "description": "The fixed theta value (this is not estimated)",
+      "comment": "This should be updated or removed from the json",
+      "type": "number"
+    }
+  }
+}
