@@ -37,3 +37,11 @@ for modelPrefix in germline RNA somatic; do
     done
 done
 
+# check all indel error models
+IndeErrorModelDir=$scriptDir/../indelErrorModel
+for modelFilePath in $(ls ${IndeErrorModelDir}/models/*json); do
+    if ! [ -f $modelFilePath ]; then continue; fi
+    echo "checking $(basename $modelFilePath)"
+    $scriptDir/validateJsonModelFromSchema.py --schema ${IndeErrorModelDir}/schema/indelErrorModelSchema.json < $modelFilePath
+done
+
