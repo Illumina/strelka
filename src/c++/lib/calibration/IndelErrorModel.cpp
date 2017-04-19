@@ -70,30 +70,66 @@ static
 IndelErrorRateSet
 getSimplifiedAdaptiveParameters()
 {
-    static const double nonStrRate(1e-2);
-    static const double logLowHpolErrorRate(std::log(4.9e-3));
-    static const double logHighHpolErrorRate(std::log(4.5e-2));
-
-    // this is the zero-indexed endpoint of the ramp, so we hit the
-    // constant high error rate at an hpol length of repeatCountSwitchPoint+1
-    static const unsigned repeatCountSwitchPoint(15);
-
     IndelErrorRateSet rates;
 
-    // model covers homopolymers only:
-    static const unsigned repeatingPatternSize(1);
+    // setup default indel error rates using a pretty clunky division between hpol and dinuc for the time being:
 
-    // add non-STR rate:
-    rates.addRate(repeatingPatternSize, 1, nonStrRate, nonStrRate);
-
-    // add homopolymer rates:
-    for (unsigned patternRepeatCount=2; patternRepeatCount <= (repeatCountSwitchPoint+1); ++patternRepeatCount)
+    // first set homopolymers:
     {
-        const double highErrorFrac(std::min((patternRepeatCount-2),repeatCountSwitchPoint-1)/static_cast<double>(repeatCountSwitchPoint-1));
-        const double logErrorRate((1.-highErrorFrac)*logLowHpolErrorRate + highErrorFrac*logHighHpolErrorRate);
-        const double errorRate(std::exp(logErrorRate));
+        static const double nonStrRate(8e-3);
+        static const double logLowHpolErrorRate(std::log(4.9e-3));
+        static const double logHighHpolErrorRate(std::log(4.5e-2));
 
-        rates.addRate(repeatingPatternSize, patternRepeatCount, errorRate, errorRate);
+        // this is the zero-indexed endpoint of the ramp, so we hit the
+        // constant high error rate at an hpol length of repeatCountSwitchPoint+1
+        static const unsigned repeatCountSwitchPoint(15);
+
+        // model covers homopolymers only:
+        static const unsigned repeatingPatternSize(1);
+
+        // add non-STR rate:
+        rates.addRate(repeatingPatternSize, 1, nonStrRate, nonStrRate);
+
+        // add homopolymer rates:
+        for (unsigned patternRepeatCount = 2; patternRepeatCount <= (repeatCountSwitchPoint + 1); ++patternRepeatCount)
+        {
+            const double highErrorFrac(std::min((patternRepeatCount - 2), repeatCountSwitchPoint - 1) /
+                                       static_cast<double>(repeatCountSwitchPoint - 1));
+            const double logErrorRate(
+                (1. - highErrorFrac) * logLowHpolErrorRate + highErrorFrac * logHighHpolErrorRate);
+            const double errorRate(std::exp(logErrorRate));
+
+            rates.addRate(repeatingPatternSize, patternRepeatCount, errorRate, errorRate);
+        }
+    }
+
+    // next set dinucleotides
+    {
+        static const double nonStrRate(8e-3);
+        static const double logLowErrorRate(std::log(1.0e-2));
+        static const double logHighErrorRate(std::log(1.8e-2));
+
+        // this is the zero-indexed endpoint of the ramp, so we hit the
+        // constant high error rate at an hpol length of repeatCountSwitchPoint+1
+        static const unsigned repeatCountSwitchPoint(8);
+
+        // model covers homopolymers only:
+        static const unsigned repeatingPatternSize(2);
+
+        // add non-STR rate:
+        rates.addRate(repeatingPatternSize, 1, nonStrRate, nonStrRate);
+
+        // add homopolymer rates:
+        for (unsigned patternRepeatCount = 2; patternRepeatCount <= (repeatCountSwitchPoint + 1); ++patternRepeatCount)
+        {
+            const double highErrorFrac(std::min((patternRepeatCount - 2), repeatCountSwitchPoint - 1) /
+                                       static_cast<double>(repeatCountSwitchPoint - 1));
+            const double logErrorRate(
+                (1. - highErrorFrac) * logLowErrorRate + highErrorFrac * logHighErrorRate);
+            const double errorRate(std::exp(logErrorRate));
+
+            rates.addRate(repeatingPatternSize, patternRepeatCount, errorRate, errorRate);
+        }
     }
     return rates;
 }
