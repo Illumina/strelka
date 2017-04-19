@@ -104,6 +104,8 @@ def main() :
         isOutputHeaderInitialized = False
         snvFeatures = None
         indelFeatures = None
+        snvEmptyFeatureString = None
+        indelEmptyFeatureString = None
 
     def processHeaderLine(line) :
         if line.find("snv_scoring_features=") != -1 :
@@ -111,12 +113,14 @@ def main() :
             tword = line.strip().split("snv_scoring_features=")
             assert(len(tword) == 2)
             HeaderData.snvFeatures = tword[1]
+            HeaderData.snvEmptyFeatureString = ',' * HeaderData.snvFeatures.count(',')
         elif line.find("indel_scoring_features=") != -1 :
             assert(HeaderData.indelFeatures is None)
             tword = line.strip().split("indel_scoring_features=")
             assert(len(tword) == 2)
             HeaderData.indelFeatures = tword[1]
-
+            HeaderData.indelEmptyFeatureString = ',' * HeaderData.indelFeatures.count(',')
+ 
     def finalizeHeader() :
         HeaderData.isOutputHeaderInitialized = True
 
@@ -167,9 +171,13 @@ def main() :
         qtype = queryVals[sampleBVTIndex]
         evsf = getKeyVal(word[VCFID.INFO],"EVSF")
         if evsf is None :
-            # hap.py adds FN entries with no EVSF. Let hap.py decide whether these are indel or snv:
-            evsf = ""
-            isSNV = (qtype==typeLabel(True))
+            # hap.py adds FN entries with no EVSF. Let hap.py decide from the truth variant whether these are indel or snv:
+            isSNV = (truthVals[sampleBVTIndex]==typeLabel(True))
+            # populate the empty evsf field with dummy information of the right length:
+            if isSNV :
+                evsf = HeaderData.snvEmptyFeatureString
+            else :
+                evsf = HeaderData.indelEmptyFeatureString
         else:
             # For entries with EVSF, use presence/absence of CIGAR to decide if indel or snv. Discard variant if this is not consistent with the type assigned by hap.py:
             isSNV = (word[VCFID.INFO].find("CIGAR=") == -1)
