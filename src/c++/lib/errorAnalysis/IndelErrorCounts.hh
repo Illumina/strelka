@@ -395,10 +395,10 @@ struct ExportedIndelObservations
     /// the repeat pattern size
     unsigned repeatPatternSize;
 
-    /// the repeat pattern size
+    /// the number of times the repeat pattern is repeated
     unsigned repeatCount;
 
-    /// the number of times we observe the observation pattern below:
+    /// the number of times we observe the observation pattern
     unsigned observationCount;
 
     /// number of supporting observations of the non-alt* allele (*exact definition in flux...)

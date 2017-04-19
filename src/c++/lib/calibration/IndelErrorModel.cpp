@@ -217,17 +217,6 @@ IndelErrorModel::deserializeIndelModels
         _errorRates.addRate(repeatPatternSize, repeatCount, indelRate, indelRate, noisyLocusRate);
     }
 
-    Json::Value thetaValue = root["theta"];
-    if (thetaValue.isNull())
-    {
-        using namespace illumina::common;
-        std::ostringstream oss;
-        oss << "ERROR: no motifs in model file '" << modelFilename << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-    }
-
-    const double theta = thetaValue.asDouble();
-    _errorRates.setTheta(theta);
 }
 
 

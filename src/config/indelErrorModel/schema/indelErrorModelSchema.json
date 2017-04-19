@@ -33,9 +33,10 @@
       }
     },
     "theta": {
-      "description": "The fixed theta value (this is not estimated)",
-      "comment": "This should be updated or removed from the json",
-      "type": "number"
+      "items": {
+        "type": "number"
+      },
+      "type": "array"
     }
   }
 }
