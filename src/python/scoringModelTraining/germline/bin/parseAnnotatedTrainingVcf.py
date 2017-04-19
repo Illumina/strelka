@@ -148,7 +148,7 @@ def main() :
         # expecting standard happy annotation with truth/query samples:
         assert(len(word) == (VCFID.SAMPLE+2))
 
-        isTrain = (word[VCFID.CHROM] not in options.testSet)
+        isTrain = (not options.testSet) or (word[VCFID.CHROM] not in options.testSet)
 
         filterVals = word[VCFID.FILTER].split(';')
 
