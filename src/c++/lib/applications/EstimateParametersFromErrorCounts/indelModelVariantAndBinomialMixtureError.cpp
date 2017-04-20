@@ -576,15 +576,15 @@ indelModelVariantAndBinomialMixtureErrorSimple(
 {
     IndelModelJson indelModelJson;
     std::ostream& ros(std::cout);
-
     std::vector<double> theta;
-    if(!thetaFilename.empty()) {
+    if(!thetaFilename.empty())
+    {
         theta = importTheta(thetaFilename);
     }
 
     std::vector<SimpleIndelErrorModel> simpleIndelErrorModels;
-    std::vector<unsigned> repeatPatterns = {1,2};
-    std::vector<unsigned> maxRepeatCounts = {16,8};
+    std::vector<unsigned> repeatPatterns = {1, 2};
+    std::vector<unsigned> maxRepeatCounts = {16, 8};
     assert(repeatPatterns.size() == maxRepeatCounts.size());
     assert(theta.size() >= *std::max_element(maxRepeatCounts.begin(), maxRepeatCounts.end()));
 
@@ -598,16 +598,16 @@ indelModelVariantAndBinomialMixtureErrorSimple(
 
     ros << "context, excludedLoci, nonExcludedLoci, usedLoci, refReads, altReads, iter, lhood, errorRate, theta, noisyLocusRate\n";
 
-    // estimate error rates for contexts with repeatCount == 1
-    for (auto repeatPattern : repeatPatterns)
+    // estimate error rate for the non-STR context
+    IndelErrorContext targetContext(1, 1);
+    log_os << "INFO: computing rates for context: " << targetContext << "\n";
+    const auto estimatedParams = SimpleIndelErrorModel::estimateModelParams(counts, targetContext, std::log(theta[0]));
+
+    // add the non-STR params to all contexts with repeat count 1
+    // this will show up as valid contexts during variant calling so we need to fill in these gaps
+    for(unsigned repeatPatternIx = 0; repeatPatternIx < repeatPatterns.size(); repeatPatternIx++)
     {
-        IndelErrorContext targetContext(repeatPattern, 1);
-        log_os << "INFO: computing rates for context: " << targetContext << "\n";
-        const auto estimatedParams = SimpleIndelErrorModel::estimateModelParams(counts, targetContext, std::log(theta[0]));
-        indelModelJson.addMotif(targetContext.getRepeatPatternSize(),
-                                targetContext.getRepeatCount(),
-                                std::exp(estimatedParams.logErrorRate),
-                                std::exp(estimatedParams.logNoisyLocusRate));
+        indelModelJson.addMotif(repeatPatterns[repeatPatternIx], 1, std::exp(estimatedParams.logErrorRate), std::exp(estimatedParams.logNoisyLocusRate));
     }
 
     // add motif to json for all contexts
