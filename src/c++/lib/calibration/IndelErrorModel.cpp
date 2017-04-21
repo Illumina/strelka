@@ -72,62 +72,40 @@ getSimplifiedAdaptiveParameters()
 {
     IndelErrorRateSet rates;
 
-    // setup default indel error rates using a pretty clunky division between hpol and dinuc for the time being:
+    // the preset values for the indel error model
+    const double nonStrRate(8e-3);
+    const std::vector<unsigned> repeatingPatternSizeVector = {1, 2};
+    const std::vector<double> logLowErrorRateVector = {std::log(4.9e-3), std::log(1.0e-2)};
+    const std::vector<double> logHighErrorRateVector = {std::log(4.5e-2), std::log(1.8e-2)};
+    const std::vector<unsigned> repeatCountSwitchPointVector = {16,9};
+    const unsigned numberOfPatternSizes = repeatingPatternSizeVector.size();
 
-    // first set homopolymers:
+    assert(logLowErrorRateVector.size() == numberOfPatternSizes &&
+                   logHighErrorRateVector.size() == numberOfPatternSizes &&
+                   repeatCountSwitchPointVector.size() == numberOfPatternSizes);
+
+
+
+    for(unsigned repeatingPatternSizeIx = 0; repeatingPatternSizeIx < numberOfPatternSizes; repeatingPatternSizeIx++)
     {
-        static const double nonStrRate(8e-3);
-        static const double logLowHpolErrorRate(std::log(4.9e-3));
-        static const double logHighHpolErrorRate(std::log(4.5e-2));
+        const unsigned repeatingPatternSize(repeatingPatternSizeVector[repeatingPatternSizeIx]);
+        const unsigned repeatCountSwitchPoint(repeatCountSwitchPointVector[repeatingPatternSizeIx]);
 
-        // this is the zero-indexed endpoint of the ramp, so we hit the
-        // constant high error rate at an hpol length of repeatCountSwitchPoint+1
-        static const unsigned repeatCountSwitchPoint(15);
+        AdaptiveIndelErrorModelLogParams lowLogParams;
+        lowLogParams.logErrorRate = logLowErrorRateVector[repeatingPatternSizeIx];
+        AdaptiveIndelErrorModelLogParams highLogParams;
+        highLogParams.logErrorRate = logHighErrorRateVector[repeatingPatternSizeIx];
 
-        // model covers homopolymers only:
-        static const unsigned repeatingPatternSize(1);
+        AdaptiveIndelErrorModel indelErrorModel(repeatingPatternSize,
+                                                repeatCountSwitchPoint,
+                                                lowLogParams,
+                                                highLogParams);
 
-        // add non-STR rate:
         rates.addRate(repeatingPatternSize, 1, nonStrRate, nonStrRate);
 
-        // add homopolymer rates:
-        for (unsigned patternRepeatCount = 2; patternRepeatCount <= (repeatCountSwitchPoint + 1); ++patternRepeatCount)
+        for (unsigned patternRepeatCount = 2; patternRepeatCount <= repeatCountSwitchPoint; ++patternRepeatCount)
         {
-            const double highErrorFrac(std::min((patternRepeatCount - 2), repeatCountSwitchPoint - 1) /
-                                       static_cast<double>(repeatCountSwitchPoint - 1));
-            const double logErrorRate(
-                (1. - highErrorFrac) * logLowHpolErrorRate + highErrorFrac * logHighHpolErrorRate);
-            const double errorRate(std::exp(logErrorRate));
-
-            rates.addRate(repeatingPatternSize, patternRepeatCount, errorRate, errorRate);
-        }
-    }
-
-    // next set dinucleotides
-    {
-        static const double nonStrRate(8e-3);
-        static const double logLowErrorRate(std::log(1.0e-2));
-        static const double logHighErrorRate(std::log(1.8e-2));
-
-        // this is the zero-indexed endpoint of the ramp, so we hit the
-        // constant high error rate at an hpol length of repeatCountSwitchPoint+1
-        static const unsigned repeatCountSwitchPoint(8);
-
-        // model covers homopolymers only:
-        static const unsigned repeatingPatternSize(2);
-
-        // add non-STR rate:
-        rates.addRate(repeatingPatternSize, 1, nonStrRate, nonStrRate);
-
-        // add homopolymer rates:
-        for (unsigned patternRepeatCount = 2; patternRepeatCount <= (repeatCountSwitchPoint + 1); ++patternRepeatCount)
-        {
-            const double highErrorFrac(std::min((patternRepeatCount - 2), repeatCountSwitchPoint - 1) /
-                                       static_cast<double>(repeatCountSwitchPoint - 1));
-            const double logErrorRate(
-                (1. - highErrorFrac) * logLowErrorRate + highErrorFrac * logHighErrorRate);
-            const double errorRate(std::exp(logErrorRate));
-
+            const double errorRate(indelErrorModel.getErrorRate(patternRepeatCount));
             rates.addRate(repeatingPatternSize, patternRepeatCount, errorRate, errorRate);
         }
     }
@@ -284,4 +262,43 @@ getIndelErrorRate(
         refToIndelErrorProb = errorRates.getRate(repeatingPatternSize, refPatternRepeatCount, indelType);
         indelToRefErrorProb = errorRates.getRate(repeatingPatternSize, indelPatternRepeatCount, reverseIndelType);
     }
+}
+
+AdaptiveIndelErrorModel::AdaptiveIndelErrorModel(
+        unsigned repeatPatternSizeIn,
+        unsigned highRepeatCountIn,
+        AdaptiveIndelErrorModelLogParams lowLogParamsIn,
+        AdaptiveIndelErrorModelLogParams highLogParamsIn):
+        repeatPatternSize(repeatPatternSizeIn),
+        highRepeatCount(highRepeatCountIn),
+        lowLogParams(lowLogParamsIn),
+        highLogParams(highLogParamsIn)
+{
+}
+
+double AdaptiveIndelErrorModel::getErrorRate(const unsigned repeatCount) const
+{
+    assert(repeatCount > 1);
+    if(repeatCount>=highRepeatCount)
+    {
+        return std::exp(highLogParams.logErrorRate);
+    }
+    return std::exp(linearFit(repeatCount, lowRepeatCount, lowLogParams.logErrorRate, highRepeatCount, highLogParams.logErrorRate));
+}
+
+double AdaptiveIndelErrorModel::getNoisyLocusRate(const unsigned repeatCount) const
+{
+    assert(repeatCount > 1);
+    if(repeatCount>=highRepeatCount)
+    {
+        return std::exp(highLogParams.logNoisyLocusRate);
+    }
+    return std::exp(
+            linearFit(repeatCount, lowRepeatCount, lowLogParams.logNoisyLocusRate, highRepeatCount, highLogParams.logNoisyLocusRate));
+}
+
+double AdaptiveIndelErrorModel::linearFit(const double x, const double x1, const double y1, const double x2, const double y2)
+{
+    assert(x1!=x2);
+    return ((y2-y1)*x +(x2*y1-x1*y2))/(x2-x1);
 }

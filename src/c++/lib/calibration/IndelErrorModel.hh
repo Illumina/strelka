@@ -71,3 +71,60 @@ private:
     }
 #endif
 };
+
+class AdaptiveIndelErrorModelLogParams
+{
+public:
+    double logErrorRate = -std::numeric_limits<double>::infinity();
+    double logNoisyLocusRate = -std::numeric_limits<double>::infinity();
+};
+
+// TODO: This class will be useful when we put in the production estimator
+class AdaptiveIndelErrorModel
+{
+public:
+    AdaptiveIndelErrorModel(
+            unsigned repeatPatternSize,
+            unsigned highRepeatCount,
+            AdaptiveIndelErrorModelLogParams lowLogParams,
+            AdaptiveIndelErrorModelLogParams highLogParams);
+private:
+    unsigned repeatPatternSize = 0;
+    unsigned lowRepeatCount = 2; // it should be safe to fix this to 2
+    unsigned highRepeatCount = 0;
+
+    AdaptiveIndelErrorModelLogParams lowLogParams;
+    AdaptiveIndelErrorModelLogParams highLogParams;
+
+public:
+    unsigned
+    getRepeatPatternSize() const { return repeatPatternSize;}
+    unsigned
+    getLowRepeatCount() const { return lowRepeatCount;}
+    unsigned
+    getHighRepeatCount() const { return highRepeatCount;}
+
+    double
+    getErrorRate(
+            const unsigned repeatCount) const;
+    double
+    getNoisyLocusRate(
+            const unsigned repeatCount) const;
+
+
+    /// Perform a linear fit from 2 known points and return y corresponding to x
+    ///
+    /// \param x the point on the linear curve of interest
+    /// \param x1 the first known x position
+    /// \param y1 the y position corresponding to x1
+    /// \param x2 the 2nd known x position
+    /// \param y2 the y position corresponding to x2
+    static double
+    linearFit(
+            const double x,
+            const double x1,
+            const double y1,
+            const double x2,
+            const double y2);
+
+};
