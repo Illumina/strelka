@@ -55,9 +55,9 @@ std::ostream& operator<<(std::ostream& os, const AlleleSampleReportInfo& obj)
 
 void AlleleReportInfo::dump(std::ostream& os) const
 {
-    os << "repeat_unit=" << repeat_unit
-       << ",ref_repeat_count=" << ref_repeat_count
-       << ",indel_repeat_count=" << indel_repeat_count
+    os << "repeatUnit=" << repeatUnit
+       << ",ref_repeat_count=" << refRepeatCount
+       << ",indel_repeat_count=" << indelRepeatCount
        << ",ihpol=" << ihpol
        << ",it=" << it;
 }

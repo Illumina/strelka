@@ -251,9 +251,9 @@ getIndelErrorRate(
     {
         // determine the repeat pattern size and count:
         static const unsigned one(1);
-        const unsigned repeatingPatternSize = std::max(indelReportInfo.repeat_unit_length, one);
-        const unsigned refPatternRepeatCount = std::max(indelReportInfo.ref_repeat_count, one);
-        const unsigned indelPatternRepeatCount = std::max(indelReportInfo.indel_repeat_count, one);
+        const unsigned repeatingPatternSize = std::max(indelReportInfo.repeatUnitLength, one);
+        const unsigned refPatternRepeatCount = std::max(indelReportInfo.refRepeatCount, one);
+        const unsigned indelPatternRepeatCount = std::max(indelReportInfo.indelRepeatCount, one);
 
         //const int indelPatternRepeatSize(std::abs(static_cast<int>(iri.ref_repeat_count)-static_cast<int>(iri.indel_repeat_count));
 

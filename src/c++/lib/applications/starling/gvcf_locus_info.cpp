@@ -540,9 +540,9 @@ computeEmpiricalScoringFeatures(
 
     if (isRNA)
     {
-        features.set(RNA_INDEL_SCORING_FEATURES::SampleRefRepeatCount, (primaryAltAllele.indelReportInfo.ref_repeat_count));
-        features.set(RNA_INDEL_SCORING_FEATURES::SampleIndelRepeatCount, (primaryAltAllele.indelReportInfo.indel_repeat_count));
-        features.set(RNA_INDEL_SCORING_FEATURES::SampleIndelRepeatUnitSize, (primaryAltAllele.indelReportInfo.repeat_unit.length()));
+        features.set(RNA_INDEL_SCORING_FEATURES::SampleRefRepeatCount, (primaryAltAllele.indelReportInfo.refRepeatCount));
+        features.set(RNA_INDEL_SCORING_FEATURES::SampleIndelRepeatCount, (primaryAltAllele.indelReportInfo.indelRepeatCount));
+        features.set(RNA_INDEL_SCORING_FEATURES::SampleIndelRepeatUnitSize, (primaryAltAllele.indelReportInfo.repeatUnit.length()));
         features.set(RNA_INDEL_SCORING_FEATURES::SampleRefAlleleDepth, (confidentRefCount));
         features.set(RNA_INDEL_SCORING_FEATURES::SamplePrimaryAltAlleleDepth, (confidentPrimaryAltCount));
         features.set(RNA_INDEL_SCORING_FEATURES::SamplePrimaryAltAlleleDepthFraction, (confidentPrimaryAltCount * confidentDepthFactor));
@@ -585,8 +585,8 @@ computeEmpiricalScoringFeatures(
     {
         features.set(GERMLINE_INDEL_SCORING_FEATURES::GenotypeCategory,
                      getEVSGenotypeCode(ploidy.isDiploid(), allele0Index, allele1Index));
-        features.set(GERMLINE_INDEL_SCORING_FEATURES::SampleIndelRepeatCount, (primaryAltAllele.indelReportInfo.indel_repeat_count));
-        features.set(GERMLINE_INDEL_SCORING_FEATURES::SampleIndelRepeatUnitSize, (primaryAltAllele.indelReportInfo.repeat_unit.length()));
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::SampleIndelRepeatCount, (primaryAltAllele.indelReportInfo.indelRepeatCount));
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::SampleIndelRepeatUnitSize, (primaryAltAllele.indelReportInfo.repeatUnit.length()));
 
         features.set(GERMLINE_INDEL_SCORING_FEATURES::SampleIndelAlleleBiasLower, SampleIndelAlleleBiasLower);
         features.set(GERMLINE_INDEL_SCORING_FEATURES::SampleIndelAlleleBias, SampleIndelAlleleBias);
@@ -613,7 +613,7 @@ computeEmpiricalScoringFeatures(
         // compute any experimental features not currently used in production
         if (isComputeDevelopmentFeatures)
         {
-            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::SampleRefRepeatCount, (primaryAltAllele.indelReportInfo.ref_repeat_count));
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::SampleRefRepeatCount, (primaryAltAllele.indelReportInfo.refRepeatCount));
 
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction,
                                     (indelSampleInfo.mapqTracker.getZeroFrac()));

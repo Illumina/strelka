@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE( test_cmodel_gqx )
     iri.vcf_indel_seq="CAATA";
     iri.ref_upstream="CTGTCTCTAC";
     iri.ref_downstream="AATAAATAAA";
-    iri.repeat_unit="AATA";
+    iri.repeatUnit="AATA";
     iri.ref_repeat_count=11;
     iri.indel_repeat_count=12;
     iri.ihpol=5;
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE( test_cmodel_gqx )
     iri2.vcf_indel_seq="CAATAAATA";
     iri2.ref_upstream="CTGTCTCTAC";
     iri2.ref_downstream="AATAAATAAA";
-    iri2.repeat_unit="AATA";
+    iri2.repeatUnit="AATA";
     iri2.ref_repeat_count=11;
     iri2.indel_repeat_count=13;
     iri2.ihpol=5;

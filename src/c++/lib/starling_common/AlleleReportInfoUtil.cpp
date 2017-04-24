@@ -109,14 +109,14 @@ set_repeat_info(
 
     if      (indelReportInfo.it == SimplifiedIndelReportType::INSERT)
     {
-        get_seq_repeat_unit(indelKey.insert_seq(), indelReportInfo.repeat_unit, insert_repeat_count);
+        get_seq_repeat_unit(indelKey.insert_seq(), indelReportInfo.repeatUnit, insert_repeat_count);
     }
     else if (indelReportInfo.it == SimplifiedIndelReportType::DELETE)
     {
         std::string deletedSeq;
         copy_ref_subseq(ref,indelKey.pos, indelKey.pos+indelKey.delete_length(), deletedSeq);
 
-        get_seq_repeat_unit(deletedSeq, indelReportInfo.repeat_unit, delete_repeat_count);
+        get_seq_repeat_unit(deletedSeq, indelReportInfo.repeatUnit, delete_repeat_count);
     }
     else if (indelReportInfo.it == SimplifiedIndelReportType::SWAP)
     {
@@ -130,20 +130,20 @@ set_repeat_info(
 
         if ((insert_ru != delete_ru) || insert_ru.empty()) return;
 
-        indelReportInfo.repeat_unit=insert_ru;
+        indelReportInfo.repeatUnit=insert_ru;
     }
     else
     {
         assert(false && "Unexpected indel type");
     }
-    indelReportInfo.repeat_unit_length=indelReportInfo.repeat_unit.size();
+    indelReportInfo.repeatUnitLength=indelReportInfo.repeatUnit.size();
 
     // count repeats in contextual sequence:
     unsigned indel_context_repeat_count(0);
     {
         const pos_t indel_begin_pos(indelKey.pos);
         const pos_t indel_end_pos(indelKey.right_pos());
-        const int repeat_unit_size(static_cast<int>(indelReportInfo.repeat_unit.size()));
+        const int repeat_unit_size(static_cast<int>(indelReportInfo.repeatUnit.size()));
 
         // count upstream repeats:
         for (pos_t i(indel_begin_pos-repeat_unit_size); i>=0; i-=repeat_unit_size)
@@ -151,7 +151,7 @@ set_repeat_info(
             bool is_repeat(true);
             for (int j(0); j<repeat_unit_size; ++j)
             {
-                if (ref.get_base(i+j) != indelReportInfo.repeat_unit[j])
+                if (ref.get_base(i+j) != indelReportInfo.repeatUnit[j])
                 {
                     is_repeat = false;
                     break;
@@ -168,7 +168,7 @@ set_repeat_info(
             bool is_repeat(true);
             for (int j(0); j<repeat_unit_size; ++j)
             {
-                if (ref.get_base(i+j) != indelReportInfo.repeat_unit[j])
+                if (ref.get_base(i+j) != indelReportInfo.repeatUnit[j])
                 {
                     is_repeat = false;
                     break;
@@ -179,8 +179,8 @@ set_repeat_info(
         }
     }
 
-    indelReportInfo.ref_repeat_count = indel_context_repeat_count+delete_repeat_count;
-    indelReportInfo.indel_repeat_count = indel_context_repeat_count+insert_repeat_count;
+    indelReportInfo.refRepeatCount = indel_context_repeat_count+delete_repeat_count;
+    indelReportInfo.indelRepeatCount = indel_context_repeat_count+insert_repeat_count;
 }
 
 

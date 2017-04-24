@@ -815,9 +815,9 @@ write_indel_record_instance(
     {
         if (altAlleleIndex > 0) os << ',';
         const auto& iri(indelAlleles[altAlleleIndex].indelReportInfo);
-        if (iri.is_repeat_unit() && iri.repeat_unit.size() <= 20)
+        if (iri.isRepeatUnit() && iri.repeatUnit.size() <= 20)
         {
-            os << iri.repeat_unit;
+            os << iri.repeatUnit;
         }
         else
         {
@@ -830,9 +830,9 @@ write_indel_record_instance(
     {
         if (altAlleleIndex > 0) os << ',';
         const auto& iri(indelAlleles[altAlleleIndex].indelReportInfo);
-        if (iri.is_repeat_unit())
+        if (iri.isRepeatUnit())
         {
-            os << iri.ref_repeat_count;
+            os << iri.refRepeatCount;
         }
         else
         {
@@ -845,9 +845,9 @@ write_indel_record_instance(
     {
         if (altAlleleIndex > 0) os << ',';
         const auto& iri(indelAlleles[altAlleleIndex].indelReportInfo);
-        if (iri.is_repeat_unit())
+        if (iri.isRepeatUnit())
         {
-            os << iri.indel_repeat_count;
+            os << iri.indelRepeatCount;
         }
         else
         {
