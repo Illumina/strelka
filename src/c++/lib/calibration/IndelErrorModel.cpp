@@ -85,7 +85,6 @@ getSimplifiedAdaptiveParameters()
                    repeatCountSwitchPointVector.size() == numberOfPatternSizes);
 
 
-
     for(unsigned repeatingPatternSizeIx = 0; repeatingPatternSizeIx < numberOfPatternSizes; repeatingPatternSizeIx++)
     {
         const unsigned repeatingPatternSize(repeatingPatternSizeVector[repeatingPatternSizeIx]);
@@ -101,11 +100,12 @@ getSimplifiedAdaptiveParameters()
                                                 lowLogParams,
                                                 highLogParams);
 
-        rates.addRate(repeatingPatternSize, 1, nonStrRate, nonStrRate);
+        unsigned patternRepeatCount = 1;
+        rates.addRate(repeatingPatternSize, patternRepeatCount, nonStrRate, nonStrRate);
 
-        for (unsigned patternRepeatCount = 2; patternRepeatCount <= repeatCountSwitchPoint; ++patternRepeatCount)
+        for (patternRepeatCount = 2; patternRepeatCount <= repeatCountSwitchPoint; ++patternRepeatCount)
         {
-            const double errorRate(indelErrorModel.getErrorRate(patternRepeatCount));
+            const double errorRate(indelErrorModel.errorRate(patternRepeatCount));
             rates.addRate(repeatingPatternSize, patternRepeatCount, errorRate, errorRate);
         }
     }
@@ -264,37 +264,39 @@ getIndelErrorRate(
     }
 }
 
+
+
 AdaptiveIndelErrorModel::AdaptiveIndelErrorModel(
         unsigned repeatPatternSizeIn,
         unsigned highRepeatCountIn,
         AdaptiveIndelErrorModelLogParams lowLogParamsIn,
         AdaptiveIndelErrorModelLogParams highLogParamsIn):
-        repeatPatternSize(repeatPatternSizeIn),
-        highRepeatCount(highRepeatCountIn),
-        lowLogParams(lowLogParamsIn),
-        highLogParams(highLogParamsIn)
+        _repeatPatternSize(repeatPatternSizeIn),
+        _highRepeatCount(highRepeatCountIn),
+        _lowLogParams(lowLogParamsIn),
+        _highLogParams(highLogParamsIn)
 {
 }
 
-double AdaptiveIndelErrorModel::getErrorRate(const unsigned repeatCount) const
+double AdaptiveIndelErrorModel::errorRate(const unsigned repeatCount) const
 {
     assert(repeatCount > 1);
-    if(repeatCount>=highRepeatCount)
+    if(repeatCount>=_highRepeatCount)
     {
-        return std::exp(highLogParams.logErrorRate);
+        return std::exp(_highLogParams.logErrorRate);
     }
-    return std::exp(linearFit(repeatCount, lowRepeatCount, lowLogParams.logErrorRate, highRepeatCount, highLogParams.logErrorRate));
+    return std::exp(linearFit(repeatCount, _lowRepeatCount, _lowLogParams.logErrorRate, _highRepeatCount, _highLogParams.logErrorRate));
 }
 
-double AdaptiveIndelErrorModel::getNoisyLocusRate(const unsigned repeatCount) const
+double AdaptiveIndelErrorModel::noisyLocusRate(const unsigned repeatCount) const
 {
     assert(repeatCount > 1);
-    if(repeatCount>=highRepeatCount)
+    if(repeatCount>=_highRepeatCount)
     {
-        return std::exp(highLogParams.logNoisyLocusRate);
+        return std::exp(_highLogParams.logNoisyLocusRate);
     }
     return std::exp(
-            linearFit(repeatCount, lowRepeatCount, lowLogParams.logNoisyLocusRate, highRepeatCount, highLogParams.logNoisyLocusRate));
+            linearFit(repeatCount, _lowRepeatCount, _lowLogParams.logNoisyLocusRate, _highRepeatCount, _highLogParams.logNoisyLocusRate));
 }
 
 double AdaptiveIndelErrorModel::linearFit(const double x, const double x1, const double y1, const double x2, const double y2)

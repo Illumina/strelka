@@ -89,26 +89,26 @@ public:
             AdaptiveIndelErrorModelLogParams lowLogParams,
             AdaptiveIndelErrorModelLogParams highLogParams);
 private:
-    unsigned repeatPatternSize = 0;
-    unsigned lowRepeatCount = 2; // it should be safe to fix this to 2
-    unsigned highRepeatCount = 0;
+    unsigned _repeatPatternSize = 0;
+    unsigned _lowRepeatCount = 2; // it should be safe to fix this to 2
+    unsigned _highRepeatCount = 0;
 
-    AdaptiveIndelErrorModelLogParams lowLogParams;
-    AdaptiveIndelErrorModelLogParams highLogParams;
+    AdaptiveIndelErrorModelLogParams _lowLogParams;
+    AdaptiveIndelErrorModelLogParams _highLogParams;
 
 public:
     unsigned
-    getRepeatPatternSize() const { return repeatPatternSize;}
+    repeatPatternSize() const { return _repeatPatternSize;}
     unsigned
-    getLowRepeatCount() const { return lowRepeatCount;}
+    lowRepeatCount() const { return _lowRepeatCount;}
     unsigned
-    getHighRepeatCount() const { return highRepeatCount;}
+    highRepeatCount() const { return _highRepeatCount;}
 
     double
-    getErrorRate(
+    errorRate(
             const unsigned repeatCount) const;
     double
-    getNoisyLocusRate(
+    noisyLocusRate(
             const unsigned repeatCount) const;
 
 
