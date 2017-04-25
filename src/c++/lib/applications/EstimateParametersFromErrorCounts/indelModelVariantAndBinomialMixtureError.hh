@@ -38,7 +38,7 @@ indelModelVariantAndBinomialMixtureErrorSimple(
         const std::string& thetaFilename,
         const std::string& outputFilename);
 
-std::vector<double>
+std::map<unsigned, std::vector<double>>
 importTheta(
         std::string filename);
 

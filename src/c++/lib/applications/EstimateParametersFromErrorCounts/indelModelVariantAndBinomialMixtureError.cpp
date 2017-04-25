@@ -576,20 +576,22 @@ indelModelVariantAndBinomialMixtureErrorSimple(
 {
     IndelModelJson indelModelJson;
     std::ostream& ros(std::cout);
-    std::vector<double> theta;
+    std::map<unsigned, std::vector<double>> thetas;
     if(!thetaFilename.empty())
     {
-        theta = importTheta(thetaFilename);
+        thetas = importTheta(thetaFilename);
     }
 
     std::vector<SimpleIndelErrorModel> simpleIndelErrorModels;
     std::vector<unsigned> repeatPatterns = {1, 2};
     std::vector<unsigned> maxRepeatCounts = {16, 8};
     assert(repeatPatterns.size() == maxRepeatCounts.size());
-    assert(theta.size() >= *std::max_element(maxRepeatCounts.begin(), maxRepeatCounts.end()));
 
     for(unsigned repeatPatternIx = 0; repeatPatternIx < repeatPatterns.size(); repeatPatternIx++)
     {
+        auto repeatPatternSize = repeatPatterns[repeatPatternIx];
+        auto theta = thetas[repeatPatternSize];
+        assert(theta.size() >= *std::max_element(maxRepeatCounts.begin(), maxRepeatCounts.end()));
         simpleIndelErrorModels.push_back(SimpleIndelErrorModel(counts,
                                                                theta,
                                                                repeatPatterns[repeatPatternIx],
@@ -599,9 +601,12 @@ indelModelVariantAndBinomialMixtureErrorSimple(
     ros << "context, excludedLoci, nonExcludedLoci, usedLoci, refReads, altReads, iter, lhood, errorRate, theta, noisyLocusRate\n";
 
     // estimate error rate for the non-STR context
-    IndelErrorContext targetContext(1, 1);
+    const unsigned nonSTRRepeatPatternSize(1);
+    const unsigned nonSTRRepeatCount(1);
+    IndelErrorContext targetContext(nonSTRRepeatPatternSize, nonSTRRepeatCount);
+    const auto nonSTRTheta = thetas[nonSTRRepeatPatternSize][0];
     log_os << "INFO: computing rates for context: " << targetContext << "\n";
-    const auto estimatedParams = SimpleIndelErrorModel::estimateModelParams(counts, targetContext, std::log(theta[0]));
+    const auto estimatedParams = SimpleIndelErrorModel::estimateModelParams(counts, targetContext, std::log(nonSTRTheta));
 
     // add the non-STR params to all contexts with repeat count 1
     // this will show up as valid contexts during variant calling so we need to fill in these gaps
@@ -628,8 +633,8 @@ indelModelVariantAndBinomialMixtureErrorSimple(
 
 }
 
-// example: {"theta" : [0.0001, 0.0002, 0.0003]}
-std::vector<double>
+// example: {"thetas": [{"repeatPatternSize" : 1, "theta" : [0.0001, 0.0002, 0.0003]}, {"repeatPatternSize" : 2, "theta" : [0.0001, 0.0002, 0.0003]}]}
+std::map<unsigned, std::vector<double>>
 importTheta(
         std::string filename)
 {
@@ -643,8 +648,8 @@ importTheta(
     }
     Json::Reader reader;
     reader.parse(jsonString, root);
-    Json::Value thetaValues = root["theta"];
-    if (thetaValues.isNull())
+    Json::Value thetasRoot = root["thetas"];
+    if (thetasRoot.isNull())
     {
         using namespace illumina::common;
         std::ostringstream oss;
@@ -652,12 +657,19 @@ importTheta(
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 
-    std::vector<double> theta;
-    for (const auto &thetaValue : thetaValues)
+    std::map<unsigned, std::vector<double>> thetas;
+
+    for(const auto & thetasByPatternSize : thetasRoot)
     {
-        theta.push_back(thetaValue.asDouble());
+        std::vector<double> theta;
+        unsigned repeatPatternSize = thetasByPatternSize["repeatPatternSize"].asUInt();
+        Json::Value thetaValues = thetasByPatternSize["theta"];
+        for (const auto &thetaValue : thetaValues) {
+            theta.push_back(thetaValue.asDouble());
+        }
+        thetas[repeatPatternSize] = theta;
     }
-    return theta;
+    return thetas;
 }
 
 SimpleIndelErrorModel::SimpleIndelErrorModel(

@@ -32,11 +32,19 @@
         }
       }
     },
-    "theta": {
-      "items": {
-        "type": "number"
+    "thetas": {
+      "description": "An array which is the collection of all thetas used in the model",
+      "type": "array",
+      "theta": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
       },
-      "type": "array"
+      "repeatPatternSize": {
+        "description": "The repeat pattern size for the given motif",
+        "type": "integer"
+      }
     }
   }
 }
