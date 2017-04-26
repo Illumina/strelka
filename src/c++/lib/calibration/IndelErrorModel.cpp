@@ -90,11 +90,11 @@ getSimplifiedAdaptiveParameters()
     const unsigned numberOfPatternSizes = repeatingPatternSizeVector.size();
 
     assert(logLowErrorRateVector.size() == numberOfPatternSizes &&
-                   logHighErrorRateVector.size() == numberOfPatternSizes &&
-                   repeatCountSwitchPointVector.size() == numberOfPatternSizes);
+           logHighErrorRateVector.size() == numberOfPatternSizes &&
+           repeatCountSwitchPointVector.size() == numberOfPatternSizes);
 
 
-    for(unsigned repeatingPatternSizeIx = 0; repeatingPatternSizeIx < numberOfPatternSizes; repeatingPatternSizeIx++)
+    for (unsigned repeatingPatternSizeIx = 0; repeatingPatternSizeIx < numberOfPatternSizes; repeatingPatternSizeIx++)
     {
         const unsigned repeatingPatternSize(repeatingPatternSizeVector[repeatingPatternSizeIx]);
         const unsigned repeatCountSwitchPoint(repeatCountSwitchPointVector[repeatingPatternSizeIx]);
@@ -280,17 +280,17 @@ AdaptiveIndelErrorModel::AdaptiveIndelErrorModel(
     unsigned highRepeatCountIn,
     const AdaptiveIndelErrorModelLogParams& lowLogParamsIn,
     const AdaptiveIndelErrorModelLogParams& highLogParamsIn):
-        _repeatPatternSize(repeatPatternSizeIn),
-        _highRepeatCount(highRepeatCountIn),
-        _lowLogParams(lowLogParamsIn),
-        _highLogParams(highLogParamsIn)
+    _repeatPatternSize(repeatPatternSizeIn),
+    _highRepeatCount(highRepeatCountIn),
+    _lowLogParams(lowLogParamsIn),
+    _highLogParams(highLogParamsIn)
 {
 }
 
 double AdaptiveIndelErrorModel::errorRate(const unsigned repeatCount) const
 {
     assert(repeatCount > 1);
-    if(repeatCount>=_highRepeatCount)
+    if (repeatCount>=_highRepeatCount)
     {
         return std::exp(_highLogParams.logErrorRate);
     }
@@ -300,12 +300,12 @@ double AdaptiveIndelErrorModel::errorRate(const unsigned repeatCount) const
 double AdaptiveIndelErrorModel::noisyLocusRate(const unsigned repeatCount) const
 {
     assert(repeatCount > 1);
-    if(repeatCount>=_highRepeatCount)
+    if (repeatCount>=_highRepeatCount)
     {
         return std::exp(_highLogParams.logNoisyLocusRate);
     }
     return std::exp(
-            linearFit(repeatCount, _lowRepeatCount, _lowLogParams.logNoisyLocusRate, _highRepeatCount, _highLogParams.logNoisyLocusRate));
+               linearFit(repeatCount, _lowRepeatCount, _lowLogParams.logNoisyLocusRate, _highRepeatCount, _highLogParams.logNoisyLocusRate));
 }
 
 double AdaptiveIndelErrorModel::linearFit(const double x, const double x1, const double y1, const double x2, const double y2)

@@ -495,8 +495,8 @@ updateSnvLocusWithSampleInfo(
         if (allele1Index > 0)
         {
             maxGt.setAllele1HaplotypeId(
-                    candidateSnvBuffer.getHaplotypeId(
-                            sampleIndex, locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
+                candidateSnvBuffer.getHaplotypeId(
+                    sampleIndex, locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
             );
         }
     }

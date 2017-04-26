@@ -81,18 +81,27 @@ private:
 
 public:
     unsigned
-    repeatPatternSize() const { return _repeatPatternSize;}
+    repeatPatternSize() const
+    {
+        return _repeatPatternSize;
+    }
     unsigned
-    lowRepeatCount() const { return _lowRepeatCount;}
+    lowRepeatCount() const
+    {
+        return _lowRepeatCount;
+    }
     unsigned
-    highRepeatCount() const { return _highRepeatCount;}
+    highRepeatCount() const
+    {
+        return _highRepeatCount;
+    }
 
     double
     errorRate(
-            const unsigned repeatCount) const;
+        const unsigned repeatCount) const;
     double
     noisyLocusRate(
-            const unsigned repeatCount) const;
+        const unsigned repeatCount) const;
 
 
     /// Perform a linear fit from 2 known points and return y corresponding to x
@@ -104,9 +113,9 @@ public:
     /// \param y2 the y position corresponding to x2
     static double
     linearFit(
-            const double x,
-            const double x1,
-            const double y1,
-            const double x2,
-            const double y2);
+        const double x,
+        const double x1,
+        const double y1,
+        const double x2,
+        const double y2);
 };

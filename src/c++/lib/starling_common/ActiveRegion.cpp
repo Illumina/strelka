@@ -389,9 +389,9 @@ isFilterSecondHaplotypeAsSequencerPhasingNoise(
 
 
 bool ActiveRegion::processSelectedHaplotypes(
-        const unsigned sampleId,
-        HaplotypeToAlignIdSet& haplotypeToAlignIdSet,
-        const unsigned totalNumReads)
+    const unsigned sampleId,
+    HaplotypeToAlignIdSet& haplotypeToAlignIdSet,
+    const unsigned totalNumReads)
 {
     // determine threshold to select 2 haplotypes with the largest counts
     unsigned largestCount(0);

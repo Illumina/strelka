@@ -130,7 +130,8 @@ struct GenotypePriorSet
         const unsigned /*highRepeatCount*/)
     {
         static const unsigned highHpolRepeatCount(16);
-        static const double hpolTheta[] = {
+        static const double hpolTheta[] =
+        {
             0.000120268,
             5.97777E-05,
             0.000124648,
@@ -157,7 +158,8 @@ struct GenotypePriorSet
         assert(hpolThetaSize >= highHpolRepeatCount);
 
         static const unsigned highDinucRepeatCount(9);
-        static const double dinucTheta[] = {
+        static const double dinucTheta[] =
+        {
             0.000120268,
             8.73757E-05,
             0.000479319,
