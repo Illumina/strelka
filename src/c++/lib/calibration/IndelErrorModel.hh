@@ -67,10 +67,10 @@ class AdaptiveIndelErrorModel
 {
 public:
     AdaptiveIndelErrorModel(
-            unsigned repeatPatternSize,
-            unsigned highRepeatCount,
-            AdaptiveIndelErrorModelLogParams lowLogParams,
-            AdaptiveIndelErrorModelLogParams highLogParams);
+        unsigned repeatPatternSize,
+        unsigned highRepeatCount,
+        const AdaptiveIndelErrorModelLogParams& lowLogParams,
+        const AdaptiveIndelErrorModelLogParams& highLogParams);
 private:
     unsigned _repeatPatternSize = 0;
     unsigned _lowRepeatCount = 2; // it should be safe to fix this to 2
@@ -109,5 +109,4 @@ public:
             const double y1,
             const double x2,
             const double y2);
-
 };

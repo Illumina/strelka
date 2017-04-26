@@ -276,10 +276,10 @@ getIndelErrorRate(
 
 
 AdaptiveIndelErrorModel::AdaptiveIndelErrorModel(
-        unsigned repeatPatternSizeIn,
-        unsigned highRepeatCountIn,
-        AdaptiveIndelErrorModelLogParams lowLogParamsIn,
-        AdaptiveIndelErrorModelLogParams highLogParamsIn):
+    unsigned repeatPatternSizeIn,
+    unsigned highRepeatCountIn,
+    const AdaptiveIndelErrorModelLogParams& lowLogParamsIn,
+    const AdaptiveIndelErrorModelLogParams& highLogParamsIn):
         _repeatPatternSize(repeatPatternSizeIn),
         _highRepeatCount(highRepeatCountIn),
         _lowLogParams(lowLogParamsIn),
