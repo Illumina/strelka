@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #pragma once
 
 #include "blt_common/MapqTracker.hh"
@@ -75,7 +71,7 @@ getRateType(
 }
 
 
-/// allele summary information which is shared between all samples:
+/// \brief Allele summary information which is shared between all samples.
 ///
 struct AlleleReportInfo
 {
@@ -102,7 +98,7 @@ struct AlleleReportInfo
 std::ostream& operator<<(std::ostream& os, const AlleleReportInfo& obj);
 
 
-/// allele summary information which is specific to each sample:
+/// \brief Allele summary information which is specific to each sample.
 ///
 struct AlleleSampleReportInfo
 {

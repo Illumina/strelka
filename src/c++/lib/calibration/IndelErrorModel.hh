@@ -16,9 +16,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
-/*
- *      Author: mkallberg
- */
 
 #pragma once
 
@@ -28,20 +25,20 @@
 #include "starling_common/AlleleReportInfo.hh"
 
 
-/// organizes indel error rate information
+/// \brief Organizes indel error rate information.
 ///
 struct IndelErrorModel
 {
-    /// Initialize indel error model to one of the hard-coded variants compiled into
-    /// Strelka (if modelFilename is empty), or from a json parameter file (otherwise)
+    /// \brief Initialize indel error model to either a precomputed static model (if \p modelFilename is empty),
+    /// or from a json parameter file otherwise.
     ///
     IndelErrorModel(
         const std::string& modelName,
         const std::string& modelFilename);
 
-    /// Retrieve indel error rates for a specific indel type
+    /// \brief Retrieve indel error rates for a specific indel type.
     ///
-    /// \param isCandidateRates if true retrieve rates to be used for indel candidate testing
+    /// \param[in] isCandidateRates If true, retrieve rates to be used for indel candidate testing.
     void
     getIndelErrorRate(
         const IndelKey& indelKey,
@@ -56,20 +53,6 @@ private:
 
     /// error rates used for candidate indel selection only
     IndelErrorRateSet _candidateErrorRates;
-
-#if 0
-    const std::string&
-    getName() const
-    {
-        return _meta.name;
-    }
-
-
-    unsigned get_max_motif_length() const
-    {
-        return MaxMotifLength;
-    }
-#endif
 };
 
 class AdaptiveIndelErrorModelLogParams

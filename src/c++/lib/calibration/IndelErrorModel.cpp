@@ -16,9 +16,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
-/*
- *      Author: Morten Kallberg
- */
 
 #include "IndelErrorModel.hh"
 #include "blt_util/log.hh"
@@ -32,7 +29,13 @@
 #include <fstream>
 
 
-/// simple log-linear error ramp as a function of hpol length - default error model used in NS5/v2.7.x release series
+/// \brief Provide simple static indel error rates.
+///
+/// Provides a single log-linear ramp for homopolymer lengths 1-16. These rates are set empirically. In
+/// practice these are scaled up if used for germline likelihood computations.
+///
+/// This was the default static error model used for all cases in NS5/v2.7.x release series.
+///
 static
 IndelErrorRateSet
 getLogLinearIndelErrorModel()
@@ -62,9 +65,15 @@ getLogLinearIndelErrorModel()
 
 
 
-/// this uses a single value for the non-STR state (hpol1) and a log-linear ramp for homopolymer lengths 2-16
+/// \brief Provide static indel error rates developed from pattern analyzer 'model 3' estimates.
 ///
-/// the parameters are averages between typical Nano and PCR-free estimates
+/// Provides a set of error rates using a single value for the non-STR state, a log-linear ramp
+/// for homopolymer lengths 2-16, and a log-linear ramp for dinucleotide repeat counts 2-9.
+///
+/// The parameters here are designed to correspond to the adaptive indel error estimates computed
+/// from the input data. These can be used under any circumstance where adaptive estimation is not
+/// practical. The parameters are based on the geometric average of adaptive parameter estimates
+/// from 'typical' Nano and PCR-free samples, with minor empirical adjustments.
 ///
 static
 IndelErrorRateSet

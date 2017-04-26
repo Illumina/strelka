@@ -17,11 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
-
 #include "starling_common/AlleleReportInfo.hh"
 
 #include <iostream>
