@@ -87,6 +87,9 @@ def getChromIsSkipped(self, chromOrder) :
             if chrom in chromIsSkipped2 :
                 chromIsSkipped2.remove(chrom)
 
+        proc.stdout.close()
+        proc.wait()
+
         chromIsSkipped = chromIsSkipped | chromIsSkipped2
 
     return chromIsSkipped
@@ -196,12 +199,29 @@ class StrelkaSharedCallWorkflow(WorkflowRunner) :
             for arg in self.params.extraVariantCallerArguments.strip().split() :
                 segCmd.append(arg)
 
+
+    def filterUncalledChromosomeSegments(self, genomeSegmentIterator):
+        """
+        Given a genome segment iterator, filter the genome segments to remove any chromosomes which are
+        absent from callRegions bed file, if such a file has been specified, otherwise just pass the
+        iterator through.
+        """
+
+        isCallRegionBed = (self.params.callRegionsBed is not None)
+
+        for gseg in genomeSegmentIterator :
+            if isCallRegionBed :
+                if gseg.chromLabel in self.params.chromIsSkipped : continue
+
+            yield gseg
+
+
     def getStrelkaGenomeSegmentGroupIterator(self, contigsExcludedFromGrouping = None) :
         """
         setup genome segment iteration for germline and somatic calling,
         including  clumping together small segments into groups.
         """
-        genomeSegmentIterator = getNextGenomeSegment(self.params)
+        genomeSegmentIterator = self.filterUncalledChromosomeSegments(getNextGenomeSegment(self.params))
         return getGenomeSegmentGroups(genomeSegmentIterator, contigsExcludedFromGrouping)
 
 
