@@ -1,3 +1,4 @@
+- STREL-524 Retrain germline EVS
 - STREL-519 Fix callRegions option thread utilization
 - STREL-459 Retain optimal soft-clipping for RNA analysis
 - STREL-451 Enable somatic indel EVS and retrain somatic SNV EVS

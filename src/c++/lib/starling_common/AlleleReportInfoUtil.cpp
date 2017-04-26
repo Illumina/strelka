@@ -98,7 +98,7 @@ shortest_unencountered(
     const pos_t pos,
     const unsigned num_encoded,
     const bool left = false)
-{  
+{
     std::string encoded;
     std::string new_prefix;
     // get substring encoded thus far:

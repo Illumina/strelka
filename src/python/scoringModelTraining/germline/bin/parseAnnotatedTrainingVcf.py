@@ -120,7 +120,7 @@ def main() :
             assert(len(tword) == 2)
             HeaderData.indelFeatures = tword[1]
             HeaderData.indelEmptyFeatureString = ',' * HeaderData.indelFeatures.count(',')
- 
+
     def finalizeHeader() :
         HeaderData.isOutputHeaderInitialized = True
 

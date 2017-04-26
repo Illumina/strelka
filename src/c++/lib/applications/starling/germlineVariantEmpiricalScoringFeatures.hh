@@ -57,6 +57,7 @@ struct GERMLINE_SNV_SCORING_FEATURES : public FeatureSet
         RelativeTotalLocusDepth,
         SampleUsedDepthFraction,
         ConservativeGenotypeQuality,
+	NormalizedAltHaplotypeCountRatio,
         SIZE
     };
 
@@ -89,6 +90,8 @@ struct GERMLINE_SNV_SCORING_FEATURES : public FeatureSet
             return "SampleUsedDepthFraction";
         case ConservativeGenotypeQuality:
             return "ConservativeGenotypeQuality";
+        case NormalizedAltHaplotypeCountRatio:
+	    return "NormalizedAltHaplotypeCountRatio";
         default:
             assert(false && "Unknown feature");
             return nullptr;
@@ -132,7 +135,6 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         VariantAlleleQuality,
         F_GQ,
         SamplePrimaryAltAlleleDepthFraction,
-        NormalizedAltHaplotypeCountRatio,
         SIZE
     };
 
@@ -173,8 +175,6 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "F_GQ";
         case SamplePrimaryAltAlleleDepthFraction:
             return "SamplePrimaryAltAlleleDepthFraction";
-        case NormalizedAltHaplotypeCountRatio:
-            return "NormalizedAltHaplotypeCountRatio";
         default:
             assert(false && "Unknown feature");
             return nullptr;
@@ -218,6 +218,7 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
 	InterruptedHomopolymerLength,
 	ContextCompressability,
 	IndelCategory,
+        NormalizedAltHaplotypeCountRatio,
         SIZE
     };
 
@@ -256,6 +257,8 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
 	    return "ContextCompressability";
         case IndelCategory:
 	  return "IndelCategory";
+        case NormalizedAltHaplotypeCountRatio:
+	  return "NormalizedAltHaplotypeCountRatio";
         default:
             assert(false && "Unknown feature");
             return nullptr;
@@ -295,7 +298,6 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         SampleRefAlleleDepthFraction,
         VariantAlleleQuality,
         F_GQ,
-        NormalizedAltHaplotypeCountRatio,
         SIZE
     };
 
@@ -328,8 +330,6 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "VariantAlleleQuality";
         case F_GQ:
             return "F_GQ";
-        case NormalizedAltHaplotypeCountRatio:
-            return "NormalizedAltHaplotypeCountRatio";
         default:
             assert(false && "Unknown feature");
             return nullptr;

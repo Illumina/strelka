@@ -47,4 +47,5 @@ class GermlineSNVFeatures(VcfFeatureSet):
             "SampleReadPosRankSum",
             "RelativeTotalLocusDepth",
             "SampleUsedDepthFraction",
-            "ConservativeGenotypeQuality"]
+            "ConservativeGenotypeQuality",
+            "NormalizedAltHaplotypeCountRatio"]
