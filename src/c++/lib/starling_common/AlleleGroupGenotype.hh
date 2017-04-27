@@ -191,26 +191,26 @@ struct GenotypePriorSet
         for (unsigned repeatingPatternSize(1); repeatingPatternSize <= maxRepeatingPatternSize; ++repeatingPatternSize)
         {
             const unsigned repeatingPatternSizeIndex(repeatingPatternSize-1);
-            auto& STRPatternPriors(_priors[repeatingPatternSizeIndex]);
+            auto& strPatternPriors(_priors[repeatingPatternSizeIndex]);
 
             if (repeatingPatternSize == 1)
             {
-                STRPatternPriors.resize(highHpolRepeatCount);
+                strPatternPriors.resize(highHpolRepeatCount);
                 for (unsigned patternRepeatCount(1); patternRepeatCount <= highHpolRepeatCount; ++patternRepeatCount)
                 {
                     const unsigned patternRepeatCountIndex(patternRepeatCount - 1);
                     const double theta(hpolTheta[patternRepeatCountIndex]);
-                    STRPatternPriors[patternRepeatCountIndex].initialize(theta);
+                    strPatternPriors[patternRepeatCountIndex].initialize(theta);
                 }
             }
             else if (repeatingPatternSize == 2)
             {
-                STRPatternPriors.resize(highDinucRepeatCount);
+                strPatternPriors.resize(highDinucRepeatCount);
                 for (unsigned patternRepeatCount(1); patternRepeatCount <= highDinucRepeatCount; ++patternRepeatCount)
                 {
                     const unsigned patternRepeatCountIndex(patternRepeatCount - 1);
                     const double theta(dinucTheta[patternRepeatCountIndex]);
-                    STRPatternPriors[patternRepeatCountIndex].initialize(theta);
+                    strPatternPriors[patternRepeatCountIndex].initialize(theta);
                 }
             }
         }
