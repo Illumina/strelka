@@ -16,9 +16,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
-/*
- *      Author: mkallberg
- */
 
 #pragma once
 
@@ -28,40 +25,97 @@
 #include "starling_common/AlleleReportInfo.hh"
 
 
-/// organizes indel error rate information
+/// \brief Organizes indel error rate information.
 ///
 struct IndelErrorModel
 {
-    /// Initialize indel error model to one of the hard-coded variants compiled into
-    /// Strelka (if modelFilename is empty), or from a json parameter file (otherwise)
+    /// \brief Initialize indel error model to either a precomputed static model (if \p modelFilename is empty),
+    /// or from a json parameter file otherwise.
     ///
     IndelErrorModel(
         const std::string& modelName,
         const std::string& modelFilename);
 
-    /// Retrieve indel error rates for a specific indel type
+    /// \brief Retrieve indel error rates for a specific indel type.
+    ///
+    /// \param[in] isCandidateRates If true, retrieve rates to be used for indel candidate testing.
     void
     getIndelErrorRate(
         const IndelKey& indelKey,
         const AlleleReportInfo& indelReportInfo,
         double& refToIndelErrorProb,
-        double& indelToRefErrorProb) const;
+        double& indelToRefErrorProb,
+        const bool isCandidateRates = false) const;
 
 private:
     IndelErrorModelMetadata _meta;
     IndelErrorRateSet _errorRates;
 
-#if 0
-    const std::string&
-    getName() const
+    /// error rates used for candidate indel selection only
+    IndelErrorRateSet _candidateErrorRates;
+};
+
+class AdaptiveIndelErrorModelLogParams
+{
+public:
+    double logErrorRate = -std::numeric_limits<double>::infinity();
+    double logNoisyLocusRate = -std::numeric_limits<double>::infinity();
+};
+
+// TODO: This class will be useful when we put in the production estimator
+class AdaptiveIndelErrorModel
+{
+public:
+    AdaptiveIndelErrorModel(
+        unsigned repeatPatternSize,
+        unsigned highRepeatCount,
+        const AdaptiveIndelErrorModelLogParams& lowLogParams,
+        const AdaptiveIndelErrorModelLogParams& highLogParams);
+private:
+    unsigned _repeatPatternSize = 0;
+    unsigned _lowRepeatCount = 2; // it should be safe to fix this to 2
+    unsigned _highRepeatCount = 0;
+
+    AdaptiveIndelErrorModelLogParams _lowLogParams;
+    AdaptiveIndelErrorModelLogParams _highLogParams;
+
+public:
+    unsigned
+    repeatPatternSize() const
     {
-        return _meta.name;
+        return _repeatPatternSize;
+    }
+    unsigned
+    lowRepeatCount() const
+    {
+        return _lowRepeatCount;
+    }
+    unsigned
+    highRepeatCount() const
+    {
+        return _highRepeatCount;
     }
 
+    double
+    errorRate(
+        const unsigned repeatCount) const;
+    double
+    noisyLocusRate(
+        const unsigned repeatCount) const;
 
-    unsigned get_max_motif_length() const
-    {
-        return MaxMotifLength;
-    }
-#endif
+
+    /// Perform a linear fit from 2 known points and return y corresponding to x
+    ///
+    /// \param x the point on the linear curve of interest
+    /// \param x1 the first known x position
+    /// \param y1 the y position corresponding to x1
+    /// \param x2 the 2nd known x position
+    /// \param y2 the y position corresponding to x2
+    static double
+    linearFit(
+        const double x,
+        const double x1,
+        const double y1,
+        const double x2,
+        const double y2);
 };

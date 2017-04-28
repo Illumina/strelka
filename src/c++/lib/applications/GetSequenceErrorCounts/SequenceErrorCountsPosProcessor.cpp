@@ -240,7 +240,7 @@ INDEL_SIGNAL_TYPE::index_t
 getIndelType(
     const AlleleReportInfo& indelReportInfo)
 {
-    int rudiff(static_cast<int>(indelReportInfo.ref_repeat_count)-static_cast<int>(indelReportInfo.indel_repeat_count));
+    int rudiff(static_cast<int>(indelReportInfo.refRepeatCount)-static_cast<int>(indelReportInfo.indelRepeatCount));
     rudiff = std::min(3,std::max(-3,rudiff));
 
     using namespace INDEL_SIGNAL_TYPE;
@@ -624,10 +624,10 @@ process_pos_error_counts(
 
             IndelErrorContext context;
 
-            if ((indelReportInfo.repeat_unit_length == refSTRContext.patternSize) && (indelReportInfo.ref_repeat_count > 1))
+            if ((indelReportInfo.repeatUnitLength == refSTRContext.patternSize) && (indelReportInfo.refRepeatCount > 1))
             {
                 // guard against the occasional non-normalized indel:
-                if (refSTRContext.STRRepeatCount == std::min(maxSTRRepeatCount, indelReportInfo.ref_repeat_count))
+                if (refSTRContext.STRRepeatCount == std::min(maxSTRRepeatCount, indelReportInfo.refRepeatCount))
                 {
                     context = IndelErrorContext(refSTRContext.patternSize, refSTRContext.STRRepeatCount);
                 }
@@ -659,7 +659,7 @@ process_pos_error_counts(
                 obs_os << _chromName << "\t";
                 obs_os << indelKey.pos << "\t" << indelKey.pos + indelKey.deletionLength << "\t"
                        << INDEL::get_index_label(indelKey.type) << "\t";
-                obs_os << indelReportInfo.repeat_unit << "\t" << indelReportInfo.ref_repeat_count << "\t";
+                obs_os << indelReportInfo.repeatUnit << "\t" << indelReportInfo.refRepeatCount << "\t";
                 obs_os << GENOTYPE_STATUS::label(obs.variantStatus) << "\t";
                 obs_os << context.getRepeatPatternSize() << "\t" << context.getRepeatCount() << "\t"
                        << INDEL_SIGNAL_TYPE::label(sigIndex) << "\t";

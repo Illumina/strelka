@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #pragma once
 
 #include "blt_common/MapqTracker.hh"
@@ -75,24 +71,24 @@ getRateType(
 }
 
 
-/// allele summary information which is shared between all samples:
+/// \brief Allele summary information which is shared between all samples.
 ///
 struct AlleleReportInfo
 {
     AlleleReportInfo() {}
 
     bool
-    is_repeat_unit() const
+    isRepeatUnit() const
     {
-        return (! repeat_unit.empty());
+        return (! repeatUnit.empty());
     }
 
     void dump(std::ostream& os) const;
 
-    std::string repeat_unit;
-    unsigned repeat_unit_length = 0;
-    unsigned ref_repeat_count = 0;
-    unsigned indel_repeat_count = 0;
+    std::string repeatUnit;
+    unsigned repeatUnitLength = 0;
+    unsigned refRepeatCount = 0;
+    unsigned indelRepeatCount = 0;
     unsigned ihpol = 0; ///< interrupted homopolymer length
 
     // not directly reported, but handy to have pre-calculated:
@@ -102,7 +98,7 @@ struct AlleleReportInfo
 std::ostream& operator<<(std::ostream& os, const AlleleReportInfo& obj);
 
 
-/// allele summary information which is specific to each sample:
+/// \brief Allele summary information which is specific to each sample.
 ///
 struct AlleleSampleReportInfo
 {

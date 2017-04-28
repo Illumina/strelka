@@ -25,11 +25,11 @@
 #include "CandidateSnvBuffer.hh"
 
 void CandidateSnvBuffer::addCandidateSnv(
-        const unsigned sampleId,
-        const pos_t pos,
-        const char baseChar,
-        const HaplotypeId haplotypeId,
-        const float altHaplotypeCountRatio)
+    const unsigned sampleId,
+    const pos_t pos,
+    const char baseChar,
+    const HaplotypeId haplotypeId,
+    const float altHaplotypeCountRatio)
 {
     assert (haplotypeId == 1 || haplotypeId == 2);
     HaplotypeIdAndCountRatio& haplotypeIdForBase = _candidateSnvBuffer[sampleId].getRef(pos);

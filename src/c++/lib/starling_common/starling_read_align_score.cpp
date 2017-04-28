@@ -478,8 +478,13 @@ score_candidate_alignment(
             if (not isCandidate)
             {
                 // add penalty for non-candidate indels
+#if 0
                 const auto& errorRates(indelDataPtr->getErrorRates());
                 alignmentLogProb += errorRates.refToIndelErrorProb.getLogValue();
+#else
+                static const double nonCandidateIndelPenalty(std::log(1e-5));
+                alignmentLogProb += nonCandidateIndelPenalty;
+#endif
             }
         }
 

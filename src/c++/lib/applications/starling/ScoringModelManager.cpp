@@ -339,10 +339,10 @@ default_classify_indel(
         for (const auto& allele : locus.getIndelAlleles())
         {
             const auto& iri(allele.indelReportInfo);
-            if (iri.is_repeat_unit())
+            if (iri.isRepeatUnit())
             {
-                if ((iri.repeat_unit.size() <= 2) &&
-                    (static_cast<int>(iri.ref_repeat_count) > _opt.max_ref_rep))
+                if ((iri.repeatUnit.size() <= 2) &&
+                    (static_cast<int>(iri.refRepeatCount) > _opt.max_ref_rep))
                 {
                     sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighRefRep);
                 }

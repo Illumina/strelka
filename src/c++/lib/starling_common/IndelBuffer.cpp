@@ -167,7 +167,7 @@ isCandidateIndelImplTestSignalNoise(
         // Test to see if the observed indel coverage has a binomial exact test
         // p-value above the rejection threshold. If this does not occur for the
         // counts observed in any sample, the indel cannot become a candidate
-        if (_countCache.isRejectNull(totalReadCount, indelData.getErrorRates().indelToRefErrorProb.getValue(), tier1ReadSupportCount))
+        if (_countCache.isRejectNull(totalReadCount, indelData.getErrorRates().candidateIndelToRefErrorProb.getValue(), tier1ReadSupportCount))
         {
             return true;
         }

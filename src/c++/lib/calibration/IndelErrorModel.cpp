@@ -16,9 +16,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
-/*
- *      Author: Morten Kallberg
- */
 
 #include "IndelErrorModel.hh"
 #include "blt_util/log.hh"
@@ -31,7 +28,14 @@
 
 #include <fstream>
 
-/// simple log-linear error ramp as a function of hpol length - default error model used in NS5/v2.7.x release series
+
+/// \brief Provide simple static indel error rates.
+///
+/// Provides a single log-linear ramp for homopolymer lengths 1-16. These rates are set empirically. In
+/// practice these are scaled up if used for germline likelihood computations.
+///
+/// This was the default static error model used for all cases in NS5/v2.7.x release series.
+///
 static
 IndelErrorRateSet
 getLogLinearIndelErrorModel()
@@ -55,6 +59,64 @@ getLogLinearIndelErrorModel()
         const double errorRate(std::exp(repeatingPatternSize==1 ? logErrorRate : logLowErrorRate));
 
         rates.addRate(repeatingPatternSize, patternRepeatCount, errorRate, errorRate);
+    }
+    return rates;
+}
+
+
+
+/// \brief Provide static indel error rates developed from pattern analyzer 'model 3' estimates.
+///
+/// Provides a set of error rates using a single value for the non-STR state, a log-linear ramp
+/// for homopolymer lengths 2-16, and a log-linear ramp for dinucleotide repeat counts 2-9.
+///
+/// The parameters here are designed to correspond to the adaptive indel error estimates computed
+/// from the input data. These can be used under any circumstance where adaptive estimation is not
+/// practical. The parameters are based on the geometric average of adaptive parameter estimates
+/// from 'typical' Nano and PCR-free samples, with minor empirical adjustments.
+///
+static
+IndelErrorRateSet
+getSimplifiedAdaptiveParameters()
+{
+    IndelErrorRateSet rates;
+
+    // the preset values for the indel error model
+    const double nonStrRate(8e-3);
+    const std::vector<unsigned> repeatingPatternSizeVector = {1, 2};
+    const std::vector<double> logLowErrorRateVector = {std::log(4.9e-3), std::log(1.0e-2)};
+    const std::vector<double> logHighErrorRateVector = {std::log(4.5e-2), std::log(1.8e-2)};
+    const std::vector<unsigned> repeatCountSwitchPointVector = {16,9};
+    const unsigned numberOfPatternSizes = repeatingPatternSizeVector.size();
+
+    assert(logLowErrorRateVector.size() == numberOfPatternSizes &&
+           logHighErrorRateVector.size() == numberOfPatternSizes &&
+           repeatCountSwitchPointVector.size() == numberOfPatternSizes);
+
+
+    for (unsigned repeatingPatternSizeIx = 0; repeatingPatternSizeIx < numberOfPatternSizes; repeatingPatternSizeIx++)
+    {
+        const unsigned repeatingPatternSize(repeatingPatternSizeVector[repeatingPatternSizeIx]);
+        const unsigned repeatCountSwitchPoint(repeatCountSwitchPointVector[repeatingPatternSizeIx]);
+
+        AdaptiveIndelErrorModelLogParams lowLogParams;
+        lowLogParams.logErrorRate = logLowErrorRateVector[repeatingPatternSizeIx];
+        AdaptiveIndelErrorModelLogParams highLogParams;
+        highLogParams.logErrorRate = logHighErrorRateVector[repeatingPatternSizeIx];
+
+        AdaptiveIndelErrorModel indelErrorModel(repeatingPatternSize,
+                                                repeatCountSwitchPoint,
+                                                lowLogParams,
+                                                highLogParams);
+
+        unsigned patternRepeatCount = 1;
+        rates.addRate(repeatingPatternSize, patternRepeatCount, nonStrRate, nonStrRate);
+
+        for (patternRepeatCount = 2; patternRepeatCount <= repeatCountSwitchPoint; ++patternRepeatCount)
+        {
+            const double errorRate(indelErrorModel.errorRate(patternRepeatCount));
+            rates.addRate(repeatingPatternSize, patternRepeatCount, errorRate, errorRate);
+        }
     }
     return rates;
 }
@@ -114,6 +176,10 @@ IndelErrorModel(
         {
             _errorRates = getLogLinearIndelErrorModel();
         }
+        else if (modelName == "adaptiveDefault")
+        {
+            _errorRates = getSimplifiedAdaptiveParameters();
+        }
         else
         {
             using namespace illumina::common;
@@ -152,6 +218,10 @@ IndelErrorModel(
     }
 
     _errorRates.finalizeRates();
+
+    // the indel candidate model always uses the v2.7.x log-linear indel error ramp:
+    _candidateErrorRates = getLogLinearIndelErrorModel();
+    _candidateErrorRates.finalizeRates();
 }
 
 
@@ -163,9 +233,13 @@ getIndelErrorRate(
     const IndelKey& indelKey,
     const AlleleReportInfo& indelReportInfo,
     double& refToIndelErrorProb,
-    double& indelToRefErrorProb) const
+    double& indelToRefErrorProb,
+    const bool isCandidateRates) const
 {
     using namespace IndelErrorRateType;
+
+    // tmp transition step:
+    const IndelErrorRateSet& errorRates(isCandidateRates ? _candidateErrorRates : _errorRates);
 
     const index_t indelType(getRateType(indelKey));
     // determine simple case
@@ -175,8 +249,8 @@ getIndelErrorRate(
     {
         // complex indels use baseline indel error rates
         /// TODO - provide estimates for complex indels
-        const double baselineInsertionErrorRate(_errorRates.getRate(1,1,INSERT));
-        const double baselineDeletionErrorRate(_errorRates.getRate(1,1,DELETE));
+        const double baselineInsertionErrorRate(errorRates.getRate(1,1,INSERT));
+        const double baselineDeletionErrorRate(errorRates.getRate(1,1,DELETE));
 
         refToIndelErrorProb=std::max(baselineInsertionErrorRate,baselineDeletionErrorRate);
         indelToRefErrorProb=refToIndelErrorProb;
@@ -186,15 +260,56 @@ getIndelErrorRate(
     {
         // determine the repeat pattern size and count:
         static const unsigned one(1);
-        const unsigned repeatingPatternSize = std::max(indelReportInfo.repeat_unit_length, one);
-        const unsigned refPatternRepeatCount = std::max(indelReportInfo.ref_repeat_count, one);
-        const unsigned indelPatternRepeatCount = std::max(indelReportInfo.indel_repeat_count, one);
+        const unsigned repeatingPatternSize = std::max(indelReportInfo.repeatUnitLength, one);
+        const unsigned refPatternRepeatCount = std::max(indelReportInfo.refRepeatCount, one);
+        const unsigned indelPatternRepeatCount = std::max(indelReportInfo.indelRepeatCount, one);
 
         //const int indelPatternRepeatSize(std::abs(static_cast<int>(iri.ref_repeat_count)-static_cast<int>(iri.indel_repeat_count));
 
         const index_t reverseIndelType((indelType == DELETE) ? INSERT : DELETE);
 
-        refToIndelErrorProb = _errorRates.getRate(repeatingPatternSize, refPatternRepeatCount, indelType);
-        indelToRefErrorProb = _errorRates.getRate(repeatingPatternSize, indelPatternRepeatCount, reverseIndelType);
+        refToIndelErrorProb = errorRates.getRate(repeatingPatternSize, refPatternRepeatCount, indelType);
+        indelToRefErrorProb = errorRates.getRate(repeatingPatternSize, indelPatternRepeatCount, reverseIndelType);
     }
+}
+
+
+
+AdaptiveIndelErrorModel::AdaptiveIndelErrorModel(
+    unsigned repeatPatternSizeIn,
+    unsigned highRepeatCountIn,
+    const AdaptiveIndelErrorModelLogParams& lowLogParamsIn,
+    const AdaptiveIndelErrorModelLogParams& highLogParamsIn):
+    _repeatPatternSize(repeatPatternSizeIn),
+    _highRepeatCount(highRepeatCountIn),
+    _lowLogParams(lowLogParamsIn),
+    _highLogParams(highLogParamsIn)
+{
+}
+
+double AdaptiveIndelErrorModel::errorRate(const unsigned repeatCount) const
+{
+    assert(repeatCount > 1);
+    if (repeatCount>=_highRepeatCount)
+    {
+        return std::exp(_highLogParams.logErrorRate);
+    }
+    return std::exp(linearFit(repeatCount, _lowRepeatCount, _lowLogParams.logErrorRate, _highRepeatCount, _highLogParams.logErrorRate));
+}
+
+double AdaptiveIndelErrorModel::noisyLocusRate(const unsigned repeatCount) const
+{
+    assert(repeatCount > 1);
+    if (repeatCount>=_highRepeatCount)
+    {
+        return std::exp(_highLogParams.logNoisyLocusRate);
+    }
+    return std::exp(
+               linearFit(repeatCount, _lowRepeatCount, _lowLogParams.logNoisyLocusRate, _highRepeatCount, _highLogParams.logNoisyLocusRate));
+}
+
+double AdaptiveIndelErrorModel::linearFit(const double x, const double x1, const double y1, const double x2, const double y2)
+{
+    assert(x1!=x2);
+    return ((y2-y1)*x +(x2*y1-x1*y2))/(x2-x1);
 }

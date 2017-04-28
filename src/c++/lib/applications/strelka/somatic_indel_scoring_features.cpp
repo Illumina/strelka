@@ -172,11 +172,11 @@ calculateScoringFeatures(
     smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::ABS_T_RR, fabs(siInfo.tisri[0].readpos_ranksum.get_z_stat()));
     smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::ABS_T_SOR, fabs(calculateSOR(siInfo.tisri[0])));
 
-    if (siInfo.indelReportInfo.is_repeat_unit())
+    if (siInfo.indelReportInfo.isRepeatUnit())
     {
-        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::IC, siInfo.indelReportInfo.indel_repeat_count);
-        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RC, siInfo.indelReportInfo.ref_repeat_count);
-        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RU_LEN, siInfo.indelReportInfo.repeat_unit_length);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::IC, siInfo.indelReportInfo.indelRepeatCount);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RC, siInfo.indelReportInfo.refRepeatCount);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RU_LEN, siInfo.indelReportInfo.repeatUnitLength);
     }
     else
     {

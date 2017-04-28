@@ -113,21 +113,34 @@ struct strelka_options : public starling_base_options
     double shared_site_error_rate = 0.000005;
     double shared_site_error_strand_bias_fraction = 0.5;
 
+    /// \brief Controls the expectation that an indel observed in the tumor may be a noise allele shared with the normal
+    /// sample.
+    ///
+    /// A higher value means a lower expected shared error rate. Note this is the indel analog of shared_site_error_rate
+    /// used for sites. Indels use a different scheme than sites to effectively allow the shared error rate to vary as
+    /// a function of each indel's error rate.
     double shared_indel_error_factor = 1.65;
-    double shared_indel_error_strand_bias_fraction = 0.1;
 
+    /// \brief Highest expected contamination level of tumor cells into the normal sample.
+    ///
+    /// Such contamination is typical for normal controls from liquid and late-stage cancers. The model integrates over
+    /// a contamination range from 0 up to this value. The values can be adjusted separately for SNVs and indels,
+    /// although they are expected to typically be set to the same value.
+    ///@{
     double ssnv_contam_tolerance = 0.15;
     double indel_contam_tolerance = 0.15;
+    ///@}
 
-    // We provide a lower flank requirement for normal sample reads
-    // during somatic variant calling, to ensure that all evidence
-    // potentially used against a somatic call in the normal is
-    // available:
+    /// \brief The minimum indel breakpoint flanking distance for a read to be used as indel evidence
+    /// in the normal sample.
+    ///
+    /// A lower flank requirement is used for normal sample reads during somatic variant calling to ensure that all
+    /// evidence potentially used against a somatic call in the normal is available.
     int normal_sample_min_read_bp_flank = 1;
 
     std::string somatic_callable_filename;
 
-    // positions/indels in vcf are used to estimate low-frequency sequencing noise:
+    /// \brief Variants in these vcfs are used to indicate known systematic low-freqeuncy noise.
     std::vector<std::string> noise_vcf;
 
     somatic_filter_options sfilter;
@@ -165,8 +178,8 @@ struct somatic_snv_caller_strand_grid;
 struct somatic_indel_caller_grid;
 
 
-// data deterministically derived from the input options, or read in from model files, etc.
-//
+/// data deterministically derived from the input options or read in from model files, etc.
+///
 struct strelka_deriv_options : public starling_base_deriv_options
 {
     typedef starling_base_deriv_options base_t;

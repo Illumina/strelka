@@ -65,11 +65,11 @@ public:
     {}
 
     void addCandidateSnv(
-            const unsigned sampleId,
-            const pos_t pos,
-            const char baseChar,
-            const HaplotypeId haplotypeId,
-            const float altHaplotypeCountRatio);
+        const unsigned sampleId,
+        const pos_t pos,
+        const char baseChar,
+        const HaplotypeId haplotypeId,
+        const float altHaplotypeCountRatio);
 
     /// Checks if baseChar is a candidate SNV allele at this position
     /// \param sampleId sample id

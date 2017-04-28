@@ -183,11 +183,11 @@ writeSomaticIndelVcfGrid(
         os << ";MQ=" << mapqTracker.getRMS()
            << ";MQ0=" << mapqTracker.zeroCount;
 
-        if (siInfo.indelReportInfo.is_repeat_unit())
+        if (siInfo.indelReportInfo.isRepeatUnit())
         {
-            os << ";RU=" << siInfo.indelReportInfo.repeat_unit
-               << ";RC=" << siInfo.indelReportInfo.ref_repeat_count
-               << ";IC=" << siInfo.indelReportInfo.indel_repeat_count;
+            os << ";RU=" << siInfo.indelReportInfo.repeatUnit
+               << ";RC=" << siInfo.indelReportInfo.refRepeatCount
+               << ";IC=" << siInfo.indelReportInfo.indelRepeatCount;
         }
         os << ";IHP=" << siInfo.indelReportInfo.ihpol;
 
