@@ -51,19 +51,16 @@ Given a strelka gVCF genome.vcf.gz and a corresponding platinum genomes truth vc
 
 ### Step 1a: Preliminary filtering of the VCF file
 
-First we need to filter out some unwanted gVCF entries. The following extracts the list of scoring features for use in Step 1c and removes the following:
+First we need to filter out some unwanted gVCF entries. The following script removes:
 
 1. off-target entries (in exome data)
 2. entries that have been flagged with any type of conflict
-3. entries that do not have diploid genotype (i.e. hemizygotes)
 
 ```bash
 gzip -dc genome.vcf.gz |\
 python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/germline/bin/filterTrainingVcf.py |\
 ${STRELKA_INSTALL_PATH}/libexec/bgzip -cf >|\
 filtered.vcf.gz
-
-gzip -dc filtered.vcf.gz | awk '/^#/ && /scoring_features/' >| scoringFeatures.txt
 ```
 
 ### Step 1b: Assigning truth labels using hap.py
@@ -123,8 +120,10 @@ python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/germline/bin/evs_learn
     --features germline.snv \
     --model germline.rf \
     --output snv_model.pickle \
+    --ambig \
     snv_training_data.csv
 ```
+The `--ambig` flag causes unknown variants to be added to the training data and treated as false positives, with weighting such that the total weight of unknown variants is half the total weight of false positives. Use of this flag is recommended for SNVs (where a large number of unknown variants are in problematic genomic regions and likely to be false) but not for indels.
 
 ## Step 3: Calculate Scores
 
