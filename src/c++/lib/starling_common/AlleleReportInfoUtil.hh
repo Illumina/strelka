@@ -70,3 +70,18 @@ getAlleleSampleReportInfo(
     const bool is_include_tier2,
     const bool is_use_alt_indel,
     AlleleSampleReportInfo& isri);
+
+
+unsigned
+shortestUnencountered(
+		      const reference_contig_segment& ref,
+		      const pos_t pos,
+		      const unsigned numEncoded,
+		      const bool left = false);
+
+unsigned
+computeContextCompressability(
+			      const reference_contig_segment& ref,
+			      const pos_t leftPos,
+			      const pos_t rightPos,
+			      const unsigned numKeys);

@@ -47,4 +47,8 @@ class GermlineSNVFeatures(VcfFeatureSet):
             "SampleProxyRMSMappingQuality",
             "RelativeTotalLocusDepth",
             "SamplePrimaryAltAlleleDepthFraction",
-            "ConservativeGenotypeQuality"]
+            "ConservativeGenotypeQuality",
+            "InterruptedHomopolymerLength",
+            "ContextCompressability",
+            "IndelCategory",
+            "NormalizedAltHaplotypeCountRatio"]

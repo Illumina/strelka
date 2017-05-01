@@ -376,6 +376,7 @@ Features used in each model are listed here and definitions are provided further
         \item \texttt{RelativeTotalLocusDepth}
         \item \texttt{SampleUsedDepthFraction}
         \item \texttt{ConservativeGenotypeQuality}
+        \item \texttt{NormalizedAltHaplotypeCountRatio}
     \end{itemize}
     \item Germline Indel features:
     \begin{itemize}
@@ -388,6 +389,10 @@ Features used in each model are listed here and definitions are provided further
         \item \texttt{RelativeTotalLocusDepth}
         \item \texttt{SamplePrimaryAltAlleleDepthFraction}
         \item \texttt{ConservativeGenotypeQuality}
+        \item \texttt{InterruptedHomopolymerLength}
+        \item \texttt{ContextCompressability}
+        \item \texttt{IndelCategory}
+        \item \texttt{NormalizedAltHaplotypeCountRatio}
     \end{itemize}
     \item RNA-seq SNV features:
     \begin{itemize}
@@ -454,6 +459,8 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
 
 \item \texttt{ConservativeGenotypeQuality} ~ The model-based ConservativeGenotypeQuality (GQX) value for one sample, reflecting the conservative confidence of the called genotype.
 
+\item \texttt{NormalizedAltHaplotypeCountRatio} ~ For variants in an active region, the proportion of reads supporting the top 2 haplotypes, or 0 if haplotyping failed due to this proportion being below threshold. For heterozygous variants with only one non-reference allele, the proportion is doubled so that its value is expected to be close to 1.0 regardless of genotype. The feature is set to -1 for variants not in an active region.
+
 \item \texttt{SampleIndelRepeatCount} ~ The number of times the primary indel allele's \emph{repeat unit} occurs in a haplotype containing the indel allele. The primary indel allele's \emph{repeat unit} is the smallest possible sequence such that the inserted/deleted sequence can be formed by concatenating multiple copies of it. The primary indel allele is the best supported allele among all overlapping indel alleles at the locus of interest in one sample.
 
 \item \texttt{SampleIndelRepeatUnitSize} ~ Length of the primary indel allele's \emph{repeat unit}, as defined for feature \texttt{SampleIndelRepeatCount}.
@@ -465,6 +472,12 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
 \item \texttt{SampleProxyRMSMappingQuality} ~ RMS mapping quality of all reads spanning the position immediately proceeding the indel in one sample. This feature approximates the SAMPLE/MQ value defined in the VCF spec.
 
 \item \texttt{SamplePrimaryAltAlleleDepthFraction} ~ For one sample, this is the ratio of the confident observation count of the best-supported non-reference allele at the variant locus, over all confident allele observation counts.
+
+\item \texttt{InterruptedHomopolymerLength} ~ The length of the longest interrupted homopolymer containing the current position. An interrupted homopolymer is a string that has edit distance 1 to a homopolymer.
+
+\item \texttt{ContextCompressability} ~ The length of the upstream or downstream reference context (whichever is greater) that can be represented using 5 Ziv-Lempel keywords (see http://www.lptmc.jussieu.fr/user/lesne/PRE-Short.pdf, and Ziv & Lempel 1977 as cited there). The Ziv-Lempel keywords are obtained using the scheme of Ziv & Lempel 1977, by traversing the sequence and successively selecting the shortest subsequence that has not yet been encountered.
+
+\item \texttt{IndelCategory} ~ A binary variable set to 1 if the indel allele is a primitive deletion or 0 otherwise.
 
 \item \texttt{SamplePrimaryAltAlleleDepth} ~ The confident observation count of the best-supported non-reference allele at the variant locus.
 

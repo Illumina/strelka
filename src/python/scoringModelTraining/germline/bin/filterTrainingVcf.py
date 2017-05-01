@@ -88,10 +88,6 @@ def main() :
         formatVals = word[VCFID.FORMAT].split(':')
         sampleVals = word[VCFID.SAMPLE].split(':')
 
-        # Skip entries that do not have diploid genotype (hemizygotes)
-        sampleGTIndex = formatVals.index("GT")
-        if not re.match(".[/|].",sampleVals[sampleGTIndex]) : continue
-
         outfp.write(line)
 
 if __name__ == "__main__" :
