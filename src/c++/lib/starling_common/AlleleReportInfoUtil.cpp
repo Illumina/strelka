@@ -91,24 +91,24 @@ getSingleIndelAlleleVcfSummaryStrings(
     }
 }
 
-// Find shortest prefix of unencoded sequence that has not been encountered in the encoded sequence: (TODO: this can be made more efficient)
+// Find shortest prefix of unencoded sequence that has not been encountered in the encoded sequence:
 unsigned
-shortest_unencountered(
+shortestUnencountered(
     const reference_contig_segment& ref,
     const pos_t pos,
-    const unsigned num_encoded,
-    const bool left = false)
+    const unsigned numEncoded,
+    const bool left)
 {
     std::string encoded;
-    std::string new_prefix;
+    std::string newPrefix;
     // get substring encoded thus far:
     if (left)
     {
-        ref.get_substring(pos-num_encoded+1,num_encoded,encoded);
+        ref.get_substring(pos-numEncoded+1,numEncoded,encoded);
     }
     else
     {
-        ref.get_substring(pos,num_encoded,encoded);
+        ref.get_substring(pos,numEncoded,encoded);
     }
     unsigned len(0);
     do
@@ -116,40 +116,37 @@ shortest_unencountered(
         ++len;
         if (left)
         {
-            ref.get_substring(pos-num_encoded-len+1,len,new_prefix);
+            ref.get_substring(pos-numEncoded-len+1,len,newPrefix);
         }
         else
         {
-            ref.get_substring(pos+num_encoded,len,new_prefix);
+            ref.get_substring(pos+numEncoded,len,newPrefix);
         }
     }
     // keep looking while string of size len has already been encountered:
-    while (encoded.find(new_prefix) != std::string::npos);
+    while (encoded.find(newPrefix) != std::string::npos);
     return len;
 }
 
 unsigned
-compute_context_compressability(
+computeContextCompressability(
     const reference_contig_segment& ref,
-    const pos_t left_pos,
-    const pos_t right_pos,
-    const unsigned numkeys)
+    const pos_t leftPos,
+    const pos_t rightPos,
+    const unsigned numKeys)
 {
     // complexity to the left:
-    unsigned num_encoded_left(1);
-    for (unsigned key(0); key<numkeys-1; ++key)
+    unsigned numEncodedLeft(1);
+    unsigned numEncodedRight(1);
+    for (unsigned key(0); key<numKeys-1; ++key)
     {
-        num_encoded_left += shortest_unencountered(ref,left_pos-1,num_encoded_left,true);
+        // complexity to the left:
+        numEncodedLeft += shortestUnencountered(ref,leftPos-1,numEncodedLeft,true);
+	// complexity to the right:
+        numEncodedRight += shortestUnencountered(ref,rightPos,numEncodedRight,false);
     }
 
-    // complexity to the right:
-    unsigned num_encoded_right(1);
-    for (unsigned key(0); key<numkeys-1; ++key)
-    {
-        num_encoded_right += shortest_unencountered(ref,right_pos,num_encoded_right,false);
-    }
-
-    return std::max(num_encoded_left, num_encoded_right);
+    return std::max(numEncodedLeft, numEncodedRight);
 }
 
 static
@@ -160,7 +157,7 @@ set_repeat_info(
     AlleleReportInfo& indelReportInfo)
 {
     // Encoded lengths using fixed number of Zev-Lempel 1977 keywords. See http://www.lptmc.jussieu.fr/user/lesne/PRE-Short.pdf :
-    indelReportInfo.contextCompressability = compute_context_compressability(ref, indelKey.pos, indelKey.right_pos(), 5);
+    indelReportInfo.contextCompressability = computeContextCompressability(ref, indelKey.pos, indelKey.right_pos(), 5);
 
     if (! ((indelReportInfo.it == SimplifiedIndelReportType::INSERT) ||
            (indelReportInfo.it == SimplifiedIndelReportType::DELETE) ||

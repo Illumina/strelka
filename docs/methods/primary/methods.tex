@@ -390,9 +390,9 @@ Features used in each model are listed here and definitions are provided further
         \item \texttt{SamplePrimaryAltAlleleDepthFraction}
         \item \texttt{ConservativeGenotypeQuality}
         \item \texttt{InterruptedHomopolymerLength}
-        \item \texttt{ContextCompressability} 
-        \item \texttt{IndelCategory} 
-        \item \texttt{NormalizedAltHaplotypeCountRatio} 
+        \item \texttt{ContextCompressability}
+        \item \texttt{IndelCategory}
+        \item \texttt{NormalizedAltHaplotypeCountRatio}
     \end{itemize}
     \item RNA-seq SNV features:
     \begin{itemize}
@@ -459,7 +459,7 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
 
 \item \texttt{ConservativeGenotypeQuality} ~ The model-based ConservativeGenotypeQuality (GQX) value for one sample, reflecting the conservative confidence of the called genotype.
 
-\item \texttt{NormalizedAltHaplotypeCountRatio} ~ The proportion of reads supporting the top 2 haplotypes, or 0 if haplotyping failed due to this proportion being below threshold. For heterozygous variants with only one non-reference allele, the proportion is doubled so that its value is expected to be close to 1.0 regardless of genotype.
+\item \texttt{NormalizedAltHaplotypeCountRatio} ~ For variants in an active region, the proportion of reads supporting the top 2 haplotypes, or 0 if haplotyping failed due to this proportion being below threshold. For heterozygous variants with only one non-reference allele, the proportion is doubled so that its value is expected to be close to 1.0 regardless of genotype. The feature is set to -1 for variants not in an active region.
 
 \item \texttt{SampleIndelRepeatCount} ~ The number of times the primary indel allele's \emph{repeat unit} occurs in a haplotype containing the indel allele. The primary indel allele's \emph{repeat unit} is the smallest possible sequence such that the inserted/deleted sequence can be formed by concatenating multiple copies of it. The primary indel allele is the best supported allele among all overlapping indel alleles at the locus of interest in one sample.
 

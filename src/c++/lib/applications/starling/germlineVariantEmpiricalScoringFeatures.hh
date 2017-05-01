@@ -57,7 +57,7 @@ struct GERMLINE_SNV_SCORING_FEATURES : public FeatureSet
         RelativeTotalLocusDepth,
         SampleUsedDepthFraction,
         ConservativeGenotypeQuality,
-	NormalizedAltHaplotypeCountRatio,
+        NormalizedAltHaplotypeCountRatio,
         SIZE
     };
 
@@ -215,9 +215,9 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
         RelativeTotalLocusDepth,
         SamplePrimaryAltAlleleDepthFraction,
         ConservativeGenotypeQuality,
-	InterruptedHomopolymerLength,
-	ContextCompressability,
-	IndelCategory,
+        InterruptedHomopolymerLength,
+        ContextCompressability,
+        IndelCategory,
         NormalizedAltHaplotypeCountRatio,
         SIZE
     };
