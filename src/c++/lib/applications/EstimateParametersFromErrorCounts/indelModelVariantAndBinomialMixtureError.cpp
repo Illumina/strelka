@@ -540,7 +540,30 @@ computeExtendedContext(
 
 }
 
+AdaptiveIndelErrorModelLogParams
+estimateModelParams(
+        const SequenceErrorCounts& counts,
+        const IndelErrorContext context,
+        const double logTheta)
+{
+    // setup the optimizer settings to the model assumption
+    const bool isLockTheta = true;
+    double normalizedParams[MIN_PARAMS3::SIZE];
 
+    AdaptiveIndelErrorModelLogParams estimatedParams;
+    auto contextIt = counts.getIndelCounts().find(context);
+    if (contextIt != counts.getIndelCounts().end()) {
+
+        const auto &data(contextIt->second);
+
+        computeExtendedContext(isLockTheta, logTheta, data, normalizedParams);
+
+        estimatedParams.logErrorRate = (normalizedParams[MIN_PARAMS3::LN_INSERT_ERROR_RATE] +
+                                        normalizedParams[MIN_PARAMS3::LN_DELETE_ERROR_RATE]) / 2;
+        estimatedParams.logNoisyLocusRate = normalizedParams[MIN_PARAMS3::LN_NOISY_LOCUS_RATE];
+    }
+    return estimatedParams;
+}
 
 void
 indelModelVariantAndBinomialMixtureError(
@@ -582,9 +605,10 @@ indelModelVariantAndBinomialMixtureErrorSimple(
         thetas = importTheta(thetaFilename);
     }
 
-    std::vector<SimpleIndelErrorModel> simpleIndelErrorModels;
+    std::vector<AdaptiveIndelErrorModel> adaptiveIndelErrorModels;
     std::vector<unsigned> repeatPatterns = {1, 2};
     std::vector<unsigned> maxRepeatCounts = {16, 8};
+    const auto lowRepeatCount = AdaptiveIndelErrorModel::lowRepeatCount;
     assert(repeatPatterns.size() == maxRepeatCounts.size());
 
     for(unsigned repeatPatternIx = 0; repeatPatternIx < repeatPatterns.size(); repeatPatternIx++)
@@ -592,10 +616,21 @@ indelModelVariantAndBinomialMixtureErrorSimple(
         auto repeatPatternSize = repeatPatterns[repeatPatternIx];
         auto theta = thetas[repeatPatternSize];
         assert(theta.size() >= *std::max_element(maxRepeatCounts.begin(), maxRepeatCounts.end()));
-        simpleIndelErrorModels.push_back(SimpleIndelErrorModel(counts,
-                                                               theta,
-                                                               repeatPatterns[repeatPatternIx],
-                                                               maxRepeatCounts[repeatPatternIx]));
+        // estimate low repeat count params
+
+        const auto highRepeatCount = maxRepeatCounts[repeatPatternIx];
+        IndelErrorContext lowCountContext(repeatPatternSize, lowRepeatCount);
+        log_os << "INFO: computing rates for context: " << lowCountContext << "\n";
+        const auto lowLogParams = estimateModelParams(counts, lowCountContext, std::log(theta[lowRepeatCount-1]));
+
+        // estimate high repeat count params
+        IndelErrorContext highCountContext(repeatPatternSize, highRepeatCount);
+        log_os << "INFO: computing rates for context: " << highCountContext << "\n";
+        const auto highLogParams = estimateModelParams(counts, highCountContext, std::log(theta[highRepeatCount-1]));
+        adaptiveIndelErrorModels.push_back(AdaptiveIndelErrorModel(repeatPatternSize,
+                                                                   highRepeatCount,
+                                                                   lowLogParams,
+                                                                   highLogParams));
     }
 
     ros << "context, excludedLoci, nonExcludedLoci, usedLoci, refReads, altReads, iter, lhood, errorRate, theta, noisyLocusRate\n";
@@ -606,7 +641,7 @@ indelModelVariantAndBinomialMixtureErrorSimple(
     IndelErrorContext targetContext(nonSTRRepeatPatternSize, nonSTRRepeatCount);
     const auto nonSTRTheta = thetas[nonSTRRepeatPatternSize][0];
     log_os << "INFO: computing rates for context: " << targetContext << "\n";
-    const auto estimatedParams = SimpleIndelErrorModel::estimateModelParams(counts, targetContext, std::log(nonSTRTheta));
+    const auto estimatedParams = estimateModelParams(counts, targetContext, std::log(nonSTRTheta));
 
     // add the non-STR params to all contexts with repeat count 1
     // this will show up as valid contexts during variant calling so we need to fill in these gaps
@@ -618,14 +653,14 @@ indelModelVariantAndBinomialMixtureErrorSimple(
     // add motif to json for all contexts
     for(unsigned repeatPatternIx = 0; repeatPatternIx < repeatPatterns.size(); repeatPatternIx++)
     {
-        auto errorModel = simpleIndelErrorModels[repeatPatternIx];
+        auto errorModel = adaptiveIndelErrorModels[repeatPatternIx];
 
-        for(unsigned repeatCount = errorModel.getLowRepeatCount();repeatCount <=errorModel.getHighRepeatCount();repeatCount++)
+        for(unsigned repeatCount = errorModel.lowRepeatCount;repeatCount <=errorModel.highRepeatCount();repeatCount++)
         {
-            indelModelJson.addMotif(errorModel.getRepeatPatternSize(),
+            indelModelJson.addMotif(errorModel.repeatPatternSize(),
                                     repeatCount,
-                                    errorModel.getErrorRate(repeatCount),
-                                    errorModel.getNoisyLocusRate(repeatCount));
+                                    errorModel.errorRate(repeatCount),
+                                    errorModel.noisyLocusRate(repeatCount));
         }
     }
 
@@ -670,77 +705,6 @@ importTheta(
         thetas[repeatPatternSize] = theta;
     }
     return thetas;
-}
-
-SimpleIndelErrorModel::SimpleIndelErrorModel(
-        const SequenceErrorCounts& counts,
-        const std::vector<double>& thetaVector,
-        unsigned repeatPatternSizeIn,
-        unsigned highRepeatCountIn):
-    repeatPatternSize(repeatPatternSizeIn),
-    highRepeatCount(highRepeatCountIn)
-{
-    // estimate low repeat count params
-    IndelErrorContext lowCountContext(repeatPatternSize, lowRepeatCount);
-    log_os << "INFO: computing rates for context: " << lowCountContext << "\n";
-    lowLogParams = estimateModelParams(counts, lowCountContext, std::log(thetaVector[lowRepeatCount-1]));
-
-    // estimate high repeat count params
-    IndelErrorContext highCountContext(repeatPatternSize, highRepeatCount);
-    log_os << "INFO: computing rates for context: " << highCountContext << "\n";
-    highLogParams = estimateModelParams(counts, highCountContext, std::log(thetaVector[highRepeatCount-1]));
-}
-
-SimpleIndelErrorModelLogParams
-SimpleIndelErrorModel::estimateModelParams(
-        const SequenceErrorCounts& counts,
-        const IndelErrorContext context,
-        const double logTheta)
-{
-    // setup the optimizer settings to the model assumption
-    const bool isLockTheta = true;
-    double normalizedParams[MIN_PARAMS3::SIZE];
-
-    SimpleIndelErrorModelLogParams estimatedParams;
-    auto contextIt = counts.getIndelCounts().find(context);
-    if (contextIt != counts.getIndelCounts().end()) {
-
-        const auto &data(contextIt->second);
-
-        computeExtendedContext(isLockTheta, logTheta, data, normalizedParams);
-
-        estimatedParams.logErrorRate = (normalizedParams[MIN_PARAMS3::LN_INSERT_ERROR_RATE] +
-                            normalizedParams[MIN_PARAMS3::LN_DELETE_ERROR_RATE]) / 2;
-        estimatedParams.logNoisyLocusRate = normalizedParams[MIN_PARAMS3::LN_NOISY_LOCUS_RATE];
-    }
-    return estimatedParams;
-}
-
-double SimpleIndelErrorModel::getErrorRate(const unsigned repeatCount) const
-{
-    assert(repeatCount > 1);
-    if(repeatCount>=highRepeatCount)
-    {
-        return std::exp(highLogParams.logErrorRate);
-    }
-    return std::exp(linearFit(repeatCount, lowRepeatCount, lowLogParams.logErrorRate, highRepeatCount, highLogParams.logErrorRate));
-}
-
-double SimpleIndelErrorModel::getNoisyLocusRate(const unsigned repeatCount) const
-{
-    assert(repeatCount > 1);
-    if(repeatCount>=highRepeatCount)
-    {
-        return std::exp(highLogParams.logNoisyLocusRate);
-    }
-    return std::exp(
-            linearFit(repeatCount, lowRepeatCount, lowLogParams.logNoisyLocusRate, highRepeatCount, highLogParams.logNoisyLocusRate));
-}
-
-double SimpleIndelErrorModel::linearFit(const double x, const double x1, const double y1, const double x2, const double y2)
-{
-    assert(x1!=x2);
-    return ((y2-y1)*x +(x2*y1-x1*y2))/(x2-x1);
 }
 
 // move these to a more appropriate place later
