@@ -22,6 +22,7 @@
 ///
 
 #pragma once
+#include "calibration/IndelErrorModel.hh"
 #include "json/json.h"
 #include "errorAnalysis/SequenceErrorCounts.hh"
 
@@ -57,62 +58,6 @@ class IndelModelBinomialMixture
 {
 public:
     std::vector<IndelMotifBinomialMixture> motifs;
-};
-
-
-class SimpleIndelErrorModelLogParams
-{
-public:
-    double logErrorRate = -1*std::numeric_limits<double>::infinity();
-    double logNoisyLocusRate = -1*std::numeric_limits<double>::infinity();
-};
-
-
-class SimpleIndelErrorModel
-{
-public:
-    SimpleIndelErrorModel(
-            const SequenceErrorCounts& counts,
-            const std::vector<double>& thetaVector,
-            unsigned repeatPatternSize,
-            unsigned highRepeatCount);
-private:
-    unsigned repeatPatternSize = 0;
-    unsigned lowRepeatCount = 2; // it should be safe to fix this to 2
-    unsigned highRepeatCount = 0;
-
-    SimpleIndelErrorModelLogParams lowLogParams;
-    SimpleIndelErrorModelLogParams highLogParams;
-
-public:
-    unsigned
-    getRepeatPatternSize() const { return repeatPatternSize;}
-    unsigned
-    getLowRepeatCount() const { return lowRepeatCount;}
-    unsigned
-    getHighRepeatCount() const { return highRepeatCount;}
-
-    static SimpleIndelErrorModelLogParams
-    estimateModelParams(
-            const SequenceErrorCounts& counts,
-            const IndelErrorContext context,
-            const double logTheta);
-
-    double
-    getErrorRate(
-        const unsigned repeatCount) const;
-    double
-    getNoisyLocusRate(
-        const unsigned repeatCount) const;
-
-    static double
-    linearFit(
-        const double x,
-        const double x1,
-        const double y1,
-        const double x2,
-        const double y2);
-
 };
 
 class IndelModelJson

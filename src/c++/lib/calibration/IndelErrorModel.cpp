@@ -113,7 +113,7 @@ getSimplifiedAdaptiveParameters()
         unsigned patternRepeatCount = 1;
         rates.addRate(repeatingPatternSize, patternRepeatCount, nonStrRate, nonStrRate);
 
-        for (patternRepeatCount = 2; patternRepeatCount <= repeatCountSwitchPoint; ++patternRepeatCount)
+        for (patternRepeatCount = AdaptiveIndelErrorModel::lowRepeatCount; patternRepeatCount <= repeatCountSwitchPoint; ++patternRepeatCount)
         {
             const double errorRate(indelErrorModel.errorRate(patternRepeatCount));
             rates.addRate(repeatingPatternSize, patternRepeatCount, errorRate, errorRate);
@@ -362,3 +362,5 @@ double AdaptiveIndelErrorModel::linearFit(const double x, const double x1, const
     assert(x1!=x2);
     return ((y2-y1)*x +(x2*y1-x1*y2))/(x2-x1);
 }
+
+unsigned AdaptiveIndelErrorModel::lowRepeatCount = 2;
