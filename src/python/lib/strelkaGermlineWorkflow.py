@@ -336,9 +336,6 @@ def countIndels(self,taskPrefix="",dependencies=None):
 
     segmentTasks = set()
 
-    sampleCount = len(self.params.bamList)
-    assert(sampleCount == 1)
-
     segFiles = TempEstimationSegmentFiles()
 
 
@@ -446,8 +443,8 @@ class EstimateIndelErrorWorkflow(WorkflowRunner) :
 
             self.params.knownSize = knownSize
 
-        countIndels(self)
 
+        countIndels(self)
 
 
 class PathInfo(SharedPathInfo):
@@ -543,8 +540,13 @@ class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
         if self.params.isHighDepthFilter :
             estimatePreReqs |= strelkaGermlineRunDepthFromAlignments(self)
 
+        if 1 != len(self.params.bamList) :
+            self.flowLog("Indel Error Estimation only supports single bam file inputs: Skipping indel error estimation")
+            self.params.isDoEstimateIndelError = False
+
         if self.params.isDoEstimateIndelError :
-            callPreReqs.add(self.addWorkflowTask("EstimateIndelError", EstimateIndelErrorWorkflow(self.params, self.paths), dependencies=estimatePreReqs))
+
+                callPreReqs.add(self.addWorkflowTask("EstimateIndelError", EstimateIndelErrorWorkflow(self.params, self.paths), dependencies=estimatePreReqs))
         else :
             callPreReqs = estimatePreReqs
 
