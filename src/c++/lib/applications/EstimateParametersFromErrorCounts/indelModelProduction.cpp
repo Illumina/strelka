@@ -361,9 +361,9 @@ computeExtendedContext(
     //
     double minParams[MIN_PARAMS3::SIZE];
 
-    unsigned iter;
-    double x_all_loghood;
     {
+        unsigned iter;
+        double x_all_loghood;
         static const double line_tol(1e-10);
         static const double end_tol(1e-10);
         static const unsigned max_iter(40);
