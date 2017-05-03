@@ -338,15 +338,6 @@ const double error_minfunc_model3::maxLogTheta = std::log(0.4);
 const double error_minfunc_model3::maxLogRate = std::log(0.5);
 const double error_minfunc_model3::maxLogLocusRate = std::log(1.0);
 
-
-
-struct SignalGroupTotal
-{
-    double ref = 0;
-    double alt = 0;
-    double locus = 0;
-};
-
 static
 void
 computeExtendedContext(
