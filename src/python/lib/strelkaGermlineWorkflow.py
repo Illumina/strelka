@@ -98,7 +98,6 @@ class TempSegmentFiles :
 class TempEstimationSegmentFiles :
     def __init__(self) :
         self.counts = []
-        self.observedIndelBed = []
 
 # we need extra quoting for files with spaces in this workflow because some commands are stringified as shell calls:
 def quote(instr):
@@ -328,7 +327,7 @@ class CallWorkflow(StrelkaSharedCallWorkflow) :
 
 def countIndels(self,taskPrefix="",dependencies=None):
     """
-    run counter on all genome segments
+    run variant error counter
     """
 
     tmpSegmentDir=self.paths.getTmpSegmentDir()
@@ -390,7 +389,7 @@ def countGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segCmd = [ self.params.getCountsBin ]
 
-    segCmd.extend(["--region", gseg.chromLabel + ":" + str(gseg.beginPos) + "-" + str(gseg.endPos)])
+    segCmd.extend(["--region", gseg.bamRegion])
     segCmd.extend(["--ref", self.params.referenceFasta ])
     segCmd.extend(["-genome-size", str(self.params.knownSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
