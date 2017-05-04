@@ -51,14 +51,14 @@ enum index_t
 static
 double
 getObsLogLhood(
-        const double logHomPrior,
-        const double logHetPrior,
-        const double logAltHetPrior,
-        const double logNoIndelPrior,
-        const double logInsertErrorRate,
-        const double logDeleteErrorRate,
-        const double logNoIndelRefRate,
-        const ExportedIndelObservations& obs)
+    const double logHomPrior,
+    const double logHetPrior,
+    const double logAltHetPrior,
+    const double logNoIndelPrior,
+    const double logInsertErrorRate,
+    const double logDeleteErrorRate,
+    const double logNoIndelRefRate,
+    const ExportedIndelObservations& obs)
 {
     static const double log0(-std::numeric_limits<double>::infinity());
 
@@ -85,9 +85,9 @@ getObsLogLhood(
         }
 
         noindel = (
-                logInsertErrorRate*totalInsertObservations +
-                logDeleteErrorRate*totalDeleteObservations +
-                logNoIndelRefRate*obs.refObservations);
+                      logInsertErrorRate*totalInsertObservations +
+                      logDeleteErrorRate*totalDeleteObservations +
+                      logNoIndelRefRate*obs.refObservations);
     }
 
     unsigned maxIndex(0);
@@ -168,11 +168,11 @@ getObsLogLhood(
 static
 double
 contextLogLhood(
-        const std::vector<ExportedIndelObservations>& observations,
-        const double logInsertErrorRate,
-        const double logDeleteErrorRate,
-        const double logNoisyLocusRate,
-        const double logTheta)
+    const std::vector<ExportedIndelObservations>& observations,
+    const double logInsertErrorRate,
+    const double logDeleteErrorRate,
+    const double logNoisyLocusRate,
+    const double logTheta)
 {
 #ifdef DEBUG_MODEL3
     log_os << "MODEL3: loghood input:"
@@ -226,11 +226,11 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
 {
     explicit
     error_minfunc_model3(
-            const std::vector<ExportedIndelObservations>& observations, const double theta,
-            const bool isLockTheta = false)
-            : defaultLogTheta(theta),
-              _obs(observations),
-              _isLockTheta(isLockTheta)
+        const std::vector<ExportedIndelObservations>& observations, const double theta,
+        const bool isLockTheta = false)
+        : defaultLogTheta(theta),
+          _obs(observations),
+          _isLockTheta(isLockTheta)
     {}
     unsigned dim() const override
     {
@@ -255,8 +255,8 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
     static
     void
     argToParameters(
-            const double* in,
-            double* out)
+        const double* in,
+        double* out)
     {
         auto rateSmoother = [](double a) -> double
         {
@@ -341,10 +341,10 @@ const double error_minfunc_model3::maxLogLocusRate = std::log(1.0);
 static
 void
 computeExtendedContext(
-        const bool isLockTheta,
-        const double logTheta,
-        const IndelErrorData& data,
-        double normalizedParams[MIN_PARAMS3::SIZE])
+    const bool isLockTheta,
+    const double logTheta,
+    const IndelErrorData& data,
+    double normalizedParams[MIN_PARAMS3::SIZE])
 {
     std::vector<ExportedIndelObservations> observations;
     data.exportObservations(observations);
@@ -392,9 +392,9 @@ computeExtendedContext(
 
 AdaptiveIndelErrorModelLogParams
 estimateModelParams(
-        const SequenceErrorCounts& counts,
-        const IndelErrorContext context,
-        const double logTheta)
+    const SequenceErrorCounts& counts,
+    const IndelErrorContext context,
+    const double logTheta)
 {
     // setup the optimizer settings to the model assumption
     const bool isLockTheta = true;
@@ -402,9 +402,10 @@ estimateModelParams(
 
     AdaptiveIndelErrorModelLogParams estimatedParams;
     auto contextIt = counts.getIndelCounts().find(context);
-    if (contextIt != counts.getIndelCounts().end()) {
+    if (contextIt != counts.getIndelCounts().end())
+    {
 
-        const auto &data(contextIt->second);
+        const auto& data(contextIt->second);
 
         computeExtendedContext(isLockTheta, logTheta, data, normalizedParams);
 
@@ -417,14 +418,14 @@ estimateModelParams(
 
 void
 indelModelProduction(
-        const SequenceErrorCounts& counts,
-        const std::string& thetaFilename,
-        const std::string& outputFilename)
+    const SequenceErrorCounts& counts,
+    const std::string& thetaFilename,
+    const std::string& outputFilename)
 {
     IndelModelJson indelModelJson;
     std::ostream& ros(std::cout);
     std::map<unsigned, std::vector<double>> thetas;
-    if(!thetaFilename.empty())
+    if (!thetaFilename.empty())
     {
         thetas = importTheta(thetaFilename);
     }
@@ -435,7 +436,7 @@ indelModelProduction(
     const auto lowRepeatCount = AdaptiveIndelErrorModel::lowRepeatCount;
     assert(repeatPatterns.size() == maxRepeatCounts.size());
 
-    for(unsigned repeatPatternIx = 0; repeatPatternIx < repeatPatterns.size(); repeatPatternIx++)
+    for (unsigned repeatPatternIx = 0; repeatPatternIx < repeatPatterns.size(); repeatPatternIx++)
     {
         auto repeatPatternSize = repeatPatterns[repeatPatternIx];
         auto theta = thetas[repeatPatternSize];
@@ -469,17 +470,17 @@ indelModelProduction(
 
     // add the non-STR params to all contexts with repeat count 1
     // this will show up as valid contexts during variant calling so we need to fill in these gaps
-    for(unsigned repeatPatternIx = 0; repeatPatternIx < repeatPatterns.size(); repeatPatternIx++)
+    for (unsigned repeatPatternIx = 0; repeatPatternIx < repeatPatterns.size(); repeatPatternIx++)
     {
         indelModelJson.addMotif(repeatPatterns[repeatPatternIx], 1, std::exp(estimatedParams.logErrorRate), std::exp(estimatedParams.logNoisyLocusRate));
     }
 
     // add motif to json for all contexts
-    for(unsigned repeatPatternIx = 0; repeatPatternIx < repeatPatterns.size(); repeatPatternIx++)
+    for (unsigned repeatPatternIx = 0; repeatPatternIx < repeatPatterns.size(); repeatPatternIx++)
     {
         auto errorModel = adaptiveIndelErrorModels[repeatPatternIx];
 
-        for(unsigned repeatCount = errorModel.lowRepeatCount;repeatCount <=errorModel.highRepeatCount();repeatCount++)
+        for (unsigned repeatCount = errorModel.lowRepeatCount; repeatCount <=errorModel.highRepeatCount(); repeatCount++)
         {
             indelModelJson.addMotif(errorModel.repeatPatternSize(),
                                     repeatCount,
@@ -494,8 +495,8 @@ indelModelProduction(
 
 // example: {"thetas": [{"repeatPatternSize" : 1, "theta" : [0.0001, 0.0002, 0.0003]}, {"repeatPatternSize" : 2, "theta" : [0.0001, 0.0002, 0.0003]}]}
 std::map<unsigned, std::vector<double>>
-importTheta(
-        std::string filename)
+                                     importTheta(
+                                         std::string filename)
 {
     std::string jsonString;
     Json::Value root;
@@ -518,12 +519,13 @@ importTheta(
 
     std::map<unsigned, std::vector<double>> thetas;
 
-    for(const auto & thetasByPatternSize : thetasRoot)
+    for (const auto& thetasByPatternSize : thetasRoot)
     {
         std::vector<double> theta;
         unsigned repeatPatternSize = thetasByPatternSize["repeatPatternSize"].asUInt();
         Json::Value thetaValues = thetasByPatternSize["theta"];
-        for (const auto &thetaValue : thetaValues) {
+        for (const auto& thetaValue : thetaValues)
+        {
             theta.push_back(thetaValue.asDouble());
         }
         thetas[repeatPatternSize] = theta;
@@ -536,7 +538,7 @@ Json::Value
 IndelModelJson::generateMotifsNode()
 {
     Json::Value motifs;
-    for(auto motifIt:model.motifs)
+    for (auto motifIt:model.motifs)
     {
         Json::Value motif;
         motif["repeatPatternSize"] = motifIt.repeatPatternSize;

@@ -91,7 +91,7 @@ struct GERMLINE_SNV_SCORING_FEATURES : public FeatureSet
         case ConservativeGenotypeQuality:
             return "ConservativeGenotypeQuality";
         case NormalizedAltHaplotypeCountRatio:
-	    return "NormalizedAltHaplotypeCountRatio";
+            return "NormalizedAltHaplotypeCountRatio";
         default:
             assert(false && "Unknown feature");
             return nullptr;
@@ -251,14 +251,14 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
             return "SamplePrimaryAltAlleleDepthFraction";
         case ConservativeGenotypeQuality:
             return "ConservativeGenotypeQuality";
-	case InterruptedHomopolymerLength:
-	    return "InterruptedHomopolymerLength";
-	case ContextCompressability:
-	    return "ContextCompressability";
+        case InterruptedHomopolymerLength:
+            return "InterruptedHomopolymerLength";
+        case ContextCompressability:
+            return "ContextCompressability";
         case IndelCategory:
-	  return "IndelCategory";
+            return "IndelCategory";
         case NormalizedAltHaplotypeCountRatio:
-	  return "NormalizedAltHaplotypeCountRatio";
+            return "NormalizedAltHaplotypeCountRatio";
         default:
             assert(false && "Unknown feature");
             return nullptr;

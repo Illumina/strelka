@@ -74,14 +74,14 @@ getAlleleSampleReportInfo(
 
 unsigned
 shortestUnencountered(
-		      const reference_contig_segment& ref,
-		      const pos_t pos,
-		      const unsigned numEncoded,
-		      const bool left = false);
+    const reference_contig_segment& ref,
+    const pos_t pos,
+    const unsigned numEncoded,
+    const bool left = false);
 
 unsigned
 computeContextCompressability(
-			      const reference_contig_segment& ref,
-			      const pos_t leftPos,
-			      const pos_t rightPos,
-			      const unsigned numKeys);
+    const reference_contig_segment& ref,
+    const pos_t leftPos,
+    const pos_t rightPos,
+    const unsigned numKeys);

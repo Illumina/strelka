@@ -167,9 +167,9 @@ deserializeRateSet(
 
 void
 IndelErrorModel::deserializeLegacyIndelModels
-        (const std::string& modelName,
-         const std::string& modelFilename,
-         const Json::Value& root)
+(const std::string& modelName,
+ const std::string& modelFilename,
+ const Json::Value& root)
 {
     Json::Value models = root["IndelModels"];
     if (! models.isNull())
@@ -195,8 +195,8 @@ IndelErrorModel::deserializeLegacyIndelModels
 
 void
 IndelErrorModel::deserializeIndelModels
-        (const std::string& modelFilename,
-         const Json::Value& root)
+(const std::string& modelFilename,
+ const Json::Value& root)
 {
 
     Json::Value motifs = root["motifs"];
@@ -255,11 +255,12 @@ IndelErrorModel(
             jsonString = buffer.str();
         }
         Json::Reader reader;
-        if(reader.parse(jsonString, root))
+        if (reader.parse(jsonString, root))
         {
             deserializeIndelModels(modelFilename, root);
         }
-        else {
+        else
+        {
             std::ostringstream oss;
             oss << "Failed to parse JSON" << reader.getFormattedErrorMessages() << "'\n";
         }

@@ -322,7 +322,7 @@ exportObservations(
 void
 IndelErrorData::
 addToObservations(const IndelErrorContext& context,
-        std::vector<ExportedIndelObservations>& observations) const
+                  std::vector<ExportedIndelObservations>& observations) const
 {
     // if this is true, we observed no errors:
     if (depthSupport.depth <= 0.) return;

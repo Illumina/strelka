@@ -57,14 +57,14 @@ enum index_t
 static
 double
 getObsLogLhood(
-        const double logHomPrior,
-        const double logHetPrior,
-        const double logAltHetPrior,
-        const double logNoIndelPrior,
-        const double logInsertErrorRate,
-        const double logDeleteErrorRate,
-        const double logNoIndelRefRate,
-        const ExportedIndelObservations& obs)
+    const double logHomPrior,
+    const double logHetPrior,
+    const double logAltHetPrior,
+    const double logNoIndelPrior,
+    const double logInsertErrorRate,
+    const double logDeleteErrorRate,
+    const double logNoIndelRefRate,
+    const ExportedIndelObservations& obs)
 {
     static const double log0(-std::numeric_limits<double>::infinity());
 
@@ -91,9 +91,9 @@ getObsLogLhood(
         }
 
         noindel = (
-                logInsertErrorRate*totalInsertObservations +
-                logDeleteErrorRate*totalDeleteObservations +
-                logNoIndelRefRate*obs.refObservations);
+                      logInsertErrorRate*totalInsertObservations +
+                      logDeleteErrorRate*totalDeleteObservations +
+                      logNoIndelRefRate*obs.refObservations);
     }
 
     unsigned maxIndex(0);
@@ -176,14 +176,14 @@ getObsLogLhood(
 static
 double
 contextLogLhood(
-        const std::vector<ExportedIndelObservations>& observations,
-        const double logInsertErrorRateSlope,
-        const double logInsertErrorRateIntercept,
-        const double logDeleteErrorRateSlope,
-        const double logDeleteErrorRateIntercept,
-        const double logNoisyLocusRateSlope,
-        const double logNoisyLocusRateIntercept,
-        const double logTheta)
+    const std::vector<ExportedIndelObservations>& observations,
+    const double logInsertErrorRateSlope,
+    const double logInsertErrorRateIntercept,
+    const double logDeleteErrorRateSlope,
+    const double logDeleteErrorRateIntercept,
+    const double logNoisyLocusRateSlope,
+    const double logNoisyLocusRateIntercept,
+    const double logTheta)
 {
 #ifdef DEBUG_MODEL3
     log_os << "MODEL3: loghood input:"
@@ -247,11 +247,11 @@ struct errorMinfuncModel3Simple : public codemin::minfunc_interface<double>
 {
     explicit
     errorMinfuncModel3Simple(
-            const std::vector<ExportedIndelObservations>& observations,
-            const unsigned minSTRLength,
-            const unsigned maxSTRLength,
-            const bool isLockTheta = true)
-            : _obs(observations), _minSTRLength(minSTRLength), _maxSTRLength(maxSTRLength), _isLockTheta(isLockTheta)
+        const std::vector<ExportedIndelObservations>& observations,
+        const unsigned minSTRLength,
+        const unsigned maxSTRLength,
+        const bool isLockTheta = true)
+        : _obs(observations), _minSTRLength(minSTRLength), _maxSTRLength(maxSTRLength), _isLockTheta(isLockTheta)
     {}
 
     unsigned dim() const override
@@ -289,8 +289,8 @@ struct errorMinfuncModel3Simple : public codemin::minfunc_interface<double>
     static
     void
     argToParameters(
-            const double* in,
-            double* out)
+        const double* in,
+        double* out)
     {
         auto rateSmoother = [](double a) -> double
         {
@@ -392,10 +392,10 @@ struct SignalGroupTotal
 static
 void
 getAltSigTotal(
-        const std::vector<ExportedIndelObservations>& observations,
-        const unsigned altBeginIndex,
-        const unsigned altEndIndex,
-        SignalGroupTotal& sigTotal)
+    const std::vector<ExportedIndelObservations>& observations,
+    const unsigned altBeginIndex,
+    const unsigned altEndIndex,
+    SignalGroupTotal& sigTotal)
 {
     for (const ExportedIndelObservations& obs : observations)
     {
@@ -416,14 +416,14 @@ getAltSigTotal(
 static
 void
 reportIndelErrorRateSet(
-        const IndelErrorContext& context,
-        const char* extendedContextTag,
-        unsigned iter,
-        const double loghood,
-        const double indelErrorRate,
-        const double theta,
-        const double noisyLocusRate,
-        std::ostream& os)
+    const IndelErrorContext& context,
+    const char* extendedContextTag,
+    unsigned iter,
+    const double loghood,
+    const double indelErrorRate,
+    const double theta,
+    const double noisyLocusRate,
+    std::ostream& os)
 {
     static const std::string sep(", ");
 
@@ -442,10 +442,10 @@ reportIndelErrorRateSet(
 static
 void
 estimateParameters(
-        const std::vector<ExportedIndelObservations>& observations,
-        unsigned minSTRLength,
-        unsigned maxSTRLength,
-        std::ostream& os)
+    const std::vector<ExportedIndelObservations>& observations,
+    unsigned minSTRLength,
+    unsigned maxSTRLength,
+    std::ostream& os)
 {
     // Get summary counts for QC purposes. Note these are unrelated to minimization or model:
     SignalGroupTotal sigInsertTotal;
@@ -539,7 +539,7 @@ estimateParameters(
 
 void
 indelModelVariantAndBinomialMixtureErrorLinearFit(
-        const SequenceErrorCounts &counts)
+    const SequenceErrorCounts& counts)
 {
     const std::vector<unsigned> referenceSTRPatternSizeVector = {1,2};
     std::ostream& ros(std::cout);
@@ -561,11 +561,11 @@ indelModelVariantAndBinomialMixtureErrorLinearFit(
         assert(maxSTRLength > minSTRLength); // has to be strictly larger
 
         std::vector<ExportedIndelObservations> observations;
-        for (const auto &contextInfo : counts.getIndelCounts())
+        for (const auto& contextInfo : counts.getIndelCounts())
         {
             if (contextInfo.first.getRepeatPatternSize() == referenceSTRPatternSize &&
-                    contextInfo.first.getRepeatCount() >= minSTRLength &&
-                    contextInfo.first.getRepeatCount() <= maxSTRLength)
+                contextInfo.first.getRepeatCount() >= minSTRLength &&
+                contextInfo.first.getRepeatCount() <= maxSTRLength)
             {
                 const auto& context(contextInfo.first);
                 const auto& data(contextInfo.second);

@@ -30,4 +30,4 @@
 ///
 void
 indelModelVariantAndBinomialMixtureErrorLinearFit(
-        const SequenceErrorCounts &counts);
+    const SequenceErrorCounts& counts);
