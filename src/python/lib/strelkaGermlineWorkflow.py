@@ -178,7 +178,7 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
             assert(len(gsegGroup) == 1)
             segCmd.append('--call-continuous-vf')
 
-    if self.params.isDoEstimateIndelError :
+    if self.params.isIndelErrorRateEstimated :
         segCmd.extend(['--indel-error-models-file', self.paths.getIndelEstimationJsonPath()])
 
     segTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gid)
@@ -540,9 +540,9 @@ class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
 
         if 1 != len(self.params.bamList) :
             self.flowLog("Indel Error Estimation only supports single bam file inputs: Skipping indel error estimation")
-            self.params.isDoEstimateIndelError = False
+            self.params.isIndelErrorRateEstimated = False
 
-        if self.params.isDoEstimateIndelError :
+        if self.params.isIndelErrorRateEstimated :
 
                 callPreReqs.add(self.addWorkflowTask("EstimateIndelError", EstimateIndelErrorWorkflow(self.params, self.paths), dependencies=estimatePreReqs))
         else :
