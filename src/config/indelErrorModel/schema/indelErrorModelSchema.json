@@ -14,11 +14,11 @@
         "type": "object",
         "properties": {
           "indelRate": {
-            "description": "The likelihood that a indel will occur",
+            "description": "Probability that an indel will occur",
             "type": "number"
           },
           "noisyLocusRate": {
-            "description": "The likelihood that we are in a noisy state",
+            "description": "Probability that the motif locus is noisy",
             "type": "number"
           },
           "repeatCount": {
@@ -33,7 +33,7 @@
       }
     },
     "thetas": {
-      "description": "An array which is the collection of all thetas used in the model",
+      "description": "An array which is the collection of all thetas used in the model, the repeat count is the 1-indexed position in the array",
       "type": "array",
       "theta": {
         "items": {

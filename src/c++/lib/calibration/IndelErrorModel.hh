@@ -47,12 +47,6 @@ struct IndelErrorModel
         const bool isCandidateRates = false) const;
 
     void
-    deserializeLegacyIndelModels(
-        const std::string& modelName,
-        const std::string& modelFilename,
-        const Json::Value& root);
-
-    void
     deserializeIndelModels
     (const std::string& modelFilename,
      const Json::Value& root);

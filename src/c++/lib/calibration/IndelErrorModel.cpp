@@ -122,77 +122,6 @@ getSimplifiedAdaptiveParameters()
     return rates;
 }
 
-
-
-/// Reads in model parameter matrix with entries as error-pair [ins_error,del_error]
-/// in the following format:
-/// unit length 1: [[[del_hpol1,ins_hpol1],[del_hpol2,ins_hpol2],...,[del_hpol_m,ins_hpol_m]],
-/// unit length 2:  [[del_dinuc1,ins_dinuc1],[del_dinuc2,ins_dinuc2],...,[del_dinuc_m,ins_dinuc_m]],
-///  ....
-/// unit length N:  [[del_repeatN,ins_repeatN],[del_repeatN2,ins_repeatN2],...,]]]
-static
-IndelErrorRateSet
-deserializeRateSet(
-    const Json::Value& root)
-{
-    const unsigned maxRepeatingPatternSize = root["MaxMotifLength"].asInt();
-    const unsigned maxTractLength = root["MaxTractLength"].asInt();
-    const Json::Value& models = root["Model"];
-
-    assert((models.size()==maxRepeatingPatternSize) && "Unexpected repeating pattern size in indel model");
-
-    IndelErrorRateSet rates;
-
-    for (unsigned repeatingPatternSize(1); repeatingPatternSize<=maxRepeatingPatternSize; ++repeatingPatternSize)
-    {
-        const auto& pattern(models[repeatingPatternSize-1]);
-
-        assert((pattern.size()<=maxTractLength) && "Unexpected tract length in indel model");
-
-        for (unsigned tractLength=1; tractLength <= pattern.size(); ++tractLength)
-        {
-            if ((tractLength % repeatingPatternSize)!=0) continue;
-            const unsigned patternRepeatCount(tractLength/repeatingPatternSize);
-            const auto& cell(pattern[tractLength-1]);
-
-            const double delete_error_prob(cell[0].asDouble());
-            const double insert_error_prob(cell[1].asDouble());
-            rates.addRate(repeatingPatternSize, patternRepeatCount, insert_error_prob, delete_error_prob);
-        }
-    }
-
-    return rates;
-}
-
-
-void
-IndelErrorModel::deserializeLegacyIndelModels
-(const std::string& modelName,
- const std::string& modelFilename,
- const Json::Value& root)
-{
-    Json::Value models = root["IndelModels"];
-    if (! models.isNull())
-    {
-        for (const auto& modelValue : models)
-        {
-            _meta.deserialize(modelValue);
-            if (_meta.name != modelName) continue;
-            _errorRates = deserializeRateSet(modelValue);
-            break;
-        }
-    }
-
-    if (_meta.name != modelName)
-    {
-        using namespace illumina::common;
-
-        std::ostringstream oss;
-        oss << "ERROR: unrecognized indel error model name: '" << modelName << "' in model file '" << modelFilename << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-    }
-}
-
 void
 IndelErrorModel::deserializeIndelModels
 (const std::string& modelFilename,
@@ -261,8 +190,11 @@ IndelErrorModel(
         }
         else
         {
+            using namespace illumina::common;
+
             std::ostringstream oss;
-            oss << "Failed to parse JSON" << reader.getFormattedErrorMessages() << "'\n";
+            oss << "Failed to parse JSON " << modelFilename << " " << reader.getFormattedErrorMessages() << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
 
     }
