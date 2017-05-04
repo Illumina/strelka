@@ -375,11 +375,9 @@ def mergeSequenceErrorCounts(self, taskPrefix, dependencies, runStatsLogPaths) :
 
 def estimateParametersFromErrorCounts(self, taskPrefix, dependencies, runStatsLogPaths) :
 
-    runEstimateLabel=preJoin(taskPrefix,"estimateParametersFromErrorCountsBin")
-    runEstimateCmd=[self.params.estimateParametersFromErrorCountsBin]
+    runEstimateLabel=preJoin(taskPrefix,"estimateVariantErrorRatesBin")
+    runEstimateCmd=[self.params.estimateVariantErrorRatesBin]
     runEstimateCmd.extend(["--counts-file",self.paths.getCountsOutputPath()])
-    runEstimateCmd.extend(["--model-type","indel"])
-    runEstimateCmd.extend(["--model","8"])
     runEstimateCmd.extend(["--theta-file",self.params.thetaParamFile])
     runEstimateCmd.extend(["--output-file",self.paths.getIndelEstimationJsonPath()])
     return self.addTask(runEstimateLabel, runEstimateCmd, dependencies=dependencies, isForceLocal=True)
