@@ -28,13 +28,13 @@
 
 void
 indelModelProduction(
-        const SequenceErrorCounts& counts,
-        const std::string& thetaFilename,
-        const std::string& outputFilename);
+    const SequenceErrorCounts& counts,
+    const std::string& thetaFilename,
+    const std::string& outputFilename);
 
 std::map<unsigned, std::vector<double>>
-importTheta(
-        std::string filename);
+                                     importTheta(
+                                         std::string filename);
 
 // move these to a more appropriate place later
 // TODO: these classes can be automatically serialized with cereal
@@ -59,13 +59,13 @@ public:
     IndelModelBinomialMixture model;
 
     void addMotif(
-            unsigned repeatPatternSize,
-            unsigned repeatCount,
-            double indelRate,
-            double noisyLocusRate);
+        unsigned repeatPatternSize,
+        unsigned repeatCount,
+        double indelRate,
+        double noisyLocusRate);
 
     void exportIndelErrorModelToJsonFile(
-            std::string filename);
+        std::string filename);
 
     Json::Value
     generateMotifsNode();

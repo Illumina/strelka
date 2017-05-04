@@ -142,11 +142,11 @@ struct IndelErrorRateSet
 
     void
     addRate(
-            const unsigned repeatingPatternSize,
-            const unsigned patternRepeatCount,
-            const double insertionErrorRate,
-            const double deletionErrorRate,
-            const double noisyLocusRate)
+        const unsigned repeatingPatternSize,
+        const unsigned patternRepeatCount,
+        const double insertionErrorRate,
+        const double deletionErrorRate,
+        const double noisyLocusRate)
     {
         assert(repeatingPatternSize>0);
         assert(patternRepeatCount>0);
