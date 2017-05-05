@@ -321,47 +321,6 @@ exportObservations(
 
 void
 IndelErrorData::
-addToObservations(const IndelErrorContext& context,
-                  std::vector<ExportedIndelObservations>& observations) const
-{
-    // if this is true, we observed no errors:
-    if (depthSupport.depth <= 0.) return;
-
-    const double supportFraction(safeFrac(depthSupport.supportCount, depthSupport.depth));
-
-    ExportedIndelObservations obs;
-    std::fill(obs.altObservations.begin(), obs.altObservations.end(), 0);
-
-    // convert background observations:
-    for (const auto& value : background)
-    {
-        obs.repeatPatternSize = context.getRepeatPatternSize();
-        obs.repeatCount = context.getRepeatCount();
-        obs.observationCount = value.second;
-        obs.refObservations = (value.first.depth*supportFraction);
-        obs.variantStatus = value.first.backgroundStatus;
-
-        observations.push_back(obs);
-    }
-
-    // convert error observations:
-    for (const auto& value : error)
-    {
-        obs.repeatPatternSize = context.getRepeatPatternSize();
-        obs.repeatCount = context.getRepeatCount();
-        obs.observationCount = value.second;
-        obs.refObservations = value.first.refCount;
-        obs.altObservations = value.first.signalCounts;
-        obs.variantStatus   = value.first.variantStatus;
-
-        observations.push_back(obs);
-    }
-}
-
-
-
-void
-IndelErrorData::
 merge(
     const IndelErrorData& in)
 {
