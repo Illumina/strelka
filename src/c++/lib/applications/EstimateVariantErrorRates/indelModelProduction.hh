@@ -18,6 +18,7 @@
 //
 
 #pragma once
+
 #include "calibration/IndelErrorModel.hh"
 #include "json/json.h"
 #include "errorAnalysis/SequenceErrorCounts.hh"
@@ -29,8 +30,8 @@ indelModelProduction(
     const std::string& outputFilename);
 
 std::map<unsigned, std::vector<double>>
-                                     importTheta(
-                                         std::string filename);
+importTheta(
+   const std::string& filename);
 
 // move these to a more appropriate place later
 // TODO: these classes can be automatically serialized with cereal
@@ -61,9 +62,8 @@ public:
         double noisyLocusRate);
 
     void exportIndelErrorModelToJsonFile(
-        std::string filename);
+        const std::string& filename) const;
 
     Json::Value
-    generateMotifsNode();
-
+    generateMotifsNode() const;
 };
