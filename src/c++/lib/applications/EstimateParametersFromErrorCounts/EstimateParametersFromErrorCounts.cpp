@@ -26,7 +26,6 @@
 #include "EstimateParametersFromErrorCounts.hh"
 #include "EPECOptions.hh"
 #include "errorAnalysis/SequenceErrorCounts.hh"
-#include "indelModelProduction.hh"
 #include "indelModel1.hh"
 #include "indelModelVariantAndBetaBinomialError.hh"
 #include "indelModelVariantAndIndyError.hh"
@@ -77,10 +76,6 @@ runEPEC(
         else if (opt.modelIndex == 7)
         {
             indelModelVariantAndBinomialMixtureErrorLinearFit(counts);
-        }
-        else if (opt.modelIndex == 8)
-        {
-            indelModelProduction(counts, opt.thetaFilename, opt.outputFilename);
         }
         else
         {
