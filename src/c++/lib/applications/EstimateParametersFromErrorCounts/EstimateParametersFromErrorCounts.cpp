@@ -35,9 +35,6 @@
 #include "indelModelVariantAndBinomialMixtureError.hh"
 #include "indelModelVariantAndBinomialMixtureErrorNoOverlap.hh"
 #include "snvModelVariantAndBinomialMixtureError.hh"
-#include "indelModelVariantAndBinomialMixtureErrorLinearFit.hh"
-
-
 
 static
 void
@@ -72,10 +69,6 @@ runEPEC(
         else if (opt.modelIndex == 6)
         {
             indelModelVariantAndBetaBinomialError(counts);
-        }
-        else if (opt.modelIndex == 7)
-        {
-            indelModelVariantAndBinomialMixtureErrorLinearFit(counts);
         }
         else
         {
