@@ -21,11 +21,6 @@
 /// \author Chris Saunders
 ///
 
-#include <iomanip>
-#include <iostream>
-#include <fstream>
-
-#include "common/Exceptions.hh"
 #include "blt_util/log.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
@@ -35,7 +30,8 @@
 #define CODEMIN_USE_BOOST
 #include "minimize_conj_direction.h"
 
-
+#include <iomanip>
+#include <iostream>
 
 namespace
 {
@@ -171,9 +167,9 @@ getObsLogLhood(
                   logDeleteErrorRate * remainingDeleteObservations);
     }
 
-    return log_sum(log_sum(logHomPrior + hom, logHetPrior + het),
-                   log_sum(logNoIndelPrior + noindel, logAltHetPrior + althet));
+    return log_sum( log_sum(logHomPrior+hom,logHetPrior+het), log_sum(logNoIndelPrior+noindel,logAltHetPrior+althet) );
 }
+
 
 
 static
@@ -201,8 +197,7 @@ contextLogLhood(
     const double theta(std::exp(logTheta));
     const double logNoIndelPrior(std::log(1 - (theta * 3. / 2. + (theta * theta))));
 
-    const double logNoIndelRefRate(
-        std::log(1 - std::exp(logInsertErrorRate)) + std::log(1 - std::exp(logDeleteErrorRate)));
+    const double logNoIndelRefRate(std::log(1-std::exp(logInsertErrorRate))+std::log(1-std::exp(logDeleteErrorRate)));
 
     const double logCleanLocusRate(std::log(1 - std::exp(logNoisyLocusRate)));
 
@@ -216,8 +211,7 @@ contextLogLhood(
         const double noisyMix(getObsLogLhood(logHomPrior, logHetPrior, logAltHetPrior, logNoIndelPrior,
                                              logInsertErrorRate, logDeleteErrorRate, logNoIndelRefRate, obs));
         const double cleanMix(getObsLogLhood(logHomPrior, logHetPrior, logAltHetPrior, logNoIndelPrior,
-                                             logCleanLocusIndelRate, logCleanLocusIndelRate, logCleanLocusRefRate,
-                                             obs));
+                                             logCleanLocusIndelRate, logCleanLocusIndelRate, logCleanLocusRefRate, obs));
 
         const double mix(log_sum(logCleanLocusRate + cleanMix, logNoisyLocusRate + noisyMix));
 
@@ -240,11 +234,10 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
 {
     explicit
     error_minfunc_model3(
-        const std::vector<ExportedIndelObservations>& observations, const double theta,
+        const std::vector<ExportedIndelObservations>& observations,
         const bool isLockTheta = false)
-        : defaultLogTheta(theta),
-          _obs(observations),
-          _isLockTheta(isLockTheta) {}
+        : _obs(observations), _isLockTheta(isLockTheta)
+    {}
 
     unsigned dim() const override
     {
@@ -313,8 +306,7 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
             return (a > maxLogTheta ? maxLogTheta - std::abs(a - maxLogTheta) : a);
         };
 
-        for (unsigned paramIndex(MIN_PARAMS3::LN_INSERT_ERROR_RATE);
-             paramIndex < MIN_PARAMS3::LN_NOISY_LOCUS_RATE; ++paramIndex)
+        for (unsigned paramIndex(MIN_PARAMS3::LN_INSERT_ERROR_RATE); paramIndex<MIN_PARAMS3::LN_NOISY_LOCUS_RATE; ++paramIndex)
         {
             out[paramIndex] = rateSmoother(in[paramIndex]);
         }
@@ -336,8 +328,7 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
     }
 #endif
 
-    const double defaultLogTheta;
-    static const double initLogTheta;
+    static const double defaultLogTheta;
     static const double maxLogTheta;
     static const double maxLogRate;
     static const double maxLogLocusRate;
@@ -348,10 +339,11 @@ private:
     double _params[MIN_PARAMS3::SIZE];
 };
 
-const double error_minfunc_model3::initLogTheta = std::log(1e-04);
+const double error_minfunc_model3::defaultLogTheta = std::log(1e-4);
 const double error_minfunc_model3::maxLogTheta = std::log(0.4);
 const double error_minfunc_model3::maxLogRate = std::log(0.5);
 const double error_minfunc_model3::maxLogLocusRate = std::log(1.0);
+
 
 
 struct SignalGroupTotal
@@ -360,6 +352,7 @@ struct SignalGroupTotal
     double alt = 0;
     double locus = 0;
 };
+
 
 
 static
@@ -383,6 +376,7 @@ getAltSigTotal(
         sigTotal.locus += obs.observationCount;
     }
 }
+
 
 
 static
@@ -417,16 +411,14 @@ reportIndelErrorRateSet(
 }
 
 
-// TODO: code duplication. combine with the new reportExtendedContext below
+
 static
 void
 reportExtendedContext(
     const bool isLockTheta,
-    const double logTheta,
     const IndelErrorContext& context,
     const std::vector<ExportedIndelObservations>& observations,
     const IndelErrorData& data,
-    double normalizedParams[MIN_PARAMS3::SIZE],
     std::ostream& os)
 {
     // Get summary counts for QC purposes. Note these are unrelated to minimization or model:
@@ -448,12 +440,11 @@ reportExtendedContext(
         static const double end_tol(1e-10);
         static const unsigned max_iter(40);
 
-        error_minfunc_model3 errFunc(observations, logTheta, isLockTheta);
         // initialize parameter search
         minParams[MIN_PARAMS3::LN_INSERT_ERROR_RATE] = std::log(1e-3);
         minParams[MIN_PARAMS3::LN_DELETE_ERROR_RATE] = std::log(1e-3);
         minParams[MIN_PARAMS3::LN_NOISY_LOCUS_RATE] = std::log(0.4);
-        minParams[MIN_PARAMS3::LN_THETA] = errFunc.defaultLogTheta;
+        minParams[MIN_PARAMS3::LN_THETA] = error_minfunc_model3::defaultLogTheta;
 
         static const unsigned SIZE2(MIN_PARAMS3::SIZE * MIN_PARAMS3::SIZE);
         double conjDir[SIZE2];
@@ -467,7 +458,7 @@ reportExtendedContext(
 
         double start_tol(end_tol);
         double final_dlh;
-
+        error_minfunc_model3 errFunc(observations,isLockTheta);
 
         codemin::minimize_conj_direction(minParams, conjDir, errFunc, start_tol, end_tol, line_tol,
                                          x_all_loghood, iter, final_dlh, max_iter);
@@ -475,22 +466,23 @@ reportExtendedContext(
 
     // report:
     {
+        double normalizedParams[MIN_PARAMS3::SIZE];
         error_minfunc_model3::argToParameters(minParams, normalizedParams);
 
         const double theta(std::exp(normalizedParams[MIN_PARAMS3::LN_THETA]));
 
         const double insertErrorRate(std::exp(normalizedParams[MIN_PARAMS3::LN_INSERT_ERROR_RATE]));
         const double noisyLocusRate(std::exp(normalizedParams[MIN_PARAMS3::LN_NOISY_LOCUS_RATE]));
-        reportIndelErrorRateSet(context, "I", sigInsertTotal, data, iter, -x_all_loghood, insertErrorRate, theta,
-                                noisyLocusRate, os);
+        reportIndelErrorRateSet(context, "I", sigInsertTotal, data, iter, -x_all_loghood, insertErrorRate, theta, noisyLocusRate, os);
 
         const double deleteErrorRate(std::exp(normalizedParams[MIN_PARAMS3::LN_DELETE_ERROR_RATE]));
-        reportIndelErrorRateSet(context, "D", sigDeleteTotal, data, iter, -x_all_loghood, deleteErrorRate, theta,
-                                noisyLocusRate, os);
+        reportIndelErrorRateSet(context, "D", sigDeleteTotal, data, iter, -x_all_loghood, deleteErrorRate, theta, noisyLocusRate, os);
     }
 }
 
 }
+
+
 
 void
 indelModelVariantAndBinomialMixtureError(
@@ -513,7 +505,6 @@ indelModelVariantAndBinomialMixtureError(
         if (observations.empty()) continue;
 
         log_os << "INFO: computing rates for context: " << context << "\n";
-        double normalizedParams[MIN_PARAMS3::SIZE];
-        reportExtendedContext(isLockTheta, error_minfunc_model3::initLogTheta, context, observations, data, normalizedParams, ros);
+        reportExtendedContext(isLockTheta, context, observations, data, ros);
     }
 }
