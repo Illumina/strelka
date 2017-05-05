@@ -1,13 +1,14 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "IndelErrorModel",
-  "description": "JSON schema describing the indel error model used for small variants in Strelka",
+  "description": "JSON schema describing indel parameter inputs used for small variant calling in Strelka",
   "type": "object",
   "properties": {
     "motifs": {
       "description": "An array which is the collection of all motifs estimated from the model",
       "comment": "There shouldn't be any gaps between the min repeat count and max repeat count for a given repeat pattern size",
       "type": "array",
+      "minItems": 1,
       "items": {
         "description": "This object describes the params for a given motif",
         "comment": "A given motif consists of a repeat pattern size and the repeat count",
@@ -15,35 +16,58 @@
         "properties": {
           "indelRate": {
             "description": "Probability that an indel will occur",
-            "type": "number"
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
           },
           "noisyLocusRate": {
             "description": "Probability that the motif locus is noisy",
-            "type": "number"
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
           },
           "repeatCount": {
             "description": "The repeat count for the given motif",
-            "type": "integer"
+            "type": "integer",
+            "minimum": 1
           },
           "repeatPatternSize": {
             "description": "The repeat pattern size for the given motif",
-            "type": "integer"
+            "type": "integer",
+            "minimum": 1
           }
-        }
+        },
+        "required": [
+          "indelRate","noisyLocusRate","repeatCount","repeatPatternSize"],
+        "additionalProperties": false
       }
     },
     "thetas": {
-      "description": "An array which is the collection of all thetas used in the model, the repeat count is the 1-indexed position in the array",
+      "description": "An array providing thetas over different repeatPatternSize values",
       "type": "array",
-      "theta": {
-        "items": {
-          "type": "number"
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "repeatPatternSize": {
+            "description": "The repeat pattern size for the given motif",
+            "type": "integer",
+            "minimum": 1
+          },
+          "theta": {
+            "description": "An array listing all theta values for a given repeatPatternSize, the repeat count is the 1-indexed position in the array",
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
         },
-        "type": "array"
-      },
-      "repeatPatternSize": {
-        "description": "The repeat pattern size for the given motif",
-        "type": "integer"
+        "required": [
+          "theta","repeatPatternSize"],
+        "additionalProperties": false
       }
     }
   }
