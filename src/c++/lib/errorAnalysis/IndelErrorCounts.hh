@@ -392,12 +392,6 @@ BOOST_CLASS_IMPLEMENTATION(IndelErrorContextObservationData, boost::serializatio
 ///
 struct ExportedIndelObservations
 {
-    /// the repeat pattern size
-    unsigned repeatPatternSize;
-
-    /// the number of times the repeat pattern is repeated
-    unsigned repeatCount;
-
     /// the number of times we observe the observation pattern
     unsigned observationCount;
 
