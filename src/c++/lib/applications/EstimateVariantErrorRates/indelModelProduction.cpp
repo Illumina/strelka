@@ -381,11 +381,11 @@ computeExtendedContext(
     }
 
     error_minfunc_model3::argToParameters(minParams,normalizedParams);
-
 }
 
 
 
+static
 AdaptiveIndelErrorModelLogParams
 estimateModelParams(
     const SequenceErrorCounts& counts,
@@ -491,8 +491,8 @@ indelModelProduction(
 
 // example: {"thetas": [{"repeatPatternSize" : 1, "theta" : [0.0001, 0.0002, 0.0003]}, {"repeatPatternSize" : 2, "theta" : [0.0001, 0.0002, 0.0003]}]}
 std::map<unsigned, std::vector<double>>
-                                     importTheta(
-                                         std::string filename)
+importTheta(
+    const std::string& filename)
 {
     std::string jsonString;
     Json::Value root;
@@ -529,12 +529,14 @@ std::map<unsigned, std::vector<double>>
     return thetas;
 }
 
+
+
 // move these to a more appropriate place later
 Json::Value
-IndelModelJson::generateMotifsNode()
+IndelModelJson::generateMotifsNode() const
 {
     Json::Value motifs;
-    for (auto motifIt:model.motifs)
+    for (const auto& motifIt : model.motifs)
     {
         Json::Value motif;
         motif["repeatPatternSize"] = motifIt.repeatPatternSize;
@@ -546,14 +548,14 @@ IndelModelJson::generateMotifsNode()
     return motifs;
 }
 
-void IndelModelJson::exportIndelErrorModelToJsonFile(std::string filename)
+void IndelModelJson::exportIndelErrorModelToJsonFile(const std::string& filename) const
 {
     Json::StyledWriter writer;
     Json::Value jsonRoot;
     jsonRoot["motifs"] = generateMotifsNode();
-    std::string str = writer.write(jsonRoot);
+    const std::string str = writer.write(jsonRoot);
     std::ofstream out(filename);
-    out << str << std::endl << std::endl;
+    out << str << "\n\n";
 }
 
 void IndelModelJson::addMotif(unsigned repeatPatternSize,
