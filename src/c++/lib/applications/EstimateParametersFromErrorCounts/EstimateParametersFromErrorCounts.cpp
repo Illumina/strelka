@@ -21,20 +21,23 @@
 /// \author Chris Saunders
 ///
 
-#include <iostream>
-
 #include "EstimateParametersFromErrorCounts.hh"
 #include "EPECOptions.hh"
 #include "errorAnalysis/SequenceErrorCounts.hh"
+
 #include "indelModel1.hh"
 #include "indelModelVariantAndBetaBinomialError.hh"
 #include "indelModelVariantAndIndyError.hh"
 #include "indelModelVariantAndIndyErrorNoOverlap.hh"
 #include "snvModel1.hh"
 #include "snvModelVariantAndIndyError.hh"
+#include <iostream>
 #include "indelModelVariantAndBinomialMixtureError.hh"
 #include "indelModelVariantAndBinomialMixtureErrorNoOverlap.hh"
 #include "snvModelVariantAndBinomialMixtureError.hh"
+
+
+
 
 static
 void
