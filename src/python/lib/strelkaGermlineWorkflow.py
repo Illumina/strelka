@@ -537,12 +537,13 @@ class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
         if self.params.isHighDepthFilter :
             estimatePreReqs |= strelkaGermlineRunDepthFromAlignments(self)
 
-        if 1 != len(self.params.bamList) :
-            self.flowLog("Indel Error Estimation only supports single bam file inputs: Skipping indel error estimation")
-            self.params.isIndelErrorRateEstimated = False
+
 
         if self.params.isIndelErrorRateEstimated :
-
+            if 1 != len(self.params.bamList) :
+                self.flowLog("Indel Error Estimation only supports single bam file inputs: Skipping indel error estimation")
+                self.params.isIndelErrorRateEstimated = False
+            else :
                 callPreReqs.add(self.addWorkflowTask("EstimateIndelError", EstimateIndelErrorWorkflow(self.params, self.paths), dependencies=estimatePreReqs))
         else :
             callPreReqs = estimatePreReqs
