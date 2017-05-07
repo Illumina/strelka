@@ -174,8 +174,8 @@ process_pos_snp_somatic(const pos_t pos)
 
     // TODO this is ridiculous -- if the tier2 data scheme works then come back and clean this up:
     static const unsigned n_tier(2);
-    CleanedPileup* normal_cpi_ptr[n_tier] = { &(normal_sif.cpi) , &(_tier2_cpi[NORMAL]) };
-    CleanedPileup* tumor_cpi_ptr[n_tier] = { &(tumor_sif.cpi) , &(_tier2_cpi[TUMOR]) };
+    CleanedPileup* normal_cpi_ptr[n_tier] = { &(normal_sif.cpi), &(_tier2_cpi[NORMAL]) };
+    CleanedPileup* tumor_cpi_ptr[n_tier] = { &(tumor_sif.cpi), &(_tier2_cpi[TUMOR]) };
 
     for (unsigned t(0); t<n_tier; ++t)
     {

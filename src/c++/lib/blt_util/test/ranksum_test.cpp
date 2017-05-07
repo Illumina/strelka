@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE( test_ranksum )
     r.add_observation(false,93);
 
     static const double tol(0.001);
-    BOOST_REQUIRE_CLOSE(-1.27021, r.get_u_stat() , tol);
+    BOOST_REQUIRE_CLOSE(-1.27021, r.get_u_stat(), tol);
 }
 
 

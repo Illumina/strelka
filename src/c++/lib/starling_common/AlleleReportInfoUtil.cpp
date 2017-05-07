@@ -259,12 +259,15 @@ getAlleleReportInfo(
     set_repeat_info(indelKey,ref,indelReportInfo);
 
     // interrupted hpol compuation:
-    indelReportInfo.ihpol=get_interrupted_hpol_size(indel_begin_pos-1,ref);
-    indelReportInfo.ihpol=std::max(indelReportInfo.ihpol,get_interrupted_hpol_size(indel_begin_pos,ref));
+    indelReportInfo.interruptedHomopolymerLength = getInterruptedHomopolymerLength(indel_begin_pos - 1, ref);
+    indelReportInfo.interruptedHomopolymerLength = std::max(indelReportInfo.interruptedHomopolymerLength,
+                                                            getInterruptedHomopolymerLength(indel_begin_pos, ref));
     if (indel_begin_pos != indel_end_pos)
     {
-        indelReportInfo.ihpol=std::max(indelReportInfo.ihpol,get_interrupted_hpol_size(indel_end_pos-1,ref));
-        indelReportInfo.ihpol=std::max(indelReportInfo.ihpol,get_interrupted_hpol_size(indel_end_pos,ref));
+        indelReportInfo.interruptedHomopolymerLength = std::max(indelReportInfo.interruptedHomopolymerLength,
+                                                                getInterruptedHomopolymerLength(indel_end_pos - 1, ref));
+        indelReportInfo.interruptedHomopolymerLength = std::max(indelReportInfo.interruptedHomopolymerLength,
+                                                                getInterruptedHomopolymerLength(indel_end_pos, ref));
     }
 }
 

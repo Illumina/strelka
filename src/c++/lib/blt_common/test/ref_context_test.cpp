@@ -68,7 +68,7 @@ single_ihpol_test(const pos_t pos,
                   const unsigned expect)
 {
 
-    const unsigned result(get_interrupted_hpol_size(pos,ref));
+    const unsigned result(getInterruptedHomopolymerLength(pos, ref));
     BOOST_CHECK_EQUAL(result,expect);
 }
 

@@ -97,7 +97,7 @@ calc_pos_nonref_freq_loghood(const snp_pos_info& pi,
     std::vector<bool> is_cache_ref(max_qscore+1,false);
     std::vector<bool> is_cache_nonref(max_qscore+1,false);
 
-    std::vector<bool>* is_cache[2] = { &is_cache_ref , &is_cache_nonref };
+    std::vector<bool>* is_cache[2] = { &is_cache_ref, &is_cache_nonref };
     blt_float_t cache[2][max_qscore+1];
 
 
@@ -223,7 +223,7 @@ calc_pos_nonref_allele_freq_loghood(const snp_pos_info& pi,
     std::vector<bool> is_cache_nonref(max_qscore+1,false);
     std::vector<bool> is_cache_other(max_qscore+1,false);
 
-    std::vector<bool>* is_cache[3] = { &is_cache_ref , &is_cache_nonref , &is_cache_other };
+    std::vector<bool>* is_cache[3] = { &is_cache_ref, &is_cache_nonref, &is_cache_other };
     blt_float_t cache[3][max_qscore+1];
 
 

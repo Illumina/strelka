@@ -489,15 +489,15 @@ indelModelProduction(
 
 }
 
-// example: {"thetas": [{"repeatPatternSize" : 1, "theta" : [0.0001, 0.0002, 0.0003]}, {"repeatPatternSize" : 2, "theta" : [0.0001, 0.0002, 0.0003]}]}
-std::map<unsigned, std::vector<double>>
+
+std::map<unsigned, std::vector<double> >
 importTheta(
     const std::string& filename)
 {
     std::string jsonString;
     Json::Value root;
     {
-        std::ifstream ifs(filename , std::ifstream::binary);
+        std::ifstream ifs(filename, std::ifstream::binary);
         std::stringstream buffer;
         buffer << ifs.rdbuf();
         jsonString = buffer.str();

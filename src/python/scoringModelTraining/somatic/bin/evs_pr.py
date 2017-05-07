@@ -108,11 +108,11 @@ def main():
             strelka_f_fps = strelka_def_f[
                 strelka_def_f["tag"] == "FP"].shape[0]
             data_remaining = dataset[True == strelka_f]
-        elif f == "QSI_NT":
+        elif f == "SomaticIndelQualityGivenGermlineGenotype":
             strelka_f_ref = (dataset["NT"] == "ref")
-            strelka_f_ihpol = (dataset["IHP"] <= 14)
+            strelka_f_ihpol = (dataset["InterruptedHomopolymerLength"] <= 14)
             strelka_f_bcnoise = (dataset["bcn"] < 0.3)
-            strelka_f_repeat = (dataset["RC"] <= 8)
+            strelka_f_repeat = (dataset["RefRepeatCount"] <= 8)
             strelka_f = strelka_f_ref & strelka_f_ihpol & strelka_f_bcnoise & strelka_f_repeat
 
             strelka_def_f = dataset[True != strelka_f]

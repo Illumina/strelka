@@ -103,7 +103,7 @@ writeSomaticIndelVcfGrid(
     }
 
     // calculate empirical scoring score and features
-    calculateScoringFeatures(siInfo, wasNormal, wasTumor, opt, dopt, smod);
+    calculateScoringFeatures(siInfo, wasNormal, wasTumor, opt, smod);
 
     const bool is_use_empirical_scoring(opt.isUseSomaticIndelScoring());
     if (!is_use_empirical_scoring)
@@ -189,7 +189,7 @@ writeSomaticIndelVcfGrid(
                << ";RC=" << siInfo.indelReportInfo.refRepeatCount
                << ";IC=" << siInfo.indelReportInfo.indelRepeatCount;
         }
-        os << ";IHP=" << siInfo.indelReportInfo.ihpol;
+        os << ";IHP=" << siInfo.indelReportInfo.interruptedHomopolymerLength;
 
         if (smod.isEVS)
         {

@@ -359,6 +359,17 @@ Somatic datasets include simulated tumor-normal pairs from the Platinum Genomes 
 
 The output scores produced by the random forest classifier are transformed to phred-scale and calibrated by passing the resulting quality values through a linear transform estimated by regressing binned empirical quality onto predicted quality. Finally, variant filter labels are assigned based on thresholds that have been selected to achieve a reasonable tradeoff across multiple datasets.
 
+\paragraph{Hard-filters applied when the EVS model is used}
+
+When the EVS model is used, most variants are filtered based on the score computed by the random forest model. In some cases this score is supplemented with additional hard filters.
+
+For somatic indels, the following filter is applied in additional to EVS thesholds:
+
+\begin{itemize}
+    \item \texttt{NormalSampleRelativeTotalLocusDepth} ~ variant is filtered if this value is greater than 3
+\end{itemize}
+
+
 \paragraph{Features used by the EVS model}
 
 Features used in each model are listed here and definitions are provided further below.
@@ -414,6 +425,7 @@ Features used in each model are listed here and definitions are provided further
         \item \texttt{SampleRefRepeatCount}
         \item \texttt{SamplePrimaryAltAlleleDepthFraction}
     \end{itemize}
+
     \item Somatic SNV features:
     \begin{itemize}
         \item \texttt{SomaticSNVQualityGivenGermlineGenotype}
@@ -425,18 +437,18 @@ Features used in each model are listed here and definitions are provided further
         \item \texttt{TumorSampleReadPosRankSum}
         \item \texttt{AlleleCountLogOddsRatio}
     \end{itemize}
-    \item Somatic Indel features: [TODO: change on renaming]
+    \item Somatic Indel features:
     \begin{itemize}
-        \item \texttt{QSI\_NT} 
-        \item \texttt{ABS\_T\_RR} 
-        \item \texttt{ABS\_T\_SOR} 
-        \item \texttt{IC} 
-        \item \texttt{IHP} 
-        \item \texttt{RC} 
-        \item \texttt{RU\_LEN} 
-        \item \texttt{TNR} 
-        \item \texttt{AFR} 
-        \item \texttt{LOR}
+        \item \texttt{SomaticIndelQualityGivenGermlineGenotype}
+        \item \texttt{TumorSampleAbsReadPosRankSum}
+        \item \texttt{TumorSampleAbsStrandOddsRatio}
+        \item \texttt{RepeatUnitLength}
+        \item \texttt{IndelRepeatCount}
+        \item \texttt{RefRepeatCount}
+        \item \texttt{InterruptedHomopolymerLength}
+        \item \texttt{TumorSampleIndelNoiseLogOdds}
+        \item \texttt{TumorNormalIndelAlleleLogOdds}
+        \item \texttt{AlleleCountLogOddsRatio}
     \end{itemize}
 \end{itemize}
 
@@ -446,9 +458,8 @@ In this case a set of filters is defined. Each filter is triggered when a single
 
 The hard filter model is used whenever EVS cannot be. This is aways the method used to filter homozygous reference calls, and for certain calls which are not well represented in EVS training (hemizygous variants). The EVS model may be turned off for all variants whenever the assay conditions are suspected to poorly match the EVS models training conditions, in which case the simple hard filters will be used as the default fallback.
 
-\paragraph{Hard filter thresholds}
+\paragraph{Hard filter thresholds for germline model}
 
-[TODO: add somatic. Also, anything to add for RNA-seq?]
 \begin{itemize}
     \item Shared filter conditions
     \begin{itemize}
@@ -460,6 +471,27 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
         \item \texttt{SampleStrandBias} ~ SNV is filtered if this value is greater than 10
     \end{itemize}
 \end{itemize}
+
+\paragraph{Hard filter thresholds for somatic model}
+
+\begin{itemize}
+    \item Shared filter conditions
+    \begin{itemize}
+        \item \texttt{NormalSampleRelativeTotalLocusDepth} ~ variant is filtered if this value is greater than 3
+    \end{itemize}
+    \item SNV specific filter conditions:
+    \begin{itemize}
+        \item \texttt{SomaticSNVQualityGivenGermlineGenotype} ~ SNV is filtered if this value is less than 15 or if the most likely normal sample genotype at the site is not homozygous reference
+        \item \texttt{SiteFilteredBasecallFrac} ~ SNV is filtered if this value is greater than or equal to 0.4
+        \item \texttt{SpanningDeletionFraction} ~ SNV is filtered if this value is greater than 0.75
+    \end{itemize}
+    \item Indel specific filter conditions:
+    \begin{itemize}
+        \item \texttt{SomaticIndelQualityGivenGermlineGenotype} ~ Indel is filtered if this value is less than 40 or if the most likely normal sample genotype for the somatic allele is not homozygous reference
+        \item \texttt{IndelWindowFilteredBasecallFrac} ~ Indel is filtered if this value is greater than or equal to 0.3
+    \end{itemize}
+\end{itemize}
+
 
 \subsection{EVS/hard-filter feature descriptions}
 
@@ -526,7 +558,7 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
 
 \begin{itemize}
 
-    \item \texttt{SomaticSNVQualityGivenGermlineGenotype} ~ Posterior probability of a somatic basecall variant conditioned on given germline genotype. This is the same value provided as INFO/QSS\_NT in the VCF output.
+    \item \texttt{SomaticSNVQualityGivenGermlineGenotype} ~ Posterior probability of a somatic SNV conditioned on given germline genotype. This is the same value provided as INFO/QSS\_NT in the VCF output.
 
     \item \texttt{NormalSampleRelativeTotalLocusDepth} ~ Locus depth relative to expectation: this is the ratio of total read depth at the variant locus in the normal sample over the total expected depth for the normal sample. Depth at the variant locus includes reads at any mapping quality. Expected depth is taken from the preliminary depth estimation step defined above in ``\nameref{sec:depth_est}''. This value is set to 1 in exome and targeted analyses, because it is problematic to define expected depth in this case.
 
@@ -543,6 +575,31 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
 
     \item \texttt{AlleleCountLogOddsRatio} ~ The log odds ratio of allele counts $log_{10}{\frac{r_t a_n} {r_n a_t}}$, given reference $(r_t,r_n)$ and non-reference $(a_t,a_n)$ allele counts for the tumor and normal sample pair.
 
+    \item \texttt{SomaticIndelQualityGivenGermlineGenotype} ~ Posterior probability of a somatic indel conditioned on given germline genotype. This is the same value provided as INFO/QSI\_NT in the VCF output.
+
+    \item \texttt{TumorSampleAbsReadPosRankSum} ~ Absolute value of the \texttt{TumorSampleReadPosRankSum} feature.
+
+    \item \texttt{TumorSampleAbsStrandOddsRatio} ~ Absolute value of the log strand odds ratio of allele counts $log_{10}{\frac{r_{fwd} a_{fwd}} {r_{rev} a_{rev}}}$, given reference $(r_{fwd},r_{rev})$ and non-reference $(a_{fwd},a_{rev})$ confident counts of the tumor sample's tier1 observations (see: ``\nameref{sec:somatic_tiers}'').
+
+    \item \texttt{RepeatUnitLength} ~ The length of the indel allele's \emph{repeat unit}. The \emph{repeat unit} is the smallest possible sequence such that the inserted/deleted sequence can be formed by concatenating multiple copies of it.
+
+    \item \texttt{IndelRepeatCount} ~ The number of times the indel allele's \emph{repeat unit} occurs in a haplotype containing the indel allele.
+
+    \item \texttt{RefRepeatCount} ~ The number of times the indel allele's \emph{repeat unit} occurs in the reference sequence.
+
+    \item \texttt{InterruptedHomopolymerLength} ~ The length of the longest interrupted homopolymer containing the current position. An interrupted homopolymer is a string that has edit distance 1 to a homopolymer.
+
+    \item \texttt{TumorSampleIndelNoiseLogOdds} ~ Log ratio of the frequency of the candidate indel vs all other indels at the same locus in the tumor sample. The frequencies are computed from reads which confidently support a single allele at the locus, and only include reads which qualify as tier1 observations in the tumor sample (see: ``\nameref{sec:somatic_tiers}'').
+
+    \item \texttt{TumorNormalIndelAlleleLogOdds} ~ Log ratio of the frequency of the candidate indel in the tumor vs normal samples. The frequencies are computed from reads which confidently support a single allele at the locus, and only include reads which qualify as tier1 observations in each sample (see: ``\nameref{sec:somatic_tiers}'').
+
+    \item \texttt{SiteFilteredBasecallFrac} ~ The maximum value over all samples of \texttt{SampleSiteFilteredBasecallFrac}, which is the fraction of basecalls at a site which have been removed by the mismatch density filter in a given sample.
+
+    \item \texttt{IndelWindowFilteredBasecallFrac} ~ The maximum value over all samples of \texttt{SampleIndelWindowFilteredBasecallFrac}, which is the fraction of basecalls in a window extending 50 bases to each side of the candidate indel's call position which have been removed by the mismatch density filter in a given sample.
+
+    \item \texttt{NormalSampleRelativeTotalLocusDepth} ~ This is the same value described in the germline \texttt{RelativeTotalLocusDepth} except that this reflects the depth of only the matched normal sample.
+
+    \item \texttt{SpanningDeletionFraction} ~ The maximum value over all samples of \texttt{SampleSpanningDeletionFraction}, which is the fraction of reads crossing a candidate SNV site with spanning deletions in a given sample.
 \end{itemize}
 
 \bibliographystyle{alpha}

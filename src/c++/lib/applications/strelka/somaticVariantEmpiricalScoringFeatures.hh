@@ -212,16 +212,16 @@ struct SOMATIC_INDEL_SCORING_FEATURES : public FeatureSet
      */
     enum index_t
     {
-        QSI_NT,
-        ABS_T_RR,
-        ABS_T_SOR,
-        IC,
-        IHP,
-        RC,
-        RU_LEN,
-        TNR,
-        AFR,
-        LOR,
+        SomaticIndelQualityGivenGermlineGenotype,
+        TumorSampleAbsReadPosRankSum,
+        TumorSampleAbsStrandOddsRatio,
+        IndelRepeatCount,
+        InterruptedHomopolymerLength,
+        RefRepeatCount,
+        RepeatUnitLength,
+        TumorSampleIndelNoiseLogOdds,
+        TumorNormalIndelAlleleLogOdds,
+        AlleleCountLogOddsRatio,
         SIZE
     };
 
@@ -237,26 +237,26 @@ struct SOMATIC_INDEL_SCORING_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-        case QSI_NT:
-            return "QSI_NT";
-        case ABS_T_RR:
-            return "ABS_T_RR";
-        case ABS_T_SOR:
-            return "ABS_T_SOR";
-        case IC:
-            return "IC";
-        case IHP:
-            return "IHP";
-        case RC:
-            return "RC";
-        case RU_LEN:
-            return "RU_LEN";
-        case TNR:
-            return "TNR";
-        case AFR:
-            return "AFR";
-        case LOR:
-            return "LOR";
+        case SomaticIndelQualityGivenGermlineGenotype:
+            return "SomaticIndelQualityGivenGermlineGenotype";
+        case TumorSampleAbsReadPosRankSum:
+            return "TumorSampleAbsReadPosRankSum";
+        case TumorSampleAbsStrandOddsRatio:
+            return "TumorSampleAbsStrandOddsRatio";
+        case IndelRepeatCount:
+            return "IndelRepeatCount";
+        case InterruptedHomopolymerLength:
+            return "InterruptedHomopolymerLength";
+        case RefRepeatCount:
+            return "RefRepeatCount";
+        case RepeatUnitLength:
+            return "RepeatUnitLength";
+        case TumorSampleIndelNoiseLogOdds:
+            return "TumorSampleIndelNoiseLogOdds";
+        case TumorNormalIndelAlleleLogOdds:
+            return "TumorNormalIndelAlleleLogOdds";
+        case AlleleCountLogOddsRatio:
+            return "AlleleCountLogOddsRatio";
         default:
             assert(false && "Unknown feature");
             return nullptr;

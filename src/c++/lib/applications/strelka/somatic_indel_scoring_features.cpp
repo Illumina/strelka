@@ -17,6 +17,7 @@
 //
 //
 
+/// \file
 /// \author Peter Krusche
 ///
 
@@ -44,7 +45,7 @@ safeFrac(const int num, const int denom)
 
 
 double
-calculateIndelAF(
+getSampleIndelAlleleFrequency(
     const AlleleSampleReportInfo& isri)
 {
     return safeFrac(isri.n_confident_indel_reads, isri.n_confident_ref_reads + isri.n_confident_alt_reads + isri.n_confident_indel_reads);
@@ -53,44 +54,46 @@ calculateIndelAF(
 
 
 double
-calculateIndelOF(
-    const AlleleSampleReportInfo& isri)
+getSampleOtherAlleleFrequency(
+    const AlleleSampleReportInfo& indelSampleReportInfo)
 {
-    return safeFrac(isri.n_other_reads, isri.n_other_reads + isri.n_confident_ref_reads + isri.n_confident_alt_reads + isri.n_confident_indel_reads);
+    return safeFrac(indelSampleReportInfo.n_other_reads, indelSampleReportInfo.n_other_reads + indelSampleReportInfo.n_confident_ref_reads + indelSampleReportInfo.n_confident_alt_reads + indelSampleReportInfo.n_confident_indel_reads);
 }
 
 
 
 double
-calculateSOR(
-    const AlleleSampleReportInfo& isri)
+getSampleStrandOddsRatio(
+    const AlleleSampleReportInfo& indelSampleReportInfo)
 {
-    // from
-    // http://www.people.fas.harvard.edu/~mparzen/published/parzen17.pdf
-    // we add .5 to each count to deal with the case of 0 / inf outcomes
-    double Y1  = isri.n_confident_ref_reads_fwd + 0.5;
-    double n1_minus_Y1 = isri.n_confident_indel_reads_fwd + 0.5;
-    double Y2  = isri.n_confident_ref_reads_rev + 0.5;
-    double n2_minus_Y2 = isri.n_confident_indel_reads_rev + 0.5;
+    static const double pseudocount(0.5);
 
+    // Names here refer to eq 1.1 in http://www.people.fas.harvard.edu/~mparzen/published/parzen17.pdf
+    /// \TODO Clean up documentation: Reference above is best guess as to why this pdf is linked here, but the computation doesn't actually match eq 1.1
+    const double Y1  = indelSampleReportInfo.n_confident_ref_reads_fwd + pseudocount;
+    const double n1_minus_Y1 = indelSampleReportInfo.n_confident_indel_reads_fwd + pseudocount;
+    const double Y2  = indelSampleReportInfo.n_confident_ref_reads_rev + pseudocount;
+    const double n2_minus_Y2 = indelSampleReportInfo.n_confident_indel_reads_rev + pseudocount;
+
+    /// \TODO Replace log10 with log to keep all features consistent.
     return log10((Y1*n1_minus_Y1)/(Y2*n2_minus_Y2));
 }
 
 
 
 double
-calculateFS(const AlleleSampleReportInfo& isri)
+calculateFS(const AlleleSampleReportInfo& indelSampleReportInfo)
 {
-    return fisher_exact_test_pval_2x2(isri.n_confident_ref_reads_fwd, isri.n_confident_indel_reads_fwd,
-                                      isri.n_confident_ref_reads_rev, isri.n_confident_indel_reads_rev);
+    return fisher_exact_test_pval_2x2(indelSampleReportInfo.n_confident_ref_reads_fwd, indelSampleReportInfo.n_confident_indel_reads_fwd,
+                                      indelSampleReportInfo.n_confident_ref_reads_rev, indelSampleReportInfo.n_confident_indel_reads_rev);
 }
 
 
 
 double
-calculateBSA(const AlleleSampleReportInfo& isri)
+calculateBSA(const AlleleSampleReportInfo& indelSampleReportInfo)
 {
-    return get_binomial_twosided_exact_pval(0.5, isri.n_confident_indel_reads_fwd, isri.n_confident_indel_reads) ;
+    return get_binomial_twosided_exact_pval(0.5, indelSampleReportInfo.n_confident_indel_reads_fwd, indelSampleReportInfo.n_confident_indel_reads) ;
 }
 
 
@@ -107,25 +110,26 @@ calculateBCNoise(const win_avg_set& was)
 
 
 double
-calculateAlleleFrequencyRate(
+getTumorNormalIndelAlleleLogOdds(
     const AlleleSampleReportInfo& normalIndelSampleReportInfo,
     const AlleleSampleReportInfo& tumorIndelSampleReportInfo)
 {
-    const double T_AF = calculateIndelAF(tumorIndelSampleReportInfo);
-    const double N_AF = calculateIndelAF(normalIndelSampleReportInfo);
+    const double tumorSampleIndelAlleleFrequency = getSampleIndelAlleleFrequency(tumorIndelSampleReportInfo);
+    const double normalSampleIndelAlleleFrequency = getSampleIndelAlleleFrequency(normalIndelSampleReportInfo);
 
-    return log10(std::max(T_AF, (double)0.00001) / std::max(N_AF, (double)0.0001));
+    /// \TODO @pkrusche The difference in these two min values doesn't look intentional, is it?
+    return log10(std::max(tumorSampleIndelAlleleFrequency, 0.00001) / std::max(normalSampleIndelAlleleFrequency, 0.0001));
 }
 
 
 
 double
-calculateTumorNoiseRate(const AlleleSampleReportInfo& tumorIndelSampleReportInfo)
+getSampleIndelNoiseLogOdds(const AlleleSampleReportInfo& indelSampleReportInfo)
 {
-    const double T_AF = calculateIndelAF(tumorIndelSampleReportInfo);
-    const double T_OF = calculateIndelOF(tumorIndelSampleReportInfo);
+    const double indelAlleleFrequency = getSampleIndelAlleleFrequency(indelSampleReportInfo);
+    const double otherAlleleFrequency = getSampleOtherAlleleFrequency(indelSampleReportInfo);
 
-    return log10(std::max(T_AF, (double)0.00001) / std::max(T_OF, (double)0.0001));
+    return log10(std::max(indelAlleleFrequency, 0.00001) / std::max(otherAlleleFrequency, 0.0001));
 }
 
 
@@ -142,8 +146,9 @@ calculateLogAltRatio(
 
 
 
+
 double
-calculateLogOddsRatio(
+getIndelAlleleCountLogOddsRatio(
     const AlleleSampleReportInfo& normalIndelSampleReportInfo,
     const AlleleSampleReportInfo& tumorIndelSampleReportInfo)
 {
@@ -164,30 +169,33 @@ calculateScoringFeatures(
     const win_avg_set& n_was,
     const win_avg_set& t_was,
     const strelka_options& opt,
-    const strelka_deriv_options& /* dopt */,
     strelka_shared_modifiers_indel& smod)
 {
     const indel_result_set& rs(siInfo.sindel.rs);
-    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::QSI_NT, rs.from_ntype_qphred);
-    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::ABS_T_RR, fabs(siInfo.tisri[0].readpos_ranksum.get_z_stat()));
-    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::ABS_T_SOR, fabs(calculateSOR(siInfo.tisri[0])));
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::SomaticIndelQualityGivenGermlineGenotype, rs.from_ntype_qphred);
+    const double tumorSampleAbsReadPosRankSum(fabs(siInfo.tisri[0].readpos_ranksum.get_z_stat()));
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::TumorSampleAbsReadPosRankSum, tumorSampleAbsReadPosRankSum);
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::TumorSampleAbsStrandOddsRatio, fabs(
+                          getSampleStrandOddsRatio(siInfo.tisri[0])));
 
     if (siInfo.indelReportInfo.isRepeatUnit())
     {
-        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::IC, siInfo.indelReportInfo.indelRepeatCount);
-        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RC, siInfo.indelReportInfo.refRepeatCount);
-        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RU_LEN, siInfo.indelReportInfo.repeatUnitLength);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::IndelRepeatCount, siInfo.indelReportInfo.indelRepeatCount);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RefRepeatCount, siInfo.indelReportInfo.refRepeatCount);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RepeatUnitLength, siInfo.indelReportInfo.repeatUnitLength);
     }
     else
     {
-        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::IC, 0);
-        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RC, 0);
-        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RU_LEN, 0);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::IndelRepeatCount, 0);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RefRepeatCount, 0);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RepeatUnitLength, 0);
     }
-    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::IHP, siInfo.indelReportInfo.ihpol);
-    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::TNR, calculateTumorNoiseRate(siInfo.tisri[0]));
-    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::AFR, calculateAlleleFrequencyRate(siInfo.nisri[0], siInfo.tisri[0]));
-    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::LOR, calculateLogOddsRatio(siInfo.nisri[0], siInfo.tisri[0]));
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::InterruptedHomopolymerLength, siInfo.indelReportInfo.interruptedHomopolymerLength);
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::TumorSampleIndelNoiseLogOdds, getSampleIndelNoiseLogOdds(siInfo.tisri[0]));
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::TumorNormalIndelAlleleLogOdds,
+                      getTumorNormalIndelAlleleLogOdds(siInfo.nisri[0], siInfo.tisri[0]));
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::AlleleCountLogOddsRatio,
+                      getIndelAlleleCountLogOddsRatio(siInfo.nisri[0], siInfo.tisri[0]));
 
     // this is how we could get the mean chromosome depth here if we needed to.
     //    double meanChrDepth = 1siInfo.iri.repeat_unit_length;
@@ -200,14 +208,17 @@ calculateScoringFeatures(
     if (opt.isReportEVSFeatures)
     {
         // features not used in the current EVS model but feature candidates/exploratory for new EVS models:
-        smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::N_AF, calculateIndelAF(siInfo.nisri[0]));
-        smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::T_AF, calculateIndelAF(siInfo.tisri[0]));
+        smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::N_AF,
+                           getSampleIndelAlleleFrequency(siInfo.nisri[0]));
+        smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::T_AF,
+                           getSampleIndelAlleleFrequency(siInfo.tisri[0]));
 
-        smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::N_OF, calculateIndelOF(siInfo.nisri[0]));
-        smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::T_OF, calculateIndelOF(siInfo.tisri[0]));
+        smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::N_OF,
+                           getSampleOtherAlleleFrequency(siInfo.nisri[0]));
+        smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::T_OF,
+                           getSampleOtherAlleleFrequency(siInfo.tisri[0]));
 
         smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::N_BCN, calculateBCNoise(n_was));
         smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::T_BCN, calculateBCNoise(t_was));
     }
 }
-

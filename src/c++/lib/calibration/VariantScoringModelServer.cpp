@@ -57,7 +57,7 @@ VariantScoringModelServer(
 {
     Json::Value root;
     {
-        std::ifstream file(model_file , std::ifstream::binary);
+        std::ifstream file(model_file, std::ifstream::binary);
         file >> root;
     }
 

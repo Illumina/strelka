@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #pragma once
 
 #include "blt_util/blt_types.hh"
@@ -74,10 +70,18 @@ unsigned
 get_snp_hpol_size(const pos_t pos,
                   const reference_contig_segment& ref);
 
-/// find the largest homopolymer extending from pos where one
-/// occurrence of an alternate base is allowed
+/// \brief Get the largest homopolymer extending from \p pos when one alternate base is allowed to interrupt the
+///        homopolymer sequence
+///
+/// ### Example
+///
+/// A small example reference sequence is shown with the function's expected return value for
+/// each position:
+///
+/// Reference: ACTGGGTGGGTA
+/// Value:     224777777742
 ///
 unsigned
-get_interrupted_hpol_size(
+getInterruptedHomopolymerLength(
     const pos_t pos,
     const reference_contig_segment& ref);

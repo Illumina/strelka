@@ -89,7 +89,7 @@ struct AlleleReportInfo
     unsigned repeatUnitLength = 0;
     unsigned refRepeatCount = 0;
     unsigned indelRepeatCount = 0;
-    unsigned ihpol = 0; ///< interrupted homopolymer length
+    unsigned interruptedHomopolymerLength = 0;
     unsigned contextCompressability = 0; /// max adjacent sequence length encodable by 5 Ziv-Lempel-77 keywords
 
     // not directly reported, but handy to have pre-calculated:

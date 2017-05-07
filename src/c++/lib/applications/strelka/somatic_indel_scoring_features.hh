@@ -17,6 +17,10 @@
 //
 //
 
+/// \file
+/// \author Peter Krusche
+///
+
 #pragma once
 
 #include "strelka_shared.hh"
@@ -29,56 +33,69 @@
 #include "SomaticIndelVcfWriter.hh"
 
 
-/// Approximate indel AF from reads
+/// \brief Get the frequency of reads supporting the indel allele at the locus in the given sample
+///
+/// Note this method only considers reads which confidently support only one of the possible alleles at the locus.
+/// If there are no confident reads at the locus, the methods reports a frequency of 0.
 ///
 double
-calculateIndelAF(
+getSampleIndelAlleleFrequency(
     const AlleleSampleReportInfo& isri);
 
-/// Approximate indel "other" frequency (OF) from reads
+/// \brief Get the frequency of reads supporting any allele other than the called indel or reference at the locus
+///        in the given sample
+///
+/// Note this method only considers reads which confidently support only one of the possible alleles at the locus.
+/// If there are no confident reads at the locus, the methods reports a frequency of 0.
 ///
 double
-calculateIndelOF(
-    const AlleleSampleReportInfo& isri);
+getSampleOtherAlleleFrequency(
+    const AlleleSampleReportInfo& indelSampleReportInfo);
 
-/// Similar to
-/// https://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_gatk_tools_walkers_annotator_StrandOddsRatio.php
+/// \brief Compute the allele strand odds ratio feature for the given sample.
 ///
-/// We adjust the counts for low coverage/low AF by adding 0.5 -- this deals with the
-/// case where we don't actually observe reads on one strand.
+/// This feature is similar to the GATK StrandOddsRatio:
+/// https://software.broadinstitute.org/gatk/documentation/tooldocs/current/org_broadinstitute_gatk_tools_walkers_annotator_StrandOddsRatio.php
+///
+/// Also associated with the following publication: http://www.people.fas.harvard.edu/~mparzen/published/parzen17.pdf
+///
+/// Counts are adjusted for low coverage by adding a pseudocount.
+///
+/// \TODO Document how this feature is supposed to function and what its relationship is the various linked references.
 ///
 double
-calculateSOR(
-    const AlleleSampleReportInfo& isri);
+getSampleStrandOddsRatio(
+    const AlleleSampleReportInfo& indelSampleReportInfo);
 
 /// Calculate phred-scaled Fisher strand bias (p-value for the null hypothesis that
 /// either REF or ALT counts are biased towards one particular strand)
 ///
 double
-calculateFS(const AlleleSampleReportInfo& isri);
+calculateFS(const AlleleSampleReportInfo& indelSampleReportInfo);
 
 /// Calculate the p-value using a binomial test for the null hypothesis that
 /// the ALT allele occurs on a particular strand only.
 ///
 double
-calculateBSA(const AlleleSampleReportInfo& isri);
+calculateBSA(const AlleleSampleReportInfo& indelSampleReportInfo);
 
 /// Calculate base-calling noise from window average set
 ///
 double
 calculateBCNoise(const win_avg_set& was);
 
-/// Calculate AFR feature (log ratio between T_AF and N_AF)
+/// \brief Get log ratio fo the frequency of the called indel in the tumor vs normal sample
 ///
 double
-calculateAlleleFrequencyRate(
+getTumorNormalIndelAlleleLogOdds(
     const AlleleSampleReportInfo& normalIndelSampleReportInfo,
     const AlleleSampleReportInfo& tumorIndelSampleReportInfo);
 
-/// Calculate TNR feature (log ratio between T_AF and T_OF)
+/// \brief Get log ratio of the frequency of the called indel vs other non-reference alleles in the given sample
 ///
 double
-calculateTumorNoiseRate(const AlleleSampleReportInfo& tumorIndelSampleReportInfo);
+getSampleIndelNoiseLogOdds(
+    const AlleleSampleReportInfo& indelSampleReportInfo);
 
 /// Calculate LAR feature (log ratio between #alt reads in tumor and #ref reads in normal)
 ///
@@ -86,15 +103,15 @@ double
 calculateLogAltRatio(const AlleleSampleReportInfo& nisri,
                      const AlleleSampleReportInfo& tisri);
 
-/// Calculate LOR feature (log odds ratio for  T_REF T_ALT
-///                                            N_REF N_ALT)
+/// \brief The log odds ratio of normalIndelAlleleCount*tumorRefAlleleCount vs normalRefAlleleCount*tumorIndelAlleleCount
 ///
 double
-calculateLogOddsRatio(const AlleleSampleReportInfo& normalIndelSampleReportInfo,
-                      const AlleleSampleReportInfo& tumorIndelSampleReportInfo);
+getIndelAlleleCountLogOddsRatio(
+    const AlleleSampleReportInfo& normalIndelSampleReportInfo,
+    const AlleleSampleReportInfo& tumorIndelSampleReportInfo);
 
 
-/// Calculate empirical scoring features and add to smod
+/// \brief Calculate empirical variant scoring features for candidate somatic indel
 ///
 void
 calculateScoringFeatures(
@@ -102,6 +119,4 @@ calculateScoringFeatures(
     const win_avg_set& n_was,
     const win_avg_set& t_was,
     const strelka_options& opt,
-    const strelka_deriv_options& dopt,
     strelka_shared_modifiers_indel& smod);
-

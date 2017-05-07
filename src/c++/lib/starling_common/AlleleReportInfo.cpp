@@ -53,7 +53,7 @@ void AlleleReportInfo::dump(std::ostream& os) const
     os << "repeatUnit=" << repeatUnit
        << ",ref_repeat_count=" << refRepeatCount
        << ",indel_repeat_count=" << indelRepeatCount
-       << ",ihpol=" << ihpol
+       << ",interruptedHomopolymerLength=" << interruptedHomopolymerLength
        << ",it=" << it;
 }
 

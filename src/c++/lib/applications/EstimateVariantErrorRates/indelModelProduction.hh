@@ -29,9 +29,9 @@ indelModelProduction(
     const std::string& thetaFilename,
     const std::string& outputFilename);
 
-std::map<unsigned, std::vector<double>>
+std::map<unsigned, std::vector<double> >
 importTheta(
-   const std::string& filename);
+    const std::string& filename);
 
 // move these to a more appropriate place later
 // TODO: these classes can be automatically serialized with cereal

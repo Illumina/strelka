@@ -32,13 +32,13 @@ class StrelkaIndelFeatures(VcfFeatureSet):
 
     def trainingfeatures(self):
         """ Return a list of columns that are features to use for EVS model training """
-        return ["QSI_NT",
-                "ABS_T_RR",
-                "ABS_T_SOR",
-                "IC",
-                "IHP",
-                "RC",
-                "RU_LEN",
-                "TNR",
-                "AFR",
-                "LOR"]
+        return ["SomaticIndelQualityGivenGermlineGenotype",
+                "TumorSampleAbsReadPosRankSum",
+                "TumorSampleAbsStrandOddsRatio",
+                "IndelRepeatCount",
+                "InterruptedHomopolymerLength",
+                "RefRepeatCount",
+                "RepeatUnitLength",
+                "TumorSampleIndelNoiseLogOdds",
+                "TumorNormalIndelAlleleLogOdds",
+                "AlleleCountLogOddsRatio"]

@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 
 #include "blt_common/ref_context.hh"
 #include "blt_util/seq_util.hh"
@@ -237,8 +233,9 @@ struct ihpol_data
 
 
 unsigned
-get_interrupted_hpol_size(const pos_t pos,
-                          const reference_contig_segment& ref)
+getInterruptedHomopolymerLength(
+    const pos_t pos,
+    const reference_contig_segment& ref)
 {
     // count current base + upstream repeats:
     ihpol_data up_ihd;
