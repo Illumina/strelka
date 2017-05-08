@@ -353,9 +353,11 @@ Empirical variant scoring in Strelka uses pre-trained random forest models takin
 
 The EVS models are trained using the random forest learning procedures implemented in the scikit-learn package \cite{scikit-learn}, trained on a set of candidate calls with truth labels assigned as described below. For the germline and RNA-seq EVS models, each random forest uses 50 decision trees with a maximum depth of 12, a minimum of 50 samples per leaf, and no limit on the maximum number of features. For the somatic EVS models, each random forest uses 100 decision trees with a maximum depth of 6. The remaining options are set to scikit-learn defaults.
 
-The training data are compiled from a collection of sequencing runs using different sample prep, sequencing platforms and chemistries. All germline and RNA-seq datasets are from an individual for which a gold standard truth set is available from the Platinum Genomes project \cite{eberle2017}. Somatic datasets include simulated tumor-normal pairs from the Platinum Genomes project as well as tumor-normal data fromreal tumor cell lines for which curated (but generally noisier) truth sets have been constructed [is there something to CITE for curium?]. For germline and RNA-seq datasets, candidate variants that correspond to the high-confidence regions of the truth set are labeled as true or false using the hap.py haplotype comparison tool (\urlstyle{same}\url{https://github.com/Illumina/hap.py}). For somatic datasets, this is done by means of a script included in the Strelka distribution (see user guide). Variants that exist in the truth set but were called with incorrect genotype are treated as false variants, with the exception of the RNA-seq model which treats them as true variants. In the case of germline calling, it is believed that the vast majority of candidate SNVs (but not indels) outside of the high-confidence regions (and classified by hap.py as unknown) are false; for this reason, these variants are added to the set of false variants that are presented to the model during training, downweighted so as to have a total weight which is half the total weight of the known false variants.
+The training data are compiled from a collection of sequencing runs using different sample prep, sequencing platforms and chemistries. All germline and RNA-seq datasets are from an individual for which a gold standard truth set is available from the Platinum Genomes project \cite{eberle2017}. Candidate variants that correspond to the high-confidence regions of the truth set are labeled as true or false using the hap.py haplotype comparison tool (\urlstyle{same}\url{https://github.com/Illumina/hap.py}). Variants that exist in the truth set but were called with incorrect genotype are treated as false variants, with the exception of the RNA-seq model which treats them as true variants. In the case of germline calling, it is believed that the vast majority of candidate SNVs (but not indels) outside of the high-confidence regions (and classified by hap.py as unknown) are false; for this reason, these variants are added to the set of false variants that are presented to the model during training, downweighted so as to have a total weight which is half the total weight of the known false variants.
 
-The output scores produced by the random forest classifier are transformed to phred-scale and calibrated by passing the resulting quality values through a linear transform estimated by regressing binned empirical quality onto predicted quality. Finally, variants are labelled as PASS or lowGQX by thresholding the scores at thresholds that have been selected to achieve a reasonable tradeoff across multiple datasets.
+Somatic datasets include simulated tumor-normal pairs from the Platinum Genomes project as well as tumor-normal data from real tumor cell lines for which curated (but generally noisier) truth sets have been constructed. Labeling of somatic datasets is done by means of a script included in the Strelka distribution (see user guide).
+
+The output scores produced by the random forest classifier are transformed to phred-scale and calibrated by passing the resulting quality values through a linear transform estimated by regressing binned empirical quality onto predicted quality. Finally, variant filter labels are assigned based on thresholds that have been selected to achieve a reasonable tradeoff across multiple datasets.
 
 \paragraph{Features used by the EVS model}
 
@@ -391,7 +393,8 @@ Features used in each model are listed here and definitions are provided further
         \item \texttt{IndelCategory}
         \item \texttt{NormalizedAltHaplotypeCountRatio}
     \end{itemize}
-    \item RNA-seq SNV features not listed above:
+
+    \item RNA-seq SNV features:
     \begin{itemize}
         \item \texttt{SiteHomopolymerLength}
         \item \texttt{SampleStrandBias}
@@ -400,7 +403,7 @@ Features used in each model are listed here and definitions are provided further
         \item \texttt{SampleMeanDistanceFromReadEdge}
         \item \texttt{SamplePrimaryAltAlleleDepthFraction}
     \end{itemize}
-    \item RNA-seq Indel features not listed above:
+    \item RNA-seq Indel features:
     \begin{itemize}
         \item \texttt{SampleRefAlleleDepth}
         \item \texttt{SamplePrimaryAltAlleleDepth}
@@ -410,6 +413,17 @@ Features used in each model are listed here and definitions are provided further
         \item \texttt{SampleIndelMeanDistanceFromReadEdge}
         \item \texttt{SampleRefRepeatCount}
         \item \texttt{SamplePrimaryAltAlleleDepthFraction}
+    \end{itemize}
+    \item Somatic SNV features:
+    \begin{itemize}
+        \item \texttt{SomaticSNVQualityGivenGermlineGenotype}
+        \item \texttt{NormalSampleRelativeTotalLocusDepth}
+        \item \texttt{TumorSampleAltAlleleFraction}
+        \item \texttt{RMSMappingQuality}
+        \item \texttt{ZeroMappingQualityFraction}
+        \item \texttt{TumorSampleStrandBias}
+        \item \texttt{TumorSampleReadPosRankSum}
+        \item \texttt{AlleleCountLogOddsRatio}
     \end{itemize}
     \item Somatic Indel features: [TODO: change on renaming]
     \begin{itemize}
@@ -423,17 +437,6 @@ Features used in each model are listed here and definitions are provided further
         \item \texttt{TNR} 
         \item \texttt{AFR} 
         \item \texttt{LOR}
-    \end{itemize}
-    \item Somatic SNV features:
-    \begin{itemize}
-        \item \texttt{SomaticSNVQualityGivenGermlineGenotype}
-        \item \texttt{NormalSampleRelativeTotalLocusDepth}
-        \item \texttt{TumorSampleAltAlleleFraction}
-        \item \texttt{RMSMappingQuality}
-        \item \texttt{ZeroMappingQualityFraction}
-        \item \texttt{TumorSampleStrandBias}
-        \item \texttt{TumorSampleReadPosRankSum}
-        \item \texttt{AlleleCountLogOddsRatio}
     \end{itemize}
 \end{itemize}
 
@@ -538,7 +541,7 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
 
     \item \texttt{TumorSampleReadPosRankSum} ~ Z-score of Mann-Whitney U test for reference vs non-reference allele read positions in the tumor sample's tier1 observations (see: ``\nameref{sec:somatic_tiers}'').
 
-    \item \texttt{AlleleCountLogOddsRatio} ~ The log odds ratio of allele counts $log_{10}{\frac{r_t a_n} {r_n a_t}}$, given reference $(r_t,r_n)$ and non-reference $>(a_t,a_n)$ allele counts for the tumor and normal sample pair.
+    \item \texttt{AlleleCountLogOddsRatio} ~ The log odds ratio of allele counts $log_{10}{\frac{r_t a_n} {r_n a_t}}$, given reference $(r_t,r_n)$ and non-reference $(a_t,a_n)$ allele counts for the tumor and normal sample pair.
 
 \end{itemize}
 
