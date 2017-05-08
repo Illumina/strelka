@@ -337,28 +337,27 @@ Note that the somatic callability track is based on the core somatic variant qua
 
 \section{Filtration and Empirical Scoring}
 
-
-\subsection{Germline and RNA-seq Models}
-
-The germline variant calling model provides a useful representation of the sequencing data at the putative variant locus; however, there is additional information not used by the model which is predictive of call accuracy. These may be metrics such as the number of reads or alleles which are filtered out of the call quality computation, the quality of alignments in the region around the putative variant or various allele/strand/quality biases indicative of assay or mapping artifacts. As a final step in the germline variant calling process, such additional information is enumerated as a set of predictive features and used to improve call precision for a given recall level beyond what can be achieved from the core variant calling model alone. These additional features are employed in the final step of germline calling in one of two ways:
+The variant calling models (both germline and somatic) provide useful representations of the sequencing data at putative variant loci; however, there is additional information not used by the models which is predictive of call accuracy. These may be metrics such as the number of reads or alleles which are filtered out of the call quality computation, the quality of alignments in the region around the putative variant or various allele/strand/quality biases indicative of assay or mapping artifacts. As a final step in the variant calling process, such additional information is enumerated as a set of predictive features and used to improve call precision for a given recall level beyond what can be achieved from the core variant calling model alone. These additional features are employed in the final step of variant calling in one of two ways:
 
 \begin{itemize}
     \item Empirical Variant Scoring (EVS):
-    The EVS model is used to provide a single aggregate quality score for each variant which incorporates the information from all variant calling features. This model is used to improve variant call precision for a given recall level as stated above, but also provides additional benefits: (1) the EVS model tends to provide a greater precision improvement than simple hard-filtration of the features (see below) (2) consolidating all accuracy predictors to a single metric allows for an optimized exploration of the full ROC curve for applications which require much higher recall or precision than provided with default variant passing thresholds (3) the training mechanism provides a pathway to create calibrated quality values, but note that this step is not taken in the current EVS model provided with Strelka.
+    The EVS model is used to provide a single aggregate quality score for each variant which incorporates the information from all variant calling features. This model is used to improve variant call precision for a given recall level as stated above, but also provides additional benefits: (1) the EVS model tends to provide a greater precision improvement than simple hard-filtration of the features (see below) (2) consolidating all accuracy predictors to a single metric allows for an optimized exploration of the full ROC curve for applications which require much higher recall or precision than provided with default variant passing thresholds (3) the training mechanism provides a pathway to create calibrated quality values.
     \item Hard Filters:
-    When the EVS model is not used, simple cutoffs are applied to a set of features (not necessarily the same set used by EVS) to filter out calls which are not sufficiently likely to be real. Hard filters are used at all homozygous reference sites, for any contig where the continuous (heteropolasmic) calling option has been selected, and for any assay where EVS is turned off by default (such as enrichment and amplicon-based targeted sequencing).
+    When the EVS model is not used, simple cutoffs are applied to a set of features (not necessarily the same set used by EVS) to filter out calls which are not sufficiently likely to be real. Hard filters are used at all homozygous reference sites, for any contig where the continuous (heteroplasmic) calling option has been selected, and for any assay where EVS is turned off by default (such as enrichment and amplicon-based targeted sequencing).
 \end{itemize}
 
 
-\subsubsection{EVS model}
+\subsection{EVS model}
 
-Empirical variant scoring in Strelka uses pre-trained random forest models taking EVS features as input to produce the probability of an erroneous variant call. There is a separate trained random forest model and feature set for each of the two high-level variant categories, SNVs and indels. Strelka is intended to run with models which have been pre-trained on a combined training data set representing a wide variety of sample-prep and sequencing assays. Note that although scripts are provided to recreate the EVS model training procedure, there is no intention for the models to be retrained for each input sequencing dataset to be analyzed (this is in contrast to dynamic re-scoring systems such as the GATK VQSR procedure [CITE]).
+Empirical variant scoring in Strelka uses pre-trained random forest models taking EVS features as input to produce the probability of an erroneous variant call. For each of germline, RNA-seq, and somatic variant calling, there are two separate trained random forest models and feature sets for the two high-level variant categories, SNVs and indels. Strelka is intended to run with models which have been pre-trained on a combined training data set representing a wide variety of sample-prep and sequencing assays. Note that although scripts are provided to recreate the EVS model training procedure, there is no intention for the models to be retrained for each input sequencing dataset to be analyzed (this is in contrast to dynamic re-scoring systems such as the GATK VQSR procedure \cite{depristo2011}).
 
-The EVS models are trained using the random forest learning procedures implemented in the scikit-learn package [CITE], trained on a set of candidate calls with truth labels assigned as described below. Each random forest model uses 50 decision trees with a maximum depth of 12, a minimum of 50 samples per leaf, and no limit on the maximum number of features. The remaining options are set to scikit-learn defaults.
+The EVS models are trained using the random forest learning procedures implemented in the scikit-learn package \cite{scikit-learn}, trained on a set of candidate calls with truth labels assigned as described below. For the germline and RNA-seq EVS models, each random forest uses 50 decision trees with a maximum depth of 12, a minimum of 50 samples per leaf, and no limit on the maximum number of features. For the somatic EVS models, each random forest uses 100 decision trees with a maximum depth of 6. The remaining options are set to scikit-learn defaults.
 
-The training data are compiled from a collection of sequencing runs using different sample prep, sequencing platforms and chemistries, all from an individual for which a gold standard truth set is available from the Platinum Genomes project \cite{eberle2017}. Candidate variants that correspond to the high-confidence regions of the truth set are labeled as true or false using the hap.py haplotype comparison tool (\urlstyle{same}\url{https://github.com/Illumina/hap.py}). Variants that exist in the truth set but were called with incorrect genotype are treated as false variants. It is believed that the vast majority of candidate variants outside of the high-confidence regions (and classified by hap.py as unknown) are false; for this reason, these variants are added to the set of false variants that are presented to the model during training.
+The training data are compiled from a collection of sequencing runs using different sample prep, sequencing platforms and chemistries. All germline and RNA-seq datasets are from an individual for which a gold standard truth set is available from the Platinum Genomes project \cite{eberle2017}. Candidate variants that correspond to the high-confidence regions of the truth set are labeled as true or false using the hap.py haplotype comparison tool (\urlstyle{same}\url{https://github.com/Illumina/hap.py}). Variants that exist in the truth set but were called with incorrect genotype are treated as false variants, with the exception of the RNA-seq model which treats them as true variants. In the case of germline calling, it is believed that the vast majority of candidate SNVs (but not indels) outside of the high-confidence regions (and classified by hap.py as unknown) are false; for this reason, these variants are added to the set of false variants that are presented to the model during training, downweighted so as to have a total weight which is half the total weight of the known false variants.
 
-The output scores produced by the random forest classifier are well calibrated under the assumption (used during training) that all of the unknown candidate variants are false. However, if this assumption is not made and the model performance is evaluated on variants in the confident regions only, the model is overly pessimistic. In order to achieve an acceptable precision-recall tradeoff, the model output is recalibrated by passing it through a monotonic transform that is set to roughly optimize f-score when the resulting score is thresholded at the default phred-scale threshold of 15.
+Somatic datasets include simulated tumor-normal pairs from the Platinum Genomes project as well as tumor-normal data from real tumor cell lines for which curated (but generally noisier) truth sets have been constructed. Labeling of somatic datasets is done by means of a script included in the Strelka distribution (see user guide).
+
+The output scores produced by the random forest classifier are transformed to phred-scale and calibrated by passing the resulting quality values through a linear transform estimated by regressing binned empirical quality onto predicted quality. Finally, variant filter labels are assigned based on thresholds that have been selected to achieve a reasonable tradeoff across multiple datasets.
 
 \paragraph{Features used by the EVS model}
 
@@ -394,6 +393,7 @@ Features used in each model are listed here and definitions are provided further
         \item \texttt{IndelCategory}
         \item \texttt{NormalizedAltHaplotypeCountRatio}
     \end{itemize}
+
     \item RNA-seq SNV features:
     \begin{itemize}
         \item \texttt{SiteHomopolymerLength}
@@ -414,9 +414,33 @@ Features used in each model are listed here and definitions are provided further
         \item \texttt{SampleRefRepeatCount}
         \item \texttt{SamplePrimaryAltAlleleDepthFraction}
     \end{itemize}
+    \item Somatic SNV features:
+    \begin{itemize}
+        \item \texttt{SomaticSNVQualityGivenGermlineGenotype}
+        \item \texttt{NormalSampleRelativeTotalLocusDepth}
+        \item \texttt{TumorSampleAltAlleleFraction}
+        \item \texttt{RMSMappingQuality}
+        \item \texttt{ZeroMappingQualityFraction}
+        \item \texttt{TumorSampleStrandBias}
+        \item \texttt{TumorSampleReadPosRankSum}
+        \item \texttt{AlleleCountLogOddsRatio}
+    \end{itemize}
+    \item Somatic Indel features: [TODO: change on renaming]
+    \begin{itemize}
+        \item \texttt{QSI\_NT} 
+        \item \texttt{ABS\_T\_RR} 
+        \item \texttt{ABS\_T\_SOR} 
+        \item \texttt{IC} 
+        \item \texttt{IHP} 
+        \item \texttt{RC} 
+        \item \texttt{RU\_LEN} 
+        \item \texttt{TNR} 
+        \item \texttt{AFR} 
+        \item \texttt{LOR}
+    \end{itemize}
 \end{itemize}
 
-\subsubsection{Hard filters}
+\subsection{Hard filters}
 
 In this case a set of filters is defined. Each filter is triggered when a single feature exceeds some critical value. Filtration thresholds are set to remove variants which are very likely to be incorrect.
 
@@ -424,6 +448,7 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
 
 \paragraph{Hard filter thresholds}
 
+[TODO: add somatic. Also, anything to add for RNA-seq?]
 \begin{itemize}
     \item Shared filter conditions
     \begin{itemize}
@@ -436,8 +461,9 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
     \end{itemize}
 \end{itemize}
 
-\subsubsection{EVS/hard-filter feature descriptions}
+\subsection{EVS/hard-filter feature descriptions}
 
+\subsubsection{Germline and RNA-seq features}
 \begin{itemize}
 
 \item \texttt{GenotypeCategory} ~ A category variable reflecting the most likely genotype as heterozygous (0), homozygous (1) or alt-heterozygous (2).
@@ -475,7 +501,7 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
 
 \item \texttt{InterruptedHomopolymerLength} ~ The length of the longest interrupted homopolymer containing the current position. An interrupted homopolymer is a string that has edit distance 1 to a homopolymer.
 
-\item \texttt{ContextCompressability} ~ The length of the upstream or downstream reference context (whichever is greater) that can be represented using 5 Ziv-Lempel keywords (see http://www.lptmc.jussieu.fr/user/lesne/PRE-Short.pdf, and Ziv & Lempel 1977 as cited there). The Ziv-Lempel keywords are obtained using the scheme of Ziv & Lempel 1977, by traversing the sequence and successively selecting the shortest subsequence that has not yet been encountered.
+\item \texttt{ContextCompressability} ~ The length of the upstream or downstream reference context (whichever is greater) that can be represented using 5 Ziv-Lempel keywords \cite{lesne2009,ziv1977}. The Ziv-Lempel keywords are obtained using the scheme of Ziv and Lempel 1977 \cite{ziv1977}, by traversing the sequence and successively selecting the shortest subsequence that has not yet been encountered.
 
 \item \texttt{IndelCategory} ~ A binary variable set to 1 if the indel allele is a primitive deletion or 0 otherwise.
 
@@ -494,29 +520,7 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
 \end{itemize}
 
 
-\subsection{Somatic Model}
-
-\subsubsection{EVS model}
-
-\paragraph{Features used by the EVS model}
-
-Features used in each model are listed here and definitions are provided further below.
-
-\begin{itemize}
-    \item SNV features:
-    \begin{itemize}
-        \item \texttt{SomaticSNVQualityGivenGermlineGenotype}
-        \item \texttt{NormalSampleRelativeTotalLocusDepth}
-        \item \texttt{TumorSampleAltAlleleFraction}
-        \item \texttt{RMSMappingQuality}
-        \item \texttt{ZeroMappingQualityFraction}
-        \item \texttt{TumorSampleStrandBias}
-        \item \texttt{TumorSampleReadPosRankSum}
-        \item \texttt{AlleleCountLogOddsRatio}
-    \end{itemize}
-\end{itemize}
-
-\subsubsection{EVS/hard-filter feature descriptions}
+\subsubsection{Somatic features}
 
 Note that for somatic features "all samples" refers to the tumor and matched normal samples together.
 
