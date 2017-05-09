@@ -270,3 +270,61 @@ getInterruptedHomopolymerLength(
     return std::max(up_ihd.max_allele_size(),dn_ihd.max_allele_size());
 }
 
+// Find shortest prefix of unencoded sequence that has not been encountered in the encoded sequence
+// (helper function for computing context compressability):
+unsigned
+shortestUnencountered(
+		      const reference_contig_segment& ref,
+		      const pos_t pos,
+		      const unsigned numEncoded,
+		      const bool left)
+{
+  std::string encoded;
+  std::string newPrefix;
+  // get substring encoded thus far:
+  if (left)
+    {
+      ref.get_substring(pos-numEncoded+1,numEncoded,encoded);
+    }
+  else
+    {
+      ref.get_substring(pos,numEncoded,encoded);
+    }
+  unsigned len(0);
+    do
+      {
+        ++len;
+        if (left)
+	  {
+            ref.get_substring(pos-numEncoded-len+1,len,newPrefix);
+	  }
+        else
+	  {
+            ref.get_substring(pos+numEncoded,len,newPrefix);
+	  }
+      }
+    // keep looking while string of size len has already been encountered:
+    while (encoded.find(newPrefix) != std::string::npos);
+    return len;
+}
+
+unsigned
+computeContextCompressability(
+			      const reference_contig_segment& ref,
+			      const pos_t leftPos,
+			      const pos_t rightPos,
+			      const unsigned numKeys)
+{
+  // complexity to the left:
+  unsigned numEncodedLeft(1);
+  unsigned numEncodedRight(1);
+  for (unsigned key(0); key<numKeys-1; ++key)
+    {
+      // complexity to the left:
+      numEncodedLeft += shortestUnencountered(ref,leftPos-1,numEncodedLeft,true);
+      // complexity to the right:
+      numEncodedRight += shortestUnencountered(ref,rightPos,numEncodedRight,false);
+    }
+
+  return std::max(numEncodedLeft, numEncodedRight);
+}
