@@ -27,6 +27,7 @@
 #include <cassert>
 
 #include <fstream>
+#include <iostream>
 
 
 /// \brief Provide simple static indel error rates.
@@ -112,7 +113,7 @@ getSimplifiedAdaptiveParameters()
         unsigned patternRepeatCount = 1;
         rates.addRate(repeatingPatternSize, patternRepeatCount, nonStrRate, nonStrRate);
 
-        for (patternRepeatCount = 2; patternRepeatCount <= repeatCountSwitchPoint; ++patternRepeatCount)
+        for (patternRepeatCount = AdaptiveIndelErrorModel::lowRepeatCount; patternRepeatCount <= repeatCountSwitchPoint; ++patternRepeatCount)
         {
             const double errorRate(indelErrorModel.errorRate(patternRepeatCount));
             rates.addRate(repeatingPatternSize, patternRepeatCount, errorRate, errorRate);
@@ -121,48 +122,31 @@ getSimplifiedAdaptiveParameters()
     return rates;
 }
 
-
-
-/// Reads in model parameter matrix with entries as error-pair [ins_error,del_error]
-/// in the following format:
-/// unit length 1: [[[del_hpol1,ins_hpol1],[del_hpol2,ins_hpol2],...,[del_hpol_m,ins_hpol_m]],
-/// unit length 2:  [[del_dinuc1,ins_dinuc1],[del_dinuc2,ins_dinuc2],...,[del_dinuc_m,ins_dinuc_m]],
-///  ....
-/// unit length N:  [[del_repeatN,ins_repeatN],[del_repeatN2,ins_repeatN2],...,]]]
-static
-IndelErrorRateSet
-deserializeRateSet(
-    const Json::Value& root)
+void
+IndelErrorModel::deserializeIndelModels
+(const std::string& modelFilename,
+ const Json::Value& root)
 {
-    const unsigned maxRepeatingPatternSize = root["MaxMotifLength"].asInt();
-    const unsigned maxTractLength = root["MaxTractLength"].asInt();
-    const Json::Value& models = root["Model"];
 
-    assert((models.size()==maxRepeatingPatternSize) && "Unexpected repeating pattern size in indel model");
-
-    IndelErrorRateSet rates;
-
-    for (unsigned repeatingPatternSize(1); repeatingPatternSize<=maxRepeatingPatternSize; ++repeatingPatternSize)
+    Json::Value motifs = root["motifs"];
+    if (motifs.isNull())
     {
-        const auto& pattern(models[repeatingPatternSize-1]);
-
-        assert((pattern.size()<=maxTractLength) && "Unexpected tract length in indel model");
-
-        for (unsigned tractLength=1; tractLength <= pattern.size(); ++tractLength)
-        {
-            if ((tractLength % repeatingPatternSize)!=0) continue;
-            const unsigned patternRepeatCount(tractLength/repeatingPatternSize);
-            const auto& cell(pattern[tractLength-1]);
-
-            const double delete_error_prob(cell[0].asDouble());
-            const double insert_error_prob(cell[1].asDouble());
-            rates.addRate(repeatingPatternSize, patternRepeatCount, insert_error_prob, delete_error_prob);
-        }
+        using namespace illumina::common;
+        std::ostringstream oss;
+        oss << "ERROR: no motifs in model file '" << modelFilename << "'\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 
-    return rates;
-}
+    for (const auto& motifValue : motifs)
+    {
+        const double indelRate = motifValue["indelRate"].asDouble();
+        const double noisyLocusRate = motifValue["noisyLocusRate"].asDouble();
+        const unsigned repeatCount = motifValue["repeatCount"].asInt();
+        const unsigned repeatPatternSize = motifValue["repeatPatternSize"].asInt();
+        _errorRates.addRate(repeatPatternSize, repeatCount, indelRate, indelRate, noisyLocusRate);
+    }
 
+}
 
 
 IndelErrorModel::
@@ -191,30 +175,28 @@ IndelErrorModel(
     }
     else
     {
+        std::string jsonString;
         Json::Value root;
-        std::ifstream file(modelFilename , std::ifstream::binary);
-        file >> root;
-
-        Json::Value models = root["IndelModels"];
-        if (! models.isNull())
         {
-            for (const auto& modelValue : models)
-            {
-                _meta.deserialize(modelValue);
-                if (_meta.name != modelName) continue;
-                _errorRates = deserializeRateSet(modelValue);
-                break;
-            }
+            std::ifstream ifs(modelFilename , std::ifstream::binary);
+            std::stringstream buffer;
+            buffer << ifs.rdbuf();
+            jsonString = buffer.str();
         }
-
-        if (_meta.name != modelName)
+        Json::Reader reader;
+        if (reader.parse(jsonString, root))
+        {
+            deserializeIndelModels(modelFilename, root);
+        }
+        else
         {
             using namespace illumina::common;
 
             std::ostringstream oss;
-            oss << "ERROR: unrecognized indel error model name: '" << modelName << "' in model file '" << modelFilename << "'\n";
+            oss << "Failed to parse JSON " << modelFilename << " " << reader.getFormattedErrorMessages() << "'\n";
             BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
+
     }
 
     _errorRates.finalizeRates();
@@ -313,3 +295,5 @@ double AdaptiveIndelErrorModel::linearFit(const double x, const double x1, const
     assert(x1!=x2);
     return ((y2-y1)*x +(x2*y1-x1*y2))/(x2-x1);
 }
+
+unsigned AdaptiveIndelErrorModel::lowRepeatCount = 2;

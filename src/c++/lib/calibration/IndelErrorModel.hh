@@ -18,7 +18,6 @@
 //
 
 #pragma once
-
 #include "IndelErrorModelMetadata.hh"
 #include "IndelErrorRateSet.hh"
 
@@ -47,6 +46,11 @@ struct IndelErrorModel
         double& indelToRefErrorProb,
         const bool isCandidateRates = false) const;
 
+    void
+    deserializeIndelModels
+    (const std::string& modelFilename,
+     const Json::Value& root);
+
 private:
     IndelErrorModelMetadata _meta;
     IndelErrorRateSet _errorRates;
@@ -73,7 +77,7 @@ public:
         const AdaptiveIndelErrorModelLogParams& highLogParams);
 private:
     unsigned _repeatPatternSize = 0;
-    unsigned _lowRepeatCount = 2; // it should be safe to fix this to 2
+    unsigned _lowRepeatCount = lowRepeatCount;
     unsigned _highRepeatCount = 0;
 
     AdaptiveIndelErrorModelLogParams _lowLogParams;
@@ -84,11 +88,6 @@ public:
     repeatPatternSize() const
     {
         return _repeatPatternSize;
-    }
-    unsigned
-    lowRepeatCount() const
-    {
-        return _lowRepeatCount;
     }
     unsigned
     highRepeatCount() const
@@ -118,4 +117,6 @@ public:
         const double y1,
         const double x2,
         const double y2);
+
+    static unsigned lowRepeatCount; // it should be safe to fix this to 2
 };

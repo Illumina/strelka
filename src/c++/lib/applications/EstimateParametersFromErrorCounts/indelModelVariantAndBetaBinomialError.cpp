@@ -192,7 +192,7 @@ contextLogLhood(
         log_os << "MODEL4: loghood obs: mix/delta: " << mix << " " << (mix*obs.repeatCount) << "\n";
 #endif
 
-        logLhood += (mix*obs.repeatCount);
+        logLhood += (mix*obs.observationCount);
     }
 
     checkSaneVal(logLhood);
@@ -348,9 +348,9 @@ getAltSigTotal(
             totalAltObservations += obs.altObservations[altIndex];
         }
 
-        sigTotal.ref += (obs.refObservations*obs.repeatCount);
-        sigTotal.alt += (totalAltObservations*obs.repeatCount);
-        sigTotal.locus += obs.repeatCount;
+        sigTotal.ref += (obs.refObservations*obs.observationCount);
+        sigTotal.alt += (totalAltObservations*obs.observationCount);
+        sigTotal.locus += obs.observationCount;
     }
 }
 

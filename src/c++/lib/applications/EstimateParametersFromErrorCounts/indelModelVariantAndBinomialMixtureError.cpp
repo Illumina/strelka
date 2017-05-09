@@ -71,32 +71,32 @@ getObsLogLhood(
     static const double hetAltRate(0.5);
 
     static const double logHomAltRate(std::log(homAltRate));
-    static const double logHomRefRate(std::log(1.-homAltRate));
+    static const double logHomRefRate(std::log(1. - homAltRate));
     static const double logHetRate(std::log(hetAltRate));
 
     // get lhood of homref GT:
     double noindel(log0);
     {
         unsigned totalInsertObservations(0);
-        for (unsigned altIndex(INDEL_SIGNAL_TYPE::INSERT_1); altIndex<INDEL_SIGNAL_TYPE::DELETE_1; ++altIndex)
+        for (unsigned altIndex(INDEL_SIGNAL_TYPE::INSERT_1); altIndex < INDEL_SIGNAL_TYPE::DELETE_1; ++altIndex)
         {
             totalInsertObservations += obs.altObservations[altIndex];
         }
 
         unsigned totalDeleteObservations(0);
-        for (unsigned altIndex(INDEL_SIGNAL_TYPE::DELETE_1); altIndex<INDEL_SIGNAL_TYPE::SIZE; ++altIndex)
+        for (unsigned altIndex(INDEL_SIGNAL_TYPE::DELETE_1); altIndex < INDEL_SIGNAL_TYPE::SIZE; ++altIndex)
         {
             totalDeleteObservations += obs.altObservations[altIndex];
         }
 
         noindel = (
-                      logInsertErrorRate*totalInsertObservations +
-                      logDeleteErrorRate*totalDeleteObservations +
-                      logNoIndelRefRate*obs.refObservations);
+                      logInsertErrorRate * totalInsertObservations +
+                      logDeleteErrorRate * totalDeleteObservations +
+                      logNoIndelRefRate * obs.refObservations);
     }
 
     unsigned maxIndex(0);
-    for (unsigned altIndex(1); altIndex<INDEL_SIGNAL_TYPE::SIZE; ++altIndex)
+    for (unsigned altIndex(1); altIndex < INDEL_SIGNAL_TYPE::SIZE; ++altIndex)
     {
         if (obs.altObservations[altIndex] > obs.altObservations[maxIndex]) maxIndex = altIndex;
     }
@@ -108,63 +108,63 @@ getObsLogLhood(
         // approximate that the most frequent observations is the only potential variant allele:
 
         unsigned remainingInsertObservations(0);
-        for (unsigned altIndex(INDEL_SIGNAL_TYPE::INSERT_1); altIndex<INDEL_SIGNAL_TYPE::DELETE_1; ++altIndex)
+        for (unsigned altIndex(INDEL_SIGNAL_TYPE::INSERT_1); altIndex < INDEL_SIGNAL_TYPE::DELETE_1; ++altIndex)
         {
-            if (altIndex==maxIndex) continue;
+            if (altIndex == maxIndex) continue;
             remainingInsertObservations += obs.altObservations[altIndex];
         }
 
         unsigned remainingDeleteObservations(0);
-        for (unsigned altIndex(INDEL_SIGNAL_TYPE::DELETE_1); altIndex<INDEL_SIGNAL_TYPE::SIZE; ++altIndex)
+        for (unsigned altIndex(INDEL_SIGNAL_TYPE::DELETE_1); altIndex < INDEL_SIGNAL_TYPE::SIZE; ++altIndex)
         {
-            if (altIndex==maxIndex) continue;
+            if (altIndex == maxIndex) continue;
             remainingDeleteObservations += obs.altObservations[altIndex];
         }
 
         // compute lhood of het/hom states given that maxIndex is the variant allele:
-        het =(logHetRate*(obs.refObservations+obs.altObservations[maxIndex]) +
-              logInsertErrorRate*remainingInsertObservations +
-              logDeleteErrorRate*remainingDeleteObservations);
+        het = (logHetRate * (obs.refObservations + obs.altObservations[maxIndex]) +
+               logInsertErrorRate * remainingInsertObservations +
+               logDeleteErrorRate * remainingDeleteObservations);
 
-        hom = (logHomAltRate*obs.altObservations[maxIndex] +
-               logHomRefRate*obs.refObservations +
-               logInsertErrorRate*remainingInsertObservations +
-               logDeleteErrorRate*remainingDeleteObservations);
+        hom = (logHomAltRate * obs.altObservations[maxIndex] +
+               logHomRefRate * obs.refObservations +
+               logInsertErrorRate * remainingInsertObservations +
+               logDeleteErrorRate * remainingDeleteObservations);
     }
 
     // get lhood of althet GT:
     double althet(log0);
     {
         // approximate that the two most frequent observations are the only potential variant alleles:
-        assert(INDEL_SIGNAL_TYPE::SIZE>1);
-        unsigned maxIndex2(maxIndex==0 ? 1 : 0);
-        for (unsigned altIndex(maxIndex2+1); altIndex<INDEL_SIGNAL_TYPE::SIZE; ++altIndex)
+        assert(INDEL_SIGNAL_TYPE::SIZE > 1);
+        unsigned maxIndex2(maxIndex == 0 ? 1 : 0);
+        for (unsigned altIndex(maxIndex2 + 1); altIndex < INDEL_SIGNAL_TYPE::SIZE; ++altIndex)
         {
-            if (altIndex==maxIndex) continue;
+            if (altIndex == maxIndex) continue;
             if (obs.altObservations[altIndex] > obs.altObservations[maxIndex2]) maxIndex2 = altIndex;
         }
 
         unsigned remainingInsertObservations(0);
-        for (unsigned altIndex(INDEL_SIGNAL_TYPE::INSERT_1); altIndex<INDEL_SIGNAL_TYPE::DELETE_1; ++altIndex)
+        for (unsigned altIndex(INDEL_SIGNAL_TYPE::INSERT_1); altIndex < INDEL_SIGNAL_TYPE::DELETE_1; ++altIndex)
         {
-            if (altIndex==maxIndex) continue;
-            if (altIndex==maxIndex2) continue;
+            if (altIndex == maxIndex) continue;
+            if (altIndex == maxIndex2) continue;
             remainingInsertObservations += obs.altObservations[altIndex];
         }
 
         unsigned remainingDeleteObservations(0);
-        for (unsigned altIndex(INDEL_SIGNAL_TYPE::DELETE_1); altIndex<INDEL_SIGNAL_TYPE::SIZE; ++altIndex)
+        for (unsigned altIndex(INDEL_SIGNAL_TYPE::DELETE_1); altIndex < INDEL_SIGNAL_TYPE::SIZE; ++altIndex)
         {
-            if (altIndex==maxIndex) continue;
-            if (altIndex==maxIndex2) continue;
+            if (altIndex == maxIndex) continue;
+            if (altIndex == maxIndex2) continue;
             remainingDeleteObservations += obs.altObservations[altIndex];
         }
 
         // compute lhood of het/hom states given that maxIndex is the variant allele:
-        althet =(logHetRate*(obs.altObservations[maxIndex]+obs.altObservations[maxIndex2]) +
-                 logHomRefRate*obs.refObservations +
-                 logInsertErrorRate*remainingInsertObservations +
-                 logDeleteErrorRate*remainingDeleteObservations);
+        althet = (logHetRate * (obs.altObservations[maxIndex] + obs.altObservations[maxIndex2]) +
+                  logHomRefRate * obs.refObservations +
+                  logInsertErrorRate * remainingInsertObservations +
+                  logDeleteErrorRate * remainingDeleteObservations);
     }
 
     return log_sum( log_sum(logHomPrior+hom,logHetPrior+het), log_sum(logNoIndelPrior+noindel,logAltHetPrior+althet) );
@@ -191,19 +191,19 @@ contextLogLhood(
 #endif
 
     static const double log2(std::log(2));
-    const double logHomPrior(logTheta-log2);
+    const double logHomPrior(logTheta - log2);
     const double logHetPrior(logTheta);
-    const double logAltHetPrior(logTheta*2);
+    const double logAltHetPrior(logTheta * 2);
     const double theta(std::exp(logTheta));
-    const double logNoIndelPrior(std::log(1-(theta*3./2.+(theta*theta))));
+    const double logNoIndelPrior(std::log(1 - (theta * 3. / 2. + (theta * theta))));
 
     const double logNoIndelRefRate(std::log(1-std::exp(logInsertErrorRate))+std::log(1-std::exp(logDeleteErrorRate)));
 
-    const double logCleanLocusRate(std::log(1-std::exp(logNoisyLocusRate)));
+    const double logCleanLocusRate(std::log(1 - std::exp(logNoisyLocusRate)));
 
     static const double cleanLocusIndelRate(1e-8);
     static const double logCleanLocusIndelRate(std::log(cleanLocusIndelRate));
-    static const double logCleanLocusRefRate(std::log(1-cleanLocusIndelRate));
+    static const double logCleanLocusRefRate(std::log(1 - cleanLocusIndelRate));
 
     double logLhood(0.);
     for (const auto& obs : observations)
@@ -213,13 +213,13 @@ contextLogLhood(
         const double cleanMix(getObsLogLhood(logHomPrior, logHetPrior, logAltHetPrior, logNoIndelPrior,
                                              logCleanLocusIndelRate, logCleanLocusIndelRate, logCleanLocusRefRate, obs));
 
-        const double mix(log_sum(logCleanLocusRate+cleanMix,logNoisyLocusRate+noisyMix));
+        const double mix(log_sum(logCleanLocusRate + cleanMix, logNoisyLocusRate + noisyMix));
 
 #ifdef DEBUG_MODEL3
         log_os << "MODEL3: loghood obs: noisy/clean/mix/delta: " << noisyMix << " " << cleanMix << " " << mix << " " << (mix*obs.repeatCount) << "\n";
 #endif
 
-        logLhood += (mix*obs.repeatCount);
+        logLhood += (mix * obs.observationCount);
     }
 
 #ifdef DEBUG_MODEL3
@@ -241,12 +241,12 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
 
     unsigned dim() const override
     {
-        return (_isLockTheta ? (MIN_PARAMS3::SIZE-1) : MIN_PARAMS3::SIZE);
+        return (_isLockTheta ? (MIN_PARAMS3::SIZE - 1) : MIN_PARAMS3::SIZE);
     }
 
     double val(const double* in) override
     {
-        argToParameters(in,_params);
+        argToParameters(in, _params);
         return -contextLogLhood(_obs,
                                 _params[MIN_PARAMS3::LN_INSERT_ERROR_RATE],
                                 _params[MIN_PARAMS3::LN_DELETE_ERROR_RATE],
@@ -269,22 +269,22 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
         {
             static const double triggerVal(1e-3);
             static const double logTriggerVal(std::log(triggerVal));
-            if (a>logTriggerVal)
+            if (a > logTriggerVal)
             {
-                a = std::log1p(a-logTriggerVal) + logTriggerVal;
+                a = std::log1p(a - logTriggerVal) + logTriggerVal;
             }
-            return (a>maxLogRate ? maxLogRate-std::abs(a-maxLogRate) : a);
+            return (a > maxLogRate ? maxLogRate - std::abs(a - maxLogRate) : a);
         };
 
         auto locusRateSmoother = [](double a) -> double
         {
             static const double triggerVal(0.8);
             static const double logTriggerVal(std::log(triggerVal));
-            if (a>logTriggerVal)
+            if (a > logTriggerVal)
             {
-                a = std::log1p(a-logTriggerVal) + logTriggerVal;
+                a = std::log1p(a - logTriggerVal) + logTriggerVal;
             }
-            return (a>maxLogLocusRate ? maxLogLocusRate-std::abs(a-maxLogLocusRate) : a);
+            return (a > maxLogLocusRate ? maxLogLocusRate - std::abs(a - maxLogLocusRate) : a);
         };
 
         // A lot of conditioning is required to keep the model from winding
@@ -299,11 +299,11 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
             static const double triggerVal(1e-3);
             static const double logTriggerVal(std::log(triggerVal));
 
-            if (a>logTriggerVal)
+            if (a > logTriggerVal)
             {
-                a = std::log1p(a-logTriggerVal) + logTriggerVal;
+                a = std::log1p(a - logTriggerVal) + logTriggerVal;
             }
-            return (a>maxLogTheta ? maxLogTheta-std::abs(a-maxLogTheta) : a);
+            return (a > maxLogTheta ? maxLogTheta - std::abs(a - maxLogTheta) : a);
         };
 
         for (unsigned paramIndex(MIN_PARAMS3::LN_INSERT_ERROR_RATE); paramIndex<MIN_PARAMS3::LN_NOISY_LOCUS_RATE; ++paramIndex)
@@ -366,14 +366,14 @@ getAltSigTotal(
     for (const ExportedIndelObservations& obs : observations)
     {
         unsigned totalAltObservations(0);
-        for (unsigned altIndex(altBeginIndex); altIndex<altEndIndex; ++altIndex)
+        for (unsigned altIndex(altBeginIndex); altIndex < altEndIndex; ++altIndex)
         {
             totalAltObservations += obs.altObservations[altIndex];
         }
 
-        sigTotal.ref += (obs.refObservations*obs.repeatCount);
-        sigTotal.alt += (totalAltObservations*obs.repeatCount);
-        sigTotal.locus += obs.repeatCount;
+        sigTotal.ref += (obs.refObservations * obs.observationCount);
+        sigTotal.alt += (totalAltObservations * obs.observationCount);
+        sigTotal.locus += obs.observationCount;
     }
 }
 
@@ -446,28 +446,28 @@ reportExtendedContext(
         minParams[MIN_PARAMS3::LN_NOISY_LOCUS_RATE] = std::log(0.4);
         minParams[MIN_PARAMS3::LN_THETA] = error_minfunc_model3::defaultLogTheta;
 
-        static const unsigned SIZE2(MIN_PARAMS3::SIZE*MIN_PARAMS3::SIZE);
+        static const unsigned SIZE2(MIN_PARAMS3::SIZE * MIN_PARAMS3::SIZE);
         double conjDir[SIZE2];
 
-        std::fill(conjDir,conjDir+SIZE2,0.);
-        const unsigned dim(isLockTheta ? MIN_PARAMS3::SIZE-1 : MIN_PARAMS3::SIZE);
-        for (unsigned i(0); i<dim; ++i)
+        std::fill(conjDir, conjDir + SIZE2, 0.);
+        const unsigned dim(isLockTheta ? MIN_PARAMS3::SIZE - 1 : MIN_PARAMS3::SIZE);
+        for (unsigned i(0); i < dim; ++i)
         {
-            conjDir[i*(dim+1)] = 0.0005;
+            conjDir[i * (dim + 1)] = 0.0005;
         }
 
         double start_tol(end_tol);
         double final_dlh;
         error_minfunc_model3 errFunc(observations,isLockTheta);
 
-        codemin::minimize_conj_direction(minParams,conjDir,errFunc,start_tol,end_tol,line_tol,
-                                         x_all_loghood,iter,final_dlh,max_iter);
+        codemin::minimize_conj_direction(minParams, conjDir, errFunc, start_tol, end_tol, line_tol,
+                                         x_all_loghood, iter, final_dlh, max_iter);
     }
 
     // report:
     {
         double normalizedParams[MIN_PARAMS3::SIZE];
-        error_minfunc_model3::argToParameters(minParams,normalizedParams);
+        error_minfunc_model3::argToParameters(minParams, normalizedParams);
 
         const double theta(std::exp(normalizedParams[MIN_PARAMS3::LN_THETA]));
 

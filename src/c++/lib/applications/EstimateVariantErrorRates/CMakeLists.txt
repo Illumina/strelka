@@ -17,13 +17,4 @@
 #
 #
 
-################################################################################
-##
-## file CMakeLists.txt
-##
-################################################################################
-
-# variant scoring and indel error files:
-file (GLOB JSON_CONFIG_LIST [a-zA-Z0-9]*.json empiricalVariantScoring/models/[a-zA-Z0-9]*.json indelErrorModel/models/[a-zA-Z0-9]*.json)
-
-install(FILES ${JSON_CONFIG_LIST} DESTINATION ${THIS_CONFIGDIR})
+include(${THIS_CXX_LIBRARY_CMAKE})

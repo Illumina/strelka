@@ -39,8 +39,7 @@ from pyflow import WorkflowRunner
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, runDepthFromAlignments
 from strelkaSharedWorkflow import runCount, SharedPathInfo, \
                            StrelkaSharedCallWorkflow, StrelkaSharedWorkflow
-from workflowUtil import ensureDir, preJoin, bamListCatCmd
-
+from workflowUtil import ensureDir, preJoin, bamListCatCmd, getNextGenomeSegment
 
 __version__ = workflowVersion
 
@@ -95,6 +94,10 @@ class TempSegmentFiles :
         self.stats = []
         self.sample = [TempSegmentFilesPerSample() for _ in range(sampleCount)]
 
+
+class TempEstimationSegmentFiles :
+    def __init__(self) :
+        self.counts = []
 
 # we need extra quoting for files with spaces in this workflow because some commands are stringified as shell calls:
 def quote(instr):
@@ -173,6 +176,9 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
         if self.params.callContinuousVf is not None and gseg.chromLabel in self.params.callContinuousVf :
             assert(len(gsegGroup) == 1)
             segCmd.append('--call-continuous-vf')
+
+    if self.params.isIndelErrorRateEstimated :
+        segCmd.extend(['--indel-error-models-file', self.paths.getIndelEstimationJsonPath()])
 
     segTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gid)
     self.addTask(segTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
@@ -319,6 +325,123 @@ class CallWorkflow(StrelkaSharedCallWorkflow) :
 
         callGenome(self)
 
+def countIndels(self,taskPrefix="",dependencies=None):
+    """
+    run variant error counter
+    """
+
+    tmpSegmentDir=self.paths.getTmpSegmentDir()
+    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), getMkdirCmd() + [tmpSegmentDir], dependencies=dependencies, isForceLocal=True)
+
+    segmentTasks = set()
+
+    segFiles = TempEstimationSegmentFiles()
+
+
+
+    for gseg in getNextGenomeSegment(self.params) :
+        if gseg.chromLabel =='chr20' :
+            segmentTasks |= countGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
+
+    if len(segmentTasks) == 0 :
+        raise Exception("No genome regions to conduct count analysis. Maybe chr20 is missing. Possible target region parse error.")
+
+    # create a checkpoint for all segments:
+    completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=segmentTasks)
+
+    completeCountErrorCounts = set()
+
+    # merge segment stats:
+    completeCountErrorCounts.add(mergeSequenceErrorCounts(self,taskPrefix,completeSegmentsTask, segFiles.counts))
+    finishTasks = set()
+    finishTasks.add(estimateParametersFromErrorCounts(self,taskPrefix,completeCountErrorCounts, segFiles.counts))
+    #if not self.params.isRetainTempFiles :
+    #    rmTmpCmd = getRmdirCmd() + [tmpSegmentDir]
+    #    rmTask=self.addTask(preJoin(taskPrefix,"rmTmpDir"),rmTmpCmd,dependencies=finishTasks, isForceLocal=True)
+
+    nextStepWait = finishTasks
+
+    return nextStepWait
+
+def mergeSequenceErrorCounts(self, taskPrefix, dependencies, runStatsLogPaths) :
+
+    runMergeLabel=preJoin(taskPrefix,"mergeCounts")
+    runMergeCmd=[self.params.mergeCountsBin]
+    for statsFile in runStatsLogPaths :
+        runMergeCmd.extend(["--counts-file",statsFile])
+    runMergeCmd.extend(["--output-file",self.paths.getCountsOutputPath()])
+    return self.addTask(runMergeLabel, runMergeCmd, dependencies=dependencies, isForceLocal=True)
+
+def estimateParametersFromErrorCounts(self, taskPrefix, dependencies, runStatsLogPaths) :
+
+    runEstimateLabel=preJoin(taskPrefix,"estimateVariantErrorRatesBin")
+    runEstimateCmd=[self.params.estimateVariantErrorRatesBin]
+    runEstimateCmd.extend(["--counts-file",self.paths.getCountsOutputPath()])
+    runEstimateCmd.extend(["--theta-file",self.params.thetaParamFile])
+    runEstimateCmd.extend(["--output-file",self.paths.getIndelEstimationJsonPath()])
+    return self.addTask(runEstimateLabel, runEstimateCmd, dependencies=dependencies, isForceLocal=True)
+
+
+
+def countGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
+
+    segStr = str(gseg.id)
+
+    segCmd = [ self.params.getCountsBin ]
+
+    segCmd.extend(["--region", gseg.bamRegion])
+    segCmd.extend(["--ref", self.params.referenceFasta ])
+    segCmd.extend(["-genome-size", str(self.params.knownSize)] )
+    segCmd.extend(["-max-indel-size", "50"] )
+
+    segFiles.counts.append(self.paths.getTmpSegmentCountsPath(segStr))
+    segCmd.extend(["--counts-file", segFiles.counts[-1]])
+
+    for bamPath in self.params.bamList :
+        segCmd.extend(["--align-file",bamPath])
+
+    if self.params.isHighDepthFilter :
+        segCmd.extend(["--chrom-depth-file", self.paths.getChromDepth()])
+
+    def addListCmdOption(optList,arg) :
+        if optList is None : return
+        for val in optList :
+            segCmd.extend([arg, val])
+
+    addListCmdOption(self.params.indelCandidatesList, '--candidate-indel-input-vcf')
+    addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
+
+    nextStepWait = set()
+
+    setTaskLabel=preJoin(taskPrefix,"countGenomeSegment_"+gseg.id)
+    self.addTask(setTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
+    nextStepWait.add(setTaskLabel)
+
+    return nextStepWait
+
+class EstimateIndelErrorWorkflow(WorkflowRunner) :
+    """
+    A separate call workflow is setup so that we can delay the workflow execution until
+    the ref count file exists
+    """
+
+    def __init__(self,params,paths) :
+        self.paths = paths
+        self.params = params
+    def workflow(self) :
+
+        if True :
+            knownSize = 0
+            for line in open(self.paths.getRefCountFile()) :
+                word = line.strip().split('\t')
+                if len(word) != 4 :
+                    raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getRefCountFile()))
+                knownSize += int(word[2])
+
+            self.params.knownSize = knownSize
+
+
+        countIndels(self)
 
 
 class PathInfo(SharedPathInfo):
@@ -362,6 +485,16 @@ class PathInfo(SharedPathInfo):
     def getRealignedBamPath(self) :
         return os.path.join( self.params.realignedDir, 'realigned.bam')
 
+    def getTmpSegmentCountsPath(self, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "strelkaErrorCounts.%s.bin" % (segStr))
+
+    def getCountsOutputPath(self) :
+        return os.path.join( self.params.variantsDir, "strelkaErrorCounts.bin")
+
+    def getIndelEstimationJsonPath(self) :
+        return os.path.join( self.params.variantsDir, "IndelModel.json")
+
+
 
 
 class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
@@ -399,7 +532,20 @@ class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
         self.setCallMemMb()
 
         callPreReqs = set()
-        callPreReqs |= runCount(self)
+        estimatePreReqs = set()
+        estimatePreReqs |= runCount(self)
         if self.params.isHighDepthFilter :
-            callPreReqs |= strelkaGermlineRunDepthFromAlignments(self)
+            estimatePreReqs |= strelkaGermlineRunDepthFromAlignments(self)
+
+
+
+        if self.params.isIndelErrorRateEstimated :
+            if 1 != len(self.params.bamList) :
+                self.flowLog("Indel Error Estimation only supports single bam file inputs: Skipping indel error estimation")
+                self.params.isIndelErrorRateEstimated = False
+            else :
+                callPreReqs.add(self.addWorkflowTask("EstimateIndelError", EstimateIndelErrorWorkflow(self.params, self.paths), dependencies=estimatePreReqs))
+        else :
+            callPreReqs = estimatePreReqs
+
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)

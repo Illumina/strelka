@@ -266,7 +266,7 @@ operator<<(
     const ExportedIndelObservations& obs)
 {
     os << "variantStatus" << GENOTYPE_STATUS::label(obs.variantStatus);
-    os << "repeatCount: " << obs.repeatCount;
+    os << "repeatCount: " << obs.observationCount;
     os << "\trefCounts: " << obs.refObservations;
     os << "\taltObservations: ";
     unsigned alt_index(0);
@@ -300,7 +300,7 @@ exportObservations(
     // convert background observations:
     for (const auto& value : background)
     {
-        obs.repeatCount = value.second;
+        obs.observationCount = value.second;
         obs.refObservations = (value.first.depth*supportFraction);
         obs.variantStatus = value.first.backgroundStatus;
 
@@ -310,7 +310,7 @@ exportObservations(
     // convert error observations:
     for (const auto& value : error)
     {
-        obs.repeatCount = value.second;
+        obs.observationCount = value.second;
         obs.refObservations = value.first.refCount;
         obs.altObservations = value.first.signalCounts;
         obs.variantStatus   = value.first.variantStatus;
@@ -318,8 +318,6 @@ exportObservations(
         counts.push_back(obs);
     }
 }
-
-
 
 void
 IndelErrorData::

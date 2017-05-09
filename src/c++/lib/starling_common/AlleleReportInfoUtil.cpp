@@ -142,7 +142,7 @@ computeContextCompressability(
     {
         // complexity to the left:
         numEncodedLeft += shortestUnencountered(ref,leftPos-1,numEncodedLeft,true);
-	// complexity to the right:
+        // complexity to the right:
         numEncodedRight += shortestUnencountered(ref,rightPos,numEncodedRight,false);
     }
 

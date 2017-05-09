@@ -36,6 +36,7 @@ enum index_t
 {
     INSERT,
     DELETE,
+    NOISYLOCUS,
     OTHER
 };
 
@@ -139,6 +140,39 @@ struct IndelErrorRateSet
         indelRates.deletionErrorRate=deletionErrorRate;
     }
 
+    void
+    addRate(
+        const unsigned repeatingPatternSize,
+        const unsigned patternRepeatCount,
+        const double insertionErrorRate,
+        const double deletionErrorRate,
+        const double noisyLocusRate)
+    {
+        assert(repeatingPatternSize>0);
+        assert(patternRepeatCount>0);
+        assert(repeatingPatternSize <= maxRepeatingPatternSize);
+        assert(patternRepeatCount <= maxPatternRepeatCount);
+        if (repeatingPatternSize > _errorRates.size())
+        {
+            _errorRates.resize(repeatingPatternSize);
+        }
+
+        auto& repeatingPatternSizeRates(_errorRates[repeatingPatternSize-1]);
+
+        if (patternRepeatCount > repeatingPatternSizeRates.size())
+        {
+            repeatingPatternSizeRates.resize(patternRepeatCount);
+        }
+
+        IndelErrorRates& indelRates(repeatingPatternSizeRates[patternRepeatCount-1]);
+
+        assert(! indelRates.isInit);
+        indelRates.isInit=true;
+        indelRates.insertionErrorRate=insertionErrorRate;
+        indelRates.deletionErrorRate=deletionErrorRate;
+        indelRates.noisyLocusRate=noisyLocusRate;
+    }
+
     /// Check for a valid rate initialization pattern
     ///
     /// this must be called before calling getRates
@@ -183,6 +217,8 @@ private:
                 return deletionErrorRate;
             case INSERT:
                 return insertionErrorRate;
+            case NOISYLOCUS:
+                return noisyLocusRate;
             default:
                 assert(false && "Unexpected indel type");
                 return 0.;
@@ -192,6 +228,7 @@ private:
         bool isInit = false;
         double insertionErrorRate = 0;
         double deletionErrorRate = 0;
+        double noisyLocusRate = 0;
     };
 
     bool _isFinalized = false;

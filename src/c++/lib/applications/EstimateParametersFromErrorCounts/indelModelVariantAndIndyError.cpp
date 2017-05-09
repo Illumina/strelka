@@ -174,7 +174,7 @@ contextLogLhood(
         /// TODO: generalize log_sum to N values...
         const double mix(log_sum( log_sum(logHomPrior+hom,logHetPrior+het), log_sum(logNoIndelPrior+noindel,logAltHetPrior+althet) ));
 
-        logLhood += (mix*obs.repeatCount);
+        logLhood += (mix*obs.observationCount);
     }
 
     return logLhood;
@@ -300,9 +300,9 @@ getAltSigTotal(
             totalAltObservations += obs.altObservations[altIndex];
         }
 
-        sigTotal.ref += (obs.refObservations*obs.repeatCount);
-        sigTotal.alt += (totalAltObservations*obs.repeatCount);
-        sigTotal.locus += obs.repeatCount;
+        sigTotal.ref += (obs.refObservations*obs.observationCount);
+        sigTotal.alt += (totalAltObservations*obs.observationCount);
+        sigTotal.locus += obs.observationCount;
     }
 }
 

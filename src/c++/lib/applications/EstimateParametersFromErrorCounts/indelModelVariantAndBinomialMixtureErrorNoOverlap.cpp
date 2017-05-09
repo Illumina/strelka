@@ -147,7 +147,7 @@ contextLogLhood(
         log_os << "MODEL3: loghood obs: noisy/clean/mix/delta: " << noisyMix << " " << cleanMix << " " << mix << " " << (mix*obs.repeatCount) << "\n";
 #endif
 
-        logLhood += (mix*obs.repeatCount);
+        logLhood += (mix*obs.observationCount);
     }
 
 #ifdef DEBUG_MODEL3
@@ -303,9 +303,9 @@ getAltSigTotal(
             totalAltObservations += obs.altObservations[altIndex];
         }
 
-        sigTotal.ref += (obs.refObservations*obs.repeatCount);
-        sigTotal.alt += (totalAltObservations*obs.repeatCount);
-        sigTotal.locus += obs.repeatCount;
+        sigTotal.ref += (obs.refObservations*obs.observationCount);
+        sigTotal.alt += (totalAltObservations*obs.observationCount);
+        sigTotal.locus += obs.observationCount;
     }
 }
 

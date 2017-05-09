@@ -399,17 +399,17 @@ computeEmpiricalScoringFeatures(
 
         features.set(GERMLINE_SNV_SCORING_FEATURES::ConservativeGenotypeQuality, (sampleInfo.gqx));
 
-	// how confident are we in the haplotyping step?
-	float normalizedAltHaplotypeCountRatio;
-	if (locus.getActiveRegionId() < 0)
-	    normalizedAltHaplotypeCountRatio = -1.0f;   // not in active region
-	else if (maxGt.getPloidy() == 1)
-	    normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply by 2 for ploidy=1
-	else if (maxGt.isHet() and maxGt.containsReference())
-	    normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply by 2 for het (but not hetalt)
-	else
-	    normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio();
-	features.set(GERMLINE_SNV_SCORING_FEATURES::NormalizedAltHaplotypeCountRatio, normalizedAltHaplotypeCountRatio);
+        // how confident are we in the haplotyping step?
+        float normalizedAltHaplotypeCountRatio;
+        if (locus.getActiveRegionId() < 0)
+            normalizedAltHaplotypeCountRatio = -1.0f;   // not in active region
+        else if (maxGt.getPloidy() == 1)
+            normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply by 2 for ploidy=1
+        else if (maxGt.isHet() and maxGt.containsReference())
+            normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply by 2 for het (but not hetalt)
+        else
+            normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio();
+        features.set(GERMLINE_SNV_SCORING_FEATURES::NormalizedAltHaplotypeCountRatio, normalizedAltHaplotypeCountRatio);
 
         // compute any experimental features not currently used in production
         //
@@ -609,21 +609,21 @@ computeEmpiricalScoringFeatures(
                      (confidentPrimaryAltCount * confidentDepthFactor));
 
         features.set(GERMLINE_INDEL_SCORING_FEATURES::ConservativeGenotypeQuality, (sampleInfo.gqx));
-	features.set(GERMLINE_INDEL_SCORING_FEATURES::InterruptedHomopolymerLength, (primaryAltAllele.indelReportInfo.ihpol));
-	features.set(GERMLINE_INDEL_SCORING_FEATURES::ContextCompressability, (primaryAltAllele.indelReportInfo.contextCompressability));
-	features.set(GERMLINE_INDEL_SCORING_FEATURES::IndelCategory, (primaryAltAllele.indelKey.isPrimitiveDeletionAllele()));
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::InterruptedHomopolymerLength, (primaryAltAllele.indelReportInfo.ihpol));
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::ContextCompressability, (primaryAltAllele.indelReportInfo.contextCompressability));
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::IndelCategory, (primaryAltAllele.indelKey.isPrimitiveDeletionAllele()));
 
         // how confident are we in the haplotyping step?
-	float normalizedAltHaplotypeCountRatio;
-	if (locus.getActiveRegionId() < 0)
-	    normalizedAltHaplotypeCountRatio = -1.0f;   // not in active region
-	else if (maxGt.getPloidy() == 1)
-	    normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply by 2 for ploidy=1
-	else if (maxGt.isHet() and maxGt.containsReference())
-	    normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply by 2 for het (but not hetalt)
-	else
-	    normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio();
-	features.set(GERMLINE_INDEL_SCORING_FEATURES::NormalizedAltHaplotypeCountRatio, normalizedAltHaplotypeCountRatio);
+        float normalizedAltHaplotypeCountRatio;
+        if (locus.getActiveRegionId() < 0)
+            normalizedAltHaplotypeCountRatio = -1.0f;   // not in active region
+        else if (maxGt.getPloidy() == 1)
+            normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply by 2 for ploidy=1
+        else if (maxGt.isHet() and maxGt.containsReference())
+            normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio()*2.0f; // multiply by 2 for het (but not hetalt)
+        else
+            normalizedAltHaplotypeCountRatio = maxGt.getAltHaplotypeCountRatio();
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::NormalizedAltHaplotypeCountRatio, normalizedAltHaplotypeCountRatio);
 
         // compute any experimental features not currently used in production
         if (isComputeDevelopmentFeatures)

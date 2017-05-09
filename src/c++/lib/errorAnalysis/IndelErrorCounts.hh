@@ -392,8 +392,8 @@ BOOST_CLASS_IMPLEMENTATION(IndelErrorContextObservationData, boost::serializatio
 ///
 struct ExportedIndelObservations
 {
-    /// the number of times we observe the observation pattern below:
-    unsigned repeatCount;
+    /// the number of times we observe the observation pattern
+    unsigned observationCount;
 
     /// number of supporting observations of the non-alt* allele (*exact definition in flux...)
     double refObservations;
@@ -418,7 +418,6 @@ struct IndelErrorData
     void
     exportObservations(
         std::vector<ExportedIndelObservations>& counts) const;
-
     void
     merge(const IndelErrorData& in);
 
@@ -492,6 +491,12 @@ public:
     end() const
     {
         return _data.end();
+    }
+
+    const_iterator
+    find(const IndelErrorContext& key) const
+    {
+        return _data.find(key);
     }
 
     /// debug output
