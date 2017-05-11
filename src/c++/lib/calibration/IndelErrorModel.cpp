@@ -174,10 +174,11 @@ IndelErrorModel::
 IndelErrorModel(
     const std::vector<std::string>& alignmentFilenames,
     const std::string& modelName,
-    const std::string& modelFilename)
+    const std::vector<std::string>& modelFilenames)
     : _sampleCount(alignmentFilenames.size())
+
 {
-    if (modelFilename.empty())
+    if(modelFilenames.empty())
     {
         // Hard-coded indel error models are never sample-specific
         //
@@ -211,7 +212,7 @@ IndelErrorModel(
         std::string jsonString;
         Json::Value root;
         {
-            std::ifstream ifs(modelFilename, std::ifstream::binary);
+            std::ifstream ifs(modelFilenames[0] , std::ifstream::binary);
             std::stringstream buffer;
             buffer << ifs.rdbuf();
             jsonString = buffer.str();
@@ -219,14 +220,14 @@ IndelErrorModel(
         Json::Reader reader;
         if (reader.parse(jsonString, root))
         {
-            deserializeIndelModels(modelFilename, root);
+            deserializeIndelModels(modelFilenames[0], root);
         }
         else
         {
             using namespace illumina::common;
 
             std::ostringstream oss;
-            oss << "Failed to parse JSON " << modelFilename << " " << reader.getFormattedErrorMessages() << "'\n";
+            oss << "Failed to parse JSON " << modelFilenames[0] << " " << reader.getFormattedErrorMessages() << "'\n";
             BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
     }
@@ -240,8 +241,6 @@ IndelErrorModel(
     _candidateErrorRates = getLogLinearIndelErrorModel();
     _candidateErrorRates.finalizeRates();
 }
-
-
 
 
 void

@@ -128,7 +128,7 @@ def mergeSequenceErrorCounts(self, taskPrefix, dependencies, runStatsLogPaths) :
     runMergeCmd=[self.params.mergeCountsBin]
     for statsFile in runStatsLogPaths :
         runMergeCmd.extend(["--counts-file",statsFile])
-    runMergeCmd.extend(["--output-file",self.paths.getCountsOutputPath()])
+    runMergeCmd.extend(["--output-file",self.paths.getCountsOutputPath(self)])
     return self.addTask(runMergeLabel, runMergeCmd, dependencies=dependencies, isForceLocal=True)
 
 

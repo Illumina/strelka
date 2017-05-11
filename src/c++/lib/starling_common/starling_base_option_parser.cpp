@@ -126,7 +126,7 @@ get_starling_base_option_parser(
      "Write runtime stats to file")
     ("report-evs-features", po::value(&opt.isReportEVSFeatures)->zero_tokens(),
      "Report empirical variant scoring (EVS) training features in VCF output")
-    ("indel-error-models-file", po::value(&opt.indel_error_models_filename),
+    ("indel-error-models-file", po::value<std::vector<std::string>>(&opt.indel_error_model_filenames),
      "File containing indel error models")
     ("indel-error-model-name", po::value(&opt.indel_error_model_name)->default_value(opt.indel_error_model_name),
      "Static indel error model name. If no indel error model file is provided a hard-coded model can be selected with this argument instead. Current options are ('logLinear'). This option is ignored when an indel error model file is provided.")
@@ -304,8 +304,10 @@ finalize_starling_base_options(
         opt.is_max_input_depth=true;
     }
 
-    checkOptionalFile(pinfo,opt.indel_error_models_filename,"indel error models");
-
+    for(auto indelErrorModelFilename : opt.indel_error_model_filenames)
+    {
+        checkOptionalFile(pinfo, indelErrorModelFilename, "indel error models");
+    }
     /// tier2 options are not parsed by starling_base, but need to live up here for now,
     /// so validate them together with the rest of starling_base
     std::string errorMsg;

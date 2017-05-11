@@ -29,17 +29,24 @@
 ///
 struct IndelErrorModel
 {
+    /// \brief Initialize indel error model using multiple json files
+    ///
+    /// \param modelName
+    /// \param modelFilenames
+    IndelErrorModel(
+        const std::string& modelName,
+        const std::vector<std::string>& modelFilenames);
     /// \brief Initialize indel error model to either a precomputed static model (if \p modelFilename is empty),
     /// or from a json parameter file otherwise.
     ///
     /// \param[in] alignmentFilenames Name and indexed order of alignment files, which can be used to sync sample
     ///                           index values in the indel error model file
     /// \param[in] modelName Name of selected static indel error model to use, ignored if \p modelFilename is non-empty
-    /// \param[in] modelFilename Indel error model structure/parameters initialized from the given file
+    /// \param[in] modelFilenames Indel error model params in json format
     IndelErrorModel(
         const std::vector<std::string>& alignmentFilenames,
         const std::string& modelName,
-        const std::string& modelFilename);
+        const std::vector<std::string>& modelFilenames);
 
     /// \brief Retrieve indel error rates for a specific indel type.
     ///
