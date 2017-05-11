@@ -70,7 +70,7 @@ unsigned
 get_snp_hpol_size(const pos_t pos,
                   const reference_contig_segment& ref);
 
-/// \brief Get the largest homopolymer extending from \p pos when one alternate base is allowed to interrupt the
+/// \brief Get the length of the longest homopolymer extending from \p pos when one alternate base is allowed to interrupt the
 ///        homopolymer sequence
 ///
 /// ### Example
@@ -79,7 +79,7 @@ get_snp_hpol_size(const pos_t pos,
 /// each position:
 ///
 /// Reference: ACTGGGTGGGTA
-/// Value:     224777777742
+/// Value:     113666666631
 ///
 unsigned
 getInterruptedHomopolymerLength(

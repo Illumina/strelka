@@ -36,7 +36,7 @@
 /// \brief Get the frequency of reads supporting the indel allele at the locus in the given sample
 ///
 /// Note this method only considers reads which confidently support only one of the possible alleles at the locus.
-/// If there are no confident reads at the locus, the methods reports a frequency of 0.
+/// If there are no confident reads at the locus, the method reports a frequency of 0.
 ///
 double
 getSampleIndelAlleleFrequency(
@@ -46,7 +46,7 @@ getSampleIndelAlleleFrequency(
 ///        in the given sample
 ///
 /// Note this method only considers reads which confidently support only one of the possible alleles at the locus.
-/// If there are no confident reads at the locus, the methods reports a frequency of 0.
+/// If there are no confident reads at the locus, the method reports a frequency of 0.
 ///
 double
 getSampleOtherAlleleFrequency(

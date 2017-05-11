@@ -363,7 +363,7 @@ The output scores produced by the random forest classifier are transformed to ph
 
 When the EVS model is used, most variants are filtered based on the score computed by the random forest model. In some cases this score is supplemented with additional hard filters.
 
-For somatic indels, the following filter is applied in additional to EVS thesholds:
+For somatic indels, the following filter is added:
 
 \begin{itemize}
     \item \texttt{NormalSampleRelativeTotalLocusDepth} ~ variant is filtered if this value is greater than 3
@@ -456,17 +456,17 @@ Features used in each model are listed here and definitions are provided further
 
 In this case a set of filters is defined. Each filter is triggered when a single feature exceeds some critical value. Filtration thresholds are set to remove variants which are very likely to be incorrect.
 
-The hard filter model is used whenever EVS cannot be. This is aways the method used to filter homozygous reference calls, and for certain calls which are not well represented in EVS training (hemizygous variants). The EVS model may be turned off for all variants whenever the assay conditions are suspected to poorly match the EVS models training conditions, in which case the simple hard filters will be used as the default fallback.
+The hard filter model is used whenever EVS cannot be, in particular this is the method used to filter germline homozygous reference calls. The EVS model may be turned off for all variants whenever the assay conditions are suspected to poorly match the EVS models training conditions, in which case the hard filters will be used instead.
 
 \paragraph{Hard filter thresholds for germline model}
 
 \begin{itemize}
     \item Shared filter conditions
     \begin{itemize}
-        \item \texttt{ConservativeGenotypeQuality} ~ variant is filtered if this value is less than 15
-        \item \texttt{RelativeTotalLocusDepth} ~ variant is filtered if this value is greater than 3
+        \item \texttt{ConservativeGenotypeQuality} ~ Variant is filtered if this value is less than 15
+        \item \texttt{RelativeTotalLocusDepth} ~ Variant is filtered if this value is greater than 3
     \end{itemize}
-    \item SNV specific filter conditions:
+    \item SNV-specific filter conditions:
     \begin{itemize}
         \item \texttt{SampleStrandBias} ~ SNV is filtered if this value is greater than 10
     \end{itemize}
@@ -477,15 +477,15 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
 \begin{itemize}
     \item Shared filter conditions
     \begin{itemize}
-        \item \texttt{NormalSampleRelativeTotalLocusDepth} ~ variant is filtered if this value is greater than 3
+        \item \texttt{NormalSampleRelativeTotalLocusDepth} ~ Variant is filtered if this value is greater than 3
     \end{itemize}
-    \item SNV specific filter conditions:
+    \item SNV-specific filter conditions:
     \begin{itemize}
         \item \texttt{SomaticSNVQualityGivenGermlineGenotype} ~ SNV is filtered if this value is less than 15 or if the most likely normal sample genotype at the site is not homozygous reference
         \item \texttt{SiteFilteredBasecallFrac} ~ SNV is filtered if this value is greater than or equal to 0.4
         \item \texttt{SpanningDeletionFraction} ~ SNV is filtered if this value is greater than 0.75
     \end{itemize}
-    \item Indel specific filter conditions:
+    \item Indel-specific filter conditions:
     \begin{itemize}
         \item \texttt{SomaticIndelQualityGivenGermlineGenotype} ~ Indel is filtered if this value is less than 40 or if the most likely normal sample genotype for the somatic allele is not homozygous reference
         \item \texttt{IndelWindowFilteredBasecallFrac} ~ Indel is filtered if this value is greater than or equal to 0.3
@@ -495,12 +495,20 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
 
 \subsection{EVS/hard-filter feature descriptions}
 
+\subsubsection{Shared features}
+\begin{itemize}
+
+    \item \texttt{InterruptedHomopolymerLength} ~ One less than the length of the longest interrupted homopolymer in the reference sequence containing the current position. An interrupted homopolymer is a string that has edit distance 1 to a homopolymer.
+
+\end{itemize}
+
+
 \subsubsection{Germline and RNA-seq features}
 \begin{itemize}
 
     \item \texttt{GenotypeCategory} ~ A category variable reflecting the most likely genotype as heterozygous (0), homozygous (1) or alt-heterozygous (2).
     
-    \item \texttt{SampleRMSMappingQuality} ~ RMS mapping quality of all reads spanning the variant in one sample. This feature matches the SAMPLE/MQ value defined in the VCF spec.
+    \item \texttt{SampleRMSMappingQuality} ~ RMS mapping quality of all reads spanning the variant in one sample. This feature matches SAMPLE/MQ in the VCF spec.
     
     \item \texttt{SiteHomopolymerLength} ~ Length of the longest homopolymer containing the current position if this position can be treated as any base.
     
@@ -531,15 +539,13 @@ The hard filter model is used whenever EVS cannot be. This is aways the method u
     
     \item \texttt{SamplePrimaryAltAlleleDepthFraction} ~ For one sample, this is the ratio of the confident observation count of the best-supported non-reference allele at the variant locus, over all confident allele observation counts.
     
-    \item \texttt{InterruptedHomopolymerLength} ~ The length of the longest interrupted homopolymer containing the current position. An interrupted homopolymer is a string that has edit distance 1 to a homopolymer.
-    
     \item \texttt{ContextCompressability} ~ The length of the upstream or downstream reference context (whichever is greater) that can be represented using 5 Ziv-Lempel keywords \cite{lesne2009,ziv1977}. The Ziv-Lempel keywords are obtained using the scheme of Ziv and Lempel 1977 \cite{ziv1977}, by traversing the sequence and successively selecting the shortest subsequence that has not yet been encountered.
     
     \item \texttt{IndelCategory} ~ A binary variable set to 1 if the indel allele is a primitive deletion or 0 otherwise.
     
     \item \texttt{SamplePrimaryAltAlleleDepth} ~ The confident observation count of the best-supported non-reference allele at the variant locus.
     
-    \item \texttt{VariantAlleleQuality} ~ The model-based variant quality value (QUAL as defined in the VCF specification), reflecting the confidence that the called variant is present in at least one sample, regardless of genotype.
+    \item \texttt{VariantAlleleQuality} ~ The model-based variant quality value reflecting confidence that the called variant is present in at least one sample, regardless of genotype. This feature matches QUAL in the VCF spec
     
     \item \texttt{SampleMeanDistanceFromReadEdge} ~ For all non-reference basecall observations in one sample at a candidate SNV site, report the mean distance to the closest edge of each alternate basecall's read. Distance is measured in read-coordinates, zero-indexed, and is allowed to have a maximum value of 20.
     
@@ -558,13 +564,13 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
 
 \begin{itemize}
 
-    \item \texttt{SomaticSNVQualityGivenGermlineGenotype} ~ Posterior probability of a somatic SNV conditioned on given germline genotype. This is the same value provided as INFO/QSS\_NT in the VCF output.
+    \item \texttt{SomaticSNVQualityGivenGermlineGenotype} ~ Posterior probability of a somatic SNV conditioned on given germline genotype. This feature matches INFO/QSS\_NT in the VCF output.
 
-    \item \texttt{NormalSampleRelativeTotalLocusDepth} ~ Locus depth relative to expectation: this is the ratio of total read depth at the variant locus in the normal sample over the total expected depth for the normal sample. Depth at the variant locus includes reads at any mapping quality. Expected depth is taken from the preliminary depth estimation step defined above in ``\nameref{sec:depth_est}''. This value is set to 1 in exome and targeted analyses, because it is problematic to define expected depth in this case.
+    \item \texttt{NormalSampleRelativeTotalLocusDepth} ~ This feature matches the germline \texttt{RelativeTotalLocusDepth} feature, except that it reflects the depth of only the matched normal sample.
 
-    \item \texttt{TumorSampleAltAlleleFraction} ~ Fraction of the tumor sample's tier1 observations which are not the reference allele (see: ``\nameref{sec:somatic_tiers}''). This is restricted to a maximum of 0.5 to prevent the model from overtraining against high somatic allele freqeuncies (these might be common e.g. for LOH regions from liquid tumors).
+    \item \texttt{TumorSampleAltAlleleFraction} ~ Fraction of the tumor sample's tier1 observations which are not the reference allele (see: ``\nameref{sec:somatic_tiers}''). This is restricted to a maximum of 0.5 to prevent the model from overtraining against high somatic allele frequencies (these might be common e.g. for loss of heterozygosity regions from liquid tumors).
 
-    \item \texttt{RMSMappingQuality} ~ Root mean square read mapping quality of all reads spanning the variant in all samples. This feature matches the INFO/MQ value defined in the VCF spec.
+    \item \texttt{RMSMappingQuality} ~ Root mean square read mapping quality of all reads spanning the variant in all samples. This feature matches INFO/MQ in the VCF spec.
 
     \item \texttt{ZeroMappingQualityFraction} ~ Fraction of read mapping qualities equal to zero, for all reads spanning the variant in all samples.
 
@@ -575,19 +581,17 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
 
     \item \texttt{AlleleCountLogOddsRatio} ~ The log odds ratio of allele counts $log_{10}{\frac{r_t a_n} {r_n a_t}}$, given reference $(r_t,r_n)$ and non-reference $(a_t,a_n)$ allele counts for the tumor and normal sample pair.
 
-    \item \texttt{SomaticIndelQualityGivenGermlineGenotype} ~ Posterior probability of a somatic indel conditioned on given germline genotype. This is the same value provided as INFO/QSI\_NT in the VCF output.
+    \item \texttt{SomaticIndelQualityGivenGermlineGenotype} ~ Posterior probability of a somatic indel conditioned on given germline genotype. This feature matches INFO/QSI\_NT in the VCF output.
 
     \item \texttt{TumorSampleAbsReadPosRankSum} ~ Absolute value of the \texttt{TumorSampleReadPosRankSum} feature.
 
     \item \texttt{TumorSampleAbsStrandOddsRatio} ~ Absolute value of the log strand odds ratio of allele counts $log_{10}{\frac{r_{fwd} a_{fwd}} {r_{rev} a_{rev}}}$, given reference $(r_{fwd},r_{rev})$ and non-reference $(a_{fwd},a_{rev})$ confident counts of the tumor sample's tier1 observations (see: ``\nameref{sec:somatic_tiers}'').
 
-    \item \texttt{RepeatUnitLength} ~ The length of the indel allele's \emph{repeat unit}. The \emph{repeat unit} is the smallest possible sequence such that the inserted/deleted sequence can be formed by concatenating multiple copies of it.
+    \item \texttt{RepeatUnitLength} ~ The length of the somatic indel allele's \emph{repeat unit}. The \emph{repeat unit} is the smallest possible sequence such that the inserted/deleted sequence can be formed by concatenating multiple copies of it.
 
-    \item \texttt{IndelRepeatCount} ~ The number of times the indel allele's \emph{repeat unit} occurs in a haplotype containing the indel allele.
+    \item \texttt{IndelRepeatCount} ~ The number of times the somatic indel allele's \emph{repeat unit} occurs in a haplotype containing the indel allele.
 
-    \item \texttt{RefRepeatCount} ~ The number of times the indel allele's \emph{repeat unit} occurs in the reference sequence.
-
-    \item \texttt{InterruptedHomopolymerLength} ~ The length of the longest interrupted homopolymer containing the current position. An interrupted homopolymer is a string that has edit distance 1 to a homopolymer.
+    \item \texttt{RefRepeatCount} ~ The number of times the somatic indel allele's \emph{repeat unit} occurs in the reference sequence.
 
     \item \texttt{TumorSampleIndelNoiseLogOdds} ~ Log ratio of the frequency of the candidate indel vs all other indels at the same locus in the tumor sample. The frequencies are computed from reads which confidently support a single allele at the locus, and only include reads which qualify as tier1 observations in the tumor sample (see: ``\nameref{sec:somatic_tiers}'').
 
@@ -596,8 +600,6 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
     \item \texttt{SiteFilteredBasecallFrac} ~ The maximum value over all samples of \texttt{SampleSiteFilteredBasecallFrac}, which is the fraction of basecalls at a site which have been removed by the mismatch density filter in a given sample.
 
     \item \texttt{IndelWindowFilteredBasecallFrac} ~ The maximum value over all samples of \texttt{SampleIndelWindowFilteredBasecallFrac}, which is the fraction of basecalls in a window extending 50 bases to each side of the candidate indel's call position which have been removed by the mismatch density filter in a given sample.
-
-    \item \texttt{NormalSampleRelativeTotalLocusDepth} ~ This is the same value described in the germline \texttt{RelativeTotalLocusDepth} except that this reflects the depth of only the matched normal sample.
 
     \item \texttt{SpanningDeletionFraction} ~ The maximum value over all samples of \texttt{SampleSpanningDeletionFraction}, which is the fraction of reads crossing a candidate SNV site with spanning deletions in a given sample.
 \end{itemize}
