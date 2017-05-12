@@ -4,6 +4,11 @@
   "description": "JSON schema describing indel parameter inputs used for small variant calling in Strelka",
   "type": "object",
   "properties": {
+    "sampleName": {
+      "description": "The sample name (usually the absolute path of the bam file) used to estiamte the model",
+      "type": "string",
+      "minimum": 1
+    },
     "motifs": {
       "description": "An array which is the collection of all motifs estimated from the model",
       "comment": "There shouldn't be any gaps between the min repeat count and max repeat count for a given repeat pattern size",

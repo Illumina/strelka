@@ -418,7 +418,7 @@ indelModelProduction(
     const std::string& thetaFilename,
     const std::string& outputFilename)
 {
-    IndelModelJson indelModelJson;
+    IndelModelJson indelModelJson(counts.getSampleName());
     std::ostream& ros(std::cout);
     std::map<unsigned, std::vector<double>> thetas;
     if (!thetaFilename.empty())
@@ -530,6 +530,10 @@ importTheta(
 }
 
 
+IndelModelJson::IndelModelJson(std::string sampleName)
+        : _sampleName(sampleName)
+{}
+
 
 // move these to a more appropriate place later
 Json::Value
@@ -552,6 +556,7 @@ void IndelModelJson::exportIndelErrorModelToJsonFile(const std::string& filename
 {
     Json::StyledWriter writer;
     Json::Value jsonRoot;
+    jsonRoot["sampleName"] = _sampleName;
     jsonRoot["motifs"] = generateMotifsNode();
     const std::string str = writer.write(jsonRoot);
     std::ofstream out(filename);

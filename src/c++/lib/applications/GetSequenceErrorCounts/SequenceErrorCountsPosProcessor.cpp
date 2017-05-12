@@ -44,6 +44,7 @@ SequenceErrorCountsPosProcessor(
     assert(getSampleCount()==1);
     static const unsigned sampleId(0);
 
+    _counts.setSampleName(opt.alignFileOpt.alignmentFilenames[0]);
     // check that we have write permission on the output file early:
     {
         OutStream outs(opt.countsFilename);

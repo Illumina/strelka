@@ -118,6 +118,13 @@ getSequenceErrorCountsRun(
     // streamData initialization:
     std::vector<std::reference_wrapper<const bam_hdr_t>> bamHeaders;
     {
+
+        if(opt.alignFileOpt.alignmentFilenames.size() > 1)
+        {
+            using namespace illumina::common;
+            std::ostringstream oss;
+            oss << "WARNING: Multiple bam file inputs. Will be treated as single sample (with sampleName: " << opt.alignFileOpt.alignmentFilenames[0] << ")\n";
+        }
         std::vector<unsigned> registrationIndices(opt.alignFileOpt.alignmentFilenames.size(), 0);
         bamHeaders = registerAlignments(opt.alignFileOpt.alignmentFilenames, registrationIndices, streamData);
 

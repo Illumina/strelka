@@ -36,6 +36,7 @@ SequenceErrorCounts::
 merge(
     const SequenceErrorCounts& in)
 {
+    _sampleName = in._sampleName;
     _bases.merge(in._bases);
     _indels.merge(in._indels);
 }
@@ -52,6 +53,7 @@ save(
     std::ofstream ofs(filename, std::ios::binary);
     binary_oarchive oa(ofs);
 
+    oa << _sampleName;
     oa << _bases;
     oa << _indels;
 }
@@ -71,6 +73,7 @@ load(
     std::ifstream ifs(filename, std::ios::binary);
     binary_iarchive ia(ifs);
 
+    ia >> _sampleName;
     ia >> _bases;
     ia >> _indels;
 }

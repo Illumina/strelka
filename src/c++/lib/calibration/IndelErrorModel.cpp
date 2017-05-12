@@ -134,12 +134,13 @@ deserializeIndelModels(
     const unsigned sampleIndex(0);
     auto& errorRates = getSampleSpecificIndelErrorRates(sampleIndex);
 
+    std::string sampleName = root["sampleName"].asString();
     Json::Value motifs = root["motifs"];
     if (motifs.isNull() || motifs.empty())
     {
         using namespace illumina::common;
         std::ostringstream oss;
-        oss << "ERROR: no indel motifs in indel error rate file '" << modelFilename << "'\n";
+        oss << "ERROR: no indel motifs in indel error rate file '" << modelFilename << " sample " <<sampleName << "'\n";
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 

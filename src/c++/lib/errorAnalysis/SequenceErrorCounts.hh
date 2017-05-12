@@ -60,6 +60,13 @@ struct SequenceErrorCounts
         return _indels;
     }
 
+    const std::string&
+    getSampleName() const
+    {
+
+        return _sampleName;
+    }
+
     void
     merge(const SequenceErrorCounts& in);
 
@@ -71,6 +78,11 @@ struct SequenceErrorCounts
     }
 
     void
+    setSampleName(const std::string& sampleName)
+    {
+        _sampleName = sampleName;
+    }
+    void
     save(const char* filename) const;
 
     void
@@ -81,6 +93,7 @@ struct SequenceErrorCounts
     dump(std::ostream& os) const;
 
 private:
+    std::string _sampleName;
     BaseErrorCounts _bases;
     IndelErrorCounts _indels;
 };
