@@ -21,11 +21,14 @@
 /// \author Sangtae Kim
 ///
 
-#include <starling_common/IndelBuffer.hh>
-#include <starling_common/ActiveRegionDetector.hh>
+#include "starling_base_options_test.hh"
+#include "starling_common/ActiveRegionDetector.hh"
+#include "starling_common/IndelBuffer.hh"
+
+
 #include "boost/test/unit_test.hpp"
 
-BOOST_AUTO_TEST_SUITE( test_activeRegion )
+
 
 typedef std::unique_ptr<IndelBuffer> IndelBufferPtr;
 
@@ -55,11 +58,13 @@ struct TestIndelBuffer
     }
 
 private:
-    starling_base_options _opt;
+    starling_base_options_test _opt;
     std::unique_ptr<starling_base_deriv_options> _doptPtr;
     std::unique_ptr<IndelBuffer> _IndelBufferPtr;
 };
 
+
+BOOST_AUTO_TEST_SUITE( test_activeRegion )
 
 // checks whether positions with consistent mismatches are marked as polymorphic sites
 BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )

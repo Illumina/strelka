@@ -178,8 +178,8 @@ get_somatic_indel(
     const starling_sample_options& tumor_opt,
     const IndelKey& indelKey,
     const IndelData& indelData,
-    const unsigned normalId,
-    const unsigned tumorId,
+    const unsigned normalSampleIndex,
+    const unsigned tumorSampleIndex,
     const bool is_use_alt_indel,
     somatic_indel_call& sindel) const
 {
@@ -191,8 +191,8 @@ get_somatic_indel(
 
     sindel.is_forced_output=indelData.isForcedOutput;
 
-    const IndelSampleData& normalIndelSampleData(indelData.getSampleData(normalId));
-    const IndelSampleData& tumorIndelSampleData(indelData.getSampleData(tumorId));
+    const IndelSampleData& normalIndelSampleData(indelData.getSampleData(normalSampleIndex));
+    const IndelSampleData& tumorIndelSampleData(indelData.getSampleData(tumorSampleIndex));
 
     static const unsigned n_tier(2);
     std::array<indel_result_set,n_tier> tier_rs;
@@ -261,7 +261,9 @@ get_somatic_indel(
             tumor_lhood_float[j] = (blt_float_t) tumor_lhood[j];
         }
 
-        const double sie_rate(std::pow(indelData.getErrorRates().indelToRefErrorProb.getValue(), opt.shared_indel_error_factor));
+        // The somatic caller has not been configured to use sample-specific error rates yet, so arbitrarily pull
+        // rates from the tumor-sample only for now.
+        const double sie_rate(std::pow(tumorIndelSampleData.getErrorRates().indelToRefErrorProb.getValue(), opt.shared_indel_error_factor));
         const double ln_sie_rate(std::log(sie_rate)); // shared indel error rate
         const double ln_csie_rate(log1p_switch(-sie_rate));
 

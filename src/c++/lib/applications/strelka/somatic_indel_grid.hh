@@ -44,8 +44,8 @@ struct somatic_indel_caller_grid : private boost::noncopyable
         const starling_sample_options& tumor_opt,
         const IndelKey& indelKey,
         const IndelData& indelData,
-        const unsigned normalId,
-        const unsigned tumorId,
+        const unsigned normalSampleIndex,
+        const unsigned tumorSampleIndex,
         const bool is_use_alt_indel,
         somatic_indel_call& sindel) const;
 

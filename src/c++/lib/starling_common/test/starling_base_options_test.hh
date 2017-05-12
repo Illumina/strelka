@@ -19,18 +19,27 @@
 
 #pragma once
 
-#include "starling_common/starling_base_shared.hh"
+#include "starling_base_shared.hh"
 
 
-struct snoise_options : public starling_base_options
+/// \brief This version of starling_base_options provides null implementations of required virtuals
+///        so that unit tests are easier to setup
+struct starling_base_options_test final : public starling_base_options
 {
     const AlignmentFileOptions&
     getAlignmentFileOptions() const override
     {
+        static const AlignmentFileOptions alignFileOpt(getTestAlignmentFileOptions());
         return alignFileOpt;
     }
 
-    AlignmentFileOptions alignFileOpt;
-
-    bool is_skip_header = false;
+private:
+    static
+    AlignmentFileOptions
+    getTestAlignmentFileOptions()
+    {
+        AlignmentFileOptions alignFileOpt;
+        alignFileOpt.alignmentFilename.push_back("sample.bam");
+        return alignFileOpt;
+    }
 };

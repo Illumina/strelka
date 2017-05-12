@@ -457,7 +457,7 @@ score_indels(
     const starling_sample_options& sample_opt,
     const read_segment& rseg,
     IndelBuffer& indelBuffer,
-    const unsigned sampleId,
+    const unsigned sampleIndex,
     const std::set<candidate_alignment>& candAlignments,
     const bool is_incomplete_search,
     const std::vector<double>& candAlignmentScores,
@@ -613,7 +613,7 @@ score_indels(
                     if (bpo>0)
                     {
                         const bool is_tier1_read(rseg.is_tier1_mapping());
-                        IndelSampleData& indelSampleData(getIndelData(indelIter).getSampleData(sampleId));
+                        IndelSampleData& indelSampleData(getIndelData(indelIter).getSampleData(sampleIndex));
 
                         if (is_tier1_read) indelSampleData.suboverlap_tier1_read_ids.insert(rseg.id());
                         else               indelSampleData.suboverlap_tier2_read_ids.insert(rseg.id());
@@ -713,9 +713,10 @@ score_indels(
 
             for (const IndelKey& evaluationIndel : indelsToEvaluate)
             {
-                const IndelData* idPtr(indelBuffer.getIndelDataPtr(evaluationIndel));
-                assert(idPtr != nullptr);
-                const auto& ep(idPtr->getErrorRates());
+                const IndelData* indelDataPtr(indelBuffer.getIndelDataPtr(evaluationIndel));
+                assert(indelDataPtr != nullptr);
+                const IndelSampleData& indelSampleData(indelDataPtr->getSampleData(sampleIndex));
+                const auto& errorRates(indelSampleData.getErrorRates());
                 const bool isIndelInCandAlignment(indelsInCandAlignment.count(evaluationIndel)!=0);
                 if (isIndelInCandAlignment)
                 {
@@ -729,7 +730,7 @@ score_indels(
                     //
                     // this represents the score of the read arising from the reference haplotype, as explained by a single indel error
                     //
-                    updateIndelScoringInfo(indelScoringInfo,evaluationIndel,false,evaluationIndel,score+ep.refToIndelErrorProb.getLogValue(),&candAlignment);
+                    updateIndelScoringInfo(indelScoringInfo,evaluationIndel,false,evaluationIndel,score+errorRates.refToIndelErrorProb.getLogValue(),&candAlignment);
 
                     // mark this as an alternate indel score for orthogonal indels:
                     for (const IndelKey& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
@@ -739,7 +740,7 @@ score_indels(
                         // same number as above, but provided in a format so that it is easily accessed from orthogonalIndel
                         //
                         updateIndelScoringInfo(indelScoringInfo, orthogonalIndel, false, orthogonalIndel,
-                                               score + ep.refToIndelErrorProb.getLogValue(), &candAlignment);
+                                               score + errorRates.refToIndelErrorProb.getLogValue(), &candAlignment);
 
                         {
                             // Note that this entry is designed to support the legacy "alt_indels" enumeration attached to ReadScoreData below, once that system is retired
@@ -789,7 +790,7 @@ score_indels(
                         // this represents the score of the read arising from the evaluationIndel haplotype
                         // but with a single indel error reverting it to reference:
                         //
-                        updateIndelScoringInfo(indelScoringInfo,evaluationIndel,true,evaluationIndel,score+ep.indelToRefErrorProb.getLogValue(),&candAlignment);
+                        updateIndelScoringInfo(indelScoringInfo,evaluationIndel,true,evaluationIndel,score+errorRates.indelToRefErrorProb.getLogValue(),&candAlignment);
                     }
                     else
                     {
@@ -800,7 +801,7 @@ score_indels(
                         //
                         // note in the absence of and indel->indel2 error rate, we use the indel->ref rate as a proxy
                         //
-                        updateIndelScoringInfo(indelScoringInfo,evaluationIndel,true,evaluationIndel,score+ep.indelToRefErrorProb.getLogValue(),&candAlignment);
+                        updateIndelScoringInfo(indelScoringInfo,evaluationIndel,true,evaluationIndel,score+errorRates.indelToRefErrorProb.getLogValue(),&candAlignment);
                     }
                 }
             }
@@ -812,7 +813,9 @@ score_indels(
             {
                 const IndelData* indelDataPtr(indelBuffer.getIndelDataPtr(nonCandidateIndel));
                 assert(indelDataPtr != nullptr);
-                const auto& ep(indelDataPtr->getErrorRates());
+                const IndelSampleData& indelSampleData(indelDataPtr->getSampleData(sampleIndex));
+
+                const auto& errorRates(indelSampleData.getErrorRates());
 
                 // test whether indel is orthogonal to each evaluationIndel, if it is, then:
                 //
@@ -831,7 +834,7 @@ score_indels(
                     // this represents the score of the read arising from the reference haplotype
                     // but with a single indel error leading to an observation of the noncandidateIndel
                     //
-                    updateIndelScoringInfo(indelScoringInfo,evaluationIndel,false,evaluationIndel,score+ep.refToIndelErrorProb.getLogValue(),&candAlignment);
+                    updateIndelScoringInfo(indelScoringInfo,evaluationIndel,false,evaluationIndel,score+errorRates.refToIndelErrorProb.getLogValue(),&candAlignment);
                 }
             }
         }
@@ -1059,7 +1062,7 @@ score_indels(
             {
                 IndelData* evaluationIndelDataPtr(indelBuffer.getIndelDataPtr(evaluationIndel));
                 assert(nullptr != evaluationIndelDataPtr);
-                IndelSampleData& evaluationIndelSampleData(evaluationIndelDataPtr->getSampleData(sampleId));
+                IndelSampleData& evaluationIndelSampleData(evaluationIndelDataPtr->getSampleData(sampleIndex));
                 evaluationIndelSampleData.read_path_lnp[rseg.id()] = rps;
             }
 

@@ -47,7 +47,7 @@ score_indels(
     const starling_sample_options& sample_opt,
     const read_segment& rseg,
     IndelBuffer& indelBuffer,
-    const unsigned sampleId,
+    const unsigned sampleIndex,
     const std::set<candidate_alignment>& candAlignments,
     const bool is_incomplete_search,
     const std::vector<double>& candAlignmentScores,

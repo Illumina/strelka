@@ -261,7 +261,7 @@ starling_run(
     starling_read_counts readCounts;
     reference_contig_segment ref;
 
-    const unsigned sampleCount(opt.alignFileOpt.alignmentFilename.size());
+    const unsigned sampleCount(opt.getSampleCount());
 
     ////////////////////////////////////////
     // setup streamData:

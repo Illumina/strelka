@@ -18,6 +18,7 @@
 //
 
 #pragma once
+
 #include "IndelErrorModelMetadata.hh"
 #include "IndelErrorRateSet.hh"
 
@@ -32,32 +33,46 @@ struct IndelErrorModel
     /// or from a json parameter file otherwise.
     ///
     IndelErrorModel(
+        const unsigned sampleCount,
         const std::string& modelName,
         const std::string& modelFilename);
 
     /// \brief Retrieve indel error rates for a specific indel type.
     ///
-    /// \param[in] isCandidateRates If true, retrieve rates to be used for indel candidate testing.
+    /// The function currently uses the sample index as a proxy for a set of read groups with a shared sample-prep/
+    /// sequencing error noise profile. Over time sampleIndex should be replaced with a more correct type of
+    /// 'sequencingAssayGroupIndex'
+    ///
+    /// \param[in] sampleIndex Index of the sample for which indel error rates should be returned
+    /// \param[in] isCandidateRates If true, retrieve rates to be used for indel candidate testing
     void
     getIndelErrorRate(
+        const unsigned sampleIndex,
         const IndelKey& indelKey,
         const AlleleReportInfo& indelReportInfo,
         double& refToIndelErrorProb,
         double& indelToRefErrorProb,
         const bool isCandidateRates = false) const;
 
-    void
-    deserializeIndelModels
-    (const std::string& modelFilename,
-     const Json::Value& root);
-
 private:
+    void
+    deserializeIndelModels(
+        const std::string& modelFilename,
+        const Json::Value& root);
+
     IndelErrorModelMetadata _meta;
+
+    /// \brief Standard indel error rates
     IndelErrorRateSet _errorRates;
 
-    /// error rates used for candidate indel selection only
+    /// \brief Error rates used for candidate indel selection only
     IndelErrorRateSet _candidateErrorRates;
+
+    /// \brief Track total number of expected samples to help support
+    /// sample-specific error rates
+    unsigned _sampleCount;
 };
+
 
 class AdaptiveIndelErrorModelLogParams
 {
@@ -66,7 +81,7 @@ public:
     double logNoisyLocusRate = -std::numeric_limits<double>::infinity();
 };
 
-// TODO: This class will be useful when we put in the production estimator
+
 class AdaptiveIndelErrorModel
 {
 public:

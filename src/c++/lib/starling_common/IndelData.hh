@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -205,12 +205,40 @@ private:
 };
 
 
-/// indel allele data specific to one sample
+
+struct IndelErrorRates
+{
+    LogValuePair refToIndelErrorProb;
+    LogValuePair indelToRefErrorProb;
+
+    /// These rates are only used by the indel candidacy model
+    LogValuePair candidateRefToIndelErrorProb;
+    LogValuePair candidateIndelToRefErrorProb;
+};
+
+
+
+/// \brief Indel allele data which are specific to one sample
 struct IndelSampleData
 {
+    /// \brief Initialize error rates
+    void
+    initializeAuxInfo(
+        const starling_base_options& opt,
+        const starling_base_deriv_options& dopt,
+        const unsigned sampleIndex,
+        const IndelKey& indelKey,
+        const AlleleReportInfo& indelReportInfo);
+
     void
     addIndelObservation(
         const IndelObservationData& obs_data);
+
+    const IndelErrorRates&
+    getErrorRates() const
+    {
+        return _errorRates;
+    }
 
 // ------------- data ------------------
 
@@ -241,23 +269,15 @@ struct IndelSampleData
 
     uint8_t haplotypeId;    // 0: reference; 1: haplotype 1; 2: haplotype 2; 3: haplotype 1 and 2
     float altAlleleHaplotypeCountRatio;
+
+private:
+    // cache indel error rates for this sample:
+    IndelErrorRates _errorRates;
 };
 
 
 
-struct IndelErrorRates
-{
-    LogValuePair refToIndelErrorProb;
-    LogValuePair indelToRefErrorProb;
-
-    /// These rates are only used by the indel candidacy model
-    LogValuePair candidateRefToIndelErrorProb;
-    LogValuePair candidateIndelToRefErrorProb;
-};
-
-
-
-/// indel allele data which is shared across all samples
+/// \brief Indel allele data which is shared across all samples
 struct IndelData
 {
     IndelData(
@@ -269,7 +289,9 @@ struct IndelData
         assert(sampleCount >= 1);
     }
 
-    /// initialize reporting and error structs
+    /// \brief Initialize all class data which does not depend on read observations
+    ///
+    /// This includes reporting info and per-sample error rates.
     void
     initializeAuxInfo(
         const starling_base_options& opt,
@@ -283,10 +305,10 @@ struct IndelData
     }
 
     IndelSampleData&
-    getSampleData(const unsigned sampleId)
+    getSampleData(const unsigned sampleIndex)
     {
-        assert(sampleId<_sampleData.size());
-        return _sampleData[sampleId];
+        assert(sampleIndex<_sampleData.size());
+        return _sampleData[sampleIndex];
     }
 
     const IndelSampleData&
@@ -298,8 +320,8 @@ struct IndelData
 
     void
     addIndelObservation(
-        const unsigned sampleId,
-        const IndelObservationData& obs_data);
+        const unsigned sampleIndex,
+        const IndelObservationData& observationData);
 
     /// return the consensus breakend seqeunce
     ///
@@ -327,12 +349,6 @@ struct IndelData
         return _reportInfo;
     }
 
-    const IndelErrorRates&
-    getErrorRates() const
-    {
-        return _errorRates;
-    }
-
 private:
     friend std::ostream& operator<<(std::ostream& os, const IndelData& indelData);
 public:
@@ -353,8 +369,8 @@ public:
 
     bool isConfirmedInActiveRegion = false;
 
-    /// status is used to facilitate effecient computation of candidate status by caching the result
-    /// after the first time canidate status is computed.
+    /// status is used to facilitate efficient computation of candidate status by caching the result
+    /// after the first time candidate status is computed.
     ///
     /// this is only read/mutated by IndelBuffer so probably should be private/friend instead of public
     mutable status_t status;
@@ -366,10 +382,8 @@ private:
     /// indel key stored for debugging only
     IndelKey _indelKey;
 
-    /// cache sequencing properties and associated error rates derived from the allele
-    /// description, but which are not dependent on any sample data:
+    /// cache allele description, which is not dependent on any sample data:
     AlleleReportInfo _reportInfo;
-    IndelErrorRates _errorRates;
 };
 
 
@@ -379,4 +393,3 @@ std::ostream& operator<<(std::ostream& os, const IndelObservationData& id);
 std::ostream& operator<<(std::ostream& os, const ReadPathScores& rps);
 std::ostream& operator<<(std::ostream& os, const IndelSampleData& indelSampleData);
 std::ostream& operator<<(std::ostream& os, const IndelData& indelData);
-

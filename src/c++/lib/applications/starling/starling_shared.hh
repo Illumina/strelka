@@ -24,7 +24,6 @@
 #pragma once
 
 #include "gvcf_options.hh"
-#include "options/AlignmentFileOptions.hh"
 #include "starling_common/starling_base_shared.hh"
 
 
@@ -73,16 +72,22 @@ struct starling_options : public starling_base_options
         return (isReportEVSFeatures || (! snv_scoring_model_filename.empty()) || (! indel_scoring_model_filename.empty()));
     }
 
+    const AlignmentFileOptions&
+    getAlignmentFileOptions() const override
+    {
+        return alignFileOpt;
+    }
+
     AlignmentFileOptions alignFileOpt;
 
     // empirical scoring models
     std::string snv_scoring_model_filename;
     std::string indel_scoring_model_filename;
 
-    // Apply variant phasing:
+    /// \brief Turn on read backed variant phasing if true
     bool isUseVariantPhaser = false;
 
-    // apply special behaviors for RNA-Seq analysis
+    /// \brief Apply special behaviors for RNA-Seq analysis if true
     bool isRNA = false;
 
     gvcf_options gvcf;

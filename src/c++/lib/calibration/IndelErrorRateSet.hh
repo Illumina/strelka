@@ -29,7 +29,7 @@
 
 namespace IndelErrorRateType
 {
-/// the indel error model current reduces all alternate alleles to the following
+/// the indel error model reduces all alternate alleles to the following
 /// simplified states
 ///
 enum index_t
@@ -61,7 +61,7 @@ getRateType(
 }
 
 
-/// Helper object used by IndelErrorModel to store a set of error rates
+/// \brief Helper object used by IndelErrorModel to store a set of error rates
 ///
 /// The rate storage grows dynamically as entries are given with different repeatingPatternSize and patternRepeatCount,
 /// with the following constraints:
@@ -173,9 +173,9 @@ struct IndelErrorRateSet
         indelRates.noisyLocusRate=noisyLocusRate;
     }
 
-    /// Check for a valid rate initialization pattern
+    /// \brief Check for a valid rate initialization pattern
     ///
-    /// this must be called before calling getRates
+    /// This must be called before calling getRates
     void
     finalizeRates()
     {

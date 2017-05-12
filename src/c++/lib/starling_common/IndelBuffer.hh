@@ -82,7 +82,7 @@ struct IndelBuffer
     ///
     bool
     addIndelObservation(
-        const unsigned sampleId,
+        const unsigned sampleIndex,
         const IndelObservation& obs);
 
     /// position iterators based on left-most indel position:

@@ -95,7 +95,7 @@ rangeIterator(
 bool
 IndelBuffer::
 addIndelObservation(
-    const unsigned sampleId,
+    const unsigned sampleIndex,
     const IndelObservation& obs)
 {
     assert(_isFinalized);
@@ -115,7 +115,7 @@ addIndelObservation(
     {
         indelData.initializeAuxInfo(_opt,_dopt, _ref);
     }
-    indelData.addIndelObservation(sampleId, obs.data);
+    indelData.addIndelObservation(sampleIndex, obs.data);
 
     return isNovel;
 }
@@ -167,7 +167,7 @@ isCandidateIndelImplTestSignalNoise(
         // Test to see if the observed indel coverage has a binomial exact test
         // p-value above the rejection threshold. If this does not occur for the
         // counts observed in any sample, the indel cannot become a candidate
-        if (_countCache.isRejectNull(totalReadCount, indelData.getErrorRates().candidateIndelToRefErrorProb.getValue(), tier1ReadSupportCount))
+        if (_countCache.isRejectNull(totalReadCount, indelSampleData.getErrorRates().candidateIndelToRefErrorProb.getValue(), tier1ReadSupportCount))
         {
             return true;
         }

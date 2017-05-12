@@ -38,7 +38,7 @@ starling_base_deriv_options(const starling_base_options& opt)
     , variant_window_last_stage(0)
     , countCache(opt.indel_candidate_signal_test_alpha)
     , logIndelRefErrorFactor(std::log(opt.indelRefErrorFactor))
-    , _indelErrorModel(new IndelErrorModel(opt.indel_error_model_name,opt.indel_error_models_filename))
+    , _indelErrorModel(new IndelErrorModel(opt.getSampleCount(), opt.indel_error_model_name,opt.indel_error_models_filename))
     , _indelGenotypePriors(new GenotypePriorSet(opt.bindel_diploid_theta, opt.indelHighRepeatTheta, opt.indelHighRepeatCount))
 {
     indel_nonsite_match_lnp=std::log(opt.indel_nonsite_match_prob);

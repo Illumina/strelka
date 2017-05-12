@@ -133,17 +133,17 @@ scaleIndelErrorRate(
 
 
 void
-IndelData::
+IndelSampleData::
 initializeAuxInfo(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
-    const reference_contig_segment& ref)
+    const unsigned sampleIndex,
+    const IndelKey& indelKey,
+    const AlleleReportInfo& indelReportInfo)
 {
-    getAlleleReportInfo(_indelKey, ref, _reportInfo);
-
     double refToIndelErrorProb;
     double indelToRefErrorProb;
-    dopt.getIndelErrorModel().getIndelErrorRate(_indelKey, _reportInfo, refToIndelErrorProb, indelToRefErrorProb);
+    dopt.getIndelErrorModel().getIndelErrorRate(sampleIndex, indelKey, indelReportInfo, refToIndelErrorProb, indelToRefErrorProb);
 
     if (opt.isIndelRefErrorFactor)
     {
@@ -153,7 +153,7 @@ initializeAuxInfo(
     _errorRates.refToIndelErrorProb.updateValue(refToIndelErrorProb);
     _errorRates.indelToRefErrorProb.updateValue(indelToRefErrorProb);
 
-    dopt.getIndelErrorModel().getIndelErrorRate(_indelKey, _reportInfo, refToIndelErrorProb, indelToRefErrorProb, true);
+    dopt.getIndelErrorModel().getIndelErrorRate(sampleIndex, indelKey, indelReportInfo, refToIndelErrorProb, indelToRefErrorProb, true);
 
     _errorRates.candidateRefToIndelErrorProb.updateValue(refToIndelErrorProb);
     _errorRates.candidateIndelToRefErrorProb.updateValue(indelToRefErrorProb);
@@ -163,37 +163,55 @@ initializeAuxInfo(
 
 void
 IndelData::
+initializeAuxInfo(
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
+    const reference_contig_segment& ref)
+{
+    getAlleleReportInfo(_indelKey, ref, _reportInfo);
+
+    const unsigned sampleCount(getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    {
+        getSampleData(sampleIndex).initializeAuxInfo(opt, dopt, sampleIndex, _indelKey, _reportInfo);
+    }
+}
+
+
+
+void
+IndelData::
 addIndelObservation(
-    const unsigned sampleId,
-    const IndelObservationData& obs_data)
+    const unsigned sampleIndex,
+    const IndelObservationData& observationData)
 {
 #ifdef DEBUG_ID
-    log_os << "KATTER: input obs: " << obs_data;
+    log_os << "KATTER: input obs: " << observationData;
 #endif
 
     // never reset the flags to false if they are true already
-    if (! is_external_candidate) is_external_candidate=obs_data.is_external_candidate;
-    if (! isForcedOutput) isForcedOutput=obs_data.is_forced_output;
+    if (! is_external_candidate) is_external_candidate=observationData.is_external_candidate;
+    if (! isForcedOutput) isForcedOutput=observationData.is_forced_output;
 
     if (_indelKey.is_breakpoint())
     {
-        _breakpointInsertSeq.addObservation(obs_data.breakpointInsertionSequence);
+        _breakpointInsertSeq.addObservation(observationData.breakpointInsertionSequence);
     }
     else
     {
-        if (not obs_data.breakpointInsertionSequence.empty())
+        if (not observationData.breakpointInsertionSequence.empty())
         {
             using namespace illumina::common;
 
             std::ostringstream oss;
             oss << "ERROR: indel observation sets breakpoint insertion sequence for a non-breakpoint allele: " << _indelKey << "\n";
-            oss << "\tobservationData: " << obs_data << "\n";
+            oss << "\tobservationData: " << observationData << "\n";
             BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
 
     }
 
-    getSampleData(sampleId).addIndelObservation(obs_data);
+    getSampleData(sampleIndex).addIndelObservation(observationData);
 }
 
 

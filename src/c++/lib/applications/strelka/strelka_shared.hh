@@ -100,6 +100,12 @@ struct strelka_options : public starling_base_options
         return (! somatic_indel_scoring_model_filename.empty());
     }
 
+    const AlignmentFileOptions&
+    getAlignmentFileOptions() const override
+    {
+        return alignFileOpt;
+    }
+
     TumorNormalAlignmentFileOptions alignFileOpt;
 
     std::string tumor_realigned_read_filename;

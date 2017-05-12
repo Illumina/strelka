@@ -20,7 +20,6 @@
 #pragma once
 
 #include "blt_util/chrom_depth_map.hh"
-#include "options/AlignmentFileOptions.hh"
 #include "starling_common/starling_base_shared.hh"
 
 
@@ -62,6 +61,12 @@ struct SequenceErrorCountsOptions : public starling_base_options
     bool is_write_observations() const
     {
         return (! observationsBedFilename.empty());
+    }
+
+    const AlignmentFileOptions&
+    getAlignmentFileOptions() const override
+    {
+        return alignFileOpt;
     }
 
     AlignmentFileOptions alignFileOpt;

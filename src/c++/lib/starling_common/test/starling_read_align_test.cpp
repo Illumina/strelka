@@ -22,6 +22,7 @@
 #include "starling_read_align.cpp"
 
 // required to mock-up a read segment:
+#include "starling_base_options_test.hh"
 #include "htsapi/align_path_bam_util.hh"
 #include "starling_read.hh"
 
@@ -29,7 +30,7 @@
 
 BOOST_AUTO_TEST_SUITE( starling_read_align )
 
-// test results of placing a single indel into a standard background:
+/// \brief Return the alignment resulting from inserting a single indel into a standard background:
 static
 candidate_alignment
 test_indel_placement(
@@ -334,6 +335,7 @@ BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 }
 
 
+
 BOOST_AUTO_TEST_CASE( test_realign_and_score_read )
 {
     // the realigner normally throws away edge soft-clipping to try to produce more indel information, this
@@ -344,7 +346,7 @@ BOOST_AUTO_TEST_CASE( test_realign_and_score_read )
     // helpful test utility functions -- in particular generating a bam_record object directly from a valid
     // SAM string
     {
-        starling_base_options opt;
+        starling_base_options_test opt;
         opt.isRetainOptimalSoftClipping = true;
         opt.is_user_genome_size = true;
         opt.user_genome_size = 1000000;

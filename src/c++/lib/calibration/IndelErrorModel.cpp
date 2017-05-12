@@ -122,18 +122,20 @@ getSimplifiedAdaptiveParameters()
     return rates;
 }
 
-void
-IndelErrorModel::deserializeIndelModels
-(const std::string& modelFilename,
- const Json::Value& root)
-{
 
+
+void
+IndelErrorModel::
+deserializeIndelModels(
+    const std::string& modelFilename,
+    const Json::Value& root)
+{
     Json::Value motifs = root["motifs"];
     if (motifs.isNull())
     {
         using namespace illumina::common;
         std::ostringstream oss;
-        oss << "ERROR: no motifs in model file '" << modelFilename << "'\n";
+        oss << "ERROR: no indel motifs in indel error rate file '" << modelFilename << "'\n";
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 
@@ -145,14 +147,16 @@ IndelErrorModel::deserializeIndelModels
         const unsigned repeatPatternSize = motifValue["repeatPatternSize"].asInt();
         _errorRates.addRate(repeatPatternSize, repeatCount, indelRate, indelRate, noisyLocusRate);
     }
-
 }
+
 
 
 IndelErrorModel::
 IndelErrorModel(
+    const unsigned sampleCount,
     const std::string& modelName,
     const std::string& modelFilename)
+    : _sampleCount(sampleCount)
 {
     if (modelFilename.empty())
     {
@@ -212,6 +216,7 @@ IndelErrorModel(
 void
 IndelErrorModel::
 getIndelErrorRate(
+    const unsigned sampleIndex,
     const IndelKey& indelKey,
     const AlleleReportInfo& indelReportInfo,
     double& refToIndelErrorProb,
@@ -219,6 +224,8 @@ getIndelErrorRate(
     const bool isCandidateRates) const
 {
     using namespace IndelErrorRateType;
+
+    assert(sampleIndex < _sampleCount);
 
     // tmp transition step:
     const IndelErrorRateSet& errorRates(isCandidateRates ? _candidateErrorRates : _errorRates);

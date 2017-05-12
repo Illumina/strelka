@@ -24,6 +24,7 @@
 #include "blt_common/blt_shared.hh"
 #include "blt_util/PrettyFloat.hh"
 #include "blt_util/reference_contig_segment.hh"
+#include "options/AlignmentFileOptions.hh"
 #include "starling_common/min_count_binom_gte_cache.hh"
 #include "starling_common/starling_align_limit.hh"
 #include "starling_common/Tier2Options.hh"
@@ -68,6 +69,17 @@ struct starling_base_options : public blt_options
     isUseCallRegions() const
     {
         return (not callRegionsBedFilename.empty());
+    }
+
+    /// \brief Provide access the input alignment file list
+    virtual
+    const AlignmentFileOptions&
+    getAlignmentFileOptions() const = 0;
+
+    unsigned
+    getSampleCount() const
+    {
+        return getAlignmentFileOptions().alignmentFilename.size();
     }
 
     std::string referenceFilename;
