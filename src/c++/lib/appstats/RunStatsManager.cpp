@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "RunStatsManager.hh"
 #include "common/Exceptions.hh"
 

@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "starling_run.hh"
 #include "starling_pos_processor.hh"
 #include "starling_streams.hh"
@@ -49,9 +45,10 @@ enum index_t
 }
 
 
-
-/// (1) validate sample count/sample name match to input alignment files
-/// (2) construct a sample index translation map
+/// \brief Parse sample names from ploidy VCF and match these to expected sample names
+///
+/// 1. Validate sample count/sample name match to input alignment files
+/// 2. Construct a sample index translation map
 ///
 /// \param[out] sampleIndexToPloidyVcfSampleIndex translate from the primary sample index order
 ///                 (derived from input alignment file order) to the VCF sample index (index in VCF sample columns)

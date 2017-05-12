@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #pragma once
 
 #include "RunStats.hh"
@@ -32,8 +28,8 @@
 #include <string>
 
 
-/// handles all messy real world interaction for the stats module,
-/// stats module itself just accumulates data
+/// \brief Handles all messy real world interaction for the stats module, while the stats module itself just
+///        accumulates data
 ///
 struct RunStatsManager : private boost::noncopyable
 {

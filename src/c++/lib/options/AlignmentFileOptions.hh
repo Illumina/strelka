@@ -24,7 +24,7 @@
 #include <vector>
 
 
-/// BAM/CRAM input file object shared by all programs which require these as input
+/// \brief Input alignment file object shared by all programs which require these as input
 struct AlignmentFileOptions
 {
     typedef std::vector<std::string> files_t;

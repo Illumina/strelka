@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -168,11 +168,11 @@ is_valid_bam_seq(const bam_seq& bs)
 
 
 
-/// sanity-check bam record for general validity, and strelka-specific restrictions
+/// \brief Sanity-check bam record for general validity, and strelka-specific restrictions
 ///
-/// most issues here will trigger an error/exit
+/// Note that most issues here will trigger an error/exit.
 ///
-/// \return false if read should be filtered
+/// \return False if read should be filtered
 ///
 static
 bool

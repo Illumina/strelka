@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #pragma once
 
 #include "starling_common/prog_info_base.hh"

@@ -23,8 +23,8 @@
 #include "AlignmentFileOptions.hh"
 
 
-/// bam input file object for tumor/normal comparisons
+/// \brief Input alignment file object for tumor/normal comparisons
 struct TumorNormalAlignmentFileOptions : public AlignmentFileOptions
 {
-    std::vector<bool> isAlignmentTumor; ///< indicates which positions in the alignmnetFilename correspond to tumor
+    std::vector<bool> isAlignmentTumor; ///< indicates which positions in the alignmnetFilename vector correspond to tumor
 };

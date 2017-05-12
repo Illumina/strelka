@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #pragma once
 
 #include "starling_pos_processor_base_stages.hh"
@@ -252,8 +248,7 @@ struct starling_base_options : public blt_options
 
 
 
-// allow for sample-specific parameter values:
-//
+/// \brief Store sample-specific parameter values
 struct starling_sample_options
 {
     explicit
@@ -271,11 +266,9 @@ struct IndelErrorModel;
 struct GenotypePriorSet;
 
 
-/// data deterministically derived from the input options:
+/// \brief Parameters deterministically derived from the input options
 ///
-/// Note that non-copyable status is in here b/c of all the unique ptrs below,
-/// if needed workaround by usual c++ methods (shared_ptr, move ctor, etc..)
-///
+/// Note noncopyable required because of the unique ptrs.
 struct starling_base_deriv_options : public blt_deriv_options, private boost::noncopyable
 {
     typedef blt_deriv_options base_t;

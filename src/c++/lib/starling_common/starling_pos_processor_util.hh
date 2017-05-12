@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -35,7 +35,7 @@
 #include <functional>
 
 
-/// register a set of alignment files to the hts streamer and verify consistency conditions.
+/// \brief Register a set of alignment files to the hts streamer and verify consistency conditions.
 std::vector<std::reference_wrapper<const bam_hdr_t> >
 registerAlignments(
     const std::vector<std::string>& alignmentFilename,
@@ -87,11 +87,11 @@ convert_vcfrecord_to_indel_allele(
     IndelObservation& obs);
 
 
-/// insert a candidate indel into posProcessor
+/// \brief Insert a candidate indel into posProcessor
 ///
-/// typically used for candidate indel input from a vcf record
+/// This is typically used for candidate indel input from a vcf record.
 ///
-/// \param is_forced_output - the results of the genotype type must be output for this indel, no matter how unlikely the variant is:
+/// \param is_forced_output[in] If true, then genotyping results must appear in the output for this indel.
 void
 process_candidate_indel(
     const unsigned max_indel_size,

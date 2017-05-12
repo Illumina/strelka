@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "starling_common/starling_base_shared.hh"
 
 #include "blt_util/math_util.hh"

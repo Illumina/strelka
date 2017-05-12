@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -29,7 +29,9 @@
 #include <array>
 
 
-/// singleton helper class for qscore.hh
+/// \brief Helper class used to precompute/cache quality scores
+///
+/// This is a singleton helper class used to accelerate quality services provided by qscore.hh.
 struct qphred_cache
 {
     static
