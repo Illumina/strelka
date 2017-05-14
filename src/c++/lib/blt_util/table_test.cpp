@@ -100,7 +100,7 @@ table_exact_pval(const int* table,
     std::cerr << "table:\n";
     for (unsigned i(0); i<n_row; ++i)
     {
-        for (unsigned j(0); j<n_col++j)
+        for (unsigned j(0); j<n_col; ++j)
         {
             if (j) std::cerr << " ";
             std::cerr << table[j+i*n_col];
