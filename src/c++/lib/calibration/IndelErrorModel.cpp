@@ -130,6 +130,11 @@ deserializeIndelModels(
     const std::string& modelFilename,
     const Json::Value& root)
 {
+    // assume this is single sample for now:
+    _isUseSampleSpecificErrorRates = true;
+    _sampleErrorRates.resize(1);
+    auto& errorRates = getIndelErrorRateSet();
+
     Json::Value motifs = root["motifs"];
     if (motifs.isNull())
     {
@@ -145,28 +150,48 @@ deserializeIndelModels(
         const double noisyLocusRate = motifValue["noisyLocusRate"].asDouble();
         const unsigned repeatCount = motifValue["repeatCount"].asInt();
         const unsigned repeatPatternSize = motifValue["repeatPatternSize"].asInt();
-        _errorRates.addRate(repeatPatternSize, repeatCount, indelRate, indelRate, noisyLocusRate);
+        errorRates.addRate(repeatPatternSize, repeatCount, indelRate, indelRate, noisyLocusRate);
     }
+}
+
+
+
+void
+IndelErrorModel::
+checkSampleIndex(
+    const unsigned sampleIndex) const
+{
+    if (sampleIndex < _sampleCount) return;
+    using namespace illumina::common;
+    std::ostringstream oss;
+    oss << "ERROR: Requested indel error rates for sample index " << sampleIndex << " when only "
+        << _sampleCount << " samples are defined\n";
+    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
 }
 
 
 
 IndelErrorModel::
 IndelErrorModel(
-    const unsigned sampleCount,
+    const std::vector<std::string>& alignmentFilenames,
     const std::string& modelName,
     const std::string& modelFilename)
-    : _sampleCount(sampleCount)
+    : _sampleCount(alignmentFilenames.size())
 {
     if (modelFilename.empty())
     {
+        // Hard-coded indel error models are never sample-specific
+        //
+        _isUseSampleSpecificErrorRates = false;
+        _sampleErrorRates.resize(1);
+
         if (modelName == "logLinear")
         {
-            _errorRates = getLogLinearIndelErrorModel();
+            getIndelErrorRateSet() = getLogLinearIndelErrorModel();
         }
         else if (modelName == "adaptiveDefault")
         {
-            _errorRates = getSimplifiedAdaptiveParameters();
+            getIndelErrorRateSet() = getSimplifiedAdaptiveParameters();
         }
         else
         {
@@ -200,10 +225,12 @@ IndelErrorModel(
             oss << "Failed to parse JSON " << modelFilename << " " << reader.getFormattedErrorMessages() << "'\n";
             BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
-
     }
 
-    _errorRates.finalizeRates();
+    for (auto& errorRates : _sampleErrorRates)
+    {
+        errorRates.finalizeRates();
+    }
 
     // the indel candidate model always uses the v2.7.x log-linear indel error ramp:
     _candidateErrorRates = getLogLinearIndelErrorModel();
@@ -225,10 +252,10 @@ getIndelErrorRate(
 {
     using namespace IndelErrorRateType;
 
-    assert(sampleIndex < _sampleCount);
+    checkSampleIndex(sampleIndex);
 
-    // tmp transition step:
-    const IndelErrorRateSet& errorRates(isCandidateRates ? _candidateErrorRates : _errorRates);
+    // tmp transition step until candidate error rates can be removed:
+    const IndelErrorRateSet& errorRates(isCandidateRates ? _candidateErrorRates : getIndelErrorRateSet(sampleIndex));
 
     const index_t indelType(getRateType(indelKey));
     // determine simple case

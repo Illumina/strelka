@@ -33,7 +33,7 @@
 
 typedef std::vector<std::unique_ptr<LocusInfo>> LocusBuffer;
 
-/// short-range phasing utility using information from ActiveRegions
+/// \brief Short-range phasing utility using information from ActiveRegions
 struct VariantPhaser : public variant_pipe_stage_base
 {
     VariantPhaser(

@@ -93,7 +93,7 @@ getDeletionLocusInfo(
     indelKey.type=INDEL::INDEL;
     indelKey.deletionLength=indelLength;
 
-    IndelData indelData(1,indelKey);
+    IndelData indelData(sampleCount,indelKey);
     indelData.getSampleData(sampleIndex).haplotypeId = haplotypeId;
 
     std::unique_ptr<GermlineDiploidIndelLocusInfo> indelInfo(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, activeRegionId));
@@ -143,19 +143,25 @@ getSnvLocusInfo(
 }
 
 
+static
+starling_options
+getMockOptions(const char* refSeq)
+{
+    starling_options opt;
+    opt.is_user_genome_size = true;
+    opt.user_genome_size = strlen(refSeq);
+    opt.alignFileOpt.alignmentFilename.push_back("sample.bam");
+    opt.isUseVariantPhaser = true;
+    return opt;
+}
+
+
 BOOST_AUTO_TEST_SUITE( variantPhaserTest )
 
 BOOST_AUTO_TEST_CASE( simplePhasingTest )
 {
-    reference_contig_segment rcs;
-    rcs.seq() = "CAAACAAAAAAACAAAAAAAAACAAAAAATC";
-
-    starling_options opt;
-    opt.is_user_genome_size = true;
-    opt.user_genome_size = rcs.seq().size();
-    opt.isUseVariantPhaser = true;
-
-    starling_deriv_options dopt(opt);
+    const starling_options opt = getMockOptions("CAAACAAAAAAACAAAAAAAAACAAAAAATC");
+    const starling_deriv_options dopt(opt);
 
     std::shared_ptr<DummyVariantSink> next(new DummyVariantSink);
 
@@ -192,28 +198,21 @@ BOOST_AUTO_TEST_CASE( simplePhasingTest )
     phaser.flush();
 
     // indel pos: 4, deletionLength: 2, hap 1, genotype: 0|1
-    BOOST_CHECK(next->check(false, 4, true, 0, 1));
+    BOOST_REQUIRE(next->check(false, 4, true, 0, 1));
     // pos: 12, C->G, hap 1, genotype: 0|1
-    BOOST_CHECK(next->check(true, 12, true, 0, 1));
+    BOOST_REQUIRE(next->check(true, 12, true, 0, 1));
     // pos: 13, deletionLength: 1, hap 2, genotype: 1|0
-    BOOST_CHECK(next->check(false, 13, true, 1, 0));
+    BOOST_REQUIRE(next->check(false, 13, true, 1, 0));
     // pos: 13, A->C, hap 1, genotype: 0|1
-    BOOST_CHECK(next->check(true, 13, true, 0, 1));
+    BOOST_REQUIRE(next->check(true, 13, true, 0, 1));
     // pos: 29, T->C, hap 1 and 2, genotype: 1/1
-    BOOST_CHECK(next->check(true, 29, false, 1, 1));
+    BOOST_REQUIRE(next->check(true, 29, false, 1, 1));
 }
 
 BOOST_AUTO_TEST_CASE( phasingConflictTest )
 {
-    reference_contig_segment rcs;
-    rcs.seq() = "CAAACAT";
-
-    starling_options opt;
-    opt.is_user_genome_size = true;
-    opt.user_genome_size = rcs.seq().size();
-    opt.isUseVariantPhaser = true;
-
-    starling_deriv_options dopt(opt);
+    const starling_options opt = getMockOptions("CAAACAT");
+    const starling_deriv_options dopt(opt);
 
 //        std::shared_ptr<variant_pipe_stage_base> next(new DummyVariantSink);
     std::shared_ptr<DummyVariantSink> next(new DummyVariantSink);
@@ -247,13 +246,13 @@ BOOST_AUTO_TEST_CASE( phasingConflictTest )
     phaser.flush();
 
     // pos: 1, A->T, hap 1, genotype: 0|1
-    BOOST_CHECK(next->check(true, 1, true, 0, 1));
+    BOOST_REQUIRE(next->check(true, 1, true, 0, 1));
     // pos: 2, A->T, not in selected haplotype, genotype should be 0/1 (unphased)
-    BOOST_CHECK(next->check(true, 2, false, 0, 1));
+    BOOST_REQUIRE(next->check(true, 2, false, 0, 1));
     // pos: 4, deletionLength: 1, hap 1 and 2 (id==3), genotype should be 0/1 (unphased)
-    BOOST_CHECK(next->check(false, 4, false, 0, 1));
+    BOOST_REQUIRE(next->check(false, 4, false, 0, 1));
     // pos: 6, A->G, hap 2, genotype: 1|0
-    BOOST_CHECK(next->check(true, 6, true, 1, 0));
+    BOOST_REQUIRE(next->check(true, 6, true, 1, 0));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -32,24 +32,23 @@
 #include <memory>
 
 
-/// client interface to variant scoring models specified by file at runtime
+/// \brief Client interface to variant scoring models specified by file at runtime
 ///
 struct VariantScoringModelServer
 {
-    /// \param featureMap Names of features supported in the client code, each feature
-    ///                   name should be mapped to a feature index number.
+    /// \param[in] featureMap Names of features supported in the client code, each feature
+    ///                       name should be mapped to a feature index number.
     VariantScoringModelServer(
         const VariantScoringModelMetadata::featureMap_t& featureMap,
         const std::string& model_file,
         const SCORING_CALL_TYPE::index_t callType,
         const SCORING_VARIANT_TYPE::index_t variantType);
 
-    /// \return prob variant call is false
+    /// \return Probability that the variant call is false
     double
     scoreVariant(
         const VariantScoringModelBase::featureInput_t& features) const
     {
-
         return std::max(0.,std::min(1.,(_meta.probScale * std::pow(_model->getProb(features), _meta.probPow))));
     }
 

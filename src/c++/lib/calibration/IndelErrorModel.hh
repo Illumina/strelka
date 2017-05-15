@@ -32,8 +32,12 @@ struct IndelErrorModel
     /// \brief Initialize indel error model to either a precomputed static model (if \p modelFilename is empty),
     /// or from a json parameter file otherwise.
     ///
+    /// \param[in] alignmentFilenames Name and indexed order of alignment files, which can be used to sync sample
+    ///                           index values in the indel error model file
+    /// \param[in] modelName Name of selected static indel error model to use, ignored if \p modelFilename is non-empty
+    /// \param[in] modelFilename Indel error model structure/parameters initialized fromt he given file
     IndelErrorModel(
-        const unsigned sampleCount,
+        const std::vector<std::string>& alignmentFilenames,
         const std::string& modelName,
         const std::string& modelFilename);
 
@@ -60,15 +64,39 @@ private:
         const std::string& modelFilename,
         const Json::Value& root);
 
+    void
+    checkSampleIndex(
+        const unsigned sampleIndex) const;
+
+    IndelErrorRateSet&
+    getIndelErrorRateSet(
+        const unsigned sampleIndex = 0)
+    {
+        checkSampleIndex(sampleIndex);
+        const unsigned sampleIndexUsed(_isUseSampleSpecificErrorRates ? 0 : sampleIndex);
+        return _sampleErrorRates[sampleIndexUsed];
+    }
+
+    const IndelErrorRateSet&
+    getIndelErrorRateSet(
+        const unsigned sampleIndex = 0) const
+    {
+        checkSampleIndex(sampleIndex);
+        const unsigned sampleIndexUsed(_isUseSampleSpecificErrorRates ? 0 : sampleIndex);
+        return _sampleErrorRates[sampleIndexUsed];
+    }
+
     IndelErrorModelMetadata _meta;
 
-    /// \brief Standard indel error rates
-    IndelErrorRateSet _errorRates;
+    bool _isUseSampleSpecificErrorRates = false;
+
+    /// \brief Standard indel error rates for each sample
+    std::vector<IndelErrorRateSet> _sampleErrorRates;
 
     /// \brief Error rates used for candidate indel selection only
     IndelErrorRateSet _candidateErrorRates;
 
-    /// \brief Track total number of expected samples to help support
+    /// \brief Track total number of expected samples in support of
     /// sample-specific error rates
     unsigned _sampleCount;
 };
