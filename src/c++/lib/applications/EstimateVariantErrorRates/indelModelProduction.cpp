@@ -428,7 +428,7 @@ indelModelProduction(
 
     std::vector<AdaptiveIndelErrorModel> adaptiveIndelErrorModels;
     std::vector<unsigned> repeatPatterns = {1, 2};
-    std::vector<unsigned> maxRepeatCounts = {16, 8};
+    std::vector<unsigned> maxRepeatCounts = {16, 9};
     const auto lowRepeatCount = AdaptiveIndelErrorModel::lowRepeatCount;
     assert(repeatPatterns.size() == maxRepeatCounts.size());
 
