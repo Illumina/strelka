@@ -66,10 +66,8 @@ struct IndelErrorModel
         const bool isCandidateRates = false) const;
 
 private:
-    void
-    deserializeIndelModels(
-        const std::string& modelFilename,
-        const Json::Value& root);
+    std::map<std::string, IndelErrorRateSet>
+    deserializeIndelModels(const std::vector<std::string>& modelFilenames);
 
     void
     checkSampleIndex(
