@@ -132,7 +132,7 @@ deserializeIndelModels(const std::vector<std::string>& modelFilenames)
         std::string jsonString;
         Json::Value root;
         {
-            std::ifstream ifs(modelFilenames[0] , std::ifstream::binary);
+            std::ifstream ifs(modelFilename , std::ifstream::binary);
             std::stringstream buffer;
             buffer << ifs.rdbuf();
             jsonString = buffer.str();
@@ -178,7 +178,7 @@ deserializeIndelModels(const std::vector<std::string>& modelFilenames)
             using namespace illumina::common;
 
             std::ostringstream oss;
-            oss << "Failed to parse JSON " << modelFilenames[0] << " " << reader.getFormattedErrorMessages() << "'\n";
+            oss << "Failed to parse JSON " << modelFilename << " " << reader.getFormattedErrorMessages() << "'\n";
             BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
 
@@ -254,8 +254,8 @@ IndelErrorModel(
                 using namespace illumina::common;
 
                 std::ostringstream oss;
-                oss << "Failed to find model for " << alignmentFilename << " using default model values'\n";
-                _sampleErrorRates[alignmentFileIndex] = getSimplifiedAdaptiveParameters();
+                oss << "ERROR: Failed to find indel error model for " << alignmentFilename << "'\n";
+                BOOST_THROW_EXCEPTION(LogicException(oss.str()));
             }
         }
     }
