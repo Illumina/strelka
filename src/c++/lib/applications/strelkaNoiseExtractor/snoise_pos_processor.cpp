@@ -32,7 +32,7 @@ snoise_pos_processor(
     const reference_contig_segment& ref,
     const snoise_streams& fileStreams,
     RunStatsManager& statsManager)
-    : base_t(opt, dopt, ref, fileStreams, opt.alignFileOpt.alignmentFilename.size(), statsManager),
+    : base_t(opt, dopt, ref, fileStreams, opt.alignFileOpt.alignmentFilenames.size(), statsManager),
       _fileStreams(fileStreams)
 {
     // setup indel buffer:

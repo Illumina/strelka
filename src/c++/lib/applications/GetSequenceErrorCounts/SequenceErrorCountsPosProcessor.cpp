@@ -35,7 +35,7 @@ SequenceErrorCountsPosProcessor(
     const reference_contig_segment& ref,
     const SequenceErrorCountsStreams& fileStreams,
     RunStatsManager& statsManager)
-    : base_t(opt, dopt, ref, fileStreams, opt.alignFileOpt.alignmentFilename.size(), statsManager),
+    : base_t(opt, dopt, ref, fileStreams, opt.alignFileOpt.alignmentFilenames.size(), statsManager),
       _opt(opt),
       _dopt(dopt),
       _streams(fileStreams)

@@ -44,7 +44,7 @@ ScoringModelManager(
     if (opt.isReportEVSFeatures)
     {
         // EVS feature output is constrained to the single-sample input case right now:
-        const unsigned sampleCount(opt.alignFileOpt.alignmentFilename.size());
+        const unsigned sampleCount(opt.alignFileOpt.alignmentFilenames.size());
         assert(1 == sampleCount);
     }
 

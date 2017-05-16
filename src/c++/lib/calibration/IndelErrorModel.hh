@@ -35,7 +35,7 @@ struct IndelErrorModel
     /// \param[in] alignmentFilenames Name and indexed order of alignment files, which can be used to sync sample
     ///                           index values in the indel error model file
     /// \param[in] modelName Name of selected static indel error model to use, ignored if \p modelFilename is non-empty
-    /// \param[in] modelFilename Indel error model structure/parameters initialized fromt he given file
+    /// \param[in] modelFilename Indel error model structure/parameters initialized from the given file
     IndelErrorModel(
         const std::vector<std::string>& alignmentFilenames,
         const std::string& modelName,
@@ -69,7 +69,7 @@ private:
         const unsigned sampleIndex) const;
 
     IndelErrorRateSet&
-    getIndelErrorRateSet(
+    getSampleSpecificIndelErrorRates(
         const unsigned sampleIndex = 0)
     {
         checkSampleIndex(sampleIndex);
@@ -78,8 +78,8 @@ private:
     }
 
     const IndelErrorRateSet&
-    getIndelErrorRateSet(
-        const unsigned sampleIndex = 0) const
+    getSampleSpecificIndelErrorRates(
+        const unsigned sampleIndex) const
     {
         checkSampleIndex(sampleIndex);
         const unsigned sampleIndexUsed(_isUseSampleSpecificErrorRates ? 0 : sampleIndex);

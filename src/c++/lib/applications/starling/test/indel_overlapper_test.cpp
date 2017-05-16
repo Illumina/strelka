@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE( simple_indel_test )
     starling_options opt;
     opt.is_user_genome_size = true;
     opt.user_genome_size = rcs.seq().size();
-    opt.alignFileOpt.alignmentFilename.push_back("sample.bam");
+    opt.alignFileOpt.alignmentFilenames.push_back("sample.bam");
 
     const starling_deriv_options dopt(opt);
 

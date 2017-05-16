@@ -50,7 +50,7 @@ parseOptions(
 {
     if (vm.count("align-file"))
     {
-        opt.alignmentFilename = (boost::any_cast<AlignmentFileOptions::files_t>(vm["align-file"].value()));
+        opt.alignmentFilenames = (boost::any_cast<AlignmentFileOptions::files_t>(vm["align-file"].value()));
     }
 }
 
@@ -62,7 +62,7 @@ checkOptions(
     std::string& errorMsg)
 {
     errorMsg.clear();
-    if (opt.alignmentFilename.empty())
+    if (opt.alignmentFilenames.empty())
     {
         errorMsg="Must specify at least one input alignment file";
     }
@@ -70,7 +70,7 @@ checkOptions(
     {
         // check that alignment files exist, and names do not repeat
         std::set<std::string> nameCheck;
-        for (std::string& afile : opt.alignmentFilename)
+        for (std::string& afile : opt.alignmentFilenames)
         {
             if (checkStandardizeInputFile(afile,"alignment file",errorMsg)) break;
             if (nameCheck.count(afile))

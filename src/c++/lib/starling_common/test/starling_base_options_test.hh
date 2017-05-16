@@ -39,7 +39,7 @@ private:
     getTestAlignmentFileOptions()
     {
         AlignmentFileOptions alignFileOpt;
-        alignFileOpt.alignmentFilename.push_back("sample.bam");
+        alignFileOpt.alignmentFilenames.push_back("sample.bam");
         return alignFileOpt;
     }
 };

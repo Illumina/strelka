@@ -113,7 +113,7 @@ callRegion(
 {
     using namespace illumina::common;
 
-    const unsigned sampleCount(opt.alignFileOpt.alignmentFilename.size());
+    const unsigned sampleCount(opt.alignFileOpt.alignmentFilenames.size());
 
     posProcessor.resetRegion(regionInfo.regionChrom, regionInfo.regionRange);
     streamData.resetRegion(regionInfo.streamerRegion.c_str());
@@ -281,7 +281,7 @@ starling_run(
         {
             registrationIndices.push_back(sampleIndex);
         }
-        bamHeaders = registerAlignments(opt.alignFileOpt.alignmentFilename, registrationIndices, streamData);
+        bamHeaders = registerAlignments(opt.alignFileOpt.alignmentFilenames, registrationIndices, streamData);
 
         assert(not bamHeaders.empty());
         const bam_hdr_t& referenceHeader(bamHeaders.front());
@@ -323,7 +323,7 @@ starling_run(
     const bam_header_info referenceHeaderInfo(referenceHeader);
 
     // parse and sanity check regions
-    const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilename.front());
+    const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilenames.front());
     std::vector<AnalysisRegionInfo> regionInfoList;
     getStrelkaAnalysisRegions(opt, referenceAlignmentFilename, referenceHeaderInfo, regionInfoList);
 

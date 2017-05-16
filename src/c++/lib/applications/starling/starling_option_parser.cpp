@@ -152,7 +152,7 @@ finalize_starling_options(
     if (opt.isReportEVSFeatures)
     {
         /// EVS feature output is contrained to the single-sample input case right now:
-        const unsigned sampleCount(opt.alignFileOpt.alignmentFilename.size());
+        const unsigned sampleCount(opt.alignFileOpt.alignmentFilenames.size());
         if (1 != sampleCount)
         {
             pinfo.usage("EVS features can only be reported when analyzing a single sample");

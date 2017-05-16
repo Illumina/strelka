@@ -194,7 +194,7 @@ strelka_run(
             registrationIndices.push_back(rindex);
         }
 
-        bamHeaders = registerAlignments(opt.alignFileOpt.alignmentFilename, registrationIndices, streamData);
+        bamHeaders = registerAlignments(opt.alignFileOpt.alignmentFilenames, registrationIndices, streamData);
 
         assert(not bamHeaders.empty());
         const bam_hdr_t& referenceHeader(bamHeaders.front());
@@ -219,7 +219,7 @@ strelka_run(
     strelka_pos_processor posProcessor(opt, dopt, ref, fileStreams, statsManager);
 
     // parse and sanity check regions
-    const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilename.front());
+    const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilenames.front());
     std::vector<AnalysisRegionInfo> regionInfoList;
     getStrelkaAnalysisRegions(opt, referenceAlignmentFilename, referenceHeaderInfo, regionInfoList);
 

@@ -29,5 +29,5 @@ struct AlignmentFileOptions
 {
     typedef std::vector<std::string> files_t;
 
-    files_t alignmentFilename;
+    files_t alignmentFilenames;
 };

@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 /// \author Sangtae Kim
 ///
@@ -40,23 +40,24 @@ calculate_bare_lnprior(const double theta,
     bare_lnprior[SOMATIC_DIGT::HET] = (blt_float_t) std::log(theta);
 }
 
-static const blt_float_t neg_inf = -std::numeric_limits<float>::infinity();
-static const blt_float_t ln_one_half(std::log(1./2.));
-static const blt_float_t log_error_mod = -std::log(static_cast<double>(DIGT_GRID::PRESTRAND_SIZE-1));
+
 
 void
 calculate_result_set_grid(
     const blt_float_t contam_tolerance,
-    const blt_float_t ln_se_rate,   // ln (shared_error_rate)
-    const blt_float_t ln_cse_rate,  // ln (1 - shared_error_rate)
+    const blt_float_t logSharedErrorRate,
+    const blt_float_t logSharedErrorRateComplement,
     const blt_float_t* normal_lhood,
     const blt_float_t* tumor_lhood,
     const blt_float_t* bare_lnprior,
     const blt_float_t lnmatch,
     const blt_float_t lnmismatch,
-    result_set& rs
-)
+    result_set& rs)
 {
+    static const blt_float_t neg_inf = -std::numeric_limits<float>::infinity();
+    static const blt_float_t ln_one_half(std::log(1./2.));
+    static const blt_float_t log_error_mod = -std::log(static_cast<double>(DIGT_GRID::PRESTRAND_SIZE-1));
+
     double log_post_prob[SOMATIC_DIGT::SIZE][SOMATIC_STATE::SIZE];
     double max_log_prob = neg_inf;
 
@@ -86,7 +87,7 @@ calculate_result_set_grid(
                     {
                         if (normal_freq_index != tumor_freq_index) continue; // P(fn != ft | Gn = Gt) = 0
 
-                        lprior_freq = (normal_freq_index == ngt) ? ln_cse_rate : ln_se_rate+log_error_mod;
+                        lprior_freq = (normal_freq_index == ngt) ? logSharedErrorRateComplement : logSharedErrorRate+log_error_mod;
                     }
                     else    // somatic
                     {
@@ -95,7 +96,7 @@ calculate_result_set_grid(
                         {
                             if (normal_freq_index != ngt)
                                 continue;
-                            lprior_freq = log_error_mod + ln_cse_rate;
+                            lprior_freq = log_error_mod + logSharedErrorRateComplement;
                         }
                         else
                         {

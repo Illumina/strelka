@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders, Sangtae Kim
 ///
 
@@ -27,21 +27,23 @@
 #include "blt_util/blt_types.hh"
 
 
-// calculates diploid prior probabilities
+/// \brief Calculates diploid prior probabilities
 void
 calculate_bare_lnprior(const double theta,
                        blt_float_t* bare_lnprior);
 
-// calculates qscores
+/// \brief Calculates somatic variant quality scores
+///
+/// \param[in] logSharedErrorRate Log of the rate at which the same (systematic) error is observed in the tumor and normal samples
+/// \param[in] logSharedErrorRateComplement Log of 1-SharedErrorRate
 void
 calculate_result_set_grid(
     const blt_float_t ssnv_freq_ratio,
-    const blt_float_t ln_se_rate,   // ln (shared_error_rate)
-    const blt_float_t ln_cse_rate,  // ln (1 - shared_error_rate)
+    const blt_float_t logSharedErrorRate,
+    const blt_float_t logSharedErrorRateComplement,
     const blt_float_t* normal_lhood,
     const blt_float_t* tumor_lhood,
     const blt_float_t* bare_lnprior,
     const blt_float_t lnmatch,
     const blt_float_t lnmismatch,
-    result_set& rs
-);
+    result_set& rs);

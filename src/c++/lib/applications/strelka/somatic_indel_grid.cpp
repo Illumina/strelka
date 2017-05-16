@@ -263,14 +263,14 @@ get_somatic_indel(
 
         // The somatic caller has not been configured to use sample-specific error rates yet, so arbitrarily pull
         // rates from the tumor-sample only for now.
-        const double sie_rate(std::pow(tumorIndelSampleData.getErrorRates().indelToRefErrorProb.getValue(), opt.shared_indel_error_factor));
-        const double ln_sie_rate(std::log(sie_rate)); // shared indel error rate
-        const double ln_csie_rate(log1p_switch(-sie_rate));
+        const double sharedIndelErrorRate(std::pow(tumorIndelSampleData.getErrorRates().indelToRefErrorProb.getValue(), opt.shared_indel_error_factor));
+        const double logSharedIndelErrorRate(std::log(sharedIndelErrorRate)); // shared indel error rate
+        const double logSharedIndelErrorRateComplement(log1p_switch(-sharedIndelErrorRate));
 
         calculate_result_set_grid(
             (float)opt.indel_contam_tolerance,
-            (float)ln_sie_rate,
-            (float)ln_csie_rate,
+            (float)logSharedIndelErrorRate,
+            (float)logSharedIndelErrorRateComplement,
             normal_lhood_float,
             tumor_lhood_float,
             _bare_lnprior,

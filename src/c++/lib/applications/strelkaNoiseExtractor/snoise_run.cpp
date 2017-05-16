@@ -68,8 +68,8 @@ snoise_run(
     // streamData initialization:
     std::vector<std::reference_wrapper<const bam_hdr_t>> bamHeaders;
     {
-        std::vector<unsigned> registrationIndices(opt.alignFileOpt.alignmentFilename.size(), 0);
-        bamHeaders = registerAlignments(opt.alignFileOpt.alignmentFilename, registrationIndices, streamData);
+        std::vector<unsigned> registrationIndices(opt.alignFileOpt.alignmentFilenames.size(), 0);
+        bamHeaders = registerAlignments(opt.alignFileOpt.alignmentFilenames, registrationIndices, streamData);
 
         assert(not bamHeaders.empty());
         const bam_hdr_t& referenceHeader(bamHeaders.front());
@@ -86,7 +86,7 @@ snoise_run(
     snoise_pos_processor posProcessor(opt, dopt, ref, fileStreams, statsManager);
 
     // parse and sanity check regions
-    const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilename.front());
+    const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilenames.front());
     std::vector<AnalysisRegionInfo> regionInfo;
     getStrelkaAnalysisRegions(opt, referenceAlignmentFilename, referenceHeaderInfo, regionInfo);
 

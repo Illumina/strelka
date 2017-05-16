@@ -150,7 +150,7 @@ getMockOptions(const char* refSeq)
     starling_options opt;
     opt.is_user_genome_size = true;
     opt.user_genome_size = strlen(refSeq);
-    opt.alignFileOpt.alignmentFilename.push_back("sample.bam");
+    opt.alignFileOpt.alignmentFilenames.push_back("sample.bam");
     opt.isUseVariantPhaser = true;
     return opt;
 }

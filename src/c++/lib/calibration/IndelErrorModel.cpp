@@ -131,12 +131,11 @@ deserializeIndelModels(
     const Json::Value& root)
 {
     // assume this is single sample for now:
-    _isUseSampleSpecificErrorRates = true;
-    _sampleErrorRates.resize(1);
-    auto& errorRates = getIndelErrorRateSet();
+    const unsigned sampleIndex(0);
+    auto& errorRates = getSampleSpecificIndelErrorRates(sampleIndex);
 
     Json::Value motifs = root["motifs"];
-    if (motifs.isNull())
+    if (motifs.isNull() || motifs.empty())
     {
         using namespace illumina::common;
         std::ostringstream oss;
@@ -184,14 +183,15 @@ IndelErrorModel(
         //
         _isUseSampleSpecificErrorRates = false;
         _sampleErrorRates.resize(1);
+        auto& errorRates = getSampleSpecificIndelErrorRates();
 
         if (modelName == "logLinear")
         {
-            getIndelErrorRateSet() = getLogLinearIndelErrorModel();
+            errorRates = getLogLinearIndelErrorModel();
         }
         else if (modelName == "adaptiveDefault")
         {
-            getIndelErrorRateSet() = getSimplifiedAdaptiveParameters();
+            errorRates = getSimplifiedAdaptiveParameters();
         }
         else
         {
@@ -204,6 +204,10 @@ IndelErrorModel(
     }
     else
     {
+        // assume this is single-sample for now
+        _isUseSampleSpecificErrorRates = true;
+        _sampleErrorRates.resize(1);
+
         std::string jsonString;
         Json::Value root;
         {
@@ -255,7 +259,8 @@ getIndelErrorRate(
     checkSampleIndex(sampleIndex);
 
     // tmp transition step until candidate error rates can be removed:
-    const IndelErrorRateSet& errorRates(isCandidateRates ? _candidateErrorRates : getIndelErrorRateSet(sampleIndex));
+    const IndelErrorRateSet& errorRates(isCandidateRates ?
+                                        _candidateErrorRates : getSampleSpecificIndelErrorRates(sampleIndex));
 
     const index_t indelType(getRateType(indelKey));
     // determine simple case

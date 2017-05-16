@@ -79,7 +79,7 @@ struct starling_base_options : public blt_options
     unsigned
     getSampleCount() const
     {
-        return getAlignmentFileOptions().alignmentFilename.size();
+        return getAlignmentFileOptions().alignmentFilenames.size();
     }
 
     std::string referenceFilename;
