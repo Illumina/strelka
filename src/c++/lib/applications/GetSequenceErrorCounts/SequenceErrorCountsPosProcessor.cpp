@@ -44,6 +44,8 @@ SequenceErrorCountsPosProcessor(
     assert(getSampleCount()==1);
     static const unsigned sampleId(0);
 
+    // set the sample name to the first bam file name
+    // this is already logged as a warning if alignmentFilenames.size() > 1
     _counts.setSampleName(opt.alignFileOpt.alignmentFilenames[0]);
     // check that we have write permission on the output file early:
     {
