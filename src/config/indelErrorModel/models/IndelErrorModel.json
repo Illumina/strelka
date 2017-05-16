@@ -1,155 +1,159 @@
 {
-    "sampleName": "default",
-    "motifs": [
+  "sample": [
       {
-        "indelRate": 0.008,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 1,
-        "repeatPatternSize": 1
-      },
-      {
-        "indelRate": 0,
-        "noisyLocusRate": 0,
-        "repeatCount": 1,
-        "repeatPatternSize": 2
-      },
-      {
-        "indelRate": 0.0049,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 2,
-        "repeatPatternSize": 1
-      },
-      {
-        "indelRate": 0.0057,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 3,
-        "repeatPatternSize": 1
-      },
-      {
-        "indelRate": 0.0067,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 4,
-        "repeatPatternSize": 1
-      },
-      {
-        "indelRate": 0.0079,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 5,
-        "repeatPatternSize": 1
-      },
-      {
-        "indelRate": 0.0092,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 6,
-        "repeatPatternSize": 1
-      },
-      {
-        "indelRate": 0.0108,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 7,
-        "repeatPatternSize": 1
-      },
-      {
-        "indelRate": 0.0127,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 8,
-        "repeatPatternSize": 1
-      },
-      {
-        "indelRate": 0.0148,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 9,
-        "repeatPatternSize": 1
-      },
-      {
-        "indelRate": 0.0174,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 10,
-        "repeatPatternSize": 1
-      },
-      {
-        "indelRate": 0.0204,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 11,
-        "repeatPatternSize": 1
-      },
-      {
-        "indelRate": 0.0239,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 12,
-        "repeatPatternSize": 1
-      },
-      {
-        "indelRate": 0.0280,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 13,
-        "repeatPatternSize": 1
-      },
-      {
-        "indelRate": 0.0328,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 14,
-        "repeatPatternSize": 1
-      },
-      {
-        "indelRate": 0.0384,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 15,
-        "repeatPatternSize": 1
-      },
-      {
-        "indelRate": 0.0450,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 16,
-        "repeatPatternSize": 1
-      },
-      {
-        "indelRate": 0.01,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 2,
-        "repeatPatternSize": 2
-      },
-      {
-        "indelRate": 0.0109,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 3,
-        "repeatPatternSize": 2
-      },
-      {
-        "indelRate": 0.0118,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 4,
-        "repeatPatternSize": 2
-      },
-      {
-        "indelRate": 0.0129,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 5,
-        "repeatPatternSize": 2
-      },
-      {
-        "indelRate": 0.0140,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 6,
-        "repeatPatternSize": 2
-      },
-      {
-        "indelRate": 0.0152,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 7,
-        "repeatPatternSize": 2
-      },
-      {
-        "indelRate": 0.0166,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 8,
-        "repeatPatternSize": 2
-      },
-      {
-        "indelRate": 0.0180,
-        "noisyLocusRate": 0.0,
-        "repeatCount": 9,
-        "repeatPatternSize": 2
+        "sampleName": "default",
+        "motif": [
+          {
+            "indelRate": 0.008,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 1,
+            "repeatPatternSize": 1
+          },
+          {
+            "indelRate": 0,
+            "noisyLocusRate": 0,
+            "repeatCount": 1,
+            "repeatPatternSize": 2
+          },
+          {
+            "indelRate": 0.0049,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 2,
+            "repeatPatternSize": 1
+          },
+          {
+            "indelRate": 0.0057,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 3,
+            "repeatPatternSize": 1
+          },
+          {
+            "indelRate": 0.0067,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 4,
+            "repeatPatternSize": 1
+          },
+          {
+            "indelRate": 0.0079,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 5,
+            "repeatPatternSize": 1
+          },
+          {
+            "indelRate": 0.0092,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 6,
+            "repeatPatternSize": 1
+          },
+          {
+            "indelRate": 0.0108,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 7,
+            "repeatPatternSize": 1
+          },
+          {
+            "indelRate": 0.0127,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 8,
+            "repeatPatternSize": 1
+          },
+          {
+            "indelRate": 0.0148,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 9,
+            "repeatPatternSize": 1
+          },
+          {
+            "indelRate": 0.0174,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 10,
+            "repeatPatternSize": 1
+          },
+          {
+            "indelRate": 0.0204,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 11,
+            "repeatPatternSize": 1
+          },
+          {
+            "indelRate": 0.0239,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 12,
+            "repeatPatternSize": 1
+          },
+          {
+            "indelRate": 0.0280,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 13,
+            "repeatPatternSize": 1
+          },
+          {
+            "indelRate": 0.0328,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 14,
+            "repeatPatternSize": 1
+          },
+          {
+            "indelRate": 0.0384,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 15,
+            "repeatPatternSize": 1
+          },
+          {
+            "indelRate": 0.0450,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 16,
+            "repeatPatternSize": 1
+          },
+          {
+            "indelRate": 0.01,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 2,
+            "repeatPatternSize": 2
+          },
+          {
+            "indelRate": 0.0109,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 3,
+            "repeatPatternSize": 2
+          },
+          {
+            "indelRate": 0.0118,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 4,
+            "repeatPatternSize": 2
+          },
+          {
+            "indelRate": 0.0129,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 5,
+            "repeatPatternSize": 2
+          },
+          {
+            "indelRate": 0.0140,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 6,
+            "repeatPatternSize": 2
+          },
+          {
+            "indelRate": 0.0152,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 7,
+            "repeatPatternSize": 2
+          },
+          {
+            "indelRate": 0.0166,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 8,
+            "repeatPatternSize": 2
+          },
+          {
+            "indelRate": 0.0180,
+            "noisyLocusRate": 0.0,
+            "repeatCount": 9,
+            "repeatPatternSize": 2
+          }
+        ]
       }
     ]
 }

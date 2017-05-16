@@ -556,8 +556,13 @@ void IndelModelJson::exportIndelErrorModelToJsonFile(const std::string& filename
 {
     Json::StyledWriter writer;
     Json::Value jsonRoot;
-    jsonRoot["sampleName"] = _sampleName;
-    jsonRoot["motifs"] = generateMotifsNode();
+    Json::Value samples;
+    Json::Value sample;
+    sample["sampleName"] = _sampleName;
+    sample["motif"] = generateMotifsNode();
+    samples.append(sample);
+    jsonRoot["sample"] = samples;
+
     const std::string str = writer.write(jsonRoot);
     std::ofstream out(filename);
     out << str << "\n\n";
