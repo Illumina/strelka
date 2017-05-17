@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE( test_interrupted_hpol_size2 )
     reference_contig_segment ref;
     ref.seq() = "ACTGGGTGGGTA";
     const std::vector<unsigned> expectedResult =
-        {1,1,3,6,6,6,6,6,6,6,3,1};
+    {1,1,3,6,6,6,6,6,6,6,3,1};
 
     for (unsigned refPosIndex(0); refPosIndex<ref.seq().size(); refPosIndex++)
     {

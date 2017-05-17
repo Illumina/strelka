@@ -178,7 +178,8 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
             segCmd.append('--call-continuous-vf')
 
     if self.params.isIndelErrorRateEstimated :
-        segCmd.extend(['--indel-error-models-file', self.paths.getIndelEstimationJsonPath()])
+        for bamIndex in range(len(self.params.bamList)) :
+            segCmd.extend(['--indel-error-models-file', self.paths.getIndelEstimationJsonPath(bamIndex)])
 
     segTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gid)
     self.addTask(segTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
@@ -369,16 +370,16 @@ def mergeSequenceErrorCounts(self, taskPrefix, dependencies, runStatsLogPaths) :
     runMergeCmd=[self.params.mergeCountsBin]
     for statsFile in runStatsLogPaths :
         runMergeCmd.extend(["--counts-file",statsFile])
-    runMergeCmd.extend(["--output-file",self.paths.getCountsOutputPath()])
+    runMergeCmd.extend(["--output-file",self.paths.getCountsOutputPath(self.bamIndex)])
     return self.addTask(runMergeLabel, runMergeCmd, dependencies=dependencies, isForceLocal=True)
 
 def estimateParametersFromErrorCounts(self, taskPrefix, dependencies, runStatsLogPaths) :
 
     runEstimateLabel=preJoin(taskPrefix,"estimateVariantErrorRatesBin")
     runEstimateCmd=[self.params.estimateVariantErrorRatesBin]
-    runEstimateCmd.extend(["--counts-file",self.paths.getCountsOutputPath()])
+    runEstimateCmd.extend(["--counts-file",self.paths.getCountsOutputPath(self.bamIndex)])
     runEstimateCmd.extend(["--theta-file",self.params.thetaParamFile])
-    runEstimateCmd.extend(["--output-file",self.paths.getIndelEstimationJsonPath()])
+    runEstimateCmd.extend(["--output-file",self.paths.getIndelEstimationJsonPath(self.bamIndex)])
     return self.addTask(runEstimateLabel, runEstimateCmd, dependencies=dependencies, isForceLocal=True)
 
 
@@ -394,11 +395,11 @@ def countGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["-genome-size", str(self.params.knownSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
 
-    segFiles.counts.append(self.paths.getTmpSegmentCountsPath(segStr))
+    segFiles.counts.append(self.paths.getTmpSegmentCountsPath(self.bamIndex,segStr))
     segCmd.extend(["--counts-file", segFiles.counts[-1]])
 
-    for bamPath in self.params.bamList :
-        segCmd.extend(["--align-file",bamPath])
+    bamPath = self.params.bamList[self.bamIndex]
+    segCmd.extend(["--align-file",bamPath])
 
     if self.params.isHighDepthFilter :
         segCmd.extend(["--chrom-depth-file", self.paths.getChromDepth()])
@@ -424,10 +425,11 @@ class EstimateIndelErrorWorkflow(WorkflowRunner) :
     A separate call workflow is setup so that we can delay the workflow execution until
     the ref count file exists
     """
-
-    def __init__(self,params,paths) :
+    def __init__(self,params,paths,bamIndex) :
         self.paths = paths
         self.params = params
+        self.bamIndex = bamIndex
+
     def workflow(self) :
 
         if True :
@@ -485,14 +487,14 @@ class PathInfo(SharedPathInfo):
     def getRealignedBamPath(self) :
         return os.path.join( self.params.realignedDir, 'realigned.bam')
 
-    def getTmpSegmentCountsPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "strelkaErrorCounts.%s.bin" % (segStr))
+    def getTmpSegmentCountsPath(self, bamIndex, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "strelkaErrorCounts.Sample%s.%s.bin" % (bamIndex,segStr))
 
-    def getCountsOutputPath(self) :
-        return os.path.join( self.params.variantsDir, "strelkaErrorCounts.bin")
+    def getCountsOutputPath(self, bamIndex) :
+        return os.path.join( self.params.variantsDir, "strelkaErrorCounts.Sample%s.bin" % (bamIndex))
 
-    def getIndelEstimationJsonPath(self) :
-        return os.path.join( self.params.variantsDir, "IndelModel.json")
+    def getIndelEstimationJsonPath(self, bamIndex) :
+        return os.path.join( self.params.variantsDir, "IndelModel.Sample%s.json" % (bamIndex))
 
 
 
@@ -540,11 +542,8 @@ class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
 
 
         if self.params.isIndelErrorRateEstimated :
-            if 1 != len(self.params.bamList) :
-                self.flowLog("Indel Error Estimation only supports single bam file inputs: Skipping indel error estimation")
-                self.params.isIndelErrorRateEstimated = False
-            else :
-                callPreReqs.add(self.addWorkflowTask("EstimateIndelError", EstimateIndelErrorWorkflow(self.params, self.paths), dependencies=estimatePreReqs))
+            for bamIndex in range(len(self.params.bamList)) :
+                callPreReqs.add(self.addWorkflowTask("EstimateIndelErrorSample"+str(bamIndex), EstimateIndelErrorWorkflow(self.params, self.paths, bamIndex), dependencies=estimatePreReqs))
         else :
             callPreReqs = estimatePreReqs
 

@@ -225,7 +225,7 @@ struct starling_base_options : public blt_options
     Tier2Options tier2;
 
     // indel error options
-    std::string indel_error_models_filename;
+    std::vector<std::string> indel_error_model_filenames;
     std::string indel_error_model_name = "logLinear";
 
     // Scalar multiple modifying the prob of observing an indel->reference error relative to reference->indel

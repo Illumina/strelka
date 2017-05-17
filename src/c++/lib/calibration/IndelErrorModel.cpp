@@ -122,38 +122,67 @@ getSimplifiedAdaptiveParameters()
     return rates;
 }
 
-
-
-void
+std::map<std::string, IndelErrorRateSet>
 IndelErrorModel::
-deserializeIndelModels(
-    const std::string& modelFilename,
-    const Json::Value& root)
+deserializeIndelModels(const std::vector<std::string>& modelFilenames)
 {
-    // assume this is single sample for now:
-    const unsigned sampleIndex(0);
-    auto& errorRates = getSampleSpecificIndelErrorRates(sampleIndex);
-
-    Json::Value motifs = root["motifs"];
-    if (motifs.isNull() || motifs.empty())
+    std::map<std::string, IndelErrorRateSet> modelMap;
+    for (const auto& modelFilename : modelFilenames)
     {
-        using namespace illumina::common;
-        std::ostringstream oss;
-        oss << "ERROR: no indel motifs in indel error rate file '" << modelFilename << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-    }
+        std::string jsonString;
+        Json::Value root;
+        {
+            std::ifstream ifs(modelFilename , std::ifstream::binary);
+            std::stringstream buffer;
+            buffer << ifs.rdbuf();
+            jsonString = buffer.str();
+        }
+        Json::Reader reader;
+        if (!reader.parse(jsonString, root))
+        {
+            using namespace illumina::common;
 
-    for (const auto& motifValue : motifs)
-    {
-        const double indelRate = motifValue["indelRate"].asDouble();
-        const double noisyLocusRate = motifValue["noisyLocusRate"].asDouble();
-        const unsigned repeatCount = motifValue["repeatCount"].asInt();
-        const unsigned repeatPatternSize = motifValue["repeatPatternSize"].asInt();
-        errorRates.addRate(repeatPatternSize, repeatCount, indelRate, indelRate, noisyLocusRate);
+            std::ostringstream oss;
+            oss << "Failed to parse JSON " << modelFilename << " " << reader.getFormattedErrorMessages() << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
+
+        Json::Value samples = root["sample"];
+        if (samples.isNull() || samples.empty())
+        {
+            using namespace illumina::common;
+            std::ostringstream oss;
+            oss << "ERROR: no samples in indel error model file '" << modelFilename << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
+
+        // one json file could potentially have multiple samples
+        for (const auto& sample : samples)
+        {
+            std::string sampleName = sample["sampleName"].asString();
+            modelMap[sampleName] = IndelErrorRateSet();
+            Json::Value motifs = sample["motif"];
+            if (motifs.isNull() || motifs.empty())
+            {
+                using namespace illumina::common;
+                std::ostringstream oss;
+                oss << "ERROR: no params for sample '" << sampleName << "' in indel error model file '" << modelFilename << "'\n";
+                BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+            }
+
+            for (const auto& motifValue : motifs)
+            {
+                const double indelRate = motifValue["indelRate"].asDouble();
+                const double noisyLocusRate = motifValue["noisyLocusRate"].asDouble();
+                const unsigned repeatCount = motifValue["repeatCount"].asInt();
+                const unsigned repeatPatternSize = motifValue["repeatPatternSize"].asInt();
+                modelMap[sampleName].addRate(repeatPatternSize, repeatCount, indelRate, indelRate, noisyLocusRate);
+            }
+        }
+
     }
+    return modelMap;
 }
-
-
 
 void
 IndelErrorModel::
@@ -174,10 +203,11 @@ IndelErrorModel::
 IndelErrorModel(
     const std::vector<std::string>& alignmentFilenames,
     const std::string& modelName,
-    const std::string& modelFilename)
+    const std::vector<std::string>& modelFilenames)
     : _sampleCount(alignmentFilenames.size())
+
 {
-    if (modelFilename.empty())
+    if (modelFilenames.empty())
     {
         // Hard-coded indel error models are never sample-specific
         //
@@ -204,30 +234,27 @@ IndelErrorModel(
     }
     else
     {
-        // assume this is single-sample for now
         _isUseSampleSpecificErrorRates = true;
-        _sampleErrorRates.resize(1);
+        _sampleErrorRates.resize(_sampleCount);
 
-        std::string jsonString;
-        Json::Value root;
-        {
-            std::ifstream ifs(modelFilename, std::ifstream::binary);
-            std::stringstream buffer;
-            buffer << ifs.rdbuf();
-            jsonString = buffer.str();
-        }
-        Json::Reader reader;
-        if (reader.parse(jsonString, root))
-        {
-            deserializeIndelModels(modelFilename, root);
-        }
-        else
-        {
-            using namespace illumina::common;
+        const auto modelsMap = deserializeIndelModels(modelFilenames);
 
-            std::ostringstream oss;
-            oss << "Failed to parse JSON " << modelFilename << " " << reader.getFormattedErrorMessages() << "'\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        for (unsigned alignmentFileIndex = 0; alignmentFileIndex < _sampleCount; alignmentFileIndex++)
+        {
+            const auto alignmentFilename = alignmentFilenames[alignmentFileIndex];
+            const auto model = modelsMap.find(alignmentFilename);
+            if (model != modelsMap.end())
+            {
+                _sampleErrorRates[alignmentFileIndex] = model->second;
+            }
+            else
+            {
+                using namespace illumina::common;
+
+                std::ostringstream oss;
+                oss << "ERROR: Failed to find indel error model for '" << alignmentFilename << "'\n";
+                BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+            }
         }
     }
 
@@ -240,8 +267,6 @@ IndelErrorModel(
     _candidateErrorRates = getLogLinearIndelErrorModel();
     _candidateErrorRates.finalizeRates();
 }
-
-
 
 
 void

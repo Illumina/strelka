@@ -22,7 +22,7 @@
 ///
 
 #include "SequenceErrorCounts.hh"
-
+#include "common/Exceptions.hh"
 #include "boost/archive/binary_iarchive.hpp"
 #include "boost/archive/binary_oarchive.hpp"
 
@@ -36,6 +36,17 @@ SequenceErrorCounts::
 merge(
     const SequenceErrorCounts& in)
 {
+    if (!_sampleName.empty() && !in._sampleName.empty())
+    {
+        if (_sampleName != in._sampleName)
+        {
+            using namespace illumina::common;
+            std::ostringstream oss;
+            oss << "ERROR: Attempted to merge SequeceErrorCounts with different sample names: '" << _sampleName << "' and '" << in._sampleName << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
+    }
+    _sampleName = in._sampleName;
     _bases.merge(in._bases);
     _indels.merge(in._indels);
 }
@@ -52,6 +63,7 @@ save(
     std::ofstream ofs(filename, std::ios::binary);
     binary_oarchive oa(ofs);
 
+    oa << _sampleName;
     oa << _bases;
     oa << _indels;
 }
@@ -71,6 +83,7 @@ load(
     std::ifstream ifs(filename, std::ios::binary);
     binary_iarchive ia(ifs);
 
+    ia >> _sampleName;
     ia >> _bases;
     ia >> _indels;
 }
