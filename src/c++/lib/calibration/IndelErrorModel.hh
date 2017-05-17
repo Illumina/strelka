@@ -73,7 +73,7 @@ private:
         const unsigned sampleIndex = 0)
     {
         checkSampleIndex(sampleIndex);
-        const unsigned sampleIndexUsed(_isUseSampleSpecificErrorRates ? 0 : sampleIndex);
+        const unsigned sampleIndexUsed(_isUseSampleSpecificErrorRates ? sampleIndex : 0);
         return _sampleErrorRates[sampleIndexUsed];
     }
 
@@ -82,7 +82,7 @@ private:
         const unsigned sampleIndex) const
     {
         checkSampleIndex(sampleIndex);
-        const unsigned sampleIndexUsed(_isUseSampleSpecificErrorRates ? 0 : sampleIndex);
+        const unsigned sampleIndexUsed(_isUseSampleSpecificErrorRates ? sampleIndex : 0);
         return _sampleErrorRates[sampleIndexUsed];
     }
 

@@ -232,7 +232,7 @@ updateSiteSampleInfo(
 
     siteSampleInfo.strandBias = strandBias;
 
-    /// add EVS feature info
+    // add EVS feature info
     const auto& sampleInfo(locus.getSample(sampleIndex));
     if (locus.isForcedOutput or sampleInfo.isVariant())
     {
