@@ -56,7 +56,7 @@ public:
     IndelModelBinomialMixture model;
 
     explicit
-    IndelModelJson(const std::string sampleName);
+    IndelModelJson(const std::string& sampleName);
 
     void addMotif(
         unsigned repeatPatternSize,

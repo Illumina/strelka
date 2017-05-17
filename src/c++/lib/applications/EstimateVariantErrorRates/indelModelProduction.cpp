@@ -530,7 +530,7 @@ importTheta(
 }
 
 
-IndelModelJson::IndelModelJson(const std::string sampleName)
+IndelModelJson::IndelModelJson(const std::string& sampleName)
         : _sampleName(sampleName)
 {}
 
