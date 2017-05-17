@@ -146,42 +146,40 @@ deserializeIndelModels(const std::vector<std::string>& modelFilenames)
             oss << "Failed to parse JSON " << modelFilename << " " << reader.getFormattedErrorMessages() << "'\n";
             BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
-        else
-        {
 
-            Json::Value samples = root["sample"];
-            if (samples.isNull() || samples.empty())
+        Json::Value samples = root["sample"];
+        if (samples.isNull() || samples.empty())
+        {
+            using namespace illumina::common;
+            std::ostringstream oss;
+            oss << "ERROR: no samples in indel error model file '" << modelFilename << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
+
+        // one json file could potentially have multiple samples
+        for (const auto& sample : samples)
+        {
+            std::string sampleName = sample["sampleName"].asString();
+            modelMap[sampleName] = IndelErrorRateSet();
+            Json::Value motifs = sample["motif"];
+            if (motifs.isNull() || motifs.empty())
             {
                 using namespace illumina::common;
                 std::ostringstream oss;
-                oss << "ERROR: no samples in indel error model file '" << modelFilename << "'\n";
+                oss << "ERROR: no params for sample '" << sampleName << "' in indel error model file '" << modelFilename << "'\n";
                 BOOST_THROW_EXCEPTION(LogicException(oss.str()));
             }
 
-            // one json file could potentially have multiple samples
-            for (const auto& sample : samples)
+            for (const auto& motifValue : motifs)
             {
-                std::string sampleName = sample["sampleName"].asString();
-                modelMap[sampleName] = IndelErrorRateSet();
-                Json::Value motifs = sample["motif"];
-                if (motifs.isNull() || motifs.empty())
-                {
-                    using namespace illumina::common;
-                    std::ostringstream oss;
-                    oss << "ERROR: no params for sample '" << sampleName << "' in indel error model file '" << modelFilename << "'\n";
-                    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-                }
-
-                for (const auto& motifValue : motifs)
-                {
-                    const double indelRate = motifValue["indelRate"].asDouble();
-                    const double noisyLocusRate = motifValue["noisyLocusRate"].asDouble();
-                    const unsigned repeatCount = motifValue["repeatCount"].asInt();
-                    const unsigned repeatPatternSize = motifValue["repeatPatternSize"].asInt();
-                    modelMap[sampleName].addRate(repeatPatternSize, repeatCount, indelRate, indelRate, noisyLocusRate);
-                }
+                const double indelRate = motifValue["indelRate"].asDouble();
+                const double noisyLocusRate = motifValue["noisyLocusRate"].asDouble();
+                const unsigned repeatCount = motifValue["repeatCount"].asInt();
+                const unsigned repeatPatternSize = motifValue["repeatPatternSize"].asInt();
+                modelMap[sampleName].addRate(repeatPatternSize, repeatCount, indelRate, indelRate, noisyLocusRate);
             }
         }
+
     }
     return modelMap;
 }
