@@ -119,7 +119,7 @@ getSequenceErrorCountsRun(
     std::vector<std::reference_wrapper<const bam_hdr_t>> bamHeaders;
     {
 
-        if(opt.alignFileOpt.alignmentFilenames.size() > 1)
+        if (opt.alignFileOpt.alignmentFilenames.size() > 1)
         {
             using namespace illumina::common;
             std::ostringstream oss;

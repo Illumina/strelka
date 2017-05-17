@@ -273,10 +273,10 @@ getInterruptedHomopolymerLength(
 
 unsigned
 shortestUnencountered(
-		      const reference_contig_segment& ref,
-		      const pos_t pos,
-		      const unsigned numEncoded,
-		      const bool left)
+    const reference_contig_segment& ref,
+    const pos_t pos,
+    const unsigned numEncoded,
+    const bool left)
 {
     std::string encoded;
     std::string newPrefix;
@@ -294,13 +294,13 @@ shortestUnencountered(
     {
         ++len;
         if (left)
-	{
+        {
             ref.get_substring(pos-numEncoded-len+1,len,newPrefix);
-	}
+        }
         else
-	{
+        {
             ref.get_substring(pos+numEncoded,len,newPrefix);
-	}
+        }
     }
     // keep looking while string of size len has already been encountered:
     while (encoded.find(newPrefix) != std::string::npos);
@@ -309,10 +309,10 @@ shortestUnencountered(
 
 unsigned
 computeContextCompressability(
-			      const reference_contig_segment& ref,
-			      const pos_t leftPos,
-			      const pos_t rightPos,
-			      const unsigned numKeys)
+    const reference_contig_segment& ref,
+    const pos_t leftPos,
+    const pos_t rightPos,
+    const unsigned numKeys)
 {
     assert(numKeys>0);
     assert(leftPos <= rightPos);
@@ -324,8 +324,8 @@ computeContextCompressability(
     {
         // complexity to the left:
         numEncodedLeft += shortestUnencountered(ref,leftPos-1,numEncodedLeft,true);
-	// complexity to the right:
-	numEncodedRight += shortestUnencountered(ref,rightPos,numEncodedRight,false);
+        // complexity to the right:
+        numEncodedRight += shortestUnencountered(ref,rightPos,numEncodedRight,false);
     }
 
     return std::max(numEncodedLeft, numEncodedRight);

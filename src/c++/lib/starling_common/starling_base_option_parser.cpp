@@ -304,7 +304,7 @@ finalize_starling_base_options(
         opt.is_max_input_depth=true;
     }
 
-    for(auto indelErrorModelFilename : opt.indel_error_model_filenames)
+    for (auto indelErrorModelFilename : opt.indel_error_model_filenames)
     {
         checkOptionalFile(pinfo, indelErrorModelFilename, "indel error models");
     }

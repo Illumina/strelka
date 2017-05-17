@@ -127,7 +127,7 @@ IndelErrorModel::
 deserializeIndelModels(const std::vector<std::string>& modelFilenames)
 {
     std::map<std::string, IndelErrorRateSet> modelMap;
-    for(auto modelFilename : modelFilenames)
+    for (auto modelFilename : modelFilenames)
     {
         std::string jsonString;
         Json::Value root;
@@ -141,7 +141,8 @@ deserializeIndelModels(const std::vector<std::string>& modelFilenames)
         if (reader.parse(jsonString, root))
         {
             Json::Value samples = root["sample"];
-            if (samples.isNull()) {
+            if (samples.isNull())
+            {
                 using namespace illumina::common;
                 std::ostringstream oss;
                 oss << "ERROR: no samples in model file '" << modelFilename << "'\n";
@@ -149,12 +150,13 @@ deserializeIndelModels(const std::vector<std::string>& modelFilenames)
             }
 
             // one json file could potentially have multiple samples
-            for(const auto &sample : samples)
+            for (const auto& sample : samples)
             {
                 std::string sampleName = sample["sampleName"].asString();
                 modelMap[sampleName] = IndelErrorRateSet();
                 Json::Value motifs = sample["motif"];
-                if (motifs.isNull()) {
+                if (motifs.isNull())
+                {
                     using namespace illumina::common;
                     std::ostringstream oss;
                     oss << "ERROR: no indel motifs in indel error rate file '" << modelFilename << " sample "
@@ -164,7 +166,8 @@ deserializeIndelModels(const std::vector<std::string>& modelFilenames)
                     BOOST_THROW_EXCEPTION(LogicException(oss.str()));
                 }
 
-                for (const auto &motifValue : motifs) {
+                for (const auto& motifValue : motifs)
+                {
                     const double indelRate = motifValue["indelRate"].asDouble();
                     const double noisyLocusRate = motifValue["noisyLocusRate"].asDouble();
                     const unsigned repeatCount = motifValue["repeatCount"].asInt();
@@ -209,7 +212,7 @@ IndelErrorModel(
     : _sampleCount(alignmentFilenames.size())
 
 {
-    if(modelFilenames.empty())
+    if (modelFilenames.empty())
     {
         // Hard-coded indel error models are never sample-specific
         //
@@ -241,11 +244,11 @@ IndelErrorModel(
 
         const auto modelsMap = deserializeIndelModels(modelFilenames);
 
-        for(unsigned alignmentFileIndex = 0; alignmentFileIndex < _sampleCount; alignmentFileIndex++)
+        for (unsigned alignmentFileIndex = 0; alignmentFileIndex < _sampleCount; alignmentFileIndex++)
         {
             const auto alignmentFilename = alignmentFilenames[alignmentFileIndex];
             const auto model = modelsMap.find(alignmentFilename);
-            if(model != modelsMap.end())
+            if (model != modelsMap.end())
             {
                 _sampleErrorRates[alignmentFileIndex] = model->second;
             }
