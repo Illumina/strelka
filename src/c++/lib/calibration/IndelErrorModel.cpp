@@ -127,7 +127,7 @@ IndelErrorModel::
 deserializeIndelModels(const std::vector<std::string>& modelFilenames)
 {
     std::map<std::string, IndelErrorRateSet> modelMap;
-    for (auto modelFilename : modelFilenames)
+    for (const auto& modelFilename : modelFilenames)
     {
         std::string jsonString;
         Json::Value root;
@@ -138,14 +138,23 @@ deserializeIndelModels(const std::vector<std::string>& modelFilenames)
             jsonString = buffer.str();
         }
         Json::Reader reader;
-        if (reader.parse(jsonString, root))
+        if (!reader.parse(jsonString, root))
         {
+            using namespace illumina::common;
+
+            std::ostringstream oss;
+            oss << "Failed to parse JSON " << modelFilename << " " << reader.getFormattedErrorMessages() << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
+        else
+        {
+
             Json::Value samples = root["sample"];
-            if (samples.isNull())
+            if (samples.isNull() || samples.empty())
             {
                 using namespace illumina::common;
                 std::ostringstream oss;
-                oss << "ERROR: no samples in model file '" << modelFilename << "'\n";
+                oss << "ERROR: no samples in indel error model file '" << modelFilename << "'\n";
                 BOOST_THROW_EXCEPTION(LogicException(oss.str()));
             }
 
@@ -155,14 +164,11 @@ deserializeIndelModels(const std::vector<std::string>& modelFilenames)
                 std::string sampleName = sample["sampleName"].asString();
                 modelMap[sampleName] = IndelErrorRateSet();
                 Json::Value motifs = sample["motif"];
-                if (motifs.isNull())
+                if (motifs.isNull() || motifs.empty())
                 {
                     using namespace illumina::common;
                     std::ostringstream oss;
-                    oss << "ERROR: no indel motifs in indel error rate file '" << modelFilename << " sample "
-                        << sampleName
-                        << "'\n";
-
+                    oss << "ERROR: no params for sample '" << sampleName << "' in indel error model file '" << modelFilename << "'\n";
                     BOOST_THROW_EXCEPTION(LogicException(oss.str()));
                 }
 
@@ -176,15 +182,6 @@ deserializeIndelModels(const std::vector<std::string>& modelFilenames)
                 }
             }
         }
-        else
-        {
-            using namespace illumina::common;
-
-            std::ostringstream oss;
-            oss << "Failed to parse JSON " << modelFilename << " " << reader.getFormattedErrorMessages() << "'\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-        }
-
     }
     return modelMap;
 }
@@ -257,7 +254,7 @@ IndelErrorModel(
                 using namespace illumina::common;
 
                 std::ostringstream oss;
-                oss << "ERROR: Failed to find indel error model for " << alignmentFilename << "'\n";
+                oss << "ERROR: Failed to find indel error model for '" << alignmentFilename << "'\n";
                 BOOST_THROW_EXCEPTION(LogicException(oss.str()));
             }
         }

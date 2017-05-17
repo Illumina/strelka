@@ -5,7 +5,7 @@
   "type": "object",
   "properties": {
     "sample": {
-      "description": "An array which is the collection of all models",
+      "description": "An array containing the error model specification for each sample or read group",
       "comment": "The model is usually estimated from a single bam file",
       "type": "array",
       "minItems": 1,

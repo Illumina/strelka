@@ -29,13 +29,6 @@
 ///
 struct IndelErrorModel
 {
-    /// \brief Initialize indel error model using multiple json files
-    ///
-    /// \param modelName
-    /// \param modelFilenames
-    IndelErrorModel(
-        const std::string& modelName,
-        const std::vector<std::string>& modelFilenames);
     /// \brief Initialize indel error model to either a precomputed static model (if \p modelFilename is empty),
     /// or from a json parameter file otherwise.
     ///

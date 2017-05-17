@@ -425,11 +425,11 @@ class EstimateIndelErrorWorkflow(WorkflowRunner) :
     A separate call workflow is setup so that we can delay the workflow execution until
     the ref count file exists
     """
-    bamIndex = 0;
     def __init__(self,params,paths,bamIndex) :
         self.paths = paths
         self.params = params
         self.bamIndex = bamIndex
+
     def workflow(self) :
 
         if True :
