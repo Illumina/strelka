@@ -542,9 +542,6 @@ class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
 
 
         if self.params.isIndelErrorRateEstimated :
-            #if 1 != len(self.params.bamList) :
-            #    self.flowLog("Indel Error Estimation only supports single bam file inputs: Skipping indel error estimation")
-            #    self.params.isIndelErrorRateEstimated = False
             for bamIndex in range(len(self.params.bamList)) :
                 callPreReqs.add(self.addWorkflowTask("EstimateIndelErrorSample"+str(bamIndex), EstimateIndelErrorWorkflow(self.params, self.paths, bamIndex), dependencies=estimatePreReqs))
         else :
