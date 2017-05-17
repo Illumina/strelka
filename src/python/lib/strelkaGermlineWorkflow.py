@@ -395,7 +395,7 @@ def countGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["-genome-size", str(self.params.knownSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
 
-    segFiles.counts.append(self.paths.getTmpSegmentCountsPath(segStr))
+    segFiles.counts.append(self.paths.getTmpSegmentCountsPath(self.bamIndex,segStr))
     segCmd.extend(["--counts-file", segFiles.counts[-1]])
 
     bamPath = self.params.bamList[self.bamIndex]
@@ -487,8 +487,8 @@ class PathInfo(SharedPathInfo):
     def getRealignedBamPath(self) :
         return os.path.join( self.params.realignedDir, 'realigned.bam')
 
-    def getTmpSegmentCountsPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "strelkaErrorCounts.%s.bin" % (segStr))
+    def getTmpSegmentCountsPath(self, bamIndex, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "strelkaErrorCounts.Sample%s.%s.bin" % (bamIndex,segStr))
 
     def getCountsOutputPath(self, bamIndex) :
         return os.path.join( self.params.variantsDir, "strelkaErrorCounts.Sample%s.bin" % (bamIndex))
