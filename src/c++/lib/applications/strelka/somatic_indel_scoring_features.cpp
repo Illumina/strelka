@@ -117,8 +117,7 @@ getTumorNormalIndelAlleleLogOdds(
     const double tumorSampleIndelAlleleFrequency = getSampleIndelAlleleFrequency(tumorIndelSampleReportInfo);
     const double normalSampleIndelAlleleFrequency = getSampleIndelAlleleFrequency(normalIndelSampleReportInfo);
 
-    /// \TODO @pkrusche The difference in these two min values doesn't look intentional, is it?
-    return log10(std::max(tumorSampleIndelAlleleFrequency, 0.00001) / std::max(normalSampleIndelAlleleFrequency, 0.0001));
+    return log10(std::max(tumorSampleIndelAlleleFrequency, 0.0001) / std::max(normalSampleIndelAlleleFrequency, 0.0001));
 }
 
 
@@ -129,7 +128,7 @@ getSampleIndelNoiseLogOdds(const AlleleSampleReportInfo& indelSampleReportInfo)
     const double indelAlleleFrequency = getSampleIndelAlleleFrequency(indelSampleReportInfo);
     const double otherAlleleFrequency = getSampleOtherAlleleFrequency(indelSampleReportInfo);
 
-    return log10(std::max(indelAlleleFrequency, 0.00001) / std::max(otherAlleleFrequency, 0.0001));
+    return log10(std::max(indelAlleleFrequency, 0.0001) / std::max(otherAlleleFrequency, 0.0001));
 }
 
 
