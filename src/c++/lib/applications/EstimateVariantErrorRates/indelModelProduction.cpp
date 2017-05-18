@@ -551,15 +551,15 @@ checkEstimatedModel() const
     // check estimated STR params
     for (const auto& model : _adaptiveIndelErrorModels)
     {
-        if (isValidErrorRate(model.errorRate(model.lowRepeatCount)) ||
-            isValidErrorRate(model.errorRate(model.highRepeatCount())))
+        if (!isValidErrorRate(model.errorRate(model.lowRepeatCount)) ||
+            !isValidErrorRate(model.errorRate(model.highRepeatCount())))
         {
             return false;
         }
     }
 
     // check non-STR params
-    if (isValidErrorRate(_nonSTRModelParams.logErrorRate))
+    if (!isValidErrorRate(_nonSTRModelParams.logErrorRate))
     {
         return false;
     }
