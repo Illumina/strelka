@@ -586,7 +586,7 @@ checkEstimatedModel() const
     }
 
     // check non-STR params and the _isEstimationAcceptable flag
-    if (!isValidErrorRate(_nonSTRModelParams.logErrorRate) || !_isEstimationAcceptable)
+    if (!isValidErrorRate(std::exp(_nonSTRModelParams.logErrorRate)) || !_isEstimationAcceptable)
     {
         return false;
     }
