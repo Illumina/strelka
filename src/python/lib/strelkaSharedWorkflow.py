@@ -38,14 +38,51 @@ from workflowUtil import checkFile, cleanPyEnv, ensureDir, getFastaChromOrderSiz
                   getGenomeSegmentGroups, getNextGenomeSegment, preJoin
 
 
+class DeepCopyProtector(object) :
+    """
+    Any data attached to this object will remain aliased through a deepcopy operation
+
+    Overloading __copy__ is provided here just to ensure that deep/shallow copy semantics are identical.
+    """
+    def __copy__(self) :
+        return self
+
+    def __deepcopy__(self, dict) :
+        return self
+
+
+class TotalRefCountWorkflow(WorkflowRunner) :
+    """
+    Load ref count file and total it into a new value in the workflow params object
+    """
+
+    def __init__(self, paths, dynamicParams) :
+        self.paths = paths
+        self.dynamicParams = dynamicParams
+
+    def workflow(self) :
+        knownSize = 0
+        for line in open(self.paths.getRefCountFile()) :
+            word = line.strip().split('\t')
+            if len(word) != 4 :
+                raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getRefCountFile()))
+            knownSize += int(word[2])
+
+        self.dynamicParams.knownSize = knownSize
+
+
+
 def runCount(self, taskPrefix="", dependencies=None) :
     """
-    count size of fasta chromosomes
+    Count size of fasta chromosomes, and put the result into a workflow variable
     """
-    cmd  = "\"%s\" \"%s\" > \"%s\""  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
 
-    nextStepWait = set()
-    nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
+    nextStepWait=set()
+
+    print "input params: ", id(self.params)
+    refCountCmd  = "\"%s\" \"%s\" > \"%s\""  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
+    refCountTask = self.addTask(preJoin(taskPrefix,"RefCount"), refCountCmd, dependencies=dependencies)
+    nextStepWait.add(self.addWorkflowTask(preJoin(taskPrefix,"RefTotal"), TotalRefCountWorkflow(self.paths, self.dynamicParams), dependencies=refCountTask))
 
     return nextStepWait
 
@@ -98,9 +135,9 @@ def getChromIsSkipped(self, chromOrder) :
 
 class StrelkaSharedCallWorkflow(WorkflowRunner) :
 
-    def __init__(self,params) :
+    def __init__(self, params, dynamicParams) :
         self.params = params
-
+        self.dynamicParams = dynamicParams
 
     def concatIndexBgzipFile(self, taskPrefix, dependencies, inputList, output, label, fileType) :
         """
@@ -173,7 +210,7 @@ class StrelkaSharedCallWorkflow(WorkflowRunner) :
             segCmd.extend(["--region", gseg.bamRegion])
 
         segCmd.extend(["--ref", self.params.referenceFasta ])
-        segCmd.extend(["-genome-size", str(self.params.knownSize)] )
+        segCmd.extend(["-genome-size", str(self.dynamicParams.knownSize)] )
         segCmd.extend(["-max-indel-size", "50"] )
 
         if self.params.indelErrorModelName is not None :
@@ -265,6 +302,7 @@ class StrelkaSharedWorkflow(WorkflowRunner) :
 
         self.params=params
         self.iniSections=iniSections
+        self.dynamicParams = DeepCopyProtector()
 
         # make sure run directory is setup:
         self.params.runDir=os.path.abspath(self.params.runDir)

@@ -36,7 +36,7 @@ sys.path.append(os.path.join(scriptDir,"pyflow"))
 from configBuildTimeInfo import workflowVersion
 from configureUtil import safeSetBool
 from pyflow import WorkflowRunner
-from sharedWorkflow import getMkdirCmd, getRmdirCmd, runDepthFromAlignments
+from sharedWorkflow import getMkdirCmd, getRmdirCmd, getDepthFromAlignments
 from strelkaSharedWorkflow import runCount, SharedPathInfo, \
                            StrelkaSharedCallWorkflow, StrelkaSharedWorkflow
 from workflowUtil import ensureDir, preJoin, bamListCatCmd
@@ -46,7 +46,7 @@ __version__ = workflowVersion
 
 
 
-def strelkaSomaticRunDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=None):
+def strelkaSomaticGetDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=None):
     bamList=[]
     if len(self.params.normalBamList) :
         bamList.append(self.params.normalBamList[0])
@@ -56,11 +56,11 @@ def strelkaSomaticRunDepthFromAlignments(self,taskPrefix="getChromDepth",depende
         return set()
 
     outputPath=self.paths.getChromDepth()
-    return runDepthFromAlignments(self, bamList, outputPath, taskPrefix, dependencies)
+    return getDepthFromAlignments(self, bamList, outputPath, taskPrefix, dependencies)
 
 
 
-class TempSegmentFiles :
+class TempVariantCallingSegmentFiles :
     def __init__(self) :
         self.snv = []
         self.indel = []
@@ -220,7 +220,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     segmentTasks = set()
 
-    segFiles = TempSegmentFiles()
+    segFiles = TempVariantCallingSegmentFiles()
 
     for gsegGroup in self.getStrelkaGenomeSegmentGroupIterator() :
         segmentTasks |= callGenomeSegment(self, gsegGroup, segFiles, dependencies=dirTask)
@@ -269,22 +269,11 @@ class CallWorkflow(StrelkaSharedCallWorkflow) :
     the ref count file exists
     """
 
-    def __init__(self,params,paths) :
-        super(CallWorkflow,self).__init__(params)
+    def __init__(self, params, paths, dynamicParams) :
+        super(CallWorkflow,self).__init__(params, dynamicParams)
         self.paths = paths
 
     def workflow(self) :
-
-        if True :
-            knownSize = 0
-            for line in open(self.paths.getRefCountFile()) :
-                word = line.strip().split('\t')
-                if len(word) != 4 :
-                    raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getRefCountFile()))
-                knownSize += int(word[2])
-
-            self.params.knownSize = knownSize
-
         callGenome(self)
 
 
@@ -367,6 +356,6 @@ class StrelkaSomaticWorkflow(StrelkaSharedWorkflow) :
         callPreReqs = set()
         callPreReqs |= runCount(self)
         if self.params.isHighDepthFilter :
-            callPreReqs |= strelkaSomaticRunDepthFromAlignments(self)
+            callPreReqs |= strelkaSomaticGetDepthFromAlignments(self)
 
-        self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)
+        self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths, self.dynamicParams), dependencies=callPreReqs)

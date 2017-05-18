@@ -34,9 +34,9 @@ pyflowDir=os.path.join(scriptDir,"pyflow")
 sys.path.append(os.path.abspath(pyflowDir))
 
 from configBuildTimeInfo import workflowVersion
-from configureUtil import safeSetBool, joinFile
+from configureUtil import safeSetBool
 from pyflow import WorkflowRunner
-from sharedWorkflow import getMkdirCmd, getRmdirCmd, runDepthFromAlignments
+from sharedWorkflow import getMkdirCmd, getRmdirCmd, getDepthFromAlignments
 from strelkaSharedWorkflow import runCount, SharedPathInfo, \
                            StrelkaSharedCallWorkflow, StrelkaSharedWorkflow
 from workflowUtil import ensureDir, preJoin, bamListCatCmd, getNextGenomeSegment
@@ -45,7 +45,7 @@ __version__ = workflowVersion
 
 
 
-def strelkaGermlineRunDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=None):
+def strelkaGermlineGetDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=None):
     bamList=[]
     if len(self.params.bamList) :
         bamList = self.params.bamList
@@ -53,49 +53,24 @@ def strelkaGermlineRunDepthFromAlignments(self,taskPrefix="getChromDepth",depend
         return set()
 
     outputPath=self.paths.getChromDepth()
-    return runDepthFromAlignments(self, bamList, outputPath, taskPrefix, dependencies)
+    return getDepthFromAlignments(self, bamList, outputPath, taskPrefix, dependencies)
 
 
 
-def runIndelModel(self,taskPrefix="",dependencies=None) :
-    """
-    estimate indel error parameters and write back a modified model file
-    """
-
-    bamFile=""
-    if len(self.params.bamList) :
-        bamFile = self.params.bamList[0]
-    else :
-        return set()
-    tempPath  = self.params.getIndelSegmentDir
-    inModel   = self.params.inputIndelErrorModelsFile
-    outModel  = self.params.getRunSpecificModel
-    reference = self.params.referenceFasta
-    scriptDir = os.path.abspath(scriptDir)
-    depth     = self.params.getChromDepth
-
-    nextStepWait = set()
-    nextStepWait.add(self.addWorkflowTask("GenerateIndelModel", indelErrorWorkflow(bamFile,tempPath,inModel,outModel,reference,scriptDir,depth), dependencies=dependencies))
-
-    # edit the scoring model used to reflect the restated model
-    self.params.dynamicIndelErrorModelsFile = outModel
-
-    return nextStepWait
-
-class TempSegmentFilesPerSample :
+class TempVariantCallingSegmentFilesPerSample :
     def __init__(self) :
         self.gvcf = []
 
 
-class TempSegmentFiles :
+class TempVariantCallingSegmentFiles :
     def __init__(self, sampleCount) :
         self.variants = []
         self.bamRealign = []
         self.stats = []
-        self.sample = [TempSegmentFilesPerSample() for _ in range(sampleCount)]
+        self.sample = [TempVariantCallingSegmentFilesPerSample() for _ in range(sampleCount)]
 
 
-class TempEstimationSegmentFiles :
+class TempSequenceErrorCountSegmentFiles :
     def __init__(self) :
         self.counts = []
 
@@ -254,7 +229,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     sampleCount = len(self.params.bamList)
 
-    segFiles = TempSegmentFiles(sampleCount)
+    segFiles = TempVariantCallingSegmentFiles(sampleCount)
 
     for gsegGroup in self.getStrelkaGenomeSegmentGroupIterator(contigsExcludedFromGrouping = self.params.callContinuousVf) :
         segmentTasks |= callGenomeSegment(self, gsegGroup, segFiles, dependencies=dirTask)
@@ -307,87 +282,22 @@ def callGenome(self,taskPrefix="",dependencies=None):
 class CallWorkflow(StrelkaSharedCallWorkflow) :
     """
     A separate call workflow is setup so that we can delay the workflow execution until
-    the ref count file exists
+    the ref count exists
     """
 
-    def __init__(self,params,paths) :
-        super(CallWorkflow,self).__init__(params)
+    def __init__(self, params, paths, dynamicParams) :
+        super(CallWorkflow,self).__init__(params, dynamicParams)
         self.paths = paths
 
     def workflow(self) :
-
-        if True :
-            knownSize = 0
-            for line in open(self.paths.getRefCountFile()) :
-                word = line.strip().split('\t')
-                if len(word) != 4 :
-                    raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getRefCountFile()))
-                knownSize += int(word[2])
-
-            self.params.knownSize = knownSize
-
         callGenome(self)
-
-def countIndels(self,taskPrefix="",dependencies=None):
-    """
-    run variant error counter
-    """
-
-    tmpSegmentDir=self.paths.getTmpSegmentDir()
-    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), getMkdirCmd() + [tmpSegmentDir], dependencies=dependencies, isForceLocal=True)
-
-    segmentTasks = set()
-
-    segFiles = TempEstimationSegmentFiles()
-
-
-
-    for gseg in getNextGenomeSegment(self.params) :
-        if gseg.chromLabel =='chr20' :
-            segmentTasks |= countGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
-
-    if len(segmentTasks) == 0 :
-        raise Exception("No genome regions to conduct count analysis. Maybe chr20 is missing. Possible target region parse error.")
-
-    # create a checkpoint for all segments:
-    completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=segmentTasks)
-
-    completeCountErrorCounts = set()
-
-    # merge segment stats:
-    completeCountErrorCounts.add(mergeSequenceErrorCounts(self,taskPrefix,completeSegmentsTask, segFiles.counts))
-    finishTasks = set()
-    finishTasks.add(estimateParametersFromErrorCounts(self,taskPrefix,completeCountErrorCounts, segFiles.counts))
-    #if not self.params.isRetainTempFiles :
-    #    rmTmpCmd = getRmdirCmd() + [tmpSegmentDir]
-    #    rmTask=self.addTask(preJoin(taskPrefix,"rmTmpDir"),rmTmpCmd,dependencies=finishTasks, isForceLocal=True)
-
-    nextStepWait = finishTasks
-
-    return nextStepWait
-
-def mergeSequenceErrorCounts(self, taskPrefix, dependencies, runStatsLogPaths) :
-
-    runMergeLabel=preJoin(taskPrefix,"mergeCounts")
-    runMergeCmd=[self.params.mergeCountsBin]
-    for statsFile in runStatsLogPaths :
-        runMergeCmd.extend(["--counts-file",statsFile])
-    runMergeCmd.extend(["--output-file",self.paths.getCountsOutputPath(self.bamIndex)])
-    return self.addTask(runMergeLabel, runMergeCmd, dependencies=dependencies, isForceLocal=True)
-
-def estimateParametersFromErrorCounts(self, taskPrefix, dependencies, runStatsLogPaths) :
-
-    runEstimateLabel=preJoin(taskPrefix,"estimateVariantErrorRatesBin")
-    runEstimateCmd=[self.params.estimateVariantErrorRatesBin]
-    runEstimateCmd.extend(["--counts-file",self.paths.getCountsOutputPath(self.bamIndex)])
-    runEstimateCmd.extend(["--theta-file",self.params.thetaParamFile])
-    runEstimateCmd.extend(["--output-file",self.paths.getIndelEstimationJsonPath(self.bamIndex)])
-    runEstimateCmd.extend(["--fallback-file",self.params.indelErrorRateDefault])
-    return self.addTask(runEstimateLabel, runEstimateCmd, dependencies=dependencies, isForceLocal=True)
 
 
 
 def countGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
+    """
+    Extract sequencing error count data from the genome segment specified by gseg.bamRegion
+    """
 
     segStr = str(gseg.id)
 
@@ -395,14 +305,14 @@ def countGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segCmd.extend(["--region", gseg.bamRegion])
     segCmd.extend(["--ref", self.params.referenceFasta ])
-    segCmd.extend(["-genome-size", str(self.params.knownSize)] )
+    segCmd.extend(["-genome-size", str(self.dynamicParams.knownSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
 
     segFiles.counts.append(self.paths.getTmpSegmentCountsPath(self.bamIndex,segStr))
     segCmd.extend(["--counts-file", segFiles.counts[-1]])
 
     bamPath = self.params.bamList[self.bamIndex]
-    segCmd.extend(["--align-file",bamPath])
+    segCmd.extend(["--align-file", bamPath])
 
     if self.params.isHighDepthFilter :
         segCmd.extend(["--chrom-depth-file", self.paths.getChromDepth()])
@@ -423,30 +333,90 @@ def countGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     return nextStepWait
 
-class EstimateIndelErrorWorkflow(WorkflowRunner) :
+
+
+def mergeSequenceErrorCounts(self, taskPrefix, dependencies, segmentErrorCountFiles) :
     """
-    A separate call workflow is setup so that we can delay the workflow execution until
-    the ref count file exists
+    Given sequencing error counts generated from multiple genome regions, merge these into a single error count set
     """
-    def __init__(self,params,paths,bamIndex) :
-        self.paths = paths
+
+    runMergeLabel=preJoin(taskPrefix,"mergeCounts")
+    runMergeCmd=[self.params.mergeCountsBin]
+    runMergeCmd.extend(["--output-file",self.paths.getCountsOutputPath(self.bamIndex)])
+    for segmentErrorCountFile in segmentErrorCountFiles :
+        runMergeCmd.extend(["--counts-file",segmentErrorCountFile])
+    return self.addTask(runMergeLabel, runMergeCmd, dependencies=dependencies, isForceLocal=True)
+
+
+
+def estimateParametersFromErrorCounts(self, taskPrefix, dependencies) :
+    """
+    Estimate variant error parameters from sequencing error count data
+    """
+
+    runEstimateLabel=preJoin(taskPrefix,"estimateVariantErrorRatesBin")
+    runEstimateCmd=[self.params.estimateVariantErrorRatesBin]
+    runEstimateCmd.extend(["--counts-file",self.paths.getCountsOutputPath(self.bamIndex)])
+    runEstimateCmd.extend(["--theta-file",self.params.thetaParamFile])
+    runEstimateCmd.extend(["--output-file",self.paths.getIndelEstimationJsonPath(self.bamIndex)])
+    runEstimateCmd.extend(["--fallback-file",self.params.indelErrorRateDefault])
+    return self.addTask(runEstimateLabel, runEstimateCmd, dependencies=dependencies, isForceLocal=True)
+
+
+
+def getSequenceErrorEstimatesForSample(self, taskPrefix="", dependencies=None):
+    """
+    Count sequencing errors in one sample and use these to estimate sample error parameters
+    """
+
+    tmpSegmentDir=self.paths.getTmpSegmentDir()
+    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), getMkdirCmd() + [tmpSegmentDir], dependencies=dependencies, isForceLocal=True)
+
+    segmentTasks = set()
+
+    segFiles = TempSequenceErrorCountSegmentFiles()
+
+    for gseg in getNextGenomeSegment(self.params) :
+        if gseg.chromLabel =='chr20' :
+            segmentTasks |= countGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
+
+    if len(segmentTasks) == 0 :
+        raise Exception("No genome regions to conduct count analysis. Maybe chr20 is missing. Possible target region parse error.")
+
+    # create a checkpoint for all segments:
+    completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=segmentTasks)
+
+    completeCountErrorCounts = set()
+
+    # merge segment stats:
+    completeCountErrorCounts.add(mergeSequenceErrorCounts(self,taskPrefix,completeSegmentsTask, segFiles.counts))
+    finishTasks = set()
+    finishTasks.add(estimateParametersFromErrorCounts(self, taskPrefix, completeCountErrorCounts))
+    #if not self.params.isRetainTempFiles :
+    #    rmTmpCmd = getRmdirCmd() + [tmpSegmentDir]
+    #    rmTask=self.addTask(preJoin(taskPrefix,"rmTmpDir"),rmTmpCmd,dependencies=finishTasks, isForceLocal=True)
+
+    nextStepWait = finishTasks
+
+    return nextStepWait
+
+
+
+class EstimateSequenceErrorWorkflow(WorkflowRunner) :
+    """
+    For a given sample, get sequence error counts from the sample's sequencing data and use these
+    to estimate error rates.
+    """
+
+    def __init__(self, params, paths, dynamicParams, bamIndex) :
         self.params = params
+        self.paths = paths
+        self.dynamicParams = dynamicParams
         self.bamIndex = bamIndex
 
     def workflow(self) :
+        getSequenceErrorEstimatesForSample(self)
 
-        if True :
-            knownSize = 0
-            for line in open(self.paths.getRefCountFile()) :
-                word = line.strip().split('\t')
-                if len(word) != 4 :
-                    raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getRefCountFile()))
-                knownSize += int(word[2])
-
-            self.params.knownSize = knownSize
-
-
-        countIndels(self)
 
 
 class PathInfo(SharedPathInfo):
@@ -540,14 +510,12 @@ class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
         estimatePreReqs = set()
         estimatePreReqs |= runCount(self)
         if self.params.isHighDepthFilter :
-            estimatePreReqs |= strelkaGermlineRunDepthFromAlignments(self)
-
-
+            estimatePreReqs |= strelkaGermlineGetDepthFromAlignments(self)
 
         if self.params.isIndelErrorRateEstimated :
             for bamIndex in range(len(self.params.bamList)) :
-                callPreReqs.add(self.addWorkflowTask("EstimateIndelErrorSample"+str(bamIndex), EstimateIndelErrorWorkflow(self.params, self.paths, bamIndex), dependencies=estimatePreReqs))
+                callPreReqs.add(self.addWorkflowTask("EstimateSequenceErrorSample"+str(bamIndex), EstimateSequenceErrorWorkflow(self.params, self.paths, self.dynamicParams, bamIndex), dependencies=estimatePreReqs))
         else :
             callPreReqs = estimatePreReqs
 
-        self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)
+        self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths, self.dynamicParams), dependencies=callPreReqs)

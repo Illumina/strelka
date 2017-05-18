@@ -93,7 +93,7 @@ def quoteStringList(strList):
 
 
 
-def _runDepthShared(self,taskPrefix, dependencies, bamList, outputPath, depthFunc) :
+def _getDepthShared(self,taskPrefix, dependencies, bamList, outputPath, depthFunc) :
     """
     estimate chrom depth using the specified depthFunc to compute per-sample depth
     """
@@ -129,7 +129,7 @@ def _runDepthShared(self,taskPrefix, dependencies, bamList, outputPath, depthFun
     return nextStepWait
 
 
-def runDepthFromAlignments(self, bamList, outputPath, taskPrefix="",dependencies=None) :
+def getDepthFromAlignments(self, bamList, outputPath, taskPrefix="",dependencies=None) :
     """
     estimate chrom depth directly from BAM/CRAM file
     """
@@ -195,4 +195,4 @@ def runDepthFromAlignments(self, bamList, outputPath, taskPrefix="",dependencies
 
         return nextStepWait
 
-    return _runDepthShared(self, taskPrefix, dependencies, bamList, outputPath, depthFunc)
+    return _getDepthShared(self, taskPrefix, dependencies, bamList, outputPath, depthFunc)
