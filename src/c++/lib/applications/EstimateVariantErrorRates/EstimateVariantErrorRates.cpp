@@ -20,9 +20,11 @@
 
 #include <iostream>
 
+#include "common/Exceptions.hh"
 #include "EstimateVariantErrorRates.hh"
 #include "EPECOptions.hh"
 #include "indelModelProduction.hh"
+
 
 
 
@@ -36,7 +38,17 @@ runEPEC(
     counts.load(opt.countsFilename.c_str());
 
 
-    indelModelProduction(counts, opt.thetaFilename, opt.outputFilename);
+    auto indelModelProduction = IndelModelProduction(counts, opt.thetaFilename, opt.outputFilename);
+    indelModelProduction.estimateIndelErrorRates();
+    if (!indelModelProduction.checkEstimatedModel())
+    {
+        using namespace illumina::common;
+        std::ostringstream oss;
+        oss << "EstimateVariantErrorRates: checkEstimatedModel failed. Using  '" << opt.fallbackFilename << "' instead\n";
+        indelModelProduction.exportModelUsingInputJson(opt.fallbackFilename);
+        return;
+    }
+    indelModelProduction.exportModel();
 
 }
 

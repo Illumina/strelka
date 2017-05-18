@@ -22,16 +22,40 @@
 #include "calibration/IndelErrorModel.hh"
 #include "json/json.h"
 #include "errorAnalysis/SequenceErrorCounts.hh"
+class IndelModelProduction
+{
+public:
+    IndelModelProduction(
+        const SequenceErrorCounts& counts,
+        const std::string& thetaFilename,
+        const std::string& outputFilename);
+    void estimateIndelErrorRates();
 
-void
-indelModelProduction(
-    const SequenceErrorCounts& counts,
-    const std::string& thetaFilename,
-    const std::string& outputFilename);
+    void exportModel() const;
 
-std::map<unsigned, std::vector<double> >
-importTheta(
-    const std::string& filename);
+    void exportModelUsingInputJson(
+        const std::string& jsonFilename) const;
+
+    bool checkEstimatedModel() const;
+
+private:
+    std::map<unsigned, std::vector<double> >
+    importTheta(
+        const std::string& filename);
+    bool isValidErrorRate(
+        const double indelErrorRate) const;
+
+private:
+    bool _isEstimated = false;
+    SequenceErrorCounts _counts;
+    std::string _outputFilename;
+    std::map<unsigned, std::vector<double> > _thetas;
+    std::vector<AdaptiveIndelErrorModel> _adaptiveIndelErrorModels;
+    std::vector<unsigned> _repeatPatterns = {1, 2};
+    std::vector<unsigned> _maxRepeatCounts = {16, 9};
+    AdaptiveIndelErrorModelLogParams _nonSTRModelParams;
+    const double _maxErrorRate = 1.0;
+};
 
 // move these to a more appropriate place later
 // TODO: these classes can be automatically serialized with cereal
@@ -67,9 +91,17 @@ public:
     void exportIndelErrorModelToJsonFile(
         const std::string& filename) const;
 
-    Json::Value
-    generateMotifsNode() const;
+    static void
+    writeIndelErrorModelJsonFile(
+        const std::string& sampleName,
+        const Json::Value& motifsNode,
+        const std::string& filename);
 
 private:
     std::string _sampleName;
+
+    Json::Value
+    generateMotifsNode() const;
+
+
 };
