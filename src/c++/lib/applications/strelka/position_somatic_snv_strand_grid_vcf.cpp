@@ -69,7 +69,7 @@ calculateLogOddsRatio(
         }
     }
 
-    return std::log10((tumorRefCount*normalAltCount) / (tumorAltCount*normalRefCount));
+    return std::log((tumorRefCount*normalAltCount) / (tumorAltCount*normalRefCount));
 }
 
 

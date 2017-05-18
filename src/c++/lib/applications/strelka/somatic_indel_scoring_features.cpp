@@ -75,8 +75,7 @@ getSampleStrandOddsRatio(
     const double Y2  = indelSampleReportInfo.n_confident_ref_reads_rev + pseudocount;
     const double n2_minus_Y2 = indelSampleReportInfo.n_confident_indel_reads_rev + pseudocount;
 
-    /// \TODO Replace log10 with log to keep all features consistent.
-    return log10((Y1*n1_minus_Y1)/(Y2*n2_minus_Y2));
+    return std::log((Y1*n1_minus_Y1)/(Y2*n2_minus_Y2));
 }
 
 
@@ -117,7 +116,7 @@ getTumorNormalIndelAlleleLogOdds(
     const double tumorSampleIndelAlleleFrequency = getSampleIndelAlleleFrequency(tumorIndelSampleReportInfo);
     const double normalSampleIndelAlleleFrequency = getSampleIndelAlleleFrequency(normalIndelSampleReportInfo);
 
-    return log10(std::max(tumorSampleIndelAlleleFrequency, 0.0001) / std::max(normalSampleIndelAlleleFrequency, 0.0001));
+    return std::log(std::max(tumorSampleIndelAlleleFrequency, 0.0001) / std::max(normalSampleIndelAlleleFrequency, 0.0001));
 }
 
 
@@ -128,7 +127,7 @@ getSampleIndelNoiseLogOdds(const AlleleSampleReportInfo& indelSampleReportInfo)
     const double indelAlleleFrequency = getSampleIndelAlleleFrequency(indelSampleReportInfo);
     const double otherAlleleFrequency = getSampleOtherAlleleFrequency(indelSampleReportInfo);
 
-    return log10(std::max(indelAlleleFrequency, 0.0001) / std::max(otherAlleleFrequency, 0.0001));
+    return std::log(std::max(indelAlleleFrequency, 0.0001) / std::max(otherAlleleFrequency, 0.0001));
 }
 
 
@@ -140,7 +139,7 @@ calculateLogAltRatio(
 {
     const unsigned n_ref_reads = normalIndelSampleReportInfo.n_confident_ref_reads;
     const unsigned t_alt_reads = tumorIndelSampleReportInfo.n_confident_indel_reads;
-    return log10(safeFrac(t_alt_reads, n_ref_reads));
+    return std::log(safeFrac(t_alt_reads, n_ref_reads));
 }
 
 
@@ -157,7 +156,7 @@ getIndelAlleleCountLogOddsRatio(
     const double tumorRefCount = tumorIndelSampleReportInfo.n_confident_ref_reads + pseudoCount;
     const double tumorAltCount = tumorIndelSampleReportInfo.n_confident_indel_reads + pseudoCount;
 
-    return std::log10((tumorRefCount*normalAltCount) / (tumorAltCount*normalRefCount));
+    return std::log((tumorRefCount*normalAltCount) / (tumorAltCount*normalRefCount));
 }
 
 
