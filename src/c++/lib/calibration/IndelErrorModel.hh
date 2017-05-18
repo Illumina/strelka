@@ -105,6 +105,7 @@ class AdaptiveIndelErrorModelLogParams
 public:
     double logErrorRate = -std::numeric_limits<double>::infinity();
     double logNoisyLocusRate = -std::numeric_limits<double>::infinity();
+    bool paramsAcceptable = true;
 };
 
 

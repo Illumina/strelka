@@ -52,6 +52,7 @@ parseEPECOptions(
     ("counts-file", po::value(&opt.countsFilename),"read binary error counts from filename (required, no default)")
     ("theta-file", po::value(&opt.thetaFilename),"select a json file with theta values")
     ("output-file", po::value(&opt.outputFilename),"select the location and name of the output json file")
+    ("fallback-file", po::value(&opt.fallbackFilename),"select a json file with default error rate values")
     ;
 
     po::options_description help("help");
