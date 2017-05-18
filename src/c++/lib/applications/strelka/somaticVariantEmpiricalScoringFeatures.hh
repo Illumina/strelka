@@ -213,8 +213,8 @@ struct SOMATIC_INDEL_SCORING_FEATURES : public FeatureSet
     enum index_t
     {
         SomaticIndelQualityGivenGermlineGenotype,
-        TumorSampleAbsReadPosRankSum,
-        TumorSampleAbsStrandOddsRatio,
+        TumorSampleReadPosRankSum,
+        TumorSampleLogSymmetricStrandOddsRatio,
         IndelRepeatCount,
         InterruptedHomopolymerLength,
         RefRepeatCount,
@@ -239,10 +239,10 @@ struct SOMATIC_INDEL_SCORING_FEATURES : public FeatureSet
         {
         case SomaticIndelQualityGivenGermlineGenotype:
             return "SomaticIndelQualityGivenGermlineGenotype";
-        case TumorSampleAbsReadPosRankSum:
-            return "TumorSampleAbsReadPosRankSum";
-        case TumorSampleAbsStrandOddsRatio:
-            return "TumorSampleAbsStrandOddsRatio";
+        case TumorSampleReadPosRankSum:
+            return "TumorSampleReadPosRankSum";
+        case TumorSampleLogSymmetricStrandOddsRatio:
+            return "TumorSampleLogSymmetricStrandOddsRatio";
         case IndelRepeatCount:
             return "IndelRepeatCount";
         case InterruptedHomopolymerLength:
@@ -296,6 +296,9 @@ struct SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         T_OF,
         N_BCN,
         T_BCN,
+	TumorSampleAbsReadPosRankSum,
+        TumorSampleLogStrandOddsRatio,
+	TumorSampleAbsLogStrandOddsRatio,
         SIZE
     };
 
@@ -317,6 +320,12 @@ struct SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "N_BCN";
         case T_BCN:
             return "T_BCN";
+        case TumorSampleAbsReadPosRankSum:
+	  return "TumorSampleAbsReadPosRankSum";
+        case TumorSampleLogStrandOddsRatio:
+	  return "TumorSampleLogStrandOddsRatio";
+        case TumorSampleAbsLogStrandOddsRatio:
+          return "TumorSampleAbsLogStrandOddsRatio";
         default:
             assert(false && "Unknown feature");
             return nullptr;

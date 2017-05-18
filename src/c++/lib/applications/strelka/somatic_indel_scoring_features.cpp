@@ -33,7 +33,7 @@
 #include "blt_util/binomial_test.hh"
 
 #include <limits>
-
+#include <assert.h>
 
 static inline
 double
@@ -64,19 +64,19 @@ getSampleOtherAlleleFrequency(
 
 double
 getSampleStrandOddsRatio(
-    const AlleleSampleReportInfo& indelSampleReportInfo)
+			 const AlleleSampleReportInfo& indelSampleReportInfo)
 {
     static const double pseudocount(0.5);
 
-    // Names here refer to eq 1.1 in http://www.people.fas.harvard.edu/~mparzen/published/parzen17.pdf
-    /// \TODO Clean up documentation: Reference above is best guess as to why this pdf is linked here, but the computation doesn't actually match eq 1.1
+    // Eq 1.1 in http://www.people.fas.harvard.edu/~mparzen/published/parzen17.pdf
     const double Y1  = indelSampleReportInfo.n_confident_ref_reads_fwd + pseudocount;
     const double n1_minus_Y1 = indelSampleReportInfo.n_confident_indel_reads_fwd + pseudocount;
     const double Y2  = indelSampleReportInfo.n_confident_ref_reads_rev + pseudocount;
     const double n2_minus_Y2 = indelSampleReportInfo.n_confident_indel_reads_rev + pseudocount;
 
-    return std::log((Y1*n1_minus_Y1)/(Y2*n2_minus_Y2));
+    return (Y1*n2_minus_Y2)/(Y2*n1_minus_Y1);
 }
+
 
 
 
@@ -144,7 +144,6 @@ calculateLogAltRatio(
 
 
 
-
 double
 getIndelAlleleCountLogOddsRatio(
     const AlleleSampleReportInfo& normalIndelSampleReportInfo,
@@ -161,6 +160,15 @@ getIndelAlleleCountLogOddsRatio(
 
 
 
+double
+makeSymmetric(const double inputRatio)
+{
+    assert(inputRatio > 0);
+    return inputRatio + 1.0/inputRatio;
+}
+
+
+
 void
 calculateScoringFeatures(
     const SomaticIndelVcfInfo& siInfo,
@@ -171,10 +179,9 @@ calculateScoringFeatures(
 {
     const indel_result_set& rs(siInfo.sindel.rs);
     smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::SomaticIndelQualityGivenGermlineGenotype, rs.from_ntype_qphred);
-    const double tumorSampleAbsReadPosRankSum(fabs(siInfo.tisri[0].readpos_ranksum.get_z_stat()));
-    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::TumorSampleAbsReadPosRankSum, tumorSampleAbsReadPosRankSum);
-    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::TumorSampleAbsStrandOddsRatio, fabs(
-                          getSampleStrandOddsRatio(siInfo.tisri[0])));
+    const double tumorSampleReadPosRankSum(siInfo.tisri[0].readpos_ranksum.get_z_stat());
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::TumorSampleReadPosRankSum, tumorSampleReadPosRankSum);
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::TumorSampleLogSymmetricStrandOddsRatio, std::log(makeSymmetric(getSampleStrandOddsRatio (siInfo.tisri[0]))));
 
     if (siInfo.indelReportInfo.isRepeatUnit())
     {
@@ -218,5 +225,10 @@ calculateScoringFeatures(
 
         smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::N_BCN, calculateBCNoise(n_was));
         smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::T_BCN, calculateBCNoise(t_was));
+
+	smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::TumorSampleAbsReadPosRankSum, fabs(tumorSampleReadPosRankSum));
+	smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::TumorSampleLogStrandOddsRatio, std::log(getSampleStrandOddsRatio(siInfo.tisri[0])));
+	smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::TumorSampleAbsLogStrandOddsRatio, fabs(std::log(getSampleStrandOddsRatio(siInfo.tisri[0]))));
+
     }
 }
