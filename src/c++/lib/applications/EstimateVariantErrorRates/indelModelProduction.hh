@@ -39,6 +39,7 @@ public:
     bool checkEstimatedModel() const;
 
 private:
+    static
     std::map<unsigned, std::vector<double> >
     importTheta(
         const std::string& filename);
@@ -47,6 +48,7 @@ private:
 
 private:
     bool _isEstimated = false;
+    bool _isEstimationAcceptable = true;
     SequenceErrorCounts _counts;
     std::string _outputFilename;
     std::map<unsigned, std::vector<double> > _thetas;
@@ -54,7 +56,8 @@ private:
     std::vector<unsigned> _repeatPatterns = {1, 2};
     std::vector<unsigned> _maxRepeatCounts = {16, 9};
     AdaptiveIndelErrorModelLogParams _nonSTRModelParams;
-    const double _maxErrorRate = 1.0;
+    const double _maxErrorRate = .3;
+    const double _minErrorRate = .0;
 };
 
 // move these to a more appropriate place later

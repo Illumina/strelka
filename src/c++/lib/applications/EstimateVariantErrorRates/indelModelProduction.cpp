@@ -335,13 +335,14 @@ const double error_minfunc_model3::maxLogRate = std::log(0.5);
 const double error_minfunc_model3::maxLogLocusRate = std::log(1.0);
 
 static
-void
+bool
 computeExtendedContext(
     const bool isLockTheta,
     const double logTheta,
     const IndelErrorData& data,
     double normalizedParams[MIN_PARAMS3::SIZE])
 {
+    bool paramsAcceptable = true;
     std::vector<ExportedIndelObservations> observations;
     data.exportObservations(observations);
     // initialize conjugate direction minimizer settings and minimize lhood...
@@ -378,9 +379,16 @@ computeExtendedContext(
 
         codemin::minimize_conj_direction(minParams,conjDir,errFunc,start_tol,end_tol,line_tol,
                                          x_all_loghood,iter,final_dlh,max_iter);
+
+        if (max_iter == iter)
+        {
+            paramsAcceptable = false;
+        }
     }
 
     error_minfunc_model3::argToParameters(minParams,normalizedParams);
+
+    return paramsAcceptable;
 }
 
 
@@ -403,7 +411,7 @@ estimateModelParams(
 
         const auto& data(contextIt->second);
 
-        computeExtendedContext(isLockTheta, logTheta, data, normalizedParams);
+        estimatedParams.paramsAcceptable = computeExtendedContext(isLockTheta, logTheta, data, normalizedParams);
 
         estimatedParams.logErrorRate = (normalizedParams[MIN_PARAMS3::LN_INSERT_ERROR_RATE] +
                                         normalizedParams[MIN_PARAMS3::LN_DELETE_ERROR_RATE]) / 2;
@@ -420,10 +428,17 @@ IndelModelProduction(
     _counts(counts),
     _outputFilename(outputFilename)
 {
-    if (!thetaFilename.empty())
+    if (thetaFilename.empty())
     {
-        _thetas = importTheta(thetaFilename);
+        using namespace illumina::common;
+
+        std::ostringstream oss;
+        oss << "Theta file name cannot be empty\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
+
+    _thetas = importTheta(thetaFilename);
+
 }
 
 void
@@ -433,26 +448,30 @@ estimateIndelErrorRates()
     const auto lowRepeatCount = AdaptiveIndelErrorModel::lowRepeatCount;
     assert(_repeatPatterns.size() == _maxRepeatCounts.size());
 
-    for (unsigned repeatPatternIx = 0; repeatPatternIx < _repeatPatterns.size(); repeatPatternIx++)
+    for (unsigned repeatPatternIndex = 0; repeatPatternIndex < _repeatPatterns.size(); repeatPatternIndex++)
     {
-        auto repeatPatternSize = _repeatPatterns[repeatPatternIx];
+        auto repeatPatternSize = _repeatPatterns[repeatPatternIndex];
         auto theta = _thetas[repeatPatternSize];
         assert(theta.size() >= *std::max_element(_maxRepeatCounts.begin(), _maxRepeatCounts.end()));
 
         // estimate low repeat count params
-        const auto highRepeatCount = _maxRepeatCounts[repeatPatternIx];
+        const auto highRepeatCount = _maxRepeatCounts[repeatPatternIndex];
         IndelErrorContext lowCountContext(repeatPatternSize, lowRepeatCount);
         log_os << "INFO: computing rates for context: " << lowCountContext << "\n";
         const auto lowLogParams = estimateModelParams(_counts, lowCountContext, std::log(theta[lowRepeatCount - 1]));
-
         // estimate high repeat count params
         IndelErrorContext highCountContext(repeatPatternSize, highRepeatCount);
         log_os << "INFO: computing rates for context: " << highCountContext << "\n";
         const auto highLogParams = estimateModelParams(_counts, highCountContext, std::log(theta[highRepeatCount - 1]));
+
         _adaptiveIndelErrorModels.push_back(AdaptiveIndelErrorModel(repeatPatternSize,
                                                                     highRepeatCount,
                                                                     lowLogParams,
                                                                     highLogParams));
+        if (!lowLogParams.paramsAcceptable || !highLogParams.paramsAcceptable)
+        {
+            _isEstimationAcceptable = false;
+        }
     }
 
     // estimate error rate for the non-STR context
@@ -471,15 +490,15 @@ IndelModelProduction::exportModel() const
     IndelModelJson indelModelJson(_counts.getSampleName());
     // add the non-STR params to all contexts with repeat count 1
     // this will show up as valid contexts during variant calling so we need to fill in these gaps
-    for (unsigned repeatPatternIx = 0; repeatPatternIx < _repeatPatterns.size(); repeatPatternIx++)
+    for (unsigned repeatPatternIndex = 0; repeatPatternIndex < _repeatPatterns.size(); repeatPatternIndex++)
     {
-        indelModelJson.addMotif(_repeatPatterns[repeatPatternIx], 1, std::exp(_nonSTRModelParams.logErrorRate), std::exp(_nonSTRModelParams.logNoisyLocusRate));
+        indelModelJson.addMotif(_repeatPatterns[repeatPatternIndex], 1, std::exp(_nonSTRModelParams.logErrorRate), std::exp(_nonSTRModelParams.logNoisyLocusRate));
     }
 
     // add motif to json for all contexts
-    for (unsigned repeatPatternIx = 0; repeatPatternIx < _repeatPatterns.size(); repeatPatternIx++)
+    for (unsigned repeatPatternIndex = 0; repeatPatternIndex < _repeatPatterns.size(); repeatPatternIndex++)
     {
-        auto errorModel = _adaptiveIndelErrorModels[repeatPatternIx];
+        auto errorModel = _adaptiveIndelErrorModels[repeatPatternIndex];
 
         for (unsigned repeatCount = errorModel.lowRepeatCount; repeatCount <=errorModel.highRepeatCount(); repeatCount++)
         {
@@ -519,18 +538,25 @@ IndelModelProduction::exportModelUsingInputJson(const std::string& jsonFilename)
     {
         using namespace illumina::common;
         std::ostringstream oss;
-        oss << "ERROR: no samples in default indel error model file '" << jsonFilename << "'\n";
+        oss << "ERROR: no samples in indel error model file '" << jsonFilename << "'\n";
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
     else if (samples.size() > 1)
     {
         using namespace illumina::common;
         std::ostringstream oss;
-        oss << "ERROR: multiple samples in default indel error model file '" << jsonFilename << "'\n";
+        oss << "ERROR: multiple samples in indel error model file '" << jsonFilename << "'\n";
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 
     Json::Value motifs = samples[0]["motif"];
+    if (motifs.isNull() || motifs.empty())
+    {
+        using namespace illumina::common;
+        std::ostringstream oss;
+        oss << "ERROR: no motifs in indel error model file '" << jsonFilename << "'\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
 
     IndelModelJson::writeIndelErrorModelJsonFile(_counts.getSampleName(), motifs, _outputFilename);
 }
@@ -556,10 +582,11 @@ checkEstimatedModel() const
         {
             return false;
         }
+
     }
 
-    // check non-STR params
-    if (!isValidErrorRate(_nonSTRModelParams.logErrorRate))
+    // check non-STR params and the _isEstimationAcceptable flag
+    if (!isValidErrorRate(_nonSTRModelParams.logErrorRate) || !_isEstimationAcceptable)
     {
         return false;
     }
@@ -571,11 +598,10 @@ bool IndelModelProduction::
 isValidErrorRate(
     const double errorRate) const
 {
-    if (isnan(errorRate)||errorRate >_maxErrorRate)
-    {
-        return false;
-    }
-    return true;
+    return !(std::isnan(errorRate) ||
+             std::isinf(errorRate) ||
+             (errorRate >= _maxErrorRate) ||
+             (errorRate <= _minErrorRate));
 }
 
 std::map<unsigned, std::vector<double> >
@@ -594,7 +620,7 @@ importTheta(
     Json::Reader reader;
     reader.parse(jsonString, root);
     Json::Value thetasRoot = root["thetas"];
-    if (thetasRoot.isNull())
+    if (thetasRoot.isNull() || thetasRoot.empty())
     {
         using namespace illumina::common;
         std::ostringstream oss;
