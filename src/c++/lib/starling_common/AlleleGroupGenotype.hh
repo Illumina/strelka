@@ -124,13 +124,12 @@ private:
 
 struct GenotypePriorSet
 {
-    GenotypePriorSet(
-        const double /*lowRepeatTheta*/,
-        const double /*highRepeatTheta*/,
-        const unsigned /*highRepeatCount*/)
+    GenotypePriorSet(const std::string& thetaJsonFilename);
+
+    GenotypePriorSet()
     {
         static const unsigned highHpolRepeatCount(16);
-        static const double hpolTheta[] =
+        static const std::vector<double> hpolTheta(
         {
             0.000120268,
             5.97777E-05,
@@ -152,13 +151,13 @@ struct GenotypePriorSet
             0.27106361,
             0.334718891,
             0.348811678
-        };
+        });
 
-        static const unsigned hpolThetaSize = sizeof(hpolTheta)/sizeof(double);
+        static const unsigned hpolThetaSize = hpolTheta.size();
         assert(hpolThetaSize >= highHpolRepeatCount);
 
         static const unsigned highDinucRepeatCount(9);
-        static const double dinucTheta[] =
+        static const std::vector<double> dinucTheta(
         {
             0.000120268,
             8.73757E-05,
@@ -180,41 +179,21 @@ struct GenotypePriorSet
             0.393439865,
             0.395844077,
             0.4
-        };
+        });
 
-        static const unsigned dinucThetaSize = sizeof(dinucTheta)/sizeof(double);
+        std::map<unsigned, std::vector<double> > thetas;
+        thetas[1] = hpolTheta;
+        thetas[2] = dinucTheta;
+
+        static const unsigned dinucThetaSize = dinucTheta.size();
         assert(dinucThetaSize >= highDinucRepeatCount);
 
-        static const unsigned maxRepeatingPatternSize(2);
-
-        _priors.resize(maxRepeatingPatternSize);
-        for (unsigned repeatingPatternSize(1); repeatingPatternSize <= maxRepeatingPatternSize; ++repeatingPatternSize)
-        {
-            const unsigned repeatingPatternSizeIndex(repeatingPatternSize-1);
-            auto& strPatternPriors(_priors[repeatingPatternSizeIndex]);
-
-            if (repeatingPatternSize == 1)
-            {
-                strPatternPriors.resize(highHpolRepeatCount);
-                for (unsigned patternRepeatCount(1); patternRepeatCount <= highHpolRepeatCount; ++patternRepeatCount)
-                {
-                    const unsigned patternRepeatCountIndex(patternRepeatCount - 1);
-                    const double theta(hpolTheta[patternRepeatCountIndex]);
-                    strPatternPriors[patternRepeatCountIndex].initialize(theta);
-                }
-            }
-            else if (repeatingPatternSize == 2)
-            {
-                strPatternPriors.resize(highDinucRepeatCount);
-                for (unsigned patternRepeatCount(1); patternRepeatCount <= highDinucRepeatCount; ++patternRepeatCount)
-                {
-                    const unsigned patternRepeatCountIndex(patternRepeatCount - 1);
-                    const double theta(dinucTheta[patternRepeatCountIndex]);
-                    strPatternPriors[patternRepeatCountIndex].initialize(theta);
-                }
-            }
-        }
+        initializePriors(thetas);
     }
+
+    void
+    initializePriors(
+        const std::map<unsigned, std::vector<double> >& thetas);
 
     const ContextGenotypePriors&
     getContextSpecificPriorSet(

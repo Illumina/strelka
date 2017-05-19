@@ -479,7 +479,7 @@ estimateIndelErrorRates()
     const unsigned nonSTRRepeatPatternSize(1);
     const unsigned nonSTRRepeatCount(1);
     IndelErrorContext targetContext(nonSTRRepeatPatternSize, nonSTRRepeatCount);
-    const auto nonSTRTheta = _thetas[nonSTRRepeatPatternSize][0];
+    const auto nonSTRTheta = _thetas.at(nonSTRRepeatPatternSize)[0];
     log_os << "INFO: computing rates for context: " << targetContext << "\n";
     _nonSTRModelParams = estimateModelParams(_counts, targetContext, std::log(nonSTRTheta));
     _isEstimated = true;

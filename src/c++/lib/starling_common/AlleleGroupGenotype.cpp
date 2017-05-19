@@ -20,11 +20,13 @@
 #include "AlleleGroupGenotype.hh"
 #include "OrthogonalVariantAlleleCandidateGroupUtil.hh"
 
+#include "common/Exceptions.hh"
+#include "calibration/IndelErrorModelJson.hh"
 #include "starling_indel_call_pprob_digt.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
 #include "blt_util/qscore.hh"
-
+#include "blt_util/log.hh"
 
 
 static
@@ -263,5 +265,46 @@ getVariantAlleleGroupGenotypeLhoodsForSample(
             updateSupportingReadStats(
                 dopt, readSupportTheshold, readScore.nsite, readScore.is_fwd_strand, alleleLogLhood, locusReadStats);
         }
+    }
+}
+
+GenotypePriorSet::
+GenotypePriorSet(
+        const std::string& thetaFilename)
+{
+    if (thetaFilename.empty())
+    {
+        GenotypePriorSet();
+        return;
+    }
+
+    const auto thetas = IndelErrorModelJson::importTheta(thetaFilename);
+    initializePriors(thetas);
+}
+
+void
+GenotypePriorSet::
+initializePriors(
+        const std::map<unsigned, std::vector<double> >& thetas)
+{
+    static const unsigned maxRepeatingPatternSize(thetas.size());
+    assert(maxRepeatingPatternSize == 2);
+
+    _priors.resize(maxRepeatingPatternSize);
+    for (unsigned repeatingPatternSize(1); repeatingPatternSize <= maxRepeatingPatternSize; ++repeatingPatternSize)
+    {
+        const unsigned repeatingPatternSizeIndex(repeatingPatternSize-1);
+        auto& strPatternPriors(_priors[repeatingPatternSizeIndex]);
+
+        const unsigned highSTRRepeatCount = thetas.at(repeatingPatternSize).size();
+
+        strPatternPriors.resize(highSTRRepeatCount);
+        for (unsigned patternRepeatCount(1); patternRepeatCount <= highSTRRepeatCount; ++patternRepeatCount)
+        {
+            const unsigned patternRepeatCountIndex(patternRepeatCount - 1);
+            const double theta(thetas.at(repeatingPatternSize)[patternRepeatCountIndex]);
+            strPatternPriors[patternRepeatCountIndex].initialize(theta);
+        }
+
     }
 }
