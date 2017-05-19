@@ -272,15 +272,84 @@ GenotypePriorSet::
 GenotypePriorSet(
     const std::string& thetaFilename)
 {
+    std::map<unsigned, std::vector<double> > thetas;
     if (thetaFilename.empty())
     {
         log_os << "WARNING: theta parameter file was not given. Using internal theta values." << "\n";
-        GenotypePriorSet();
-        return;
+        thetas = initializeThetas();
     }
-
-    const auto thetas = IndelErrorModelJson::importTheta(thetaFilename);
+    else
+    {
+        thetas = IndelErrorModelJson::importTheta(thetaFilename);
+    }
     initializePriors(thetas);
+}
+
+std::map<unsigned, std::vector<double> >
+GenotypePriorSet::
+initializeThetas()
+{
+    static const unsigned highHpolRepeatCount(16);
+    static const std::vector<double> hpolTheta(
+            {
+                    0.000120268,
+                    5.97777E-05,
+                    0.000124648,
+                    0.000260759,
+                    0.000589544,
+                    0.002394583,
+                    0.007417864,
+                    0.022660355,
+                    0.04670561,
+                    0.082031233,
+                    0.124548518,
+                    0.149765438,
+                    0.168051826,
+                    0.187346626,
+                    0.207339703,
+                    0.225843098,
+                    0.248849306,
+                    0.27106361,
+                    0.334718891,
+                    0.348811678
+            });
+
+    static const unsigned hpolThetaSize = hpolTheta.size();
+    assert(hpolThetaSize >= highHpolRepeatCount);
+
+    static const unsigned highDinucRepeatCount(9);
+    static const std::vector<double> dinucTheta(
+            {
+                    0.000120268,
+                    8.73757E-05,
+                    0.000479319,
+                    0.002678401,
+                    0.012194565,
+                    0.03162284,
+                    0.060846617,
+                    0.108263861,
+                    0.163510548,
+                    0.204456064,
+                    0.23462438,
+                    0.267919304,
+                    0.290588942,
+                    0.355588567,
+                    0.369478351,
+                    0.378290471,
+                    0.38555006,
+                    0.393439865,
+                    0.395844077,
+                    0.4
+            });
+
+    std::map<unsigned, std::vector<double> > thetas;
+    thetas[1] = hpolTheta;
+    thetas[2] = dinucTheta;
+
+    static const unsigned dinucThetaSize = dinucTheta.size();
+    assert(dinucThetaSize >= highDinucRepeatCount);
+
+    return thetas;
 }
 
 void
