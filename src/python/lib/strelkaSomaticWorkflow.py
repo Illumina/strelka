@@ -216,7 +216,8 @@ def callGenome(self,taskPrefix="",dependencies=None):
     """
 
     tmpSegmentDir=self.paths.getTmpSegmentDir()
-    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), getMkdirCmd() + [tmpSegmentDir], dependencies=dependencies, isForceLocal=True)
+    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), getMkdirCmd() + [tmpSegmentDir],
+                         dependencies=dependencies, isForceLocal=True)
 
     segmentTasks = set()
 
@@ -254,8 +255,8 @@ def callGenome(self,taskPrefix="",dependencies=None):
         finishBam(segFiles.tumorRealign, self.paths.getRealignedBamPath("tumor"), "realignedTumor")
 
     if not self.params.isRetainTempFiles :
-        rmStatsTmpCmd = getRmdirCmd() + [tmpSegmentDir]
-        rmTask=self.addTask(preJoin(taskPrefix,"rmTmpDir"),rmStatsTmpCmd,dependencies=finishTasks, isForceLocal=True)
+        rmTmpCmd = getRmdirCmd() + [tmpSegmentDir]
+        self.addTask(preJoin(taskPrefix,"removeTmpDir"), rmTmpCmd, dependencies=finishTasks, isForceLocal=True)
 
     nextStepWait = finishTasks
 
@@ -265,8 +266,8 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
 class CallWorkflow(StrelkaSharedCallWorkflow) :
     """
-    A separate call workflow is setup so that we can delay the workflow execution until
-    the ref count file exists
+    A separate workflow is setup around callGenome() so that the workflow execution can be
+    delayed until the ref count exists
     """
 
     def __init__(self, params, paths, dynamicParams) :

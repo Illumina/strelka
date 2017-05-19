@@ -62,10 +62,10 @@ class TotalRefCountWorkflow(WorkflowRunner) :
 
     def workflow(self) :
         knownSize = 0
-        for line in open(self.paths.getRefCountFile()) :
+        for line in open(self.paths.getReferenceSizePath()) :
             word = line.strip().split('\t')
             if len(word) != 4 :
-                raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getRefCountFile()))
+                raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getReferenceSizePath()))
             knownSize += int(word[2])
 
         self.dynamicParams.knownSize = knownSize
@@ -80,7 +80,7 @@ def runCount(self, taskPrefix="", dependencies=None) :
     nextStepWait=set()
 
     print "input params: ", id(self.params)
-    refCountCmd  = "\"%s\" \"%s\" > \"%s\""  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
+    refCountCmd  = "\"%s\" \"%s\" > \"%s\""  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getReferenceSizePath())
     refCountTask = self.addTask(preJoin(taskPrefix,"RefCount"), refCountCmd, dependencies=dependencies)
     nextStepWait.add(self.addWorkflowTask(preJoin(taskPrefix,"RefTotal"), TotalRefCountWorkflow(self.paths, self.dynamicParams), dependencies=refCountTask))
 
@@ -277,6 +277,9 @@ class SharedPathInfo(object):
     def getTmpSegmentDir(self) :
         return os.path.join(self.params.workDir, "genomeSegment.tmpdir")
 
+    def getTmpErrorEstimationDir(self) :
+        return os.path.join(self.params.workDir, "errorEstimation.tmpdir")
+
     def getTmpRunStatsPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "runStats.%s.xml" % (segStr))
 
@@ -286,8 +289,8 @@ class SharedPathInfo(object):
     def getRunStatsReportPath(self) :
         return os.path.join(self.params.statsDir,"runStats.tsv")
 
-    def getRefCountFile(self) :
-        return os.path.join( self.params.workDir, "refCount.txt")
+    def getReferenceSizePath(self) :
+        return os.path.join( self.params.workDir, "referenceSize.tsv")
 
 
 
