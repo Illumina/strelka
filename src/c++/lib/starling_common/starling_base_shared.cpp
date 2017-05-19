@@ -38,8 +38,8 @@ starling_base_deriv_options(const starling_base_options& opt)
     , variant_window_last_stage(0)
     , countCache(opt.indel_candidate_signal_test_alpha)
     , logIndelRefErrorFactor(std::log(opt.indelRefErrorFactor))
-    , _indelErrorModel(new IndelErrorModel(opt.getAlignmentFileOptions().alignmentFilenames, opt.indel_error_model_name,opt.indel_error_model_filenames))
-    , _indelGenotypePriors(new GenotypePriorSet(opt.theta_filename))
+    , _indelErrorModel(new IndelErrorModel(opt.getAlignmentFileOptions().alignmentFilenames, opt.indel_error_model_name,opt.indelErrorModelFilenames))
+    , _indelGenotypePriors(new GenotypePriorSet(opt.thetaFilename))
 {
     indel_nonsite_match_lnp=std::log(opt.indel_nonsite_match_prob);
     if (opt.tier2.is_tier2_indel_nonsite_match_prob)
