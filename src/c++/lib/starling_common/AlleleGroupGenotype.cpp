@@ -274,6 +274,7 @@ GenotypePriorSet(
 {
     if (thetaFilename.empty())
     {
+        log_os << "WARNING: theta parameter file was not given. Using internal theta values." << "\n";
         GenotypePriorSet();
         return;
     }
