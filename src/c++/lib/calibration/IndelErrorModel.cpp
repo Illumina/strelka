@@ -21,7 +21,7 @@
 #include "blt_util/log.hh"
 #include "common/Exceptions.hh"
 #include "IndelErrorModel.hh"
-#include "IndelModelJson.hh"
+#include "IndelErrorModelJson.hh"
 
 #include <cmath>
 #include <cassert>
@@ -176,7 +176,7 @@ IndelErrorModel(
         _isUseSampleSpecificErrorRates = true;
         _sampleErrorRates.resize(_sampleCount);
 
-        const auto modelsMap = IndelModelJson::deserializeIndelModels(modelFilenames);
+        const auto modelsMap = IndelErrorModelJson::deserializeIndelModels(modelFilenames);
 
         for (unsigned alignmentFileIndex = 0; alignmentFileIndex < _sampleCount; alignmentFileIndex++)
         {

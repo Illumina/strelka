@@ -27,7 +27,7 @@
 #include "blt_util/prob_util.hh"
 
 #include "IndelModelProduction.hh"
-#include "calibration/IndelModelJson.hh"
+#include "calibration/IndelErrorModelJson.hh"
 
 //#define CODEMIN_DEBUG
 #define CODEMIN_USE_BOOST
@@ -438,7 +438,7 @@ IndelModelProduction(
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 
-    _thetas = IndelModelJson::importTheta(thetaFilename);
+    _thetas = IndelErrorModelJson::importTheta(thetaFilename);
 
 }
 
@@ -488,7 +488,7 @@ estimateIndelErrorRates()
 void
 IndelModelProduction::exportModel() const
 {
-    IndelModelJson indelModelJson(_counts.getSampleName());
+    IndelErrorModelJson indelModelJson(_counts.getSampleName());
     // add the non-STR params to all contexts with repeat count 1
     // this will show up as valid contexts during variant calling so we need to fill in these gaps
     for (unsigned repeatPatternIndex = 0; repeatPatternIndex < _repeatPatterns.size(); repeatPatternIndex++)
@@ -559,7 +559,7 @@ IndelModelProduction::exportModelUsingInputJson(const std::string& jsonFilename)
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 
-    IndelModelJson::writeIndelErrorModelJsonFile(_counts.getSampleName(), motifs, _outputFilename);
+    IndelErrorModelJson::writeIndelErrorModelJsonFile(_counts.getSampleName(), motifs, _outputFilename);
 }
 
 bool

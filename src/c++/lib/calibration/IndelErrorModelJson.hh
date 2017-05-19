@@ -36,12 +36,12 @@ public:
 };
 
 
-class IndelModelJson
+class IndelErrorModelJson
 {
 
 public:
     explicit
-    IndelModelJson(const std::string& sampleName);
+    IndelErrorModelJson(const std::string& sampleName);
 
     void addMotif(
             unsigned repeatPatternSize,

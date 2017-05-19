@@ -22,17 +22,17 @@
 
 #include "common/Exceptions.hh"
 #include "blt_util/log.hh"
-#include "IndelModelJson.hh"
+#include "IndelErrorModelJson.hh"
 
-IndelModelJson::
-IndelModelJson(const std::string& sampleName)
+IndelErrorModelJson::
+IndelErrorModelJson(const std::string& sampleName)
         : _sampleName(sampleName)
 {}
 
 
 // move these to a more appropriate place later
 Json::Value
-IndelModelJson::
+IndelErrorModelJson::
 generateMotifsNode() const
 {
     Json::Value motifs;
@@ -49,7 +49,7 @@ generateMotifsNode() const
 }
 
 void
-IndelModelJson::
+IndelErrorModelJson::
 exportIndelErrorModelToJsonFile(
         const std::string& filename) const
 {
@@ -57,7 +57,7 @@ exportIndelErrorModelToJsonFile(
 }
 
 void
-IndelModelJson::
+IndelErrorModelJson::
 writeIndelErrorModelJsonFile(
         const std::string& sampleName,
         const Json::Value& motifsNode,
@@ -78,7 +78,7 @@ writeIndelErrorModelJsonFile(
 }
 
 void
-IndelModelJson::
+IndelErrorModelJson::
 addMotif(unsigned repeatPatternSize,
                               unsigned repeatCount,
                               double indelRate,
@@ -93,7 +93,7 @@ addMotif(unsigned repeatPatternSize,
 }
 
 std::map<std::string, IndelErrorRateSet>
-IndelModelJson::
+IndelErrorModelJson::
 deserializeIndelModels(const std::vector<std::string>& modelFilenames)
 {
     std::map<std::string, IndelErrorRateSet> modelMap;
@@ -155,7 +155,7 @@ deserializeIndelModels(const std::vector<std::string>& modelFilenames)
 }
 
 std::map<unsigned, std::vector<double> >
-IndelModelJson::
+IndelErrorModelJson::
 importTheta(
         const std::string& filename)
 {
