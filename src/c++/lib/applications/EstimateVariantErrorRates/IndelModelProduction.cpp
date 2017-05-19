@@ -26,7 +26,8 @@
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
 
-#include "indelModelProduction.hh"
+#include "IndelModelProduction.hh"
+#include "calibration/IndelModelJson.hh"
 
 //#define CODEMIN_DEBUG
 #define CODEMIN_USE_BOOST
@@ -437,7 +438,7 @@ IndelModelProduction(
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 
-    _thetas = importTheta(thetaFilename);
+    _thetas = IndelModelJson::importTheta(thetaFilename);
 
 }
 
@@ -604,106 +605,6 @@ isValidErrorRate(
              (errorRate <= _minErrorRate));
 }
 
-std::map<unsigned, std::vector<double> >
-IndelModelProduction::
-importTheta(
-    const std::string& filename)
-{
-    std::string jsonString;
-    Json::Value root;
-    {
-        std::ifstream ifs(filename, std::ifstream::binary);
-        std::stringstream buffer;
-        buffer << ifs.rdbuf();
-        jsonString = buffer.str();
-    }
-    Json::Reader reader;
-    reader.parse(jsonString, root);
-    Json::Value thetasRoot = root["thetas"];
-    if (thetasRoot.isNull() || thetasRoot.empty())
-    {
-        using namespace illumina::common;
-        std::ostringstream oss;
-        oss << "ERROR: no theta values in theta file '" << filename << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-    }
-
-    std::map<unsigned, std::vector<double>> thetas;
-
-    for (const auto& thetasByPatternSize : thetasRoot)
-    {
-        std::vector<double> theta;
-        unsigned repeatPatternSize = thetasByPatternSize["repeatPatternSize"].asUInt();
-        Json::Value thetaValues = thetasByPatternSize["theta"];
-        for (const auto& thetaValue : thetaValues)
-        {
-            theta.push_back(thetaValue.asDouble());
-        }
-        thetas[repeatPatternSize] = theta;
-    }
-    return thetas;
-}
 
 
-IndelModelJson::IndelModelJson(const std::string& sampleName)
-    : _sampleName(sampleName)
-{}
-
-
-// move these to a more appropriate place later
-Json::Value
-IndelModelJson::generateMotifsNode() const
-{
-    Json::Value motifs;
-    for (const auto& motifIt : model.motifs)
-    {
-        Json::Value motif;
-        motif["repeatPatternSize"] = motifIt.repeatPatternSize;
-        motif["repeatCount"] = motifIt.repeatCount;
-        motif["indelRate"] = motifIt.indelRate;
-        motif["noisyLocusRate"] = motifIt.noisyLocusRate;
-        motifs.append(motif);
-    }
-    return motifs;
-}
-
-void
-IndelModelJson::exportIndelErrorModelToJsonFile(
-    const std::string& filename) const
-{
-    writeIndelErrorModelJsonFile(_sampleName, generateMotifsNode(), filename);
-}
-
-void
-IndelModelJson::writeIndelErrorModelJsonFile(
-    const std::string& sampleName,
-    const Json::Value& motifsNode,
-    const std::string& filename)
-{
-    Json::StyledWriter writer;
-    Json::Value jsonRoot;
-    Json::Value samples;
-    Json::Value sample;
-    sample["sampleName"] = sampleName;
-    sample["motif"] = motifsNode;
-    samples.append(sample);
-    jsonRoot["sample"] = samples;
-
-    const std::string str = writer.write(jsonRoot);
-    std::ofstream out(filename);
-    out << str << "\n\n";
-}
-
-void IndelModelJson::addMotif(unsigned repeatPatternSize,
-                              unsigned repeatCount,
-                              double indelRate,
-                              double noisyLocusRate)
-{
-    IndelMotifBinomialMixture motif;
-    motif.repeatPatternSize = repeatPatternSize;
-    motif.repeatCount = repeatCount;
-    motif.indelRate = indelRate;
-    motif.noisyLocusRate = noisyLocusRate;
-    model.motifs.push_back(motif);
-}
 
