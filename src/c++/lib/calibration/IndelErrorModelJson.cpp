@@ -26,7 +26,7 @@
 
 IndelErrorModelJson::
 IndelErrorModelJson(const std::string& sampleName)
-        : _sampleName(sampleName)
+    : _sampleName(sampleName)
 {}
 
 
@@ -51,7 +51,7 @@ generateMotifsNode() const
 void
 IndelErrorModelJson::
 exportIndelErrorModelToJsonFile(
-        const std::string& filename) const
+    const std::string& filename) const
 {
     writeIndelErrorModelJsonFile(_sampleName, generateMotifsNode(), filename);
 }
@@ -59,9 +59,9 @@ exportIndelErrorModelToJsonFile(
 void
 IndelErrorModelJson::
 writeIndelErrorModelJsonFile(
-        const std::string& sampleName,
-        const Json::Value& motifsNode,
-        const std::string& filename)
+    const std::string& sampleName,
+    const Json::Value& motifsNode,
+    const std::string& filename)
 {
     Json::StyledWriter writer;
     Json::Value jsonRoot;
@@ -80,9 +80,9 @@ writeIndelErrorModelJsonFile(
 void
 IndelErrorModelJson::
 addMotif(unsigned repeatPatternSize,
-                              unsigned repeatCount,
-                              double indelRate,
-                              double noisyLocusRate)
+         unsigned repeatCount,
+         double indelRate,
+         double noisyLocusRate)
 {
     IndelMotifBinomialMixture motif;
     motif.repeatPatternSize = repeatPatternSize;
@@ -157,7 +157,7 @@ deserializeIndelModels(const std::vector<std::string>& modelFilenames)
 std::map<unsigned, std::vector<double> >
 IndelErrorModelJson::
 importTheta(
-        const std::string& filename)
+    const std::string& filename)
 {
     std::string jsonString;
     Json::Value root;

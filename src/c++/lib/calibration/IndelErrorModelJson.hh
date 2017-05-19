@@ -44,27 +44,27 @@ public:
     IndelErrorModelJson(const std::string& sampleName);
 
     void addMotif(
-            unsigned repeatPatternSize,
-            unsigned repeatCount,
-            double indelRate,
-            double noisyLocusRate);
+        unsigned repeatPatternSize,
+        unsigned repeatCount,
+        double indelRate,
+        double noisyLocusRate);
 
     void exportIndelErrorModelToJsonFile(
-            const std::string& filename) const;
+        const std::string& filename) const;
 
     static void
     writeIndelErrorModelJsonFile(
-            const std::string& sampleName,
-            const Json::Value& motifsNode,
-            const std::string& filename);
+        const std::string& sampleName,
+        const Json::Value& motifsNode,
+        const std::string& filename);
 
     static std::map<std::string, IndelErrorRateSet>
     deserializeIndelModels(
-            const std::vector<std::string>& modelFilenames);
+        const std::vector<std::string>& modelFilenames);
 
     static std::map<unsigned, std::vector<double> >
     importTheta(
-            const std::string& filename);
+        const std::string& filename);
 
 public:
     IndelModelBinomialMixture model;

@@ -270,7 +270,7 @@ getVariantAlleleGroupGenotypeLhoodsForSample(
 
 GenotypePriorSet::
 GenotypePriorSet(
-        const std::string& thetaFilename)
+    const std::string& thetaFilename)
 {
     if (thetaFilename.empty())
     {
@@ -286,7 +286,7 @@ GenotypePriorSet(
 void
 GenotypePriorSet::
 initializePriors(
-        const std::map<unsigned, std::vector<double> >& thetas)
+    const std::map<unsigned, std::vector<double> >& thetas)
 {
     static const unsigned maxRepeatingPatternSize(thetas.size());
     assert(maxRepeatingPatternSize == 2);
