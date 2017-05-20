@@ -131,7 +131,7 @@ get_starling_base_option_parser(
     ("theta-file", po::value<std::string>(&opt.thetaFilename),
      "File containing theta values")
     ("indel-error-model-name", po::value(&opt.indel_error_model_name)->default_value(opt.indel_error_model_name),
-     "Static indel error model name. If no indel error model file is provided a hard-coded model can be selected with this argument instead. Current options are ('logLinear'). This option is ignored when an indel error model file is provided.")
+     "Static indel error model name. If no indel error model file is provided a hard-coded model can be selected with this argument instead. Current options are ('adaptiveDefault','logLinear'). This option is ignored when at least one indel error models file is provided.")
     ("call-regions-bed",  po::value(&opt.callRegionsBedFilename),
      "Bed file describing regions to call. No output will be provided outside of these regions. (must be bgzip compressed and tabix indexed).")
     ;

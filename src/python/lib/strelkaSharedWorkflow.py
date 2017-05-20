@@ -37,7 +37,6 @@ from sharedWorkflow import getMvCmd
 from workflowUtil import checkFile, cleanPyEnv, ensureDir, getFastaChromOrderSize, \
                   getGenomeSegmentGroups, getNextGenomeSegment, preJoin
 
-
 class DeepCopyProtector(object) :
     """
     Any data attached to this object will remain aliased through a deepcopy operation
@@ -61,14 +60,16 @@ class TotalRefCountWorkflow(WorkflowRunner) :
         self.dynamicParams = dynamicParams
 
     def workflow(self) :
-        knownSize = 0
+        totalKnownSize = 0
         for line in open(self.paths.getReferenceSizePath()) :
             word = line.strip().split('\t')
             if len(word) != 4 :
                 raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getReferenceSizePath()))
-            knownSize += int(word[2])
+            knownSize = int(word[2])
 
-        self.dynamicParams.knownSize = knownSize
+            totalKnownSize += knownSize
+
+        self.dynamicParams.totalKnownSize = totalKnownSize
 
 
 
@@ -79,7 +80,6 @@ def runCount(self, taskPrefix="", dependencies=None) :
 
     nextStepWait=set()
 
-    print "input params: ", id(self.params)
     refCountCmd  = "\"%s\" \"%s\" > \"%s\""  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getReferenceSizePath())
     refCountTask = self.addTask(preJoin(taskPrefix,"RefCount"), refCountCmd, dependencies=dependencies)
     nextStepWait.add(self.addWorkflowTask(preJoin(taskPrefix,"RefTotal"), TotalRefCountWorkflow(self.paths, self.dynamicParams), dependencies=refCountTask))
@@ -210,13 +210,11 @@ class StrelkaSharedCallWorkflow(WorkflowRunner) :
             segCmd.extend(["--region", gseg.bamRegion])
 
         segCmd.extend(["--ref", self.params.referenceFasta ])
-        segCmd.extend(["-genome-size", str(self.dynamicParams.knownSize)] )
+        segCmd.extend(["-genome-size", str(self.dynamicParams.totalKnownSize)] )
         segCmd.extend(["-max-indel-size", "50"] )
 
         if self.params.indelErrorModelName is not None :
             segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
-        if self.params.inputIndelErrorModelsFile is not None :
-            segCmd.extend(['--indel-error-models-file', self.params.inputIndelErrorModelsFile])
 
         if self.params.isReportEVSFeatures :
             segCmd.append("--report-evs-features")
@@ -326,16 +324,16 @@ class StrelkaSharedWorkflow(WorkflowRunner) :
 
         self.paths = PathInfoType(self.params)
 
-        indexRefFasta=self.params.referenceFasta+".fai"
+        referenceFastaIndex=self.params.referenceFasta+".fai"
 
         if self.params.referenceFasta is None:
             raise Exception("No reference fasta defined.")
         else:
             checkFile(self.params.referenceFasta,"reference fasta")
-            checkFile(indexRefFasta,"reference fasta index")
+            checkFile(referenceFastaIndex,"reference fasta index")
 
         # read fasta index
-        (self.params.chromOrder,self.params.chromSizes) = getFastaChromOrderSize(indexRefFasta)
+        (self.params.chromOrder,self.params.chromSizes) = getFastaChromOrderSize(referenceFastaIndex)
 
         # determine subset of chroms where we can skip calling entirely
         self.params.chromIsSkipped = getChromIsSkipped(self, self.params.chromOrder)

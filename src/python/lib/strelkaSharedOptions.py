@@ -33,7 +33,7 @@ from configureOptions import ConfigureWorkflowOptions
 from configureUtil import assertOptionExists, joinFile, OptParseException, \
                           validateFixExistingDirArg, validateFixExistingFileArg, \
                           checkFixTabixListOption, checkFixTabixIndexedFileOption
-from workflowUtil import exeFile, parseGenomeRegion
+from workflowUtil import exeFile, getFastaChromOrderSize, parseGenomeRegion
 
 
 def cleanLocals(locals_dict) :
@@ -76,6 +76,7 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
                               "Only one BED file may be specified. (default: call the entire genome)")
         group.add_option("--runDir", type="string",metavar="DIR",
                          help="Run script and run output will be written to this directory [required] (default: %default)")
+
 
     def addExtendedGroupOptions(self,group) :
         # note undocumented library behavior: "dest" is optional, but not including it here will
@@ -181,7 +182,6 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
         return cleanLocals(locals())
 
 
-
     def validateAndSanitizeOptions(self,options) :
 
         assertOptionExists(options.runDir,"run directory")
@@ -194,6 +194,28 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
         referenceFastaIndex=options.referenceFasta + ".fai"
         if not os.path.isfile(referenceFastaIndex) :
             raise OptParseException("Can't find expected fasta index file: '%s'" % (referenceFastaIndex))
+
+        if options.isIndelErrorRateEstimated :
+            # Determine if dynamic error estimation is feasible based on the reference size
+            # - Given reference contig set (S) with sequence length of at least 5 Mb
+            # - The total sequence length from S must be at least 50 Mb
+
+            class Constants :
+                Megabase = 1000000
+                minChromSize = 5*Megabase
+                minTotalSize = 50*Megabase
+
+            # read fasta index
+            (_, chromSizes) = getFastaChromOrderSize(referenceFastaIndex)
+
+            totalEstimationSize=0
+            for chromSize in chromSizes.values() :
+                if chromSize < Constants.minChromSize : continue
+                totalEstimationSize += chromSize
+
+            if totalEstimationSize < Constants.minTotalSize :
+                sys.stderr.write("WARNING: Cannot estimate sequence errors from data due to small or overly fragmented reference sequence. Sequence error estimation disabled.\n")
+                options.isIndelErrorRateEstimated = False
 
         checkFixTabixListOption(options.indelCandidatesList,"candidate indel vcf")
         checkFixTabixListOption(options.forcedGTList,"forced genotype vcf")

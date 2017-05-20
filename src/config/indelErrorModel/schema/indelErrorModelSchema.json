@@ -20,7 +20,7 @@
             "minimum": 1
           },
           "sampleName": {
-            "description": "The sample name (usually the absolute path of the bam file) used to estiamte the model",
+            "description": "The sample name (usually the absolute path of the bam file) used to estiamte the model, or 'default'",
             "type": "string",
             "minimum": 1
           },

@@ -35,7 +35,7 @@ sys.path.append(os.path.abspath(pyflowDir))
 
 from configBuildTimeInfo import workflowVersion
 from configureUtil import safeSetBool
-from pyflow import WorkflowRunner
+from pyflow import LogState, WorkflowRunner
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, getDepthFromAlignments
 from strelkaSharedWorkflow import runCount, SharedPathInfo, \
                            StrelkaSharedCallWorkflow, StrelkaSharedWorkflow
@@ -155,6 +155,8 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     if self.params.isIndelErrorRateEstimated :
         for bamIndex in range(len(self.params.bamList)) :
             segCmd.extend(['--indel-error-models-file', self.paths.getIndelErrorModelPath(bamIndex)])
+    else :
+        segCmd.extend(['--indel-error-models-file', self.params.indelErrorRateDefault])
 
     segCmd.extend(['--theta-file', self.params.thetaParamFile])
 
@@ -306,7 +308,7 @@ def countGenomeSegment(self, sampleIndex, gseg, segFiles, taskPrefix="", depende
 
     segCmd.extend(["--region", gseg.bamRegion])
     segCmd.extend(["--ref", self.params.referenceFasta ])
-    segCmd.extend(["-genome-size", str(self.dynamicParams.knownSize)] )
+    segCmd.extend(["-genome-size", str(self.dynamicParams.totalKnownSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
 
     segFiles.counts.append(self.paths.getTmpSegmentErrorCountsPath(sampleIndex, segStr))
@@ -443,7 +445,7 @@ class EstimateSequenceErrorWorkflow(WorkflowRunner) :
 
 class PathInfo(SharedPathInfo):
     """
-    object to centralize shared workflow path names
+    Object to centralize shared workflow path names
     """
 
     def __init__(self, params) :
@@ -489,7 +491,7 @@ class PathInfo(SharedPathInfo):
 
 class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
     """
-    germline small variant calling workflow
+    Germline small variant calling workflow
     """
 
     def __init__(self,params) :
@@ -508,6 +510,7 @@ class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
 
         if self.params.isExome :
             self.params.isEVS = False
+
 
     def getSuccessMessage(self) :
         "Message to be included in email for successful runs"
