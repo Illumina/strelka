@@ -150,6 +150,13 @@ classify_site(
                                                    error_prob_to_qphred(_snvScoringModelPtr->scoreVariant(locus.evsFeatures.getAll())),
                                                    maxEmpiricalVariantScore);
 
+            // hard filter to prevent PASS calls with low AD sum
+            // manually set empiricalVariantScore = 0 if AD sum is below a threshold
+            if (sampleInfo.supportCounts.totalConfidentCounts() < _opt.minADSum)
+            {
+                sampleInfo.empiricalVariantScore = 0;
+            }
+
             if (sampleInfo.empiricalVariantScore < snvEVSThreshold())
             {
                 sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
@@ -217,6 +224,13 @@ classify_indel(
             sampleInfo.empiricalVariantScore = std::min(
                                                    error_prob_to_qphred(_indelScoringModelPtr->scoreVariant(locus.evsFeatures.getAll())),
                                                    maxEmpiricalVariantScore);
+
+            // hard filter to prevent PASS calls with low AD sum
+            // manually set empiricalVariantScore = 0 if AD sum is below a threshold
+            if (sampleInfo.supportCounts.totalConfidentCounts() < _opt.minADSum)
+            {
+                sampleInfo.empiricalVariantScore = 0;
+            }
 
             if (sampleInfo.empiricalVariantScore < indelEVSThreshold())
             {

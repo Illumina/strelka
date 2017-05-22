@@ -50,7 +50,6 @@ struct gvcf_options
         return (max_ref_rep >= 0);
     }
 
-
     // admin/other:
     std::string chrom_depth_file;
     bool is_skip_header = false;
@@ -68,6 +67,9 @@ struct gvcf_options
     bool is_max_snv_hpol = true;
     int max_snv_hpol = -1;
     int max_ref_rep = -1;
+
+    // EVS is set to 0 if AD sum is below this value
+    unsigned minADSum = 3u;
 
     // blocking scheme:
     //
