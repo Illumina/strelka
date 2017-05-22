@@ -20,7 +20,6 @@
 #pragma once
 
 #include "calibration/IndelErrorModel.hh"
-#include "json/json.h"
 #include "errorAnalysis/SequenceErrorCounts.hh"
 class IndelModelProduction
 {
@@ -39,10 +38,6 @@ public:
     bool checkEstimatedModel() const;
 
 private:
-    static
-    std::map<unsigned, std::vector<double> >
-    importTheta(
-        const std::string& filename);
     bool isValidErrorRate(
         const double indelErrorRate) const;
 
@@ -60,51 +55,5 @@ private:
     const double _minErrorRate = .0;
 };
 
-// move these to a more appropriate place later
-// TODO: these classes can be automatically serialized with cereal
-class IndelMotifBinomialMixture
-{
-public:
-    unsigned repeatPatternSize = 0;
-    unsigned repeatCount = 0;
-    double indelRate = 0;
-    double noisyLocusRate = 0;
-};
-
-class IndelModelBinomialMixture
-{
-public:
-    std::vector<IndelMotifBinomialMixture> motifs;
-};
-
-class IndelModelJson
-{
-public:
-    IndelModelBinomialMixture model;
-
-    explicit
-    IndelModelJson(const std::string& sampleName);
-
-    void addMotif(
-        unsigned repeatPatternSize,
-        unsigned repeatCount,
-        double indelRate,
-        double noisyLocusRate);
-
-    void exportIndelErrorModelToJsonFile(
-        const std::string& filename) const;
-
-    static void
-    writeIndelErrorModelJsonFile(
-        const std::string& sampleName,
-        const Json::Value& motifsNode,
-        const std::string& filename);
-
-private:
-    std::string _sampleName;
-
-    Json::Value
-    generateMotifsNode() const;
 
 
-};

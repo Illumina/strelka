@@ -59,9 +59,6 @@ struct IndelErrorModel
         const bool isCandidateRates = false) const;
 
 private:
-    std::map<std::string, IndelErrorRateSet>
-    deserializeIndelModels(const std::vector<std::string>& modelFilenames);
-
     void
     checkSampleIndex(
         const unsigned sampleIndex) const;

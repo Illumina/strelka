@@ -23,7 +23,7 @@
 #include "blt_util/log.hh"
 #include "EstimateVariantErrorRates.hh"
 #include "EPECOptions.hh"
-#include "indelModelProduction.hh"
+#include "IndelModelProduction.hh"
 
 
 

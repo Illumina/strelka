@@ -126,8 +126,10 @@ get_starling_base_option_parser(
      "Write runtime stats to file")
     ("report-evs-features", po::value(&opt.isReportEVSFeatures)->zero_tokens(),
      "Report empirical variant scoring (EVS) training features in VCF output")
-    ("indel-error-models-file", po::value<std::vector<std::string>>(&opt.indel_error_model_filenames),
+    ("indel-error-models-file", po::value<std::vector<std::string>>(&opt.indelErrorModelFilenames),
      "File containing indel error models (may be specified more than once)")
+    ("theta-file", po::value<std::string>(&opt.thetaFilename),
+     "File containing theta values")
     ("indel-error-model-name", po::value(&opt.indel_error_model_name)->default_value(opt.indel_error_model_name),
      "Static indel error model name. If no indel error model file is provided a hard-coded model can be selected with this argument instead. Current options are ('logLinear'). This option is ignored when an indel error model file is provided.")
     ("call-regions-bed",  po::value(&opt.callRegionsBedFilename),
@@ -304,7 +306,7 @@ finalize_starling_base_options(
         opt.is_max_input_depth=true;
     }
 
-    for (const auto& indelErrorModelFilename : opt.indel_error_model_filenames)
+    for (const auto& indelErrorModelFilename : opt.indelErrorModelFilenames)
     {
         checkOptionalFile(pinfo, indelErrorModelFilename, "indel error models");
     }
