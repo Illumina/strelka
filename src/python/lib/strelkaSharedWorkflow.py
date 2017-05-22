@@ -299,12 +299,11 @@ class StrelkaSharedWorkflow(WorkflowRunner) :
     small variant calling workflow base
     """
 
-    def __init__(self,params,iniSections,PathInfoType) :
+    def __init__(self,params,PathInfoType) :
 
         cleanPyEnv()
 
         self.params=params
-        self.iniSections=iniSections
         self.dynamicParams = DeepCopyProtector()
 
         # make sure run directory is setup:

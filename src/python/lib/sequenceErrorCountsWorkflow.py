@@ -226,9 +226,9 @@ class SequenceErrorCountsWorkflow(StrelkaSharedWorkflow) :
     sequence error counts workflow
     """
 
-    def __init__(self,params,iniSections) :
+    def __init__(self, params) :
         global PathInfo
-        super(SequenceErrorCountsWorkflow,self).__init__(params,iniSections,PathInfo)
+        super(SequenceErrorCountsWorkflow,self).__init__(params, PathInfo)
 
         # if debugging output is going to be produced, add a results/debug dir
         if self.params.isReportObservedIndels:

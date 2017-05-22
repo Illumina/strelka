@@ -321,9 +321,9 @@ class StrelkaSomaticWorkflow(StrelkaSharedWorkflow) :
     Strelka somatic small variant calling workflow
     """
 
-    def __init__(self,params,iniSections) :
+    def __init__(self,params) :
         global PathInfo
-        super(StrelkaSomaticWorkflow,self).__init__(params,iniSections, PathInfo)
+        super(StrelkaSomaticWorkflow,self).__init__(params, PathInfo)
 
         # format bam lists:
         if self.params.normalBamList is None : self.params.normalBamList = []

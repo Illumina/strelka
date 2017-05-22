@@ -95,10 +95,9 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
         return defaults
 
 
-    def validateAndSanitizeExistingOptions(self,options) :
+    def validateAndSanitizeOptions(self,options) :
 
-        StrelkaSharedWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
-        groomBamList(options.bamList,"input")
+        StrelkaSharedWorkflowOptionsBase.validateAndSanitizeOptions(self,options)
 
         options.ploidyFilename = checkFixTabixIndexedFileOption(options.ploidyFilename,"ploidy file")
         options.noCompressBed = checkFixTabixIndexedFileOption(options.noCompressBed,"no-compress bed")
@@ -115,9 +114,7 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
                 options.indelScoringModelFile = options.germlineIndelScoringModelFile
 
 
-    def validateOptionExistence(self,options) :
-
-        StrelkaSharedWorkflowOptionsBase.validateOptionExistence(self,options)
+        groomBamList(options.bamList,"input")
 
         def safeLen(x) :
             if x is None : return 0
@@ -126,10 +123,9 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
         if safeLen(options.bamList) == 0 :
             raise OptParseException("No input sample alignment files specified")
 
-        bcheck = BamSetChecker()
-        bcheck.appendBams(options.bamList,"Input")
-        bcheck.check(options.htsfileBin,
-                     options.referenceFasta)
+        bamSetChecker = BamSetChecker()
+        bamSetChecker.appendBams(options.bamList,"Input")
+        bamSetChecker.check(options.htsfileBin, options.referenceFasta)
 
 
 
@@ -141,7 +137,7 @@ def main() :
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:
     #
-    StrelkaGermlineWorkflow(options,iniSections)
+    StrelkaGermlineWorkflow(options)
 
     # generate runscript:
     #

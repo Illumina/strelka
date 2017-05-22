@@ -182,17 +182,18 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
 
 
-    def validateAndSanitizeExistingOptions(self,options) :
+    def validateAndSanitizeOptions(self,options) :
 
+        assertOptionExists(options.runDir,"run directory")
         options.runDir=os.path.abspath(options.runDir)
 
-        options.referenceFasta=validateFixExistingFileArg(options.referenceFasta,"reference")
+        assertOptionExists(options.referenceFasta,"reference fasta file")
+        options.referenceFasta=validateFixExistingFileArg(options.referenceFasta,"reference fasta file")
 
         # check for reference fasta index file:
-        if options.referenceFasta is not None :
-            faiFile=options.referenceFasta + ".fai"
-            if not os.path.isfile(faiFile) :
-                raise OptParseException("Can't find expected fasta index file: '%s'" % (faiFile))
+        referenceFastaIndex=options.referenceFasta + ".fai"
+        if not os.path.isfile(referenceFastaIndex) :
+            raise OptParseException("Can't find expected fasta index file: '%s'" % (referenceFastaIndex))
 
         checkFixTabixListOption(options.indelCandidatesList,"candidate indel vcf")
         checkFixTabixListOption(options.forcedGTList,"forced genotype vcf")
@@ -205,10 +206,3 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         options.snvScoringModelFile=validateFixExistingFileArg(options.snvScoringModelFile,"SNV empirical scoring model file")
         options.indelScoringModelFile=validateFixExistingFileArg(options.indelScoringModelFile,"Indel empirical scoring model file")
-
-
-    def validateOptionExistence(self,options) :
-
-        assertOptionExists(options.runDir,"run directory")
-
-        assertOptionExists(options.referenceFasta,"reference fasta file")

@@ -87,11 +87,9 @@ This script configures the Strelka sequence error counts workflow.
         return defaults
 
 
+    def validateAndSanitizeOptions(self,options) :
 
-    def validateAndSanitizeExistingOptions(self,options) :
-
-        StrelkaSharedWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
-        groomBamList(options.bamList,"input")
+        StrelkaSharedWorkflowOptionsBase.validateAndSanitizeOptions(self,options)
 
         def checkFixTabixIndexedFileOption(tabixFile,label):
             checkOptionalTabixIndexedFile(tabixFile,label)
@@ -107,22 +105,17 @@ This script configures the Strelka sequence error counts workflow.
             options.knownVariants = \
                 checkFixTabixIndexedFileOption(options.knownVariants,"known-variants vcf")
 
+        groomBamList(options.bamList,"input")
 
-
-    def validateOptionExistence(self,options) :
-
-        StrelkaSharedWorkflowOptionsBase.validateOptionExistence(self,options)
-
-        bcheck = BamSetChecker()
+        bamSetChecker = BamSetChecker()
 
         def singleAppender(bamList,label):
             if len(bamList) > 1 :
                 raise OptParseException("More than one %s sample BAM/CRAM files specified" % (label))
-            bcheck.appendBams(bamList,label)
+            bamSetChecker.appendBams(bamList,label)
 
         singleAppender(options.bamList,"Input")
-        bcheck.check(options.htsfileBin,
-                     options.referenceFasta)
+        bamSetChecker.check(options.htsfileBin, options.referenceFasta)
 
 
 
@@ -134,7 +127,7 @@ def main() :
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:
     #
-    SequenceErrorCountsWorkflow(options,iniSections)
+    SequenceErrorCountsWorkflow(options)
 
     # generate runscript:
     #

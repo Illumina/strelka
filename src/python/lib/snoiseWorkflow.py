@@ -195,9 +195,9 @@ class snoiseWorkflow(StrelkaSharedWorkflow) :
     germline small variant calling workflow
     """
 
-    def __init__(self,params,iniSections) :
+    def __init__(self,params) :
         global PathInfo
-        super(snoiseWorkflow,self).__init__(params,iniSections,PathInfo)
+        super(snoiseWorkflow,self).__init__(params, PathInfo)
 
         # format bam lists:
         if self.params.bamList is None : self.params.bamList = []
