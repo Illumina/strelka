@@ -76,9 +76,9 @@ public:
     ///
     static void
     serializeIndelErrorModel(
-            const std::string &sampleName,
-            const Json::Value &motifsNode,
-            const std::string &filename);
+        const std::string& sampleName,
+        const Json::Value& motifsNode,
+        const std::string& filename);
 
     /// \brief Deserializes multiple json files and populates the IndelErrorRateSet object for each sample
     ///
@@ -86,7 +86,7 @@ public:
     ///
     static std::map<std::string, IndelErrorRateSet>
     deserializeIndelErrorModels(
-            const std::vector<std::string> &modelFilenames);
+        const std::vector<std::string>& modelFilenames);
 
     /// \brief Deserializes the theta values for each repeat pattern size
     ///
@@ -94,13 +94,16 @@ public:
     ///
     static std::map<unsigned, std::vector<double> >
     deserializeTheta(
-            const std::string &filename);
+        const std::string& filename);
 
     Json::Value
     generateMotifsNode() const;
 
     std::string
-    getSampleName() const {return _sampleName;}
+    getSampleName() const
+    {
+        return _sampleName;
+    }
 
 public:
     IndelModelBinomialMixture model;

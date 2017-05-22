@@ -126,7 +126,7 @@ struct GenotypePriorSet
 {
 
     explicit GenotypePriorSet(
-            const std::string& thetaJsonFilename);
+        const std::string& thetaJsonFilename);
 
     std::map<unsigned, std::vector<double> >
     initializeThetas();

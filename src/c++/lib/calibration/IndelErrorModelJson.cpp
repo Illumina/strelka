@@ -51,9 +51,9 @@ generateMotifsNode() const
 void
 IndelErrorModelJson::
 serializeIndelErrorModel(
-        const std::string &sampleName,
-        const Json::Value &motifsNode,
-        const std::string &filename)
+    const std::string& sampleName,
+    const Json::Value& motifsNode,
+    const std::string& filename)
 {
     Json::StyledWriter writer;
     Json::Value jsonRoot;
@@ -86,7 +86,7 @@ addMotif(unsigned repeatPatternSize,
 
 std::map<std::string, IndelErrorRateSet>
 IndelErrorModelJson::
-deserializeIndelErrorModels(const std::vector<std::string> &modelFilenames)
+deserializeIndelErrorModels(const std::vector<std::string>& modelFilenames)
 {
     std::map<std::string, IndelErrorRateSet> modelMap;
     for (const auto& modelFilename : modelFilenames)
@@ -149,7 +149,7 @@ deserializeIndelErrorModels(const std::vector<std::string> &modelFilenames)
 std::map<unsigned, std::vector<double> >
 IndelErrorModelJson::
 deserializeTheta(
-        const std::string &filename)
+    const std::string& filename)
 {
     std::string jsonString;
     Json::Value root;
