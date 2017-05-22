@@ -176,7 +176,7 @@ IndelErrorModel(
         _isUseSampleSpecificErrorRates = true;
         _sampleErrorRates.resize(_sampleCount);
 
-        const auto modelsMap = IndelErrorModelJson::deserializeIndelModels(modelFilenames);
+        const auto modelsMap = IndelErrorModelJson::deserializeIndelErrorModels(modelFilenames);
 
         for (unsigned alignmentFileIndex = 0; alignmentFileIndex < _sampleCount; alignmentFileIndex++)
         {

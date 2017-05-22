@@ -280,7 +280,7 @@ GenotypePriorSet(
     }
     else
     {
-        thetas = IndelErrorModelJson::importTheta(thetaFilename);
+        thetas = IndelErrorModelJson::deserializeTheta(thetaFilename);
     }
     initializePriors(thetas);
 }

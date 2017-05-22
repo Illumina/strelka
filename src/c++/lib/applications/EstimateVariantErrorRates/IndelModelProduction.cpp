@@ -438,7 +438,7 @@ IndelModelProduction(
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 
-    _thetas = IndelErrorModelJson::importTheta(thetaFilename);
+    _thetas = IndelErrorModelJson::deserializeTheta(thetaFilename);
 
 }
 
@@ -510,7 +510,8 @@ IndelModelProduction::exportModel() const
         }
     }
 
-    indelModelJson.exportIndelErrorModelToJsonFile(_outputFilename);
+    indelModelJson.serializeIndelErrorModel(indelModelJson.getSampleName(), indelModelJson.generateMotifsNode(),
+                                            _outputFilename);
 }
 
 void
@@ -559,7 +560,7 @@ IndelModelProduction::exportModelUsingInputJson(const std::string& jsonFilename)
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 
-    IndelErrorModelJson::writeIndelErrorModelJsonFile(_counts.getSampleName(), motifs, _outputFilename);
+    IndelErrorModelJson::serializeIndelErrorModel(_counts.getSampleName(), motifs, _outputFilename);
 }
 
 bool

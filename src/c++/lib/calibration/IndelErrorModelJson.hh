@@ -36,35 +36,71 @@ public:
 };
 
 
+/// \brief Handles all serialization/deserialization to/from json files for the IndelErrorModel
+///
 class IndelErrorModelJson
 {
 
 public:
+    /// \brief Initialize json object (used for serialization)
+    ///
+    /// \param[in] sampleName The sample name (typically the bam file path) used to estiamte the model
+    ///
     explicit
     IndelErrorModelJson(const std::string& sampleName);
 
+    /// \brief Adds the motif with the given parameters to the json object
+    ///
+    /// \param[in] repeatPatternSize The length of the repeat pattern
+    ///
+    /// \param[in] repeatCount Number of repetitions for the given repeatPatternSize
+    ///
+    /// \param[in] indelRate The estimated indel error rate
+    ///
+    /// \param[in] noisyLocusRate The probabililty that a locus is in a noisy state
+    ///
     void addMotif(
         unsigned repeatPatternSize,
         unsigned repeatCount,
         double indelRate,
         double noisyLocusRate);
 
-    void exportIndelErrorModelToJsonFile(
-        const std::string& filename) const;
-
+    // TODO: This isn't really serialization. Serialize the IndelErrorRateSet instead
+    /// \brief Serializes the model and writes it out to a json file
+    ///
+    /// \param[in] sampleName The sample name (typically the bam file path) used to estiamte the model
+    ///
+    /// \param[in] motifsNode The json value to write out
+    ///
+    /// \param[in] filename The name of the json file to write to
+    ///
     static void
-    writeIndelErrorModelJsonFile(
-        const std::string& sampleName,
-        const Json::Value& motifsNode,
-        const std::string& filename);
+    serializeIndelErrorModel(
+            const std::string &sampleName,
+            const Json::Value &motifsNode,
+            const std::string &filename);
 
+    /// \brief Deserializes multiple json files and populates the IndelErrorRateSet object for each sample
+    ///
+    /// \param[in] modelFilenames The json filenames to deserialize
+    ///
     static std::map<std::string, IndelErrorRateSet>
-    deserializeIndelModels(
-        const std::vector<std::string>& modelFilenames);
+    deserializeIndelErrorModels(
+            const std::vector<std::string> &modelFilenames);
 
+    /// \brief Deserializes the theta values for each repeat pattern size
+    ///
+    /// \param[in] filename The json filename to deserialize
+    ///
     static std::map<unsigned, std::vector<double> >
-    importTheta(
-        const std::string& filename);
+    deserializeTheta(
+            const std::string &filename);
+
+    Json::Value
+    generateMotifsNode() const;
+
+    std::string
+    getSampleName() const {return _sampleName;}
 
 public:
     IndelModelBinomialMixture model;
@@ -72,8 +108,7 @@ public:
 private:
     std::string _sampleName;
 
-    Json::Value
-    generateMotifsNode() const;
+
 };
 
 
