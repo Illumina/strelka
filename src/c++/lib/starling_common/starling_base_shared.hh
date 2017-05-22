@@ -238,7 +238,7 @@ struct starling_base_options : public blt_options
     ///
     /// WARNING: This value does not just change superficial AD count output in the VCF, but also impacts
     /// several count-based EVS metrics. An EVS retrain may be required when it is changed.
-    PrettyFloat<double> readConfidentSupportThreshold = PrettyFloat<double>("0.9");
+    PrettyFloat<double> readConfidentSupportThreshold = PrettyFloat<double>("0.51");
 
     // this option is only used by the error counting module
     //
