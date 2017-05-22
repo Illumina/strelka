@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #pragma once
 
 #include "SequenceErrorCountsOptions.hh"
@@ -39,4 +35,3 @@ finalizeSequenceErrorCountsOptions(
     const prog_info& pinfo,
     const po::variables_map& vm,
     SequenceErrorCountsOptions& opt);
-

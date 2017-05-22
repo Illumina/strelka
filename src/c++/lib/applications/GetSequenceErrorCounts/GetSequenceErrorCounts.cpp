@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "GetSequenceErrorCounts.hh"
 #include "GetSequenceErrorCountsInfo.hh"
 #include "GetSequenceErrorCountsRun.hh"

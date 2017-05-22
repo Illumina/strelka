@@ -17,9 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
 
 #include "DumpSequenceErrorCounts.hh"
 #include "DSECOptions.hh"
@@ -28,6 +25,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+
 
 static
 void

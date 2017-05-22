@@ -17,9 +17,6 @@
 //
 //
 
-#include "blt_util/blt_exception.hh"
-
-#include <sstream>
 #include "SequenceErrorCountsOptions.hh"
 
 

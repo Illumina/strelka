@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "SequenceErrorCountsOptionsParser.hh"
 #include "options/AlignmentFileOptionsParser.hh"
 
@@ -58,6 +54,9 @@ getSequenceErrorCountsOptionsParser(
     ("excluded-regions-bed-file",
      po::value(&opt.excludedRegionsFileList)->multitoken(),
      "BED file specifying regions to exclude from counting. File must be tabix indexed. Argument can be provided multiple times to specify multiple exclusions.")
+    ("nonempty-site-count-file",
+     po::value(&opt.nonEmptySiteCountFilename),
+     "File used to report the total number of non-empty sites observed which are otherwise eligible for error counting purposes. This file is used to monitor the approximate amount of evidence gathered")
     ;
 
     // final assembly
@@ -100,7 +99,7 @@ finalizeSequenceErrorCountsOptions(
     // knownVariantsFile and excludedRegionsFileList are both checked in the Python config code,
     // so we're not duplicating the effort here
 
-    /// not using any of these below options, not worth cleaning this up right now...
+    // not using any of these below options, not worth cleaning this up right now...
 
     if (!opt.is_ploidy_prior)
     {

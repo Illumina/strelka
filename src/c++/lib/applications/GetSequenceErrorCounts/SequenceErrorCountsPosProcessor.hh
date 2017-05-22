@@ -43,9 +43,6 @@ struct SequenceErrorCountsPosProcessor : public starling_pos_processor_base
         const SequenceErrorCountsStreams& fileStreams,
         RunStatsManager& statsManager);
 
-    virtual
-    ~SequenceErrorCountsPosProcessor();
-
     void reset() override;
 
     void resetRegion(
@@ -71,7 +68,7 @@ private:
         process_pos_error_counts(pos);
     }
 
-    /// enumerate all SNV and indel counts for this position
+    /// Enumerate all SNV and indel counts for this position
     void
     process_pos_error_counts(
         const pos_t pos);
@@ -95,4 +92,7 @@ private:
 
     RegionTracker _excludedRegions;
     RecordTracker _knownVariants;
+
+    /// Count of all non-empty sites eligible to contribute to sequencing error stats
+    unsigned long _nonEmptySiteCount = 0;
 };

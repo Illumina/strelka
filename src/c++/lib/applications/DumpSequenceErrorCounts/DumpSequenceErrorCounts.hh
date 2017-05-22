@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #pragma once
 
 #include "common/Program.hh"
@@ -37,4 +33,3 @@ struct DumpSequenceErrorCounts : public illumina::Program
     void
     runInternal(int argc, char* argv[]) const;
 };
-

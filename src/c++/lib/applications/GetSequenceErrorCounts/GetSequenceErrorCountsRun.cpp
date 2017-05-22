@@ -17,12 +17,8 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
-///
-/// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the beginning of the range
-/// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
 #include "GetSequenceErrorCountsRun.hh"
@@ -52,7 +48,7 @@ enum index_t
 }
 
 
-/// adds truth variant input from a vcf to indel synchronizer
+/// \brief Adds truth variant input from a vcf into the error counting process
 ///
 static
 void
