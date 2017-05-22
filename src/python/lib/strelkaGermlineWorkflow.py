@@ -35,11 +35,11 @@ sys.path.append(os.path.abspath(pyflowDir))
 
 from configBuildTimeInfo import workflowVersion
 from configureUtil import safeSetBool
-from pyflow import LogState, WorkflowRunner
+from pyflow import WorkflowRunner
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, getDepthFromAlignments
-from strelkaSharedWorkflow import runCount, SharedPathInfo, \
+from strelkaSharedWorkflow import DeepCopyProtector, runCount, SharedPathInfo, \
                            StrelkaSharedCallWorkflow, StrelkaSharedWorkflow
-from workflowUtil import ensureDir, preJoin, bamListCatCmd, getNextGenomeSegment
+from workflowUtil import ensureDir, preJoin, bamListCatCmd, getChromIntervals, getNextGenomeSegment
 
 __version__ = workflowVersion
 
@@ -367,7 +367,7 @@ def estimateParametersFromErrorCounts(self, sampleIndex, taskPrefix="", dependen
 
 
 
-def getSequenceErrorEstimatesForSample(self, sampleIndex, taskPrefix="", dependencies=None):
+def getSequenceErrorEstimatesForSample(self, estimationIntervals, sampleIndex, taskPrefix="", dependencies=None):
     """
     Count sequencing errors in one sample and use these to estimate sample error parameters
     """
@@ -401,6 +401,23 @@ def getSequenceErrorEstimatesForSample(self, sampleIndex, taskPrefix="", depende
 
 
 
+def getErrorEstimationIntervals(params) :
+    import random
+
+    # setup the estimation region sampling list for all samples, estimation uses smaller genome
+    # segments than variant calling, and shuffles these (with a constant seeed to make results deterministic)
+    class Constants :
+        Megabase = 1000000
+        errorEstimationMinChromSize = params.errorEstimationMinChromMb * Megabase
+        errorEstimationChunkSize = 1 * Megabase
+
+    largeChroms = [chrom for chrom in params.chromOrder if params.chromSizes[chrom] >= Constants.errorEstimationMinChromSize]
+    estimationIntervals = list(getChromIntervals(largeChroms, params.chromSizes, Constants.errorEstimationChunkSize))
+    random.shuffle(estimationIntervals, lambda: 0.5)
+    return estimationIntervals
+
+
+
 def getSequenceErrorEstimates(self, taskPrefix="", dependencies=None):
     """
     Count sequence errors and use these to estimate error parameters
@@ -411,12 +428,14 @@ def getSequenceErrorEstimates(self, taskPrefix="", dependencies=None):
     mkDirCmd = getMkdirCmd() + [tmpErrorEstimationDir]
     self.addTask(mkDirTask, mkDirCmd, dependencies=dependencies, isForceLocal=True)
 
+    estimationIntervals = getErrorEstimationIntervals(self.params)
+
     # The count and estimation processes are currently independent for each sample
     sampleTasks = set()
     for sampleIndex in range(len(self.params.bamList)) :
         sampleTaskPrefix="Sample"+str(sampleIndex)
-        sampleTasks |= getSequenceErrorEstimatesForSample(self, sampleIndex, taskPrefix=sampleTaskPrefix,
-                                                          dependencies=mkDirTask)
+        sampleTasks |= getSequenceErrorEstimatesForSample(self, estimationIntervals, sampleIndex,
+                                                          taskPrefix=sampleTaskPrefix, dependencies=mkDirTask)
 
     #if not self.params.isRetainTempFiles :
     #    rmTmpCmd = getRmdirCmd() + [tmpErrorEstimationDir]

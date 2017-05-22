@@ -179,6 +179,9 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         isIndelErrorRateEstimated = False
 
+        errorEstimationMinChromMb = 5
+        errorEstimationMinTotalMb = 50
+
         return cleanLocals(locals())
 
 
@@ -202,8 +205,8 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
             class Constants :
                 Megabase = 1000000
-                minChromSize = 5*Megabase
-                minTotalSize = 50*Megabase
+                minChromSize = options.errorEstimationMinChromMb*Megabase
+                minTotalSize = options.errorEstimationMinTotalMb*Megabase
 
             # read fasta index
             (_, chromSizes) = getFastaChromOrderSize(referenceFastaIndex)
