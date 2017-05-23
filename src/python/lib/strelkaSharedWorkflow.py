@@ -88,13 +88,13 @@ def runCount(self, taskPrefix="", dependencies=None) :
 
 
 
-def getChromIsSkipped(self, chromOrder) :
+def getChromIsSkipped(self) :
     """
-    determine subset of chroms from chromOrder which are completely skipped over
+    Determine subset of chroms from chromOrder which are completely skipped over
 
-    here "skipped" means that not a single base on the chrom is requested for calling
+    here "skipped" means that not a single base on the chrom is requested for calling or error estimation
 
-    \return set of chromLabels which are skipped
+    \return The set of chromLabels which are skipped
     """
 
     chromIsSkipped = set()
@@ -128,6 +128,17 @@ def getChromIsSkipped(self, chromOrder) :
         proc.wait()
 
         chromIsSkipped = chromIsSkipped | chromIsSkipped2
+
+    # if sequencing error estimation is turned on, make sure estimation targets are not skipped:
+    if self.params.isIndelErrorRateEstimated :
+        class Constants :
+            Megabase = 1000000
+            errorEstimationMinChromSize = self.params.errorEstimationMinChromMb * Megabase
+
+        for chrom in self.params.chromSizes :
+            if self.params.chromSizes[chrom] < Constants.errorEstimationMinChromSize : continue
+            if chrom in chromIsSkipped :
+                chromIsSkipped.remove(chrom)
 
     return chromIsSkipped
 
@@ -336,7 +347,7 @@ class StrelkaSharedWorkflow(WorkflowRunner) :
         (self.params.chromOrder,self.params.chromSizes) = getFastaChromOrderSize(referenceFastaIndex)
 
         # determine subset of chroms where we can skip calling entirely
-        self.params.chromIsSkipped = getChromIsSkipped(self, self.params.chromOrder)
+        self.params.chromIsSkipped = getChromIsSkipped(self)
 
         self.params.isHighDepthFilter = (not (self.params.isExome or self.params.isRNA))
 
