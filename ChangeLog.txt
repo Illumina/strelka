@@ -1,3 +1,4 @@
+- STREL-564 Add filter preventing low depth PASS calls
 - STREL-567 Change readConfidentSupportThreshold to 0.51 
 - STREL-524 Retrain germline EVS
 - STREL-519 Fix callRegions option thread utilization
