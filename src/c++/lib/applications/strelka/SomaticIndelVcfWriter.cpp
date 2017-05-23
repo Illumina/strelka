@@ -132,6 +132,13 @@ writeSomaticIndelVcfGrid(
         const VariantScoringModelServer& varModel(*dopt.somaticIndelScoringModel);
         updateAlleleEVSScore(varModel, rs, smod);
 
+        // hard filter to prevent PASS calls with low tumor depths
+        // manually set EVS = 0 if tier 1 tumor depth is below a threshold
+        if (siInfo.tisri[0].tier1Depth < opt.sfilter.minDepth)
+        {
+            smod.EVS = 0;
+        }
+
         if (smod.EVS < varModel.scoreFilterThreshold())
         {
             smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::LowEVSindel);
