@@ -150,9 +150,11 @@ classify_site(
                                                    error_prob_to_qphred(_snvScoringModelPtr->scoreVariant(locus.evsFeatures.getAll())),
                                                    maxEmpiricalVariantScore);
 
-            // hard filter to prevent PASS calls with low AD sum
-            // manually set empiricalVariantScore = 0 if AD sum is below a threshold
-            if (sampleInfo.supportCounts.totalConfidentCounts() < _opt.minADSum)
+            // hard filter to prevent PASS calls with low DP or AD sum
+            // manually set empiricalVariantScore = 0 if DP or AD sum is below a threshold
+            const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
+            if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minDepth)
+                    || (siteSampleInfo.n_unused_calls < _opt.minDepth))
             {
                 sampleInfo.empiricalVariantScore = 0;
             }
@@ -227,7 +229,9 @@ classify_indel(
 
             // hard filter to prevent PASS calls with low AD sum
             // manually set empiricalVariantScore = 0 if AD sum is below a threshold
-            if (sampleInfo.supportCounts.totalConfidentCounts() < _opt.minADSum)
+            const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
+            if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minDepth)
+                || (indelSampleInfo.tier1Depth < _opt.minDepth))
             {
                 sampleInfo.empiricalVariantScore = 0;
             }

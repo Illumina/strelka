@@ -68,8 +68,8 @@ struct gvcf_options
     int max_snv_hpol = -1;
     int max_ref_rep = -1;
 
-    // EVS is set to 0 if AD sum is below this value
-    unsigned minADSum = 3u;
+    /// EVS is set to 0 if AD sum or DP is below this value
+    unsigned minDepth = 3u;
 
     // blocking scheme:
     //
