@@ -296,9 +296,9 @@ struct SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         T_OF,
         N_BCN,
         T_BCN,
-	TumorSampleAbsReadPosRankSum,
+        TumorSampleAbsReadPosRankSum,
         TumorSampleLogStrandOddsRatio,
-	TumorSampleAbsLogStrandOddsRatio,
+        TumorSampleAbsLogStrandOddsRatio,
         SIZE
     };
 
@@ -321,11 +321,11 @@ struct SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         case T_BCN:
             return "T_BCN";
         case TumorSampleAbsReadPosRankSum:
-	  return "TumorSampleAbsReadPosRankSum";
+            return "TumorSampleAbsReadPosRankSum";
         case TumorSampleLogStrandOddsRatio:
-	  return "TumorSampleLogStrandOddsRatio";
+            return "TumorSampleLogStrandOddsRatio";
         case TumorSampleAbsLogStrandOddsRatio:
-          return "TumorSampleAbsLogStrandOddsRatio";
+            return "TumorSampleAbsLogStrandOddsRatio";
         default:
             assert(false && "Unknown feature");
             return nullptr;

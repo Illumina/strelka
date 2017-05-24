@@ -64,7 +64,7 @@ getSampleOtherAlleleFrequency(
 
 double
 getSampleStrandOddsRatio(
-			 const AlleleSampleReportInfo& indelSampleReportInfo)
+    const AlleleSampleReportInfo& indelSampleReportInfo)
 {
     static const double pseudocount(0.5);
 
