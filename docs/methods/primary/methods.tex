@@ -456,8 +456,8 @@ Features used in each model are listed here and definitions are provided further
     \item Somatic Indel features:
     \begin{itemize}
         \item \texttt{SomaticIndelQualityGivenGermlineGenotype}
-        \item \texttt{TumorSampleAbsReadPosRankSum}
-        \item \texttt{TumorSampleAbsStrandOddsRatio}
+        \item \texttt{TumorSampleReadPosRankSum}
+        \item \texttt{TumorSampleLogSymmetricStrandOddsRatio}
         \item \texttt{RepeatUnitLength}
         \item \texttt{IndelRepeatCount}
         \item \texttt{RefRepeatCount}
@@ -595,13 +595,11 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
 
     \item \texttt{TumorSampleReadPosRankSum} ~ Z-score of Mann-Whitney U test for reference vs non-reference allele read positions in the tumor sample's tier1 observations (see: ``\nameref{sec:somatic_tiers}'').
 
-    \item \texttt{AlleleCountLogOddsRatio} ~ The log odds ratio of allele counts $log_{10}{\frac{r_t a_n} {r_n a_t}}$, given reference $(r_t,r_n)$ and non-reference $(a_t,a_n)$ allele counts for the tumor and normal sample pair.
+    \item \texttt{AlleleCountLogOddsRatio} ~ The log odds ratio of allele counts $log{\frac{r_t a_n} {r_n a_t}}$, given reference $(r_t,r_n)$ and non-reference $(a_t,a_n)$ allele counts for the tumor and normal sample pair.
 
     \item \texttt{SomaticIndelQualityGivenGermlineGenotype} ~ Posterior probability of a somatic indel conditioned on given germline genotype. This feature matches INFO/QSI\_NT in the VCF output.
 
-    \item \texttt{TumorSampleAbsReadPosRankSum} ~ Absolute value of the \texttt{TumorSampleReadPosRankSum} feature.
-
-    \item \texttt{TumorSampleAbsStrandOddsRatio} ~ Absolute value of the log strand odds ratio of allele counts $log_{10}{\frac{r_{fwd} a_{fwd}} {r_{rev} a_{rev}}}$, given reference $(r_{fwd},r_{rev})$ and non-reference $(a_{fwd},a_{rev})$ confident counts of the tumor sample's tier1 observations (see: ``\nameref{sec:somatic_tiers}'').
+    \item \texttt{TumorSampleLogSymmetricStrandOddsRatio} ~ Log of the symmetric strand odds ratio of allele counts $log{\left( \frac{r_{fwd} a_{rev}} {r_{rev} a_{fwd}} + \frac{r_{rev} a_{fwd}} {r_{fwd} a_{rev}}\right)}$, given reference $(r_{fwd},r_{rev})$ and non-reference $(a_{fwd},a_{rev})$ confident counts of the tumor sample's tier1 observations (see: ``\nameref{sec:somatic_tiers}'').
 
     \item \texttt{RepeatUnitLength} ~ The length of the somatic indel allele's \emph{repeat unit}. The \emph{repeat unit} is the smallest possible sequence such that the inserted/deleted sequence can be formed by concatenating multiple copies of it.
 
