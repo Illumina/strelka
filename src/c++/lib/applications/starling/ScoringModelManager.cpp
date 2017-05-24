@@ -150,6 +150,15 @@ classify_site(
                                                    error_prob_to_qphred(_snvScoringModelPtr->scoreVariant(locus.evsFeatures.getAll())),
                                                    maxEmpiricalVariantScore);
 
+            // hard filter to prevent PASS calls with low DP or AD sum
+            // manually set empiricalVariantScore = 0 if DP or AD sum is below a threshold
+            const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
+            if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minDepth)
+                    || (siteSampleInfo.n_used_calls < _opt.minDepth))
+            {
+                sampleInfo.empiricalVariantScore = 0;
+            }
+
             if (sampleInfo.empiricalVariantScore < snvEVSThreshold())
             {
                 sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
@@ -217,6 +226,15 @@ classify_indel(
             sampleInfo.empiricalVariantScore = std::min(
                                                    error_prob_to_qphred(_indelScoringModelPtr->scoreVariant(locus.evsFeatures.getAll())),
                                                    maxEmpiricalVariantScore);
+
+            // hard filter to prevent PASS calls with low AD sum
+            // manually set empiricalVariantScore = 0 if AD sum is below a threshold
+            const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
+            if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minDepth)
+                || (indelSampleInfo.tier1Depth < _opt.minDepth))
+            {
+                sampleInfo.empiricalVariantScore = 0;
+            }
 
             if (sampleInfo.empiricalVariantScore < indelEVSThreshold())
             {
