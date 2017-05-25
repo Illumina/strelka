@@ -29,7 +29,7 @@
 #include "boost/algorithm/string.hpp"
 
 // compile with this macro to get verbose output:
-#define DEBUG_ACTIVE_REGION
+//#define DEBUG_ACTIVE_REGION
 
 void ActiveRegion::processHaplotypes()
 {
