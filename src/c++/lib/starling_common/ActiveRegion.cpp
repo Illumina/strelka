@@ -34,11 +34,11 @@
 void ActiveRegion::processHaplotypes()
 {
     // adjust the window size if not enough reads are available
-    if (_readBuffer.getEndPos() < _posRange.end_pos)
-        _posRange.set_end_pos(_readBuffer.getEndPos());
+    bool isRangeValid = (_posRange.begin_pos >= _readBuffer.getBeginPos())
+                        && (_posRange.end_pos <= _readBuffer.getEndPos());
 
     // if reference span is too large, give up haplotyping
-    if (_posRange.size() > MaxRefSpanToBypassAssembly)
+    if (!isRangeValid || (_posRange.size() > MaxRefSpanToBypassAssembly))
     {
         doNotUseHaplotyping();
     }
