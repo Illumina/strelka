@@ -29,7 +29,7 @@
 #include "boost/algorithm/string.hpp"
 
 // compile with this macro to get verbose output:
-//#define DEBUG_ACTIVE_REGION
+#define DEBUG_ACTIVE_REGION
 
 void ActiveRegion::processHaplotypes()
 {
@@ -250,6 +250,8 @@ void ActiveRegion::doNotUseHaplotyping()
 #ifdef DEBUG_ACTIVE_REGION
     std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << "\tBypass"<< std::endl;
 #endif
+
+    assert(_posRange.end_pos > _posRange.begin_pos);
 
     auto it(_indelBuffer.positionIterator(_posRange.begin_pos));
     const auto it_end(_indelBuffer.positionIterator(_posRange.end_pos));

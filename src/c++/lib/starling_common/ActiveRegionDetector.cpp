@@ -100,11 +100,14 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
             // close the existing active region
             if (_activeRegionStartPos < _readBuffer.getBeginPos())
                 _activeRegionStartPos = _readBuffer.getBeginPos();
-            pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
-            _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
-                                        _aligner, _readBuffer, _indelBuffer, _candidateSnvBuffer);
 
-            setPosToActiveRegionIdMap(activeRegionRange);
+            if (_anchorPosFollowingPrevVariant >= _activeRegionStartPos)
+            {
+                pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
+                _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
+                                            _aligner, _readBuffer, _indelBuffer, _candidateSnvBuffer);
+                setPosToActiveRegionIdMap(activeRegionRange);
+            }
 
             // we have no existing acive region at this point
             _numVariants = 0;
