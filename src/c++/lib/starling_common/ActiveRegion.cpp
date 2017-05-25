@@ -251,7 +251,7 @@ void ActiveRegion::doNotUseHaplotyping()
     std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << "\tBypass"<< std::endl;
 #endif
 
-    assert(_posRange.end_pos > _posRange.begin_pos);
+    if(_posRange.end_pos <= _posRange.begin_pos) return;
 
     auto it(_indelBuffer.positionIterator(_posRange.begin_pos));
     const auto it_end(_indelBuffer.positionIterator(_posRange.end_pos));
