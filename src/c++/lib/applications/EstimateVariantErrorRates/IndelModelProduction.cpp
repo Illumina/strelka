@@ -510,7 +510,10 @@ IndelModelProduction::exportModel() const
         }
     }
 
-    indelModelJson.serializeIndelErrorModel(indelModelJson.getSampleName(), indelModelJson.generateMotifsNode(),
+    static const bool isStatic(false);
+    indelModelJson.serializeIndelErrorModel(indelModelJson.getSampleName(),
+                                            indelModelJson.generateMotifsNode(),
+                                            isStatic,
                                             _outputFilename);
 }
 
@@ -560,7 +563,8 @@ IndelModelProduction::exportModelUsingInputJson(const std::string& jsonFilename)
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 
-    IndelErrorModelJson::serializeIndelErrorModel(_counts.getSampleName(), motifs, _outputFilename);
+    static const bool isStatic(true);
+    IndelErrorModelJson::serializeIndelErrorModel(_counts.getSampleName(), motifs, isStatic, _outputFilename);
 }
 
 bool

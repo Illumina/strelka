@@ -72,12 +72,15 @@ public:
     ///
     /// \param[in] motifsNode The json value to write out
     ///
+    /// \param[in] isStatic Flag describing whether the model params were estimated from the specific sample or taken from the static model
+    ///
     /// \param[in] filename The name of the json file to write to
     ///
     static void
     serializeIndelErrorModel(
         const std::string& sampleName,
         const Json::Value& motifsNode,
+        const bool isStatic,
         const std::string& filename);
 
     /// \brief Deserializes multiple json files and populates the IndelErrorRateSet object for each sample
