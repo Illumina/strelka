@@ -229,9 +229,9 @@ calculateScoringFeatures(
         smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::N_BCN, calculateBCNoise(n_was));
         smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::T_BCN, calculateBCNoise(t_was));
 
-	smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::TumorSampleAbsReadPosRankSum, fabs(tumorSampleReadPosRankSum));
-	smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::TumorSampleLogStrandOddsRatio, std::log(getSampleStrandOddsRatio(siInfo.tisri[0])));
-	smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::TumorSampleAbsLogStrandOddsRatio, fabs(std::log(getSampleStrandOddsRatio(siInfo.tisri[0]))));
+        smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::TumorSampleAbsReadPosRankSum, fabs(tumorSampleReadPosRankSum));
+        smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::TumorSampleLogStrandOddsRatio, std::log(getSampleStrandOddsRatio(siInfo.tisri[0])));
+        smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::TumorSampleAbsLogStrandOddsRatio, fabs(std::log(getSampleStrandOddsRatio(siInfo.tisri[0]))));
 
     }
 }

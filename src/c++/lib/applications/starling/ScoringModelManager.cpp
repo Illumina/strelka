@@ -154,7 +154,7 @@ classify_site(
             // manually set empiricalVariantScore = 0 if DP or AD sum is below a threshold
             const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
             if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minDepth)
-                    || (siteSampleInfo.n_used_calls < _opt.minDepth))
+                || (siteSampleInfo.n_used_calls < _opt.minDepth))
             {
                 sampleInfo.empiricalVariantScore = 0;
             }

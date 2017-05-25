@@ -96,7 +96,7 @@ deserializeIndelErrorModels(const std::vector<std::string>& modelFilenames)
         std::string jsonString;
         Json::Value root;
         {
-            std::ifstream ifs(modelFilename , std::ifstream::binary);
+            std::ifstream ifs(modelFilename, std::ifstream::binary);
             std::stringstream buffer;
             buffer << ifs.rdbuf();
             jsonString = buffer.str();
