@@ -148,8 +148,10 @@ void ActiveRegionDetector::clear()
 
     if (_numVariants >= MinNumVariantsPerRegion)
     {
+        if (_activeRegionStartPos < 0)
+            _activeRegionStartPos = _readBuffer.getBeginPos();
         if (_anchorPosFollowingPrevVariant < 0)
-            _anchorPosFollowingPrevVariant = _readBuffer.getEndPos();
+            _anchorPosFollowingPrevVariant = (_readBuffer.getEndPos()-1);
 
         // close the existing active region
         assert (_activeRegionStartPos < _anchorPosFollowingPrevVariant);
