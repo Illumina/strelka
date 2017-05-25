@@ -148,7 +148,7 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
             assert(len(gsegGroup) == 1)
             segCmd.append('--call-continuous-vf')
 
-    if self.params.isIndelErrorRateEstimated :
+    if self.params.isEstimateSequenceError :
         for bamIndex in range(len(self.params.bamList)) :
             segCmd.extend(['--indel-error-models-file', self.paths.getIndelErrorModelPath(bamIndex)])
     else :
@@ -387,8 +387,8 @@ class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
         if self.params.isHighDepthFilter :
             estimatePreReqs |= strelkaGermlineGetDepthFromAlignments(self)
 
-        if self.params.isIndelErrorRateEstimated :
-            callPreReqs |= getSequenceErrorEstimates(self, taskPrefix="EstimateSequenceError", dependencies=estimatePreReqs)
+        if self.params.isEstimateSequenceError :
+            callPreReqs |= getSequenceErrorEstimates(self, taskPrefix="EstimateSeqError", dependencies=estimatePreReqs)
         else :
             callPreReqs = estimatePreReqs
 

@@ -428,9 +428,9 @@ def getSequenceErrorEstimates(self, taskPrefix="", dependencies=None):
         workflow=EstimateSequenceErrorWorkflowForSample(self.params, self.paths, self.dynamicParams, estimationIntervals, sampleIndex)
         sampleTasks.add(self.addWorkflowTask(sampleTask, workflow, dependencies=mkDirTask))
 
-    #if not self.params.isRetainTempFiles :
-    #    rmTmpCmd = getRmdirCmd() + [tmpErrorEstimationDir]
-    #    self.addTask(preJoin(taskPrefix,"removeTmpDir"), rmTmpCmd, dependencies=sampleTasks, isForceLocal=True)
+    if not self.params.isRetainTempFiles :
+        rmTmpCmd = getRmdirCmd() + [tmpErrorEstimationDir]
+        self.addTask(preJoin(taskPrefix,"removeTmpDir"), rmTmpCmd, dependencies=sampleTasks, isForceLocal=True)
 
     nextStepWait = sampleTasks
     return nextStepWait

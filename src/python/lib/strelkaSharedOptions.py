@@ -106,8 +106,6 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
                          help="Provide a custom empirical scoring model file for SNVs (default: %default)")
         group.add_option("--indelScoringModelFile", type="string", dest="indelScoringModelFile", metavar="FILE",
                          help="Provide a custom empirical scoring model file for indels (default: %default)")
-        group.add_option("--estimateIndelErrorRates", dest="isIndelErrorRateEstimated", action="store_true",
-                         help="Enable indel estimation.")
 
         ConfigureWorkflowOptions.addExtendedGroupOptions(self,group)
 
@@ -177,7 +175,8 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
         snvScoringModelFile = None
         indelScoringModelFile = None
 
-        isIndelErrorRateEstimated = False
+        # error estimation is planned for all workflows, but can only be set true in germline at present:
+        isEstimateSequenceError = False
 
         errorEstimationMinChromMb = 5
         errorEstimationMinTotalMb = 50
@@ -198,7 +197,7 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
         if not os.path.isfile(referenceFastaIndex) :
             raise OptParseException("Can't find expected fasta index file: '%s'" % (referenceFastaIndex))
 
-        if options.isIndelErrorRateEstimated :
+        if options.isEstimateSequenceError :
             # Determine if dynamic error estimation is feasible based on the reference size
             # - Given reference contig set (S) with sequence length of at least 5 Mb
             # - The total sequence length from S must be at least 50 Mb
@@ -218,7 +217,7 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
             if totalEstimationSize < Constants.minTotalSize :
                 sys.stderr.write("WARNING: Cannot estimate sequence errors from data due to small or overly fragmented reference sequence. Sequence error estimation disabled.\n")
-                options.isIndelErrorRateEstimated = False
+                options.isEstimateSequenceError = False
 
         checkFixTabixListOption(options.indelCandidatesList,"candidate indel vcf")
         checkFixTabixListOption(options.forcedGTList,"forced genotype vcf")

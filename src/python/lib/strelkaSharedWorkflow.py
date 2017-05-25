@@ -130,7 +130,7 @@ def getChromIsSkipped(self) :
         chromIsSkipped = chromIsSkipped | chromIsSkipped2
 
     # if sequencing error estimation is turned on, make sure estimation targets are not skipped:
-    if self.params.isIndelErrorRateEstimated :
+    if self.params.isEstimateSequenceError :
         class Constants :
             Megabase = 1000000
             errorEstimationMinChromSize = self.params.errorEstimationMinChromMb * Megabase

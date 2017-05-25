@@ -66,6 +66,15 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
         StrelkaSharedWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
 
+    def addExtendedGroupOptions(self,group) :
+        # note undocumented library behavior: "dest" is optional, but not including it here will
+        # cause the hidden option to always print
+        group.add_option("--disableSequenceErrorEstimation", dest="isEstimateSequenceError", action="store_false",
+                         help="Disable estimation of sequence error rates from data.")
+
+        StrelkaSharedWorkflowOptionsBase.addExtendedGroupOptions(self,group)
+
+
     def getOptionDefaults(self) :
 
         self.configScriptDir=scriptDir
@@ -90,7 +99,8 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
             'mergeCountsBin' : joinFile(libexecDir,exeFile("MergeSequenceErrorCounts")),
             'estimateVariantErrorRatesBin' : joinFile(libexecDir,exeFile("EstimateVariantErrorRates")),
             'thetaParamFile' : joinFile(configDir,'theta.json'),
-            'indelErrorRateDefault' : joinFile(configDir,'indelErrorModel.json')
+            'indelErrorRateDefault' : joinFile(configDir,'indelErrorModel.json'),
+            'isEstimateSequenceError' : True
             })
         return defaults
 
