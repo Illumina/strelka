@@ -1,6 +1,7 @@
 {
   "sample": [
       {
+        "isStatic" : true,
         "sampleName": "default",
         "motif": [
           {
