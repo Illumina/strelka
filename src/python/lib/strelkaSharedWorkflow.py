@@ -281,7 +281,7 @@ class SharedPathInfo(object):
         self.params = params
 
     def getChromDepth(self) :
-        return os.path.join(self.params.workDir,"chromDepth.txt")
+        return os.path.join(self.params.workDir,"chromDepth.tsv")
 
     def getTmpSegmentDir(self) :
         return os.path.join(self.params.workDir, "genomeSegment.tmpdir")
