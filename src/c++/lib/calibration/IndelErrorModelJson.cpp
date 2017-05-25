@@ -53,6 +53,7 @@ IndelErrorModelJson::
 serializeIndelErrorModel(
     const std::string& sampleName,
     const Json::Value& motifsNode,
+    const bool estimationSuccess,
     const std::string& filename)
 {
     Json::StyledWriter writer;
@@ -61,6 +62,7 @@ serializeIndelErrorModel(
     Json::Value sample;
     sample["sampleName"] = sampleName;
     sample["motif"] = motifsNode;
+    sample["estimationSuccess"] = estimationSuccess;
     samples.append(sample);
     jsonRoot["sample"] = samples;
 

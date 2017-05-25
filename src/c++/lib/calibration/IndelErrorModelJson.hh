@@ -78,6 +78,7 @@ public:
     serializeIndelErrorModel(
         const std::string& sampleName,
         const Json::Value& motifsNode,
+        const bool estimationSuccess,
         const std::string& filename);
 
     /// \brief Deserializes multiple json files and populates the IndelErrorRateSet object for each sample
