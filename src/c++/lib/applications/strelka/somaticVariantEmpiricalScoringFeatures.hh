@@ -59,6 +59,8 @@ struct SOMATIC_SNV_SCORING_FEATURES : public FeatureSet
         TumorSampleStrandBias,
         TumorSampleReadPosRankSum,
         AlleleCountLogOddsRatio,
+        NormalSampleFilteredDepthFraction,
+        TumorSampleFilteredDepthFraction,
         SIZE
     };
 
@@ -84,6 +86,10 @@ struct SOMATIC_SNV_SCORING_FEATURES : public FeatureSet
             return "NormalSampleRelativeTotalLocusDepth";
         case AlleleCountLogOddsRatio:
             return "AlleleCountLogOddsRatio";
+	case NormalSampleFilteredDepthFraction:
+	  return "NormalSampleFilteredDepthFraction";
+        case TumorSampleFilteredDepthFraction:
+	  return "TumorSampleFilteredDepthFraction";
         default:
             assert(false && "Unknown feature");
             return nullptr;
@@ -136,12 +142,10 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
 
     enum index_t
     {
-        altmap,
-        altpos,
-        N_FDP_RATE,
-        T_FDP_RATE,
-        N_SDP_RATE,
-        T_SDP_RATE,
+        TumorSampleAltAlleleMedianReadPosVariation,
+        TumorSampleAltAlleleMedianReadPos,
+        NormalSampleSpanningDeletionFraction,
+        TumorSampleSpanningDeletionFraction,
         SIZE
     };
 
@@ -151,18 +155,14 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-        case altmap:
-            return "altmap";
-        case altpos:
-            return "altpos";
-        case N_FDP_RATE:
-            return "N_FDP_RATE";
-        case T_FDP_RATE:
-            return "T_FDP_RATE";
-        case N_SDP_RATE:
-            return "N_SDP_RATE";
-        case T_SDP_RATE:
-            return "T_SDP_RATE";
+        case TumorSampleAltAlleleMedianReadPosVariation:
+            return "TumorSampleAltAlleleMedianReadPosVariation";
+        case TumorSampleAltAlleleMedianReadPos:
+            return "TumorSampleAltAlleleMedianReadPos";
+        case NormalSampleSpanningDeletionFraction:
+            return "NormalSampleSpanningDeletionFraction";
+        case TumorSampleSpanningDeletionFraction:
+            return "TumorSampleSpanningDeletionFraction";
         default:
             assert(false && "Unknown feature");
             return nullptr;
