@@ -1,3 +1,4 @@
+- STREL-553 Standardize somatic EVS features
 - STREL-564 Add filter preventing low depth PASS calls
 - STREL-567 Change readConfidentSupportThreshold to 0.51 
 - STREL-524 Retrain germline EVS
@@ -10,48 +11,48 @@
 - STREL-462 Do not penalize candidate SNVs in alignment scoring
 - STREL-450 Add dinucs to indel error stats module
 - STREL-465 Filter germline haplotypes with phasing error signature
-- STREL-460 do not assess indel candidacy in active regions if assembly fails
-- STREL-454 penalize for non-candidate indels in alignment scoring
+- STREL-460 Do not assess indel candidacy in active regions if assembly fails
+- STREL-454 Penalize for non-candidate indels in alignment scoring
 - STREL-443 Remove old germline caller target BED file option
-- STREL-178 replace codon phaser with variant phaser
+- STREL-178 Replace codon phaser with variant phaser
 - STREL-356 Allow BED file to restrict variant calling regions
 - STREL-392 Fix overlap del handling across segments
 - STREL-405 Fix overcounting issue in error stats module 
 - STREL-401 Remove read edge events from error stats module
-- STREL-342 use assembly to generate haplotypes in long active regions
+- STREL-342 Use assembly to generate haplotypes in long active regions
 - STREL-251 Enable automatic germline EVS calibration
 - STREL-357 Add separate threshold for homref calls
 v2.7.1
 - STREL-336 Fix incorrect indel normalizations
 - STREL-332 Revert to core somatic indel scoring with adjusted threshold
-- STREL-331 left-shift indels inside of active regions
-- STREL-248 update somatic EVS to include isaac4 data in training
-- STREL-321 fix rare shared variant prefix issue in multi-sample analysis
-- STREL-322 fix VCF namespace conflict on INFO/EVS
+- STREL-331 Left-shift indels inside of active regions
+- STREL-248 Update somatic EVS to include isaac4 data in training
+- STREL-321 Fix rare shared variant prefix issue in multi-sample analysis
+- STREL-322 Fix VCF namespace conflict on INFO/EVS
 - STREL-200 Adjust mitochondrial strand-bias for consistency with autosomes
 - STREL-319 Sync RNA-seq EVS feature names with DNA changes
 - STREL-318 Accept VCFs with unknown ALT values as forced-call sites
 - STREL-275 REF and ALTs do not share a common prefix of size over 1
-- STREL-274 simplify variant filter logic in multi-sample germline gVCF(s)
-- STREL-269 prevent indels larger than the max indel size from becoming candidate
-- STREL-267 forced indel call does not appear in somatic output
+- STREL-274 Simplify variant filter logic in multi-sample germline gVCF(s)
+- STREL-269 Prevent indels larger than the max indel size from becoming candidate
+- STREL-267 Forced indel call does not appear in somatic output
 v2.7.0
-- STREL-184 enable somatic indel EVS
-- STREL-228 improve runtime for references with many small contigs
+- STREL-184 Enable somatic indel EVS
+- STREL-228 Improve runtime for references with many small contigs
 - STREL-210 Retrain germline EVS
-- STREL-164 document short haplotyping
-- STREL-254 fix haploid indel call exception
-- STREL-227 shift away from legacy naming schemes
-- STREL-240 make active regions non-overlapping
-- STREL-239 fix haploid nonvariant indels in multi-sample analysis
-- STREL-238 add multi-sample ploidy specification using vcf
-- STREL-217 integrate short haplotying with multi-sample support
-- STREL-158 support multi-sample in standard germline analysis
+- STREL-164 Document short haplotyping
+- STREL-254 Fix haploid indel call exception
+- STREL-227 Shift away from legacy naming schemes
+- STREL-240 Make active regions non-overlapping
+- STREL-239 Fix haploid nonvariant indels in multi-sample analysis
+- STREL-238 Add multi-sample ploidy specification using vcf
+- STREL-217 Integrate short haplotying with multi-sample support
+- STREL-158 Support multi-sample in standard germline analysis
 - STREL-218 Tune indel parameters for improved het/hom ratio
-- STREL-216 relax normalization requirement for indel candidates to a warning
+- STREL-216 Relax normalization requirement for indel candidates to a warning
 - STREL-198 Update germline EVS using mixed training data (variety of platforms/chemistries/depths) 
-- STREL-154 adjust active window size depending on neighboring sequences
-- STREL-188 haplotype generation includes soft-clipped reads
+- STREL-154 Adjust active window size depending on neighboring sequences
+- STREL-188 Haplotype generation includes soft-clipped reads
 v2.6.0
 - STREL-163 Update germline EVS model training with ambiguous call handling
 - STREL-122/STARKA-454 Updated somatic scoring model, integrate somatic indel EVS model

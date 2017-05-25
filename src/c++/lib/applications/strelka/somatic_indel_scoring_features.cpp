@@ -33,7 +33,9 @@
 #include "blt_util/binomial_test.hh"
 
 #include <limits>
+#include <cassert>
 
+static const double minFreq(0.0001);
 
 static inline
 double
@@ -68,16 +70,15 @@ getSampleStrandOddsRatio(
 {
     static const double pseudocount(0.5);
 
-    // Names here refer to eq 1.1 in http://www.people.fas.harvard.edu/~mparzen/published/parzen17.pdf
-    /// \TODO Clean up documentation: Reference above is best guess as to why this pdf is linked here, but the computation doesn't actually match eq 1.1
+    // Eq 1.1 in http://www.people.fas.harvard.edu/~mparzen/published/parzen17.pdf
     const double Y1  = indelSampleReportInfo.n_confident_ref_reads_fwd + pseudocount;
     const double n1_minus_Y1 = indelSampleReportInfo.n_confident_indel_reads_fwd + pseudocount;
     const double Y2  = indelSampleReportInfo.n_confident_ref_reads_rev + pseudocount;
     const double n2_minus_Y2 = indelSampleReportInfo.n_confident_indel_reads_rev + pseudocount;
 
-    /// \TODO Replace log10 with log to keep all features consistent.
-    return log10((Y1*n1_minus_Y1)/(Y2*n2_minus_Y2));
+    return (Y1*n2_minus_Y2)/(Y2*n1_minus_Y1);
 }
+
 
 
 
@@ -117,8 +118,7 @@ getTumorNormalIndelAlleleLogOdds(
     const double tumorSampleIndelAlleleFrequency = getSampleIndelAlleleFrequency(tumorIndelSampleReportInfo);
     const double normalSampleIndelAlleleFrequency = getSampleIndelAlleleFrequency(normalIndelSampleReportInfo);
 
-    /// \TODO @pkrusche The difference in these two min values doesn't look intentional, is it?
-    return log10(std::max(tumorSampleIndelAlleleFrequency, 0.00001) / std::max(normalSampleIndelAlleleFrequency, 0.0001));
+    return std::log(std::max(tumorSampleIndelAlleleFrequency, minFreq) / std::max(normalSampleIndelAlleleFrequency, minFreq));
 }
 
 
@@ -129,7 +129,7 @@ getSampleIndelNoiseLogOdds(const AlleleSampleReportInfo& indelSampleReportInfo)
     const double indelAlleleFrequency = getSampleIndelAlleleFrequency(indelSampleReportInfo);
     const double otherAlleleFrequency = getSampleOtherAlleleFrequency(indelSampleReportInfo);
 
-    return log10(std::max(indelAlleleFrequency, 0.00001) / std::max(otherAlleleFrequency, 0.0001));
+    return std::log(std::max(indelAlleleFrequency, minFreq) / std::max(otherAlleleFrequency, minFreq));
 }
 
 
@@ -141,9 +141,8 @@ calculateLogAltRatio(
 {
     const unsigned n_ref_reads = normalIndelSampleReportInfo.n_confident_ref_reads;
     const unsigned t_alt_reads = tumorIndelSampleReportInfo.n_confident_indel_reads;
-    return log10(safeFrac(t_alt_reads, n_ref_reads));
+    return std::log(safeFrac(t_alt_reads, n_ref_reads));
 }
-
 
 
 
@@ -158,7 +157,17 @@ getIndelAlleleCountLogOddsRatio(
     const double tumorRefCount = tumorIndelSampleReportInfo.n_confident_ref_reads + pseudoCount;
     const double tumorAltCount = tumorIndelSampleReportInfo.n_confident_indel_reads + pseudoCount;
 
-    return std::log10((tumorRefCount*normalAltCount) / (tumorAltCount*normalRefCount));
+    return std::log((tumorRefCount*normalAltCount) / (tumorAltCount*normalRefCount));
+}
+
+
+
+static inline
+double
+makeSymmetric(const double inputRatio)
+{
+    assert(inputRatio > 0);
+    return inputRatio + 1.0/inputRatio;
 }
 
 
@@ -173,10 +182,9 @@ calculateScoringFeatures(
 {
     const indel_result_set& rs(siInfo.sindel.rs);
     smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::SomaticIndelQualityGivenGermlineGenotype, rs.from_ntype_qphred);
-    const double tumorSampleAbsReadPosRankSum(fabs(siInfo.tisri[0].readpos_ranksum.get_z_stat()));
-    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::TumorSampleAbsReadPosRankSum, tumorSampleAbsReadPosRankSum);
-    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::TumorSampleAbsStrandOddsRatio, fabs(
-                          getSampleStrandOddsRatio(siInfo.tisri[0])));
+    const double tumorSampleReadPosRankSum(siInfo.tisri[0].readpos_ranksum.get_z_stat());
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::TumorSampleReadPosRankSum, tumorSampleReadPosRankSum);
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::TumorSampleLogSymmetricStrandOddsRatio, std::log(makeSymmetric(getSampleStrandOddsRatio (siInfo.tisri[0]))));
 
     if (siInfo.indelReportInfo.isRepeatUnit())
     {
@@ -220,5 +228,10 @@ calculateScoringFeatures(
 
         smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::N_BCN, calculateBCNoise(n_was));
         smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::T_BCN, calculateBCNoise(t_was));
+
+	smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::TumorSampleAbsReadPosRankSum, fabs(tumorSampleReadPosRankSum));
+	smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::TumorSampleLogStrandOddsRatio, std::log(getSampleStrandOddsRatio(siInfo.tisri[0])));
+	smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::TumorSampleAbsLogStrandOddsRatio, fabs(std::log(getSampleStrandOddsRatio(siInfo.tisri[0]))));
+
     }
 }
