@@ -512,7 +512,7 @@ IndelModelProduction::exportModel() const
 
     indelModelJson.serializeIndelErrorModel(indelModelJson.getSampleName(),
                                             indelModelJson.generateMotifsNode(),
-                                            checkEstimatedModel(),
+                                            true,
                                             _outputFilename);
 }
 
