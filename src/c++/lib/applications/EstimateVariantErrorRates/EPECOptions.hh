@@ -30,6 +30,7 @@ struct EPECOptions
     std::string countsFilename;
     std::string thetaFilename;
     std::string outputFilename;
+    std::string fallbackFilename;
 };
 
 

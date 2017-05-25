@@ -181,6 +181,8 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
         for bamIndex in range(len(self.params.bamList)) :
             segCmd.extend(['--indel-error-models-file', self.paths.getIndelEstimationJsonPath(bamIndex)])
 
+    segCmd.extend(['--theta-file', self.params.thetaParamFile])
+
     segTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gid)
     self.addTask(segTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
 
@@ -380,6 +382,7 @@ def estimateParametersFromErrorCounts(self, taskPrefix, dependencies, runStatsLo
     runEstimateCmd.extend(["--counts-file",self.paths.getCountsOutputPath(self.bamIndex)])
     runEstimateCmd.extend(["--theta-file",self.params.thetaParamFile])
     runEstimateCmd.extend(["--output-file",self.paths.getIndelEstimationJsonPath(self.bamIndex)])
+    runEstimateCmd.extend(["--fallback-file",self.params.indelErrorRateDefault])
     return self.addTask(runEstimateLabel, runEstimateCmd, dependencies=dependencies, isForceLocal=True)
 
 

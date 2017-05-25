@@ -20,11 +20,13 @@
 #include "AlleleGroupGenotype.hh"
 #include "OrthogonalVariantAlleleCandidateGroupUtil.hh"
 
+#include "common/Exceptions.hh"
+#include "calibration/IndelErrorModelJson.hh"
 #include "starling_indel_call_pprob_digt.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
 #include "blt_util/qscore.hh"
-
+#include "blt_util/log.hh"
 
 
 static
@@ -263,5 +265,116 @@ getVariantAlleleGroupGenotypeLhoodsForSample(
             updateSupportingReadStats(
                 dopt, readSupportTheshold, readScore.nsite, readScore.is_fwd_strand, alleleLogLhood, locusReadStats);
         }
+    }
+}
+
+GenotypePriorSet::
+GenotypePriorSet(
+    const std::string& thetaFilename)
+{
+    std::map<unsigned, std::vector<double> > thetas;
+    if (thetaFilename.empty())
+    {
+        log_os << "WARNING: theta parameter file was not given. Using internal theta values." << "\n";
+        thetas = initializeThetas();
+    }
+    else
+    {
+        thetas = IndelErrorModelJson::deserializeTheta(thetaFilename);
+    }
+    initializePriors(thetas);
+}
+
+std::map<unsigned, std::vector<double> >
+GenotypePriorSet::
+initializeThetas()
+{
+    static const unsigned highHpolRepeatCount(16);
+    static const std::vector<double> hpolTheta(
+    {
+        0.000120268,
+        5.97777E-05,
+        0.000124648,
+        0.000260759,
+        0.000589544,
+        0.002394583,
+        0.007417864,
+        0.022660355,
+        0.04670561,
+        0.082031233,
+        0.124548518,
+        0.149765438,
+        0.168051826,
+        0.187346626,
+        0.207339703,
+        0.225843098,
+        0.248849306,
+        0.27106361,
+        0.334718891,
+        0.348811678
+    });
+
+    static const unsigned hpolThetaSize = hpolTheta.size();
+    assert(hpolThetaSize >= highHpolRepeatCount);
+
+    static const unsigned highDinucRepeatCount(9);
+    static const std::vector<double> dinucTheta(
+    {
+        0.000120268,
+        8.73757E-05,
+        0.000479319,
+        0.002678401,
+        0.012194565,
+        0.03162284,
+        0.060846617,
+        0.108263861,
+        0.163510548,
+        0.204456064,
+        0.23462438,
+        0.267919304,
+        0.290588942,
+        0.355588567,
+        0.369478351,
+        0.378290471,
+        0.38555006,
+        0.393439865,
+        0.395844077,
+        0.4
+    });
+
+    std::map<unsigned, std::vector<double> > thetas;
+    thetas[1] = hpolTheta;
+    thetas[2] = dinucTheta;
+
+    static const unsigned dinucThetaSize = dinucTheta.size();
+    assert(dinucThetaSize >= highDinucRepeatCount);
+
+    return thetas;
+}
+
+void
+GenotypePriorSet::
+initializePriors(
+    const std::map<unsigned, std::vector<double> >& thetas)
+{
+    static const unsigned maxRepeatingPatternSize(thetas.size());
+    assert(maxRepeatingPatternSize == 2);
+
+    _priors.resize(maxRepeatingPatternSize);
+    for (unsigned repeatingPatternSize(1); repeatingPatternSize <= maxRepeatingPatternSize; ++repeatingPatternSize)
+    {
+        const unsigned repeatingPatternSizeIndex(repeatingPatternSize-1);
+        auto& strPatternPriors(_priors[repeatingPatternSizeIndex]);
+
+        const unsigned highSTRRepeatCount = thetas.at(repeatingPatternSize).size();
+
+        strPatternPriors.resize(highSTRRepeatCount);
+        for (unsigned patternRepeatCount(1); patternRepeatCount <= highSTRRepeatCount; ++patternRepeatCount)
+        {
+            const unsigned patternRepeatCountIndex(patternRepeatCount - 1);
+            const double theta(thetas.at(repeatingPatternSize)[patternRepeatCountIndex]);
+            strPatternPriors[patternRepeatCountIndex].initialize(theta);
+        }
+
     }
 }

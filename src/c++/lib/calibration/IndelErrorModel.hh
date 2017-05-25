@@ -59,9 +59,6 @@ struct IndelErrorModel
         const bool isCandidateRates = false) const;
 
 private:
-    std::map<std::string, IndelErrorRateSet>
-    deserializeIndelModels(const std::vector<std::string>& modelFilenames);
-
     void
     checkSampleIndex(
         const unsigned sampleIndex) const;
@@ -105,6 +102,7 @@ class AdaptiveIndelErrorModelLogParams
 public:
     double logErrorRate = -std::numeric_limits<double>::infinity();
     double logNoisyLocusRate = -std::numeric_limits<double>::infinity();
+    bool paramsAcceptable = true;
 };
 
 

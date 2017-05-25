@@ -225,7 +225,8 @@ struct starling_base_options : public blt_options
     Tier2Options tier2;
 
     // indel error options
-    std::vector<std::string> indel_error_model_filenames;
+    std::vector<std::string> indelErrorModelFilenames;
+    std::string thetaFilename;
     std::string indel_error_model_name = "logLinear";
 
     // Scalar multiple modifying the prob of observing an indel->reference error relative to reference->indel
@@ -238,7 +239,7 @@ struct starling_base_options : public blt_options
     ///
     /// WARNING: This value does not just change superficial AD count output in the VCF, but also impacts
     /// several count-based EVS metrics. An EVS retrain may be required when it is changed.
-    PrettyFloat<double> readConfidentSupportThreshold = PrettyFloat<double>("0.9");
+    PrettyFloat<double> readConfidentSupportThreshold = PrettyFloat<double>("0.51");
 
     // this option is only used by the error counting module
     //
