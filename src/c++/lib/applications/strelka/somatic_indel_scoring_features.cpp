@@ -33,7 +33,9 @@
 #include "blt_util/binomial_test.hh"
 
 #include <limits>
-#include <assert.h>
+#include <cassert>
+
+static const double minFreq(0.0001);
 
 static inline
 double
@@ -116,7 +118,7 @@ getTumorNormalIndelAlleleLogOdds(
     const double tumorSampleIndelAlleleFrequency = getSampleIndelAlleleFrequency(tumorIndelSampleReportInfo);
     const double normalSampleIndelAlleleFrequency = getSampleIndelAlleleFrequency(normalIndelSampleReportInfo);
 
-    return std::log(std::max(tumorSampleIndelAlleleFrequency, 0.0001) / std::max(normalSampleIndelAlleleFrequency, 0.0001));
+    return std::log(std::max(tumorSampleIndelAlleleFrequency, minFreq) / std::max(normalSampleIndelAlleleFrequency, minFreq));
 }
 
 
@@ -127,7 +129,7 @@ getSampleIndelNoiseLogOdds(const AlleleSampleReportInfo& indelSampleReportInfo)
     const double indelAlleleFrequency = getSampleIndelAlleleFrequency(indelSampleReportInfo);
     const double otherAlleleFrequency = getSampleOtherAlleleFrequency(indelSampleReportInfo);
 
-    return std::log(std::max(indelAlleleFrequency, 0.0001) / std::max(otherAlleleFrequency, 0.0001));
+    return std::log(std::max(indelAlleleFrequency, minFreq) / std::max(otherAlleleFrequency, minFreq));
 }
 
 
@@ -160,6 +162,7 @@ getIndelAlleleCountLogOddsRatio(
 
 
 
+static inline
 double
 makeSymmetric(const double inputRatio)
 {
