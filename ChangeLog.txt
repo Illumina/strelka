@@ -1,3 +1,4 @@
+- STREL-577 Fix bug creating negative size active regions
 - STREL-553 Standardize somatic EVS features
 - STREL-564 Add filter preventing low depth PASS calls
 - STREL-567 Change readConfidentSupportThreshold to 0.51 

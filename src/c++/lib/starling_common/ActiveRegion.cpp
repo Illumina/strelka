@@ -33,11 +33,12 @@
 
 void ActiveRegion::processHaplotypes()
 {
-    // adjust the window size if not enough reads are available
-    bool isRangeValid = (_posRange.begin_pos >= _readBuffer.getBeginPos())
+    // Check whether the active region is included in the read buffer
+    const bool isRangeValid = (_posRange.begin_pos >= _readBuffer.getBeginPos())
                         && (_posRange.end_pos <= _readBuffer.getEndPos());
 
-    // if reference span is too large, give up haplotyping
+    // if the active region is not included in the read buffer or if it is too large,
+    // bypass haplotyping
     if (!isRangeValid || (_posRange.size() > MaxRefSpanToBypassAssembly))
     {
         doNotUseHaplotyping();
@@ -251,7 +252,7 @@ void ActiveRegion::doNotUseHaplotyping()
     std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << "\tBypass"<< std::endl;
 #endif
 
-    if(_posRange.end_pos <= _posRange.begin_pos) return;
+    assert(_posRange.end_pos > _posRange.begin_pos);
 
     auto it(_indelBuffer.positionIterator(_posRange.begin_pos));
     const auto it_end(_indelBuffer.positionIterator(_posRange.end_pos));
