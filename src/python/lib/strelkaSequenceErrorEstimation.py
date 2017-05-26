@@ -217,6 +217,8 @@ def countEmTillTheCountinsDone(self, estimationIntervals, sampleIndex, segFiles,
         countTask = countGenomeSegment(self, sampleIndex, gseg, segFiles,
                                        taskPrefix=taskPrefix, dependencies=dependencies)
 
+        #self.flowLog("ZZZ Sample%i launching taskIndex/task %i %s" % (sampleIndex, taskIndex, countTask))
+
         allTasks.add(countTask)
         taskByIndex.append(countTask)
 
@@ -247,7 +249,9 @@ def countEmTillTheCountinsDone(self, estimationIntervals, sampleIndex, segFiles,
 
         assert(nTargetTasks <= shared.lowestCanceledTaskIndex)
 
+        #self.flowLog("ZZZ Sample%i cancelQuery allTasks nTargetTasks lowestCanceledTaskIndex %i %i %i" % (sampleIndex, len(taskByIndex), nTargetTasks, shared.lowestCanceledTaskIndex))
         for task in taskByIndex[nTargetTasks:shared.lowestCanceledTaskIndex] :
+            #self.flowLog("ZZZ Sample%i canceling task %s" % (sampleIndex, task))
             self.cancelTaskTree(task)
 
         shared.lowestCanceledTaskIndex = nTargetTasks
@@ -259,7 +263,15 @@ def countEmTillTheCountinsDone(self, estimationIntervals, sampleIndex, segFiles,
         # Loop until the total required counts have been found in this sample, or there are no more counting
         # tasks to launch.
 
+        #(count,sum) = completedTaskTracker.totalValue()
+        #self.flowLog("ZZZ Sample%i total sum (count) %i (%i)" % (sampleIndex, count, sum))
+
+        #(count,sum) = completedTaskTracker.totalContinuousValue()
+        #self.flowLog("ZZZ Sample%i continuous sum (count) %i (%i)" % (sampleIndex, count, sum))
+
         (nTargetTasks,isContinuous) = completedTaskTracker.countTasksRequiredToReachTarget(Constants.totalContinuousNonEmptySiteTarget)
+        #self.flowLog("ZZZ Sample%i nTargetTasks isContinuous %s %s" % (sampleIndex, str(nTargetTasks), str(isContinuous)))
+
         if nTargetTasks is not None :
             # nTargetTasks always provides an upper bound on the total number of tasks required to reach the goal,
             # so we can start cancelling tasks we know won't be needed. This upper bound becomes exact when
@@ -277,7 +289,7 @@ def countEmTillTheCountinsDone(self, estimationIntervals, sampleIndex, segFiles,
         runningTaskCount = len(allTasks)-len(completedTasks)
         assert(runningTaskCount >= 0)
 
-        #self.flowLog("Sample%i Completed/Running/All/Input tasks: %i %i %i %i" %
+        #self.flowLog("ZZZ Sample%i Completed/Running/All/Input tasks: %i %i %i %i" %
         #             (sampleIndex, len(completedTasks), runningTaskCount, len(allTasks), len(estimationIntervals)))
 
         if len(allTasks) < len(estimationIntervals) :
@@ -318,7 +330,7 @@ def estimateParametersFromErrorCounts(self, sampleIndex, taskPrefix="", dependen
     Estimate variant error parameters from sequencing error count data
     """
 
-    runEstimateLabel=preJoin(taskPrefix,"estimateVariantErrorRatesBin")
+    runEstimateLabel=preJoin(taskPrefix,"estimateVariantErrorRates")
     runEstimateCmd=[self.params.estimateVariantErrorRatesBin]
     runEstimateCmd.extend(["--counts-file", self.paths.getErrorCountsOutputPath(sampleIndex)])
     runEstimateCmd.extend(["--theta-file",self.params.thetaParamFile])
