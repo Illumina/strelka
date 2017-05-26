@@ -71,6 +71,9 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
         # cause the hidden option to always print
         group.add_option("--disableSequenceErrorEstimation", dest="isEstimateSequenceError", action="store_false",
                          help="Disable estimation of sequence error rates from data.")
+        group.add_option("--useAllDataForSequenceErrorEstimation", dest="isErrorEstimationFromAllData", action="store_true",
+                         help="Instead of sampling a subset of data for error estimation, use all data from sufficiently large chromosomes."
+                              " This could greatly increase the workflow's runtime.")
 
         StrelkaSharedWorkflowOptionsBase.addExtendedGroupOptions(self,group)
 
@@ -124,14 +127,13 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
             else :
                 options.indelScoringModelFile = options.germlineIndelScoringModelFile
 
+        # Disable dynamic error estimation for Exome
+        if options.isExome :
+            options.isEstimateSequenceError = False
+
         # Disable dynamic error estimation for RNA
         if options.isRNA :
             options.isEstimateSequenceError = False
-
-        # In exome mode, dynamic error estimation is based on the full data set instead of a sub-sample:
-        if options.isExome :
-            options.isErrorEstimationFromAllData = True
-
 
         groomBamList(options.bamList,"input")
 
