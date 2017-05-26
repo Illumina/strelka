@@ -22,10 +22,12 @@
 ///
 
 #include "vcf_streamer.hh"
+#include "samtools_fasta_util.hh"
 
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "blt_util/seq_util.hh"
+#include "blt_util/parse_util.hh"
 
 #include "common/Exceptions.hh"
 
@@ -77,17 +79,18 @@ vcf_streamer::
 vcf_streamer(
     const char* filename,
     const char* region,
+    const std::string& referenceFilename,
     const bool isRequireNormalized) :
     hts_streamer(filename,region),
     _hdr(nullptr),
-    _isRequireNormalized(isRequireNormalized)
+    _isRequireNormalized(isRequireNormalized),
+    _referenceFilename(referenceFilename)
 {
     //
     // note with the switch to samtools 1.X vcf/bcf still involve predominantly separate
     // apis -- no bcf support added here, but a shared function has been chosen where possible
     // ... for_instance hts_open/bcf_hdr_read should work with both vcf and bcf
     //
-
     _hdr = bcf_hdr_read(_hfp);
     if (nullptr == _hdr)
     {
@@ -95,6 +98,8 @@ vcf_streamer(
         exit(EXIT_FAILURE);
     }
     _sampleCount = bcf_hdr_nsamples(_hdr);
+
+    resetRegion(region);
 }
 
 
@@ -131,7 +136,7 @@ next()
 
         _record_no++;
 
-        if (! _vcfrec.set(_kstr.s))
+        if (! _vcfrec.set(_kstr.s, _ref))
         {
             log_os << "ERROR: Can't parse vcf record: '" << _kstr.s << "'\n";
             exit(EXIT_FAILURE);
@@ -150,6 +155,29 @@ next()
                     std::ostringstream ess;
                     ess << "ERROR: " << oss.str();
                     ess << "Please normalize all records in this VCF with a tool such as vt, then resubmit\n";
+                    BOOST_THROW_EXCEPTION(illumina::common::LogicException(ess.str()));
+                }
+                else
+                {
+                    log_os << "WARNING: " << oss.str();
+                    log_os << "All alleles in this VCF record have been skipped.\n";
+                    continue;
+                }
+            }
+
+            if (!_vcfrec.is_match_reference())
+            {
+                std::ostringstream oss;
+                oss << "Reference field in input VCF record does not match genome reference:\n";
+                report_state(oss);
+                oss << "Genome reference: " << _vcfrec.fasta_ref << "\n";
+
+                // error handling matches that of normalization
+                if (_isRequireNormalized)
+                {
+                    std::ostringstream ess;
+                    ess << "ERROR: " << oss.str();
+                    ess << "Please ensure that the VCF you are using comes from the appropriate reference genome\n";
                     BOOST_THROW_EXCEPTION(illumina::common::LogicException(ess.str()));
                 }
                 else
@@ -185,6 +213,58 @@ report_state(std::ostream& os) const
     {
         os << "\tno vcf record currently set\n";
     }
+}
+
+
+
+void
+vcf_streamer::
+resetRegion(const char* region)
+{
+    // call hts_streamer::resetRegion, then
+    // parse and reset ref_fasta
+    hts_streamer::resetRegion(region);
+
+    std::string chrom;
+    unsigned begin = 0;
+    unsigned end = 0;
+
+    // parse region:
+    static const unsigned maxword(3);
+    const char* start(region);
+    const char* p(start);
+
+    unsigned wordindex(0);
+    while (wordindex<maxword)
+    {
+        if ((*p == ':') || (*p == '-') || (*p == '\n') || (*p == '\0'))
+        {
+            switch (wordindex)
+            {
+            case 0:
+                chrom = std::string(start,p-start);
+                break;
+            case 1:
+                begin = illumina::blt_util::parse_int(start);
+                assert(start==p);
+                break;
+            case 2:
+                end = illumina::blt_util::parse_int(start);
+                assert(start==p);
+                break;
+            default:
+                assert(0);
+                break;
+            }
+            start=p+1;
+            wordindex++;
+        }
+        if ((*p == '\n') || (*p == '\0')) break;
+        ++p;
+    }
+
+    _ref.set_offset(begin);
+    get_standardized_region_seq(_referenceFilename, chrom, begin, end, _ref.seq());
 }
 
 

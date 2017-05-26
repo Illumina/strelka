@@ -74,8 +74,10 @@ snoise_run(
         assert(not bamHeaders.empty());
         const bam_hdr_t& referenceHeader(bamHeaders.front());
 
-        registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader, streamData);
-        registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
+        registerVcfList(opt.referenceFilename, opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS,
+                        referenceHeader, streamData);
+        registerVcfList(opt.referenceFilename, opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS,
+                        referenceHeader, streamData);
     }
 
     const bam_hdr_t& referenceHeader(bamHeaders.front());
