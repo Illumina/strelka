@@ -1,3 +1,4 @@
+- STREL-579 Add filtered depth rates as somatic SNV EVS features
 - STREL-553 Standardize somatic EVS features
 - STREL-564 Add filter preventing low depth PASS calls
 - STREL-567 Change readConfidentSupportThreshold to 0.51 
