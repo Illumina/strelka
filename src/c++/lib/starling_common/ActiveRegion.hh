@@ -115,7 +115,7 @@ public:
     }
 
 private:
-    pos_range _posRange;
+    const pos_range _posRange;
     const reference_contig_segment& _ref;
     const unsigned _maxIndelSize;
     const unsigned _sampleCount;
