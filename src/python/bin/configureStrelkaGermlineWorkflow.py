@@ -123,6 +123,10 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
             else :
                 options.indelScoringModelFile = options.germlineIndelScoringModelFile
 
+        # Disable dynamic error estimation for RNA
+        if options.isRNA :
+            options.isEstimateSequenceError = False
+
 
         groomBamList(options.bamList,"input")
 
