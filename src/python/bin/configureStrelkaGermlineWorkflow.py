@@ -100,7 +100,8 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
             'estimateVariantErrorRatesBin' : joinFile(libexecDir,exeFile("EstimateVariantErrorRates")),
             'thetaParamFile' : joinFile(configDir,'theta.json'),
             'indelErrorRateDefault' : joinFile(configDir,'indelErrorModel.json'),
-            'isEstimateSequenceError' : True
+            'isEstimateSequenceError' : True,
+            'isErrorEstimationFromAllData' : False
             })
         return defaults
 
@@ -126,6 +127,10 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
         # Disable dynamic error estimation for RNA
         if options.isRNA :
             options.isEstimateSequenceError = False
+
+        # In exome mode, dynamic error estimation is based on the full data set instead of a sub-sample:
+        if options.isExome :
+            options.isErrorEstimationFromAllData = True
 
 
         groomBamList(options.bamList,"input")

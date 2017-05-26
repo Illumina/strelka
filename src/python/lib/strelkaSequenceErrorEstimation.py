@@ -38,6 +38,8 @@ from sharedWorkflow import getMkdirCmd, getRmdirCmd
 from strelkaSharedWorkflow import DeepCopyProtector
 from workflowUtil import preJoin, GenomeSegment, getChromIntervals
 
+
+
 def countGenomeSegment(self, sampleIndex, gseg, segFiles, taskPrefix="", dependencies=None) :
     """
     Extract sequencing error count data from the genome segment specified by gseg.bamRegion
@@ -76,6 +78,21 @@ def countGenomeSegment(self, sampleIndex, gseg, segFiles, taskPrefix="", depende
     self.addTask(setTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
 
     return setTaskLabel
+
+
+
+def countEmAll(self, estimationIntervals, sampleIndex, segFiles, taskPrefix="", dependencies=None) :
+    """
+    This routine launches error counting jobs for a sample to cover all available input data.
+    """
+
+    segmentTasks = set()
+
+    for gseg in estimationIntervals :
+        segmentTasks.add(countGenomeSegment(self, sampleIndex, gseg, segFiles,
+                                            taskPrefix=taskPrefix, dependencies=dependencies))
+
+    return segmentTasks
 
 
 
@@ -354,8 +371,12 @@ def getSequenceErrorEstimatesForSample(self, estimationIntervals, sampleIndex, t
 
     segFiles = TempSequenceErrorCountSegmentFiles()
 
-    # Launch tasks until the required counts are found
-    segmentTasks |= countEmTillTheCountinsDone(self, estimationIntervals, sampleIndex, segFiles, taskPrefix, dependencies)
+    if self.params.isErrorEstimationFromAllData :
+        # get error counts from full data set:
+        segmentTasks |= countEmAll(self, estimationIntervals, sampleIndex, segFiles, taskPrefix, dependencies)
+    else :
+        # Launch tasks until the required counts are found
+        segmentTasks |= countEmTillTheCountinsDone(self, estimationIntervals, sampleIndex, segFiles, taskPrefix, dependencies)
 
     # create a checkpoint for all segments:
     completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=segmentTasks)
@@ -402,18 +423,25 @@ def getErrorEstimationIntervals(params) :
     class Constants :
         Megabase = 1000000
         errorEstimationMinChromSize = params.errorEstimationMinChromMb * Megabase
-        errorEstimationChunkSize = 2 * Megabase
+        sampledErrorEstimationChunkSize = 2 * Megabase
+        allDataErrorEstimationChunkSize = 12 * Megabase
+
 
     largeChroms = [chrom for chrom in params.chromOrder if params.chromSizes[chrom] >= Constants.errorEstimationMinChromSize]
-    estimationIntervals = [GenomeSegment(*interval) for interval in getChromIntervals(largeChroms, params.chromSizes, Constants.errorEstimationChunkSize)]
 
-    # Create a local random instance such that the fixed-seed shuffle procedure works as expected
-    # in a multi-threaded context.
-    import random
-    localRandom = random.Random()
-    localRandom.seed(4000)
+    if params.isErrorEstimationFromAllData :
+        estimationIntervals = [GenomeSegment(*interval) for interval in getChromIntervals(largeChroms, params.chromSizes, Constants.allDataErrorEstimationChunkSize)]
 
-    localRandom.shuffle(estimationIntervals)
+    else :
+        estimationIntervals = [GenomeSegment(*interval) for interval in getChromIntervals(largeChroms, params.chromSizes, Constants.sampledErrorEstimationChunkSize)]
+
+        # Create a local random instance such that the fixed-seed shuffle procedure works as expected
+        # in a multi-threaded context.
+        import random
+        localRandom = random.Random()
+        localRandom.seed(4000)
+
+        localRandom.shuffle(estimationIntervals)
 
     return estimationIntervals
 
