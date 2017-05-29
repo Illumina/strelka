@@ -342,7 +342,7 @@ class PathInfo(SharedPathInfo):
 
     def getIndelErrorModelPath(self, sampleIndex) :
         sampleIndexStr = str(sampleIndex).zfill(3)
-        return os.path.join( self.params.statsDir, "sequenceErrorModel.Sample%s.json" % (sampleIndexStr))
+        return os.path.join( self.params.workDir, "sequenceErrorModel.Sample%s.json" % (sampleIndexStr))
 
 
 

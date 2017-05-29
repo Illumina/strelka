@@ -334,6 +334,9 @@ Strelka does not read any fields besides `CHROM`, `POS`, `ALT`, `INFO/END` and `
 
 Note this feature is primarily intended to delineate the sex chromosome copy number but can be used to call small variants in the context of CNV calls as well.
 
+###### Adaptive sequence error estimation
+
+By default the germline calling workflow includes an adaptive sequencing error estimation step, in which indel errors are estimated from a subsample of the input sequencing data and used to estimate indel error rates for each sample. This step can be disabled with the configuration option `--disableSequenceErrorEstimation` so that the workflow reverts to precomputed indel error rates reflecting an intermediate point between different sequencing assays.
 
 ### Execution
 
