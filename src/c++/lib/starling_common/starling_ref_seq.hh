@@ -40,19 +40,19 @@ setRefSegment(
 
 struct AnalysisRegionInfo
 {
-    /// chrom string from region parse
+    /// Chrom string from region parse
     std::string regionChrom;
 
-    ///strelka range from region parse
+    /// Range from region parse
     known_pos_range2 regionRange;
 
-    ///analysis range padded by indel size (used for streamer classses)
+    /// Analysis range padded by indel size (used for streamer classses)
     known_pos_range2 streamerRegionRange;
 
-    ///analysis range padded by indel size + extra constant pad (used for reference region)
+    /// Analysis range padded by indel size + extra constant pad (used for reference region)
     known_pos_range2 refRegionRange;
 
-    /// region formatted into a samtools region string, e.g. "chr20:100-200"
+    /// Region formatted into a samtools region string, e.g. "chr20:100-200"
     std::string streamerRegion;
 };
 

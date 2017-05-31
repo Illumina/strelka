@@ -175,7 +175,10 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     set_head_pos(const pos_t pos);
 
 protected:
-    /// reset current report region -- must be called before inserting region data
+    /// Reset current report region -- must be called before inserting region data
+    ///
+    /// Note that pos_processor classes only take a const ref to the reference sequence, and do not reset
+    /// the reference even though this needs to be reset to the new region somewhere.
     void
     resetRegionBase(
         const std::string& chromName,
