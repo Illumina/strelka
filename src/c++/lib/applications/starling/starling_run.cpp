@@ -287,9 +287,9 @@ starling_run(
         const bam_hdr_t& referenceHeader(bamHeaders.front());
 
         static const bool noRequireNormalized(false);
-        registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader, streamData,
+        registerVcfList(opt.referenceFilename, opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader, streamData,
                         noRequireNormalized);
-        registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
+        registerVcfList(opt.referenceFilename, opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
 
         for (const bam_hdr_t& bamHeader : bamHeaders)
         {

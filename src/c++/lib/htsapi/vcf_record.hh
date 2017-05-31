@@ -38,7 +38,7 @@ struct vcf_record
     }
 
     /// set the vcf record from record string s, return false on error
-    bool set(const char* s);
+    bool set(const char* s, const reference_contig_segment& fasta_ref_contig);
 
     void clear()
     {
@@ -107,9 +107,12 @@ struct vcf_record
 
     bool is_normalized() const;
 
+    bool is_match_reference() const;
+
     std::string chrom;
     int pos = 0;
     std::string ref;
+    std::string fasta_ref;
     std::vector<std::string> alt;
     const char* line = nullptr;
 };
