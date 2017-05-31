@@ -25,9 +25,9 @@
 
 #include "HtsMergeStreamer.hh"
 
+
 void
 registerVcfList(
-    const std::string& referenceFilename,
     const std::vector<std::string>& vcfFilenames,
     const unsigned typeIndex,
     const bam_hdr_t& header,

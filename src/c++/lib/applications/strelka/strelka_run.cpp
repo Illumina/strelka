@@ -200,13 +200,11 @@ strelka_run(
         const bam_hdr_t& referenceHeader(bamHeaders.front());
 
         static const bool noRequireNormalized(false);
-        registerVcfList(opt.referenceFilename, opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS,
-                        referenceHeader, streamData, noRequireNormalized);
-        registerVcfList(opt.referenceFilename, opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS,
-                        referenceHeader, streamData);
+        registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader, streamData,
+                        noRequireNormalized);
+        registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
 
-        registerVcfList(opt.referenceFilename, opt.noise_vcf, INPUT_TYPE::NOISE_VARIANTS,
-                        referenceHeader, streamData);
+        registerVcfList(opt.noise_vcf, INPUT_TYPE::NOISE_VARIANTS, referenceHeader, streamData);
 
         if (! opt.callRegionsBedFilename.empty())
         {

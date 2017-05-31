@@ -36,8 +36,8 @@ struct vcf_streamer : public hts_streamer
     vcf_streamer(
         const char* filename,
         const char* region,
-        const std::string& referenceFilename,
         const bool isRequireNormalized = true);
+
     ~vcf_streamer();
 
     /// advance to next (normalized) vcf record
@@ -52,8 +52,6 @@ struct vcf_streamer : public hts_streamer
     }
 
     void report_state(std::ostream& os) const;
-
-    void resetRegion(const char* region);
 
     /// provide a BAM header to validate vcf chromosome names against
     ///
@@ -80,7 +78,5 @@ private:
     bcf_hdr_t* _hdr;
     unsigned _sampleCount;
     vcf_record _vcfrec;
-    reference_contig_segment _ref;
     bool _isRequireNormalized;
-    std::string _referenceFilename;
 };
