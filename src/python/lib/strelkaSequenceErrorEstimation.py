@@ -81,7 +81,7 @@ def countGenomeSegment(self, sampleIndex, gseg, segFiles, taskPrefix="", depende
 
 
 
-def countEmAll(self, estimationIntervals, sampleIndex, segFiles, taskPrefix="", dependencies=None) :
+def countAllEligibleSequenceEvidence(self, estimationIntervals, sampleIndex, segFiles, taskPrefix="", dependencies=None) :
     """
     This routine launches error counting jobs for a sample to cover all available input data.
     """
@@ -195,10 +195,11 @@ class UpdateCompletedTaskTrackerWorkflow(WorkflowRunner) :
 
 
 
-def countEmTillTheCountinsDone(self, estimationIntervals, sampleIndex, segFiles, taskPrefix="", dependencies=None) :
+def countSequenceEvidenceUntilTargetIsReached(self, estimationIntervals, sampleIndex, segFiles,
+                                              taskPrefix="", dependencies=None) :
     """
     This routine organizes the process of launching sequence error count jobs until a specific total
-    evidence count has been gathered from the genome (or not genome segments are left)
+    evidence count has been gathered from the genome (or no genome segments are left)
 
     Note that this function will not return until its tasks are completed, so it will block conventional task parallelization
     """
@@ -266,7 +267,8 @@ def countEmTillTheCountinsDone(self, estimationIntervals, sampleIndex, segFiles,
 
         assert(nTargetTasks <= shared.lowestCanceledTaskIndex)
 
-        #self.flowLog("ZZZ Sample%i cancelQuery allTasks nTargetTasks lowestCanceledTaskIndex %i %i %i" % (sampleIndex, len(taskByIndex), nTargetTasks, shared.lowestCanceledTaskIndex))
+        #self.flowLog("ZZZ Sample%i cancelQuery allTasks nTargetTasks lowestCanceledTaskIndex %i %i %i" %
+        #             (sampleIndex, len(taskByIndex), nTargetTasks, shared.lowestCanceledTaskIndex))
         for task in taskByIndex[nTargetTasks:shared.lowestCanceledTaskIndex] :
             #self.flowLog("ZZZ Sample%i canceling task %s" % (sampleIndex, task))
             self.cancelTaskTree(task)
@@ -373,10 +375,10 @@ def getSequenceErrorEstimatesForSample(self, estimationIntervals, sampleIndex, t
 
     if self.params.isErrorEstimationFromAllData :
         # get error counts from full data set:
-        segmentTasks |= countEmAll(self, estimationIntervals, sampleIndex, segFiles, taskPrefix, dependencies)
+        segmentTasks |= countAllEligibleSequenceEvidence(self, estimationIntervals, sampleIndex, segFiles, taskPrefix, dependencies)
     else :
         # Launch tasks until the required counts are found
-        segmentTasks |= countEmTillTheCountinsDone(self, estimationIntervals, sampleIndex, segFiles, taskPrefix, dependencies)
+        segmentTasks |= countSequenceEvidenceUntilTargetIsReached(self, estimationIntervals, sampleIndex, segFiles, taskPrefix, dependencies)
 
     # create a checkpoint for all segments:
     completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=segmentTasks)

@@ -29,6 +29,21 @@
 #include <vector>
 
 
+
+/// Checks that the path given in \p fileName can be opened for writing
+///
+/// If \p fileName is empty it is ignored, if \p fileName is not writable for any reason
+/// (path does not exist, user does not have permission, etc..) this function will throw.
+static
+void
+checkOutputFilePathIsWriteable(
+    const std::string& fileName)
+{
+    OutStream outs(fileName);
+}
+
+
+
 SequenceErrorCountsPosProcessor::
 SequenceErrorCountsPosProcessor(
     const SequenceErrorCountsOptions& opt,
@@ -49,17 +64,15 @@ SequenceErrorCountsPosProcessor(
     // this is already logged as a warning if alignmentFilenames.size() > 1
     _counts.setSampleName(opt.alignFileOpt.alignmentFilenames[0]);
 
-    // check that we have write permission on the output files early:
+    // check that we have write permission on all output files as early as possible:
+    checkOutputFilePathIsWriteable(opt.countsFilename);
+    if (opt.is_write_observations())
     {
-        OutStream outs(opt.countsFilename);
-        if (opt.is_write_observations())
-        {
-            OutStream outs2(opt.observationsBedFilename);
-        }
-        if (! opt.nonEmptySiteCountFilename.empty())
-        {
-            OutStream outs2(opt.nonEmptySiteCountFilename);
-        }
+        checkOutputFilePathIsWriteable(opt.observationsBedFilename);
+    }
+    if (! opt.nonEmptySiteCountFilename.empty())
+    {
+        checkOutputFilePathIsWriteable(opt.nonEmptySiteCountFilename);
     }
 
     // setup indel buffer samples
@@ -84,14 +97,8 @@ reset()
 
     if (! _opt.nonEmptySiteCountFilename.empty())
     {
-        std::ofstream ofs(_opt.nonEmptySiteCountFilename);
-        if (! ofs)
-        {
-            std::ostringstream oss;
-            oss << "ERROR: Can't open output file: " << _opt.nonEmptySiteCountFilename << "\n";
-            BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
-        }
-        ofs << "nonEmptySiteCount\t" << _nonEmptySiteCount << "\n";
+        OutStream outs(_opt.nonEmptySiteCountFilename);
+        outs.getStream() << "nonEmptySiteCount\t" << _nonEmptySiteCount << "\n";
     }
 
     base_t::reset();
