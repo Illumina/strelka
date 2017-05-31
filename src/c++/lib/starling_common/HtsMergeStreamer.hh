@@ -79,14 +79,14 @@ template <> inline index_t getStreamType<bed_streamer>()
 }
 
 template <typename T>
-T* htsTypeFactory(const char* name, const char* region, const std::string& /*unused*/, const bool /*unused*/)
+T* htsTypeFactory(const char* name, const char* region, const bool /*unused*/)
 {
     return new T(name, region);
 }
 template <>
-inline vcf_streamer* htsTypeFactory(const char* name, const char* region, const std::string& referenceFilename, const bool isRequreNormalized)
+inline vcf_streamer* htsTypeFactory(const char* name, const char* region, const bool isRequreNormalized)
 {
-    return new vcf_streamer(name, region, referenceFilename, isRequreNormalized);
+    return new vcf_streamer(name, region, isRequreNormalized);
 }
 }
 
@@ -129,10 +129,9 @@ struct HtsMergeStreamer
     registerVcf(
         const char* vcfFilename,
         const unsigned index = 0,
-        const std::string& referenceFilename = "",
         const bool isRequireNormalized = true)
     {
-        return registerHtsType(vcfFilename,index,_data._vcf,referenceFilename,isRequireNormalized);
+        return registerHtsType(vcfFilename,index,_data._vcf, isRequireNormalized);
     }
 
     /// resets the region over which all files scanned
@@ -284,15 +283,13 @@ private:
         const char* htsFilename,
         const unsigned index,
         std::vector<std::unique_ptr<T>>& htsStreamerVec,
-        const std::string& referenceFilename = "",
         const bool isRequireNormalized = false)
     {
         static const HTS_TYPE::index_t htsType(HTS_TYPE::getStreamType<T>());
         assert(! _isStreamBegin);
         const unsigned htsTypeIndex(htsStreamerVec.size());
         const unsigned orderIndex(_order.size());
-        htsStreamerVec.emplace_back(HTS_TYPE::htsTypeFactory<T>(htsFilename, getRegionPtr(), referenceFilename,
-                                    isRequireNormalized));
+        htsStreamerVec.emplace_back(HTS_TYPE::htsTypeFactory<T>(htsFilename, getRegionPtr(), isRequireNormalized));
         _order.emplace_back(htsType, index, htsTypeIndex);
         queueItem(orderIndex);
         return *(htsStreamerVec.back());

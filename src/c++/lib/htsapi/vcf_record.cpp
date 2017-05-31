@@ -52,7 +52,7 @@ stoupper(std::string& s)
 
 bool
 vcf_record::
-set(const char* s, const reference_contig_segment& fasta_ref_contig)
+set(const char* s)
 {
     static const char sep('\t');
     static const unsigned maxword(5);
@@ -119,9 +119,6 @@ set(const char* s, const reference_contig_segment& fasta_ref_contig)
         ++p;
     }
 
-    // get matching segment from ref
-    fasta_ref_contig.get_substring(pos, ref.size(), fasta_ref);
-
     return (wordindex >= maxword);
 }
 
@@ -182,30 +179,6 @@ is_normalized() const
             // normalization requirements
         }
     }
-    return true;
-}
-
-bool
-vcf_record::
-is_match_reference() const
-{
-    // Returns true if REF in the VCF record should have a REF matches
-    // the reference sequence at that position (or positions if record
-    // is an indel).
-
-    if (ref.size() != fasta_ref.size())
-    {
-        return false;
-    }
-
-    for (unsigned i = 0; i < ref.size(); ++i)
-    {
-        if (ref[i] != fasta_ref[i])
-        {
-            return false;
-        }
-    }
-
     return true;
 }
 

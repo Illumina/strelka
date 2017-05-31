@@ -18,7 +18,6 @@
 //
 
 #include "test_config.h"
-#include <iostream>
 
 #include "htsapi/vcf_streamer.hh"
 
@@ -31,23 +30,16 @@ BOOST_AUTO_TEST_SUITE( test_vcf_streamer )
 
 static
 const char*
-getTestVcfPath()
+getTestpath()
 {
     static const std::string testPath(std::string(TEST_DATA_PATH) + "/vcf_streamer_test.vcf.gz");
-    return testPath.c_str();
-}
-
-const char*
-getTestFastaPath()
-{
-    static const std::string testPath(std::string(TEST_DATA_PATH) + "/vcf_streamer_test.fa");
     return testPath.c_str();
 }
 
 
 BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
 {
-    vcf_streamer vcfs(getTestVcfPath(),"chrP:1-100", getTestFastaPath());
+    vcf_streamer vcfs(getTestpath(),"chr1:750000-822000");
 
     const vcf_record* vptr(nullptr);
 
@@ -57,54 +49,15 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
     assert(vptr != nullptr);
 
     // VCF record test for
-    // chrP    1    MantaINS:29:0:0:0:0:0    T    TTTTCTTTC    ...
+    // chr1    757807  MantaDEL:44:0:0:0:1:0   CCCTGGCCAGCAGATCCACCCTGTCTATACTACCTG    C       ...
     // testing variant assignment, normalize and validity checks, position, and ref
     BOOST_REQUIRE(vptr->isSimpleVariantLocus() );
     BOOST_REQUIRE( vptr->is_indel() );
     BOOST_REQUIRE( vptr->is_normalized());
-    BOOST_REQUIRE( vptr->is_match_reference());
     BOOST_REQUIRE( ! vptr->is_snv() );
 
-    BOOST_REQUIRE_EQUAL(vptr->pos, 1);
-    BOOST_REQUIRE_EQUAL(vptr->ref,"T");
-    BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
-    BOOST_REQUIRE_EQUAL(vptr->alt[0],"TTTTCTTTC");
-
-    BOOST_REQUIRE( vcfs.next() );
-    vptr = vcfs.get_record_ptr();
-    assert(vptr != nullptr);
-
-    // VCF record test for
-    // chrP    2    MantaDEL:41:0:0:0:3:0    CGAATGGAATG    C    ...
-    // testing variant assignment, normalize and validity checks, position, and ref
-    BOOST_REQUIRE(vptr->isSimpleVariantLocus() );
-    BOOST_REQUIRE( vptr->is_indel() );
-    BOOST_REQUIRE( vptr->is_normalized());
-    BOOST_REQUIRE( vptr->is_match_reference());
-    BOOST_REQUIRE( ! vptr->is_snv() );
-
-    BOOST_REQUIRE_EQUAL(vptr->pos, 2);
-    BOOST_REQUIRE_EQUAL(vptr->ref,"CGAATGGAATG");
-    BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
-    BOOST_REQUIRE_EQUAL(vptr->alt[0],"C");
-
-    BOOST_REQUIRE( vcfs.next() );
-    vptr = vcfs.get_record_ptr();
-    assert(vptr != nullptr);
-
-    // VCF record test for
-    // chrP    13  MantaDEL:44:0:0:0:1:0   CCCTGGCCAGCAGATCCACCCTGTCTATACTACCTG    C       ...
-    // testing variant assignment, normalize and validity checks, position, and ref
-    BOOST_REQUIRE(vptr->isSimpleVariantLocus() );
-    BOOST_REQUIRE( vptr->is_indel() );
-    BOOST_REQUIRE( vptr->is_normalized());
-    BOOST_REQUIRE( vptr->is_match_reference());
-    BOOST_REQUIRE( ! vptr->is_snv() );
-
-    BOOST_REQUIRE_EQUAL(vptr->pos, 13);
+    BOOST_REQUIRE_EQUAL(vptr->pos, 757807);
     BOOST_REQUIRE_EQUAL(vptr->ref,"CCCTGGCCAGCAGATCCACCCTGTCTATACTACCTG");
-    BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
-    BOOST_REQUIRE_EQUAL(vptr->alt[0],"C");
 
     // also check that a valid record returns true
     BOOST_REQUIRE( vcfs.next() );
@@ -112,39 +65,34 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
     assert(vptr != nullptr);
 
     // VCF record test for
-    // chrP    39  FAKED   A       T,C     ...
+    // chr1    758807  FAKED   C       T,A     ...
     // testing variant assignment, normalize and validity checks, position, alt size, and alt
     BOOST_REQUIRE(vptr->isSimpleVariantLocus() );
     BOOST_REQUIRE( ! vptr->is_indel() );
     BOOST_REQUIRE( vptr->is_snv() );
     BOOST_REQUIRE( vptr->is_normalized());
-    BOOST_REQUIRE( vptr->is_match_reference());
 
-    BOOST_REQUIRE_EQUAL(vptr->pos, 39);
-    BOOST_REQUIRE_EQUAL(vptr->ref,"A");
+    BOOST_REQUIRE_EQUAL(vptr->pos, 758807);
     BOOST_REQUIRE_EQUAL(vptr->alt.size(),2u);
     BOOST_REQUIRE_EQUAL(vptr->alt[0],"T");
-    BOOST_REQUIRE_EQUAL(vptr->alt[1],"C");
 
     BOOST_REQUIRE( vcfs.next() );
     vptr = vcfs.get_record_ptr();
     assert(vptr != nullptr);
 
     // VCF record test for
-    // chrP    40  MantaINS:53:0:0:0:1:0   T       TGCCCTTTGGCAGAGCAGGTGTGCTGTGCTG ...
+    // chr1    821604  MantaINS:53:0:0:0:1:0   T       TGCCCTTTGGCAGAGCAGGTGTGCTGTGCTG ...
     // testing variant assignment, normalize and validity checks, position, alt size, and alt
     BOOST_REQUIRE(vptr->isSimpleVariantLocus() );
     BOOST_REQUIRE( vptr->is_indel() );
     BOOST_REQUIRE( ! vptr->is_snv() );
     BOOST_REQUIRE( vptr->is_normalized());
-    BOOST_REQUIRE( vptr->is_match_reference());
 
-    BOOST_REQUIRE_EQUAL(vptr->pos, 40);
-    BOOST_REQUIRE_EQUAL(vptr->ref,"T");
+    BOOST_REQUIRE_EQUAL(vptr->pos, 821604);
     BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
     BOOST_REQUIRE_EQUAL(vptr->alt[0],"TGCCCTTTGGCAGAGCAGGTGTGCTGTGCTG");
 
-    vcfs.resetRegion("chrQ:1-100");
+    vcfs.resetRegion("chr10:89717700-89717810");
 
     // tests that we can reset VCF regions
     BOOST_REQUIRE( vcfs.next() );
@@ -152,14 +100,13 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
     assert(vptr != nullptr);
 
     // VCF record test for
-    // chrQ   1    NORMALIZED    TA    T    ...
+    // chr10   89717769        COSM30622       TA      T       ...
     // testing that deletion is reported as normalized
     BOOST_REQUIRE(vptr->isSimpleVariantLocus() );
     BOOST_REQUIRE( vptr->is_indel() );
     BOOST_REQUIRE( ! vptr->is_snv() );
     BOOST_REQUIRE( vptr->is_normalized());
-    BOOST_REQUIRE( vptr->is_match_reference());
-    BOOST_REQUIRE_EQUAL(vptr->pos, 1);
+    BOOST_REQUIRE_EQUAL(vptr->pos, 89717769);
     BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
     BOOST_REQUIRE_EQUAL(vptr->alt[0],"T");
 
@@ -168,14 +115,13 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
     assert(vptr != nullptr);
 
     // VCF record test for
-    // chrQ   3    UNNORMALIZED_DEL    AA    A    ...
+    // chr10   89717774        COSM5809        AA      A       ...
     // testing that deletion is not reported as left-shifted
     BOOST_REQUIRE(vptr->isSimpleVariantLocus() );
     BOOST_REQUIRE( vptr->is_indel() );
     BOOST_REQUIRE( ! vptr->is_snv() );
     BOOST_REQUIRE( ! vptr->is_normalized());
-    BOOST_REQUIRE( vptr->is_match_reference());
-    BOOST_REQUIRE_EQUAL(vptr->pos, 3);
+    BOOST_REQUIRE_EQUAL(vptr->pos, 89717774);
     BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
     BOOST_REQUIRE_EQUAL(vptr->alt[0],"A");
 
@@ -184,14 +130,13 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
     assert(vptr != nullptr);
 
     // VCF record test for
-    // chrQ   5    COSM5012    A    AA    ...
+    // chr10   89717775        COSM5012        A       AA      ...
     // testing that insertion is not reported as left-shifted
     BOOST_REQUIRE(vptr->isSimpleVariantLocus() );
     BOOST_REQUIRE( vptr->is_indel() );
     BOOST_REQUIRE( ! vptr->is_snv() );
     BOOST_REQUIRE( ! vptr->is_normalized());
-    BOOST_REQUIRE( vptr->is_match_reference());
-    BOOST_REQUIRE_EQUAL(vptr->pos, 5);
+    BOOST_REQUIRE_EQUAL(vptr->pos, 89717775);
     BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
     BOOST_REQUIRE_EQUAL(vptr->alt[0],"AA");
 
@@ -200,14 +145,13 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
     assert(vptr != nullptr);
 
     // VCF record test for
-    // chrQ   6    VALID_MNV_1    TCG    AGT    ...
+    // chr10   89717776        VALID_MNV_1     TCG     AGT     ...
     // testing that MNV is reported as normalized
     BOOST_REQUIRE(vptr->isSimpleVariantLocus() );
     BOOST_REQUIRE( vptr->is_indel() );
     BOOST_REQUIRE( ! vptr->is_snv() );
     BOOST_REQUIRE( vptr->is_normalized());
-    BOOST_REQUIRE( vptr->is_match_reference());
-    BOOST_REQUIRE_EQUAL(vptr->pos, 6);
+    BOOST_REQUIRE_EQUAL(vptr->pos, 89717776);
     BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
     BOOST_REQUIRE_EQUAL(vptr->alt[0],"AGT");
 
@@ -216,14 +160,13 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
     assert(vptr != nullptr);
 
     // VCF record test for
-    // chrQ   10    INVALID_MNV_1    TCG    AGG    ...
+    // chr10   89717779        INVALID_MNV_1   TCG     AGG     ...
     // testing that MNV is not reported as normalized
     BOOST_REQUIRE(vptr->isSimpleVariantLocus() );
     BOOST_REQUIRE( vptr->is_indel() );
     BOOST_REQUIRE( ! vptr->is_snv() );
     BOOST_REQUIRE( ! vptr->is_normalized());
-    BOOST_REQUIRE( vptr->is_match_reference());
-    BOOST_REQUIRE_EQUAL(vptr->pos, 10);
+    BOOST_REQUIRE_EQUAL(vptr->pos, 89717779);
     BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
     BOOST_REQUIRE_EQUAL(vptr->alt[0],"AGG");
 
@@ -232,7 +175,7 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
     assert(vptr != nullptr);
 
     // VCF record test for
-    // chrQ   13    INVALID_MNV_2   ACG    AGT    ...
+    // chr10   89717782        INVALID_MNV_2   ACG     AGT     ...
     // testing that MNV is reported as normalized, despite first base
     // matching (Manta returns MNV candidates with reference-padding, so
     // this is to maintain consistency with its inputs)
@@ -240,8 +183,7 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
     BOOST_REQUIRE( vptr->is_indel() );
     BOOST_REQUIRE( ! vptr->is_snv() );
     BOOST_REQUIRE( vptr->is_normalized());
-    BOOST_REQUIRE( vptr->is_match_reference());
-    BOOST_REQUIRE_EQUAL(vptr->pos, 13);
+    BOOST_REQUIRE_EQUAL(vptr->pos, 89717782);
     BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
     BOOST_REQUIRE_EQUAL(vptr->alt[0],"AGT");
 
@@ -250,14 +192,13 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
     assert(vptr != nullptr);
 
     // VCF record test for
-    // chrQ   16    INVALID_SNV   A    A    ...
+    // chr10   89717785        INVALID_SNV   A     A     ...
     // testing that SNV is not reported as normalized
     BOOST_REQUIRE(vptr->isSimpleVariantLocus() );
     BOOST_REQUIRE( ! vptr->is_indel() );
     BOOST_REQUIRE( vptr->is_snv() );
     BOOST_REQUIRE( ! vptr->is_normalized());
-    BOOST_REQUIRE( vptr->is_match_reference());
-    BOOST_REQUIRE_EQUAL(vptr->pos, 16);
+    BOOST_REQUIRE_EQUAL(vptr->pos, 89717785);
     BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
     BOOST_REQUIRE_EQUAL(vptr->alt[0],"A");
 
@@ -266,14 +207,13 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
     assert(vptr != nullptr);
 
     // VCF record test for
-    // chrQ   17    RIGHT_PAD_INDEL    ACCC    AC    ...
+    // chr10   89717785        RIGHT_PAD_INDEL ACCC    AC      ...
     // testing that indel is not reported as normalized
     BOOST_REQUIRE(vptr->isSimpleVariantLocus() );
     BOOST_REQUIRE( vptr->is_indel() );
     BOOST_REQUIRE( ! vptr->is_snv() );
     BOOST_REQUIRE( ! vptr->is_normalized());
-    BOOST_REQUIRE( vptr->is_match_reference());
-    BOOST_REQUIRE_EQUAL(vptr->pos, 17);
+    BOOST_REQUIRE_EQUAL(vptr->pos, 89717785);
     BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
     BOOST_REQUIRE_EQUAL(vptr->alt[0],"AC");
 
@@ -282,14 +222,13 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
     assert(vptr != nullptr);
 
     // VCF record test for
-    // chrQ   21    COMPLEX    GAGCTGTG   AGCT    ...
+    // chr10   89717790        COMPLEX GAGCTGTG   AGCT ...
     // testing that complex allele is reported as normalized
     BOOST_REQUIRE(vptr->isSimpleVariantLocus() );
     BOOST_REQUIRE( vptr->is_indel() );
     BOOST_REQUIRE( ! vptr->is_snv() );
     BOOST_REQUIRE( vptr->is_normalized());
-    BOOST_REQUIRE( vptr->is_match_reference());
-    BOOST_REQUIRE_EQUAL(vptr->pos, 21);
+    BOOST_REQUIRE_EQUAL(vptr->pos, 89717790);
     BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
     BOOST_REQUIRE_EQUAL(vptr->alt[0],"AGCT");
 
@@ -298,38 +237,9 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
     assert(vptr != nullptr);
 
     // VCF record test for complex val
-    // chrQ   29    INVALID_ALT    A    <DEL>    ...
+    // chr10   89717799    INVALID_ALT A   <DEL>   .   .   .
     // this should not be parsed as an SNV or indel
     BOOST_REQUIRE(not vptr->isSimpleVariantLocus());
-    BOOST_REQUIRE_THROW( vcfs.next(), illumina::common::LogicException );
-
-    // VCF record test for
-    // chrQ    30    MISMATCH_REF_SNP    T    A    ...
-    // testing that mismatched ref is caught
-    BOOST_REQUIRE( vptr->isSimpleVariantLocus() );
-    BOOST_REQUIRE( ! vptr->is_indel() );
-    BOOST_REQUIRE( vptr->is_snv() );
-    BOOST_REQUIRE( vptr->is_normalized());
-    BOOST_REQUIRE( ! vptr->is_match_reference());
-    BOOST_REQUIRE_EQUAL(vptr->pos, 30);
-    BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
-    BOOST_REQUIRE_EQUAL(vptr->alt[0],"A");
-
-    BOOST_REQUIRE_THROW( vcfs.next(), illumina::common::LogicException );
-    vptr = vcfs.get_record_ptr();
-    assert(vptr != nullptr);
-
-    // VCF record test for
-    // chrQ    32    MISMATCH_REF_INDEL  GTA    G    ...
-    // testing that mismatched ref is caught
-    BOOST_REQUIRE(vptr->isSimpleVariantLocus() );
-    BOOST_REQUIRE( vptr->is_indel() );
-    BOOST_REQUIRE( ! vptr->is_snv() );
-    BOOST_REQUIRE( vptr->is_normalized());
-    BOOST_REQUIRE( ! vptr->is_match_reference());
-    BOOST_REQUIRE_EQUAL(vptr->pos, 32);
-    BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
-    BOOST_REQUIRE_EQUAL(vptr->alt[0],"G");
 
     // testing that next returns false after last record
     BOOST_REQUIRE( ! vcfs.next() );
