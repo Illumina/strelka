@@ -485,7 +485,7 @@ updateSnvLocusWithSampleInfo(
         {
             maxGt.setAllele0HaplotypeId(
                 candidateSnvBuffer.getHaplotypeId(
-                    sampleIndex, locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex)
+                    locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex)
             );
         }
     }
@@ -496,11 +496,11 @@ updateSnvLocusWithSampleInfo(
         {
             maxGt.setAllele1HaplotypeId(
                 candidateSnvBuffer.getHaplotypeId(
-                    sampleIndex, locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
+                    locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
             );
         }
     }
-    maxGt.addAltAlleleHaplotypeCountRatio(candidateSnvBuffer.getAltHaplotypeCountRatio(sampleIndex, locus.pos));
+    maxGt.addAltAlleleHaplotypeCountRatio(candidateSnvBuffer.getAltHaplotypeCountRatio(locus.pos));
 }
 
 
@@ -670,7 +670,8 @@ process_pos_snp_digt(
     // -----------------------------------------------
     // create site locus object:
     //
-    const auto activeRegionId(getActiveRegionDetector().getActiveRegionId(pos));
+//    const auto activeRegionId(getActiveRegionDetector().getActiveRegionId(pos));
+    const auto activeRegionId(-1);
     std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, activeRegionId, pos, refBaseIndex, isForcedOutput));
 
 
@@ -685,7 +686,7 @@ process_pos_snp_digt(
     {
         updateSnvLocusWithSampleInfo(
             _opt, sample(sampleIndex), callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex],
-            allDgt[sampleIndex], sampleIndex, getActiveRegionDetector().getCandidateSnvBuffer(), *locusPtr, homRefLogProb);
+            allDgt[sampleIndex], sampleIndex, getActiveRegionDetector(sampleIndex).getCandidateSnvBuffer(), *locusPtr, homRefLogProb);
     }
 
     // add sample-independent info:
@@ -1561,7 +1562,8 @@ process_pos_indel_digt(const pos_t pos)
     bool isReportedLocus(false);
     OrthogonalVariantAlleleCandidateGroup topVariantAlleleGroup;
 
-    const auto activeRegionId(getActiveRegionDetector().getActiveRegionId(pos));
+//    const auto activeRegionId(getActiveRegionDetector().getActiveRegionId(pos));
+    const auto activeRegionId(-1);
 
     // now check to see if we can call variant alleles at this position, we may have already found this positions alleles while
     // analyzing a locus positioned downstream. If so, skip ahead to handle the forced output alleles only:

@@ -101,7 +101,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
             assert (_activeRegionStartPos < _anchorPosFollowingPrevVariant);
 
             pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
-            _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
+            _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleId,
                                         _aligner, _readBuffer, _indelBuffer, _candidateSnvBuffer);
             setPosToActiveRegionIdMap(activeRegionRange);
 
@@ -157,7 +157,7 @@ void ActiveRegionDetector::clear()
         assert (_activeRegionStartPos < _anchorPosFollowingPrevVariant);
 
         pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
-        _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
+        _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleId,
                                     _aligner, _readBuffer, _indelBuffer, _candidateSnvBuffer);
         setPosToActiveRegionIdMap(activeRegionRange);
     }

@@ -77,7 +77,9 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
 
     TestIndelBuffer testBuffer(ref);
 
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
+    std::vector<std::unique_ptr<ActiveRegionDetector>> activeRegionDetector(sampleCount);
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        activeRegionDetector[sampleIndex].reset(new ActiveRegionDetector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleIndex));
 
     const auto snvPos = std::set<pos_t>({2, 4, 5});
 
@@ -86,47 +88,50 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
     // fake reading reads
     for (int alignId=0; alignId < depth*sampleCount; ++alignId)
     {
-        unsigned sampleId = alignId % sampleCount;
+        unsigned sampleIndex = alignId % sampleCount;
         bool isForwardStrand = ((alignId % 4) == 0) or ((alignId % 4) == 3);
-        detector.getReadBuffer().setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ, isForwardStrand);
+        activeRegionDetector[sampleIndex]->getReadBuffer().setAlignInfo(alignId, sampleIndex, INDEL_ALIGN_TYPE::GENOME_TIER1_READ, isForwardStrand);
         for (pos_t pos(0); pos<refLength; ++pos)
         {
             // only sample 1 has mismatches
             // alternative allele frequency 0.5
-            if (sampleId != 1 or ((alignId/sampleCount) % 2)
+            if (sampleIndex != 1 or ((alignId/sampleCount) % 2)
                 or (snvPos.find(pos) == snvPos.end()))
             {
                 // No SNV
-                detector.getReadBuffer().insertMatch(alignId, pos);
+                activeRegionDetector[sampleIndex]->getReadBuffer().insertMatch(alignId, pos);
             }
             else
             {
                 // SNV position
-                detector.getReadBuffer().insertMismatch(alignId, pos, 'A');
+                activeRegionDetector[sampleIndex]->getReadBuffer().insertMismatch(alignId, pos, 'A');
             }
         }
     }
 
-    for (pos_t pos(0); pos<refLength; ++pos)
-    {
-        detector.updateEndPosition(pos);
-    }
-    detector.clear();
-
-    // check if polySites are correctly set
-    for (unsigned sampleId(0); sampleId<sampleCount; ++sampleId)
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         for (pos_t pos(0); pos<refLength; ++pos)
         {
-            if ((sampleId == 1) and (snvPos.find(pos) != snvPos.end()))
+            activeRegionDetector[sampleIndex]->updateEndPosition(pos);
+        }
+        activeRegionDetector[sampleIndex]->clear();
+    }
+
+    // check if polySites are correctly set
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    {
+        for (pos_t pos(0); pos<refLength; ++pos)
+        {
+            if ((sampleIndex == 1) and (snvPos.find(pos) != snvPos.end()))
             {
                 // SNV
-                BOOST_REQUIRE_EQUAL(detector.getCandidateSnvBuffer().isCandidateSnv(sampleId, pos, 'A'), true);
+                BOOST_REQUIRE_EQUAL(activeRegionDetector[sampleIndex]->getCandidateSnvBuffer().isCandidateSnv(pos, 'A'), true);
             }
             else
             {
                 // No SNV
-                BOOST_REQUIRE_EQUAL(detector.getCandidateSnvBuffer().isCandidateSnv(sampleId, pos, 'A'), false);
+                BOOST_REQUIRE_EQUAL(activeRegionDetector[sampleIndex]->getCandidateSnvBuffer().isCandidateSnv(pos, 'A'), false);
             }
         }
     }
@@ -139,11 +144,11 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
     ref.seq() = "TCTCT";
 
     const unsigned maxIndelSize = 50;
-    const unsigned sampleCount = 1;
+    const unsigned sampleIndex = 0;
 
     TestIndelBuffer testBuffer(ref);
 
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleIndex);
 
     const int sampleId = 0;
     const int depth = 50;
@@ -172,7 +177,7 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
                 indelObservationData.iat = INDEL_ALIGN_TYPE::GENOME_TIER1_READ;
                 indelObservation.data = indelObservationData;
 
-                detector.getReadBuffer().insertIndel(sampleId, indelObservation);
+                detector.getReadBuffer().insertIndel(indelObservation);
             }
         }
     }
@@ -208,11 +213,11 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
     ref.seq() = refSeq;
 
     const unsigned maxIndelSize = 50;
-    const unsigned sampleCount = 1;
+    const unsigned sampleIndex = 0;
 
     TestIndelBuffer testBuffer(ref);
 
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleIndex);
 
     // fake reading reads
     const int depth = 50;
@@ -249,8 +254,8 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
         detector.clear();
 
         // check if polySites are correctly set
-        BOOST_REQUIRE_EQUAL(detector.getCandidateSnvBuffer().isCandidateSnv(sampleId, startPosition + snvOffsets[0], 'G'), true);
-        BOOST_REQUIRE_EQUAL(detector.getCandidateSnvBuffer().isCandidateSnv(sampleId, startPosition + snvOffsets[1], 'G'), true);
+        BOOST_REQUIRE_EQUAL(detector.getCandidateSnvBuffer().isCandidateSnv(startPosition + snvOffsets[0], 'G'), true);
+        BOOST_REQUIRE_EQUAL(detector.getCandidateSnvBuffer().isCandidateSnv(startPosition + snvOffsets[1], 'G'), true);
     }
 }
 
@@ -261,11 +266,11 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
     ref.seq() = "GTCC";
 
     const unsigned maxIndelSize = 50;
-    const unsigned sampleCount = 1;
+    const unsigned sampleIndex = 0;
 
     TestIndelBuffer testBuffer(ref);
 
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleCount);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleIndex);
 
     const int sampleId = 0;
     const int depth = 50;
@@ -294,7 +299,7 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
                 indelObservationData.iat = INDEL_ALIGN_TYPE::GENOME_TIER1_READ;
                 indelObservation.data = indelObservationData;
 
-                detector.getReadBuffer().insertIndel(sampleId, indelObservation);
+                detector.getReadBuffer().insertIndel(indelObservation);
             }
         }
     }

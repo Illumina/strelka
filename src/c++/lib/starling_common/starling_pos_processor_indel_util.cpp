@@ -342,7 +342,7 @@ addAlignmentIndelsToPosProcessor(
     const unsigned aps(al.path.size());
 
     const bool isUsingActiveRegionDetector(posProcessor.is_active_region_detector_enabled());
-    ActiveRegionReadBuffer& activeRegionReadBuffer(posProcessor.getActiveRegionReadBuffer());
+    ActiveRegionReadBuffer& activeRegionReadBuffer(posProcessor.getActiveRegionReadBuffer(sample_no));
     if (isUsingActiveRegionDetector)
     {
         activeRegionReadBuffer.setAlignInfo(id, sample_no, iat, al.is_fwd_strand);

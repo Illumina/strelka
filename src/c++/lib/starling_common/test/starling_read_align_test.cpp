@@ -398,8 +398,7 @@ BOOST_AUTO_TEST_CASE( test_realign_and_score_read )
         read_segment& rseg(sread.get_full_segment());
 
         // create an active region detector instance
-        static const unsigned sampleCount(1);
-        const CandidateSnvBuffer candidateSnvBuffer(sampleCount);
+        const CandidateSnvBuffer candidateSnvBuffer;
 
         realign_and_score_read(opt, dopt, sample_opt, ref, realign_buffer_range, sampleId, candidateSnvBuffer, rseg, indelBuffer);
 
