@@ -17,14 +17,22 @@
 //
 //
 
-
 #pragma once
 
-#include "blt_util/prog_info.hh"
-#include "strelka_shared.hh"
+#include "vcf_streamer.hh"
+#include "blt_util/reference_contig_segment.hh"
 
-/// \brief Entry point for somatic variant calling after all command-line parse/verification
+
+/// Return true if the vcf record REF field matches the given reference
+bool
+isExpectedVcfReference(
+    const reference_contig_segment& ref,
+    const vcf_record& vcfRecord);
+
+/// Test if the vcf record REF field matches the given reference and throw if it does not
+///
+/// \param[in] vcfStreamer Provides the current vcf_record and additional context in exception message
 void
-strelka_run(
-    const prog_info& pinfo,
-    const strelka_options& opt);
+assertExpectedVcfReference(
+    const reference_contig_segment& ref,
+    const vcf_streamer& vcfStreamer);
