@@ -35,7 +35,7 @@ void ActiveRegion::processHaplotypes()
 {
     // Check whether the active region is included in the read buffer
     const bool isRangeValid = (_posRange.begin_pos >= _readBuffer.getBeginPos())
-                        && (_posRange.end_pos <= _readBuffer.getEndPos());
+                              && (_posRange.end_pos <= _readBuffer.getEndPos());
 
     // if the active region is not included in the read buffer or if it is too large,
     // bypass haplotyping
