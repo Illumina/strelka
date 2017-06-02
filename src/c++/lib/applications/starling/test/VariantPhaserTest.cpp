@@ -96,13 +96,15 @@ getDeletionLocusInfo(
     IndelData indelData(sampleCount,indelKey);
     indelData.getSampleData(sampleIndex).haplotypeId = haplotypeId;
 
-    std::unique_ptr<GermlineDiploidIndelLocusInfo> indelInfo(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, activeRegionId));
+    std::unique_ptr<GermlineDiploidIndelLocusInfo> indelInfo(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount));
     indelInfo->addAltIndelAllele(indelKey, indelData);
 
+    auto& indelSampleInfo(indelInfo->getSample(sampleIndex));
+    indelSampleInfo.setActiveRegionId(activeRegionId);
     if (!isHom)
-        indelInfo->getSample(sampleIndex).max_gt().setGenotypeFromAlleleIndices(0,1);
+        indelSampleInfo.max_gt().setGenotypeFromAlleleIndices(0,1);
     else
-        indelInfo->getSample(sampleIndex).max_gt().setGenotypeFromAlleleIndices(1,1);
+        indelSampleInfo.max_gt().setGenotypeFromAlleleIndices(1,1);
 
     indelInfo->getSample(sampleIndex).max_gt().setAllele1HaplotypeId(haplotypeId);
     return indelInfo;
@@ -126,11 +128,13 @@ getSnvLocusInfo(
     const unsigned sampleIndex(0);
 
     std::unique_ptr<GermlineDiploidSiteLocusInfo> siteInfo(
-        new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, activeRegionId, pos, base_to_id(refBaseChar)));
+        new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, pos, base_to_id(refBaseChar)));
 
     siteInfo->addAltSiteAllele((const BASE_ID::index_t) base_to_id(altBaseChar));
 
-    auto& maxGenotype(siteInfo->getSample(sampleIndex).max_gt());
+    auto& siteSampleInfo(siteInfo->getSample(sampleIndex));
+    siteSampleInfo.setActiveRegionId(activeRegionId);
+    auto& maxGenotype(siteSampleInfo.max_gt());
     if (isHom)
         maxGenotype.setGenotypeFromAlleleIndices(1, 1);
     else

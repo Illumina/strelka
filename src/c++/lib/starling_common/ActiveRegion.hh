@@ -65,7 +65,7 @@ public:
     /// \param posRange position range of the active region
     /// \param ref reference
     /// \param maxIndelSize max indel size
-    /// \param sampleId sample id
+    /// \param sampleIndex sample index
     /// \param aligner aligner for aligning haplotypes to the reference
     /// \param readBuffer read buffer
     /// \param indelBuffer indel buffer
@@ -74,12 +74,12 @@ public:
     ActiveRegion(const pos_range& posRange,
                  const reference_contig_segment& ref,
                  const unsigned maxIndelSize,
-                 const unsigned sampleId,
+                 const unsigned sampleIndex,
                  const GlobalAligner<int>& aligner,
                  const ActiveRegionReadBuffer& readBuffer,
                  IndelBuffer& indelBuffer,
                  CandidateSnvBuffer& candidateSnvBuffer):
-        _posRange(posRange), _ref(ref), _maxIndelSize(maxIndelSize), _sampleId(sampleId),
+        _posRange(posRange), _ref(ref), _maxIndelSize(maxIndelSize), _sampleIndex(sampleIndex),
         _aligner(aligner), _readBuffer(readBuffer), _indelBuffer(indelBuffer), _candidateSnvBuffer(candidateSnvBuffer)
     {
     }
@@ -118,7 +118,7 @@ private:
     const pos_range _posRange;
     const reference_contig_segment& _ref;
     const unsigned _maxIndelSize;
-    const unsigned _sampleId;
+    const unsigned _sampleIndex;
     const GlobalAligner<int> _aligner;
 
     const ActiveRegionReadBuffer& _readBuffer;

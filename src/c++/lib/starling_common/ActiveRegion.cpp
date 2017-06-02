@@ -88,7 +88,7 @@ bool ActiveRegion::processHaplotypesWithCounting()
 #ifdef DEBUG_ACTIVE_REGION
     std::string refStr;
     _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
-    std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tCounting"<< std::endl;
+    std::cerr << _sampleIndex << "\t" << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tCounting"<< std::endl;
 #endif
 
     return processSelectedHaplotypes(haplotypeToAlignIdSet, numReads);
@@ -187,7 +187,7 @@ bool ActiveRegion::processHaplotypesWithAssembly()
     _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
 
 #ifdef DEBUG_ACTIVE_REGION
-    std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tAssembly"<< std::endl;
+    std::cerr << _sampleIndex << "\t" << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tAssembly"<< std::endl;
 #endif
 
     for (unsigned i(0); i<contigs.size(); ++i)
@@ -242,7 +242,7 @@ bool ActiveRegion::processHaplotypesWithAssembly()
 void ActiveRegion::doNotUseHaplotyping()
 {
 #ifdef DEBUG_ACTIVE_REGION
-    std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << "\tBypass"<< std::endl;
+    std::cerr << _sampleIndex << "\t" << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << "\tBypass"<< std::endl;
 #endif
 
     assert(_posRange.end_pos > _posRange.begin_pos);
@@ -629,8 +629,8 @@ void ActiveRegion::convertToPrimitiveAlleles(
             // determine whether this indel is candidate or private
             indelDataPtr->isConfirmedInActiveRegion = true;
 
-            indelDataPtr->getSampleData(_sampleId).haplotypeId += haplotypeId;
-            indelDataPtr->getSampleData(_sampleId).altAlleleHaplotypeCountRatio += altHaplotypeCountRatio;
+            indelDataPtr->getSampleData(_sampleIndex).haplotypeId += haplotypeId;
+            indelDataPtr->getSampleData(_sampleIndex).altAlleleHaplotypeCountRatio += altHaplotypeCountRatio;
 
             // TODO: perform candidacy test here
         }

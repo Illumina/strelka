@@ -36,17 +36,9 @@ void VariantPhaser::processLocus(std::unique_ptr<T> locusPtr)
 
     if (curActiveRegionId < 0)
     {
-        // locus is outside of active region
+        // locus is outside of active region in all samples
         outputBuffer();
         _sink->process(std::move(locusPtr));
-    }
-    else if (curActiveRegionId != _activeRegionId)
-    {
-        // new active region
-        outputBuffer();
-
-        _activeRegionId = curActiveRegionId;
-        addLocusToBuffer(std::move(locusPtr));
     }
     else
     {
@@ -106,43 +98,54 @@ createPhaseRecord(unsigned sampleId)
     if (not isBuffer()) return;
 
     // simple hack for checking whether 2 alternative haplotypes (haplotypeId 1 and 2) are selected
-    auto isHetHap1(false);
-    auto isHetHap2(false);
-    unsigned numHetVariants(0);
+    std::vector<bool> isHetHap1;
+    std::vector<bool> isHetHap2;
+    std::vector<unsigned> numHetVariants;
+
+    ActiveRegionId activeRegionId = -1;
     for (const auto& locusPtr : _locusBuffer)
     {
         const auto& sampleInfo = locusPtr->getSample(sampleId);
-        if (sampleInfo.isVariant())
+        const auto curActiveRegionId(sampleInfo.getActiveRegionId());
+
+        if ((!sampleInfo.isVariant()) || (curActiveRegionId < 0)) continue;
+
+        if (curActiveRegionId != activeRegionId)
         {
-            const auto& maxGenotype = sampleInfo.max_gt();
-            bool isHet = maxGenotype.isHet();
+            // new active region
+            isHetHap1.push_back(false);
+            isHetHap2.push_back(false);
+            numHetVariants.push_back(0);
 
-            // isConflict==true means that the het variant is not from the top 2 selected haplotypes
-            bool isConflict(maxGenotype.isConflict());
-            if (isHet and !isConflict)
-                ++numHetVariants;
+            activeRegionId = curActiveRegionId;
+        }
 
-            if (isHet and (not isConflict) and (locusPtr->getActiveRegionId() >= 0))
+        const auto& maxGenotype = sampleInfo.max_gt();
+        bool isHet = maxGenotype.isHet();
+
+        // isConflict==true means that the het variant is not from the top 2 selected haplotypes
+        bool isConflict(maxGenotype.isConflict());
+
+        if (isHet and (!isConflict))
+        {
+            ++(numHetVariants.back());
+            if (maxGenotype.getAllele0HaplotypeId() == 1)
+                isHetHap1.back() = true;
+            else if (maxGenotype.getAllele0HaplotypeId() == 2)
+                isHetHap2.back() = true;
+
+            if (maxGenotype.getPloidy() == 2)
             {
-                if (maxGenotype.getAllele0HaplotypeId() == 1)
-                    isHetHap1 = true;
-                else if (maxGenotype.getAllele0HaplotypeId() == 2)
-                    isHetHap2 = true;
-
-                if (maxGenotype.getPloidy() == 2)
-                {
-                    if (maxGenotype.getAllele1HaplotypeId() == 1)
-                        isHetHap1 = true;
-                    else if (maxGenotype.getAllele1HaplotypeId() == 2)
-                        isHetHap2 = true;
-                }
+                if (maxGenotype.getAllele1HaplotypeId() == 1)
+                    isHetHap1.back() = true;
+                else if (maxGenotype.getAllele1HaplotypeId() == 2)
+                    isHetHap2.back() = true;
             }
         }
     }
 
-    // no phasing is needed if there's 0 or 1 het variant
-    if (numHetVariants <= 1)
-        return;
+    int activeRegionIndex = -1;
+    activeRegionId = -1;
 
     // to record the haplotype id of the first nonref allele of the first variant
     // i.e. to write 0|1 instead of 1|0 for the first variant of the phase block
@@ -154,7 +157,21 @@ createPhaseRecord(unsigned sampleId)
     for (auto& locusPtr : _locusBuffer)
     {
         auto& sampleInfo = locusPtr->getSample(sampleId);
-        if (not sampleInfo.isVariant()) continue;
+        const auto curActiveRegionId(sampleInfo.getActiveRegionId());
+
+        if ((!sampleInfo.isVariant()) || (curActiveRegionId < 0)) continue;
+
+        if (curActiveRegionId != activeRegionId)
+        {
+            ++activeRegionIndex;
+            posFirstVariantInPhaseSet = -1;
+
+            activeRegionId = curActiveRegionId;
+        }
+
+        // no phasing is needed if there's 0 or 1 het variant
+        if (numHetVariants[activeRegionIndex] <= 1)
+            continue;
 
         auto& maxGenotype = sampleInfo.max_gt();
 
@@ -181,7 +198,7 @@ createPhaseRecord(unsigned sampleId)
         // phase set id is the 1-based position of the first variant in the set
         sampleInfo.phaseSetId = posFirstVariantInPhaseSet;
 
-        if ((not isHetHap1) or (not isHetHap2))
+        if ((not isHetHap1[activeRegionIndex]) or (not isHetHap2[activeRegionIndex]))
         {
             // simple case where there's no flipped genotype
             // one haplotype is the reference
