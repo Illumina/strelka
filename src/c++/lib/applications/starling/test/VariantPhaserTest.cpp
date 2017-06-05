@@ -35,11 +35,9 @@ struct DummyVariantSink : public variant_pipe_stage_base
         _indelLoci.push_back(std::move(indelLocus));
     }
 
-    bool check(bool isSnv, const pos_t pos,
+    bool check(const unsigned sampleIndex, const bool isSnv, const pos_t pos,
                const bool isPhased, const uint8_t allele0Index, const uint8_t allele1Index)
     {
-        const unsigned sampleIndex(0);
-
         if (isSnv)
         {
             for (const auto& locus : _siteLoci)
@@ -78,6 +76,7 @@ static
 std::unique_ptr<GermlineDiploidIndelLocusInfo>
 getDeletionLocusInfo(
     const starling_deriv_options& dopt,
+    const unsigned sampleIndex,
     const ActiveRegionId activeRegionId,
     const pos_t pos,
     const unsigned indelLength,
@@ -86,7 +85,6 @@ getDeletionLocusInfo(
 )
 {
     const unsigned sampleCount(1);
-    const unsigned sampleIndex(0);
 
     IndelKey indelKey;
     indelKey.pos=pos;
@@ -116,6 +114,7 @@ static
 std::unique_ptr<GermlineDiploidSiteLocusInfo>
 getSnvLocusInfo(
     const starling_deriv_options& dopt,
+    const unsigned sampleIndex,
     const unsigned sampleCount,
     const ActiveRegionId activeRegionId,
     const pos_t pos,
@@ -125,8 +124,6 @@ getSnvLocusInfo(
     const uint8_t allele1HaplotypeId,
     bool isHom)
 {
-    const unsigned sampleIndex(0);
-
     std::unique_ptr<GermlineDiploidSiteLocusInfo> siteInfo(
         new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, pos, base_to_id(refBaseChar)));
 
@@ -162,55 +159,77 @@ getMockOptions(const char* refSeq)
 
 BOOST_AUTO_TEST_SUITE( variantPhaserTest )
 
-BOOST_AUTO_TEST_CASE( simplePhasingTest )
+BOOST_AUTO_TEST_CASE( multiSamplePhasingTest )
 {
     const starling_options opt = getMockOptions("CAAACAAAAAAACAAAAAAAAACAAAAAATC");
     const starling_deriv_options dopt(opt);
 
     std::shared_ptr<DummyVariantSink> next(new DummyVariantSink);
 
-    const unsigned sampleCount(1);
+    const unsigned sampleCount(2);
     const ActiveRegionId activeRegionId(1);
 
     VariantPhaser phaser(opt, sampleCount, next);
 
+    // =============== Sample 1 ==================
     // hap0 (ref):  CAAACAAAAAAACAAAAAAAAACAAAAAAT
     // hap1:        CAAA--AAAAAAGCAAAAAAAACAAAAAAC
     // hap2:        CAAACAAAAAAAC-AAAAAAAACAAAAAAC
 
+    const unsigned sampleIndex0(0);
     // pos: 4, deletionLength: 2, hap 1, genotype: 0|1
-    auto indelInfo1(getDeletionLocusInfo(dopt, activeRegionId, 4, 0, 1, false));
+    auto indelInfo1(getDeletionLocusInfo(dopt, sampleIndex0, activeRegionId, 4, 0, 1, false));
     phaser.process(std::move(indelInfo1));
 
     // pos: 12, C->G, hap 1, genotype: 0|1
-    auto snvInfo1(getSnvLocusInfo(dopt, sampleCount, activeRegionId, 12, 'C', 'G', 0, 1, false));
+    auto snvInfo1(getSnvLocusInfo(dopt, sampleIndex0, sampleCount, activeRegionId, 12, 'C', 'G', 0, 1, false));
     phaser.process(std::move(snvInfo1));
 
     // pos: 13, deletionLength: 1, hap 2, genotype: 1|0
-    auto indelInfo2(getDeletionLocusInfo(dopt, activeRegionId, 13, 0, 2, false));
+    auto indelInfo2(getDeletionLocusInfo(dopt, sampleIndex0, activeRegionId, 13, 0, 2, false));
     phaser.process(std::move(indelInfo2));
 
     // pos: 13, A->C, hap 1, genotype: 0|1
-    auto snvInfo2(getSnvLocusInfo(dopt, sampleCount, activeRegionId, 13, 'A', 'C', 0, 1, false));
+    auto snvInfo2(getSnvLocusInfo(dopt, sampleIndex0, sampleCount, activeRegionId, 13, 'A', 'C', 0, 1, false));
     phaser.process(std::move(snvInfo2));
 
     // pos: 29, T->C, hap 1 and 2, genotype: 1/1
     // alt1HaplotypeId==3 means that T->C appears both hap1 and hap2
-    auto snvInfo3(getSnvLocusInfo(dopt, sampleCount, activeRegionId, 29, 'T', 'C', 0, 3, true));
+    auto snvInfo3(getSnvLocusInfo(dopt, sampleIndex0, sampleCount, activeRegionId, 29, 'T', 'C', 0, 3, true));
     phaser.process(std::move(snvInfo3));
+
+    // =============== Sample 2 ==================
+    // hap0 (ref):  CAAACAAAAAAACAAAAAAAAACAAAAAAT
+    // hap1:        C--ACAAAAAAAGCAAAAAAAACAAAAAAT
+    // hap2:        CAAACAAAAAAATCAAAAAAAACAAAAAAT
+    const unsigned sampleIndex1(1);
+    // pos: 1, deletionLength: 2, hap 1, genotype: 0|1
+    auto indelInfo3(getDeletionLocusInfo(dopt, sampleIndex1, activeRegionId, 4, 0, 1, false));
+    phaser.process(std::move(indelInfo3));
+
+    // pos: 12, C->T, hap 2, genotype: 1|0
+    auto snvInfo4(getSnvLocusInfo(dopt, sampleIndex1, sampleCount, activeRegionId, 12, 'C', 'G', 0, 1, false));
+    phaser.process(std::move(snvInfo4));
 
     phaser.flush();
 
+    // =============== Sample 1 ==================
     // indel pos: 4, deletionLength: 2, hap 1, genotype: 0|1
-    BOOST_REQUIRE(next->check(false, 4, true, 0, 1));
+    BOOST_REQUIRE(next->check(sampleIndex0, false, 4, true, 0, 1));
     // pos: 12, C->G, hap 1, genotype: 0|1
-    BOOST_REQUIRE(next->check(true, 12, true, 0, 1));
+    BOOST_REQUIRE(next->check(sampleIndex0, true, 12, true, 0, 1));
     // pos: 13, deletionLength: 1, hap 2, genotype: 1|0
-    BOOST_REQUIRE(next->check(false, 13, true, 1, 0));
+    BOOST_REQUIRE(next->check(sampleIndex0, false, 13, true, 1, 0));
     // pos: 13, A->C, hap 1, genotype: 0|1
-    BOOST_REQUIRE(next->check(true, 13, true, 0, 1));
+    BOOST_REQUIRE(next->check(sampleIndex0, true, 13, true, 0, 1));
     // pos: 29, T->C, hap 1 and 2, genotype: 1/1
-    BOOST_REQUIRE(next->check(true, 29, false, 1, 1));
+    BOOST_REQUIRE(next->check(sampleIndex0, true, 29, false, 1, 1));
+
+    // =============== Sample 2 ==================
+    // indel pos: 1 deletionLength: 2, hap 1, genotype: 0|1
+    BOOST_REQUIRE(next->check(sampleIndex1, false, 1, true, 0, 1));
+    // pos: 12, C->T, hap 2, genotype: 1|0
+    BOOST_REQUIRE(next->check(sampleIndex1, true, 12, true, 1, 0));
 }
 
 BOOST_AUTO_TEST_CASE( phasingConflictTest )
@@ -222,6 +241,7 @@ BOOST_AUTO_TEST_CASE( phasingConflictTest )
     std::shared_ptr<DummyVariantSink> next(new DummyVariantSink);
 
     const unsigned sampleCount(1);
+    const unsigned sampleIndex(0);
     const ActiveRegionId activeRegionId(1);
 
     VariantPhaser phaser(opt, sampleCount, next);
@@ -231,32 +251,32 @@ BOOST_AUTO_TEST_CASE( phasingConflictTest )
     // hap1:        CAAA-CGT
 
     // pos: 1, A->T, hap 1, genotype: 0|1
-    auto snvInfo1(getSnvLocusInfo(dopt, sampleCount, activeRegionId, 1, 'A', 'T', 0, 1, false));
+    auto snvInfo1(getSnvLocusInfo(dopt, sampleIndex, sampleCount, activeRegionId, 1, 'A', 'T', 0, 1, false));
     phaser.process(std::move(snvInfo1));
 
     // pos: 2, A->T, not in selected haplotype, genotype should be 0/1 (unphased)
-    auto conflictSnvInfo(getSnvLocusInfo(dopt, sampleCount, activeRegionId, 2, 'A', 'T', 0, 0, false));
+    auto conflictSnvInfo(getSnvLocusInfo(dopt, sampleIndex, sampleCount, activeRegionId, 2, 'A', 'T', 0, 0, false));
     phaser.process(std::move(conflictSnvInfo));
 
     // pos: 4, deletionLength: 1, hap 1 and 2 (id==3), genotype should be 0/1 (unphased)
     // hom variant in active region, but called het
-    auto conflictIndelInfo(getDeletionLocusInfo(dopt, activeRegionId, 4, 0, 3, false));
+    auto conflictIndelInfo(getDeletionLocusInfo(dopt, sampleIndex, activeRegionId, 4, 0, 3, false));
     phaser.process(std::move(conflictIndelInfo));
 
     // pos: 6, A->G, hap 2, genotype: 1|0
-    auto snvInfo2(getSnvLocusInfo(dopt, sampleCount, activeRegionId, 6, 'A', 'G', 0, 2, false));
+    auto snvInfo2(getSnvLocusInfo(dopt, sampleIndex, sampleCount, activeRegionId, 6, 'A', 'G', 0, 2, false));
     phaser.process(std::move(snvInfo2));
 
     phaser.flush();
 
     // pos: 1, A->T, hap 1, genotype: 0|1
-    BOOST_REQUIRE(next->check(true, 1, true, 0, 1));
+    BOOST_REQUIRE(next->check(sampleIndex, true, 1, true, 0, 1));
     // pos: 2, A->T, not in selected haplotype, genotype should be 0/1 (unphased)
-    BOOST_REQUIRE(next->check(true, 2, false, 0, 1));
+    BOOST_REQUIRE(next->check(sampleIndex, true, 2, false, 0, 1));
     // pos: 4, deletionLength: 1, hap 1 and 2 (id==3), genotype should be 0/1 (unphased)
-    BOOST_REQUIRE(next->check(false, 4, false, 0, 1));
+    BOOST_REQUIRE(next->check(sampleIndex, false, 4, false, 0, 1));
     // pos: 6, A->G, hap 2, genotype: 1|0
-    BOOST_REQUIRE(next->check(true, 6, true, 1, 0));
+    BOOST_REQUIRE(next->check(sampleIndex, true, 6, true, 1, 0));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
