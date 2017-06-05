@@ -1,3 +1,4 @@
+- STREL-280 Retrain germline EVS
 - STREL-260 Add validation on all input vcf reference fields
 - STREL-566 Use indel error estimation by default for germline calling
 - STREL-577 Fix bug creating negative size active regions
