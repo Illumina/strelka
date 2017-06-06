@@ -228,6 +228,9 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     sampleCount = len(self.params.bamList)
 
+    for sampleIndex in range(sampleCount) :
+        validateEstimatedParameters(self,sampleIndex)
+
     segFiles = TempVariantCallingSegmentFiles(sampleCount)
 
     for gsegGroup in self.getStrelkaGenomeSegmentGroupIterator(contigsExcludedFromGrouping = self.params.callContinuousVf) :
@@ -276,6 +279,18 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     return nextStepWait
 
+def validateEstimatedParameters(self, sampleIndex) :
+    jsonFileName = self.paths.getIndelErrorModelPath(sampleIndex)
+    if os.path.isfile(jsonFileName) :
+        try :
+            import json
+            jsonFile = open(jsonFileName, 'r')
+            indelModel = json.load(jsonFile)
+
+            if indelModel['sample'][0]['isStatic'] :
+                self.flowLog("Sample '" + indelModel['sample'][0]['sampleName'] + "' is using the static indel error rate model")
+        except :
+            self.flowLog("Error while parsing the indel rate model file '"+jsonFileName+"'. The file format may be invalid")
 
 
 class CallWorkflow(StrelkaSharedCallWorkflow) :
