@@ -150,7 +150,6 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
 
     ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleIndex);
 
-    const int sampleIndex = 0;
     const int depth = 50;
 
     const pos_t indelPos = 2;
@@ -221,7 +220,6 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
 
     // fake reading reads
     const int depth = 50;
-    const int sampleIndex = 0;
     const unsigned readLength = 100;
 
 
@@ -272,7 +270,6 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
 
     ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleIndex);
 
-    const int sampleIndex = 0;
     const int depth = 50;
 
     const pos_t indelPos = 2;
