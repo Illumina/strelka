@@ -108,7 +108,7 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     ///
     void
     insert_indel(const IndelObservation& obs,
-                 const unsigned sampleId);
+                 const unsigned sampleIndex);
 
     bool is_active_region_detector_enabled()
     {

@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
 
     ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleIndex);
 
-    const int sampleId = 0;
+    const int sampleIndex = 0;
     const int depth = 50;
 
     const pos_t indelPos = 2;
@@ -162,7 +162,7 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
     for (int alignId=0; alignId < depth; ++alignId)
     {
         bool isForwardStrand = ((alignId % 4) == 0) or ((alignId % 4) == 3);
-        detector.getReadBuffer().setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ, isForwardStrand);
+        detector.getReadBuffer().setAlignInfo(alignId, sampleIndex, INDEL_ALIGN_TYPE::GENOME_TIER1_READ, isForwardStrand);
         for (pos_t pos(0); pos<refLength; ++pos)
         {
             detector.getReadBuffer().insertMatch(alignId, pos);
@@ -221,7 +221,7 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
 
     // fake reading reads
     const int depth = 50;
-    const int sampleId = 0;
+    const int sampleIndex = 0;
     const unsigned readLength = 100;
 
 
@@ -231,7 +231,7 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
         for (int alignId=0; alignId < depth; ++alignId)
         {
             bool isForwardStrand = ((alignId % 4) == 0) or ((alignId % 4) == 3);
-            detector.getReadBuffer().setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ, isForwardStrand);
+            detector.getReadBuffer().setAlignInfo(alignId, sampleIndex, INDEL_ALIGN_TYPE::GENOME_TIER1_READ, isForwardStrand);
             for (pos_t pos(startPosition); pos<endPosition; ++pos)
             {
                 // SNVs at startPosition+10 and startPosition+12
@@ -272,7 +272,7 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
 
     ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleIndex);
 
-    const int sampleId = 0;
+    const int sampleIndex = 0;
     const int depth = 50;
 
     const pos_t indelPos = 2;
@@ -284,7 +284,7 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
     for (int alignId=0; alignId < depth; ++alignId)
     {
         bool isForwardStrand = ((alignId % 4) == 0) or ((alignId % 4) == 3);
-        detector.getReadBuffer().setAlignInfo(alignId, sampleId, INDEL_ALIGN_TYPE::GENOME_TIER1_READ, isForwardStrand);
+        detector.getReadBuffer().setAlignInfo(alignId, sampleIndex, INDEL_ALIGN_TYPE::GENOME_TIER1_READ, isForwardStrand);
         for (pos_t pos(0); pos<refLength; ++pos)
         {
             detector.getReadBuffer().insertMatch(alignId, pos);

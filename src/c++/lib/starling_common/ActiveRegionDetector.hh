@@ -63,17 +63,17 @@ public:
     /// \param ref reference segment
     /// \param indelBuffer indel buffer
     /// \param maxIndelSize maximum indel size
-    /// \param sampleId sample Id
+    /// \param sampleIndex sample Id
     ActiveRegionDetector(
         const reference_contig_segment& ref,
         IndelBuffer& indelBuffer,
         unsigned maxIndelSize,
-        unsigned sampleId) :
+        unsigned sampleIndex) :
         _ref(ref),
         _readBuffer(ref, indelBuffer),
         _indelBuffer(indelBuffer),
         _maxIndelSize(maxIndelSize),
-        _sampleId(sampleId),
+        _sampleIndex(sampleIndex),
         _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
     {
         _isBeginning = true;
@@ -121,7 +121,7 @@ private:
     CandidateSnvBuffer _candidateSnvBuffer;
 
     const unsigned _maxIndelSize;
-    const unsigned _sampleId;
+    const unsigned _sampleIndex;
 
     bool _isBeginning;
     pos_t _activeRegionStartPos;

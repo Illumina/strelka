@@ -103,7 +103,7 @@ ActiveRegionReadBuffer::insertIndel(const IndelObservation& indelObservation)
         }
     }
 
-    _indelBuffer.addIndelObservation(getSampleId(alignId), indelObservation);
+    _indelBuffer.addIndelObservation(getSampleIndex(alignId), indelObservation);
 }
 
 void ActiveRegionReadBuffer::setMatch(const align_id_t id, const pos_t pos)

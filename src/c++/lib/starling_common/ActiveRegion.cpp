@@ -621,7 +621,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
                 const auto& alignInfo(_readBuffer.getAlignInfo(alignId));
                 indelObservationData.iat = alignInfo.indelAlignType;
                 indelObservationData.id = alignId;
-                _indelBuffer.addIndelObservation(alignInfo.sampleId, {*indelKeyPtr, indelObservationData});
+                _indelBuffer.addIndelObservation(alignInfo.sampleIndex, {*indelKeyPtr, indelObservationData});
             }
             auto* indelDataPtr(_indelBuffer.getIndelDataPtr(*indelKeyPtr));
             assert(indelDataPtr != nullptr && "Missing indelData");

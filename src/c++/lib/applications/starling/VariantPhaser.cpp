@@ -68,8 +68,8 @@ VariantPhaser::
 outputBuffer()
 {
     // create phase records
-    for (unsigned sampleId(0); sampleId < _sampleCount; ++sampleId)
-        createPhaseRecord(sampleId);
+    for (unsigned sampleIndex(0); sampleIndex < _sampleCount; ++sampleIndex)
+        createPhaseRecord(sampleIndex);
 
     // move loci to the next pipe
     for (auto& locusPtr : _locusBuffer)
@@ -93,7 +93,7 @@ outputBuffer()
 
 void
 VariantPhaser::
-createPhaseRecord(unsigned sampleId)
+createPhaseRecord(unsigned sampleIndex)
 {
     if (not isBuffer()) return;
 
@@ -106,7 +106,7 @@ createPhaseRecord(unsigned sampleId)
     ActiveRegionId activeRegionId = -1;
     for (const auto& locusPtr : _locusBuffer)
     {
-        const auto& sampleInfo = locusPtr->getSample(sampleId);
+        const auto& sampleInfo = locusPtr->getSample(sampleIndex);
         const auto curActiveRegionId(sampleInfo.getActiveRegionId());
 
         if ((!sampleInfo.isVariant()) || (curActiveRegionId < 0)) continue;
@@ -157,7 +157,7 @@ createPhaseRecord(unsigned sampleId)
 
     for (auto& locusPtr : _locusBuffer)
     {
-        auto& sampleInfo = locusPtr->getSample(sampleId);
+        auto& sampleInfo = locusPtr->getSample(sampleIndex);
         const auto curActiveRegionId(sampleInfo.getActiveRegionId());
 
         if ((!sampleInfo.isVariant()) || (curActiveRegionId < 0)) continue;

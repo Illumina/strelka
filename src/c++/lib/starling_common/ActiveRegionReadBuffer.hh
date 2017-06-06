@@ -34,7 +34,7 @@
 /// AlignInfo object to store sample id and indel align type
 struct AlignInfo
 {
-    unsigned sampleId;
+    unsigned sampleIndex;
     INDEL_ALIGN_TYPE::index_t indelAlignType;
     bool isForwardStrand;
 };
@@ -160,14 +160,14 @@ public:
         const bool includePartialReads,
         const unsigned minReadSegmentLength = 1u) const;
 
-    /// cache sampleId and indelAlignType corresponding to alignId
+    /// cache sampleIndex and indelAlignType corresponding to alignId
     /// \param alignId align id
-    /// \param sampleId sample id
+    /// \param sampleIndex sample index
     /// \param indelAlignType indel align type
-    void setAlignInfo(const align_id_t alignId, const unsigned sampleId, const INDEL_ALIGN_TYPE::index_t indelAlignType, const bool isForwardStrand)
+    void setAlignInfo(const align_id_t alignId, const unsigned sampleIndex, const INDEL_ALIGN_TYPE::index_t indelAlignType, const bool isForwardStrand)
     {
         AlignInfo& alignInfo = _alignIdToAlignInfo[alignId % MaxDepth];
-        alignInfo.sampleId = sampleId;
+        alignInfo.sampleIndex = sampleIndex;
         alignInfo.indelAlignType = indelAlignType;
         alignInfo.isForwardStrand = isForwardStrand;
     }
@@ -175,9 +175,9 @@ public:
     /// Gets sample id
     /// \param alignId align id
     /// \return sample id
-    unsigned getSampleId(const align_id_t alignId) const
+    unsigned getSampleIndex(const align_id_t alignId) const
     {
-        return _alignIdToAlignInfo[alignId % MaxDepth].sampleId;
+        return _alignIdToAlignInfo[alignId % MaxDepth].sampleIndex;
     }
 
     /// Clear buffer

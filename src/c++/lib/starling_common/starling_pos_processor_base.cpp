@@ -423,7 +423,7 @@ void
 starling_pos_processor_base::
 insert_indel(
     const IndelObservation& obs,
-    const unsigned sampleId)
+    const unsigned sampleIndex)
 {
     // ppr advance is controlled by the start positions of reads and
     // relatively cheap to store (so long as we aren't including
@@ -473,11 +473,11 @@ insert_indel(
 
         if (is_active_region_detector_enabled())
         {
-            getActiveRegionReadBuffer(sampleId).insertIndel(obs);
+            getActiveRegionReadBuffer(sampleIndex).insertIndel(obs);
         }
         else
         {
-            getIndelBuffer().addIndelObservation(sampleId, obs);
+            getIndelBuffer().addIndelObservation(sampleIndex, obs);
         }
         if (obs.data.is_forced_output) _is_skip_process_pos=false;
     }

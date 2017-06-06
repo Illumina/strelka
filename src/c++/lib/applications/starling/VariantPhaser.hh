@@ -68,7 +68,7 @@ private:
     void outputBuffer();
 
     /// dump buffer contents to sink and clear object
-    void createPhaseRecord(unsigned sampleId);
+    void createPhaseRecord(unsigned sampleIndex);
 
     bool
     isBuffer() const
