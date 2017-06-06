@@ -98,9 +98,10 @@ createPhaseRecord(unsigned sampleId)
     if (not isBuffer()) return;
 
     // simple hack for checking whether 2 alternative haplotypes (haplotypeId 1 and 2) are selected
-    std::vector<bool> isHetHap1(_sampleCount);
-    std::vector<bool> isHetHap2(_sampleCount);
-    std::vector<unsigned> numHetVariants(_sampleCount);
+    // These are vectors because there can be multiple active regions.
+    std::vector<bool> isHetHap1;
+    std::vector<bool> isHetHap2;
+    std::vector<unsigned> numHetVariants;
 
     ActiveRegionId activeRegionId = -1;
     for (const auto& locusPtr : _locusBuffer)
