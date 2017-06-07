@@ -467,6 +467,8 @@ Features used in each model are listed here and definitions are provided further
         \item \texttt{TumorSampleStrandBias}
         \item \texttt{TumorSampleReadPosRankSum}
         \item \texttt{AlleleCountLogOddsRatio}
+        \item \texttt{NormalSampleFilteredDepthFraction}
+        \item \texttt{TumorSampleFilteredDepthFraction}
     \end{itemize}
     \item Somatic Indel features:
     \begin{itemize}
@@ -611,6 +613,10 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
     \item \texttt{TumorSampleReadPosRankSum} ~ Z-score of Mann-Whitney U test for reference vs non-reference allele read positions in the tumor sample's tier1 observations (see: ``\nameref{sec:somatic_tiers}'').
 
     \item \texttt{AlleleCountLogOddsRatio} ~ The log odds ratio of allele counts $log{\frac{r_t a_n} {r_n a_t}}$, given reference $(r_t,r_n)$ and non-reference $(a_t,a_n)$ allele counts for the tumor and normal sample pair.
+
+    \item \texttt{NormalSampleFilteredDepthFraction} ~ The fraction of reads that were filtered out of the normal sample before calling the variant locus.
+
+    \item \texttt{TumorSampleFilteredDepthFraction} ~ The fraction of reads that were filtered out of the tumor sample before calling the variant locus.
 
     \item \texttt{SomaticIndelQualityGivenGermlineGenotype} ~ Posterior probability of a somatic indel conditioned on given germline genotype. This feature matches INFO/QSI\_NT in the VCF output.
 

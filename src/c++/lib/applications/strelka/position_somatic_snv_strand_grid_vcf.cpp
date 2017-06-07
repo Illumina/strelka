@@ -89,13 +89,12 @@ get_single_sample_scoring_features(
     const bool isNormalSample,
     strelka_shared_modifiers_snv& smod)
 {
+    const double filteredDepthFraction(safeFrac(tier1_cpi.n_unused_calls(), tier1_cpi.n_calls()));
+    smod.features.set((isNormalSample ? SOMATIC_SNV_SCORING_FEATURES::NormalSampleFilteredDepthFraction : SOMATIC_SNV_SCORING_FEATURES::TumorSampleFilteredDepthFraction), filteredDepthFraction);
     if (opt.isReportEVSFeatures)
     {
-        const double FDP_ratio(safeFrac(tier1_cpi.n_unused_calls(), tier1_cpi.n_calls()));
-        const double SDP_ratio(safeFrac(tier1_cpi.rawPileup().spanningDeletionReadCount, tier1_cpi.n_calls()+tier1_cpi.rawPileup().spanningDeletionReadCount));
-
-        smod.dfeatures.set((isNormalSample ? SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::N_FDP_RATE : SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::T_FDP_RATE), FDP_ratio);
-        smod.dfeatures.set((isNormalSample ? SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::N_SDP_RATE : SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::T_SDP_RATE), SDP_ratio);
+        const double spanningDeletionFraction(safeFrac(tier1_cpi.rawPileup().spanningDeletionReadCount, tier1_cpi.n_calls()+tier1_cpi.rawPileup().spanningDeletionReadCount));
+        smod.dfeatures.set((isNormalSample ? SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::NormalSampleSpanningDeletionFraction : SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::TumorSampleSpanningDeletionFraction), spanningDeletionFraction);
     }
 
     // compute NormalSampleRelativeTotalLocusDepth
@@ -158,8 +157,8 @@ get_scoring_features(
     const snv_result_set& rs,
     strelka_shared_modifiers_snv& smod)
 {
-    uint16_t altpos=0;
-    uint16_t altmap=0;
+    uint16_t medianReadPos=-1;
+    uint16_t medianReadPosVar=-1;
     if (! t1_cpi.rawPileup().nonReferenceAlleleReadPositionInfo.empty())
     {
         const auto& apos(t1_cpi.rawPileup().nonReferenceAlleleReadPositionInfo);
@@ -177,7 +176,7 @@ get_scoring_features(
         const auto pmedian(median(readpos.begin(),readpos.end()));
         const auto lmedian(median(readposcomp.begin(),readposcomp.end()));
 
-        altpos=std::min(pmedian,lmedian);
+        medianReadPos=std::min(pmedian,lmedian);
 
         if (readpos.size() >= 3)
         {
@@ -186,7 +185,7 @@ get_scoring_features(
                 p = std::abs(p-pmedian);
             }
 
-            altmap=median(readpos.begin(),readpos.end());
+            medianReadPosVar=median(readpos.begin(),readpos.end());
         }
     }
 
@@ -214,9 +213,8 @@ get_scoring_features(
     // features not used in the current EVS model but feature candidates/exploratory for new EVS models
     if (opt.isReportEVSFeatures)
     {
-        /// TODO better handling of default values for in cases where altpos or altmap are not defined (0 is not a good default)
-        smod.dfeatures.set(SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::altpos,altpos);
-        smod.dfeatures.set(SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::altmap,altmap);
+        smod.dfeatures.set(SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::TumorSampleAltAlleleMedianReadPos,medianReadPos);
+        smod.dfeatures.set(SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::TumorSampleAltAlleleMedianReadPosVariation,medianReadPosVar);
     }
 }
 

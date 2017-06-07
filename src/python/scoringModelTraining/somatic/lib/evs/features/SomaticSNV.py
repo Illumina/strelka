@@ -46,4 +46,6 @@ class StrelkaSNVFeatures(VcfFeatureSet):
             "ZeroMappingQualityFraction",
             "TumorSampleStrandBias",
             "TumorSampleReadPosRankSum",
-            "AlleleCountLogOddsRatio"]
+            "AlleleCountLogOddsRatio",
+            "NormalSampleFilteredDepthFraction",
+            "TumorSampleFilteredDepthFraction"]
