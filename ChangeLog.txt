@@ -1,3 +1,4 @@
+- STREL-586 Improve germline multi-sample calling runtime
 - STREL-576 Reduce demo installation size
 - STREL-579 Add filtered depth rates as somatic SNV EVS features
 - STREL-280 Retrain germline EVS

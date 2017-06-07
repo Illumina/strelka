@@ -25,7 +25,7 @@
 
 void ActiveRegionReadBuffer::insertMatch(const align_id_t alignId, const pos_t pos)
 {
-    addVariantCount(getSampleId(alignId), pos, 0);
+    addVariantCount(pos, 0);
     setMatch(alignId, pos);
     addAlignIdToPos(alignId, pos);
 }
@@ -33,15 +33,14 @@ void ActiveRegionReadBuffer::insertMatch(const align_id_t alignId, const pos_t p
 void ActiveRegionReadBuffer::insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string& segmentSeq, const bool isBeginEdge)
 {
     // For invariant counting
-    addVariantCount(getSampleId(alignId), pos, IndelWeight);
-    unsigned sampleId(getSampleId(alignId));
+    addVariantCount(pos, IndelWeight);
     if (isBeginEdge)
     {
-        addSoftClipCount(sampleId, pos+1, IndelWeight);
+        addSoftClipCount(pos+1, IndelWeight);
     }
     else
     {
-        addSoftClipCount(sampleId, pos-1, IndelWeight);
+        addSoftClipCount(pos-1, IndelWeight);
     }
 
     // soft clipp doesn't add mismatch count, but the base is used in haplotype generation
@@ -52,13 +51,13 @@ void ActiveRegionReadBuffer::insertSoftClipSegment(const align_id_t alignId, con
 void
 ActiveRegionReadBuffer::insertMismatch(const align_id_t alignId, const pos_t pos, const char baseChar)
 {
-    addVariantCount(getSampleId(alignId), pos, MismatchWeight);
+    addVariantCount(pos, MismatchWeight);
     setMismatch(alignId, pos, baseChar);
     addAlignIdToPos(alignId, pos);
 }
 
 void
-ActiveRegionReadBuffer::insertIndel(const unsigned sampleId, const IndelObservation& indelObservation)
+ActiveRegionReadBuffer::insertIndel(const IndelObservation& indelObservation)
 {
     const auto pos = indelObservation.key.pos;
 
@@ -75,15 +74,15 @@ ActiveRegionReadBuffer::insertIndel(const unsigned sampleId, const IndelObservat
             // make sure an active region is created around the external candidate indel
             for (pos_t refPos(pos-1); refPos<indelObservationKey.right_pos(); ++refPos)
             {
-                addVariantCount(sampleId, refPos, MinNumVariantsPerPosition);
+                addVariantCount(refPos, MinNumVariantsPerPosition);
             }
             // skip adding this indel to the indel buffer
             return;
         }
         else if (indelObservationKey.isPrimitiveInsertionAllele())
         {
-            addVariantCount(sampleId, pos - 1, IndelWeight);
-            addVariantCount(sampleId, pos, IndelWeight);
+            addVariantCount(pos - 1, IndelWeight);
+            addVariantCount(pos, IndelWeight);
             setInsert(alignId, pos - 1, indelObservationKey.insert_seq());
             addAlignIdToPos(alignId, pos - 1);
         }
@@ -92,18 +91,19 @@ ActiveRegionReadBuffer::insertIndel(const unsigned sampleId, const IndelObservat
             unsigned length = indelObservationKey.deletionLength;
             for (unsigned i(0); i<length; ++i)
             {
-                addVariantCount(sampleId, pos + i, IndelWeight);
+                addVariantCount(pos + i, IndelWeight);
                 setDelete(alignId, pos + i);
                 addAlignIdToPos(alignId, pos + i);
             }
-            addVariantCount(sampleId, pos - 1, IndelWeight);
+            addVariantCount(pos - 1, IndelWeight);
         }
         else
         {
             // ignore BP_LEFT, BP_RIGHT, SWAP
         }
     }
-    _indelBuffer.addIndelObservation(sampleId, indelObservation);
+
+    _indelBuffer.addIndelObservation(getSampleIndex(alignId), indelObservation);
 }
 
 void ActiveRegionReadBuffer::setMatch(const align_id_t id, const pos_t pos)
@@ -257,14 +257,13 @@ void ActiveRegionReadBuffer::getReadSegments(
 
 bool ActiveRegionReadBuffer::isCandidateVariant(const pos_t pos) const
 {
-    for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
-    {
-        if (_ref.get_base(pos) == 'N')
-            return false;
-        const auto count = getVariantCount(sampleId, pos);
-        if ((count >= MinNumVariantsPerPosition and count >= (MinAlternativeAlleleFraction*getDepth(sampleId, pos)))
-            or count >= (MinAlternativeAlleleFractionLowDepth*getDepth(sampleId, pos)))
-            return true;
-    }
+    if (_ref.get_base(pos) == 'N')
+        return false;
+
+    const auto count = getVariantCount(pos);
+    if ((count >= MinNumVariantsPerPosition and count >= (MinAlternativeAlleleFraction*getDepth(pos)))
+        or count >= (MinAlternativeAlleleFractionLowDepth*getDepth(pos)))
+        return true;
+
     return false;
 }

@@ -45,26 +45,23 @@ void ActiveRegion::processHaplotypes()
     }
     else
     {
-        for (unsigned sampleId(0); sampleId<_sampleCount; ++sampleId)
+        bool isHaplotypingSuccess = processHaplotypesWithCounting();
+        if (not isHaplotypingSuccess)
         {
-            bool isHaplotypingSuccess = processHaplotypesWithCounting(sampleId);
-            if (not isHaplotypingSuccess)
-            {
-                // counting failed. Try assembly.
-                isHaplotypingSuccess = processHaplotypesWithAssembly(sampleId);
-            }
+            // counting failed. Try assembly.
+            isHaplotypingSuccess = processHaplotypesWithAssembly();
+        }
 
-            if (not isHaplotypingSuccess)
-            {
-                // both counting and assembly failed
-                // do not use haplotyping to determine indel candidacy
-                doNotUseHaplotyping();
-            }
+        if (not isHaplotypingSuccess)
+        {
+            // both counting and assembly failed
+            // do not use haplotyping to determine indel candidacy
+            doNotUseHaplotyping();
         }
     }
 }
 
-bool ActiveRegion::processHaplotypesWithCounting(const unsigned sampleId)
+bool ActiveRegion::processHaplotypesWithCounting()
 {
     ReadInfo readInfo;
     _readBuffer.getReadSegments(_posRange, readInfo, false);
@@ -80,8 +77,6 @@ bool ActiveRegion::processHaplotypesWithCounting(const unsigned sampleId)
     for (const auto& entry : readInfo.readSegments)
     {
         align_id_t alignId = entry.first;
-        unsigned currentSampleId = _readBuffer.getSampleId(alignId);
-        if (currentSampleId != sampleId) continue;
 
         const std::string& haplotype(entry.second);
 
@@ -93,14 +88,14 @@ bool ActiveRegion::processHaplotypesWithCounting(const unsigned sampleId)
 #ifdef DEBUG_ACTIVE_REGION
     std::string refStr;
     _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
-    std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tCounting"<< std::endl;
+    std::cerr << _sampleIndex << "\t" << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tCounting"<< std::endl;
 #endif
 
-    return processSelectedHaplotypes(sampleId, haplotypeToAlignIdSet, numReads);
+    return processSelectedHaplotypes(haplotypeToAlignIdSet, numReads);
 }
 
 
-bool ActiveRegion::processHaplotypesWithAssembly(const unsigned sampleId)
+bool ActiveRegion::processHaplotypesWithAssembly()
 {
     // Expand the region to include left/right anchors.
     // TODO: anchors may be too short if there are SNVs close to anchors
@@ -149,8 +144,6 @@ bool ActiveRegion::processHaplotypesWithAssembly(const unsigned sampleId)
     for (const auto& entry : readInfo.readSegments)
     {
         align_id_t alignId = entry.first;
-        unsigned currentSampleId = _readBuffer.getSampleId(alignId);
-        if (currentSampleId != sampleId) continue;
 
         const std::string& readSegment(entry.second);
 
@@ -194,7 +187,7 @@ bool ActiveRegion::processHaplotypesWithAssembly(const unsigned sampleId)
     _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
 
 #ifdef DEBUG_ACTIVE_REGION
-    std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tAssembly"<< std::endl;
+    std::cerr << _sampleIndex << "\t" << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tAssembly"<< std::endl;
 #endif
 
     for (unsigned i(0); i<contigs.size(); ++i)
@@ -243,13 +236,13 @@ bool ActiveRegion::processHaplotypesWithAssembly(const unsigned sampleId)
     if (not isNonRefHaplotypeFound)
         return false;
 
-    return processSelectedHaplotypes(sampleId, haplotypeToAlignIdSet, totalNumReads);
+    return processSelectedHaplotypes(haplotypeToAlignIdSet, totalNumReads);
 }
 
 void ActiveRegion::doNotUseHaplotyping()
 {
 #ifdef DEBUG_ACTIVE_REGION
-    std::cerr << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << "\tBypass"<< std::endl;
+    std::cerr << _sampleIndex << "\t" << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << "\tBypass"<< std::endl;
 #endif
 
     assert(_posRange.end_pos > _posRange.begin_pos);
@@ -392,7 +385,6 @@ isFilterSecondHaplotypeAsSequencerPhasingNoise(
 
 
 bool ActiveRegion::processSelectedHaplotypes(
-    const unsigned sampleId,
     HaplotypeToAlignIdSet& haplotypeToAlignIdSet,
     const unsigned totalNumReads)
 {
@@ -481,7 +473,7 @@ bool ActiveRegion::processSelectedHaplotypes(
     {
         const auto& haplotype(*bestHaplotypePtr);
         const auto& alignIdList(haplotypeToAlignIdSet[haplotype]);
-        convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, totalNumReads, haplotypeId);
+        convertToPrimitiveAlleles(haplotype, alignIdList, totalNumReads, haplotypeId);
         ++haplotypeId;
 #ifdef DEBUG_ACTIVE_REGION
         std::cerr << haplotype << '\t' << alignIdList.size() << std::endl;
@@ -495,7 +487,7 @@ bool ActiveRegion::processSelectedHaplotypes(
         {
             const auto& haplotype(*haplotypePtr);
             const auto& alignIdList(haplotypeToAlignIdSet[haplotype]);
-            convertToPrimitiveAlleles(sampleId, haplotype, alignIdList, totalNumReads, haplotypeId);
+            convertToPrimitiveAlleles(haplotype, alignIdList, totalNumReads, haplotypeId);
             ++haplotypeId;
 #ifdef DEBUG_ACTIVE_REGION
             std::cerr << haplotype << '\t' << alignIdList.size() << std::endl;
@@ -507,7 +499,6 @@ bool ActiveRegion::processSelectedHaplotypes(
 }
 
 void ActiveRegion::convertToPrimitiveAlleles(
-    const unsigned sampleId,
     const std::string& haploptypeSeq,
     const std::vector<align_id_t>& alignIdList,
     const unsigned totalNumReads,
@@ -548,7 +539,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
         case ALIGNPATH::SEQ_MISMATCH:
             for (unsigned i(0); i<segmentLength; ++i)
             {
-                _candidateSnvBuffer.addCandidateSnv(sampleId, referencePos, haploptypeSeq[haplotypePosOffset], haplotypeId, altHaplotypeCountRatio);
+                _candidateSnvBuffer.addCandidateSnv(referencePos, haploptypeSeq[haplotypePosOffset], haplotypeId, altHaplotypeCountRatio);
 
                 ++referencePos;
                 ++haplotypePosOffset;
@@ -630,7 +621,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
                 const auto& alignInfo(_readBuffer.getAlignInfo(alignId));
                 indelObservationData.iat = alignInfo.indelAlignType;
                 indelObservationData.id = alignId;
-                _indelBuffer.addIndelObservation(alignInfo.sampleId, {*indelKeyPtr, indelObservationData});
+                _indelBuffer.addIndelObservation(alignInfo.sampleIndex, {*indelKeyPtr, indelObservationData});
             }
             auto* indelDataPtr(_indelBuffer.getIndelDataPtr(*indelKeyPtr));
             assert(indelDataPtr != nullptr && "Missing indelData");
@@ -638,8 +629,8 @@ void ActiveRegion::convertToPrimitiveAlleles(
             // determine whether this indel is candidate or private
             indelDataPtr->isConfirmedInActiveRegion = true;
 
-            indelDataPtr->getSampleData(sampleId).haplotypeId += haplotypeId;
-            indelDataPtr->getSampleData(sampleId).altAlleleHaplotypeCountRatio += altHaplotypeCountRatio;
+            indelDataPtr->getSampleData(_sampleIndex).haplotypeId += haplotypeId;
+            indelDataPtr->getSampleData(_sampleIndex).altAlleleHaplotypeCountRatio += altHaplotypeCountRatio;
 
             // TODO: perform candidacy test here
         }

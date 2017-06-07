@@ -1206,7 +1206,6 @@ score_candidate_alignments(
     const reference_contig_segment& ref,
     read_segment& rseg,
     IndelBuffer& indelBuffer,
-    const unsigned sampleId,
     const CandidateSnvBuffer& candidateSnvBuffer,
     const std::set<candidate_alignment>& candAlignments,
     std::vector<double>& candAlignmentScores,
@@ -1236,7 +1235,7 @@ score_candidate_alignments(
     for (citer cal_iter(cal_set_begin); cal_iter!=cal_set_end; ++cal_iter)
     {
         const candidate_alignment& ical(*cal_iter);
-        const double path_lnp(score_candidate_alignment(opt,indelBuffer,sampleId,candidateSnvBuffer,rseg,ical,ref));
+        const double path_lnp(score_candidate_alignment(opt,indelBuffer,candidateSnvBuffer,rseg,ical,ref));
 
         candAlignmentScores.push_back(path_lnp);
 
@@ -1390,7 +1389,7 @@ score_candidate_alignments(
         }
 
         // score candidate alignment:
-        const double path_lnp(score_candidate_alignment(opt, indelBuffer, sampleId, candidateSnvBuffer, rseg, softClippedCandidateAlignment, ref));
+        const double path_lnp(score_candidate_alignment(opt, indelBuffer, candidateSnvBuffer, rseg, softClippedCandidateAlignment, ref));
 
         if (path_lnp >= smooth_path_lnp)
         {
@@ -1449,7 +1448,7 @@ score_candidate_alignments_and_indels(
 
     try
     {
-        score_candidate_alignments(opt, ref, rseg, indelBuffer, sampleId, candidateSnvBuffer, candAlignments,
+        score_candidate_alignments(opt, ref, rseg, indelBuffer, candidateSnvBuffer, candAlignments,
                                    candAlignmentScores, maxCandAlignmentScore, maxCandAlignmentPtr,
                                    isTestSoftClippedInputAligned, softClippedInputAlignment);
     }

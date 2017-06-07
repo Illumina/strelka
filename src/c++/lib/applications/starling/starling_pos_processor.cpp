@@ -346,12 +346,15 @@ updateSnvLocusWithSampleInfo(
     const unsigned groupLocusPloidy,
     const diploid_genotype& dgt,
     const unsigned sampleIndex,
+    const ActiveRegionId activeRegionId,
     const CandidateSnvBuffer& candidateSnvBuffer,
     GermlineDiploidSiteLocusInfo& locus,
     double& homRefLogProb)
 {
     auto& sampleInfo(locus.getSample(sampleIndex));
     sampleInfo.setPloidy(callerPloidy);
+
+    sampleInfo.setActiveRegionId(activeRegionId);
 
     bool isOverlappingHomAltDeletion(false);
     if (groupLocusPloidy == 0)
@@ -485,7 +488,7 @@ updateSnvLocusWithSampleInfo(
         {
             maxGt.setAllele0HaplotypeId(
                 candidateSnvBuffer.getHaplotypeId(
-                    sampleIndex, locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex)
+                    locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex)
             );
         }
     }
@@ -496,11 +499,11 @@ updateSnvLocusWithSampleInfo(
         {
             maxGt.setAllele1HaplotypeId(
                 candidateSnvBuffer.getHaplotypeId(
-                    sampleIndex, locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
+                    locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
             );
         }
     }
-    maxGt.addAltAlleleHaplotypeCountRatio(candidateSnvBuffer.getAltHaplotypeCountRatio(sampleIndex, locus.pos));
+    maxGt.addAltAlleleHaplotypeCountRatio(candidateSnvBuffer.getAltHaplotypeCountRatio(locus.pos));
 }
 
 
@@ -670,8 +673,7 @@ process_pos_snp_digt(
     // -----------------------------------------------
     // create site locus object:
     //
-    const auto activeRegionId(getActiveRegionDetector().getActiveRegionId(pos));
-    std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, activeRegionId, pos, refBaseIndex, isForcedOutput));
+    std::unique_ptr<GermlineDiploidSiteLocusInfo> locusPtr(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, pos, refBaseIndex, isForcedOutput));
 
 
     // add all candidate alternate alleles:
@@ -683,9 +685,10 @@ process_pos_snp_digt(
     double homRefLogProb(0);
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
+        ActiveRegionId activeRegionId(getActiveRegionDetector(sampleIndex).getActiveRegionId(pos));
         updateSnvLocusWithSampleInfo(
             _opt, sample(sampleIndex), callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex],
-            allDgt[sampleIndex], sampleIndex, getActiveRegionDetector().getCandidateSnvBuffer(), *locusPtr, homRefLogProb);
+            allDgt[sampleIndex], sampleIndex, activeRegionId, getActiveRegionDetector(sampleIndex).getCandidateSnvBuffer(), *locusPtr, homRefLogProb);
     }
 
     // add sample-independent info:
@@ -1287,6 +1290,7 @@ updateIndelLocusWithSampleInfo(
     const unsigned callerPloidy,
     const unsigned groupLocusPloidy,
     const unsigned sampleIndex,
+    const ActiveRegionId activeRegionId,
     pos_basecall_buffer& basecallBuffer,
     GermlineIndelLocusInfo& locus,
     double& homRefLogProb)
@@ -1297,6 +1301,8 @@ updateIndelLocusWithSampleInfo(
     {
         sampleInfo.setPloidyConflict();
     }
+
+    sampleInfo.setActiveRegionId(activeRegionId);
 
     // score all possible genotypes from topVariantAlleleGroup for this sample
     std::vector<double> genotypeLogLhood;
@@ -1561,8 +1567,6 @@ process_pos_indel_digt(const pos_t pos)
     bool isReportedLocus(false);
     OrthogonalVariantAlleleCandidateGroup topVariantAlleleGroup;
 
-    const auto activeRegionId(getActiveRegionDetector().getActiveRegionId(pos));
-
     // now check to see if we can call variant alleles at this position, we may have already found this positions alleles while
     // analyzing a locus positioned downstream. If so, skip ahead to handle the forced output alleles only:
     if (_variantLocusAlreadyOutputToPos <= pos)
@@ -1605,7 +1609,7 @@ process_pos_indel_digt(const pos_t pos)
 
             // setup new indel locus:
             std::unique_ptr<GermlineIndelLocusInfo> locusPtr(
-                new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount, activeRegionId));
+                new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount));
 
             // cycle through variant alleles and add them to locus (the locus interface requires that this is done first):
             addIndelAllelesToLocus(topVariantAlleleGroup, isForcedOutput, *locusPtr);
@@ -1614,11 +1618,12 @@ process_pos_indel_digt(const pos_t pos)
             double homRefLogProb(0);
             for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
             {
-                auto& sif(sample(sampleIndex));
+                auto& sampleInfo(sample(sampleIndex));
+                ActiveRegionId activeRegionId(getActiveRegionDetector(sampleIndex).getActiveRegionId(pos));
                 updateIndelLocusWithSampleInfo(
                     _opt, _dopt, topVariantAlleleGroup, topVariantAlleleIndexPerSample[sampleIndex], emptyGroup,
-                    sif.sample_opt,
-                    callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex, sif.bc_buff, *locusPtr,
+                    sampleInfo.sample_opt,
+                    callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex, activeRegionId, sampleInfo.bc_buff, *locusPtr,
                     homRefLogProb);
             }
 
@@ -1714,7 +1719,7 @@ process_pos_indel_digt(const pos_t pos)
              forcedOutputAlleleIndex < forcedOutputAlleleCount; ++forcedOutputAlleleIndex)
         {
             // setup new indel locus:
-            std::unique_ptr<GermlineIndelLocusInfo> locusPtr(new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount, activeRegionId));
+            std::unique_ptr<GermlineIndelLocusInfo> locusPtr(new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount));
 
             // fake an allele group with only the forced output allele so that we can output using
             // standard data structures
@@ -1730,9 +1735,10 @@ process_pos_indel_digt(const pos_t pos)
             for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
             {
                 auto& sif(sample(sampleIndex));
+                ActiveRegionId activeRegionId(getActiveRegionDetector(sampleIndex).getActiveRegionId(pos));
                 updateIndelLocusWithSampleInfo(
                     _opt, _dopt, fakeForcedOutputAlleleGroup, fakeTopVariantAlleleIndexPerSample, topVariantAlleleGroup,
-                    sif.sample_opt, callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex,
+                    sif.sample_opt, callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex, activeRegionId,
                     sif.bc_buff, *locusPtr, homRefLogProb);
             }
 

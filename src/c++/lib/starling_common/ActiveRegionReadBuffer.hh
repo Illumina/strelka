@@ -34,7 +34,7 @@
 /// AlignInfo object to store sample id and indel align type
 struct AlignInfo
 {
-    unsigned sampleId;
+    unsigned sampleIndex;
     INDEL_ALIGN_TYPE::index_t indelAlignType;
     bool isForwardStrand;
 };
@@ -78,19 +78,16 @@ public:
 
     /// Read buffer to be used in active regions
     /// \param ref reference
-    /// \param sampleCount sample count
     /// \param indelBuffer indel buffer
     ActiveRegionReadBuffer(
         const reference_contig_segment& ref,
-        const unsigned sampleCount,
         IndelBuffer& indelBuffer)
         :
         _ref(ref),
         _refRepeatFinder(ref, MaxRepeatUnitLength, MaxBufferSize, MinRepeatSpan),
-        _sampleCount(sampleCount),
         _indelBuffer(indelBuffer),
-        _variantCounter(sampleCount, std::vector<unsigned>(MaxBufferSize)),
-        _depth(sampleCount, std::vector<unsigned>(MaxBufferSize)),
+        _variantCounter(MaxBufferSize),
+        _depth(MaxBufferSize),
         _positionToAlignIds(MaxBufferSize),
         _alignIdToAlignInfo(MaxDepth),
         _variantInfo(MaxDepth, std::vector<VariantType>(MaxBufferSize, VariantType())),
@@ -116,9 +113,8 @@ public:
     void insertSoftClipSegment(const align_id_t alignId, const pos_t pos, const std::string& segmentSeq, const bool isBeginEdge);
 
     /// insert indel
-    /// \param sampleId sample id
     /// \param indelObservation indel observation object
-    void insertIndel(const unsigned sampleId, const IndelObservation& indelObservation);
+    void insertIndel(const IndelObservation& indelObservation);
 
     /// checks if pos is an anchor position
     /// \param pos reference position
@@ -164,14 +160,14 @@ public:
         const bool includePartialReads,
         const unsigned minReadSegmentLength = 1u) const;
 
-    /// cache sampleId and indelAlignType corresponding to alignId
+    /// cache sampleIndex and indelAlignType corresponding to alignId
     /// \param alignId align id
-    /// \param sampleId sample id
+    /// \param sampleIndex sample index
     /// \param indelAlignType indel align type
-    void setAlignInfo(const align_id_t alignId, const unsigned sampleId, const INDEL_ALIGN_TYPE::index_t indelAlignType, const bool isForwardStrand)
+    void setAlignInfo(const align_id_t alignId, const unsigned sampleIndex, const INDEL_ALIGN_TYPE::index_t indelAlignType, const bool isForwardStrand)
     {
         AlignInfo& alignInfo = _alignIdToAlignInfo[alignId % MaxDepth];
-        alignInfo.sampleId = sampleId;
+        alignInfo.sampleIndex = sampleIndex;
         alignInfo.indelAlignType = indelAlignType;
         alignInfo.isForwardStrand = isForwardStrand;
     }
@@ -179,9 +175,9 @@ public:
     /// Gets sample id
     /// \param alignId align id
     /// \return sample id
-    unsigned getSampleId(const align_id_t alignId) const
+    unsigned getSampleIndex(const align_id_t alignId) const
     {
-        return _alignIdToAlignInfo[alignId % MaxDepth].sampleId;
+        return _alignIdToAlignInfo[alignId % MaxDepth].sampleIndex;
     }
 
     /// Clear buffer
@@ -212,13 +208,12 @@ private:
     const reference_contig_segment& _ref;
     ReferenceRepeatFinder _refRepeatFinder;
 
-    const unsigned _sampleCount;
     IndelBuffer& _indelBuffer;
 
     pos_range _readBufferRange;
 
-    std::vector<std::vector<unsigned>> _variantCounter;
-    std::vector<std::vector<unsigned>> _depth;
+    std::vector<unsigned> _variantCounter;
+    std::vector<unsigned> _depth;
 
     // for haplotypes
     std::vector<std::vector<align_id_t>> _positionToAlignIds;
@@ -241,29 +236,26 @@ private:
     {
         int index = pos % MaxBufferSize;
 
-        for (unsigned sampleId=0; sampleId<_sampleCount; ++sampleId)
-        {
-            _variantCounter[sampleId][index] = 0;
-            _depth[sampleId][index] = 0;
-        }
+        _variantCounter[index] = 0;
+        _depth[index] = 0;
     }
 
-    void addVariantCount(const unsigned sampleId, const pos_t pos, const unsigned count)
+    void addVariantCount(const pos_t pos, const unsigned count)
     {
         int index = pos % MaxBufferSize;
-        _variantCounter[sampleId][index] += count;
-        ++_depth[sampleId][index];
+        _variantCounter[index] += count;
+        ++_depth[index];
     }
 
-    void addSoftClipCount(const unsigned sampleId, const pos_t pos, const unsigned count)
+    void addSoftClipCount(const pos_t pos, const unsigned count)
     {
         int index = pos % MaxBufferSize;
-        _variantCounter[sampleId][index] += count;
+        _variantCounter[index] += count;
     }
 
-    unsigned getVariantCount(const unsigned sampleId, const pos_t pos) const
+    unsigned getVariantCount(const pos_t pos) const
     {
-        return _variantCounter[sampleId][pos % MaxBufferSize];
+        return _variantCounter[pos % MaxBufferSize];
     }
 
     void addAlignIdToPos(const align_id_t alignId, const pos_t pos)
@@ -273,10 +265,10 @@ private:
             _positionToAlignIds[index].push_back(alignId);
     }
 
-    unsigned getDepth(const unsigned sampleId, const pos_t pos) const
+    unsigned getDepth(const pos_t pos) const
     {
         int index = pos % MaxBufferSize;
-        return _depth[sampleId][index];
+        return _depth[index];
     }
 
     const std::vector<align_id_t>& getPositionToAlignIds(const pos_t pos) const

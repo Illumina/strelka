@@ -291,6 +291,7 @@ struct LocusSampleInfo
         genotypePhredLoghood.clear();
         filters.clear();
         supportCounts.clear();
+        _activeRegionId = -1;
         phaseSetId = -1;
         _ploidy.reset();
         _isPloidyConflict = false;
@@ -357,6 +358,18 @@ struct LocusSampleInfo
         }
     }
 
+    void
+    setActiveRegionId(ActiveRegionId activeRegionId)
+    {
+        _activeRegionId = activeRegionId;
+    }
+
+    ActiveRegionId
+    getActiveRegionId() const
+    {
+        return _activeRegionId;
+    }
+
     //--------------------------------------------
     // data
 
@@ -385,12 +398,17 @@ struct LocusSampleInfo
     /// VCF AD/ADF/ADR counts
     LocusSupportingReadStats supportCounts;
 
+
     /// if non-negative, use this to provide a PS tag to acompany a phased max_gt() value.
     pos_t phaseSetId = -1;
 
 private:
     SamplePloidyState _ploidy;
     bool _isPloidyConflict = false;
+
+    /// Active region ID (-1 if this locus is not in AR)
+    ActiveRegionId _activeRegionId = -1;
+
 };
 
 std::ostream& operator<<(std::ostream& os,const LocusSampleInfo& lsi);
@@ -402,11 +420,9 @@ struct LocusInfo : public PolymorphicObject
     explicit
     LocusInfo(
         const unsigned sampleCount,
-        const ActiveRegionId activeRegionId = -1,
         const pos_t initPos = 0)
         : pos(initPos),
-          _sampleInfo(sampleCount),
-          _activeRegionId(activeRegionId)
+          _sampleInfo(sampleCount)
     {}
 
     unsigned
@@ -454,9 +470,24 @@ struct LocusInfo : public PolymorphicObject
         return false;
     }
 
+    /// \return Minimum active region ID among all samples.
+    /// The return value is -1 if this locus is not in AR in any of the samples.
+    /// The maximum valid active region ID is the current position.
     ActiveRegionId getActiveRegionId() const
     {
-        return _activeRegionId;
+        ActiveRegionId activeRegionId(pos+1);
+
+        for (const auto& sample : _sampleInfo)
+        {
+            auto sampleActiveRegionId(sample.getActiveRegionId());
+            if ((sampleActiveRegionId >= 0) && (sampleActiveRegionId < activeRegionId))
+                activeRegionId = sampleActiveRegionId;
+        }
+
+        if (activeRegionId > pos)
+            return -1;  // this locus is not in AR in any of the samples
+
+        return activeRegionId;
     }
 
 protected:
@@ -488,7 +519,6 @@ public:
 private:
     std::vector<LocusSampleInfo> _sampleInfo;
     unsigned _altAlleleCount = 0;
-    ActiveRegionId _activeRegionId = -1;
 
 protected:
     /// to sanity check input, locus must be specified by adding all alleles, and then adding all sample information, this bool enforces the allele->sample ordering
@@ -533,9 +563,8 @@ struct GermlineIndelLocusInfo : public LocusInfo
 {
     explicit
     GermlineIndelLocusInfo(
-        const unsigned sampleCount,
-        const ActiveRegionId activeRegionId)
-        : LocusInfo(sampleCount, activeRegionId),
+        const unsigned sampleCount)
+        : LocusInfo(sampleCount),
           _indelSampleInfo(sampleCount), _commonPrefixLength(0)
     {}
 
@@ -682,9 +711,8 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
 {
     GermlineDiploidIndelLocusInfo(
         const gvcf_deriv_options& gvcfDerivedOptions,
-        const unsigned sampleCount,
-        const ActiveRegionId activeRegionId)
-        : GermlineIndelLocusInfo(sampleCount, activeRegionId)
+        const unsigned sampleCount)
+        : GermlineIndelLocusInfo(sampleCount)
         , evsFeatures(gvcfDerivedOptions.indelFeatureSet)
         , evsDevelopmentFeatures(gvcfDerivedOptions.indelDevelopmentFeatureSet)
     {}
@@ -721,7 +749,7 @@ struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
     explicit
     GermlineContinuousIndelLocusInfo(
         const unsigned sampleCount)
-        : GermlineIndelLocusInfo(sampleCount, -1)
+        : GermlineIndelLocusInfo(sampleCount)
     {}
 };
 
@@ -841,11 +869,10 @@ struct GermlineSiteLocusInfo : public LocusInfo
 
     GermlineSiteLocusInfo(
         const unsigned sampleCount,
-        const ActiveRegionId activeRegionId,
         const pos_t initPos,
         const uint8_t initRefBaseIndex,
         const bool initIsForcedOutput = false)
-        : base_t(sampleCount, activeRegionId, initPos),
+        : base_t(sampleCount, initPos),
           refBaseIndex(initRefBaseIndex),
           _siteSampleInfo(sampleCount)
     {
@@ -984,11 +1011,10 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     GermlineDiploidSiteLocusInfo(
         const gvcf_deriv_options& gvcfDerivedOptions,
         const unsigned sampleCount,
-        const ActiveRegionId activeRegionId,
         const pos_t init_pos,
         const uint8_t initRefBaseIndex,
         const bool is_forced_output = false)
-        : GermlineSiteLocusInfo(sampleCount, activeRegionId, init_pos, initRefBaseIndex, is_forced_output),
+        : GermlineSiteLocusInfo(sampleCount, init_pos, initRefBaseIndex, is_forced_output),
           evsFeatures(gvcfDerivedOptions.snvFeatureSet),
           evsDevelopmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
     {}
@@ -1060,7 +1086,7 @@ struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
         const pos_t init_pos,
         const uint8_t initRefBaseIndex,
         const bool is_forced_output = false)
-        : base_t(sampleCount, (ActiveRegionId)(-1), init_pos, initRefBaseIndex, is_forced_output),
+        : base_t(sampleCount, init_pos, initRefBaseIndex, is_forced_output),
           _continuousSiteSampleInfo(sampleCount)
     {}
 

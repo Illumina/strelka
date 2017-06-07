@@ -358,7 +358,7 @@ BOOST_AUTO_TEST_CASE( test_realign_and_score_read )
 
         known_pos_range realign_buffer_range(0, 20);
 
-        const unsigned sampleId(0);
+        const unsigned sampleIndex(0);
 
         // to mock up the indel buffer with one candidate indel, we have to initialize it with one fake sample,
         // finalize, and then insert an indel observation
@@ -372,7 +372,7 @@ BOOST_AUTO_TEST_CASE( test_realign_and_score_read )
             obs.key = IndelKey(4, INDEL::INDEL, 1);
             obs.data.is_external_candidate = true;
 
-            indelBuffer.addIndelObservation(sampleId, obs);
+            indelBuffer.addIndelObservation(sampleIndex, obs);
         }
 
         // the read segment is the hardest piece of this to mock up:
@@ -398,10 +398,9 @@ BOOST_AUTO_TEST_CASE( test_realign_and_score_read )
         read_segment& rseg(sread.get_full_segment());
 
         // create an active region detector instance
-        static const unsigned sampleCount(1);
-        const CandidateSnvBuffer candidateSnvBuffer(sampleCount);
+        const CandidateSnvBuffer candidateSnvBuffer;
 
-        realign_and_score_read(opt, dopt, sample_opt, ref, realign_buffer_range, sampleId, candidateSnvBuffer, rseg, indelBuffer);
+        realign_and_score_read(opt, dopt, sample_opt, ref, realign_buffer_range, sampleIndex, candidateSnvBuffer, rseg, indelBuffer);
 
         BOOST_REQUIRE(not rseg.is_realigned);
     }

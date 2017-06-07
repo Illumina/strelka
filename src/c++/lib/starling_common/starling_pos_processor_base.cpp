@@ -266,6 +266,7 @@ starling_pos_processor_base(
     , _sample(sampleCount)
     , _pileupCleaner(opt)
     , _indelBuffer(opt,dopt,ref)
+    , _activeRegionDetector(sampleCount)
 {
     assert(sampleCount != 0);
 
@@ -305,7 +306,12 @@ void
 starling_pos_processor_base::
 resetActiveRegionDetector()
 {
-    _active_region_detector.reset(new ActiveRegionDetector(_ref, _indelBuffer, _opt.max_indel_size, getSampleCount()));
+    for (unsigned sampleIndex(0); sampleIndex<getSampleCount(); ++sampleIndex)
+    {
+        _activeRegionDetector[sampleIndex].reset(
+                new ActiveRegionDetector(_ref, _indelBuffer, _opt.max_indel_size, sampleIndex)
+        );
+    }
 }
 
 
@@ -377,7 +383,8 @@ reset()
     {
         _stagemanPtr->reset();
     }
-    _active_region_detector->clear();
+    for (unsigned sampleIndex(0); sampleIndex<getSampleCount(); ++sampleIndex)
+        _activeRegionDetector[sampleIndex]->clear();
 }
 
 
@@ -420,7 +427,7 @@ void
 starling_pos_processor_base::
 insert_indel(
     const IndelObservation& obs,
-    const unsigned sampleId)
+    const unsigned sampleIndex)
 {
     // ppr advance is controlled by the start positions of reads and
     // relatively cheap to store (so long as we aren't including
@@ -470,11 +477,11 @@ insert_indel(
 
         if (is_active_region_detector_enabled())
         {
-            getActiveRegionReadBuffer().insertIndel(sampleId, obs);
+            getActiveRegionReadBuffer(sampleIndex).insertIndel(obs);
         }
         else
         {
-            getIndelBuffer().addIndelObservation(sampleId, obs);
+            getIndelBuffer().addIndelObservation(sampleIndex, obs);
         }
         if (obs.data.is_forced_output) _is_skip_process_pos=false;
     }
@@ -816,7 +823,7 @@ align_pos(const pos_t pos)
 
             try
             {
-                realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,sampleIndex, _active_region_detector->getCandidateSnvBuffer(), rseg,
+                realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,sampleIndex, _activeRegionDetector[sampleIndex]->getCandidateSnvBuffer(), rseg,
                                        getIndelBuffer());
             }
             catch (...)
@@ -871,7 +878,8 @@ process_pos(const int stage_no,
         init_read_segment_pos(pos);
         if (is_active_region_detector_enabled())
         {
-            _getActiveRegionDetector().updateEndPosition(pos);
+            for (unsigned sampleIndex(0); sampleIndex<getSampleCount(); ++sampleIndex)
+                _getActiveRegionDetector(sampleIndex).updateEndPosition(pos);
         }
 
         if (_opt.is_write_candidate_indels())
@@ -907,7 +915,10 @@ process_pos(const int stage_no,
         }
 
         if (is_active_region_detector_enabled())
-            _getActiveRegionDetector().clearReadBuffer(pos);
+        {
+            for (unsigned sampleIndex(0); sampleIndex<getSampleCount(); ++sampleIndex)
+                _getActiveRegionDetector(sampleIndex).clearReadBuffer(pos);
+        }
     }
     else if (stage_no==STAGE::POST_ALIGN)
     {
@@ -972,7 +983,8 @@ process_pos(const int stage_no,
 
         if (is_active_region_detector_enabled())
         {
-            _getActiveRegionDetector().clearUpToPos(pos);
+            for (unsigned sampleIndex(0); sampleIndex<getSampleCount(); ++sampleIndex)
+                _getActiveRegionDetector(sampleIndex).clearUpToPos(pos);
         }
 
         // everything else:
@@ -1383,7 +1395,7 @@ pileup_read_segment(
     if ((! is_submapped) && _opt.is_max_win_mismatch)
     {
         const rc_segment_bam_seq ref_bseq(_ref);
-        create_mismatch_filter_map(_opt,best_al,ref_bseq,sampleIndex,bseq,read_begin,read_end, getActiveRegionDetector().getCandidateSnvBuffer(), _rmi);
+        create_mismatch_filter_map(_opt,best_al,ref_bseq,bseq,read_begin,read_end, _activeRegionDetector[sampleIndex]->getCandidateSnvBuffer(), _rmi);
         if (_opt.tier2.is_tier2_mismatch_density_filter_count)
         {
             const int max_pass(_opt.tier2.tier2_mismatch_density_filter_count);

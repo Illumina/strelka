@@ -65,7 +65,7 @@ public:
     /// \param posRange position range of the active region
     /// \param ref reference
     /// \param maxIndelSize max indel size
-    /// \param sampleCount sample count
+    /// \param sampleIndex sample index
     /// \param aligner aligner for aligning haplotypes to the reference
     /// \param readBuffer read buffer
     /// \param indelBuffer indel buffer
@@ -74,12 +74,12 @@ public:
     ActiveRegion(const pos_range& posRange,
                  const reference_contig_segment& ref,
                  const unsigned maxIndelSize,
-                 const unsigned sampleCount,
+                 const unsigned sampleIndex,
                  const GlobalAligner<int>& aligner,
                  const ActiveRegionReadBuffer& readBuffer,
                  IndelBuffer& indelBuffer,
                  CandidateSnvBuffer& candidateSnvBuffer):
-        _posRange(posRange), _ref(ref), _maxIndelSize(maxIndelSize), _sampleCount(sampleCount),
+        _posRange(posRange), _ref(ref), _maxIndelSize(maxIndelSize), _sampleIndex(sampleIndex),
         _aligner(aligner), _readBuffer(readBuffer), _indelBuffer(indelBuffer), _candidateSnvBuffer(candidateSnvBuffer)
     {
     }
@@ -118,7 +118,7 @@ private:
     const pos_range _posRange;
     const reference_contig_segment& _ref;
     const unsigned _maxIndelSize;
-    const unsigned _sampleCount;
+    const unsigned _sampleIndex;
     const GlobalAligner<int> _aligner;
 
     const ActiveRegionReadBuffer& _readBuffer;
@@ -127,24 +127,21 @@ private:
 
     std::set<align_id_t> _alignIdSoftClipped;
 
-    bool processSelectedHaplotypes(const unsigned sampleId, HaplotypeToAlignIdSet& haplotypeToAlignIdSet, const unsigned totalNumReads);
+    bool processSelectedHaplotypes(HaplotypeToAlignIdSet& haplotypeToAlignIdSet, const unsigned totalNumReads);
 
     /// Create haplotypes using counting and process variants
-    /// \param sampleId sample id
     /// \return true if haplotype generation succeeds, false otherwise
-    bool processHaplotypesWithCounting(const unsigned sampleId);
+    bool processHaplotypesWithCounting();
 
     /// Create haplotypes using assembly and process variants
-    /// \param sampleId sample id
     /// \return true if haplotype generation succeeds, false otherwise
-    bool processHaplotypesWithAssembly(const unsigned sampleId);
+    bool processHaplotypesWithAssembly();
 
     /// Do not use haplotyping to determine indel candidacy and MMDF relax positions
     void doNotUseHaplotyping();
 
     /// convert the haplotype into primitive alleles and update _indelBuffer and _polySites
     void convertToPrimitiveAlleles(
-        const unsigned sampleId,
         const std::string& haploptypeSeq,
         const std::vector<align_id_t>& alignIdList,
         const unsigned totalNumReads,

@@ -42,8 +42,7 @@ struct VariantPhaser : public variant_pipe_stage_base
         const std::shared_ptr<variant_pipe_stage_base>& destination)
         : variant_pipe_stage_base(destination),
           _opt(opt),
-          _sampleCount(sampleCount),
-          _activeRegionId(-1)
+          _sampleCount(sampleCount)
     {}
 
     void process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr) override;
@@ -54,7 +53,6 @@ private:
     const starling_options& _opt;
     const unsigned _sampleCount;
 
-    ActiveRegionId _activeRegionId;
     LocusBuffer _locusBuffer;
 
     void flush_impl() override;
@@ -70,7 +68,7 @@ private:
     void outputBuffer();
 
     /// dump buffer contents to sink and clear object
-    void createPhaseRecord(unsigned sampleId);
+    void createPhaseRecord(unsigned sampleIndex);
 
     bool
     isBuffer() const

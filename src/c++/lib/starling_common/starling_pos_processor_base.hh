@@ -108,7 +108,7 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     ///
     void
     insert_indel(const IndelObservation& obs,
-                 const unsigned sampleId);
+                 const unsigned sampleIndex);
 
     bool is_active_region_detector_enabled()
     {
@@ -117,9 +117,9 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
 
     /// \return reference to the read buffer from the active region detector
     ActiveRegionReadBuffer&
-    getActiveRegionReadBuffer()
+    getActiveRegionReadBuffer(const unsigned sampleIndex)
     {
-        return _getActiveRegionDetector().getReadBuffer();
+        return _getActiveRegionDetector(sampleIndex).getReadBuffer();
     }
 
     /// in range [begin,end), is the estimated depth always below
@@ -406,18 +406,18 @@ protected:
     }
 
     const ActiveRegionDetector&
-    getActiveRegionDetector() const
+    getActiveRegionDetector(const unsigned sampleIndex) const
     {
-        assert (_active_region_detector);
-        return *_active_region_detector;
+        assert (_activeRegionDetector[sampleIndex]);
+        return *_activeRegionDetector[sampleIndex];
     }
 
 private:
     ActiveRegionDetector&
-    _getActiveRegionDetector()
+    _getActiveRegionDetector(const unsigned sampleIndex)
     {
-        assert (_active_region_detector);
-        return *_active_region_detector;
+        assert (_activeRegionDetector[sampleIndex]);
+        return *_activeRegionDetector[sampleIndex];
     }
 
     void
@@ -681,5 +681,5 @@ protected:
 
 private:
     IndelBuffer _indelBuffer;
-    std::unique_ptr<ActiveRegionDetector> _active_region_detector;
+    std::vector<std::unique_ptr<ActiveRegionDetector>> _activeRegionDetector;
 };
