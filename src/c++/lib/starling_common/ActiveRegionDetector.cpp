@@ -98,12 +98,11 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
         if (_numVariants >= MinNumVariantsPerRegion )
         {
             // close the existing active region
-            if (_activeRegionStartPos < _readBuffer.getBeginPos())
-                _activeRegionStartPos = _readBuffer.getBeginPos();
+            assert (_activeRegionStartPos < _anchorPosFollowingPrevVariant);
+
             pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
             _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
                                         _aligner, _readBuffer, _indelBuffer, _candidateSnvBuffer);
-
             setPosToActiveRegionIdMap(activeRegionRange);
 
             // we have no existing acive region at this point
@@ -149,11 +148,14 @@ void ActiveRegionDetector::clear()
 
     if (_numVariants >= MinNumVariantsPerRegion)
     {
-        // close the existing active region
-        if (_activeRegionStartPos < _readBuffer.getBeginPos())
+        if (_activeRegionStartPos < 0)
             _activeRegionStartPos = _readBuffer.getBeginPos();
         if (_anchorPosFollowingPrevVariant < 0)
-            _anchorPosFollowingPrevVariant = _readBuffer.getEndPos();
+            _anchorPosFollowingPrevVariant = (_readBuffer.getEndPos()-1);
+
+        // close the existing active region
+        assert (_activeRegionStartPos < _anchorPosFollowingPrevVariant);
+
         pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
         _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleCount,
                                     _aligner, _readBuffer, _indelBuffer, _candidateSnvBuffer);

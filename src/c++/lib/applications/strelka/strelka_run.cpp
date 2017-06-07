@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "strelka_pos_processor.hh"
 #include "strelka_streams.hh"
 #include "strelka_run.hh"
@@ -29,6 +25,7 @@
 #include "blt_util/log.hh"
 #include "common/Exceptions.hh"
 #include "htsapi/bam_header_info.hh"
+#include "htsapi/vcf_record_util.hh"
 #include "starling_common/HtsMergeStreamerUtil.hh"
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
@@ -91,6 +88,7 @@ callRegion(
         }
         else if (HTS_TYPE::VCF == currentHtsType)
         {
+            assertExpectedVcfReference(ref, streamData.getCurrentVcfStreamer());
             const vcf_record& vcfRecord(streamData.getCurrentVcf());
             if (INPUT_TYPE::CANDIDATE_INDELS == currentIndex)     // process candidate indels input from vcf file(s)
             {

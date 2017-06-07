@@ -24,7 +24,7 @@
 #include "blt_util/prog_info.hh"
 
 
-/// \brief Entry point for germline variant calling after all command-line parse/verifcation is complete
+/// \brief Entry point for germline variant calling after all command-line parse/verification
 void
 starling_run(
     const prog_info& pinfo,

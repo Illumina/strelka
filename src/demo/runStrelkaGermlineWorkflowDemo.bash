@@ -67,6 +67,7 @@ cmd="$configScript \
 --referenceFasta='$dataDir/chr20_860k_only.fa' \
 --callMemMb=1024 \
 --exome \
+--disableSequenceErrorEstimation \
 --runDir=$analysisDir"
 
 echo 1>&2

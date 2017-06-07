@@ -17,15 +17,13 @@
 //
 //
 
-/// \author Chris Saunders
-///
-
 #pragma once
 
 #include "blt_util/prog_info.hh"
 #include "SequenceErrorCountsOptions.hh"
 
 
+/// \brief Execute sequence error counting after options have been parsed
 void
 getSequenceErrorCountsRun(
     const prog_info& pinfo,

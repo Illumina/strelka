@@ -17,15 +17,13 @@
 //
 //
 
-/// \author Chris Saunders
-///
 
 #pragma once
 
 #include "blt_util/prog_info.hh"
 #include "strelka_shared.hh"
 
-
+/// \brief Entry point for somatic variant calling after all command-line parse/verification
 void
 strelka_run(
     const prog_info& pinfo,

@@ -77,7 +77,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["-genome-size", str(self.params.knownSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
 
-    segFiles.counts.append(self.paths.getTmpSegmentCountsPath(segStr))
+    segFiles.counts.append(self.paths.getTmpSegmentErrorCountsPath(segStr))
     segCmd.extend(["--counts-file", segFiles.counts[-1]])
 
     for bamPath in self.params.bamList :
@@ -128,7 +128,7 @@ def mergeSequenceErrorCounts(self, taskPrefix, dependencies, runStatsLogPaths) :
     runMergeCmd=[self.params.mergeCountsBin]
     for statsFile in runStatsLogPaths :
         runMergeCmd.extend(["--counts-file",statsFile])
-    runMergeCmd.extend(["--output-file",self.paths.getCountsOutputPath()])
+    runMergeCmd.extend(["--output-file", self.paths.getErrorCountsOutputPath()])
     return self.addTask(runMergeLabel, runMergeCmd, dependencies=dependencies, isForceLocal=True)
 
 
@@ -187,10 +187,10 @@ class CallWorkflow(StrelkaSharedCallWorkflow) :
 
         if True :
             knownSize = 0
-            for line in open(self.paths.getRefCountFile()) :
+            for line in open(self.paths.getReferenceSizePath()) :
                 word = line.strip().split('\t')
                 if len(word) != 4 :
-                    raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getRefCountFile()))
+                    raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getReferenceSizePath()))
                 knownSize += int(word[2])
 
             self.params.knownSize = knownSize
@@ -226,9 +226,9 @@ class SequenceErrorCountsWorkflow(StrelkaSharedWorkflow) :
     sequence error counts workflow
     """
 
-    def __init__(self,params,iniSections) :
+    def __init__(self, params) :
         global PathInfo
-        super(SequenceErrorCountsWorkflow,self).__init__(params,iniSections,PathInfo)
+        super(SequenceErrorCountsWorkflow,self).__init__(params, PathInfo)
 
         # if debugging output is going to be produced, add a results/debug dir
         if self.params.isReportObservedIndels:

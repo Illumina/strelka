@@ -74,18 +74,22 @@ struct SequenceErrorCountsOptions : public starling_base_options
     std::string chrom_depth_file;
     double max_depth_factor = 3.;
 
-    ////////// input files:
-
-    // mark certain variants as having a known genotype:
+    //========= input files:
+    /// File indicating known variant genotypes
     std::string knownVariantsFile;
-    // exclude genome regions from analysis
+
+    /// File indicating which regions to exclude from counting
     std::vector<std::string> excludedRegionsFileList;
 
-    ////////// output files:
-    // binary output pattern counts (required)
+    //======== output files:
+    /// Binary output file containing error counts data (required)
     std::string countsFilename;
-    // optional debug output specifying indel location
+
+    /// optional debug output specifying indel location
     std::string observationsBedFilename;
+
+    /// optional evidence count indicating the number of non-empty sites considered during error counting
+    std::string nonEmptySiteCountFilename;
 };
 
 

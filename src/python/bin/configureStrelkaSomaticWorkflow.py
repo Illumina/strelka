@@ -91,18 +91,14 @@ You must specify an alignment file (BAM or CRAM) for each sample of a matched tu
         return defaults
 
 
-    def validateAndSanitizeExistingOptions(self,options) :
+    def validateAndSanitizeOptions(self,options) :
 
-        StrelkaSharedWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
-        groomBamList(options.normalBamList,"normal sample")
-        groomBamList(options.tumorBamList, "tumor sample")
+        StrelkaSharedWorkflowOptionsBase.validateAndSanitizeOptions(self,options)
 
         checkFixTabixListOption(options.noiseVcfList,"noise vcf")
 
-
-    def validateOptionExistence(self,options) :
-
-        StrelkaSharedWorkflowOptionsBase.validateOptionExistence(self,options)
+        groomBamList(options.normalBamList,"normal sample")
+        groomBamList(options.tumorBamList, "tumor sample")
 
         def checkRequired(bamList,label):
             if (bamList is None) or (len(bamList) == 0) :
@@ -110,18 +106,20 @@ You must specify an alignment file (BAM or CRAM) for each sample of a matched tu
 
         checkRequired(options.tumorBamList,"tumor")
 
-        bcheck = BamSetChecker()
+        bamSetChecker = BamSetChecker()
 
         def singleAppender(bamList,label):
             if bamList is None : return
             if len(bamList) > 1 :
                 raise OptParseException("More than one %s sample BAM/CRAM files specified" % (label))
-            bcheck.appendBams(bamList,label)
+            bamSetChecker.appendBams(bamList,label)
 
         singleAppender(options.normalBamList,"normal")
         singleAppender(options.tumorBamList,"tumor")
-        bcheck.check(options.htsfileBin,
+        bamSetChecker.check(options.htsfileBin,
                      options.referenceFasta)
+
+
 
 def main() :
 
@@ -132,7 +130,7 @@ def main() :
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:
     #
-    StrelkaSomaticWorkflow(options,iniSections)
+    StrelkaSomaticWorkflow(options)
 
     # generate runscript:
     #

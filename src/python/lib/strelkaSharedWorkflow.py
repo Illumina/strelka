@@ -37,27 +37,64 @@ from sharedWorkflow import getMvCmd
 from workflowUtil import checkFile, cleanPyEnv, ensureDir, getFastaChromOrderSize, \
                   getGenomeSegmentGroups, getNextGenomeSegment, preJoin
 
+class DeepCopyProtector(object) :
+    """
+    Any data attached to this object will remain aliased through a deepcopy operation
+
+    Overloading __copy__ is provided here just to ensure that deep/shallow copy semantics are identical.
+    """
+    def __copy__(self) :
+        return self
+
+    def __deepcopy__(self, dict) :
+        return self
+
+
+class TotalRefCountWorkflow(WorkflowRunner) :
+    """
+    Load ref count file and total it into a new value in the workflow params object
+    """
+
+    def __init__(self, paths, dynamicParams) :
+        self.paths = paths
+        self.dynamicParams = dynamicParams
+
+    def workflow(self) :
+        totalKnownSize = 0
+        for line in open(self.paths.getReferenceSizePath()) :
+            word = line.strip().split('\t')
+            if len(word) != 4 :
+                raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getReferenceSizePath()))
+            knownSize = int(word[2])
+
+            totalKnownSize += knownSize
+
+        self.dynamicParams.totalKnownSize = totalKnownSize
+
+
 
 def runCount(self, taskPrefix="", dependencies=None) :
     """
-    count size of fasta chromosomes
+    Count size of fasta chromosomes, and put the result into a workflow variable
     """
-    cmd  = "\"%s\" \"%s\" > \"%s\""  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
 
-    nextStepWait = set()
-    nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
+    nextStepWait=set()
+
+    refCountCmd  = "\"%s\" \"%s\" > \"%s\""  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getReferenceSizePath())
+    refCountTask = self.addTask(preJoin(taskPrefix,"RefCount"), refCountCmd, dependencies=dependencies)
+    nextStepWait.add(self.addWorkflowTask(preJoin(taskPrefix,"RefTotal"), TotalRefCountWorkflow(self.paths, self.dynamicParams), dependencies=refCountTask))
 
     return nextStepWait
 
 
 
-def getChromIsSkipped(self, chromOrder) :
+def getChromIsSkipped(self) :
     """
-    determine subset of chroms from chromOrder which are completely skipped over
+    Determine subset of chroms from chromOrder which are completely skipped over
 
-    here "skipped" means that not a single base on the chrom is requested for calling
+    here "skipped" means that not a single base on the chrom is requested for calling or error estimation
 
-    \return set of chromLabels which are skipped
+    \return The set of chromLabels which are skipped
     """
 
     chromIsSkipped = set()
@@ -92,15 +129,26 @@ def getChromIsSkipped(self, chromOrder) :
 
         chromIsSkipped = chromIsSkipped | chromIsSkipped2
 
+    # if sequencing error estimation is turned on, make sure estimation targets are not skipped:
+    if self.params.isEstimateSequenceError :
+        class Constants :
+            Megabase = 1000000
+            errorEstimationMinChromSize = self.params.errorEstimationMinChromMb * Megabase
+
+        for chrom in self.params.chromSizes :
+            if self.params.chromSizes[chrom] < Constants.errorEstimationMinChromSize : continue
+            if chrom in chromIsSkipped :
+                chromIsSkipped.remove(chrom)
+
     return chromIsSkipped
 
 
 
 class StrelkaSharedCallWorkflow(WorkflowRunner) :
 
-    def __init__(self,params) :
+    def __init__(self, params, dynamicParams) :
         self.params = params
-
+        self.dynamicParams = dynamicParams
 
     def concatIndexBgzipFile(self, taskPrefix, dependencies, inputList, output, label, fileType) :
         """
@@ -173,13 +221,11 @@ class StrelkaSharedCallWorkflow(WorkflowRunner) :
             segCmd.extend(["--region", gseg.bamRegion])
 
         segCmd.extend(["--ref", self.params.referenceFasta ])
-        segCmd.extend(["-genome-size", str(self.params.knownSize)] )
+        segCmd.extend(["-genome-size", str(self.dynamicParams.totalKnownSize)] )
         segCmd.extend(["-max-indel-size", "50"] )
 
         if self.params.indelErrorModelName is not None :
             segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
-        if self.params.inputIndelErrorModelsFile is not None :
-            segCmd.extend(['--indel-error-models-file', self.params.inputIndelErrorModelsFile])
 
         if self.params.isReportEVSFeatures :
             segCmd.append("--report-evs-features")
@@ -235,10 +281,13 @@ class SharedPathInfo(object):
         self.params = params
 
     def getChromDepth(self) :
-        return os.path.join(self.params.workDir,"chromDepth.txt")
+        return os.path.join(self.params.workDir,"chromDepth.tsv")
 
     def getTmpSegmentDir(self) :
         return os.path.join(self.params.workDir, "genomeSegment.tmpdir")
+
+    def getTmpErrorEstimationDir(self) :
+        return os.path.join(self.params.workDir, "errorEstimation.tmpdir")
 
     def getTmpRunStatsPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "runStats.%s.xml" % (segStr))
@@ -249,8 +298,8 @@ class SharedPathInfo(object):
     def getRunStatsReportPath(self) :
         return os.path.join(self.params.statsDir,"runStats.tsv")
 
-    def getRefCountFile(self) :
-        return os.path.join( self.params.workDir, "refCount.txt")
+    def getReferenceSizePath(self) :
+        return os.path.join( self.params.workDir, "referenceSize.tsv")
 
 
 
@@ -259,12 +308,12 @@ class StrelkaSharedWorkflow(WorkflowRunner) :
     small variant calling workflow base
     """
 
-    def __init__(self,params,iniSections,PathInfoType) :
+    def __init__(self,params,PathInfoType) :
 
         cleanPyEnv()
 
         self.params=params
-        self.iniSections=iniSections
+        self.dynamicParams = DeepCopyProtector()
 
         # make sure run directory is setup:
         self.params.runDir=os.path.abspath(self.params.runDir)
@@ -286,19 +335,19 @@ class StrelkaSharedWorkflow(WorkflowRunner) :
 
         self.paths = PathInfoType(self.params)
 
-        indexRefFasta=self.params.referenceFasta+".fai"
+        referenceFastaIndex=self.params.referenceFasta+".fai"
 
         if self.params.referenceFasta is None:
             raise Exception("No reference fasta defined.")
         else:
             checkFile(self.params.referenceFasta,"reference fasta")
-            checkFile(indexRefFasta,"reference fasta index")
+            checkFile(referenceFastaIndex,"reference fasta index")
 
         # read fasta index
-        (self.params.chromOrder,self.params.chromSizes) = getFastaChromOrderSize(indexRefFasta)
+        (self.params.chromOrder,self.params.chromSizes) = getFastaChromOrderSize(referenceFastaIndex)
 
         # determine subset of chroms where we can skip calling entirely
-        self.params.chromIsSkipped = getChromIsSkipped(self, self.params.chromOrder)
+        self.params.chromIsSkipped = getChromIsSkipped(self)
 
         self.params.isHighDepthFilter = (not (self.params.isExome or self.params.isRNA))
 

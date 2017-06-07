@@ -17,12 +17,8 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
-///
-/// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the beginning of the range
-/// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
 #include "GetSequenceErrorCountsRun.hh"
@@ -33,6 +29,7 @@
 #include "common/Exceptions.hh"
 #include "htsapi/align_path_bam_util.hh"
 #include "htsapi/bam_header_info.hh"
+#include "htsapi/vcf_record_util.hh"
 #include "starling_common/HtsMergeStreamerUtil.hh"
 #include "starling_common/ploidy_util.hh"
 #include "starling_common/starling_ref_seq.hh"
@@ -52,7 +49,7 @@ enum index_t
 }
 
 
-/// adds truth variant input from a vcf to indel synchronizer
+/// \brief Adds truth variant input from a vcf into the error counting process
 ///
 static
 void
@@ -207,6 +204,7 @@ getSequenceErrorCountsRun(
             }
             else if (HTS_TYPE::VCF == currentHtsType)
             {
+                assertExpectedVcfReference(ref, streamData.getCurrentVcfStreamer());
                 const vcf_record& vcfRecord(streamData.getCurrentVcf());
                 if (INPUT_TYPE::CANDIDATE_INDELS == currentIndex)     // process candidate indels input from vcf file(s)
                 {

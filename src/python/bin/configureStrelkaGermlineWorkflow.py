@@ -66,6 +66,18 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
         StrelkaSharedWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
 
+    def addExtendedGroupOptions(self,group) :
+        # note undocumented library behavior: "dest" is optional, but not including it here will
+        # cause the hidden option to always print
+        group.add_option("--disableSequenceErrorEstimation", dest="isEstimateSequenceError", action="store_false",
+                         help="Disable estimation of sequence error rates from data.")
+        group.add_option("--useAllDataForSequenceErrorEstimation", dest="isErrorEstimationFromAllData", action="store_true",
+                         help="Instead of sampling a subset of data for error estimation, use all data from sufficiently large chromosomes."
+                              " This could greatly increase the workflow's runtime.")
+
+        StrelkaSharedWorkflowOptionsBase.addExtendedGroupOptions(self,group)
+
+
     def getOptionDefaults(self) :
 
         self.configScriptDir=scriptDir
@@ -90,15 +102,16 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
             'mergeCountsBin' : joinFile(libexecDir,exeFile("MergeSequenceErrorCounts")),
             'estimateVariantErrorRatesBin' : joinFile(libexecDir,exeFile("EstimateVariantErrorRates")),
             'thetaParamFile' : joinFile(configDir,'theta.json'),
-            'indelErrorRateDefault' : joinFile(configDir,'indelErrorModel.json')
+            'indelErrorRateDefault' : joinFile(configDir,'indelErrorModel.json'),
+            'isEstimateSequenceError' : True,
+            'isErrorEstimationFromAllData' : False
             })
         return defaults
 
 
-    def validateAndSanitizeExistingOptions(self,options) :
+    def validateAndSanitizeOptions(self,options) :
 
-        StrelkaSharedWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
-        groomBamList(options.bamList,"input")
+        StrelkaSharedWorkflowOptionsBase.validateAndSanitizeOptions(self,options)
 
         options.ploidyFilename = checkFixTabixIndexedFileOption(options.ploidyFilename,"ploidy file")
         options.noCompressBed = checkFixTabixIndexedFileOption(options.noCompressBed,"no-compress bed")
@@ -114,10 +127,15 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
             else :
                 options.indelScoringModelFile = options.germlineIndelScoringModelFile
 
+        # Disable dynamic error estimation for Exome
+        if options.isExome :
+            options.isEstimateSequenceError = False
 
-    def validateOptionExistence(self,options) :
+        # Disable dynamic error estimation for RNA
+        if options.isRNA :
+            options.isEstimateSequenceError = False
 
-        StrelkaSharedWorkflowOptionsBase.validateOptionExistence(self,options)
+        groomBamList(options.bamList,"input")
 
         def safeLen(x) :
             if x is None : return 0
@@ -126,10 +144,9 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
         if safeLen(options.bamList) == 0 :
             raise OptParseException("No input sample alignment files specified")
 
-        bcheck = BamSetChecker()
-        bcheck.appendBams(options.bamList,"Input")
-        bcheck.check(options.htsfileBin,
-                     options.referenceFasta)
+        bamSetChecker = BamSetChecker()
+        bamSetChecker.appendBams(options.bamList,"Input")
+        bamSetChecker.check(options.htsfileBin, options.referenceFasta)
 
 
 
@@ -141,7 +158,7 @@ def main() :
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:
     #
-    StrelkaGermlineWorkflow(options,iniSections)
+    StrelkaGermlineWorkflow(options)
 
     # generate runscript:
     #

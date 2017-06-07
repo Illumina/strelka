@@ -33,7 +33,7 @@ from configureOptions import ConfigureWorkflowOptions
 from configureUtil import assertOptionExists, joinFile, OptParseException, \
                           validateFixExistingDirArg, validateFixExistingFileArg, \
                           checkFixTabixListOption, checkFixTabixIndexedFileOption
-from workflowUtil import exeFile, parseGenomeRegion
+from workflowUtil import exeFile, getFastaChromOrderSize, parseGenomeRegion
 
 
 def cleanLocals(locals_dict) :
@@ -77,6 +77,7 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
         group.add_option("--runDir", type="string",metavar="DIR",
                          help="Run script and run output will be written to this directory [required] (default: %default)")
 
+
     def addExtendedGroupOptions(self,group) :
         # note undocumented library behavior: "dest" is optional, but not including it here will
         # cause the hidden option to always print
@@ -105,8 +106,6 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
                          help="Provide a custom empirical scoring model file for SNVs (default: %default)")
         group.add_option("--indelScoringModelFile", type="string", dest="indelScoringModelFile", metavar="FILE",
                          help="Provide a custom empirical scoring model file for indels (default: %default)")
-        group.add_option("--estimateIndelErrorRates", dest="isIndelErrorRateEstimated", action="store_true",
-                         help="Enable indel estimation.")
 
         ConfigureWorkflowOptions.addExtendedGroupOptions(self,group)
 
@@ -176,23 +175,49 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
         snvScoringModelFile = None
         indelScoringModelFile = None
 
-        isIndelErrorRateEstimated = False
+        # error estimation is planned for all workflows, but can only be set true in germline at present:
+        isEstimateSequenceError = False
+
+        errorEstimationMinChromMb = 5
+        errorEstimationMinTotalMb = 50
 
         return cleanLocals(locals())
 
 
+    def validateAndSanitizeOptions(self,options) :
 
-    def validateAndSanitizeExistingOptions(self,options) :
-
+        assertOptionExists(options.runDir,"run directory")
         options.runDir=os.path.abspath(options.runDir)
 
-        options.referenceFasta=validateFixExistingFileArg(options.referenceFasta,"reference")
+        assertOptionExists(options.referenceFasta,"reference fasta file")
+        options.referenceFasta=validateFixExistingFileArg(options.referenceFasta,"reference fasta file")
 
         # check for reference fasta index file:
-        if options.referenceFasta is not None :
-            faiFile=options.referenceFasta + ".fai"
-            if not os.path.isfile(faiFile) :
-                raise OptParseException("Can't find expected fasta index file: '%s'" % (faiFile))
+        referenceFastaIndex=options.referenceFasta + ".fai"
+        if not os.path.isfile(referenceFastaIndex) :
+            raise OptParseException("Can't find expected fasta index file: '%s'" % (referenceFastaIndex))
+
+        if options.isEstimateSequenceError :
+            # Determine if dynamic error estimation is feasible based on the reference size
+            # - Given reference contig set (S) with sequence length of at least 5 Mb
+            # - The total sequence length from S must be at least 50 Mb
+
+            class Constants :
+                Megabase = 1000000
+                minChromSize = options.errorEstimationMinChromMb*Megabase
+                minTotalSize = options.errorEstimationMinTotalMb*Megabase
+
+            # read fasta index
+            (_, chromSizes) = getFastaChromOrderSize(referenceFastaIndex)
+
+            totalEstimationSize=0
+            for chromSize in chromSizes.values() :
+                if chromSize < Constants.minChromSize : continue
+                totalEstimationSize += chromSize
+
+            if totalEstimationSize < Constants.minTotalSize :
+                sys.stderr.write("WARNING: Cannot estimate sequence errors from data due to small or overly fragmented reference sequence. Sequence error estimation disabled.\n")
+                options.isEstimateSequenceError = False
 
         checkFixTabixListOption(options.indelCandidatesList,"candidate indel vcf")
         checkFixTabixListOption(options.forcedGTList,"forced genotype vcf")
@@ -205,10 +230,3 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         options.snvScoringModelFile=validateFixExistingFileArg(options.snvScoringModelFile,"SNV empirical scoring model file")
         options.indelScoringModelFile=validateFixExistingFileArg(options.indelScoringModelFile,"Indel empirical scoring model file")
-
-
-    def validateOptionExistence(self,options) :
-
-        assertOptionExists(options.runDir,"run directory")
-
-        assertOptionExists(options.referenceFasta,"reference fasta file")

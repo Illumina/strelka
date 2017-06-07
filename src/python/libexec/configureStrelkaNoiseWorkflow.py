@@ -19,7 +19,7 @@
 #
 
 """
-This script configures the strelka noise estimation workflow
+This script configures the strelka somatic variant noise estimation workflow
 """
 
 import os,sys
@@ -57,7 +57,6 @@ You must specify a BAM or CRAM file.
         StrelkaSharedWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
 
-
     def getOptionDefaults(self) :
 
         self.configScriptDir=scriptDir
@@ -74,21 +73,16 @@ You must specify a BAM or CRAM file.
         return defaults
 
 
+    def validateAndSanitizeOptions(self,options) :
 
-    def validateAndSanitizeExistingOptions(self,options) :
+        StrelkaSharedWorkflowOptionsBase.validateAndSanitizeOptions(self,options)
 
-        StrelkaSharedWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
         groomBamList(options.bamList,"input")
 
-
-
-    def validateOptionExistence(self,options) :
-
-        StrelkaSharedWorkflowOptionsBase.validateOptionExistence(self,options)
-        bcheck = BamSetChecker()
-        bcheck.appendBams(options.bamList,"Input")
-        bcheck.check(options.samtoolsBin,
-                     options.referenceFasta)
+        bamSetChecker = BamSetChecker()
+        bamSetChecker.appendBams(options.bamList,"Input")
+        bamSetChecker.check(options.samtoolsBin,
+                            options.referenceFasta)
 
 
 
@@ -100,7 +94,7 @@ def main() :
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:
     #
-    snoiseWorkflow(options,iniSections)
+    snoiseWorkflow(options)
 
     # generate runscript:
     #

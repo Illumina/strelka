@@ -58,13 +58,13 @@ struct RunStatsData
         ar& BOOST_SERIALIZATION_NVP(nonCandidateIndels);
     }
 
-    /// total wall-time of each (single-thread) process, summed together
+    /// Total wall-time of each (single-thread) process, summed together
     CpuTimes lifeTime;
 
-    /// total indels reaching candidate status in the report range and (if defined) call regions
+    /// Total indels reaching candidate status in the report range and (if defined) call regions
     unsigned long candidateIndels = 0;
 
-    /// total indels failing to reach candidate status in the report range and (if defined) call regions
+    /// Total indels failing to reach candidate status in the report range and (if defined) call regions
     unsigned long nonCandidateIndels = 0;
 };
 

@@ -20,11 +20,27 @@
 #include "SequenceErrorCountsPosProcessor.hh"
 #include "blt_common/ref_context.hh"
 #include "common/OutStream.hh"
+#include "common/Exceptions.hh"
 #include "starling_common/OrthogonalVariantAlleleCandidateGroupUtil.hh"
-#include "starling_common/starling_indel_call_pprob_digt.hh"
 
 #include <algorithm>
+#include <fstream>
+#include <iostream>
 #include <vector>
+
+
+
+/// Checks that the path given in \p fileName can be opened for writing
+///
+/// If \p fileName is empty it is ignored, if \p fileName is not writable for any reason
+/// (path does not exist, user does not have permission, etc..) this function will throw.
+static
+void
+checkOutputFilePathIsWriteable(
+    const std::string& fileName)
+{
+    OutStream outs(fileName);
+}
 
 
 
@@ -47,13 +63,16 @@ SequenceErrorCountsPosProcessor(
     // set the sample name to the first bam file name
     // this is already logged as a warning if alignmentFilenames.size() > 1
     _counts.setSampleName(opt.alignFileOpt.alignmentFilenames[0]);
-    // check that we have write permission on the output file early:
+
+    // check that we have write permission on all output files as early as possible:
+    checkOutputFilePathIsWriteable(opt.countsFilename);
+    if (opt.is_write_observations())
     {
-        OutStream outs(opt.countsFilename);
-        if (opt.is_write_observations())
-        {
-            OutStream outs2(opt.observationsBedFilename);
-        }
+        checkOutputFilePathIsWriteable(opt.observationsBedFilename);
+    }
+    if (! opt.nonEmptySiteCountFilename.empty())
+    {
+        checkOutputFilePathIsWriteable(opt.nonEmptySiteCountFilename);
     }
 
     // setup indel buffer samples
@@ -70,22 +89,23 @@ SequenceErrorCountsPosProcessor(
 
 
 
-SequenceErrorCountsPosProcessor::
-~SequenceErrorCountsPosProcessor()
-{
-    _counts.save(_opt.countsFilename.c_str());
-}
-
-
-
 void
 SequenceErrorCountsPosProcessor::
 reset()
 {
+    _counts.save(_opt.countsFilename.c_str());
+
+    if (! _opt.nonEmptySiteCountFilename.empty())
+    {
+        OutStream outs(_opt.nonEmptySiteCountFilename);
+        outs.getStream() << "nonEmptySiteCount\t" << _nonEmptySiteCount << "\n";
+    }
+
     base_t::reset();
 
     _excludedRegions.clear();
     _knownVariants.clear();
+    _nonEmptySiteCount = 0;
 }
 
 
@@ -323,7 +343,7 @@ static const unsigned maxSTRRepeatCount(20);
 
 
 
-/// derive the STR context for a given position in the reference
+/// Derive the STR context for a given position in the reference
 static
 ReferenceSTRContext
 getReferenceSTRContext(
@@ -369,8 +389,6 @@ process_pos_error_counts(
     assert(sampleCount==1);
     const unsigned sampleIndex(0);
     sample_info& sif(sample(sampleIndex));
-
-
 
 
     const char refBase(_ref.get_base(pos));
@@ -452,6 +470,11 @@ process_pos_error_counts(
     // handle basecall error signal
     if (! isSkipSNV)
     {
+        // even though this site may still be excluded from SNV counting because of noise, we use this countet to
+        // approximate how much of the genome has some level of detectible coverage that could possibly contribute to
+        // error estimation
+        _nonEmptySiteCount += 1;
+
         // be relatively intolerant of anything interesting happening in the local sequence neighborhood:
         static const double snvMMDRMaxFrac(0.05);
 

@@ -14,8 +14,13 @@
         "comment": "The model is estimated using the bam file given in the sampleName",
         "type": "object",
         "properties": {
+          "isStatic": {
+            "description": "This value is set to false when the model parameters are estimated from the specific sample",
+            "type": "boolean",
+            "minimum": 1
+          },
           "sampleName": {
-            "description": "The sample name (usually the absolute path of the bam file) used to estiamte the model",
+            "description": "The sample name (usually the absolute path of the bam file) used to estiamte the model, or 'default'",
             "type": "string",
             "minimum": 1
           },
@@ -64,7 +69,7 @@
         },
         "required": [
           "sampleName",
-          "motifs"
+          "motif"
         ],
         "additionalProperties": false
       }

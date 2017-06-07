@@ -156,10 +156,10 @@ class CallWorkflow(WorkflowRunner) :
 
         if True :
             knownSize = 0
-            for line in open(self.paths.getRefCountFile()) :
+            for line in open(self.paths.getReferenceSizePath()) :
                 word = line.strip().split('\t')
                 if len(word) != 4 :
-                    raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getRefCountFile()))
+                    raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getReferenceSizePath()))
                 knownSize += int(word[2])
 
             self.params.knownSize = knownSize
@@ -185,7 +185,7 @@ class PathInfo(SharedPathInfo):
     def getGvcfOutputPath(self) :
         return os.path.join( self.params.variantsDir, "noise.vcf.gz")
 
-    def getRefCountFile(self) :
+    def getReferenceSizePath(self) :
         return os.path.join( self.params.workDir, "refCount.txt")
 
 
@@ -195,9 +195,9 @@ class snoiseWorkflow(StrelkaSharedWorkflow) :
     germline small variant calling workflow
     """
 
-    def __init__(self,params,iniSections) :
+    def __init__(self,params) :
         global PathInfo
-        super(snoiseWorkflow,self).__init__(params,iniSections,PathInfo)
+        super(snoiseWorkflow,self).__init__(params, PathInfo)
 
         # format bam lists:
         if self.params.bamList is None : self.params.bamList = []

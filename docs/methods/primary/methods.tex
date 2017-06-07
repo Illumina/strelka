@@ -61,11 +61,12 @@ The details of the shared and application specific model steps are provided belo
 
 \section{Preliminary Parameter Estimation}
 
-An initial step in all workflows is the rapid estimation of the sequencing depth for each chromosome. For somatic analysis this depth is only computed for the normal sample. This information is used downstream to filter out high-depth regions (details below) when Strelka is run in its default whole genome sequencing mode. This step is skipped for exome or other targeted analyses.
-
+Various aggregate statistics may be estimated from the sequencing data prior to the start of the primary variant calling procedure.
 
 \subsection{Chromosome depth estimation}
 \label{sec:depth_est}
+
+An initial step in all workflows is the rapid estimation of the sequencing depth for each chromosome. For somatic analysis this depth is only computed for the normal sample. This information is used downstream to filter out high-depth regions (details below) when Strelka is run in its default whole genome sequencing mode. This step is skipped for exome or other targeted analyses.
 
 For each chromosome, depth is estimated using a modified median calculation. As a first step, each chromosome is partitioned into segments of similar size to ensure the estimation process samples several chromosome regions. The chromosome is divided into the smallest number of segments no larger than $S_{max}$, where all segments have nearly equal size (all sizes must be $S$ or $S+1$, given smallest segment size of $S$). If this procedure results in more than 20 segments then $S_{max}$ is doubled until 20 or fewer segments are found. $S_{max}$ is initialized to 2 Mbase.
 
@@ -78,10 +79,24 @@ Depth is estimated from the resulting pileup, using a simple median over all dep
 The depth estimation procedure is run separately for each non-tumor sample, and all high-depth thresholds are set based on the sum of depth estimates over these samples.
 
 
-\subsection{Depth estimation design discussion}
+\subsubsection{Depth estimation design discussion}
 
 The objective of the depth estimation step is to find the expected depth and/or depth distribution for each copy number state or plasmid -- at present dividing this estimation to run separately on each chromosome is a reasonable approximation towards this goal. An improvement would be to estimate the depth distribution properties jointly over each copy number state and plasmid.
 
+
+\subsection{Indel Error Rate Estimation}
+
+TODO: Transfer/adapt methods already written up in the errorAnalysis doc
+
+\paragraph{Implementation}
+
+Indel error estimation is only run on chromosomes which are at least 5 Mb in length. If the combined length of all such chromosomes is less than 50 Mb, indel error estimation is disabled and the method reverts to static parameters for all samples.
+
+If the reference sequence is determined to be acceptable for the estimation process, then the set and ordering of genome regions used to count errors is determined. This is done by finding the subset of chromosomes which are 5 Mb or longer, and dividing each of these chromosomes into the smallest number of approximately equal length segments which are not larger than 2 Mbs each. These intervals are randomly sorted using a fixed seed to help distribute the estimation process over all large chromosomes while providing a deterministic response over multiple runs.
+
+After determining the set and order of estimation intervals, error counting and parameter estimation proceeds independently for each sample. In each sample, counting tasks are launched in order from the estimation interval list up to the number of available workers in the workflow. As each counting procedure completes, the number of sites with non-zero sequence coverage is summed into a running total from all completed tasks. Additional tasks from the estimation interval list are launched until the total coverage of non-empty sites from completed tasks is greater than or equal to 50 Mb. When this site coverage goal is readhed, then tasks which are no longer needed are canceled, and the workflow waits for tasks to complete so as to cover the smallest continuous series of estimation intervals from the beginning of the estimation interval list which provide coverage of 50 Mb or greater. The workflow waits for this continuous series of tasks so that the final set of counts is deterministic regardless of the completion order of the launched estimation tasks.
+
+Once the counting procedure has completed for a given sample, all of the estimation interval count files are merged, and parameter estimation is conducted according to the procedure outlined above. If parameter estimation fails to converge after the maximum allowed iterations or the estimated error rates fall outside of valid estimation ranges, then the estimation procedure is considered a failure for the given sample, and the default static parameter set is used for that sample instead.
 
 
 \section{Variant Discovery}

@@ -173,26 +173,41 @@ IndelErrorModel(
     }
     else
     {
-        _isUseSampleSpecificErrorRates = true;
-        _sampleErrorRates.resize(_sampleCount);
-
         const auto modelsMap = IndelErrorModelJson::deserializeIndelErrorModels(modelFilenames);
+        const auto defaultModelIter = modelsMap.find("default");
 
-        for (unsigned alignmentFileIndex = 0; alignmentFileIndex < _sampleCount; alignmentFileIndex++)
+        if ((modelsMap.size() == 1) && (defaultModelIter != modelsMap.end()))
         {
-            const auto alignmentFilename = alignmentFilenames[alignmentFileIndex];
-            const auto model = modelsMap.find(alignmentFilename);
-            if (model != modelsMap.end())
-            {
-                _sampleErrorRates[alignmentFileIndex] = model->second;
-            }
-            else
-            {
-                using namespace illumina::common;
+            // If the default model file is submitted instead of smaple specific ones, then use that model for all
+            // samples
+            _isUseSampleSpecificErrorRates = false;
+            _sampleErrorRates.resize(1);
+            auto& errorRates = getSampleSpecificIndelErrorRates();
+            errorRates = defaultModelIter->second;
+        }
+        else
+        {
+            // In all other scenarios, assume a sample specific model is provided for each bam file
+            //
+            _isUseSampleSpecificErrorRates = true;
+            _sampleErrorRates.resize(_sampleCount);
 
-                std::ostringstream oss;
-                oss << "ERROR: Failed to find indel error model for '" << alignmentFilename << "'\n";
-                BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+            for (unsigned alignmentFileIndex = 0; alignmentFileIndex < _sampleCount; alignmentFileIndex++)
+            {
+                const auto alignmentFilename = alignmentFilenames[alignmentFileIndex];
+                const auto model = modelsMap.find(alignmentFilename);
+                if (model != modelsMap.end())
+                {
+                    _sampleErrorRates[alignmentFileIndex] = model->second;
+                }
+                else
+                {
+                    using namespace illumina::common;
+
+                    std::ostringstream oss;
+                    oss << "ERROR: Failed to find indel error model for '" << alignmentFilename << "'\n";
+                    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                }
             }
         }
     }
