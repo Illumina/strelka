@@ -33,6 +33,7 @@ sys.path.append(scriptDir)
 pyflowDir=os.path.join(scriptDir,"pyflow")
 sys.path.append(os.path.abspath(pyflowDir))
 
+from pyflow import WorkflowRunner
 from configBuildTimeInfo import workflowVersion
 from configureUtil import safeSetBool
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, getDepthFromAlignments
@@ -225,11 +226,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
                          dependencies=dependencies, isForceLocal=True)
 
     segmentTasks = set()
-
     sampleCount = len(self.params.bamList)
-
-    for sampleIndex in range(sampleCount) :
-        validateEstimatedParameters(self,sampleIndex)
 
     segFiles = TempVariantCallingSegmentFiles(sampleCount)
 
@@ -288,9 +285,26 @@ def validateEstimatedParameters(self, sampleIndex) :
             indelModel = json.load(jsonFile)
 
             if indelModel['sample'][0]['isStatic'] :
-                self.flowLog("Sample '" + indelModel['sample'][0]['sampleName'] + "' is using the static indel error rate model")
+                self.flowLog("Sample '" + indelModel['sample'][0]['sampleName'] + "' is using the static indel error rate model", logState=2)
         except :
-            self.flowLog("Error while parsing the indel rate model file '"+jsonFileName+"'. The file format may be invalid")
+            self.flowLog("Error while parsing the indel rate model file '"+jsonFileName+"'. The file format may be invalid", logState=3)
+
+
+class ValidateEstimatedParametersWorkflow(WorkflowRunner) :
+    """
+    A separate workflow is setup around validateEstimatedParameters() so that the workflow execution can be
+    delayed until the json files exist
+    """
+
+    def __init__(self, params, paths) :
+        self.paths = paths
+        self.params = params
+
+    def workflow(self) :
+        sampleCount = len(self.params.bamList)
+
+        for sampleIndex in range(sampleCount) :
+            validateEstimatedParameters(self,sampleIndex)
 
 
 class CallWorkflow(StrelkaSharedCallWorkflow) :
@@ -403,7 +417,9 @@ class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
             estimatePreReqs |= strelkaGermlineGetDepthFromAlignments(self)
 
         if self.params.isEstimateSequenceError :
-            callPreReqs |= getSequenceErrorEstimates(self, taskPrefix="EstimateSeqError", dependencies=estimatePreReqs)
+            validatePreReq = set()
+            validatePreReq |= getSequenceErrorEstimates(self, taskPrefix="EstimateSeqError", dependencies=estimatePreReqs)
+            callPreReqs.add(self.addWorkflowTask("ValidateEstimatedParameters", ValidateEstimatedParametersWorkflow(self.params, self.paths), dependencies=validatePreReq))
         else :
             callPreReqs = estimatePreReqs
 
