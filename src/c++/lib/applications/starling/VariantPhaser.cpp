@@ -32,17 +32,18 @@ void VariantPhaser::processLocus(std::unique_ptr<T> locusPtr)
         return;
     }
 
+    // The locus is moved to the buffer unless it is outside of an active region
     auto curActiveRegionId(locusPtr->getActiveRegionId());
 
     if (curActiveRegionId < 0)
     {
         // locus is outside of active region in all samples
+        // Create phase records for the loci in the buffer
         outputBuffer();
         _sink->process(std::move(locusPtr));
     }
     else
     {
-        // locus is within the existing active region
         addLocusToBuffer(std::move(locusPtr));
     }
 }
@@ -95,10 +96,16 @@ void
 VariantPhaser::
 createPhaseRecord(unsigned sampleIndex)
 {
+    // Create phase records for the specified sample.
+    // Note that the locus buffer may contain loci from different active regions
+    // even in the same sample
+    // E.g.  ------------- AR1 -------------      (Sample 1)
+    //           ---- AR2 ---   ----- AR3 ----    (Sample 2)
+    //       ---------------------------------    (Loci in the buffer)
     if (not isBuffer()) return;
 
     // simple hack for checking whether 2 alternative haplotypes (haplotypeId 1 and 2) are selected
-    // These are vectors because there can be multiple active regions.
+    // Use vectors to separate loci from different ARs
     std::vector<bool> isHetHap1;
     std::vector<bool> isHetHap2;
     std::vector<unsigned> numHetVariants;
@@ -122,10 +129,10 @@ createPhaseRecord(unsigned sampleIndex)
         }
 
         const auto& maxGenotype = sampleInfo.max_gt();
-        bool isHet = maxGenotype.isHet();
+        const bool isHet = maxGenotype.isHet();
 
         // isConflict==true means that the het variant is not from the top 2 selected haplotypes
-        bool isConflict(maxGenotype.isConflict());
+        const bool isConflict(maxGenotype.isConflict());
 
         if (isHet and (!isConflict))
         {
@@ -145,7 +152,10 @@ createPhaseRecord(unsigned sampleIndex)
         }
     }
 
-    int activeRegionIndex = -1;
+    // used to refer isHetHap1, isHetHap2, and numHetVariants
+    int bufferActiveRegionIndex = -1;
+
+    // Active region id assigned by the active region detector
     activeRegionId = -1;
 
     // to record the haplotype id of the first nonref allele of the first variant
@@ -155,6 +165,13 @@ createPhaseRecord(unsigned sampleIndex)
     // to record the first het variant within the phasing set
     pos_t posFirstVariantInPhaseSet(-1);
 
+    // TODO: Comments from Chris
+    // Perhaps for a future TDR ticket -- this whole loop looks improvable --
+    // it depends on a lot of continuous state between iterations in this loop
+    // in ways that could potentially harbor some corner case bugs.
+    // I'm not sure how I would suggest to revise,
+    // but if we did a cross-team review with other developers,
+    // this might be an interesting case to discuss re: refactoring for robustness.
     for (auto& locusPtr : _locusBuffer)
     {
         auto& sampleInfo = locusPtr->getSample(sampleIndex);
@@ -164,14 +181,14 @@ createPhaseRecord(unsigned sampleIndex)
 
         if (curActiveRegionId != activeRegionId)
         {
-            ++activeRegionIndex;
+            ++bufferActiveRegionIndex;
             posFirstVariantInPhaseSet = -1;
 
             activeRegionId = curActiveRegionId;
         }
 
         // no phasing is needed if there's 0 or 1 het variant
-        if (numHetVariants[activeRegionIndex] <= 1)
+        if (numHetVariants[bufferActiveRegionIndex] <= 1)
             continue;
 
         auto& maxGenotype = sampleInfo.max_gt();
@@ -199,7 +216,7 @@ createPhaseRecord(unsigned sampleIndex)
         // phase set id is the 1-based position of the first variant in the set
         sampleInfo.phaseSetId = posFirstVariantInPhaseSet;
 
-        if ((not isHetHap1[activeRegionIndex]) or (not isHetHap2[activeRegionIndex]))
+        if ((not isHetHap1[bufferActiveRegionIndex]) or (not isHetHap2[bufferActiveRegionIndex]))
         {
             // simple case where there's no flipped genotype
             // one haplotype is the reference

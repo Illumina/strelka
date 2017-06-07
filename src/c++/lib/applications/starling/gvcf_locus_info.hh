@@ -358,14 +358,12 @@ struct LocusSampleInfo
         }
     }
 
-    /// sets active region ID
     void
     setActiveRegionId(ActiveRegionId activeRegionId)
     {
         _activeRegionId = activeRegionId;
     }
 
-    /// gets active region ID
     ActiveRegionId
     getActiveRegionId() const
     {
@@ -472,10 +470,11 @@ struct LocusInfo : public PolymorphicObject
         return false;
     }
 
-    /// \return minimum active region ID among all samples. -1 if this locus is not in AR in any of the samples
+    /// \return Minimum active region ID among all samples.
+    /// The return value is -1 if this locus is not in AR in any of the samples.
+    /// The maximum valid active region ID is the current position.
     ActiveRegionId getActiveRegionId() const
     {
-        // max valid active region ID is pos
         ActiveRegionId activeRegionId(pos+1);
 
         for (const auto& sample : _sampleInfo)

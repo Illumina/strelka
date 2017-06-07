@@ -121,11 +121,10 @@ void
 create_mismatch_filter_map(const blt_options& client_opt,
                            const alignment& al,
                            const bam_seq_base& ref_seq,
-                           const unsigned sampleIndex,
                            const bam_seq_base& read_seq,
                            const unsigned read_begin,
                            const unsigned read_end,
-                           const std::vector<std::unique_ptr<ActiveRegionDetector>>& activeRegionDetector,
+                           const CandidateSnvBuffer& candidateSnvBuffer,
                            read_mismatch_info& rmi)
 {
 
@@ -175,7 +174,7 @@ create_mismatch_filter_map(const blt_options& client_opt,
                 if (readChar != ref_seq.get_char(ref_pos))
                 {
                     // if the mismatch is a SNV found in an active region, don't increase the counter
-                    if (not activeRegionDetector[sampleIndex]->getCandidateSnvBuffer().isCandidateSnv(ref_pos, readChar))
+                    if (not candidateSnvBuffer.isCandidateSnv(ref_pos, readChar))
                     {
                         rmi[read_pos].is_mismatch=true;
                         dd.inc(read_pos,1);

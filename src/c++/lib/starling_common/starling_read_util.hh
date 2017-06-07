@@ -45,11 +45,10 @@ void
 create_mismatch_filter_map(const blt_options& client_opt,
                            const alignment& al,
                            const bam_seq_base& ref_seq,
-                           const unsigned sampleIndex,
                            const bam_seq_base& read_seq,
                            const unsigned read_begin,
                            const unsigned read_end,
-                           const std::vector<std::unique_ptr<ActiveRegionDetector>>& activeRegionDetector,
+                           const CandidateSnvBuffer& candidateSnvBuffer,
                            read_mismatch_info& rmi);
 
 

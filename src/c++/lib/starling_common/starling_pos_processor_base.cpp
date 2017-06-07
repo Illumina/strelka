@@ -307,7 +307,11 @@ starling_pos_processor_base::
 resetActiveRegionDetector()
 {
     for (unsigned sampleIndex(0); sampleIndex<getSampleCount(); ++sampleIndex)
-        _activeRegionDetector[sampleIndex].reset(new ActiveRegionDetector(_ref, _indelBuffer, _opt.max_indel_size, sampleIndex));
+    {
+        _activeRegionDetector[sampleIndex].reset(
+                new ActiveRegionDetector(_ref, _indelBuffer, _opt.max_indel_size, sampleIndex)
+        );
+    }
 }
 
 
@@ -1391,7 +1395,7 @@ pileup_read_segment(
     if ((! is_submapped) && _opt.is_max_win_mismatch)
     {
         const rc_segment_bam_seq ref_bseq(_ref);
-        create_mismatch_filter_map(_opt,best_al,ref_bseq,sampleIndex,bseq,read_begin,read_end, _activeRegionDetector, _rmi);
+        create_mismatch_filter_map(_opt,best_al,ref_bseq,bseq,read_begin,read_end, _activeRegionDetector[sampleIndex]->getCandidateSnvBuffer(), _rmi);
         if (_opt.tier2.is_tier2_mismatch_density_filter_count)
         {
             const int max_pass(_opt.tier2.tier2_mismatch_density_filter_count);
