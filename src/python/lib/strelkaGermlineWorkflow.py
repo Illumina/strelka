@@ -34,6 +34,7 @@ pyflowDir=os.path.join(scriptDir,"pyflow")
 sys.path.append(os.path.abspath(pyflowDir))
 
 from pyflow import WorkflowRunner
+from pyflow import LogState
 from configBuildTimeInfo import workflowVersion
 from configureUtil import safeSetBool
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, getDepthFromAlignments
@@ -277,17 +278,26 @@ def callGenome(self,taskPrefix="",dependencies=None):
     return nextStepWait
 
 def validateEstimatedParameters(self, sampleIndex) :
+    """
+    check whether the indel error rates are static or estimated values
+    """
     jsonFileName = self.paths.getIndelErrorModelPath(sampleIndex)
     if os.path.isfile(jsonFileName) :
         try :
             import json
             jsonFile = open(jsonFileName, 'r')
             indelModel = json.load(jsonFile)
-
+            jsonFile.close()
             if indelModel['sample'][0]['isStatic'] :
-                self.flowLog("Sample '" + indelModel['sample'][0]['sampleName'] + "' is using the static indel error rate model", logState=2)
+                self.flowLog("Adaptive indel error rate estimation for sample '" + indelModel['sample'][0]['sampleName'] + "' did not succeed, using static indel error model instead.", logState=LogState.WARNING)
+
+        except ImportError :
+            self.flowLog("Python version does not support json parsing. Skipping json validation.", logState=pyflowDir.LogState.WARNING)
+
         except :
-            self.flowLog("Error while parsing the indel rate model file '"+jsonFileName+"'. The file format may be invalid", logState=3)
+            self.flowLog("Error while parsing the indel rate model file '"+jsonFileName+"'. The file format may be invalid", logState=LogState.ERROR)
+    else :
+        self.flowLog("Error while parsing the indel rate model file '"+jsonFileName+"'. File does not exist.", logState=LogState.ERROR)
 
 
 class ValidateEstimatedParametersWorkflow(WorkflowRunner) :
