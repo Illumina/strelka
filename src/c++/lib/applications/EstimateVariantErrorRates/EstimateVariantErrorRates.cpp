@@ -28,7 +28,6 @@
 
 
 
-
 static
 void
 runEPEC(
@@ -42,7 +41,7 @@ runEPEC(
     indelModelProduction.estimateIndelErrorRates();
     if (!indelModelProduction.checkEstimatedModel())
     {
-        log_os << "WARNING: In EstimateVariantErrorRates, checkEstimatedModel() failed. Using  '" << opt.fallbackFilename << "' instead\n";
+        log_os << "WARNING: In EstimateVariantErrorRates on '" << counts.getSampleName() <<"', checkEstimatedModel() failed. Using  '" << opt.fallbackFilename << "' instead\n";
         indelModelProduction.exportModelUsingInputJson(opt.fallbackFilename);
         return;
     }
