@@ -1113,10 +1113,12 @@ static unsigned getCommonPrefixLength(
 }
 
 
-/// setup indelSampleInfo assuming that corresponding sampleInfo has already been initialized
+
+/// Populate the indelSampleInfo object and add it to locus
 ///
-/// \param basecallBuffer[inout] read previous base depth and mqpq values from basecallbuffer, and also
-///                              set ploidy modifications on any bases which the indel overlaps
+/// This covers the update for both diploid/haploid and continuous calling models
+///
+/// \param[in] is_use_alt_indel If true, account for indels other than indelKey while computing indel posteriors.
 static
 void
 updateIndelSampleInfo(
@@ -1124,16 +1126,62 @@ updateIndelSampleInfo(
     const starling_deriv_options& dopt,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     const unsigned sampleIndex,
-    pos_basecall_buffer& basecallBuffer,
+    const pos_basecall_buffer& basecallBuffer,
+    const bool is_use_alt_indel,
     GermlineIndelLocusInfo& locus)
 {
     GermlineIndelSampleInfo indelSampleInfo;
 
+    // get various indel stats from the pileup:
+    {
+        const auto& range(locus.range());
+        pos_t pileupPos(range.begin_pos()-1);
+        const IndelKey& indelKey0(alleleGroup.key(0));
+        if (indelKey0.type == INDEL::BP_RIGHT) pileupPos=range.end_pos();
+        const snp_pos_info& spi(basecallBuffer.get_pos(pileupPos));
+        indelSampleInfo.tier1Depth=spi.calls.size();
+        indelSampleInfo.mapqTracker=spi.mapqTracker;
+    }
+
+    // add misc sample info from legacy sample indel report:
+    {
+        static const bool is_tier2_pass(false);
+
+        /// TODO STREL-125 legacy structure assumes single indel allele, get rid of this....
+        const IndelKey& indelKey(alleleGroup.key(0));
+        const IndelData& indelData(alleleGroup.data(0));
+        const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
+
+        getAlleleSampleReportInfo(opt, dopt, indelKey, indelSampleData, basecallBuffer, is_tier2_pass,
+                                  is_use_alt_indel, indelSampleInfo.legacyReportInfo);
+    }
+
+    locus.setIndelSampleInfo(sampleIndex, indelSampleInfo);
+}
+
+
+
+/// Make all sample-specific changes to the indel locus for the diploid/haploid calling case.
+///
+/// This will setup indelSampleInfo assuming that corresponding sampleInfo has already been initialized,
+/// and update ploidy values in basecall buffer
+///
+/// \param[in,out] basecallBuffer Read previous base depth and mqpq values from basecallbuffer, and also
+///                               set ploidy modifications on any bases which the indel overlaps
+static
+void
+updateDiploidIndelLocusWithSampleInfo(
+    const starling_base_options& opt,
+    const starling_deriv_options& dopt,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    const unsigned sampleIndex,
+    pos_basecall_buffer& basecallBuffer,
+    GermlineIndelLocusInfo& locus)
+{
     const LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
     const unsigned callerPloidy(sampleInfo.getPloidy().getPloidy());
 
     // set site ploidy modifications:
-    const auto& range(locus.range());
     auto updateSitePloidyForAlleleIndex = [&](const uint8_t alleleIndex)
     {
         if (alleleIndex == 0) return;
@@ -1144,7 +1192,6 @@ updateIndelSampleInfo(
         for (pos_t pos(beginPos); pos < endPos; ++pos)
         {
             basecallBuffer.decrementSpanningIndelPloidy(pos);
-
         }
     };
 
@@ -1163,31 +1210,8 @@ updateIndelSampleInfo(
         assert(false and "Unexpected ploidy value");
     }
 
-    {
-        // get various indel stats from the pileup:
-        pos_t pileupPos(range.begin_pos()-1);
-        const IndelKey& indelKey0(alleleGroup.key(0));
-        if (indelKey0.type == INDEL::BP_RIGHT) pileupPos=range.end_pos();
-        const snp_pos_info& spi(basecallBuffer.get_pos(pileupPos));
-        indelSampleInfo.tier1Depth=spi.calls.size();
-        indelSampleInfo.mapqTracker=spi.mapqTracker;
-    }
-
-    /// TODO STREL-125 deprecated
-    // add misc sample info from legacy sample indel report:
-    {
-        static const bool is_tier2_pass(false);
-        static const bool is_use_alt_indel(false);
-
-        /// TODO STREL-125 legacy structure assumes single indel allele, get rid of this....
-        const IndelKey& indelKey(alleleGroup.key(0));
-        const IndelData& indelData(alleleGroup.data(0));
-        const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
-        getAlleleSampleReportInfo(opt, dopt, indelKey, indelSampleData, basecallBuffer,
-                                  is_tier2_pass, is_use_alt_indel, indelSampleInfo.legacyReportInfo);
-    }
-
-    locus.setIndelSampleInfo(sampleIndex, indelSampleInfo);
+    static const bool is_use_alt_indel(false);
+    updateIndelSampleInfo(opt,dopt, alleleGroup, sampleIndex, basecallBuffer, is_use_alt_indel, locus);
 }
 
 
@@ -1425,7 +1449,7 @@ updateIndelLocusWithSampleInfo(
     homRefLogProb += std::log(genotypePosterior[AG_GENOTYPE::HOMREF]);
 
     // set indelSampleInfo
-    updateIndelSampleInfo(opt, dopt, alleleGroup, sampleIndex, basecallBuffer, locus);
+    updateDiploidIndelLocusWithSampleInfo(opt, dopt, alleleGroup, sampleIndex, basecallBuffer, locus);
 
     // set haplotype ids and alt allele haplotype count ratio
     auto& maxGt = sampleInfo.max_gt();
@@ -1759,35 +1783,27 @@ process_pos_indel_digt(const pos_t pos)
 
 
 
-/// fill in all sample-specific locus info
+/// Fill in all sample-specific indel locus info for the continuous-frequency calling case
 ///
 static
 void
 updateContinuousIndelLocusWithSampleInfo(
     const starling_base_options& opt,
     const starling_deriv_options& dopt,
-    const unsigned sampleIndex,
-    const pos_basecall_buffer& bc_buff,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    const unsigned sampleIndex,
+    const pos_basecall_buffer& basecallBuffer,
     GermlineIndelLocusInfo& locus)
 {
-    static const bool is_tier2_pass(false);
-    static const bool is_use_alt_indel(true);
-
     auto& sampleInfo(locus.getSample(sampleIndex));
     sampleInfo.setPloidy(-1);
 
-    // tmp until new count structures are in place:
     assert(alleleGroup.size() == 1);
-    const auto& indelKey(alleleGroup.key(0));
-    const auto& indelData(alleleGroup.data(0));
 
-    const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
+    static const bool is_use_alt_indel(true);
+    updateIndelSampleInfo(opt,dopt, alleleGroup, sampleIndex, basecallBuffer, is_use_alt_indel, locus);
 
-    GermlineIndelSampleInfo indelSampleInfo;
-    getAlleleSampleReportInfo(opt, dopt, indelKey, indelSampleData, bc_buff, is_tier2_pass,
-                              is_use_alt_indel, indelSampleInfo.legacyReportInfo);
-    locus.setIndelSampleInfo(sampleIndex, indelSampleInfo);
+    const GermlineIndelSampleInfo& indelSampleInfo(locus.getIndelSample(sampleIndex));
 
     sampleInfo.gqx = sampleInfo.genotypeQualityPolymorphic =
                          starling_continuous_variant_caller::poisson_qscore(
@@ -1855,7 +1871,7 @@ process_pos_indel_continuous(const pos_t pos)
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
             updateContinuousIndelLocusWithSampleInfo(
-                _opt, _dopt, sampleIndex, sample(sampleIndex).bc_buff, topVariantAlleleGroup, *locusPtr);
+                _opt, _dopt, topVariantAlleleGroup, sampleIndex, sample(sampleIndex).bc_buff, *locusPtr);
         }
 
         // add sample-independent info:

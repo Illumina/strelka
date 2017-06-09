@@ -139,7 +139,9 @@ struct AlleleSampleReportInfo
         return n_confident_alt_reads + n_confident_indel_reads + n_confident_ref_reads;
     }
 
+    /// Debugging printer
     void dump(std::ostream& os) const;
 };
 
+/// Debugging printer
 std::ostream& operator<<(std::ostream& os, const AlleleSampleReportInfo& obj);
