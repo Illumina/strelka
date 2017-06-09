@@ -1,3 +1,4 @@
+- STREL-596 Add missing data to pooled indel calls
 - STREL-586 Improve germline multi-sample calling runtime
 - STREL-576 Reduce demo installation size
 - STREL-579 Add filtered depth rates as somatic SNV EVS features

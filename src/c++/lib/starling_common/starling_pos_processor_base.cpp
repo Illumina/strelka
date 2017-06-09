@@ -309,7 +309,7 @@ resetActiveRegionDetector()
     for (unsigned sampleIndex(0); sampleIndex<getSampleCount(); ++sampleIndex)
     {
         _activeRegionDetector[sampleIndex].reset(
-                new ActiveRegionDetector(_ref, _indelBuffer, _opt.max_indel_size, sampleIndex)
+            new ActiveRegionDetector(_ref, _indelBuffer, _opt.max_indel_size, sampleIndex)
         );
     }
 }

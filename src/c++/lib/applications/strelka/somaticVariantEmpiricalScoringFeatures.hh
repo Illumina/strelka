@@ -86,10 +86,10 @@ struct SOMATIC_SNV_SCORING_FEATURES : public FeatureSet
             return "NormalSampleRelativeTotalLocusDepth";
         case AlleleCountLogOddsRatio:
             return "AlleleCountLogOddsRatio";
-	case NormalSampleFilteredDepthFraction:
-	  return "NormalSampleFilteredDepthFraction";
+        case NormalSampleFilteredDepthFraction:
+            return "NormalSampleFilteredDepthFraction";
         case TumorSampleFilteredDepthFraction:
-	  return "TumorSampleFilteredDepthFraction";
+            return "TumorSampleFilteredDepthFraction";
         default:
             assert(false && "Unknown feature");
             return nullptr;
