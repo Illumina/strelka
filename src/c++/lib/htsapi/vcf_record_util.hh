@@ -24,6 +24,9 @@
 
 
 /// Return true if the vcf record REF field matches the given reference
+///
+/// Matching the reference means that each base in the VCF reference either matches that in the reference, or the
+/// reference contains an 'N'.
 bool
 isExpectedVcfReference(
     const reference_contig_segment& ref,

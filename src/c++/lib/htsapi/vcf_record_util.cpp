@@ -31,10 +31,10 @@ isExpectedVcfReference(
     const unsigned vcfRefSize(vcfRecord.ref.size());
     for (unsigned vcfRefIndex(0); vcfRefIndex < vcfRefSize; ++vcfRefIndex)
     {
-        if (vcfRecord.ref[vcfRefIndex] != ref.get_base(vcfRecord.pos - 1 + vcfRefIndex))
-        {
-            return false;
-        }
+        const char refBase(ref.get_base(vcfRecord.pos - 1 + vcfRefIndex));
+        if (refBase == 'N') continue;
+        if (refBase == vcfRecord.ref[vcfRefIndex]) continue;
+        return false;
     }
 
     return true;
