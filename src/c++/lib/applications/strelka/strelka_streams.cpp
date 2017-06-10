@@ -64,8 +64,6 @@ write_shared_vcf_header_info(
         {
             std::ostringstream oss;
             oss << "Locus depth is greater than " << opt.max_depth_factor << "x the mean chromosome depth in the normal sample";
-            //oss << "Greater than " << opt.max_depth_factor << "x chromosomal mean depth in Normal sample
-
             write_vcf_filter(os,get_label(HighDepth),oss.str().c_str());
         }
 
@@ -79,6 +77,22 @@ write_shared_vcf_header_info(
             os << "##Depth_" << chrom << '=' << expectedDepth << "\n";
         }
     }
+}
+
+
+
+static
+void
+writeLowEVSFilter(
+    std::ofstream& fos,
+    const strelka_options& opt,
+    const VariantScoringModelServer& varModel,
+    const char* label)
+{
+    const double threshold(varModel.scoreFilterThreshold());
+    std::ostringstream oss;
+    oss << "Somatic Empirical Variant Score (" << opt.SomaticEVSVcfInfoTag << ") is less than " << threshold;
+    write_vcf_filter(fos, label, oss.str().c_str());
 }
 
 
@@ -168,15 +182,8 @@ strelka_streams(
                 using namespace SOMATIC_VARIANT_VCF_FILTERS;
                 if (isUseEVS)
                 {
-                    {
-                        std::ostringstream oss;
-
-                        // Currently the lowEVS filter is shared btw. indels and snvs. For the header
-                        // we report the cut-off value from the SNV currently
-                        const VariantScoringModelServer& varModel(*dopt.somaticSnvScoringModel);
-                        oss << "Somatic Empirical Variant Score (" << opt.SomaticEVSVcfInfoTag << ") is less than " << varModel.scoreFilterThreshold();
-                        write_vcf_filter(fos, get_label(LowEVSsnv), oss.str().c_str());
-                    }
+		    assert(dopt.somaticSnvScoringModel);
+		    writeLowEVSFilter(fos, opt, *dopt.somaticSnvScoringModel, get_label(LowEVSsnv));
                 }
                 else
                 {
@@ -292,15 +299,8 @@ strelka_streams(
                 using namespace SOMATIC_VARIANT_VCF_FILTERS;
                 if (isUseEVS)
                 {
-                    {
-                        assert(dopt.somaticIndelScoringModel);
-                        const VariantScoringModelServer& varModel(*dopt.somaticIndelScoringModel);
-                        const double threshold(varModel.scoreFilterThreshold());
-
-                        std::ostringstream oss;
-                        oss << "Somatic Empirical Variant Score (" << opt.SomaticEVSVcfInfoTag << ") is less than " << threshold;
-                        write_vcf_filter(fos, get_label(LowEVSindel), oss.str().c_str());
-                    }
+		    assert(dopt.somaticIndelScoringModel);
+		    writeLowEVSFilter(fos, opt, *dopt.somaticIndelScoringModel, get_label(LowEVSindel));
                 }
                 else
                 {
@@ -317,7 +317,7 @@ strelka_streams(
                 }
             }
 
-            // for indels only, we temporarily keep using the highdepth filter while EVS is on, so we need
+            // for indels only, we keep using the highdepth filter while EVS is on, so we need
             // to add this into the header too:
             const bool isPrintRuleFilters(true);
             write_shared_vcf_header_info(opt.sfilter, dopt.sfilter, isPrintRuleFilters, fos);
