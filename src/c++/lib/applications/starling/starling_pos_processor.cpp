@@ -1114,11 +1114,56 @@ static unsigned getCommonPrefixLength(
 
 
 
+/// Get various indel stats from the pileup
+static
+void
+addIndelSamplePileupInfo(
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    const pos_basecall_buffer& basecallBuffer,
+    const GermlineIndelLocusInfo& locus,
+    GermlineIndelSampleInfo& indelSampleInfo)
+{
+    const auto& range(locus.range());
+    pos_t pileupPos(range.begin_pos()-1);
+    const IndelKey& indelKey0(alleleGroup.key(0));
+    if (indelKey0.type == INDEL::BP_RIGHT) pileupPos=range.end_pos();
+    const snp_pos_info& spi(basecallBuffer.get_pos(pileupPos));
+    indelSampleInfo.tier1Depth=spi.calls.size();
+    indelSampleInfo.mapqTracker=spi.mapqTracker;
+}
+
+
+
+/// Add misc sample info from legacy sample indel report
+static
+void
+addIndelSampleLegacyInfo(
+    const starling_base_options& opt,
+    const starling_deriv_options& dopt,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    const unsigned sampleIndex,
+    const pos_basecall_buffer& basecallBuffer,
+    const bool isUseAltIndel,
+    GermlineIndelSampleInfo& indelSampleInfo)
+{
+    static const bool isUseTier2Data(false);
+
+    /// TODO STREL-125 legacy structure assumes single indel allele, get rid of this....
+    const IndelKey& indelKey(alleleGroup.key(0));
+    const IndelData& indelData(alleleGroup.data(0));
+    const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
+
+    getAlleleSampleReportInfo(opt, dopt, indelKey, indelSampleData, basecallBuffer, isUseTier2Data,
+                              isUseAltIndel, indelSampleInfo.legacyReportInfo);
+}
+
+
+
 /// Populate the indelSampleInfo object and add it to locus
 ///
 /// This covers the update for both diploid/haploid and continuous calling models
 ///
-/// \param[in] is_use_alt_indel If true, account for indels other than indelKey while computing indel posteriors.
+/// \param[in] isUseAltIndel If true, account for indels other than indelKey while computing indel posteriors
 static
 void
 updateIndelSampleInfo(
@@ -1127,34 +1172,13 @@ updateIndelSampleInfo(
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     const unsigned sampleIndex,
     const pos_basecall_buffer& basecallBuffer,
-    const bool is_use_alt_indel,
+    const bool isUseAltIndel,
     GermlineIndelLocusInfo& locus)
 {
     GermlineIndelSampleInfo indelSampleInfo;
 
-    // get various indel stats from the pileup:
-    {
-        const auto& range(locus.range());
-        pos_t pileupPos(range.begin_pos()-1);
-        const IndelKey& indelKey0(alleleGroup.key(0));
-        if (indelKey0.type == INDEL::BP_RIGHT) pileupPos=range.end_pos();
-        const snp_pos_info& spi(basecallBuffer.get_pos(pileupPos));
-        indelSampleInfo.tier1Depth=spi.calls.size();
-        indelSampleInfo.mapqTracker=spi.mapqTracker;
-    }
-
-    // add misc sample info from legacy sample indel report:
-    {
-        static const bool is_tier2_pass(false);
-
-        /// TODO STREL-125 legacy structure assumes single indel allele, get rid of this....
-        const IndelKey& indelKey(alleleGroup.key(0));
-        const IndelData& indelData(alleleGroup.data(0));
-        const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
-
-        getAlleleSampleReportInfo(opt, dopt, indelKey, indelSampleData, basecallBuffer, is_tier2_pass,
-                                  is_use_alt_indel, indelSampleInfo.legacyReportInfo);
-    }
+    addIndelSamplePileupInfo(alleleGroup, basecallBuffer, locus, indelSampleInfo);
+    addIndelSampleLegacyInfo(opt, dopt, alleleGroup, sampleIndex, basecallBuffer, isUseAltIndel, indelSampleInfo);
 
     locus.setIndelSampleInfo(sampleIndex, indelSampleInfo);
 }

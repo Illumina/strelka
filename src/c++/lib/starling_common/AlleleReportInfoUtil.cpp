@@ -298,8 +298,8 @@ getAlleleSampleReportInfo(
     const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
     const pos_basecall_buffer& bc_buff,
-    const bool is_tier2_pass,
-    const bool is_use_alt_indel,
+    const bool isUseTier2Data,
+    const bool isUseAltIndel,
     AlleleSampleReportInfo& isri)
 {
     // get read info:
@@ -311,9 +311,9 @@ getAlleleSampleReportInfo(
             const ReadPathScores& path_lnp(val.second);
 
             // optionally skip tier2 data:
-            if ((! is_tier2_pass) && (! path_lnp.is_tier1_read)) continue;
+            if ((! isUseTier2Data) && (! path_lnp.is_tier1_read)) continue;
 
-            const ReadPathScores pprob(indel_lnp_to_pprob(dopt,path_lnp,is_tier2_pass,is_use_alt_indel));
+            const ReadPathScores pprob(indel_lnp_to_pprob(dopt, path_lnp, isUseTier2Data, isUseAltIndel));
 
             const unsigned usableReadPos(std::max(0,static_cast<int>(path_lnp.read_pos)));
             if       (pprob.ref >= opt.readConfidentSupportThreshold.numval())
@@ -400,7 +400,7 @@ getAlleleSampleReportInfo(
         const unsigned n_suboverlap_tier1_reads(indelSampleData.suboverlap_tier1_read_ids.size());
         isri.n_other_reads = (n_subscore_reads+n_suboverlap_tier1_reads);
 
-        if (is_tier2_pass)
+        if (isUseTier2Data)
         {
             const unsigned n_suboverlap_tier2_reads(indelSampleData.suboverlap_tier2_read_ids.size());
             isri.n_other_reads += n_suboverlap_tier2_reads;

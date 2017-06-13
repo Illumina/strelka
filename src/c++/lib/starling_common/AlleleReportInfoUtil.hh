@@ -63,10 +63,11 @@ struct pos_basecall_buffer;
 /// Compute the (now legacy) AlleleSampleReportInfo data structure values for a specific indel and sample
 ///
 /// The principal reason this structure is outdated is that it is designed in an allele, rather than locus
-/// specific fasion. It does not fully support overlapping alleles directly (althought there is some indirect
+/// specific fashion. It does not fully support overlapping alleles directly (although there is some indirect
 /// support)
 ///
-/// \param[in] is_use_alt_indel If true, account for indels other than indelKey while computing indel posteriors.
+/// \param[in] isUseTier2Data If true, include tier2 data while updating indel posteriors, otherwise only tier1 is used
+/// \param[in] isUseAltIndel If true, account for indels other than indelKey while computing indel posteriors
 void
 getAlleleSampleReportInfo(
     const starling_base_options& opt,
@@ -74,6 +75,6 @@ getAlleleSampleReportInfo(
     const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
     const pos_basecall_buffer& bc_buff,
-    const bool is_include_tier2,
-    const bool is_use_alt_indel,
+    const bool isUseTier2Data,
+    const bool isUseAltIndel,
     AlleleSampleReportInfo& isri);
