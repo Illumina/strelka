@@ -183,9 +183,12 @@ struct starling_base_options : public blt_options
     /// the minimum allele frequency to call a heterozygous genotype when not assuming ploidy
     double min_het_vf = 0.01;
 
-    /// average quality used for the purpose of computing q-score in mito:
-    int continuousSiteCallerAverageQuality = 17;
+    /// Expected allele observation quality used for the purpose of computing
+    /// continuous frequency caller variant qualities
+    const int continuousFrequencyCallerExpectedObservationQuality = 17;
 
+    /// Maximum continuous frequency caller variant qscore
+    const int continuousFrequencyCallerMaxQscore = 40;
 
     //------------------------------------------------------
 

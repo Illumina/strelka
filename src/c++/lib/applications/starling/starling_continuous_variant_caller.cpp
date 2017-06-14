@@ -26,24 +26,58 @@
 
 
 
-static double AssignPValue(unsigned observedCallCount, unsigned coverage, unsigned estimatedBaseCallQuality)
+/// Get the probability that 'allele' can be explained as sequencing error under a simple Poisson error model
+///
+/// \param[in] alleleObservationCount Observation count of the allele in question
+/// \param[in] totalObservationCount Observation count of all alleles
+/// \param[in] expectedObservationQscore Approximate that all observations have the same error probability given by
+///                                       this value (expressed as a phred-scaled quality score)
+///
+/// \return Probability that 'allele' observations are due to sequencing error
+static
+double
+getAlleleSequencingErrorProb(
+    const unsigned alleleObservationCount,
+    const unsigned totalObservationCount,
+    const int expectedObservationQscore)
 {
-    if (observedCallCount == 0)
+    if (alleleObservationCount == 0)
         return 1.0;
 
-    const double errorRate = qphred_to_error_prob(estimatedBaseCallQuality);
-    return (boost::math::gamma_p(observedCallCount, coverage * errorRate));
+    const double expectedObservationErrorRate(qphred_to_error_prob(expectedObservationQscore));
+
+    // Expected error count assuming no variant allele is present (poisson \lambda parameter)
+    const double expectedObservationErrorCount(totalObservationCount * expectedObservationErrorRate);
+
+    // Return the probability that an allele observation count of 'alleleObservationCount' or higher is due
+    // to sequencing error.
+    //
+    // Note that gamma_p is being used here to compute the Poisson CDF complement (q) according to:
+    // q = gamma_p(k+1, \lambda)
+    //
+    return (boost::math::gamma_p(alleleObservationCount, expectedObservationErrorCount));
 }
 
 
 
 int
 starling_continuous_variant_caller::
-poisson_qscore(unsigned callCount, unsigned coverage, unsigned estimatedBaseCallQuality, int maxQScore)
+getAlleleSequencingErrorQscore(
+    const unsigned alleleObservationCount,
+    const unsigned totalObservationCount,
+    const int expectedObservationQscore,
+    const int maxQScore)
 {
-    double pValue = AssignPValue(callCount, coverage, estimatedBaseCallQuality);
-    if (pValue <= 0) return maxQScore;
-    return std::min(maxQScore, error_prob_to_qphred(pValue));
+    /// TODO: enable this assertion to be safely added in production
+    // assert(alleleObservationCount <= totalObservationCount);
+
+    // When alleleObservationCount is an alternate allele (and the only alternate allele), alleleErrorProb is the same
+    // as the probability that the locus is non-variant
+    double alleleErrorProb = getAlleleSequencingErrorProb(
+        alleleObservationCount, totalObservationCount, expectedObservationQscore);
+
+    if (alleleErrorProb <= 0) return maxQScore;
+    return std::min(maxQScore, error_prob_to_qphred(alleleErrorProb));
 }
 
 

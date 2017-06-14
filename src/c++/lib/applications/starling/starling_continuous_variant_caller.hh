@@ -22,11 +22,24 @@
 
 struct starling_continuous_variant_caller
 {
+    /// Get the quality score of the assertion that 'allele' can be explained as sequencing error under
+    /// a simple Poisson error model
+    ///
+    /// \param[in] alleleObservationCount Observation count of the allele in question
+    /// \param[in] totalObservationCount Observation count of all alleles
+    /// \param[in] expectedObservationQscore Approximate that all observations have the same error probability given by
+    ///                                       this value (expressed as a phred-scaled quality score)
+    ///
+    /// \return Quality score asserting that 'allele' observations are due to sequencing error
     static
     int
-    poisson_qscore(unsigned callCount, unsigned coverage, unsigned estimatedBaseCallQuality, int maxQScore);
+    getAlleleSequencingErrorQscore(
+        const unsigned alleleObservationCount,
+        const unsigned totalObservationCount,
+        const int expectedObservationQscore,
+        const int maxQScore);
 
-    /// return log likelihood ratio of the variants on either strand over both strands
+    /// Return log likelihood ratio of the variants on either strand over both strands
     static
     double
     strandBias(
