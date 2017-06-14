@@ -258,8 +258,18 @@ default_classify_site(
     GermlineSiteLocusInfo& locus) const
 {
     LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
+
     if (sampleInfo.max_gt().isVariant())
     {
+        // hard filter to prevent PASS calls with low DP or AD sum
+        // manually set gqx = 0 if DP or AD sum is below a threshold
+        const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
+        if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minDepth)
+            || (siteSampleInfo.n_used_calls < _opt.minDepth))
+        {
+            sampleInfo.gqx = 0;
+        }
+
         if (_opt.is_min_gqx)
         {
             if (sampleInfo.gqx < _opt.min_gqx) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
@@ -334,6 +344,15 @@ default_classify_indel(
     GermlineIndelLocusInfo& locus) const
 {
     LocusSampleInfo& sampleInfo(locus.getSample(sampleIndex));
+
+    // hard filter to prevent PASS calls with low AD sum
+    // manually set gqx = 0 if DPI or AD sum is below a threshold
+    const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
+    if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minDepth)
+        || (indelSampleInfo.tier1Depth < _opt.minDepth))
+    {
+        sampleInfo.gqx = 0;
+    }
 
     if (_opt.is_min_gqx)
     {

@@ -1,3 +1,4 @@
+- STREL-597 Add low depth filter when EVS is off
 - STREL-596 Add missing data to pooled indel calls
 - STREL-586 Improve germline multi-sample calling runtime
 - STREL-576 Reduce demo installation size
