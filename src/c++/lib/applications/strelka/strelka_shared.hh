@@ -55,7 +55,7 @@ struct somatic_filter_options
     double snvMinEVS = 20.0;
 
     /// EVS is set to 0 if the tumor tier 1 depth is below this value
-    unsigned minDepth = 2u;
+    unsigned minPassedCallDepth = 2u;
 };
 
 

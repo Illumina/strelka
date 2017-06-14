@@ -49,6 +49,7 @@ enum index_t
     LowEVSindel,
     IndelBCNoise,
     QSI_ref,
+    LowDepth,
     SIZE
 };
 
@@ -74,6 +75,8 @@ get_label(const unsigned idx)
         return "QSI_ref";
     case LowEVSindel:
         return "LowEVS";
+    case LowDepth:
+        return "LowDepth";
     default:
         assert(false && "Unknown vcf filter id");
         return nullptr;

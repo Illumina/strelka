@@ -338,19 +338,18 @@ write_vcf_somatic_snv_genotype_strand_grid(
             const VariantScoringModelServer& varModel(*dopt.somaticSnvScoringModel);
             updateAlleleEVSScore(varModel, rs, smod);
 
-            // hard filter to prevent PASS calls with low tumor depths
-            // manually set EVS = 0 if tier 1 tumor depth is below a threshold
-            if (t1_epd.n_calls() < opt.sfilter.minDepth)
-            {
-                smod.EVS = 0;
-            }
-
             smod.filters.clear();
 
             if (smod.EVS < varModel.scoreFilterThreshold())
             {
                 smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::LowEVSsnv);
             }
+        }
+
+        // set LowDepth filter if tier 1 tumor depth is below a threshold
+        if (t1_epd.n_calls() < opt.sfilter.minPassedCallDepth)
+        {
+            smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::LowDepth);
         }
     }
 

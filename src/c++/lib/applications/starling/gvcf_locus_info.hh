@@ -55,6 +55,7 @@ enum index_t
     HighSNVSB,
     HighSNVHPOL,
     HighRefRep,
+    LowDepth,
     SIZE
 };
 
@@ -84,6 +85,8 @@ get_label(const unsigned idx)
         return "SiteConflict";
     case PloidyConflict:
         return "PloidyConflict";
+    case LowDepth:
+        return "LowDepth";
     default:
         assert(false && "Unknown VCF filter value");
         return nullptr;
