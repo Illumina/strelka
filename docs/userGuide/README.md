@@ -106,20 +106,34 @@ to support case/control or population analysis.
 
 ## Input requirements
 
+### Sequencing Data
+
 The input sequencing reads are expected to come from a paired-end sequencing assay.
-Any non-paired reads in the input are ignored by default except to double-check
-for putative somatic variant evidence in the normal sample.
+Any input other than paired-end reads are ignored by default except to double-check
+for putative somatic variant evidence in the normal sample during somatic variant analysis.
+Read lengths above ~400 bases are not tested.
 
-Strelka requires input sequencing reads to be mapped by an external tool and
-provided as input in BAM or CRAM format.
+### Alignment Files
 
-The following limitations apply to the BAM/CRAM alignment records which can be used as input:
+All input sequencing reads should be mapped by an external tool and provided as input in
+BAM or CRAM format.
+
+The following limitations apply to the input BAM/CRAM alignment records:
 
 * Alignments cannot contain the "=" character in the SEQ field.
 * RG (read group) tags are ignored -- each alignment file must represent one
   sample.
-* Alignments with basecall quality values greater than 70 are rejected (these
+* Alignments with basecall quality values greater than 70 will trigger a runtime error (these
   are not supported on the assumption that this indicates an offset error)
+
+### VCF Files
+
+Input VCFs files are accepted for a number of roles as described below. All input VCF records are checked for
+compatibility with the given reference genome, in additional to role-specific checks described below. If any
+VCF record's REF field is not compatible with the reference genome a runtime error will be triggered.
+"Compatible with the reference genome" means that each VCF record's REF base either (1) matches the corresponding
+reference genome base or the VCF record's REF base is 'N' or the reference genome base is any ambiguous IUPAC base code
+(all ambiguous base codes are converted to 'N' while importing the reference).
 
 ## Outputs
 
@@ -274,7 +288,7 @@ realignment and genotyping steps, but will not be output unless the indel allele
 This is a useful mechanism to supply Strelka with larger indels (ie. larger than can be found by the read mapper),
 or to provide population variants.
 
-Any candidate indel record which is not left-normalized will be skipped with a warning. Any candidate indel record where the REF field is not consistent with the corresponding reference sequence will trigger a runtime error. Consistency with the reference means that each vcf REF base either matches the reference or the reference base is ambiguous.
+In addition to [standard input VCF checks](#vcf-files), any candidate indel record which is not left-normalized will be skipped with a warning.
 
 Multiple candidate indel VCFs may be submitted to the workflow (e.g. `--indelCandidates cand1.vcf.gz --indelCandidates cand2.vcf.gz ...`). All input VCFs must be bgzip compressed and tabix-indexed.
 
@@ -282,7 +296,7 @@ Multiple candidate indel VCFs may be submitted to the workflow (e.g. `--indelCan
 
 One or more forced genotype VCFs can be provided to any Strelka workflow with the `--forcedGT` configuration option.  Any indel allele provided in this way will be treated as a candidate (per the `--indelCandidates` option above), and additionally must appear in the output VCF, even when there is no support for the allele in the input samples. Be aware that in certain cases where the forced allele overlaps another called allele, the forced allele may appear in the output on a VCF record with a different position and/or an additional prefix/suffix added to the REF and ALT fields compared to the allele description in the VCF input. Any SNV listed in the forced genotype VCF will prevent the corresponding site form being compressed into a homozygous reference block and ensure that a VCF site record is output for the given position, but will not provide any special treatment of the alternate base(s) listed in the VCF.
 
-Any forced genotype variant record which is not left-normalized will trigger a runtime error. Any variant record where the REF field is not consistent with the corresponding reference sequence will trigger a runtime error. Consistency with the reference means that each vcf REF base either matches the reference or the reference base is ambiguous.
+In addition to [standard input VCF checks](#vcf-files), any forced genotype variant record which is not left-normalized will trigger a runtime error.
 
 Multiple forced genotype VCFs may be submitted to the workflow (e.g. `--forcedGT fgt1.vcf.gz --forcedGT fgt2.vcf.gz ...`). All input VCFs must be bgzip compressed and tabix-indexed.
 
@@ -326,7 +340,7 @@ information for all input samples in VCF format using the `FORMAT/CN` tag to rec
 
 The span over which the copy number from each VCF record is applied is:  `[POS+1, INFO/END]`.
 
-Strelka does not read any fields besides `CHROM`, `POS`, `ALT`, `INFO/END` and `FORMAT/CN`, so a ploidy specific record could be further simplified if desired, e.g:
+Strelka does not require any fields besides `CHROM`, `POS`, `ALT`, `INFO/END` and `FORMAT/CN`, so a ploidy specific record could be further simplified if desired, e.g:
 
     chrY    0   .   .   <CNV>   .   .    END=57227415    CN  1   0   1
 

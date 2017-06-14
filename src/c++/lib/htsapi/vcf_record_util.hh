@@ -23,10 +23,10 @@
 #include "blt_util/reference_contig_segment.hh"
 
 
-/// Return true if the vcf record REF field matches the given reference
+/// Return true if the vcf record REF field is compatible with the given reference
 ///
-/// Matching the reference means that each base in the VCF reference either matches that in the reference, or the
-/// reference contains an 'N'.
+/// "Compatible with the reference" means that each base in the VCF REF field either matches that in the reference, or
+/// the VCF REF base is 'N' or the reference base is 'N'.
 bool
 isExpectedVcfReference(
     const reference_contig_segment& ref,

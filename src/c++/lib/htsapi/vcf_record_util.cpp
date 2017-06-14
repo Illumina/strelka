@@ -31,9 +31,10 @@ isExpectedVcfReference(
     const unsigned vcfRefSize(vcfRecord.ref.size());
     for (unsigned vcfRefIndex(0); vcfRefIndex < vcfRefSize; ++vcfRefIndex)
     {
-        const char refBase(ref.get_base(vcfRecord.pos - 1 + vcfRefIndex));
-        if (refBase == 'N') continue;
-        if (refBase == vcfRecord.ref[vcfRefIndex]) continue;
+        const char fastaRefBase(ref.get_base(vcfRecord.pos - 1 + vcfRefIndex));
+        const char vcfRefBase(vcfRecord.ref[vcfRefIndex]);
+        if (fastaRefBase == vcfRefBase) continue;
+        if ((fastaRefBase == 'N') || (vcfRefBase == 'N')) continue;
         return false;
     }
 
@@ -57,10 +58,10 @@ assertExpectedVcfReference(
     ref.get_substring(vcfRecord.pos-1, vcfRecord.ref.size(), fastaReferenceSegment);
 
     std::ostringstream oss;
-    oss << "Reference field in input VCF record does not match genome reference:\n";
+    oss << "Input VCF record REF value is not compatible with genome reference:\n";
     vcfStreamer.report_state(oss);
     oss << "Genome reference: '" << fastaReferenceSegment << "'\n";
-    oss << "VCF reference:    '" << vcfRecord.ref << "'\n";
-    oss << "Please ensure that the VCF you are using comes from the appropriate reference genome\n";
+    oss << "VCF record REF value:    '" << vcfRecord.ref << "'\n";
+    oss << "Please ensure that the input VCF comes from the appropriate reference genome\n";
     BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
 }
