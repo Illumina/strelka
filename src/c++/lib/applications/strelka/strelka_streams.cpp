@@ -182,8 +182,8 @@ strelka_streams(
                 using namespace SOMATIC_VARIANT_VCF_FILTERS;
                 if (isUseEVS)
                 {
-		    assert(dopt.somaticSnvScoringModel);
-		    writeLowEVSFilter(fos, opt, *dopt.somaticSnvScoringModel, get_label(LowEVSsnv));
+                    assert(dopt.somaticSnvScoringModel);
+                    writeLowEVSFilter(fos, opt, *dopt.somaticSnvScoringModel, get_label(LowEVSsnv));
                 }
                 else
                 {
@@ -299,8 +299,8 @@ strelka_streams(
                 using namespace SOMATIC_VARIANT_VCF_FILTERS;
                 if (isUseEVS)
                 {
-		    assert(dopt.somaticIndelScoringModel);
-		    writeLowEVSFilter(fos, opt, *dopt.somaticIndelScoringModel, get_label(LowEVSindel));
+                    assert(dopt.somaticIndelScoringModel);
+                    writeLowEVSFilter(fos, opt, *dopt.somaticIndelScoringModel, get_label(LowEVSindel));
                 }
                 else
                 {
