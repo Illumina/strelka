@@ -105,7 +105,7 @@ add_gvcf_filters(
     if (opt.is_low_depth)
     {
         std::ostringstream oss;
-        oss << "Locus read depth is below " << opt.minPassedCallDepth;
+        oss << "Locus depth is below " << opt.minPassedCallDepth;
         write_vcf_filter(os,get_label(LowDepth),oss.str().c_str());
     }
 

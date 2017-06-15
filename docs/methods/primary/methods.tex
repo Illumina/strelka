@@ -390,6 +390,11 @@ Somatic datasets include simulated tumor-normal pairs from the Platinum Genomes 
 
 The output scores produced by the random forest classifier are transformed to phred-scale and calibrated by passing the resulting quality values through a linear transform estimated by regressing binned empirical quality onto predicted quality. Finally, variant filter labels are assigned based on thresholds that have been selected to achieve a reasonable tradeoff across multiple datasets.
 
+\paragraph{Hard-filter applied when the read depth is low}
+For germline site loci, read depths are calculated from base calls used for site genotyping. For germline indel loci, read depths are taken from the read depths of the sites preceding the indels. For all loci with read depths below 3, (variant or homozygous reference) genotype calls are supplemented with a LowDepth filter. For variant loci, allelic depths for the reference and alternative alleles are additionally considered. If the sum of the allelec depths is below 3, variant calls are supplemented with a LowDepth filter.
+
+For somatic variants, tumor sample read depths are calculated for SNVs and indels in a similar way. If read depths are below 2, somatic variant calls are supplemented with a LowDepth filter.
+
 \paragraph{Hard-filters applied when the EVS model is used}
 
 When the EVS model is used, most variants are filtered based on the score computed by the random forest model. In some cases this score is supplemented with additional hard filters.
