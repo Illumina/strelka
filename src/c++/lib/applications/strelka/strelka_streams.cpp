@@ -205,7 +205,7 @@ strelka_streams(
                 }
                 {
                     std::ostringstream oss;
-                    oss << "Tumor sample read depth at this site is below " << opt.sfilter.minPassedCallDepth;
+                    oss << "Tumor sample read depth at this locus is below " << opt.sfilter.minPassedCallDepth;
                     write_vcf_filter(fos, get_label(LowDepth), oss.str().c_str());
                 }
             }
@@ -323,7 +323,7 @@ strelka_streams(
                 //
                 {
                     std::ostringstream oss;
-                    oss << "Tumor sample read depth associated with this indel is below " << opt.sfilter.minPassedCallDepth;
+                    oss << "Tumor sample read depth at this locus is below " << opt.sfilter.minPassedCallDepth;
                     write_vcf_filter(fos, get_label(LowDepth), oss.str().c_str());
                 }
             }

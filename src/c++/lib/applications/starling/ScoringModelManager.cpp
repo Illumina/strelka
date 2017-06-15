@@ -163,18 +163,15 @@ classify_site(
     }
 
     // set LowDepth filter if DP or AD sum is below a threshold
-    if (_opt.is_low_depth)
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
-        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
-        {
-            const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
-            auto& sampleInfo(locus.getSample(sampleIndex));
+        const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
+        auto& sampleInfo(locus.getSample(sampleIndex));
 
-            if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minPassedCallDepth)
-                || (siteSampleInfo.n_used_calls < _opt.minPassedCallDepth))
-            {
-                sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowDepth);
-            }
+        if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minPassedCallDepth)
+            || (siteSampleInfo.n_used_calls < _opt.minPassedCallDepth))
+        {
+            sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowDepth);
         }
     }
 }
@@ -246,17 +243,14 @@ classify_indel(
     }
 
     // set LowDepth filter if DPI or AD sum is below a threshold
-    if (_opt.is_low_depth)
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
-        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
+        auto& sampleInfo(locus.getSample(sampleIndex));
+        if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minPassedCallDepth)
+            || (indelSampleInfo.tier1Depth < _opt.minPassedCallDepth))
         {
-            const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
-            auto& sampleInfo(locus.getSample(sampleIndex));
-            if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minPassedCallDepth)
-                || (indelSampleInfo.tier1Depth < _opt.minPassedCallDepth))
-            {
-                sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowDepth);
-            }
+            sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowDepth);
         }
     }
 }

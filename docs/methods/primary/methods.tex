@@ -390,16 +390,13 @@ Somatic datasets include simulated tumor-normal pairs from the Platinum Genomes 
 
 The output scores produced by the random forest classifier are transformed to phred-scale and calibrated by passing the resulting quality values through a linear transform estimated by regressing binned empirical quality onto predicted quality. Finally, variant filter labels are assigned based on thresholds that have been selected to achieve a reasonable tradeoff across multiple datasets.
 
-\paragraph{Hard-filter applied when the read depth is low}
-For germline site loci, read depths are calculated from base calls used for site genotyping. For germline indel loci, read depths are taken from the read depths of the sites preceding the indels. For all loci with read depths below 3, (variant or homozygous reference) genotype calls are supplemented with a LowDepth filter. For variant loci, allelic depths for the reference and alternative alleles are additionally considered. If the sum of the allelec depths is below 3, variant calls are supplemented with a LowDepth filter.
-
-For somatic variants, tumor sample read depths are calculated for SNVs and indels in a similar way. If read depths are below 2, somatic variant calls are supplemented with a LowDepth filter.
-
 \paragraph{Hard-filters applied when the EVS model is used}
 
 When the EVS model is used, most variants are filtered based on the score computed by the random forest model. In some cases this score is supplemented with additional hard filters.
 
-For somatic indels, the following filter is added:
+One such example is a LowDepth filter which is applied to all germline and somatic calls. For germline site calls, read depths are calculated from base calls used for site genotyping. For germline indel loci, read depths are taken from the depths of the sites preceding the indels. If read depths are below 3, genotype calls are supplemented with a LowDepth filter. For variant calls in particular, allelic depths for the reference and alternative alleles are additionally considered. If the sum of the allelec depths is below 3, the associated variant calls are supplemented with a LowDepth filter. For somatic variants, tumor sample read depths are calculated for SNVs and indels in a similar way. If tumor depths are below 2, associated somatic variant calls are supplemented with a LowDepth filter.  
+
+In addition to the LowDepth filter, for somatic indels, the following filter is added:
 
 \begin{itemize}
     \item \texttt{NormalSampleRelativeTotalLocusDepth} ~ variant is filtered if this value is greater than 3
@@ -494,7 +491,9 @@ Features used in each model are listed here and definitions are provided further
 
 In this case a set of filters is defined. Each filter is triggered when a single feature exceeds some critical value. Filtration thresholds are set to remove variants which are very likely to be incorrect.
 
-The hard filter model is used whenever EVS cannot be, in particular this is the method used to filter germline homozygous reference calls. The EVS model may be turned off for all variants whenever the assay conditions are suspected to poorly match the EVS models training conditions, in which case the hard filters will be used instead.
+The hard filter model is used whenever EVS cannot be, in particular this is the method used to filter germline homozygous reference calls. The EVS model may be turned off for all variants whenever the assay conditions are suspected to poorly match the EVS models training conditions, in which case the hard filters will be used instead. 
+
+The LowDepth filter mentioned above is applied to all germline and somatic calls. Additionally, the following filters are used depending on the variant type.
 
 \paragraph{Hard filter thresholds for germline model}
 

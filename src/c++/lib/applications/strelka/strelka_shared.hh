@@ -54,7 +54,7 @@ struct somatic_filter_options
     unsigned indelRegionFlankSize = 50;
     double snvMinEVS = 20.0;
 
-    /// EVS is set to 0 if the tumor tier 1 depth is below this value
+    /// LowDepth filter is added if the tumor tier 1 depth is below this value
     unsigned minPassedCallDepth = 2u;
 };
 

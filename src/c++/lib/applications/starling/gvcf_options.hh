@@ -67,9 +67,8 @@ struct gvcf_options
     bool is_max_snv_hpol = true;
     int max_snv_hpol = -1;
     int max_ref_rep = -1;
-    bool is_low_depth = true;
 
-    /// EVS is set to 0 if AD sum or DP/DPI is below this value
+    /// LowDepth filter is added if AD sum or DP/DPI is below this value
     unsigned minPassedCallDepth = 3u;
 
     // blocking scheme:
