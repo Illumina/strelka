@@ -102,6 +102,13 @@ add_gvcf_filters(
         }
     }
 
+    // Add low depth filter
+    {
+        std::ostringstream oss;
+        oss << "Locus depth is below " << opt.minPassedCallDepth;
+        write_vcf_filter(os,get_label(LowDepth),oss.str().c_str());
+    }
+
     // even if no ploidy bed file is provided, this filter should still exist, so I don't
     // see any reason to leave it in the header for all cases:
     write_vcf_filter(os,get_label(PloidyConflict),"Genotype call from variant caller not consistent with chromosome ploidy");

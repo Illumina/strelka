@@ -203,6 +203,11 @@ strelka_streams(
                         write_vcf_filter(fos, get_label(QSS_ref), oss.str().c_str());
                     }
                 }
+                {
+                    std::ostringstream oss;
+                    oss << "Tumor sample read depth at this locus is below " << opt.sfilter.minPassedCallDepth;
+                    write_vcf_filter(fos, get_label(LowDepth), oss.str().c_str());
+                }
             }
 
             write_shared_vcf_header_info(opt.sfilter, dopt.sfilter, (! isUseEVS), fos);
@@ -314,6 +319,12 @@ strelka_streams(
                         oss << "Normal sample is not homozygous ref or sindel Q-score < " << opt.sfilter.sindelQuality_LowerBound << ", ie calls with NT!=ref or QSI_NT < " << opt.sfilter.sindelQuality_LowerBound;
                         write_vcf_filter(fos, get_label(QSI_ref), oss.str().c_str());
                     }
+                }
+                //
+                {
+                    std::ostringstream oss;
+                    oss << "Tumor sample read depth at this locus is below " << opt.sfilter.minPassedCallDepth;
+                    write_vcf_filter(fos, get_label(LowDepth), oss.str().c_str());
                 }
             }
 
