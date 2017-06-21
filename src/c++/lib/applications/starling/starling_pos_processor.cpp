@@ -1579,9 +1579,11 @@ process_pos_indel_digt(const pos_t pos)
     const unsigned sampleCount(getSampleCount());
 
 
-    // Define groups of overlapping alleles to rank and then genotype.
+    // High-level summary of calling process:
     //
-    // overlapping alleles can be thought to form "conflict graphs", where an edge exists between two alleles
+    // The locus calling process requires that we define groups of overlapping alleles to rank and then genotype.
+    //
+    // Overlapping alleles can be thought to form "conflict graphs", where an edge exists between two alleles
     // which cannot exist together on the same haplotype (called orthogonal alleles below). Without phasing
     // information, we can only (accurately) genotype among sets of alleles forming a clique in the graph.
     //
@@ -1603,7 +1605,7 @@ process_pos_indel_digt(const pos_t pos)
     log_os << "ZEBRA pos/pos-alleles: " << pos << " " << orthogonalVariantAlleles << "\n";
 #endif
 
-    // determine ploidy for this locus in each sample
+    // Determine ploidy for this locus in each sample
     //
     std::vector<unsigned> groupLocusPloidy(sampleCount);
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
@@ -1618,10 +1620,11 @@ process_pos_indel_digt(const pos_t pos)
         groupLocusPloidy[sampleIndex]=std::max(groupLeftPloidy,groupRightPloidy);
     }
 
-    // groupLocusPloidy of 0 is treated as a special case, if this happens the
-    // entire calling method reverts to a ploidy of 2 for the sample, but the
-    // locus ploidy is passed into the gVCF writer as 0. The gVCF writer can
-    // decide what to do with this information from there.
+    // A groupLocusPloidy value of 0 is treated as a special case, if this happens the
+    // entire calling method reverts to a ploidy of 2 for the sample, as reflected in callerPloidy.
+    //
+    // The callerPloidy value will be used to generate the call information in this function,
+    // and the groupLocusPloidy will be passed downstream to the gVCF writer.
     //
     std::vector<unsigned> callerPloidy(sampleCount);
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
@@ -1636,12 +1639,12 @@ process_pos_indel_digt(const pos_t pos)
     // analyzing a locus positioned downstream. If so, skip ahead to handle the forced output alleles only:
     if (_variantLocusAlreadyOutputToPos <= pos)
     {
-        // track top alt allele within each sample -- this is used as a temporary crutch to transfer the previous prior
+        // Track the top alt allele within each sample -- this is used as a temporary crutch to transfer the previous prior
         // calculation from single to multi-sample, and should be removed when a mature prior scheme is put in place
         std::vector<unsigned> topVariantAlleleIndexPerSample(sampleCount);
 
-        // rank input alleles to pick the top N, N=ploidy, per sample, and aggregate/rank these
-        // over all samples
+        // Rank input alleles to pick the top N per sample, where N=ploidy, and then aggregate and rank the top
+        // per-sample alleles over all samples
         selectTopOrthogonalAllelesInAllSamples(
             sampleCount, callerPloidy, orthogonalVariantAlleles, topVariantAlleleGroup, topVariantAlleleIndexPerSample);
 
@@ -1649,9 +1652,9 @@ process_pos_indel_digt(const pos_t pos)
         log_os << "ZEBRA pos/ranked-pos-alleles: " << pos << " " << topVariantAlleleGroup << "\n";
 #endif
 
-        // At this point topVariantAlleleGroup represents the best alleles which
-        // start at the current position (over all samples). Now we add conflicting
-        // alleles at other positions and re-rank, re-select the top alleles again:
+        // At this point topVariantAlleleGroup represents the alleles starting at the current position
+        // which are best supported over all samples. Now we add conflicting alleles at other positions,
+        // re-rank, and re-select the top alleles from the expanded set of candidates.
         if (not topVariantAlleleGroup.empty())
         {
             addAllelesAtOtherPositions(_ref, sampleCount, callerPloidy, pos,
@@ -1665,7 +1668,9 @@ process_pos_indel_digt(const pos_t pos)
 
         if (isAlleleGroupReportable(pos, topVariantAlleleGroup))
         {
-            // genotype and report topVariantAlleleGroup
+            // The candidate variant alleles are eligible for reporting. At this point the alleles are
+            // genotyped for each sample, the genotyped locus is tested to see if it meets emission criteria,
+            // and if so, the locus information is pushed into the gVCF writer for reporting.
             //
 
             // parameter inputs if/when we wrap this as a function:
@@ -1676,7 +1681,8 @@ process_pos_indel_digt(const pos_t pos)
             std::unique_ptr<GermlineIndelLocusInfo> locusPtr(
                 new GermlineDiploidIndelLocusInfo(_dopt.gvcf, sampleCount));
 
-            // cycle through variant alleles and add them to locus (the locus interface requires that this is done first):
+            // cycle through variant alleles and add them to locus
+            // (the locus interface requires that this is done before any other locus information is added):
             addIndelAllelesToLocus(topVariantAlleleGroup, isForcedOutput, *locusPtr);
 
             // add sample-dependent info:
@@ -1706,7 +1712,7 @@ process_pos_indel_digt(const pos_t pos)
 
             if (isForcedOutput or locusPtr->isVariantLocus())
             {
-                // finished! send this locus down the pipe:
+                // The locus meets emisison criteria, so send it into the gVCF writer for reporting.
 
                 // expand the end range of the locus by one to represent adjacent indel interference, for instance a
                 // 1D at position 10 should block any indel at position 11
@@ -1759,8 +1765,7 @@ process_pos_indel_digt(const pos_t pos)
     // score and report any remaining forced output alleles
     //
     {
-        // track all forced output alleles in a separate group (even if they go into topVariant group)
-        // to ensure that these are output even if not included in the most likely genotype for any sample
+        // Add all forced output alleles found at the current position and not already reported.
         //
         OrthogonalVariantAlleleCandidateGroup forcedOutputAlleleGroup;
         {
