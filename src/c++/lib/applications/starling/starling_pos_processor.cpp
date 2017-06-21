@@ -1525,32 +1525,24 @@ isAlleleGroupReportable(
 
 
 
+/// Find all indel alleles at the current position which are either forced or viable candidates for
+/// variant calling.
+///
+/// \param[out] orthogonalVariantAlleles All alleles at this position which meet acceptance critieria
+static
 void
-starling_pos_processor::
-process_pos_indel_digt(const pos_t pos)
+getIndelAllelesAtPosition(
+    const IndelBuffer& indelBuffer,
+    const pos_t position,
+    OrthogonalVariantAlleleCandidateGroup& orthogonalVariantAlleles)
 {
-    const unsigned sampleCount(getSampleCount());
+    orthogonalVariantAlleles.clear();
 
-    auto it(getIndelBuffer().positionIterator(pos));
-    const auto it_end(getIndelBuffer().positionIterator(pos + 1));
+    const unsigned sampleCount(indelBuffer.getSampleCount());
 
-    // define groups of overlapping alleles to rank and then genotype.
-    //
-    // overlapping alleles can be thought to form "conflict graphs", where an edge exists between two alleles
-    // which cannot exist together on the same haplotype (called orthogonal alleles below). Without phasing
-    // information, we can only (accurately) genotype among sets of alleles forming a clique in the graph.
-    //
-    // Given above constraint, we first identify all candidates alleles with a start position at the current
-    // allele genotyper position (these form a clique by definition), and then greedily add the top-ranking
-    // overlapping alleles with different start positions if they preserve the orthogonal clique relationship
-    // of the set.
-    //
-    // Once we have the largest possible allele set, the reference is implicitly added and all alleles are
-    // ranked. The top N are kept, N= ploidy. The reference is restored for the genotyping process if it is not
-    // in the top N.
-    //
-    OrthogonalVariantAlleleCandidateGroup orthogonalVariantAlleles;
-    for (; it!=it_end; ++it)
+    auto it(indelBuffer.positionIterator(position));
+    const auto it_end(indelBuffer.positionIterator(position + 1));
+    for (; it != it_end; ++it)
     {
         const IndelKey& indelKey(it->first);
         const IndelData& indelData(getIndelData(it));
@@ -1573,12 +1565,41 @@ process_pos_indel_digt(const pos_t pos)
             }
 
             if (isZeroCoverage) continue;
-            if (not getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
+            if (not indelBuffer.isCandidateIndel(indelKey, indelData)) continue;
         }
 
-        // all alleles at the same position are automatically conflicting/orthogonal:
+        // All alleles at the same position are automatically conflicting/orthogonal,
+        // so they can be added to the orthogonal set without additional checks.
         orthogonalVariantAlleles.addVariantAllele(it);
     }
+}
+
+
+
+void
+starling_pos_processor::
+process_pos_indel_digt(const pos_t pos)
+{
+    const unsigned sampleCount(getSampleCount());
+
+
+    // Define groups of overlapping alleles to rank and then genotype.
+    //
+    // overlapping alleles can be thought to form "conflict graphs", where an edge exists between two alleles
+    // which cannot exist together on the same haplotype (called orthogonal alleles below). Without phasing
+    // information, we can only (accurately) genotype among sets of alleles forming a clique in the graph.
+    //
+    // Given above constraint, we first identify all candidates alleles with a start position at the current
+    // allele genotyper position (these form a clique by definition), and then greedily add the top-ranking
+    // overlapping alleles with different start positions if they preserve the orthogonal clique relationship
+    // of the set.
+    //
+    // Once we have the largest possible allele set, the reference is implicitly added and all alleles are
+    // ranked. The top N are kept, N= ploidy. The reference is restored for the genotyping process if it is not
+    // in the top N.
+    //
+    OrthogonalVariantAlleleCandidateGroup orthogonalVariantAlleles;
+    getIndelAllelesAtPosition(getIndelBuffer(), pos, orthogonalVariantAlleles);
 
     if (orthogonalVariantAlleles.empty()) return;
 
@@ -1852,38 +1873,19 @@ process_pos_indel_continuous(const pos_t pos)
 {
     const unsigned sampleCount(getSampleCount());
 
-    auto it(getIndelBuffer().positionIterator(pos));
-    const auto it_end(getIndelBuffer().positionIterator(pos + 1));
-    for (; it!=it_end; ++it)
+    OrthogonalVariantAlleleCandidateGroup orthogonalVariantAlleles;
+    getIndelAllelesAtPosition(getIndelBuffer(), pos, orthogonalVariantAlleles);
+
+    // In continuous calling mode, each non-reference allele is handled independently:
+    //
+    const unsigned nonrefAlleleCount(orthogonalVariantAlleles.size());
+    for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<nonrefAlleleCount; nonrefAlleleIndex++)
     {
-        const IndelKey& indelKey(it->first);
-        const IndelData& indelData(getIndelData(it));
+        const auto nonrefAlleleIter(orthogonalVariantAlleles.iter(nonrefAlleleIndex));
+        const bool isForcedOutput(orthogonalVariantAlleles.data(nonrefAlleleIndex).isForcedOutput);
 
-        if (indelKey.is_breakpoint()) continue;
-
-        const bool isForcedOutput(indelData.isForcedOutput);
-
-        if (! isForcedOutput)
-        {
-            bool isZeroCoverage(true);
-            for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-            {
-                const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
-                if (not indelSampleData.read_path_lnp.empty())
-                {
-                    isZeroCoverage = false;
-                    break;
-                }
-            }
-
-            if (isZeroCoverage) continue;
-            if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
-        }
-
-
-        // the way things are handled in continuous mode right now we only add one allele per locus
         OrthogonalVariantAlleleCandidateGroup topVariantAlleleGroup;
-        topVariantAlleleGroup.alleles.push_back(it);
+        topVariantAlleleGroup.addVariantAllele(nonrefAlleleIter);
 
         // setup new indel locus:
         std::unique_ptr<GermlineContinuousIndelLocusInfo> locusPtr(new GermlineContinuousIndelLocusInfo(sampleCount));

@@ -199,6 +199,11 @@ struct IndelBuffer
     void
     dump(std::ostream& os) const;
 
+    unsigned
+    getSampleCount() const
+    {
+        return _indelSampleData.size();
+    }
 
 private:
 
@@ -255,12 +260,6 @@ private:
     ebuff2(const unsigned sampleId) const
     {
         return *(getIndelSampleData(sampleId).dbp2);
-    }
-
-    unsigned
-    getSampleCount() const
-    {
-        return _indelSampleData.size();
     }
 
     typedef std::vector<IndelBufferSampleData> indelSampleData_t;
