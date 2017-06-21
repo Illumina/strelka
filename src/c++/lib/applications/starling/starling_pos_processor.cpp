@@ -152,10 +152,6 @@ process_pos_snp(const pos_t pos)
 
         const bool isForcedOutput(is_forced_output_pos(pos));
 
-        // the second term in is_skippable below forces sites to go through the pipeline
-        // if phaser has put a hold on buffer cleanup. This ensures that the phaser will be turned back off
-        //
-        // TODO: there must be a way to force correct usage into the phaser's API instead of requiring this brittle hack
         const bool isSkippable(!isForcedOutput);
 
         if (isSkippable)
