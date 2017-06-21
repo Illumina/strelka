@@ -109,9 +109,7 @@ private:
 
     RegionTracker _nocompress_regions;
 
-    /// mark the position below which indel output is excluded
+    /// The furthest upstream position already covered by a variant indel locus.
+    /// Further indel output is supressed until going past this point.
     pos_t _variantLocusAlreadyOutputToPos = -1;
-
-    /// track forced output alleles which are reported as part of a variant so that they aren't reported twice:
-    std::set<IndelKey> _forcedAllelesAlreadyOutput;
 };

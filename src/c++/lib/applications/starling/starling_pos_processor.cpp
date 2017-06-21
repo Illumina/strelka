@@ -137,7 +137,6 @@ reset()
     }
     _nocompress_regions.clear();
     _variantLocusAlreadyOutputToPos = -1;
-    _forcedAllelesAlreadyOutput.clear();
 }
 
 
@@ -1576,7 +1575,13 @@ void
 starling_pos_processor::
 process_pos_indel_digt(const pos_t pos)
 {
-    const unsigned sampleCount(getSampleCount());
+    // Check to see if we can call variant and forced alleles at this position.
+    //
+    // We may have already found this position's called and forced alleles while analyzing a locus positioned
+    // downstream. If so, the entire locus is skipped over to prevent writing a conflicting interpretation of
+    // the region covered by the downstream locus
+    //
+    if (pos <= _variantLocusAlreadyOutputToPos) return;
 
 
     // High-level summary of calling process:
@@ -1596,6 +1601,8 @@ process_pos_indel_digt(const pos_t pos)
     // ranked. The top N are kept, N= ploidy. The reference is restored for the genotyping process if it is not
     // in the top N.
     //
+    const unsigned sampleCount(getSampleCount());
+
     OrthogonalVariantAlleleCandidateGroup orthogonalVariantAlleles;
     getIndelAllelesAtPosition(getIndelBuffer(), pos, orthogonalVariantAlleles);
 
@@ -1632,12 +1639,16 @@ process_pos_indel_digt(const pos_t pos)
         callerPloidy[sampleIndex] = ((groupLocusPloidy[sampleIndex] == 0) ? 2 : groupLocusPloidy[sampleIndex]);
     }
 
-    bool isReportedLocus(false);
+    // This is set to true when at least one allele is reported based on variant evidence in at least one sample
+    //
+    // Even if this is not the case, other alleles may be reported because they are set to forcedOutput.
+    bool isVariantLocusReported(false);
+
+    // Track the top ranked variant alleles across all samples
     OrthogonalVariantAlleleCandidateGroup topVariantAlleleGroup;
 
-    // now check to see if we can call variant alleles at this position, we may have already found this positions alleles while
-    // analyzing a locus positioned downstream. If so, skip ahead to handle the forced output alleles only:
-    if (_variantLocusAlreadyOutputToPos <= pos)
+    // The following subsection tracks data structures specific to variant allele calling phase of the process
+    // which are not needed in the subsequent step where any remaining forcedOutput alleles are handled.
     {
         // Track the top alt allele within each sample -- this is used as a temporary crutch to transfer the previous prior
         // calculation from single to multi-sample, and should be removed when a mature prior scheme is put in place
@@ -1710,14 +1721,19 @@ process_pos_indel_digt(const pos_t pos)
                     locusPtr->setCommonPrefix(commonPrefixLength);
             }
 
-            if (isForcedOutput or locusPtr->isVariantLocus())
+            if (locusPtr->isVariantLocus())
             {
-                // The locus meets emisison criteria, so send it into the gVCF writer for reporting.
+                // The locus meets emission criteria, so send it into the gVCF writer for reporting.
 
-                // expand the end range of the locus by one to represent adjacent indel interference, for instance a
-                // 1D at position 10 should block any indel at position 11
-                _variantLocusAlreadyOutputToPos = (locusPtr->range().end_pos() + 1);
-                isReportedLocus = true;
+                // Mark the end position of the range covered by this locus so that no interfering/duplicated
+                // interpretations of this locus are written while analyzing downstream positions.
+                //
+                // The final position of the range goes one past the final locus position to represent interference of
+                // adjacent indel alleles, for instance a 1D at position 10 should block any indel at position 11. This
+                // one base offset does not need to be added because it's already built into the range objects
+                // half-open interval format
+                _variantLocusAlreadyOutputToPos = (locusPtr->range().end_pos());
+                isVariantLocusReported = true;
 
                 // STREL-392 check if the indel can be reported given this process' reporting restrictions
                 //
@@ -1739,25 +1755,34 @@ process_pos_indel_digt(const pos_t pos)
         }
     }
 
-    // update data structure to track which forced alleles have already been output ahead of the current position
+    //
+    // Handle remaining forced variant output.
+    //
+    // In the section below the forced variants are handled using one of two approaches:
+    //
+    // 1) If a variant locus was reported at this position (ie. isVariantLocusReported is true)
+    //
+    // Handle all forced alleles from the current position to _variantLocusAlreadyOutputToPos
+    //
+    // 2) Otherwise...
+    //
+    // Handle all forced alleles at the current position only
+    //
+
+    // Determine which forced alleles have already been output via the standard variant calling process above.
+    std::set<IndelKey> forcedAllelesAlreadyOutput;
+    if (isVariantLocusReported)
     {
-        // we never track anything below the current position
-        const auto endIter(_forcedAllelesAlreadyOutput.lower_bound(IndelKey(pos)));
-        _forcedAllelesAlreadyOutput.erase(_forcedAllelesAlreadyOutput.begin(),endIter);
-
-        if (isReportedLocus)
+        // look through current topVariantAlleleGroup and note any forced output alleles already reported:
+        const unsigned alleleGroupSize(topVariantAlleleGroup.size());
+        for (unsigned alleleIndex(0); alleleIndex < alleleGroupSize; ++alleleIndex)
         {
-            // look through current topVariantAlleleGroup and note any forced output alleles already reported:
-            const unsigned alleleGroupSize(topVariantAlleleGroup.size());
-            for (unsigned alleleIndex(0); alleleIndex < alleleGroupSize; ++alleleIndex)
-            {
-                const IndelKey& indelKey(topVariantAlleleGroup.key(alleleIndex));
-                const IndelData& indelData(topVariantAlleleGroup.data(alleleIndex));
+            const IndelKey& indelKey(topVariantAlleleGroup.key(alleleIndex));
+            const IndelData& indelData(topVariantAlleleGroup.data(alleleIndex));
 
-                if (indelData.isForcedOutput)
-                {
-                    _forcedAllelesAlreadyOutput.insert(indelKey);
-                }
+            if (indelData.isForcedOutput)
+            {
+                forcedAllelesAlreadyOutput.insert(indelKey);
             }
         }
     }
@@ -1774,10 +1799,31 @@ process_pos_indel_digt(const pos_t pos)
             {
                 const IndelKey& indelKey(orthogonalVariantAlleles.key(alleleIndex));
                 const IndelData& indelData(orthogonalVariantAlleles.data(alleleIndex));
-                if (indelData.isForcedOutput and (_forcedAllelesAlreadyOutput.count(indelKey) == 0))
+                if (indelData.isForcedOutput and (forcedAllelesAlreadyOutput.count(indelKey) == 0))
                 {
                     forcedOutputAlleleGroup.addVariantAllele(orthogonalVariantAlleles.iter(alleleIndex));
                 }
+            }
+        }
+
+        // If a variant locus has been reported at this position, then add forced output alleles
+        // at all other positions covered by the reported locus
+        if (isVariantLocusReported && (_variantLocusAlreadyOutputToPos > pos))
+        {
+            const auto& indelBuffer(getIndelBuffer());
+            auto it(indelBuffer.positionIterator(pos+1));
+            const auto it_end(indelBuffer.positionIterator(_variantLocusAlreadyOutputToPos+1));
+            for (; it != it_end; ++it)
+            {
+                const IndelKey& indelKey(it->first);
+                if (indelKey.is_breakpoint()) continue;
+
+                const IndelData& indelData(getIndelData(it));
+                if (! indelData.isForcedOutput) continue;
+
+                if (forcedAllelesAlreadyOutput.count(indelKey) != 0) continue;
+
+                forcedOutputAlleleGroup.addVariantAllele(it);
             }
         }
 
