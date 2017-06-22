@@ -20,7 +20,7 @@
 #include "gvcf_aggregator.hh"
 
 #include "gvcf_writer.hh"
-#include "indel_overlapper.hh"
+#include "VariantOverlapResolver.hh"
 #include "variant_prefilter_stage.hh"
 
 
@@ -43,7 +43,7 @@ gvcf_aggregator(
     std::shared_ptr<variant_pipe_stage_base> nextPipeStage(_gvcfWriterPtr);
     if (opt.is_ploidy_prior)
     {
-        std::shared_ptr<variant_pipe_stage_base> overlapper(new indel_overlapper(_scoringModels, ref, nextPipeStage));
+        std::shared_ptr<variant_pipe_stage_base> overlapper(new VariantOverlapResolver(_scoringModels, ref, nextPipeStage));
         _variantPhaserPtr.reset(new VariantPhaser(opt, sampleCount, overlapper));
         nextPipeStage = _variantPhaserPtr;
     }

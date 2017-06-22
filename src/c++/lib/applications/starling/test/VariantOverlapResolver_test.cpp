@@ -19,7 +19,7 @@
 
 #include "boost/test/unit_test.hpp"
 
-#include "indel_overlapper.hh"
+#include "VariantOverlapResolver.hh"
 
 #include "ScoringModelManager.hh"
 
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE( simple_indel_test )
     ScoringModelManager cm(opt, dopt.gvcf);
 
     std::shared_ptr<variant_pipe_stage_base> next(new DummyVariantSink);
-    indel_overlapper overlap(cm, rcs, next);
+    VariantOverlapResolver overlap(cm, rcs, next);
 
     IndelKey indelKey;
     const IndelData indelData(1,indelKey);

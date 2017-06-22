@@ -24,7 +24,7 @@
 #include "gvcf_writer.hh"
 
 #include "gvcf_header.hh"
-#include "indel_overlapper.hh"
+#include "VariantOverlapResolver.hh"
 #include "LocusReportInfoUtil.hh"
 #include "variant_prefilter_stage.hh"
 
@@ -121,7 +121,7 @@ filter_site_by_last_indel_overlap(
         }
         else
         {
-            indel_overlapper::modify_overlapping_site(*_lastVariantIndelWritten, locus, _scoringModels);
+            VariantOverlapResolver::modifySiteOverlappingVariantIndel(*_lastVariantIndelWritten, locus, _scoringModels);
         }
     }
 }

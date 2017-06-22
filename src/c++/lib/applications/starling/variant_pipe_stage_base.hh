@@ -17,24 +17,28 @@
 //
 //
 
+/// \file
 /// \author John Duddy
 
 #pragma once
 #include "gvcf_locus_info.hh"
 
 
-/// base class used for snv/indel processing pipeline from "raw" calls to gVCF
-/// output.
+/// Base class used for snv/indel processing pipeline from "raw" calls to gVCF
+/// output
 ///
-/// Design is based on passign site/indel_info ownership down the pipe via unique_ptr/move
+/// Design is based on passing site/indel_info ownership down the pipe via unique_ptr/move
 ///
 class variant_pipe_stage_base
 {
 public:
+    /// Insert new site locus into this pipeline stage
     virtual void process(std::unique_ptr<GermlineSiteLocusInfo> si)
     {
         if (_sink) _sink->process(std::move(si));
     }
+
+    /// Insert new indel locus into this pipeline stage
     virtual void process(std::unique_ptr<GermlineIndelLocusInfo> ii)
     {
         if (_sink) _sink->process(std::move(ii));
