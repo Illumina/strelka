@@ -52,7 +52,7 @@ process(std::unique_ptr<GermlineSiteLocusInfo> siteLocusPtr)
         processOverlappingVariants();
     }
 
-    assert(_nonvariantIndelBuffer.empty());
+    //assert(_nonvariantIndelBuffer.empty());
 
     _sink->process(std::move(si));
 }
