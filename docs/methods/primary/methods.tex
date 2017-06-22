@@ -85,16 +85,122 @@ The objective of the depth estimation step is to find the expected depth and/or 
 
 
 \subsection{Indel Error Rate Estimation}
+\label{sec:indel_error_est}
+The next step in the germline variant calling workflow is the indel error rate estimation process. The indel error rate estimation process is conducted in two steps: (1) indel error count analysis and (2) parameter estimation. In the first step, mapped sequencing data are analyzed to produce the error counts for various sequencing contexts. In the second step, these counts are used to esimate the parameters of the indel error model of interest.
 
-TODO: Transfer/adapt methods already written up in the errorAnalysis doc
+\subsubsection{Indel error count analysis}
+The reads are filtered from the counting process as a pre-processing step based on the following criteria.
+    \begin{enumerate}
+        \item Read fails platform quality test.
+        \item Read is a PCR/optical duplicate.
+        \item Read is not mapped.
+        \item Read is not a ``proper pair''.
+        \item Read input alignment contains more than 2 indels.
+    \end{enumerate}
+Reads with MAPQ scores below 60 are kept but not used to generate the error counts.
 
-\paragraph{Implementation}
+Additionally, observations from the edges (10 bases from the beginning and end of the read) of each read are filtered out. The filtering is conducted on both no-variant and variant observations. However, an indel that does not fall between two excluded bases does not get filtered out. For example, a 1 base delection at position 9 would be filtered out, but a 1 base deletion at position 10 would not be filtered out.
 
-Indel error estimation is only run on chromosomes which are at least 5 Mb in length. If the combined length of all such chromosomes is less than 50 Mb, indel error estimation is disabled and the method reverts to static parameters for all samples.
+The remaining reads are used to count the number of indel errors for all sequencing contexts.
+
+The extracted data are stored in a compact binary file format. A given sequence context $C(p,r)$ has two parameters, short tandem repeat (STR) pattern size ($p$) and STR pattern repeat count ($r$). Each STR tract with pattern size $P$ and repeat count $R$ is counted as a single observation for $C(P,R)$. reference Ns are not included. Any ambiguity in the assignment is resolved by choosing the lowest applicable value of $P$ for the site.
+
+The counting process itself uses the same mapped read scanning and realignment strategy used by the small variant caller, with the following major differences:
+ \begin{enumerate}
+    \item \label{no_threshold_for_indel} There is no threshold for indel candidacy.
+    \item \label{no_indel_errors_allowed} No indel errors are allowed when read likelihood for each indel allele is computed.
+    \item There is no restriction on the number of overlapping allele candidates based on ploidy.
+    \item The whole locus is skipped if more than 4 overlapping allele candidates are found.
+    \item The locus is skipped if the set of overlapping alleles at a locus are not all mutually incompatible with the same haplotype.
+ \end{enumerate}
+
+Note that item \ref{no_threshold_for_indel} means that an alignment gap observed once in an input read is treated as a ``candidate'' for the purpose of error evaluation. Hence, an attempt is made to realign all other reads to that indel, and in the process the likelihood of each read supporting the given indel is found. Item \ref{no_indel_errors_allowed} above means that all read likelihoods for each indel allele can be explained by basecalling errors only.
+
+Additional, but less critical, modifications to the error counting process compared to the variant caller include suspending indel candidacy and the candidate process for any region where the pileup depth is observed to be more than 3 times the chromosome mean. When the high depth threshold is triggered the error counting process suspends the collection of any evidence. The number of contexts affected by such filtration is recorded so that it is still possible to verify the total number of contexts observed during the counting process.
+
+\subsubsection{Indel error model parameter estimation}
+The indel error model assumes that the observation of an indel follows a mixture of sample variants and independent insertion and deletion error processes. The error processes are assumed to be independent for different contexts. Based on this model, there are three parameters for a given $C(p,r)$; the insertion error rate $e_i(p,r)$, the deletion error rate $e_d(p,r)$, and the mutation rate $\theta(p,r)$.
+
+The likelihood function for this model given parameter set
+
+\begin{equation*}
+\Theta=\Theta(p,r)=\{e_i(p,r),e_d(p,r),\theta(p,r)\}
+\end{equation*}
+can be given as
+
+\begin{equation*}
+P(D \vert \Theta)=\prod_{d\in D}P(d \vert \Theta)
+\end{equation*}
+where
+
+\begin{equation*}
+P(d \vert \Theta,g_{ref})=\sum_{g\in G}P(d \vert \Theta,g)P(g)
+\end{equation*}
+ given possible genotypes $G={ref,het,hom,althet}$. The genotype priors are a function of $\theta$ as follows:
+
+\begin{equation*}
+\begin{aligned}
+P(het)&=\theta \\
+P(hom)&=\theta/2 \\
+P(hetalt)&=\theta^2
+\end{aligned}
+\end{equation*}
+
+
+Let $c(y)$ be the supporting observation count and $r(y)$ be the error rate (either $e_i$, $e_d$, or $(1-e_i)(1-e_d)$ depending on the allele type insertion, deletion, or reference) of allele $y$. Then the reference genotype liklihood can be given as
+
+\begin{equation*}
+P(d \vert \Theta,g_{ref})=m_c \prod_{y \in Y}r(y)^{c(y)}
+\end{equation*}
+where
+
+\begin{equation*}
+m_c = \frac{\Gamma(\sum_{i}{x_i + 1})}{\prod_{i}{\Gamma(x_i+1)}}
+\end{equation*}
+
+is the corresponding multinomial coefficient. Since this term is not dependent on any of the model parameters, it is ignored during parameter estimation.
+
+The heterozygous and homozygous genotype likelihoods are approximated by finding the most likely (by number of supporting counts) non-reference indel allele and using that as the only candidate variant allele, $y_{var}$.
+
+The heterozygous likelihood is
+
+\begin{equation*}
+P (d \vert \theta, g_{het}) = m_c 0.5^{c(y_{var}) + c(ref)} \prod_{y \in Y, y \not\in \{y_{var},ref\}} r(y)^{c(y)}.
+\end{equation*}
+
+Note that in this form, we remove the impact of all indel errors except for those that would mutate the reference allele into something other than $y_{var}$. This approximation should lead to a greater distortion of results as indel error rates become large and as greater asymmetry develops between the rate of error from $ref$ to $y_{var}$ vs $y_{var}$ to $ref$.
+
+The homozygous likelihood is
+
+\begin{equation*}
+P (d \vert \theta, g_{hom}) = m_c (1-e_{ref})^{c(y_{var})} {e_{ref}}^{c(ref)} \prod_{y \in Y, y \not\in \{y_{var},ref\}} r(y)^{c(y)}
+\end{equation*}
+
+where $e_{ref}$ is set to a constant value of 0.01. As discussed for the heterozygous likelihood, the simplified representation of error terms such as $e_{ref}$ here are likely to introduce distortions in indel contexts with higher error rates.
+
+Finally, because observed $\theta_{indel}$ values can become very high for long homopolymers, hetalt variants start to become important enough to include in the model. Just as with heterozygous variants, the hetalt state is approximated by finding the top two most likely non-reference indel alleles, $y_{var}$, $y_{var2}$ and computing the likelihood with these values fixed. The likelihood of this genotype is
+
+\begin{equation*}
+P (d \vert \theta, g_{hetalt}) = m_c 0.5^{c(y_{var})+c(y_{var2})} {e_{ref}}^{c(ref)} \prod_{y \in Y, y \not\in \{y_{var},y_{var2},ref\}} r(y)^{c(y)}
+\end{equation*}
+
+Note that the indel mutation rates $\theta$ for all contexts are pre-determined in order to reduce the number of estimated parameters. This is based on the assumption that the mutation rate does not vary across different sequencing runs or samples. These values were determined by estimating all four parameters across the entire genome excluding chromosome 23. The pre-determined mutation rates for all contexts of intrest can be found in the theta.json file.
+
+We further assume that the insertion and deletion error processes have two states, \emph{clean} and \emph{noisy}. Every locus has a $p_n(p,r)$ chance of being in the \emph{noisy} state and $1-p_n(p,r)$ chance of being in the \emph{clean} state. The indel error rate follows the model above with parameters $e_i(p,r), e_d(p,r), \theta(p,r)$ when it is in the \emph{noisy} state and all indel errors are fixed to $1 \times 10^{-8}$ when it is the \emph{clean} state. The likelihood function for this model can be given as
+\begin{equation*}
+P(d \vert \theta) = P(noisy) P (d \vert \Theta_{noisy}) + (1-P(noisy)) P (d \vert \Theta_{clean}).
+\end{equation*}
+
+
+In order to reduce complexity, only homopolymer repeats ($P=1$) up to repeat count 16 ($2\leq R \leq 16$) and dinucleotide repeats ($P=2$) up to repeat count 9 ($2\leq R \leq 9$) are of interest. We also assume that the parameters for contexts with a given repeat pattern size $p$ ($C(p,1),C(p,2),...,C(p,r)$) follow a log-linear model dependent on the repeat count $r$. Hence, only the contexts with the minimum and maximum repeat counts for a given STR length ($C(1,2)$, $C(1,16)$, $C(2,2)$, and $C(2,9)$) are considered during parameter estimation. The parameters for the remaining contexts are interpolated using a log-linear model estiamted from those contexts. Addtionally, the parameters for the non-STR context ($C(1,1)$) is also estimated.
+
+\subsubsection{Implementation}
+
+In practice, the indel error rate estimation is only run on chromosomes which are at least 5 Mb in length. If the combined length of all such chromosomes is less than 50 Mb, indel error estimation is disabled and the method reverts to static parameters for all samples.
 
 If the reference sequence is determined to be acceptable for the estimation process, then the set and ordering of genome regions used to count errors is determined. This is done by finding the subset of chromosomes which are 5 Mb or longer, and dividing each of these chromosomes into the smallest number of approximately equal length segments which are not larger than 2 Mbs each. These intervals are randomly sorted using a fixed seed to help distribute the estimation process over all large chromosomes while providing a deterministic response over multiple runs.
 
-After determining the set and order of estimation intervals, error counting and parameter estimation proceeds independently for each sample. In each sample, counting tasks are launched in order from the estimation interval list up to the number of available workers in the workflow. As each counting procedure completes, the number of sites with non-zero sequence coverage is summed into a running total from all completed tasks. Additional tasks from the estimation interval list are launched until the total coverage of non-empty sites from completed tasks is greater than or equal to 50 Mb. When this site coverage goal is readhed, then tasks which are no longer needed are canceled, and the workflow waits for tasks to complete so as to cover the smallest continuous series of estimation intervals from the beginning of the estimation interval list which provide coverage of 50 Mb or greater. The workflow waits for this continuous series of tasks so that the final set of counts is deterministic regardless of the completion order of the launched estimation tasks.
+After determining the set and order of estimation intervals, error counting and parameter estimation proceeds independently for each sample. In each sample, counting tasks are launched in order from the estimation interval list up to the number of available workers in the workflow. As each counting procedure completes, the number of sites with non-zero sequence coverage is summed into a running total from all completed tasks. Additional tasks from the estimation interval list are launched until the total coverage of non-empty sites from completed tasks is greater than or equal to 50 Mb. When this site coverage goal is reached, tasks which are no longer needed are canceled, and the workflow waits for tasks to complete so as to cover the smallest continuous series of estimation intervals from the beginning of the estimation interval list which provide coverage of 50 Mb or greater. The workflow waits for this continuous series of tasks so that the final set of counts is deterministic regardless of the completion order of the launched estimation tasks.
 
 Once the counting procedure has completed for a given sample, all of the estimation interval count files are merged, and parameter estimation is conducted according to the procedure outlined above. If parameter estimation fails to converge after the maximum allowed iterations or the estimated error rates fall outside of valid estimation ranges, then the estimation procedure is considered a failure for the given sample, and the default static parameter set is used for that sample instead.
 
