@@ -1,3 +1,4 @@
+- STREL-602 Retrain germline SNV EVS on updated alignments
 - STREL-597 Add low depth filter for both somatic and germline calls
 - STREL-596 Add missing data to pooled indel calls
 - STREL-586 Improve germline multi-sample calling runtime
