@@ -36,23 +36,27 @@ process(std::unique_ptr<GermlineSiteLocusInfo> siteLocusPtr)
 {
     std::unique_ptr<GermlineDiploidSiteLocusInfo> si(downcast<GermlineDiploidSiteLocusInfo>(std::move(siteLocusPtr)));
 #ifdef DEBUG_GVCF
-    log_os << "CHIRP: " << __FUNCTION__ << " SITE START\n";
+    log_os << "CHIRP: Begin " << __FUNCTION__ << " siteLocus\n";
     log_os << "CHIRP: " << __FUNCTION__ << " pos/bufferedVariantIndelRange: " << si->pos << "/" << _bufferedVariantIndelRange << "\n";
 #endif
 
-    if (_bufferedVariantIndelRange.is_pos_intersect(si->pos))
+    if (! _variantIndelBuffer.empty())
     {
-        // buffer this site in the context of an overlapping variant indel record
-        _siteBuffer.push_back(std::move(si));
-        return;
+        if (si->pos >= _bufferedVariantIndelRange.end_pos())
+        {
+            // Resolve any current or previous indels before forwarding this site down the pipeline:
+            processOverlappingVariants();
+        }
+        else
+        {
+            // Buffer this site in the context of an overlapping variant indel record
+            //
+            // the site must be buffered even if it occurs before the variant indel range so that nonvariant
+            // indels and sites can be ordered correctly
+            _siteBuffer.push_back(std::move(si));
+            return;
+        }
     }
-    else if (si->pos >= _bufferedVariantIndelRange.end_pos())
-    {
-        // Resolve any current or previous indels before forwarding this site down the pipeline:
-        processOverlappingVariants();
-    }
-
-    //assert(_nonvariantIndelBuffer.empty());
 
     _sink->process(std::move(si));
 }
@@ -70,14 +74,19 @@ process(std::unique_ptr<GermlineIndelLocusInfo> indelLocusPtr)
     if (! (isVariantLocus || isForcedOutputLocus)) return;
 
 #ifdef DEBUG_GVCF
-    log_os << "CHIRP: " << __FUNCTION__ << " VARIANT_INDEL START\n";
+    log_os << "CHIRP: Begin " << __FUNCTION__ << " indelLocus\n";
     log_os << "CHIRP: " << __FUNCTION__ << " pos/indel_range: " << indelLocusPtr->pos << "/" << _bufferedVariantIndelRange << "\n";
     log_os << "CHIRP: " << __FUNCTION__ << " isVariant/isForcedOutput: " << isVariantLocus << "/" << isForcedOutputLocus << "\n";
 #endif
 
-    if (indelLocusPtr->pos > _bufferedVariantIndelRange.end_pos())
+    if (! _variantIndelBuffer.empty())
     {
-        processOverlappingVariants();
+        // the test is greater than, and not greater than or equals, because two adjacent indels are considered
+        // as interacting/interfering
+        if (indelLocusPtr->pos > _bufferedVariantIndelRange.end_pos())
+        {
+            processOverlappingVariants();
+        }
     }
 
     if (isVariantLocus)
@@ -94,17 +103,17 @@ process(std::unique_ptr<GermlineIndelLocusInfo> indelLocusPtr)
     }
     else
     {
-        // The range intersection test below is similar to the conventional indel range intersection test, except that
-        // the indel_range's 'end' is extended by one position:
-        if ((indelLocusPtr->pos >= _bufferedVariantIndelRange.begin_pos()) && (indelLocusPtr->pos <= _bufferedVariantIndelRange.end_pos()))
+        if (_variantIndelBuffer.empty())
         {
-            _nonvariantIndelBuffer.push_back(std::move(indelLocusPtr));
+            _sink->process(std::move(indelLocusPtr));
         }
         else
         {
-            // This should handle the common case that the variant indel buffer is empty, and the rare case that this
-            // indel is positioned before any buffered variant indel
-            _sink->process(std::move(indelLocusPtr));
+            // If variant indels are buffered, we already know that this indel intersects or is upstream
+            // of the buffered variant, and therefor must be buffered to resolve possible indel/site
+            // reordering requirements.
+            //
+            _nonvariantIndelBuffer.push_back(std::move(indelLocusPtr));
         }
     }
 }
@@ -118,9 +127,8 @@ dumpLocusBuffer(
     const std::vector<std::unique_ptr<T>>& locusBuffer,
     std::ostream& os)
 {
-    // dump function may need to deal with data structure in an intermediate state when certain site
-    // and indel pointers are already released (principally if called while building an exception
-    // report)
+    // dump function may need to deal with object data in an intermediate state when some locus
+    // pointers are already sunk (especially if called while building an exception report)
     //
     const unsigned locusCount(locusBuffer.size());
     os << locusTypeLabel << " count: (" << locusCount << ")\n";
@@ -248,7 +256,7 @@ VariantOverlapResolver::
 processOverlappingVariantsImplementation()
 {
 #ifdef DEBUG_GVCF
-    log_os << "CHIRP: " << __FUNCTION__ << " START\n";
+    log_os << "CHIRP: Begin " << __FUNCTION__ << "\n";
     dump(log_os);
 #endif
 
@@ -280,14 +288,15 @@ processOverlappingVariantsImplementation()
     //
 
     // check that if anything is in the site buffer, we have at least one variant indel:
-    // (this guards the _variantIndelBuffer.front() access below)
+    // (this (1) must be true (2) guards the _variantIndelBuffer.front() access below)
     assert(_siteBuffer.empty() || (! _variantIndelBuffer.empty()));
 
     for (auto& siteLocusPtr : _siteBuffer)
     {
 #ifdef DEBUG_GVCF
-        log_os << "CHIRP: indel overlapping site: " << siteLocusPtr->pos << "\n";
+        log_os << "CHIRP: " << __FUNCTION__ << " indel overlapping site at position: " << siteLocusPtr->pos << "\n";
 #endif
+        if (siteLocusPtr->pos < _bufferedVariantIndelRange.begin_pos()) continue;
         modifySiteOverlappingVariantIndel(*(_variantIndelBuffer.front()), *siteLocusPtr, _scoringModels);
     }
 
@@ -380,11 +389,12 @@ modifySiteOverlappingNonconflictingVariantIndel(
     const ScoringModelManager& model)
 {
 #ifdef DEBUG_GVCF
-    log_os << "CHIRP: indel_overlap_site before: " << siteLocus << "\n";
+    log_os << "CHIRP: Begin " << __FUNCTION__ << " siteLocus before: " << siteLocus << "\n";
+    log_os << "CHIRP: Begin " << __FUNCTION__ << " indelLocus: " << indelLocus << "\n";
 #endif
+
     // site must be positioned within the indel range
     assert(indelLocus.range().is_pos_intersect(siteLocus.pos));
-
 
     // If the overlapping indel has any filters, annotate the site with a site conflict
     // (note that we formerly had the site inherit indel filters, but this interacts

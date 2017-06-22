@@ -110,7 +110,7 @@ writeSampleNonVariantBlockRecord(
 
 void
 gvcf_writer::
-filter_site_by_last_indel_overlap(
+modifySiteForConsistencyWithUpstreamIndels(
     GermlineDiploidSiteLocusInfo& locus)
 {
     if (_lastVariantIndelWritten)
@@ -215,7 +215,7 @@ process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr)
     {
         skip_to_pos(locusPtr->pos);
 
-        // flush any non-variant block before starting:
+        // flush any non-variant blocks across all samples before handling the indel:
         writeAllNonVariantBlockRecords();
 
         write_indel_record(*locusPtr);
@@ -262,7 +262,7 @@ add_site_internal(
     GermlineDiploidSiteLocusInfo* diploidLocusPtr(dynamic_cast<GermlineDiploidSiteLocusInfo*>(&locus));
     if (diploidLocusPtr != nullptr)
     {
-        filter_site_by_last_indel_overlap(*diploidLocusPtr);
+        modifySiteForConsistencyWithUpstreamIndels(*diploidLocusPtr);
     }
 
     _headPos=locus.pos+1;
@@ -279,7 +279,7 @@ queue_site_record(
     const GermlineSiteLocusInfo& locus)
 {
     //test for basic blocking criteria
-    if (!_gvcf_comp.is_site_compressible(locus))
+    if (! _gvcf_comp.is_site_compressible(locus))
     {
         writeAllNonVariantBlockRecords();
         write_site_record(locus);
@@ -1037,9 +1037,10 @@ gvcf_writer::
 write_indel_record(
     const GermlineIndelLocusInfo& locus) const
 {
+    if (! _reportRange.is_pos_intersect(locus.pos)) return;
     if (_opt.isUseCallRegions())
     {
-        if (not _callRegions.isIntersectRegion(locus.pos)) return;
+        if (! _callRegions.isIntersectRegion(locus.pos)) return;
     }
 
     const unsigned sampleCount(locus.getSampleCount());

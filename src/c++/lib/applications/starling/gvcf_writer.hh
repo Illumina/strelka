@@ -89,11 +89,11 @@ private:
     void
     writeSampleNonVariantBlockRecord(const unsigned sampleIndex);
 
-    /// write out compressed non-variant block for all samples
+    /// Write out compressed non-variant block for all samples
     ///
-    /// frequenty the non-variant block ending criteria is shared by
-    /// all samples (eg. introduction of a variant at the next position)
-    /// so we frequently need to syncronize block end across all samples
+    /// Although compressed non-variant blocks can start and end independently in each sample,
+    /// the block ending criteria is often synchronized across all samples (due to, eg. introduction
+    /// of a variant at the next position). This method assists with the latter case.
     ///
     void
     writeAllNonVariantBlockRecords()
@@ -153,8 +153,11 @@ private:
         return _empty_site;
     }
 
-    /// TODO STREL-125 why can't we get rid of this? Indel overlapper should already be doing the same thing!
-    void filter_site_by_last_indel_overlap(GermlineDiploidSiteLocusInfo& locus);
+    /// Check if the site overlaps with the last variant indel written
+    ///
+    /// Note this should only impact empty sites, because non-empty sites have already been
+    /// handled in VariantOverlapResolver
+    void modifySiteForConsistencyWithUpstreamIndels(GermlineDiploidSiteLocusInfo& locus);
 
     const starling_options& _opt;
     const starling_streams& _streams;

@@ -700,7 +700,7 @@ private:
     std::vector<GermlineIndelAlleleInfo> _indelAlleleInfo;
     std::vector<GermlineIndelSampleInfo> _indelSampleInfo;
 
-    /// the refernece range of all indel alleles at this locus:
+    /// the reference range of all indel alleles at this locus:
     known_pos_range2 _range;
 
     unsigned _commonPrefixLength;

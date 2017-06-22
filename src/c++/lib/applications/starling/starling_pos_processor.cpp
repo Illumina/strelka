@@ -1584,6 +1584,13 @@ process_pos_indel_digt(const pos_t pos)
     if (pos <= _variantLocusAlreadyOutputToPos) return;
 
 
+    // Reporting an extended indel locus is an all or nothing arrangement. An extended variant locus is composed
+    // of a variant locus and all of the forced indels it overlaps. If any one member of this ensemble is
+    // reportable, then the whole is treated as reportable. We rely on gvcf_writer to trim off any extra indels
+    // left on the edges.
+    bool isExtendedLocusReportable(is_pos_reportable(pos));
+
+
     // High-level summary of calling process:
     //
     // The locus calling process requires that we define groups of overlapping alleles to rank and then genotype.
@@ -1738,16 +1745,20 @@ process_pos_indel_digt(const pos_t pos)
                 // STREL-392 check if the indel can be reported given this process' reporting restrictions
                 //
                 // Note two tricky details here:
-                // 1. we need this check even though this function will not be called for "pos" values greater than
+                // 1. We need this check even though this function will not be called for "pos" values greater than
                 //    the report range, because the new indel overlap resolution rules can lead to an indel locus
                 //    begin_pos() which is higher than "pos", and thus potentially out of the report range.
                 // 2. In order to better sync across independent processes, we need to call the enclosing function on a
-                //    range of pos values before the report range, so that values like "_variantLocusAlreadyOutputToPos"
-                //    and "_forcedAllelesAlreadyOutput" are in sync with the other process at the time we hit the first
-                //    reportable position for this process, so we need to filter out indels found before report range
-                //    begins
+                //    range of pos values before the report range, so that a value like "_variantLocusAlreadyOutputToPos"
+                //    is in sync with the other process at the time we hit the first reportable position for this
+                //    process, so we need to filter out indels found before report range begins
                 //
-                if (is_pos_reportable(locusPtr->range().begin_pos()))
+                if (! isExtendedLocusReportable)
+                {
+                    isExtendedLocusReportable = is_pos_reportable(locusPtr->range().begin_pos());
+                }
+
+                if (isExtendedLocusReportable)
                 {
                     _gvcfer->add_indel(std::move(locusPtr));
                 }
@@ -1864,7 +1875,7 @@ process_pos_indel_digt(const pos_t pos)
             // STREL-392 check if the indel can be reported given this process' reporting restrictions
             //
             // see additional notes above for the previous add_indel call
-            if (is_pos_reportable(locusPtr->range().begin_pos()))
+            if (isExtendedLocusReportable)
             {
                 // finished! send this locus down the pipe:
                 _gvcfer->add_indel(std::move(locusPtr));
