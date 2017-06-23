@@ -169,7 +169,14 @@ private:
     known_pos_range2 _reportRange;
     pos_t _headPos;
 
-    std::unique_ptr<GermlineIndelLocusInfo> _last_indel;
+    /// Hold a reference to the last variant indel output
+    ///
+    /// This is held so that empty sites overlapping the indel can be modified if required. Note that
+    /// non-empty sites have already been modified for indel overlap upstream of this object in the
+    /// gvcf writer pipeline, but empty sites are created by this object, and these empty sites may
+    /// require modification.
+    ///
+    std::unique_ptr<GermlineIndelLocusInfo> _lastVariantIndelWritten;
 
     gvcf_compressor _gvcf_comp;
     const ScoringModelManager& _scoringModels;

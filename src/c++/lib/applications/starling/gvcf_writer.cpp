@@ -113,15 +113,15 @@ gvcf_writer::
 filter_site_by_last_indel_overlap(
     GermlineDiploidSiteLocusInfo& locus)
 {
-    if (_last_indel)
+    if (_lastVariantIndelWritten)
     {
-        if (locus.pos >= _last_indel->end())
+        if (locus.pos >= _lastVariantIndelWritten->end())
         {
-            _last_indel.reset(nullptr);
+            _lastVariantIndelWritten.reset(nullptr);
         }
         else
         {
-            indel_overlapper::modify_overlapping_site(*_last_indel, locus, _scoringModels);
+            indel_overlapper::modify_overlapping_site(*_lastVariantIndelWritten, locus, _scoringModels);
         }
     }
 }
@@ -151,7 +151,7 @@ skip_to_pos(
 
         // Don't do compressed ranges if there is an overlapping indel
         // because filters are being applied to the overlapping positions
-        if (_last_indel) continue;
+        if (_lastVariantIndelWritten) continue;
 
         if (_gvcf_comp.is_range_compressible(known_pos_range2(si.pos, target_pos)))
         {
@@ -219,9 +219,12 @@ process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr)
         writeAllNonVariantBlockRecords();
 
         write_indel_record(*locusPtr);
-        if (dynamic_cast<GermlineDiploidIndelLocusInfo*>(locusPtr.get()) != nullptr)
+        if (locusPtr->isVariantLocus())
         {
-            _last_indel = std::move(locusPtr);
+            if (dynamic_cast<GermlineDiploidIndelLocusInfo*>(locusPtr.get()) != nullptr)
+            {
+                _lastVariantIndelWritten = std::move(locusPtr);
+            }
         }
     }
     catch (...)
@@ -246,7 +249,7 @@ flush_impl()
 
     _chromName.clear();
     _headPos = 0;
-    _last_indel.reset(nullptr);
+    _lastVariantIndelWritten.reset(nullptr);
 }
 
 
