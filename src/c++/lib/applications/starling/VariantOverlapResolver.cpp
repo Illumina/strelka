@@ -34,15 +34,14 @@ void
 VariantOverlapResolver::
 process(std::unique_ptr<GermlineSiteLocusInfo> siteLocusPtr)
 {
-    std::unique_ptr<GermlineDiploidSiteLocusInfo> si(downcast<GermlineDiploidSiteLocusInfo>(std::move(siteLocusPtr)));
 #ifdef DEBUG_GVCF
     log_os << "CHIRP: Begin " << __FUNCTION__ << " siteLocus\n";
-    log_os << "CHIRP: " << __FUNCTION__ << " pos/bufferedVariantIndelRange: " << si->pos << "/" << _bufferedVariantIndelRange << "\n";
+    log_os << "CHIRP: " << __FUNCTION__ << " pos/bufferedVariantIndelRange: " << siteLocusPtr->pos << "/" << _bufferedVariantIndelRange << "\n";
 #endif
 
     if (! _variantIndelBuffer.empty())
     {
-        if (si->pos >= _bufferedVariantIndelRange.end_pos())
+        if (siteLocusPtr->pos >= _bufferedVariantIndelRange.end_pos())
         {
             // Resolve any current or previous indels before forwarding this site down the pipeline:
             processOverlappingVariants();
@@ -53,12 +52,19 @@ process(std::unique_ptr<GermlineSiteLocusInfo> siteLocusPtr)
             //
             // the site must be buffered even if it occurs before the variant indel range so that nonvariant
             // indels and sites can be ordered correctly
-            _siteBuffer.push_back(std::move(si));
+            //
+            // \TODO STREL-617
+            // Currently need to downcast to diploid type in this object so that filters can be
+            // rerun on sites overlapped by deletions. Would be better to hide this detail from the overlapper, and
+            // have a general "refilter" method shared by this component and variant_prefilter stage, which hides this
+            // detail from both
+            //
+            _siteBuffer.push_back(downcast<GermlineDiploidSiteLocusInfo>(std::move(siteLocusPtr)));
             return;
         }
     }
 
-    _sink->process(std::move(si));
+    _sink->process(std::move(siteLocusPtr));
 }
 
 
@@ -110,7 +116,7 @@ process(std::unique_ptr<GermlineIndelLocusInfo> indelLocusPtr)
         else
         {
             // If variant indels are buffered, we already know that this indel intersects or is upstream
-            // of the buffered variant, and therefor must be buffered to resolve possible indel/site
+            // of the buffered variant, and therefore must be buffered to resolve possible indel/site
             // reordering requirements.
             //
             _nonvariantIndelBuffer.push_back(std::move(indelLocusPtr));
@@ -127,8 +133,8 @@ dumpLocusBuffer(
     const std::vector<std::unique_ptr<T>>& locusBuffer,
     std::ostream& os)
 {
-    // dump function may need to deal with object data in an intermediate state when some locus
-    // pointers are already sunk (especially if called while building an exception report)
+    // This function may need to deal with object data in an intermediate state when some locus
+    // pointers have already been sunk (especially if called while building an exception report)
     //
     const unsigned locusCount(locusBuffer.size());
     os << locusTypeLabel << " count: (" << locusCount << ")\n";
