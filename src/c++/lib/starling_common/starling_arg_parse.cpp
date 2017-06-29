@@ -62,8 +62,6 @@ legacy_starling_arg_parse(
 
     bool is_inmp(false);
 
-    bool is_uacmq_set(false);
-
     bool local_is_min_vexp(false);
 
     const unsigned as(ad.size());
@@ -126,10 +124,6 @@ legacy_starling_arg_parse(
         else if (ad.argstr[i]=="-genome-size")
         {
             set_arg(i,ad,opt.is_user_genome_size,opt.user_genome_size);
-        }
-        else if (ad.argstr[i]=="-used-allele-count-min-qscore")
-        {
-            set_arg(i,ad,is_uacmq_set,opt.used_allele_count_min_qscore);
         }
         else if (ad.argstr[i]=="-max-candidate-indel-density")
         {
