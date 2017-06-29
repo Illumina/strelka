@@ -51,11 +51,11 @@ def parseArgs():
                         help="Output CSV filename for training data")
     parser.add_argument("--testSet", action='append', help="Chromosome (e.g. chr20) to hold out as test data (may be specified more than once; if omitted, all data will be used for training)")
     parser.add_argument("--testOutput", help="Output CSV filename for test data")
-    parser.add_argument("-t", "--truth", help="Truth VCF file")
-    parser.add_argument("-f", "--fp-regions", dest="fp_regions",
-                        help="Bed file indicating regions for FPs only.")
-    parser.add_argument("-a", "--ambiguous", dest="ambi", action='append',
-                        help="Bed file indicating ambiguous regions ie. places we don't want to label as FP"
+    parser.add_argument("--truth", help="Truth VCF file")
+    parser.add_argument("--fp-regions", dest="fpRegionsFile",
+                        help="Bed file indicating regions where variants that are not true can be labeled as false positives. Outside of these regions variants will be labeled as unknown.")
+    parser.add_argument("--ambiguous", dest="ambiguousRegionsFiles", action='append',
+                        help="Bed file conforming to the curium ambiguous region file format"
                              " (may be specified more than once)")
     parser.add_argument("--features", required=True,
                         choices=evs.features.FeatureSet.sets.keys(),
@@ -72,10 +72,10 @@ def parseArgs():
         checkFile(filename, label)
 
     checkOptionalFile(args.truth,"truth")
-    checkOptionalFile(args.fp_regions,"false positive regions")
-    if args.ambi is not None :
-        for ambiFile in args.ambi :
-            checkFile(ambiFile,"ambiguous regions")
+    checkOptionalFile(args.fpRegionsFile,"false positive regions")
+    if args.ambiguousRegionsFiles is not None :
+        for ambiguousRegionsFile in args.ambiguousRegionsFiles :
+            checkFile(ambiguousRegionsFile,"ambiguous regions")
 
     return args
 
@@ -105,25 +105,44 @@ def main():
         to_keep = [x for x in list(featuretable) if not x.endswith(".query") and not x.endswith(".truth")]
         featuretable = featuretable[to_keep]
 
-    fp = BedIntervalTree()
-    if args.fp_regions:
-        fp.addFromBed(args.fp_regions, "FP")
+    if args.ambiguousRegionsFiles or args.fpRegionsFile:
+        #
+        # 1. Load all false positive and ambiguous region information into labeledIntervals
+        #
+        labeledIntervals = BedIntervalTree()
+        if args.fpRegionsFile:
+            labeledIntervals.addFromBed(args.fpRegionsFile, "FP")
 
-    if args.ambi:
-        # can have multiple ambiguous BED files
-        for aBED in args.ambi:
-            fp.addFromBed(aBED, lambda xe: xe[4])
+        if args.ambiguousRegionsFiles:
+            # can have multiple ambiguous BED files
+            for ambiguousRegionsFile in args.ambiguousRegionsFiles:
+                labeledIntervals.addFromBed(ambiguousRegionsFile, lambda xe: xe[4])
 
-    if args.ambi or args.fp_regions:
-        has_fp = (fp.count("FP") > 0) or (fp.count("fp") > 0 and args.ambi)
+        #
+        # 2. Resolve all interaction rules between truth sets, fp and amiguous regions to produce a final labeling
+        #
+        areFPRegionsProvided = (labeledIntervals.count("FP") > 0) or (labeledIntervals.count("fp") > 0 and args.ambiguousRegionsFiles)
 
         def relabeller(xx):
+            """
+            Resolve various rules regarding how variants should interact with the fp and ambiguous regions they
+            intersect.
+
+            Rules:
+            - All TP and FN calls are untouched -- even if they fall in a false positive or ambiguous region
+            - Otherwise...
+                - Any call intersecting an FP region is labeled as "FP", regardless of ambiguous region input
+                - Any call intersecting an ambiguous region gets a comma separated list of all ambiguous region labels
+                - Any call falling outside of an ambiguous or fp region will be labeled as:
+                  - FP if no fp regions are given the ambiguous region file contains no false positive regions
+                  - UNK otherwise.
+            """
             if xx["tag"] == "TP" or xx["tag"] == "FN":
                 return xx
             chrom = xx["CHROM"]
             start = xx["POS"]
             stop = xx["POS"] + len(xx["REF"])
-            overlap = fp.intersect(chrom, start, stop)
+            overlap = labeledIntervals.intersect(chrom, start, stop)
 
             is_fp = False
             is_ambi = False
@@ -141,7 +160,7 @@ def main():
                 xx["tag"] = "FP"
             elif is_ambi:
                 xx["tag"] = ",".join(list(classes_this_pos))
-            elif not has_fp:
+            elif not areFPRegionsProvided:
                 # when we don't have FP regions, unk stuff becomes FP
                 xx["tag"] = "FP"
             else:

@@ -49,7 +49,7 @@ def parseArgs():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("inputs", nargs="+",
-                        help="Feature CSV file (argument may be specified more than once")
+                        help="Labeled feature CSV file (argument may be specified more than once")
 
     modelNames=evs.EVSModel.names()
     parser.add_argument("-m", "--model", choices=modelNames, required=True,
