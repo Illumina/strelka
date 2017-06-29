@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -85,10 +85,10 @@ protected:
     ///
     static
     void
-    write_file_audit(const blt_options& opt,
-                     const prog_info& pinfo,
-                     const char* const cmdline,
-                     std::ostream& os);
+    write_file_audit(
+        const prog_info& pinfo,
+        const char* const cmdline,
+        std::ostream& os);
 
     /// write the first few meta-data lines for a vcf file:
     ///

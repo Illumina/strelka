@@ -17,6 +17,7 @@
 //
 //
 
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -53,31 +54,27 @@ open_ofstream(const prog_info& pinfo,
 
 static
 void
-write_audit(const blt_options& opt,
-            const prog_info& pinfo,
-            const char* const cmdline,
-            std::ostream& os,
-            const char* const prefix = 0)
+write_audit(
+    const prog_info& pinfo,
+    const char* const cmdline,
+    std::ostream& os,
+    const char* const prefix = 0)
 {
-    if (opt.is_write_variable_metadata)
-    {
-        if (prefix) os << prefix;
-        os << "CMDLINE " << cmdline << "\n";
-    }
+    if (prefix) os << prefix;
+    os << "CMDLINE " << cmdline << "\n";
+
     if (prefix) os << prefix;
     os << "PROGRAM_VERSION " << pinfo.version() << "\n";
-    if (opt.is_write_variable_metadata)
-    {
-        if (prefix) os << prefix;
 
-        static const unsigned bufferSize(256);
-        char timeBuffer[bufferSize];
+    if (prefix) os << prefix;
 
-        const time_t result(time(nullptr));
-        strftime(timeBuffer, bufferSize, "%c", localtime(&result));
+    static const unsigned bufferSize(256);
+    char timeBuffer[bufferSize];
 
-        os << "START_TIME " << timeBuffer << "\n";
-    }
+    const time_t result(time(nullptr));
+    strftime(timeBuffer, bufferSize, "%c", localtime(&result));
+
+    os << "START_TIME " << timeBuffer << "\n";
 }
 
 
@@ -118,12 +115,12 @@ write_vcf_audit(
 
 static
 void
-write_file_audit(const blt_options& opt,
-                 const prog_info& pinfo,
-                 const char* const cmdline,
-                 std::ostream& os)
+write_file_audit(
+    const prog_info& pinfo,
+    const char* const cmdline,
+    std::ostream& os)
 {
-    write_audit(opt,pinfo,cmdline,os,"#$ ");
+    write_audit(pinfo,cmdline,os,"#$ ");
     os << "#\n";
 }
 
@@ -131,12 +128,12 @@ write_file_audit(const blt_options& opt,
 
 void
 starling_streams_base::
-write_file_audit(const blt_options& opt,
-                 const prog_info& pinfo,
-                 const char* const cmdline,
-                 std::ostream& os)
+write_file_audit(
+    const prog_info& pinfo,
+    const char* const cmdline,
+    std::ostream& os)
 {
-    ::write_file_audit(opt,pinfo,cmdline,os);
+    ::write_file_audit(pinfo,cmdline,os);
 }
 
 
@@ -197,7 +194,7 @@ initialize_candidate_indel_file(
 
     fos << "# ** " << pinfo.name();
     fos << " candidate-indel file **\n";
-    write_file_audit(opt,pinfo,cmdline,fos);
+    write_file_audit(pinfo,cmdline,fos);
     fos << "#\n";
     fos << "#$ COLUMNS seq_name pos type length seq\n";
 

@@ -113,8 +113,6 @@ struct blt_options
 
     LOG_LEVEL::index_t verbosity = LOG_LEVEL::DEFAULT;
 
-    bool is_write_variable_metadata = true;
-
     std::string cmdline;
 
     // constants for het-bias model:

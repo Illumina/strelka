@@ -178,10 +178,6 @@ legacy_starling_arg_parse(
         {
             opt.is_write_candidate_indels_only=true;
         }
-        else if (ad.argstr[i]=="-skip-variable-metadata")
-        {
-            opt.is_write_variable_metadata=false;
-        }
         else if (ad.argstr[i]=="-h")
         {
             pinfo.usage();

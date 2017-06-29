@@ -207,9 +207,6 @@ write_starling_legacy_options(
        "\n"
        " -all-warnings      - print all warnings (default: errors and low-frequency warnings only)\n"
        "\n"
-       " -skip-variable-metadata\n"
-       "                    - do not print commmand-line or time stamp in data file metadata\n"
-       "\n"
        " -h                 - Display usage (this page)\n";
 }
 
