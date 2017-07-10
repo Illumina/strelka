@@ -86,12 +86,10 @@ void
 writeLowEVSFilter(
     std::ofstream& fos,
     const strelka_options& opt,
-    const VariantScoringModelServer& varModel,
     const char* label)
 {
-    const double threshold(varModel.scoreFilterThreshold());
     std::ostringstream oss;
-    oss << "Somatic Empirical Variant Score (" << opt.SomaticEVSVcfInfoTag << ") is less than " << threshold;
+    oss << "Somatic Empirical Variant Score (" << opt.SomaticEVSVcfInfoTag << ") is below threshold";
     write_vcf_filter(fos, label, oss.str().c_str());
 }
 
@@ -183,7 +181,7 @@ strelka_streams(
                 if (isUseEVS)
                 {
                     assert(dopt.somaticSnvScoringModel);
-                    writeLowEVSFilter(fos, opt, *dopt.somaticSnvScoringModel, get_label(LowEVSsnv));
+                    writeLowEVSFilter(fos, opt, get_label(LowEVSsnv));
                 }
                 else
                 {
@@ -305,7 +303,7 @@ strelka_streams(
                 if (isUseEVS)
                 {
                     assert(dopt.somaticIndelScoringModel);
-                    writeLowEVSFilter(fos, opt, *dopt.somaticIndelScoringModel, get_label(LowEVSindel));
+                    writeLowEVSFilter(fos, opt, get_label(LowEVSindel));
                 }
                 else
                 {
