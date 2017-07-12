@@ -35,7 +35,7 @@ sys.path.append(os.path.abspath(pyflowDir))
 
 from pyflow import WorkflowRunner
 from sharedWorkflow import getMkdirCmd, getRmdirCmd
-from strelkaSharedWorkflow import DeepCopyProtector
+from strelkaSharedWorkflow import getTotalKnownReferenceSize
 from workflowUtil import preJoin, GenomeSegment, getChromIntervals
 
 
@@ -51,7 +51,7 @@ def countGenomeSegment(self, sampleIndex, gseg, segFiles, taskPrefix="", depende
 
     segCmd.extend(["--region", gseg.bamRegion])
     segCmd.extend(["--ref", self.params.referenceFasta ])
-    segCmd.extend(["-genome-size", str(self.dynamicParams.totalKnownSize)] )
+    segCmd.extend(["-genome-size", str(self.params.totalKnownReferenceSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
 
     segFiles.counts.append(self.paths.getTmpSegmentErrorCountsPath(sampleIndex, segStr))
@@ -113,6 +113,20 @@ def lockMethod(f):
         finally:
             self.lock.release()
     return wrapped
+
+
+
+class DeepCopyProtector(object) :
+    """
+    Any data attached to this object will remain aliased through a deepcopy operation
+
+    Overloading __copy__ is provided here just to ensure that deep/shallow copy semantics are identical.
+    """
+    def __copy__(self) :
+        return self
+
+    def __deepcopy__(self, dict) :
+        return self
 
 
 
@@ -400,13 +414,11 @@ class EstimateSequenceErrorWorkflowForSample(WorkflowRunner) :
     """
     A separate workflow is setup around the error estimation process for each sample so that:
     (1) sequence error estimation can run in parallel for all samples
-    (2) workflow execution can be delayed until the ref count exists
     """
 
-    def __init__(self, params, paths, dynamicParams, estimationIntervals, sampleIndex) :
+    def __init__(self, params, paths, estimationIntervals, sampleIndex) :
         self.params = params
         self.paths = paths
-        self.dynamicParams = dynamicParams
         self.estimationIntervals = estimationIntervals
         self.sampleIndex = sampleIndex
 
@@ -467,7 +479,7 @@ def getSequenceErrorEstimates(self, taskPrefix="", dependencies=None):
     for sampleIndex in range(len(self.params.bamList)) :
         sampleIndexStr = str(sampleIndex).zfill(3)
         sampleTask=preJoin(taskPrefix,"Sample"+sampleIndexStr)
-        workflow=EstimateSequenceErrorWorkflowForSample(self.params, self.paths, self.dynamicParams, estimationIntervals, sampleIndex)
+        workflow=EstimateSequenceErrorWorkflowForSample(self.params, self.paths, estimationIntervals, sampleIndex)
         sampleTasks.add(self.addWorkflowTask(sampleTask, workflow, dependencies=mkDirTask))
 
     if not self.params.isRetainTempFiles :
@@ -476,3 +488,18 @@ def getSequenceErrorEstimates(self, taskPrefix="", dependencies=None):
 
     nextStepWait = sampleTasks
     return nextStepWait
+
+
+class EstimateSequenceErrorWorkflow(WorkflowRunner) :
+    """
+    A separate workflow is setup around the error estimation process for all samples so that:
+    (1) execution can be delayed until refcount is complete
+    """
+
+    def __init__(self, params, paths) :
+        self.params = params
+        self.paths = paths
+
+    def workflow(self) :
+        self.params.totalKnownReferenceSize = getTotalKnownReferenceSize(self.paths.getReferenceSizePath())
+        getSequenceErrorEstimates(self)

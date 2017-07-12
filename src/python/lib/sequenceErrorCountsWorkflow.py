@@ -34,13 +34,11 @@ pyflowDir=os.path.join(scriptDir,"pyflow")
 sys.path.append(os.path.abspath(pyflowDir))
 
 from configBuildTimeInfo import workflowVersion
-from configureUtil import safeSetBool, getIniSections, dumpIniSections
 from pyflow import WorkflowRunner
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, runDepthFromAlignments
-from strelkaSharedWorkflow import runCount, SharedPathInfo, \
+from strelkaSharedWorkflow import getTotalKnownReferenceSize, runCount, SharedPathInfo, \
                            StrelkaSharedCallWorkflow, StrelkaSharedWorkflow
-from workflowUtil import checkFile, ensureDir, preJoin, which, \
-                         getNextGenomeSegment, bamListCatCmd
+from workflowUtil import ensureDir, preJoin, getNextGenomeSegment
 
 
 __version__ = workflowVersion
@@ -74,7 +72,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segCmd.extend(["--region", gseg.chromLabel + ":" + str(gseg.beginPos) + "-" + str(gseg.endPos)])
     segCmd.extend(["--ref", self.params.referenceFasta ])
-    segCmd.extend(["-genome-size", str(self.params.knownSize)] )
+    segCmd.extend(["-genome-size", str(self.params.totalKnownReferenceSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
 
     segFiles.counts.append(self.paths.getTmpSegmentErrorCountsPath(segStr))
@@ -184,17 +182,7 @@ class CallWorkflow(StrelkaSharedCallWorkflow) :
         self.paths = paths
 
     def workflow(self) :
-
-        if True :
-            knownSize = 0
-            for line in open(self.paths.getReferenceSizePath()) :
-                word = line.strip().split('\t')
-                if len(word) != 4 :
-                    raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getReferenceSizePath()))
-                knownSize += int(word[2])
-
-            self.params.knownSize = knownSize
-
+        self.params.totalKnownReferenceSize = getTotalKnownReferenceSize(self.paths.getReferenceSizePath())
         callGenome(self)
 
 
@@ -223,7 +211,7 @@ class PathInfo(SharedPathInfo):
 
 class SequenceErrorCountsWorkflow(StrelkaSharedWorkflow) :
     """
-    sequence error counts workflow
+    Sequence error counts workflow
     """
 
     def __init__(self, params) :
@@ -252,7 +240,7 @@ class SequenceErrorCountsWorkflow(StrelkaSharedWorkflow) :
         self.setCallMemMb()
 
         callPreReqs = set()
-        callPreReqs |= runCount(self)
+        callPreReqs.add(runCount(self))
         if self.params.isHighDepthFilter :
             callPreReqs |= strelkaGermlineRunDepthFromAlignments(self)
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)

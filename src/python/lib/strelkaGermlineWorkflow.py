@@ -33,13 +33,12 @@ sys.path.append(scriptDir)
 pyflowDir=os.path.join(scriptDir,"pyflow")
 sys.path.append(os.path.abspath(pyflowDir))
 
-from pyflow import WorkflowRunner
-from pyflow import LogState
+from pyflow import WorkflowRunner, LogState
 from configBuildTimeInfo import workflowVersion
 from configureUtil import safeSetBool
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, getDepthFromAlignments
-from strelkaSequenceErrorEstimation import getSequenceErrorEstimates
-from strelkaSharedWorkflow import runCount, SharedPathInfo, \
+from strelkaSequenceErrorEstimation import EstimateSequenceErrorWorkflow
+from strelkaSharedWorkflow import getTotalKnownReferenceSize, runCount, SharedPathInfo, \
                            StrelkaSharedCallWorkflow, StrelkaSharedWorkflow
 from workflowUtil import ensureDir, preJoin, bamListCatCmd
 
@@ -277,10 +276,13 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     return nextStepWait
 
+
+
 def validateEstimatedParameters(self, sampleIndex) :
     """
-    check whether the indel error rates are static or estimated values
+    Check whether the indel error rates are static or estimated values
     """
+
     jsonFileName = self.paths.getIndelErrorModelPath(sampleIndex)
     if os.path.isfile(jsonFileName) :
         try :
@@ -323,11 +325,12 @@ class CallWorkflow(StrelkaSharedCallWorkflow) :
     delayed until the ref count exists
     """
 
-    def __init__(self, params, paths, dynamicParams) :
-        super(CallWorkflow,self).__init__(params, dynamicParams)
+    def __init__(self, params, paths) :
+        super(CallWorkflow,self).__init__(params)
         self.paths = paths
 
     def workflow(self) :
+        self.params.totalKnownReferenceSize = getTotalKnownReferenceSize(self.paths.getReferenceSizePath())
         callGenome(self)
 
 
@@ -422,15 +425,14 @@ class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
 
         callPreReqs = set()
         estimatePreReqs = set()
-        estimatePreReqs |= runCount(self)
+        estimatePreReqs.add(runCount(self))
         if self.params.isHighDepthFilter :
             estimatePreReqs |= strelkaGermlineGetDepthFromAlignments(self)
 
         if self.params.isEstimateSequenceError :
-            validatePreReq = set()
-            validatePreReq |= getSequenceErrorEstimates(self, taskPrefix="EstimateSeqError", dependencies=estimatePreReqs)
-            callPreReqs.add(self.addWorkflowTask("ValidateEstimatedParameters", ValidateEstimatedParametersWorkflow(self.params, self.paths), dependencies=validatePreReq))
+            validatePreReq = self.addWorkflowTask("EstimateSeqErrorParams", EstimateSequenceErrorWorkflow(self.params, self.paths), dependencies=estimatePreReqs)
+            callPreReqs.add(self.addWorkflowTask("ValidateSeqErrorParams", ValidateEstimatedParametersWorkflow(self.params, self.paths), dependencies=validatePreReq))
         else :
             callPreReqs = estimatePreReqs
 
-        self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths, self.dynamicParams), dependencies=callPreReqs)
+        self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)

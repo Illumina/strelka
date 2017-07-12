@@ -35,11 +35,9 @@ pyflowDir=os.path.join(scriptDir,"pyflow")
 sys.path.append(os.path.abspath(pyflowDir))
 
 from configBuildTimeInfo import workflowVersion
-from configureUtil import argToBool, getIniSections, dumpIniSections
 from pyflow import WorkflowRunner
-from strelkaSharedWorkflow import runCount, SharedPathInfo, StrelkaSharedWorkflow
-from workflowUtil import checkFile, ensureDir, preJoin, which, \
-                         getNextGenomeSegment, getFastaChromOrderSize, bamListCatCmd
+from strelkaSharedWorkflow import getTotalKnownReferenceSize, runCount, SharedPathInfo, StrelkaSharedWorkflow
+from workflowUtil import preJoin, getNextGenomeSegment
 
 
 
@@ -66,7 +64,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["-min-mapping-quality",self.params.minMapq])
     segCmd.extend(["--ref", self.params.referenceFasta ])
     segCmd.extend(["-max-window-mismatch", "2", "20" ])
-    segCmd.extend(["-genome-size", str(self.params.knownSize)] )
+    segCmd.extend(["-genome-size", str(self.params.totalKnownReferenceSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
 
     segCmd.extend(['-min-qscore','17'])
@@ -153,17 +151,7 @@ class CallWorkflow(WorkflowRunner) :
         self.paths = paths
 
     def workflow(self) :
-
-        if True :
-            knownSize = 0
-            for line in open(self.paths.getReferenceSizePath()) :
-                word = line.strip().split('\t')
-                if len(word) != 4 :
-                    raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getReferenceSizePath()))
-                knownSize += int(word[2])
-
-            self.params.knownSize = knownSize
-
+        self.params.totalKnownReferenceSize = getTotalKnownReferenceSize(self.paths.getReferenceSizePath())
         callGenome(self)
 
 
@@ -220,6 +208,6 @@ class snoiseWorkflow(StrelkaSharedWorkflow) :
         self.flowLog("Initiating Strelka noise estimation workflow version: %s" % (__version__))
 
         callPreReqs = set()
-        callPreReqs |= runCount(self)
+        callPreReqs.add(runCount(self))
 
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)

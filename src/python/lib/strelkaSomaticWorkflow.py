@@ -37,7 +37,7 @@ from configBuildTimeInfo import workflowVersion
 from configureUtil import safeSetBool
 from pyflow import WorkflowRunner
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, getDepthFromAlignments
-from strelkaSharedWorkflow import runCount, SharedPathInfo, \
+from strelkaSharedWorkflow import getTotalKnownReferenceSize, runCount, SharedPathInfo, \
                            StrelkaSharedCallWorkflow, StrelkaSharedWorkflow
 from workflowUtil import ensureDir, preJoin, bamListCatCmd
 
@@ -270,11 +270,12 @@ class CallWorkflow(StrelkaSharedCallWorkflow) :
     delayed until the ref count exists
     """
 
-    def __init__(self, params, paths, dynamicParams) :
-        super(CallWorkflow,self).__init__(params, dynamicParams)
+    def __init__(self, params, paths) :
+        super(CallWorkflow,self).__init__(params)
         self.paths = paths
 
     def workflow(self) :
+        self.params.totalKnownReferenceSize = getTotalKnownReferenceSize(self.paths.getReferenceSizePath())
         callGenome(self)
 
 
@@ -355,8 +356,8 @@ class StrelkaSomaticWorkflow(StrelkaSharedWorkflow) :
         self.setCallMemMb()
 
         callPreReqs = set()
-        callPreReqs |= runCount(self)
+        callPreReqs.add(runCount(self))
         if self.params.isHighDepthFilter :
             callPreReqs |= strelkaSomaticGetDepthFromAlignments(self)
 
-        self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths, self.dynamicParams), dependencies=callPreReqs)
+        self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)
