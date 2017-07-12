@@ -47,12 +47,10 @@ __version__ = workflowVersion
 
 
 def strelkaGermlineGetDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=None):
-    bamList=[]
-    if len(self.params.bamList) :
-        bamList = self.params.bamList
-    else :
+    if len(self.params.bamList) == 0 :
         return set()
 
+    bamList = self.params.bamList
     outputPath=self.paths.getChromDepth()
     return getDepthFromAlignments(self, bamList, outputPath, taskPrefix, dependencies)
 
