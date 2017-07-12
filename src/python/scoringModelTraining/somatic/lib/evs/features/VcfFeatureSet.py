@@ -32,6 +32,56 @@ class VcfFeatureSet(FeatureSet):
         If headerKey is provided, then use this header value to extract labels
         for the INFO EVSF feature tag
         """
+
+        def isNucleotide(nucString):
+            """
+            Return True if nucString is a single nucleotide, False otherwise.
+            """
+            return (nucString in ["A", "C", "G", "T", "N"])
+
+
+
+        def variantType(ref, alt):
+            """
+            Return 'snv' if ref and all alt alleles are single nucleotides, 
+            otherwise return 'indel'
+            """
+            if isNucleotide(ref) and all(isNucleotide(allele) for allele in alt.split(',')) :
+                return "snv"
+            return "indel"
+
+
+
+        def processVariant(line, keyType, header_feature_labels):
+            """
+            Return a record with collected features for this variant
+            or None if the variant type does not match the key type.
+            """
+
+            isHeaderKey = (header_feature_labels is not None)
+            word = line.strip().split('\t')
+            
+            qrec = {
+                "CHROM": word[VCFID.CHROM],
+                "POS": int(word[VCFID.POS]),
+                "REF": word[VCFID.REF],
+                "ALT": word[VCFID.ALT],
+            }
+
+            if isHeaderKey :
+                if variantType(word[VCFID.REF], word[VCFID.ALT]) != keyType :
+                    return None
+                for ikv in word[VCFID.INFO].split(';') :
+                    iword = ikv.split("=",1)
+                    if iword[0] == "EVSF" :
+                        assert(len(iword) == 2)
+                        features = [float(f) for f in iword[1].split(',')]
+                        for i in range(len(features)) :
+                            qrec[header_feature_labels[i]] = features[i]
+            return qrec
+
+
+
         feature_labels = ["CHROM", "POS", "REF", "ALT"]
         header_feature_labels = None
 
@@ -39,6 +89,15 @@ class VcfFeatureSet(FeatureSet):
 
         isHeader = True
         isHeaderKey = (headerKey is not None)
+        if isHeaderKey :
+            if headerKey == "snv_scoring_features" :
+                keyType = "snv"
+            elif headerKey == "indel_scoring_features" :
+                keyType = "indel"
+            else :
+                raise Exception("Unknown header key: '%s'" % headerKey)
+        else :
+            keyType = None
 
         for line in openMaybeGzip(vcfname):
             if isHeader :
@@ -55,26 +114,9 @@ class VcfFeatureSet(FeatureSet):
                         assert(header_feature_labels is not None)
                     isHeader = False
 
-            word = line.strip().split('\t')
-
-            qrec = {
-                "CHROM": word[VCFID.CHROM],
-                "POS": int(word[VCFID.POS]),
-                "REF": word[VCFID.REF],
-                "ALT": word[VCFID.ALT]
-            }
-
-            if isHeaderKey :
-                for ikv in word[VCFID.INFO].split(';') :
-                    iword = ikv.split("=",1)
-                    if iword[0] != "EVSF" : continue
-                    assert(len(iword) == 2)
-                    features = [float(f) for f in iword[1].split(',')]
-                    assert(len(features) == len(header_feature_labels))
-                    for i in range(len(features)) :
-                        qrec[header_feature_labels[i]] = features[i]
-
-            records.append(qrec)
+            qrec = processVariant(line, keyType, header_feature_labels)
+            if qrec is not None:
+                records.append(qrec)
 
         cols = feature_labels
         if isHeaderKey :

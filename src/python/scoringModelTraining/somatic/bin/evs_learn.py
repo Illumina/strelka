@@ -100,8 +100,10 @@ def parseArgs():
 def getDataSet(inputs, sample_input) :
 
     import random
-
     datasets = []
+    admixWeight = 1
+    nnWeight = 1
+
     for inputFile in inputs:
         inputFile = os.path.abspath(inputFile)
         print "Reading '%s'" % (inputFile)
@@ -112,6 +114,13 @@ def getDataSet(inputs, sample_input) :
             p_rows_selected = random.sample(df.index, p_rows)
             df = pandas.DataFrame(df.ix[p_rows_selected])
 
+        df["weight"] = 1
+        if "Admix" in inputFile:
+            df["weight"] = admixWeight
+            print "Admixture: setting weight to %f" % admixWeight
+        if "NN" in inputFile:
+            df["weight"] = nnWeight
+            print "Normal-normal: setting weight to %f" % nnWeight
         datasets.append(df)
 
     if len(datasets) > 1:
