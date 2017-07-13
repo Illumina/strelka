@@ -215,7 +215,8 @@ def countSequenceEvidenceUntilTargetIsReached(self, estimationIntervals, sampleI
     This routine organizes the process of launching sequence error count jobs until a specific total
     evidence count has been gathered from the genome (or no genome segments are left)
 
-    Note that this function will not return until its tasks are completed, so it will block conventional task parallelization
+    Note that this function will not return until its tasks are completed, so it will block conventional task
+    parallelization
     """
 
     class Constants :
@@ -255,8 +256,9 @@ def countSequenceEvidenceUntilTargetIsReached(self, estimationIntervals, sampleI
         taskByIndex.append(countTask)
 
         updateTaskLabel=preJoin(taskPrefix,"trackCounts_"+gseg.id)
-        updateWorkflow =  UpdateCompletedTaskTrackerWorkflow(taskIndex, segFiles.nonEmptySiteCounts[-1], completedTaskTracker)
-        self.addWorkflowTask(updateTaskLabel, updateWorkflow, dependencies=countTask)
+        updateWorkflow = UpdateCompletedTaskTrackerWorkflow(taskIndex, segFiles.nonEmptySiteCounts[-1],
+                                                            completedTaskTracker)
+        self.addWorkflowTask(updateTaskLabel, updateWorkflow, dependencies=countTask, isEphemeral=True)
 
         return True
 
