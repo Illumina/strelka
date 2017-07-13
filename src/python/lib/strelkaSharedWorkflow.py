@@ -42,12 +42,20 @@ def getTotalKnownReferenceSize(referenceSizeFilePath) :
     Return the total known reference size given the output file from countFastaBin
     :return:
     """
+
+    class ReferenceCountColumns :
+        FASTA_PATH = 0
+        CHROM = 1
+        KNOWN_SIZE = 2
+        TOTAL_SIZE = 3
+        SIZE = 4
+
     knownSize = 0
     for line in open(referenceSizeFilePath) :
         word = line.strip().split('\t')
-        if len(word) != 4 :
+        if len(word) != ReferenceCountColumns.SIZE :
             raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getReferenceSizePath()))
-        knownSize += int(word[2])
+        knownSize += int(word[ReferenceCountColumns.KNOWN_SIZE])
 
     return knownSize
 
