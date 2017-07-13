@@ -1,3 +1,4 @@
+- STREL-557 Retrain somatic EVS on updated alignments and truth sets
 - STREL-609 Fix genotyping error on forced non-variant indels
 - STREL-612 Fix sites overlapping forced non-variant indels
 - STREL-602 Retrain germline SNV EVS on updated alignments
