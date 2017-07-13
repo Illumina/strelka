@@ -292,7 +292,7 @@ def countSequenceEvidenceUntilTargetIsReached(self, estimationIntervals, sampleI
 
     import time
 
-    while True :
+    while (not self.isWorkflowStopping()) :
         # Loop until the total required counts have been found in this sample, or there are no more counting
         # tasks to launch.
 
