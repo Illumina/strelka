@@ -1,3 +1,4 @@
+- STREL-608 Fix hang after error during adaptive estimation
 - STREL-610 Fix workflow resumption after interrupt
 - STREL-557 Retrain somatic EVS on updated alignments and truth sets
 - STREL-609 Fix genotyping error on forced non-variant indels

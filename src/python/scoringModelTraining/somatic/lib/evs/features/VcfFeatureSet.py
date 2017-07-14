@@ -43,7 +43,7 @@ class VcfFeatureSet(FeatureSet):
 
         def variantType(ref, alt):
             """
-            Return 'snv' if ref and all alt alleles are single nucleotides, 
+            Return 'snv' if ref and all alt alleles are single nucleotides,
             otherwise return 'indel'
             """
             if isNucleotide(ref) and all(isNucleotide(allele) for allele in alt.split(',')) :
@@ -60,7 +60,7 @@ class VcfFeatureSet(FeatureSet):
 
             isHeaderKey = (header_feature_labels is not None)
             word = line.strip().split('\t')
-            
+
             qrec = {
                 "CHROM": word[VCFID.CHROM],
                 "POS": int(word[VCFID.POS]),
