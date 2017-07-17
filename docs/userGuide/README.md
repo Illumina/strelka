@@ -39,11 +39,10 @@ Strelka User Guide
 
 ## Introduction
 
-Strelka calls somatic and germline small variants from mapped sequencing reads. It is optimized for rapid clinical analysis of somatic variation in tumor/normal sample pairs and germline variation in small cohorts. For best indel performance, Strelka is designed to be run with the [Manta structural variant and indel caller][manta], which provides additional sample-specific indel candidates up to Strelka's configured maxiumum indel size (by default this is 50). By design, Manta and Strelka together provide complete coverage over all indel sizes (in additional to all SVs and SNVs) for clinical somatic and germline analysis scenarios.
-Strelka accepts input read mappings from BAM or CRAM
-files and input alleles from VCF. It reports all small variant predictions in VCF 4.1 format. Germline variant reporting
-uses the [gVCF conventions][gvcfPage] to represent both variant and reference
-call confidence.
+Strelka calls germline and somatic small variants from mapped sequencing reads. It is optimized for rapid clinical analysis of germline variation in small cohorts and somatic variation in tumor/normal sample pairs. Strelka's germline caller employs a haplotype model to improve call quality and provide short-range read-backed phasing in addition to a probabilistic variant calling model using indel error rates adaptively estimated from each input sample's sequencing data. Both germline and somatic callers include a final empirical variant rescoring step using a random forest model to reflect numerous features indicative of call reliability which may not be represented in the core variant calling probability model.
+
+Strelka accepts input read mappings from BAM or CRAM files, in addition to input candidate and/or forced-call alleles from VCF. It reports all small variant predictions in VCF 4.1 format. Germline variant reporting uses the [gVCF conventions][gvcfPage] to represent both variant and reference
+call confidence. For best somatic indel performance, Strelka is designed to be run with the [Manta structural variant and indel caller][manta], which provides additional indel candidates up to a given maxiumum indel size (by default this is 50). By design, Manta and Strelka run together with default settings provide complete coverage over all indel sizes (in additional to all SVs and SNVs) for clinical somatic and germline analysis scenarios.
 
 [manta]:https://github.com/Illumina/manta
 [gvcfPage]:https://sites.google.com/site/gvcftools/home/about-gvcf
@@ -61,21 +60,25 @@ methods specific to the analysis of germline or somatic variation.
 
 In all cases, strelka starts with a preliminary step to estimate various genomic or regional
 statistics from the input alignments, including the sequence depth distribution
-and sequence error patterns. This is followed by segmenting of the genome
-for parallel processing, where within each segment all input samples are jointly analyzed
-to identify candidate alleles, realign all input reads, analyze reads to make model
-specific variant inferences, then compute properties of each variant used to apply filters
-or empirically recalibrate confidence that each variant represents a germline or somatic
+and, for germline analysis, a detailed analysis of indel error rates for each input sample.
+This is followed by segmenting of the genome for parallel processing, where within each segment
+all input samples are jointly analyzed to identify candidate alleles, realign all input reads,
+analyze reads to make model specific variant inferences, then compute properties of each variant
+used to apply filters or empirically recalibrate confidence that each variant represents a germline or somatic
 variant in the input sample(s). Finally, all parallel segment results are joined to produce
 Strelka's final variant output.
+
+Strelka's germline calling model employs a haplotype representation to improve variant call quality
+and provide short-range read backed phasing of all variants. The haplotype idenfiication method uses both
+a fast k-mer ranking approach for simple loci and local assembly for more complex or repetitive regions.
 
 ## Capabilities
 
 Strelka is capable of detecting SNVs and indels up to a predefined maximum size, currently
-defaulting to 50 or less. Indels are detected from several sources, including indels
-placed by the read mapper (or other sources) into the input alignments, indels detected by Strelka from
-the assembly of an active region, and candidate indel VCFs provided as input from an
-external SV/indel caller. For all strelka workflows, it is a recommended best practice
+defaulting to 50 bases or less. Indels are detected from several sources, including indels
+present in the input read alignments, indels detected by Strelka from the assembly of an
+active region, and candidate indel VCFs provided as input from an external SV/indel caller or
+population database. For somatic variant calling, it is a recommended best practice
 to provide indel candidates from the [Manta SV and indel caller][manta], as outlined
 in the suggested configuration steps below.
 
@@ -89,7 +92,7 @@ sufficient normal and tumor sequencing depth. Strelka also accounts for minor co
 sample with tumor cells (up to 10%) to better support liquid and late-stage solid tumor analysis.
 
 Strelka is capable of performing joint germline analysis on a family scale (10s of samples). This is primarily intended
-to facilite de-novo variant analysis in families. Strelka's germline analysis capabilities are not currently
+to facilitate de-novo variant analysis in families. Strelka's germline analysis capabilities are not currently
 optimized for population analysis and may become unstable or fail to leverage population variant constraints to improve
 calls at higher sample counts.
 
@@ -127,7 +130,7 @@ The following limitations apply to the input BAM/CRAM alignment records:
 * RG (read group) tags are ignored -- each alignment file must represent one
   sample.
 * Alignments with basecall quality values greater than 70 will trigger a runtime error (these
-  are not supported on the assumption that this indicates an offset error)
+  are not supported on the assumption that the high basecall quality indicates an offset error)
 
 ### VCF Files
 
@@ -183,7 +186,7 @@ Additional diagnostic output is provided in `${STRELKA_ANALYSIS_PATH}/results/st
 * __genomeCallStats.tsv__
     * A tab-delimited report of various internal statistics from the variant calling process:
         * Runtime information accumulated for each genome segment, excluding auxiliary steps such as BAM indexing and vcf merging.
-        * Indel candidatacy statistics
+        * Indel candidacy statistics
 
 * __genomeCallStats.xml__
     * xml data backing the genomeCallStats.tsv report
@@ -215,7 +218,7 @@ On completion, the configuration script will create the workflow run script `${S
 This can be used to run the workflow in various parallel compute modes per the instructions in the [Execution](#execution) section
 below.
 
-For all workflows, the best-practice recommendation is to run the [Manta SV and indel caller][manta] on the same set of
+For the somatic workflow, the best-practice recommendation is to run the [Manta SV and indel caller][manta] on the same set of
 samples first, then supply Manta's candidate indels as input to Strelka. Examples of this procedure are shown below.
 
 #### Somatic configuration example
@@ -243,17 +246,20 @@ Manta is:
 
 ...followed by execution of the manta workflow. Note that full installation and usage instructions for Manta can be found in the [Manta User Guide][mantaUserGuide].
 
+[mantaUserGuide]:https://github.com/Illumina/manta/blob/master/docs/userGuide/README.md
 
 #### Germline configuration example
 
-Germline analysis is configured with the script: `${STRELKA_INSTALL_PATH}/bin/configureStrelkaGermlineWorkflow.py`
+Germline analysis is configured with the script: `${STRELKA_INSTALL_PATH}/bin/configureStrelkaGermlineWorkflow.py`. The
+germline caller already includes its own assembly step, so indel candidate input from a tool like Manta is not
+recommended in this case (in testing, Manta candidate indels have been found to provide no benefit and in some cases
+may complicate the accurate resolution of a locus).
 
 Single Diploid Sample Analysis -- Example Configuration:
 
     ${STRELKA_INSTALL_PATH}/bin/configureStrelkaGermlineWorkflow.py \
     --bam NA12878.bam \
     --referenceFasta hg19.fa \
-    --indelCandidates ${MANTA_ANALYSIS_PATH}/results/variants/candidateSmallIndels.vcf.gz \
     --runDir ${STRELKA_ANALYSIS_PATH}
 
 Joint Diploid Sample Analysis -- Example Configuration:
@@ -263,23 +269,7 @@ Joint Diploid Sample Analysis -- Example Configuration:
     --bam NA12891.cram \
     --bam NA12892.cram \
     --referenceFasta hg19.fa \
-    --indelCandidates ${MANTA_ANALYSIS_PATH}/results/variants/candidateSmallIndels.vcf.gz \
     --runDir ${STRELKA_ANALYSIS_PATH}
-
-In the above examples, including the candidate indel file `${MANTA_ANALYSIS_PATH}/results/variants/candidateSmallIndels.vcf.gz`
-is a recommended best practice but not required. To generate these candidate indels the configuration for
-Manta corresponding to the "Joint Diploid Sample Analysis" example above is:
-
-    ${MANTA_INSTALL_PATH}/bin/configManta.py \
-    --bam NA12878.cram \
-    --bam NA12891.cram \
-    --bam NA12892.cram \
-    --referenceFasta hg19.fa \
-    --runDir ${MANTA_ANALYSIS_PATH}
-
-...followed by execution of the manta workflow. Note that full installation and usage instructions for Manta can be found in the [Manta User Guide][mantaUserGuide]
-
-[mantaUserGuide]:https://github.com/Illumina/manta/blob/master/docs/userGuide/README.md
 
 #### General configuration options
 
@@ -451,4 +441,3 @@ The following items provide an in-depth focus on a special topic or procedure
 
 [1]: http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-41
 [2]: http://Illumina.github.io/pyflow/
-[3]: http://bioinformatics.oxfordjournals.org/content/28/14/1811
