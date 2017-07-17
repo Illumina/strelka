@@ -861,7 +861,7 @@ candidate_alignment_search(
 
         if (is_start_pin_valid)
         {
-            const pos_t read_start_pos(apath_read_lead_size(cal.al.path));
+            const pos_t read_start_pos(unalignedPrefixSize(cal.al.path));
             candidate_alignment start_cal;
             try
             {
@@ -914,7 +914,7 @@ candidate_alignment_search(
             // work backwards from end_pos to get start_pos and
             // read_start_pos when the current indel set included,
             // and then used the make_start_pos_alignment routine.
-            const pos_t read_end_pos(read_length-apath_read_trail_size(cal.al.path));
+            const pos_t read_end_pos(read_length-+unalignedSuffixSize(cal.al.path));
             pos_t ref_start_pos(0);
             pos_t read_start_pos(0);
             get_end_pin_start_pos(current_indels,read_length,

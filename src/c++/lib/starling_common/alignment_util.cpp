@@ -60,8 +60,8 @@ known_pos_range
 get_alignment_range(
     const alignment& al)
 {
-    const pos_t lead(apath_read_lead_size(al.path));
-    const pos_t trail(apath_read_trail_size(al.path));
+    const pos_t lead(unalignedPrefixSize(al.path));
+    const pos_t trail(unalignedSuffixSize(al.path));
     const pos_t asize(apath_ref_length(al.path));
 
     const pos_t begin_pos(al.pos-lead);

@@ -30,7 +30,7 @@ pos_t
 get_alignment_buffer_pos(const alignment& al)
 {
 
-    const pos_t lead(apath_read_lead_size(al.path));
+    const pos_t lead(unalignedPrefixSize(al.path));
     return al.pos-lead;
 }
 
