@@ -17,9 +17,6 @@
 //
 //
 
-/// \author Chris Saunders
-///
-
 #pragma once
 
 #include "bam_util.hh"

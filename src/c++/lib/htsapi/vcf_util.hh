@@ -17,10 +17,12 @@
 //
 //
 
-/// random vcf utilities
+/// \file
+///
+/// \brief VCF utilities
 ///
 /// \author Chris Saunders
-///
+
 
 #pragma once
 

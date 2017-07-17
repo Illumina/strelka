@@ -18,10 +18,11 @@
 //
 
 /**
+ ** \file
  ** \brief Declaration of the common exception mechanism.
  **
  ** All exceptions must carry the same data (independently of the
- ** exception type) to homogenixe the reporting and processing of
+ ** exception type) to homogenize the reporting and processing of
  ** errors.
  **
  ** \author Come Raczy
