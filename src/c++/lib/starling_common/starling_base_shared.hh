@@ -90,11 +90,6 @@ struct starling_base_options : public blt_options
     //
     double bindel_diploid_theta = 0.0001;
 
-    // use this theta in long homopolymers (germline only)
-    double indelHighRepeatTheta = 0.01;
-    // definition of "long homopolymer" above
-    unsigned indelHighRepeatCount = 16;
-
     uint32_t user_genome_size = 0; // genome size specified by user for the indel calling model -- actual value used is in deriv_options.
     bool is_user_genome_size = false;
 
