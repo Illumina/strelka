@@ -458,7 +458,6 @@ updateSnvLocusWithSampleInfo(
             for (const auto& call : good_pi.calls)
             {
                 if (call.base_id == BASE_ID::ANY) continue;
-                if (call.get_qscore() < opt.used_allele_count_min_qscore) continue;
                 const uint8_t alleleIndex(baseIndexToAlleleIndex[call.base_id]);
                 if (alleleIndex == fullAlleleCount) continue;
                 sampleInfo.supportCounts.getCounts(call.is_fwd_strand).incrementAlleleCount(alleleIndex);
@@ -521,7 +520,7 @@ getSiteAltAlleles(
     {
         const auto& cpi(sample(sampleIndex).cpi);
         const auto& good_pi(cpi.cleanedPileup());
-        good_pi.get_known_counts(sampleBaseCounts, _opt.used_allele_count_min_qscore);
+        good_pi.get_known_counts(sampleBaseCounts);
 
         static const double minAlleleFraction(0.10);
         unsigned minCount(0);
@@ -783,7 +782,6 @@ updateContinuousSnvLocusWithSampleInfo(
         for (const auto& call : good_pi.calls)
         {
             if (call.base_id==BASE_ID::ANY) continue;
-            if (call.get_qscore()<opt.used_allele_count_min_qscore) continue;
             const uint8_t alleleIndex(baseIndexToAlleleIndex[call.base_id]);
             auto& strandCounts(sampleInfo.supportCounts.getCounts(call.is_fwd_strand));
             if (alleleIndex==fullAlleleCount)

@@ -104,9 +104,6 @@ struct blt_options
     bool is_include_singleton = false;
     bool is_include_anomalous = false;
 
-    /// If printing used allele counts, filter them for qscore >= this value
-    int used_allele_count_min_qscore = 0;
-
     int max_vexp_iterations = 0;
     bool is_min_vexp = false;
     double min_vexp = 0;

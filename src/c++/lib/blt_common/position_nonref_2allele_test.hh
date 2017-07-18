@@ -18,11 +18,10 @@
 //
 
 /// \file
-
 /// \author Chris Saunders
 ///
-#ifndef __POSITION_NONREF_2ALLELE_TEST_HH
-#define __POSITION_NONREF_2ALLELE_TEST_HH
+
+#pragma once
 
 #include "blt_common/blt_shared.hh"
 #include "blt_common/nonref_test_call.hh"
@@ -89,9 +88,7 @@ position_nonref_2allele_test(
 
 
 void
-write_nonref_2allele_test(const blt_options& opt,
-                          const snp_pos_info& pi,
-                          const nonref_test_call& nrc,
-                          std::ostream& os);
-
-#endif
+write_nonref_2allele_test(
+    const snp_pos_info& pi,
+    const nonref_test_call& nrc,
+    std::ostream& os);

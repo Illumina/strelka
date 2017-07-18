@@ -125,7 +125,7 @@ public:
 std::ostream& operator<<(std::ostream& os,const base_call& bc);
 
 
-
+/// \brief Captures basecall information for a single position 'pileup'
 struct snp_pos_info
 {
     snp_pos_info()
@@ -154,10 +154,11 @@ struct snp_pos_info
         spanningIndelPloidyModification = 0;
     }
 
+    /// Summarize pileup information as a simple allele count
     template <typename T>
     void
     get_known_counts(std::array<T,N_BASE>& base_count,
-                     const int min_qscore) const
+                     const int min_qscore = 0) const
     {
         for (unsigned i(0); i<N_BASE; ++i) base_count[i] = 0;
 
@@ -165,23 +166,6 @@ struct snp_pos_info
         {
             if (call.base_id==BASE_ID::ANY) continue;
             if (call.get_qscore()<min_qscore) continue;
-            base_count[call.base_id]++;
-        }
-    }
-
-    template <typename T>
-    void
-    get_known_counts(std::array<T,N_BASE>& base_count,
-                     const int min_qscore,
-                     const bool is_fwd_strand) const
-    {
-        std::fill(base_count.begin(),base_count.end(),0);
-
-        for (const auto& call : calls)
-        {
-            if (call.base_id==BASE_ID::ANY) continue;
-            if (call.get_qscore()<min_qscore) continue;
-            if (call.is_fwd_strand != is_fwd_strand) continue;
             base_count[call.base_id]++;
         }
     }
@@ -252,11 +236,11 @@ struct snp_pos_info
 
     void
     print_known_counts(std::ostream& os,
-                       const int min_qscore) const;
+                       const int min_qscore = 0) const;
 
     void
     print_known_qscore(std::ostream& os,
-                       const int min_qscore) const;
+                       const int min_qscore = 0) const;
 
 private:
     bool _is_ref_set;

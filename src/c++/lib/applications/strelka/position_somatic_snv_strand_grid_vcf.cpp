@@ -33,21 +33,19 @@
 #include <iostream>
 
 
-
+/// Calculate LOR feature for SNVs (log odds ratio for  T_REF T_ALT
+///                               		                N_REF N_ALT)
+///
+static
 double
 calculateLogOddsRatio(
     const CleanedPileup& n1_cpi,
-    const CleanedPileup& t1_cpi,
-    const blt_options& opt)
+    const CleanedPileup& t1_cpi)
 {
-    /**
-     * Calculate LOR feature (log odds ratio for  T_REF T_ALT
-     *                                            N_REF N_ALT)
-     */
     std::array<unsigned,N_BASE> n_tier1_base_counts;
     std::array<unsigned,N_BASE> t_tier1_base_counts;
-    n1_cpi.cleanedPileup().get_known_counts(n_tier1_base_counts,opt.used_allele_count_min_qscore);
-    t1_cpi.cleanedPileup().get_known_counts(t_tier1_base_counts,opt.used_allele_count_min_qscore);
+    n1_cpi.cleanedPileup().get_known_counts(n_tier1_base_counts);
+    t1_cpi.cleanedPileup().get_known_counts(t_tier1_base_counts);
     const unsigned ref_index(base_to_id(n1_cpi.cleanedPileup().get_ref_base()));
 
     static const double pseudoCount(0.5);
@@ -115,7 +113,7 @@ get_single_sample_scoring_features(
     if (!isNormalSample)      //report tier1_allele count for tumor case
     {
         std::array<unsigned,N_BASE> tier1_base_counts;
-        tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
+        tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts);
 
         const unsigned ref_index(base_to_id(tier1_cpi.cleanedPileup().get_ref_base()));
         unsigned ref=0;
@@ -208,7 +206,7 @@ get_scoring_features(
 
     smod.features.set(SOMATIC_SNV_SCORING_FEATURES::TumorSampleStrandBias,rs.strandBias);
 
-    smod.features.set(SOMATIC_SNV_SCORING_FEATURES::AlleleCountLogOddsRatio, calculateLogOddsRatio(n1_cpi,t1_cpi,opt));
+    smod.features.set(SOMATIC_SNV_SCORING_FEATURES::AlleleCountLogOddsRatio, calculateLogOddsRatio(n1_cpi, t1_cpi));
 
     // features not used in the current EVS model but feature candidates/exploratory for new EVS models
     if (opt.isReportEVSFeatures)
@@ -224,7 +222,6 @@ get_scoring_features(
 static
 void
 write_vcf_sample_info(
-    const blt_options& opt,
     const strelka_deriv_options& /*dopt*/,
     const CleanedPileup& tier1_cpi,
     const CleanedPileup& tier2_cpi,
@@ -242,8 +239,8 @@ write_vcf_sample_info(
 
     std::array<unsigned,N_BASE> tier1_base_counts;
     std::array<unsigned,N_BASE> tier2_base_counts;
-    tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
-    tier2_cpi.cleanedPileup().get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
+    tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts);
+    tier2_cpi.cleanedPileup().get_known_counts(tier2_base_counts);
 
     for (unsigned b(0); b<N_BASE; ++b)
     {
@@ -441,9 +438,9 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
     // normal sample info:
     os << "\t";
-    write_vcf_sample_info(opt,dopt,n1_epd,n2_epd,os);
+    write_vcf_sample_info(dopt,n1_epd,n2_epd,os);
 
     // tumor sample info:
     os << "\t";
-    write_vcf_sample_info(opt,dopt,t1_epd,t2_epd,os);
+    write_vcf_sample_info(dopt,t1_epd,t2_epd,os);
 }
