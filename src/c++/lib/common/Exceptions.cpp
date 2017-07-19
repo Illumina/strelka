@@ -36,8 +36,8 @@ namespace illumina
 namespace common
 {
 
-ExceptionData::ExceptionData(int errorNumber, const std::string& message) : boost::exception(),
-    errorNumber_(errorNumber), message_(message)
+ExceptionData::ExceptionData(int errorNumber, const std::string& message)
+    : errorNumber_(errorNumber), message_(message)
 {
 }
 

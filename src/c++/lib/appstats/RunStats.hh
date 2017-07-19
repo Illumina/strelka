@@ -37,7 +37,7 @@
 
 struct RunStatsData
 {
-    RunStatsData() {}
+    RunStatsData() = default;
 
     void
     merge(const RunStatsData& rhs)

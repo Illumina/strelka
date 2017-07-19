@@ -53,7 +53,7 @@ SegmentTimeTracker(
 SegmentTimeTracker::
 ~SegmentTimeTracker()
 {
-    if (nullptr != _osPtr) delete _osPtr;
+    delete _osPtr;
 }
 
 

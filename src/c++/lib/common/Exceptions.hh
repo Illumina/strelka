@@ -81,8 +81,8 @@ class IlluminaException : public std::exception, public ExceptionData
 public:
     IlluminaException(int errorNumber, const std::string& message) : ExceptionData(errorNumber, message) {}
     IlluminaException(const IlluminaException& e) : std::exception(e), ExceptionData(e) {}
-private:
-    IlluminaException& operator=(const IlluminaException&);
+
+    IlluminaException& operator=(const IlluminaException&) = delete;
 };
 
 /**
