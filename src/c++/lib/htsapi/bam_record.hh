@@ -259,10 +259,10 @@ public:
         if (! is_paired()) return false;
         static const char amtag[] = {'A','M'};
         uint8_t* am_ptr(bam_aux_get(_bp,amtag));
-        if (NULL == am_ptr)  return false;
+        if (nullptr == am_ptr)  return false;
         static const char smtag[] = {'S','M'};
         uint8_t* sm_ptr(bam_aux_get(_bp,smtag));
-        if (NULL == sm_ptr)  return false;
+        if (nullptr == sm_ptr)  return false;
         return (is_int_code(am_ptr[0]) &&
                 is_int_code(sm_ptr[0]) &&
                 (0 == bam_aux2i(am_ptr)) &&
@@ -334,7 +334,7 @@ public:
     bool
     empty() const
     {
-        assert(NULL != _bp);
+        assert(nullptr != _bp);
         return (_bp->l_data == 0);
     }
 
@@ -364,9 +364,9 @@ private:
     void
     freeBam()
     {
-        if (NULL != _bp)
+        if (nullptr != _bp)
         {
-            if (NULL != _bp->data) free(_bp->data);
+            if (nullptr != _bp->data) free(_bp->data);
             free(_bp);
         }
     }

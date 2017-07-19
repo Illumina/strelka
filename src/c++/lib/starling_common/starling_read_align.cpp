@@ -1270,7 +1270,7 @@ score_candidate_alignments(
     std::vector<bool> is_cal_allowed;
     if (is_pinned)
     {
-        const candidate_alignment* max_allowed_cal_ptr(NULL);
+        const candidate_alignment* max_allowed_cal_ptr(nullptr);
         is_cal_allowed.resize(candAlignments.size(),true);
         const known_pos_range gen_pr(get_strict_alignment_range(rseg.genome_align()));
 
@@ -1288,7 +1288,7 @@ score_candidate_alignments(
             }
             if (! is_cal_allowed[cal_index]) continue;
 
-            if (NULL!=max_allowed_cal_ptr)
+            if (nullptr!=max_allowed_cal_ptr)
             {
                 if (candAlignmentScores[cal_index]<max_allowed_path_lnp) continue;
             }
@@ -1296,7 +1296,7 @@ score_candidate_alignments(
             max_allowed_cal_ptr=&(*cal_iter);
         }
 
-        if (NULL == max_allowed_cal_ptr)
+        if (nullptr == max_allowed_cal_ptr)
         {
             std::ostringstream oss;
             oss << "ERROR: reached anomalous state during search for most likely exon alignment.\n";
@@ -1326,7 +1326,7 @@ score_candidate_alignments(
     }
 
     double smooth_path_lnp(0);
-    const candidate_alignment* smooth_cal_ptr(NULL);
+    const candidate_alignment* smooth_cal_ptr(nullptr);
     cal_pool_t smooth_cal_pool; // set of alignments within smooth-range of max path score
 
     unsigned cal_index(0);
@@ -1336,7 +1336,7 @@ score_candidate_alignments(
         if (is_pinned && (! is_cal_allowed[cal_index])) continue;
         const candidate_alignment& ical(*cal_iter);
         smooth_cal_pool.push_back(&ical);
-        if ((NULL==smooth_cal_ptr) ||
+        if ((nullptr==smooth_cal_ptr) ||
             (!is_first_cal_preferred(indelBuffer, *smooth_cal_ptr, ical)))
         {
             smooth_path_lnp=candAlignmentScores[cal_index];
@@ -1344,7 +1344,7 @@ score_candidate_alignments(
         }
     }
 
-    assert(NULL != smooth_cal_ptr);
+    assert(nullptr != smooth_cal_ptr);
 
 #ifdef DEBUG_ALIGN
     std::cerr << "BUBBY: key,max_path_lnp,max_path: " << rseg.key() << " " << maxCandAlignmentScore << " max_cal: " << *maxCandAlignmentPtr;

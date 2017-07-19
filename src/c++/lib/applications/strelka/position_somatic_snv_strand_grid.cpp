@@ -258,7 +258,7 @@ position_somatic_snv_call(
     blt_float_t normal_lhood[DIGT_GRID::SIZE];
     blt_float_t tumor_lhood[DIGT_GRID::SIZE];
 
-    const bool is_tier2(NULL != normal_epi_t2_ptr);
+    const bool is_tier2(nullptr != normal_epi_t2_ptr);
 
     static const unsigned n_tier(2);
     snv_result_set tier_rs[n_tier];

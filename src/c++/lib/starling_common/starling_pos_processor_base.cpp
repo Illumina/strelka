@@ -745,7 +745,7 @@ init_read_segment_pos(const pos_t pos)
         for (read_segment_iter::ret_val r; true; ri.next())
         {
             r=ri.get_ptr();
-            if (NULL==r.first) break;
+            if (nullptr==r.first) break;
             // full_segments of unspliced reads and the initial
             // segment of spliced reads are initialized outside of the
             // process_pos framework, so this routine only initializes
@@ -1199,7 +1199,7 @@ rebuffer_pos_reads(const pos_t pos)
         for (read_segment_iter::ret_val r; true; ri.next())
         {
             r=ri.get_ptr();
-            if (NULL==r.first) break;
+            if (nullptr==r.first) break;
             read_segment& rseg(r.first->get_segment(r.second));
 
             const pos_t new_pos(get_new_read_pos(rseg));
@@ -1233,7 +1233,7 @@ write_reads(const pos_t pos)
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         bam_dumper* bamd_ptr(_streams.realign_bam_ptr(sampleIndex));
-        if (NULL == bamd_ptr) continue;
+        if (nullptr == bamd_ptr) continue;
         bam_dumper& bamd(*bamd_ptr);
 
         read_segment_iter ri(sample(sampleIndex).read_buff.get_pos_read_segment_iter(pos));

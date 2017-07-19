@@ -194,7 +194,7 @@ read_segment_iter::ret_val
 read_segment_iter::
 get_ptr()
 {
-    static const ret_val null_ret(std::make_pair(static_cast<starling_read*>(NULL),0));
+    static const ret_val null_ret(std::make_pair(static_cast<starling_read*>(nullptr),0));
     if (_head==_end) return null_ret;
     const align_id_t read_id(_head->first);
     const seg_id_t seg_id(_head->second);

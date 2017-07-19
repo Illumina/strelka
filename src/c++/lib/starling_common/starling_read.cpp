@@ -243,7 +243,7 @@ write_bam(bam_dumper& bamd)
     const read_segment& rseg(get_full_segment());
 
     const alignment* al_ptr(rseg.get_best_alignment());
-    if (NULL == al_ptr) return;
+    if (nullptr == al_ptr) return;
 
     // if original genomic alignment, write out record unmodified:
     if (al_ptr == (&(rseg.genome_align())))
@@ -305,7 +305,7 @@ write_bam(bam_dumper& bamd)
         // write current pos to "OP" field if "OP" field does not
         // exist already:
         static const char optag[] = {'O','P'};
-        if (NULL==bam_aux_get(&br,optag))
+        if (nullptr==bam_aux_get(&br,optag))
         {
             assert(orig_pos>=-1);
             const uint32_t out_pos(orig_pos+1);
@@ -318,7 +318,7 @@ write_bam(bam_dumper& bamd)
     // cigar has changed in realignment):
     //
     static const char octag[] = {'O','C'};
-    if ((! is_orig_unmapped) && (NULL==bam_aux_get(&br,octag)))
+    if ((! is_orig_unmapped) && (nullptr==bam_aux_get(&br,octag)))
     {
         std::string _oc_cigar;
         apath_to_cigar(rseg.genome_align().path,_oc_cigar);

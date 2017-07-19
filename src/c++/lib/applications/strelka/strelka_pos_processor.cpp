@@ -402,7 +402,7 @@ process_pos_indel_somatic(const pos_t pos)
                     const starling_read* srptr(sif.read_buff.get_read(read_id));
 
                     report_os << "read key: ";
-                    if (NULL==srptr) report_os << "UNKNOWN_KEY";
+                    if (nullptr==srptr) report_os << "UNKNOWN_KEY";
                     else            report_os << srptr->key();
                     report_os << "\n"
                               << "read log_lhoods: " << lnp << "\n"

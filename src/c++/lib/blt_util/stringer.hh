@@ -35,7 +35,7 @@
 struct stringer_base
 {
     stringer_base()
-        : _scanstr(NULL)
+        : _scanstr(nullptr)
     {}
 
 protected:
@@ -60,7 +60,7 @@ struct stringer : public stringer_base
     stringer<T>()
     {
         _scanstr=scan_string<T>();
-        if (NULL==_scanstr)
+        if (nullptr==_scanstr)
         {
             type_error(typeid(T).name());
         }
