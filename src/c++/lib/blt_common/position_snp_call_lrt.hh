@@ -18,11 +18,10 @@
 //
 
 /// \file
-
 /// \author Chris Saunders
 ///
-#ifndef __POSITION_SNP_CALL_LRT_HH
-#define __POSITION_SNP_CALL_LRT_HH
+
+#pragma once
 
 #include "blt_common/blt_shared.hh"
 
@@ -46,8 +45,8 @@ struct lrt_snp_call : private boost::noncopyable
 
     bool is_snp;
     double null_loghood;
-    double min_test_loghood; // lhood from the single-parameter test used to determine sigificance
-    double min_loghood;      // lhood from the three-parameter minimization used to find all ML frequences
+    double min_test_loghood; // lhood from the single-parameter test used to determine significance
+    double min_loghood;      // lhood from the three-parameter minimization used to find all ML frequencies
     double snp_prob;
     double allele_freq[N_BASE]; // ML frequencies taking Qvalues into account.
 };
@@ -66,5 +65,3 @@ void
 position_snp_call_lrt(const double alpha,
                       const snp_pos_info& pi,
                       lrt_snp_call& sc);
-
-#endif

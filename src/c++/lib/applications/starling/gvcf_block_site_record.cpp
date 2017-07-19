@@ -32,7 +32,7 @@ check_block_single_tolerance(const stream_stat& ss,
                              const int min,
                              const int tol)
 {
-    return ((min + tol) >= ss.max()/2.0);       // hack to get nova vcfs into acceptable size ramge, make check less stringent across the board
+    return ((min + tol) >= ss.max()/2.0);       // hack to get nova vcfs into acceptable size range, make check less stringent across the board
 }
 
 

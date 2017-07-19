@@ -42,7 +42,7 @@ merge(
         {
             using namespace illumina::common;
             std::ostringstream oss;
-            oss << "ERROR: Attempted to merge SequeceErrorCounts with different sample names: '" << _sampleName << "' and '" << in._sampleName << "'\n";
+            oss << "ERROR: Attempted to merge SequenceErrorCounts with different sample names: '" << _sampleName << "' and '" << in._sampleName << "'\n";
             BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
     }

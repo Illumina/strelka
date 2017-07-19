@@ -62,9 +62,9 @@ write_indel_state(const DDIGT::index_t dgt,
     else
     {
         if (normal_gt == SOMATIC_DIGT::REF)
-            os << SOMATIC_DIGT::label(SOMATIC_DIGT::HET);   // ref->som is written as ref->het for backward compatability
+            os << SOMATIC_DIGT::label(SOMATIC_DIGT::HET);   // ref->som is written as ref->het for backward compatibility
         else
-            os << SOMATIC_DIGT::label(SOMATIC_DIGT::REF);   // het/hom->som is written as het/hom->ref for backward compatability
+            os << SOMATIC_DIGT::label(SOMATIC_DIGT::REF);   // het/hom->som is written as het/hom->ref for backward compatibility
     }
 }
 

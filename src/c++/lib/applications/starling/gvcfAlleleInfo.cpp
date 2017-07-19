@@ -134,6 +134,6 @@ operator<<(
 {
     os << static_cast<GermlineVariantAlleleInfo>(allele) << '\n';
     os << "IndelKey: " << allele.indelKey << "\n";
-    os << "AleleReportInfo: " << allele.indelReportInfo << "\n";
+    os << "AlleleReportInfo: " << allele.indelReportInfo << "\n";
     return os;
 }

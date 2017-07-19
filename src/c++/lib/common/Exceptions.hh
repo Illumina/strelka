@@ -52,7 +52,7 @@ namespace common
 /**
  ** \brief Virtual base class to all the exception classes
  **
- ** Use BOOST_THROW_EXCEPTION to get the contect info (file, function, line)
+ ** Use BOOST_THROW_EXCEPTION to get the context info (file, function, line)
  ** at the throw site.
  **/
 class ExceptionData : public boost::exception

@@ -46,7 +46,7 @@ struct AnalysisRegionInfo
     /// Range from region parse
     known_pos_range2 regionRange;
 
-    /// Analysis range padded by indel size (used for streamer classses)
+    /// Analysis range padded by indel size (used for streamer classes)
     known_pos_range2 streamerRegionRange;
 
     /// Analysis range padded by indel size + extra constant pad (used for reference region)

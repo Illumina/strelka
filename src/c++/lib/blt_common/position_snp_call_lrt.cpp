@@ -72,7 +72,7 @@ position_snp_call_lrt(const double alpha,
 
     const double log_lrt(-2.*(x_loghood+null_loghood));
 
-    // becuase null has the parameter fixed to a boundary value, the
+    // because null has the parameter fixed to a boundary value, the
     // asymmtotic distribution is a 50:50 mixture of csq(0) and chq(1)
     // -- the same effect as multiplying alpha of csq(1) by 2, dividing
     // the null prob by 2. (as we do below):

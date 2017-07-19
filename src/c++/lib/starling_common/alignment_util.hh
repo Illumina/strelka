@@ -47,7 +47,7 @@ get_soft_clip_alignment_range(const alignment& al);
 /// Provides ref coordinate bounds of an alignment when edge insertions
 /// and soft clip are converted to match.
 ///
-/// For instanace pos=10 CIGAR=2S2M2S should return [8,15)
+/// For instance pos=10 CIGAR=2S2M2S should return [8,15)
 ///
 known_pos_range
 get_alignment_range(const alignment& al);

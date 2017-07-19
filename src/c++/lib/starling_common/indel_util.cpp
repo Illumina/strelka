@@ -42,7 +42,7 @@ is_indel_conflict(
 
 
 
-/// return true if the range insercts the left or the right indel position
+/// return true if the range intersects the left or the right indel position
 bool
 is_range_intersect_indel_breakpoints(
     const known_pos_range read_pr,

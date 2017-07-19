@@ -84,9 +84,9 @@ T* htsTypeFactory(const char* name, const char* region, const bool /*unused*/)
     return new T(name, region);
 }
 template <>
-inline vcf_streamer* htsTypeFactory(const char* name, const char* region, const bool isRequreNormalized)
+inline vcf_streamer* htsTypeFactory(const char* name, const char* region, const bool isRequireNormalized)
 {
-    return new vcf_streamer(name, region, isRequreNormalized);
+    return new vcf_streamer(name, region, isRequireNormalized);
 }
 }
 

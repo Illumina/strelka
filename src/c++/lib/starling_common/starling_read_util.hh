@@ -55,7 +55,7 @@ create_mismatch_filter_map(const blt_options& client_opt,
 /// \brief find the range within this alignment which is considered
 /// sufficiently high quality to support indel candidacy.
 ///
-/// Note this function only gaurds against random/noise alignments,
+/// Note this function only guards against random/noise alignments,
 /// sub-optimal alignments with sufficient supporting sequence on each
 /// side is not identified.
 ///

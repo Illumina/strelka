@@ -135,7 +135,7 @@ static
 void
 updateSupportingReadStats(
     const starling_base_deriv_options& dopt,
-    const double readSupportTheshold,
+    const double readSupportThreshold,
     const uint16_t nsite,
     const bool isFwdStrand,
     std::vector<double>& alleleLoglhoods,
@@ -153,7 +153,7 @@ updateSupportingReadStats(
     const unsigned fullAlleleCount(alleleLoglhoods.size());
     for (unsigned alleleIndex(0); alleleIndex<fullAlleleCount; ++alleleIndex)
     {
-        if (alleleLoglhoods[alleleIndex] < readSupportTheshold) continue;
+        if (alleleLoglhoods[alleleIndex] < readSupportThreshold) continue;
         locusReadStats.getCounts(isFwdStrand).incrementAlleleCount(alleleIndex);
         isConfidentAlleleFound=true;
         break;

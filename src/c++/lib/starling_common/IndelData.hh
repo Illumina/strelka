@@ -51,7 +51,7 @@ struct IndelObservationData
     INDEL_ALIGN_TYPE::index_t iat = INDEL_ALIGN_TYPE::GENOME_SUBMAP_READ;
     align_id_t id = 0;
 
-    std::string breakpointInsertionSequence; ///< partial breakpont sequence, do not use to describe regular indels
+    std::string breakpointInsertionSequence; ///< partial breakpoint sequence, do not use to describe regular indels
 };
 
 

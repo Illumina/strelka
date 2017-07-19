@@ -82,10 +82,10 @@ get_diploid_strand_grid_lhood_spi(
 
 
 /// The non-somatic callability track is defined based on a minimum somatic variant
-/// freqeuncy of 10% (hard-coded), this function tests for grid values less than the threshold
+/// frequency of 10% (hard-coded), this function tests for grid values less than the threshold
 ///
 /// \param f sample DIGT_GRID index
-/// \return false for indices corresponding to allele frequences too close to zero/one
+/// \return false for indices corresponding to allele frequencies too close to zero/one
 ///
 static
 bool

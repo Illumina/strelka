@@ -109,12 +109,12 @@ struct diploid_genotype
 };
 
 
-// debuging output -- produces labels
+// debugging output -- produces labels
 //
 std::ostream& operator<<(std::ostream& os,const diploid_genotype& dgt);
 
 
-// more debuging output:
+// more debugging output:
 void
 debug_dump_digt_lhood(const blt_float_t* lhood,
                       std::ostream& os);

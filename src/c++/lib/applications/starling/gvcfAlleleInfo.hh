@@ -83,7 +83,7 @@ setIndelAlleleCigar(
 /// variant here means SNV or indel
 ///
 /// SimpleGenotype here means information pertaining to the core genotyping algorithm for SNVs or Indels (where for indels this genotype is
-///    restricted to a single alt allele). This information is suplemnted with additional details requred for full VCF records in the "Call"
+///    restricted to a single alt allele). This information is supplemented with additional details required for full VCF records in the "Call"
 ///    objects further below
 ///
 /// model types where this is used include diploid/haploid and continuous single sample calling, but not contrastive (ie. tumor-normal) models

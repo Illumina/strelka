@@ -26,4 +26,4 @@ strelka:
 somatic caller
 
 strelkaNoiseExtractor:
-strelka utiltity to develop 'panel of normal' noise profiles
+strelka utility to develop 'panel of normal' noise profiles

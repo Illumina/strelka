@@ -402,7 +402,7 @@ struct LocusSampleInfo
     LocusSupportingReadStats supportCounts;
 
 
-    /// if non-negative, use this to provide a PS tag to acompany a phased max_gt() value.
+    /// if non-negative, use this to provide a PS tag to accompany a phased max_gt() value.
     pos_t phaseSetId = -1;
 
 private:
@@ -536,7 +536,7 @@ struct GermlineIndelSampleInfo
 {
     /// get the count of reads crossing indel or reference alleles at any teir or mapq value, including MAPQ0 reads
     ///
-    /// TODO get a more exact definition of requrements for read to be counted here - how are mulitple indel alleles handled, by how many bases must the read cross an indel breakend? etc...
+    /// TODO get a more exact definition of requirements for read to be counted here - how are mulitple indel alleles handled, by how many bases must the read cross an indel breakend? etc...
     unsigned
     getTotalReadDepth() const
     {

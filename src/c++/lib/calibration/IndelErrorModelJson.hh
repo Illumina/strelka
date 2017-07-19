@@ -44,7 +44,7 @@ class IndelErrorModelJson
 public:
     /// \brief Initialize json object (used for serialization)
     ///
-    /// \param[in] sampleName The sample name (typically the bam file path) used to estiamte the model
+    /// \param[in] sampleName The sample name (typically the bam file path) used to estimate the model
     ///
     explicit
     IndelErrorModelJson(const std::string& sampleName);
@@ -57,7 +57,7 @@ public:
     ///
     /// \param[in] indelRate The estimated indel error rate
     ///
-    /// \param[in] noisyLocusRate The probabililty that a locus is in a noisy state
+    /// \param[in] noisyLocusRate The probability that a locus is in a noisy state
     ///
     void addMotif(
         unsigned repeatPatternSize,
@@ -68,7 +68,7 @@ public:
     // TODO: This isn't really serialization. Serialize the IndelErrorRateSet instead
     /// \brief Serializes the model and writes it out to a json file
     ///
-    /// \param[in] sampleName The sample name (typically the bam file path) used to estiamte the model
+    /// \param[in] sampleName The sample name (typically the bam file path) used to estimate the model
     ///
     /// \param[in] motifsNode The json value to write out
     ///

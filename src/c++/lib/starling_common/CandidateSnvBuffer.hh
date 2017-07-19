@@ -79,7 +79,7 @@ public:
     /// Gets the haplotype ID for the input single base allele
     /// \param pos reference position
     /// \param baseIndex base index of the allele
-    /// \return 0 if it's not apprearing in non-ref haplotype.
+    /// \return 0 if it's not appearing in non-ref haplotype.
     /// 1 or 2 if it appears in one non-ref haplotype
     /// 3 if it appears in both non-ref haplotype (i.e. hetalt SNV)
     HaplotypeId getHaplotypeId(const pos_t pos, const BASE_ID::index_t baseIndex) const;

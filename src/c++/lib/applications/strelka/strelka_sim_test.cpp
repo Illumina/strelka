@@ -17,12 +17,8 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
-///
-/// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the begining of the range
-/// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
 

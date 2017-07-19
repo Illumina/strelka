@@ -148,11 +148,11 @@ dump(
 {
     uint64_t totalObservations(0.);
     uint64_t totalUnknownObservations(0);
-    double totaDepth(0.);
+    double totalDepth(0.);
     for (const auto& value : data)
     {
         totalObservations += value.second;
-        totaDepth += (value.second*value.first.depth);
+        totalDepth += (value.second*value.first.depth);
         if (value.first.backgroundStatus == GENOTYPE_STATUS::UNKNOWN)
         {
             totalUnknownObservations += value.second;
@@ -166,7 +166,7 @@ dump(
     os << tag << "TotalObservations: " <<  totalObservations << "\n";
     os << tag << "TotalUnknownObservations: " << totalUnknownObservations << "\n";
     os << tag << "MeanKeyOccupancy: " <<  safeFrac(totalObservations,keyCount) << "\n";
-    os << tag << "MeanDepth: " << safeFrac(totaDepth,totalObservations) << "\n";
+    os << tag << "MeanDepth: " << safeFrac(totalDepth,totalObservations) << "\n";
 }
 
 

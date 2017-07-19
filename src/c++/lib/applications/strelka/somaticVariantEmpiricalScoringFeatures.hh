@@ -46,7 +46,7 @@ struct SOMATIC_SNV_SCORING_FEATURES : public FeatureSet
         return "SOMATIC_SNV_SCORING_FEATURES";
     }
 
-    /** any change here must be syncronized with:
+    /** any change here must be synchronized with:
         src/python/scoringModelTraining/somatic/lib/features/StrelkaSNV.py
      */
     enum index_t
