@@ -68,15 +68,16 @@ getStrelkaAnalysisRegionInfo(
     rinfo.regionChrom = chrom;
     rinfo.regionRange.set_range(beginPos, endPos);
 
+    static const pos_t streamerRegionPadSize(100);
     rinfo.streamerRegionRange = rinfo.regionRange;
-    rinfo.streamerRegionRange.expandBy(maxIndelSize);
+    rinfo.streamerRegionRange.expandBy(streamerRegionPadSize + maxIndelSize);
     rinfo.streamerRegionRange.makeNonNegative();
 
     rinfo.streamerRegion = getSamtoolsRegionString(rinfo.regionChrom, rinfo.streamerRegionRange);
 
-    static const pos_t region_read_size_pad(512);
+    static const pos_t refRegionPadSize(400);
     rinfo.refRegionRange = rinfo.streamerRegionRange;
-    rinfo.refRegionRange.expandBy(region_read_size_pad);
+    rinfo.refRegionRange.expandBy(refRegionPadSize);
     rinfo.refRegionRange.makeNonNegative();
 }
 

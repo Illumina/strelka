@@ -203,12 +203,21 @@ After determining the set and order of estimation intervals, error counting and 
 
 Once the counting procedure has completed for a given sample, all of the estimation interval count files are merged, and parameter estimation is conducted according to the procedure outlined above. If parameter estimation fails to converge after the maximum allowed iterations or the estimated error rates fall outside of valid estimation ranges, then the estimation procedure is canceled for the given sample, and the default static parameter set is used for that sample instead.
 
+\section{Parallelization scheme for primary variant calling}
+
+Following all preliminary parameter estimation tasks, the primary variant calling operation is initiated. Variant calling tasks can be divided among a set of worker processes running in parallel, with each worker process handling one or more segments of the genome. For each genome segment, a worker process completes all phases of variant calling described below in a single operation transitioning from the lowest to highest position in the targeted genome segment. When all genome segments have been completed a final step is run to merge all intermediate results into the complete output files.
+
+\paragraph{Genome segmentation} Given a maximum segment size (default is 12 Mb), each chromosome is partitioned into a set of nearly equal size segments such that each does not exceed the maximum. Each genome segment larger than 200Kb can be directly distributed to a worker process for variant calling, smaller segments are grouped together such that each worker process handles a batch of genome segments which have a total length of less than 200Kb. Grouping small segments better amortizes the startup and bookkeeping costs of each variant calling process in cases where large numbers of small contigs need to be handled, such as for decoys and unplaced contigs in the human hg38 reference.
+
+\paragraph{Segment boundaries} It is important that the segmentation is not allowed to alter the variant calling results at the segmentation point. To prevent this each variant calling process expands its targeted calling range by a fixed amount and completes all elements of the variant calling operation in the expanded region with the exception of writing variant output. In this way regional operation such as haplotype modeling can be applied consistently across the segment boundary in most cases. By default each genome segment is expanded by 150 bases for this purpose (A fixed 100 base offset plus the maximum indel size).
 
 \section{Variant Discovery}
 
+The processes of variant discovery, calling and filtering are
 
 \subsection{Input Read Filtration}
 
+Variant discovery and calling
 TODO. Outright filtration of unmapped, anomalous, etc. Note additional category of reads that are marked for special processing but not actually filtered (low MAPQ, etc.)
 
 

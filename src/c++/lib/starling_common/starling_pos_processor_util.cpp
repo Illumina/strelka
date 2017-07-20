@@ -212,11 +212,14 @@ checkBamRecord(
         {
             try
             {
-                //for RNAseq work-flow corner case. Reads of length one with '*' q-score
-//                log_os << "qscore " << static_cast<int>(qual[i])<< "\n";
+                // I *think* this is here because a QUAL value of "*" (in SAM), will be translated to
+                // a basecall quality of 255 to indicate that the basecall quality is unknown.
+                //
+                // There was also an older RNAseq work-flow corner case where reads of length one with '*' QUAL
+                // fields were used as part of the RNA mapper's output scheme.
+                //
                 if (qual[i]==255)
                 {
-//                    log_os << "\nException for basecall quality score " << static_cast<int>(qual[i])<< "\n";
                     return false;
                 }
                 qphred_cache::qscore_check(qual[i],"basecall quality");
