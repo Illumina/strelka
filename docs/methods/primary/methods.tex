@@ -290,9 +290,10 @@ During RNA-Seq analysis, a similar soft-clipping approach is taken, except that 
 
 \subsection{Shared}
 
-This section describes components of the probability model shared by all calling modes.
+This section describes components of the probability model shared by the germline and somatic calling modes.
 
 \subsubsection{Indel Error Model}
+TODO: merge with earlier indel error model section; remove this section here.
 \label{sec:indel_error}
 Indel errors are approximated as a process which occurs independently in each read, with some fixed probably of an indel error occurring as a function of the local sequence STR context. Strelka's indel error parameters are currently set to pre-estimated values based on empirical observation of indel calling performance for both germline and somatic indel detection.
 
@@ -476,10 +477,10 @@ Separate from the primary germline and somatic calling models, the germline vari
 Under the continuous frequency calling model, each alternate allele is evaluated independently, and thus the overlap with other candidate alleles is ignored. For each alternate allele (representing an SNV or indel), the total count of reads supporting the alternate allele, $N_a$, is compared to the count of reads supporting any allele at that locus, $N_t$. The probability that the alternate allele is erroneous is evaluated assuming a fixed error probability for each observation, $e$. Given this simplification, and making the further simplifying assumption that these observation errors are independent, the probability of at least $N_a$ errors out of $N_t$ total observations is found from a simple Poisson error model
 
 \begin{equation*}
-P(error) = \gamma(k,\lambda) / \Gamma(k)
+P(error) = \frac{\gamma(k,\lambda)}{(k-1)!}
 \end{equation*}
 
-...where $\gamma$ refers to the lower incomplete gamma function, $\lambda = e N_t$ and $k = N_a$. This error probability is provided in the output for each alternate allele as a phred-scaled quality score.
+...where $\gamma$ is the lower incomplete gamma function, $\lambda = e N_t$ and $k = N_a$. This error probability is provided in the output for each alternate allele as a phred-scaled quality score.
 
 The fixed observation error, $e$, is set from a quality score of 17 for both SNVs and indels.
 
