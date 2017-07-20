@@ -33,7 +33,7 @@
 /// \param[in] expectedObservationQscore Approximate that all observations have the same error probability given by
 ///                                       this value (expressed as a phred-scaled quality score)
 ///
-/// \return Probability that 'allele' observations are due to sequencing error
+/// \return Probability of observing at least this many allele observations if the allele is not present in the sample
 static
 double
 getAlleleSequencingErrorProb(
