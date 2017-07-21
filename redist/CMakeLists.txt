@@ -87,8 +87,8 @@ set (HTSLIB_FINAL_TASK ${HTSLIB_DIR})
 if (NOT WIN32)
     add_custom_command(
         OUTPUT ${HTSLIB_LIBRARY}
-        COMMAND ./configure CC="${CMAKE_C_COMPILER}" --disable-libcurl --disable-bz2 --disable-lzma >htslib.config.log 2>htslib.config.error.log
-        COMMAND $(MAKE) lib-static bgzip htsfile tabix >htslib.build.log 2>htslib.build.error.log
+        COMMAND ./configure CC="${CMAKE_C_COMPILER}" --disable-libcurl --disable-bz2 --disable-lzma >htslib.config.log 2>htslib.config.error.log || \(echo "Failed to configure htslib, see ${HTSLIB_DIR}/htslib.config.error.log for details." && exit 1\)
+        COMMAND $(MAKE) lib-static bgzip htsfile tabix >htslib.build.log 2>htslib.build.error.log || \(echo "Failed to build htslib, see ${HTSLIB_DIR}/htslib.build.error.log for details." && exit 1\)
         WORKING_DIRECTORY ${HTSLIB_DIR}
         DEPENDS ${HTSLIB_DIR}
         COMMENT "Building htslib library")
@@ -128,8 +128,8 @@ set (SAMTOOLS_FINAL_TASK ${SAMTOOLS_DIR})
 if (NOT WIN32)
     add_custom_command(
         OUTPUT ${SAMTOOLS_PROG}
-        COMMAND ./configure CC="${CMAKE_C_COMPILER}" --without-curses --with-htslib=${HTSLIB_DIR} >samtools.config.log 2>samtools.config.error.log
-        COMMAND $(MAKE) all >samtools.build.log 2>samtools.build.error.log
+        COMMAND ./configure CC="${CMAKE_C_COMPILER}" --without-curses --with-htslib=${HTSLIB_DIR} >samtools.config.log 2>samtools.config.error.log || \(echo "Failed to configure samtools, see ${SAMTOOLS_DIR}/samtools.config.error.log for details." && exit 1\)
+        COMMAND $(MAKE) all >samtools.build.log 2>samtools.build.error.log  || \(echo "Failed to build samtools, see ${SAMTOOLS_DIR}/samtools.build.error.log for details." && exit 1\)
         DEPENDS ${HTSLIB_LIBRARY}
         DEPENDS ${SAMTOOLS_DIR}
         WORKING_DIRECTORY ${SAMTOOLS_DIR}
