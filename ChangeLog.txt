@@ -1,3 +1,4 @@
+- STREL-633 Update htslib/samtools to v1.5
 v2.8.0
 - STREL-608 Fix hang after error during adaptive estimation
 - STREL-610 Fix workflow resumption after interrupt

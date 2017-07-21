@@ -48,9 +48,31 @@ endif ()
 
 
 #
+# Find packages required by htslib/samtools:
+#
+# These packages are needed both for building redist executables and for linking against redist libraries.
+# For the latter purpose library information is transmited to PARENT for inclusion in any project binaries
+# linking htslib.
+#
+find_package(ZLIB)
+if    (ZLIB_FOUND)
+    set (THIS_ADDITIONAL_LIB ${THIS_ADDITIONAL_LIB} z)
+    message(STATUS "zlib found")
+else  ()
+    set(TMP_MSG "zlib not found")
+    if (WIN32)
+        set (TMP_MSG "${TMP_MSG}. On win32 this can be installed as part of GnuWin32: http://gnuwin32.sourceforge.net/downlinks/zlib.php")
+    endif ()
+    message(FATAL_ERROR "${TMP_MSG}")
+endif ()
+
+superset(THIS_ADDITIONAL_LIB "${THIS_ADDITIONAL_LIB}")
+
+
+#
 # htslib
 #
-set(HTSLIB_PREFIX "htslib-1.2.1-204-g8197cfd")
+set(HTSLIB_PREFIX "htslib-1.5")
 superset(HTSLIB_DIR "${CMAKE_CURRENT_BINARY_DIR}/${HTSLIB_PREFIX}")
 superset(HTSLIB_LIBRARY "${HTSLIB_DIR}/libhts.a")
 
@@ -65,6 +87,7 @@ set (HTSLIB_FINAL_TASK ${HTSLIB_DIR})
 if (NOT WIN32)
     add_custom_command(
         OUTPUT ${HTSLIB_LIBRARY}
+        COMMAND ./configure CC="${CMAKE_C_COMPILER}" --disable-libcurl --disable-bz2 --disable-lzma >htslib.config.log 2>htslib.config.error.log
         COMMAND $(MAKE) lib-static bgzip htsfile tabix >htslib.build.log 2>htslib.build.error.log
         WORKING_DIRECTORY ${HTSLIB_DIR}
         DEPENDS ${HTSLIB_DIR}
@@ -86,7 +109,7 @@ endif ()
 #
 # samtools
 #
-set(SAMTOOLS_PREFIX "samtools-1.2")
+set(SAMTOOLS_PREFIX "samtools-1.5")
 set(SAMTOOLS_DIR "${CMAKE_CURRENT_BINARY_DIR}/${SAMTOOLS_PREFIX}")
 set(SAMTOOLS_LIBRARY "${SAMTOOLS_DIR}/libbam.a")
 superset(SAMTOOLS_PROG "${SAMTOOLS_DIR}/samtools")
@@ -96,16 +119,17 @@ add_custom_command(
     OUTPUT ${SAMTOOLS_DIR}
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${SAMTOOLS_DIR}"
     COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${SAMTOOLS_PREFIX}.tar.bz2"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${HTSLIB_DIR}" "${SAMTOOLS_DIR}/${HTSLIB_PREFIX}"
     DEPENDS ${HTSLIB_FINAL_TASK}
     COMMENT "Unpacking samtools package")
 
 set (SAMTOOLS_FINAL_TASK ${SAMTOOLS_DIR})
 
+
 if (NOT WIN32)
     add_custom_command(
         OUTPUT ${SAMTOOLS_PROG}
-        COMMAND $(MAKE) HTSDIR=${HTSLIB_PREFIX} all 2>| samtools.build.log
+        COMMAND ./configure CC="${CMAKE_C_COMPILER}" --without-curses --with-htslib=${HTSLIB_DIR} >samtools.config.log 2>samtools.config.error.log
+        COMMAND $(MAKE) all >samtools.build.log 2>samtools.build.error.log
         DEPENDS ${HTSLIB_LIBRARY}
         DEPENDS ${SAMTOOLS_DIR}
         WORKING_DIRECTORY ${SAMTOOLS_DIR}

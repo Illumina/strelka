@@ -1,16 +1,27 @@
-# external packages
+# External packages
 
-## modification notes
+This directory contains external packages for building strelka.
 
-boost has been modified to remove some files according to
-${ROOT_PATH}/scratch/make_boost_subset.bash
+## Package modification notes
 
-samtools and htslib have been modified to remove the test/
-directories, in addition to all test and curses requirements
-from the Makefiles.
+### boost
+
+To reduce size, certain files have been removed from the
+full boost source distribution acccording to:
+
+    ${ROOT_PATH}/scratch/make_boost_subset.bash
+
+### htslib/samtools
+
+To reduce size, both packages have been modified to remove the test
+directories and test references in the makefiles
+
+### cmake-modules
 
 cmake-modules-c99fd3 modified to show git describe --dirty
 
-jsoncpp cmake compile flags have been modified to compile
+### jsoncpp
+
+The package's cmake compile flags have been modified to compile
 without warning on clang 3.7+ and gcc 6+
 

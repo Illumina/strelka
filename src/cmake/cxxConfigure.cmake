@@ -70,21 +70,6 @@ endif ()
 #    set(THIS_LIBRARY_SUFFIX "")
 #endif ()
 
-# required support for gzip compression
-find_package(ZLIB)
-#static_find_library(ZLIB zlib.h z)
-if    (ZLIB_FOUND)
-    include_directories(${ZLIB_INCLUDE_DIRS})
-    set  (THIS_ADDITIONAL_LIB ${THIS_ADDITIONAL_LIB} z)
-    message(STATUS "zlib found")
-else  ()
-    set(TMP_MSG "zlib library not found")
-    if (WIN32)
-        set (TMP_MSG "${TMP_MSG}. On win32 this can be installed as part of GnuWin32: http://gnuwin32.sourceforge.net/downlinks/zlib.php")
-    endif ()
-    message(FATAL_ERROR "${TMP_MSG}")
-endif ()
-
 # required support for librt to allow boost chrono
 if (UNIX AND NOT APPLE)
     set  (THIS_ADDITIONAL_LIB ${THIS_ADDITIONAL_LIB} rt)
