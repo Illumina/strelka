@@ -22,7 +22,7 @@
 
 struct starling_continuous_variant_caller
 {
-    /// Get the quality score of the assertion that 'allele' can be explained as sequencing error under
+    /// Get the phred-scaled p-value for the hypothesis that 'allele' was generated as sequencing error under
     /// a simple Poisson error model
     ///
     /// \param[in] alleleObservationCount Observation count of the allele in question
@@ -30,8 +30,7 @@ struct starling_continuous_variant_caller
     /// \param[in] expectedObservationQscore Approximate that all observations have the same error probability given by
     ///                                       this value (expressed as a phred-scaled quality score)
     ///
-    /// \return Quality score reflecting the probability of observing at least this many allele observations if the
-    ///         allele is not present in the sample
+    /// \return The above-described phred-scaled p-value
     static
     int
     getAlleleSequencingErrorQscore(
