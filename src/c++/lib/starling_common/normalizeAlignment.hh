@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -50,7 +50,7 @@
 /// Note that any BAM CIGAR seq-match/mismatch states ("=","X") will be collapsed to
 /// regular match ("M") states in regions surrounding normalized indels.
 ///
-/// \returns true if the alignment is changed
+/// \returns True if the input alignment is changed
 ///
 bool
 normalizeAlignment(
@@ -58,9 +58,9 @@ normalizeAlignment(
     const bam_seq_base& readSeq,
     alignment& al);
 
-/// execute the above normalizeAlignment transformation directly on a bam_record
+/// Execute the above normalizeAlignment transformation directly on a bam_record
 ///
-/// \returns true if the alignment is changed
+/// \returns True if bamRead's alignment is changed
 ///
 bool
 normalizeBamRecordAlignment(

@@ -17,6 +17,7 @@
 //
 //
 
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -25,16 +26,16 @@
 #include <cassert>
 
 
+/// \brief A small number of categories used to reduce read mapping information
 namespace MAPLEVEL
 {
 enum index_t
 {
-    UNKNOWN,
-    UNKNOWN_MAPPED,
-    TIER1_MAPPED,
-    TIER2_MAPPED,
-    SUB_MAPPED,
-    UNMAPPED
+    UNKNOWN,      ///< MAPLEVEL initialization state, this does not describe any read mapping
+    TIER1_MAPPED, ///< The read has a high-quality mapping which is approximated as true for most purposes
+    TIER2_MAPPED, ///< The read has a lower-quality mapping, and thus is only used for specialized tasks, eg. normal sample evidence to disprove a putative somatic hypothesis
+    SUB_MAPPED,   ///< Any mapped read which does not meet tier 1 or 2 criteria
+    UNMAPPED      ///< The read is unampped
 };
 
 inline
@@ -45,8 +46,6 @@ get_label(const index_t i)
     {
     case UNKNOWN:
         return "unknown";
-    case UNKNOWN_MAPPED:
-        return "unknown-mapped";
     case TIER1_MAPPED:
         return "tier1-mapped";
     case TIER2_MAPPED:

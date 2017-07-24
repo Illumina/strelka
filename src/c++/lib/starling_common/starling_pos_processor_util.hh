@@ -60,8 +60,8 @@ getSubRegionsFromBedTrack(
     std::vector<known_pos_range2>& subRegionRanges);
 
 
-/// handles mapped read alignments -- reads are parsed, their indels
-/// are extracted and buffered, and the reads themselves are buffered
+/// Handles input read alignments -- reads are parsed, their indels
+/// are extracted and the reads/indels are buffered to posProcessor
 ///
 void
 processInputReadAlignment(

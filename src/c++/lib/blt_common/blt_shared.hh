@@ -39,8 +39,8 @@ namespace LOG_LEVEL
 {
 enum index_t
 {
-    DEFAULT = 0, // 0 = errors and low-frequency warnings
-    ALLWARN = 1  // all other warnings
+    DEFAULT = 0, ///< errors and low-frequency warnings
+    ALLWARN = 1  ///< all other warnings
 };
 }
 
@@ -54,7 +54,7 @@ struct blt_options
     void
     validate() const
     {
-        // this should never be true once the object is fully constructed, TODO: can we move this into a state enum so it *can't* be true:
+        // this should never be true once the object is fully constructed, TODO: can we move this into a state enum so it *can't* be true?:
         assert(! (is_compute_germline_scoring_metrics() && is_compute_somatic_scoring_metrics));
     }
 
@@ -99,7 +99,6 @@ struct blt_options
     unsigned max_win_mismatch_flank_size = 0;
     bool is_print_evidence = false;
     bool is_print_all_site_evidence = false;
-    //pos_range user_report_range;   // requested report range
 
     bool is_include_singleton = false;
     bool is_include_anomalous = false;
@@ -121,10 +120,13 @@ struct blt_options
     const double het_bias_inc_fudge = 0.0001;
     const double het_bias_max_ratio_inc = 0.05 + het_bias_inc_fudge;
 
+    /// If true, then reads above max_input_depth are filtered out (option used mostly for amplicon calling)
     bool is_max_input_depth = false;
+
+    /// If is_max_input_depth, then filter out reads above this depth
     unsigned max_input_depth = 0;
 
-    //bool is_compute_hapscore = false;
+    /// If true, then report production and development EVS features in VCF output files
     bool isReportEVSFeatures = false;
     bool is_compute_somatic_scoring_metrics = false;
 };

@@ -311,7 +311,7 @@ get_map_level(const starling_base_options& opt,
 /// check if read is overdepth, but only if max input depth option is set
 static
 bool
-is_al_overdepth(
+isAlignmentAboveMaxDepth(
     const starling_base_options& opt,
     const starling_pos_processor_base& posProcessor,
     const unsigned sample_no,
@@ -354,88 +354,95 @@ processInputReadAlignment(
     starling_pos_processor_base& posProcessor,
     const unsigned sampleIndex)
 {
-    // Read filters which are *always* on, because we
-    // can't do anything sensible with these reads. This filtration
-    // is shared with the chrom depth estimation routine.
+    // These read filters are always on, because we can't do anything sensible
+    // with these cases. This filtration is shared with the chromosome
+    // depth estimation routine, so the perceived depth of the two routines
+    // will match for the purpose of high/low depth filtration.
     //
-    const READ_FILTER_TYPE::index_t filterId(starling_read_filter_shared(read));
-    if (filterId != READ_FILTER_TYPE::NONE)
+    const READ_FILTER_TYPE::index_t filterIndex(starling_read_filter_shared(read));
+    if (filterIndex != READ_FILTER_TYPE::NONE)
     {
         using namespace READ_FILTER_TYPE;
-        if (filterId == PRIMARY) readCounts.primary_filter++;
-        if (filterId == DUPLICATE) readCounts.duplicate++;
-        if (filterId == UNMAPPED) readCounts.unmapped++;
-        if (filterId == SECONDARY) readCounts.secondary++;
-        if (filterId == SUPPLEMENT) readCounts.supplement++;
+        if (filterIndex == PRIMARY) readCounts.primary_filter++;
+        if (filterIndex == DUPLICATE) readCounts.duplicate++;
+        if (filterIndex == UNMAPPED) readCounts.unmapped++;
+        if (filterIndex == SECONDARY) readCounts.secondary++;
+        if (filterIndex == SUPPLEMENT) readCounts.supplement++;
         return;
     }
 
     MAPLEVEL::index_t maplev(get_map_level(opt,read));
 
     const bool isKeepRecord(checkBamRecord(read_stream, read));
-    if (not isKeepRecord)
+    if (! isKeepRecord)
     {
-//        log_os << "Skipping read " << read << "\n";
         return;
     }
 
-    // sanity-check/filter/normalize the remaining mapped reads
+    // Now that 'alignment-free' filtration is finished, sanity-check/fitler/normalize the remaining mapped reads
+    // based on the read's alignment.
     //
+    // Note there is logic below assuming that unmapped reads need to be handled even though these
+    // are filtered out above. This is to retain the ability to experiment with local assembly of
+    // unmapped reads with mapped mate reads.
+    //
+
+    // if we're seeing an unmapped read, it's still expected to have a position and chrom assignment:
+    alignment readAlignment;
+    readAlignment.pos=base_pos;
+
+    if (maplev != MAPLEVEL::UNMAPPED)
     {
-        // if we're seeing an unmapped read, it's still expected to
-        // have a position and chrom assignment
-        //
-        alignment al;
-        al.pos=base_pos;
-
         // if mapped, sanity check alignment:
-        if (maplev != MAPLEVEL::UNMAPPED)
+        readAlignment.is_fwd_strand=read.is_fwd_strand();
+        bam_cigar_to_apath(read.raw_cigar(),read.n_cigar(),readAlignment.path);
+
+        ALIGNPATH::apath_cleaner(readAlignment.path);
+
+        if (read.read_size() != ALIGNPATH::apath_read_length(readAlignment.path))
         {
-            al.is_fwd_strand=read.is_fwd_strand();
-            bam_cigar_to_apath(read.raw_cigar(),read.n_cigar(),al.path);
+            using namespace illumina::common;
 
-            ALIGNPATH::apath_cleaner(al.path);
+            const unsigned rs(read.read_size());
+            const unsigned as(ALIGNPATH::apath_read_length(readAlignment.path));
 
-            if (read.read_size() != ALIGNPATH::apath_read_length(al.path))
-            {
-                const unsigned rs(read.read_size());
-                const unsigned as(ALIGNPATH::apath_read_length(al.path));
-                log_os << "ERROR: Read length implied by mapped alignment (" << as << ") does not match read length (" << rs << ") in alignment record:\n";
-                read_stream.report_state(log_os);
-                exit(EXIT_FAILURE);
-            }
-
-            // filter out reads with no match segments:
-            if (ALIGNPATH::is_apath_floating(al.path))
-            {
-                readCounts.floating++;
-                return;
-            }
-
-            if (is_al_overdepth(opt,posProcessor,sampleIndex,al))
-            {
-                readCounts.max_depth++;
-                return;
-            }
-
-            // normalize/left-shift the input alignment
-            const rc_segment_bam_seq refBamSeq(ref);
-            const bam_seq readBamSeq(read.get_bam_read());
-            normalizeAlignment(refBamSeq,readBamSeq,al);
+            std::ostringstream oss;
+            oss << "ERROR: Read length implied by mapped alignment (" << as << ") does not match read length ("
+                   << rs << ") in alignment record:\n";
+            read_stream.report_state(oss);
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
 
+        // filter out reads with no match segments:
+        if (ALIGNPATH::is_apath_floating(readAlignment.path))
+        {
+            readCounts.floating++;
+            return;
+        }
 
-        try
+        if (isAlignmentAboveMaxDepth(opt, posProcessor, sampleIndex, readAlignment))
         {
-            const char* chrom_name(read_stream.target_id_to_name(read.target_id()));
-            posProcessor.insert_read(read,al,chrom_name,maplev,sampleIndex);
+            readCounts.max_depth++;
+            return;
         }
-        catch (...)
-        {
-            log_os << "\nException caught while inserting read alignment in posProcessor. Genomic read alignment record:\n";
-            read_stream.report_state(log_os);
-            throw;
-        }
+
+        // normalize/left-shift the input alignment
+        const rc_segment_bam_seq refBamSeq(ref);
+        const bam_seq readBamSeq(read.get_bam_read());
+        normalizeAlignment(refBamSeq, readBamSeq, readAlignment);
+    }
+
+
+    try
+    {
+        const char* chrom_name(read_stream.target_id_to_name(read.target_id()));
+        posProcessor.insert_read(read,readAlignment,chrom_name,maplev,sampleIndex);
+    }
+    catch (...)
+    {
+        log_os << "\nException caught while inserting read alignment in posProcessor. Genomic read alignment record:\n";
+        read_stream.report_state(log_os);
+        throw;
     }
 }
 

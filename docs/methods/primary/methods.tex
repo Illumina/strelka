@@ -203,9 +203,9 @@ After determining the set and order of estimation intervals, error counting and 
 
 Once the counting procedure has completed for a given sample, all of the estimation interval count files are merged, and parameter estimation is conducted according to the procedure outlined above. If parameter estimation fails to converge after the maximum allowed iterations or the estimated error rates fall outside of valid estimation ranges, then the estimation procedure is canceled for the given sample, and the default static parameter set is used for that sample instead.
 
-\section{Parallelization scheme for primary variant calling}
+\section{Variant calling workflow}
 
-Following all preliminary parameter estimation tasks, the primary variant calling operation is initiated. Variant calling tasks can be divided among a set of worker processes running in parallel, with each worker process handling one or more segments of the genome. For each genome segment, a worker process completes all phases of variant calling described below in a single operation transitioning from the lowest to highest position in the targeted genome segment. When all genome segments have been completed a final step is run to merge all intermediate results into the complete output files.
+Following all preliminary parameter estimation tasks, the primary variant calling operation is initiated. Variant calling tasks can be divided among a set of worker processes running in parallel, with each worker process handling one or more segments of the genome. For each genome segment, a worker process completes all phases of variant calling described below in a single operation transitioning from the lowest to highest position in the targeted genome segment. When all genome segments have been processed their intermediate results are merged into the complete output files.
 
 \paragraph{Genome segmentation} Given a maximum segment size (default is 12 Mb), each chromosome is partitioned into a set of nearly equal size segments such that each does not exceed the maximum. Each genome segment larger than 200Kb can be directly distributed to a worker process for variant calling, smaller segments are grouped together such that each worker process handles a batch of genome segments which have a total length of less than 200Kb. Grouping small segments better amortizes the startup and bookkeeping costs of each variant calling process in cases where large numbers of small contigs need to be handled, such as for decoys and unplaced contigs in the human hg38 reference.
 
@@ -213,18 +213,11 @@ Following all preliminary parameter estimation tasks, the primary variant callin
 
 \section{Variant Discovery}
 
-The processes of variant discovery, calling and filtering are
-
-\subsection{Input Read Filtration}
-
-Variant discovery and calling
-TODO. Outright filtration of unmapped, anomalous, etc. Note additional category of reads that are marked for special processing but not actually filtered (low MAPQ, etc.)
-
-
 \subsection{Input Read Processing}
 
-TODO. Left-shifting and other normalizing transformations of all indels present in the reads input alignments.
+Reads from the input alignment files are read in as the first step of the variant calling operation, and certain read types are immediately filtered out. These are reads marked as (1) not passing filters (2) PCR/optical duplicates (3) unmapped (4) secondary or (5) supplemental.
 
+After filtration the remaining read alignments are subject to the following normalizations: (1) All indels are left-shifted (moved to a lower position) such that the total number of alignment mismatches does not increase with each 1-base left-shift operation (2) Adjacent indels are merged (3) Indels are simplified by identifying any portion of a set of adjacent insert/delete edits which can be matched to the reference, for example, given reference 'ACTGC' and read 'ACGC', the CIGAR '2M1I2D1M' will be simplified to '2M1D2M' (4) Indels at or left-shifted to the edge of the read are simplified if possible, possibly changing the alignment start position.
 
 \subsection{Short Haplotyping}
 

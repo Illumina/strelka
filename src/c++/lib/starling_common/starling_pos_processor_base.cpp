@@ -1383,13 +1383,6 @@ pileup_read_segment(
                 }
 
                 /// include only data meeting mapping criteria after this point:
-#if 0
-                if (_opt.is_compute_hapscore)
-                {
-                    insert_hap_cand(ref_pos,sampleIndex,is_tier1,
-                                    bseq,qual,read_pos);
-                }
-#endif
 
                 try
                 {
