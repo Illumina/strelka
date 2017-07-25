@@ -94,27 +94,6 @@ report_pos_range(const pos_range& pr,
 
 
 
-#if 0
-static
-void
-write_snp_prefix_info(const char* label,
-                      const pos_t output_pos,
-                      const char ref,
-                      const unsigned n_used_calls,
-                      const unsigned n_unused_calls,
-                      std::ostream& os)
-{
-
-    os << label
-       << " pos: " << output_pos
-       << " bcalls_used: " << n_used_calls
-       << " bcalls_filt: " << n_unused_calls
-       << " ref: " << ref;
-}
-#endif
-
-
-
 static
 unsigned
 get_read_buffer_size(const unsigned largest_read_size,
@@ -594,7 +573,7 @@ insert_read(
         }
     }
 
-    // assume that pos_procesor, as a container, is no longer empty...
+    // assume that pos_processor, as a container, is no longer empty...
     _is_skip_process_pos=false;
 
     // update read_size:
@@ -608,6 +587,7 @@ insert_read(
         }
     }
 
+    // insert the read:
     retval.reset(rbuff.add_read_alignment(br,al,maplev));
 
     // must initialize initial read_segments "by-hand":
@@ -629,34 +609,6 @@ insert_read(
 
     return retval;
 }
-
-
-
-// // this function is last chance to check-for/warn-about/clean-out any
-// // alignments that won't survive alignment and calling:
-// //
-// // note that cleared alignments still potentially have ids sitting in
-// // the indel buffer, and this would be hard to clean out (except by
-// // brute force)
-// //
-// void
-// starling_pos_processor_base::
-// clean_pos(const pos_t pos) {
-//     std::vector<align_id_t> dead_meat;
-
-//     starling_read_iter ri(_read_buff.get_pos_read_iter(pos));
-//     starling_read* srp;
-//     while(NULL!=(srp=ri.get_ptr())){
-//         if(not srp->is_full_record()) {
-//             log_os << "WARNING: incomplete read record must be removed from pipeline: " << srp->key() << "\n";
-//             dead_meat.push_back(srp->id);
-//         }
-//         ri.next();
-//     }
-
-//     const unsigned ds(dead_meat.size());
-//     for(unsigned i(0);i<ds;++i) _read_buff.clear_read(dead_meat[i]);
-// }
 
 
 
@@ -756,22 +708,6 @@ init_read_segment_pos(const pos_t pos)
         }
     }
 }
-
-
-
-#if 0
-// function has the general purpose of normalizing candidates which
-// are very likely to refer to the same event -- in practice at the
-// moment this only includes removing breakpoint calls which fall
-// entirely within an existing closed insertion
-//
-void
-consolidate_candidate_indel_pos(pos)
-{
-
-
-}
-#endif
 
 
 
@@ -1091,22 +1027,6 @@ insert_pos_basecall(const pos_t pos,
     // assume pos is already valid:
 
     sample(sample_no).bc_buff.insert_pos_basecall(pos,is_tier1,bc);
-}
-
-
-
-void
-starling_pos_processor_base::
-insert_hap_cand(const pos_t pos,
-                const unsigned sample_no,
-                const bool is_tier1,
-                const bam_seq_base& read_seq,
-                const uint8_t* qual,
-                const unsigned offset)
-{
-    // assume pos is already valid:
-
-    sample(sample_no).bc_buff.insert_hap_cand(pos,is_tier1,read_seq,qual,offset);
 }
 
 
@@ -1583,16 +1503,6 @@ process_pos_sample_stats(
 
     const unsigned n_spandel(pi.spanningDeletionReadCount);
     const unsigned n_submapped(pi.n_submapped);
-
-#if 0
-    sif.ss.update(sif.cpi.n_calls());
-    sif.used_ss.update(sif.cpi.n_used_calls());
-    if (pi.get_ref_base() != 'N')
-    {
-        sif.ssn.update(sif.cpi.n_calls());
-        sif.used_ssn.update(sif.cpi.n_used_calls());
-    }
-#endif
 
     if (pi.get_ref_base() != 'N')
     {

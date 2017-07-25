@@ -130,18 +130,6 @@ struct pos_basecall_buffer
     }
 
     void
-    insert_hap_cand(const pos_t pos,
-                    const bool is_tier1,
-                    const bam_seq_base& read_seq,
-                    const uint8_t* qual,
-                    const unsigned offset)
-    {
-        // TODO write this for multi-tier:
-        assert(is_tier1);
-        _pdata.getRef(pos).hap_set.emplace_back(read_seq,qual,offset);
-    }
-
-    void
     decrementSpanningIndelPloidy(const pos_t pos)
     {
         _pdata.getRef(pos).spanningIndelPloidyModification -= 1;

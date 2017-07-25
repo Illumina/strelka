@@ -160,7 +160,6 @@ struct starling_base_options : public blt_options
     bool is_filter_unanchored = false;
 
     std::string realignedReadFilenamePrefix;
-    //std::string bam_seq_name;
 
     double indel_nonsite_match_prob = 0.25;
 

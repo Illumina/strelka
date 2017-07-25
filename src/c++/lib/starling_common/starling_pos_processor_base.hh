@@ -162,15 +162,6 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     insertCallRegion(
         const known_pos_range2& range);
 
-#if 0
-    starling_read*
-    get_read(const align_id_t read_id,
-             const unsigned sample_no)
-    {
-        return sample(sample_no).read_buff.get_read(read_id);
-    }
-#endif
-
     void
     set_head_pos(const pos_t pos);
 
@@ -321,23 +312,6 @@ public:
 
         starling_sample_options sample_opt;
 
-#if 0
-        /// TODO restore this tracking structure by allowing the report_size to be updated multiple times during a run
-        /// as we cycle through multiple regions
-        const unsigned report_size,
-              const unsigned knownref_report_size,
-
-              , ss(report_size)
-              , used_ss(report_size)
-              , ssn(knownref_report_size)
-              , used_ssn(knownref_report_size)
-
-              depth_stream_stat_range ss;
-        depth_stream_stat_range used_ss;
-        depth_stream_stat_range ssn;
-        depth_stream_stat_range used_ssn;
-#endif
-
         // regional basecall average windows:
         pos_win_avgs wav;
 
@@ -459,14 +433,6 @@ private:
                         const unsigned sample_no,
                         const bool is_tier1,
                         const base_call& bc);
-
-    void
-    insert_hap_cand(const pos_t pos,
-                    const unsigned sample_no,
-                    const bool is_tier1,
-                    const bam_seq_base& read_seq,
-                    const uint8_t* qual,
-                    const unsigned offset);
 
     void
     process_pos(const int stage_no,
