@@ -156,10 +156,6 @@ legacy_starling_arg_parse(
         {
             opt.verbosity=LOG_LEVEL::ALLWARN;
         }
-        else if (ad.argstr[i]=="-filter-unanchored")
-        {
-            opt.is_filter_unanchored=true;
-        }
         else if (ad.argstr[i]=="-include-singleton")
         {
             opt.is_include_singleton = true;

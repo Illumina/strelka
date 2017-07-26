@@ -84,7 +84,6 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
 
     self.appendCommonGenomeSegmentCommandOptions(gsegGroup, segCmd)
 
-    segCmd.append("-filter-unanchored")
     segCmd.extend(["-min-mapping-quality",str(self.params.minTier1Mapq)])
     segCmd.extend(["-min-qscore","0"])
     segCmd.extend(["-max-window-mismatch", "3", "20" ])
@@ -96,7 +95,6 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     segCmd.extend(["--shared-indel-error-factor", str(self.params.sindelNoiseFactor)])
     segCmd.extend(["--tier2-min-mapping-quality", str(self.params.minTier2Mapq) ] )
     segCmd.extend(["--tier2-mismatch-density-filter-count", "10"] )
-    segCmd.append("--tier2-no-filter-unanchored")
     segCmd.extend(["--tier2-indel-nonsite-match-prob", "0.25"] )
     segCmd.append("--tier2-include-singleton")
     segCmd.append("--tier2-include-anomalous")

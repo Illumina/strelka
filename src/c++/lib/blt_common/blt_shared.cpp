@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -59,7 +59,6 @@ report(std::ostream& os) const
     os << "READ_COUNTS used: " << used
        << " align-score-filter: " << align_score_filter
        << " large-ref-deletion: " << large_ref_deletion
-       << " unanchored: " << unanchored
        << " unmapped: " << unmapped
        << " duplicate: " << duplicate
        << " primary-analysis-filter: " << primary_filter

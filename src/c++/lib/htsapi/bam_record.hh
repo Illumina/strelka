@@ -249,26 +249,6 @@ public:
         return _bp->core.isize;
     }
 
-
-    /// Test if SM and AM fields both exist and are equal to zero. Any
-    /// other result returns false:
-    ///
-    bool
-    is_unanchored() const
-    {
-        if (! is_paired()) return false;
-        static const char amtag[] = {'A','M'};
-        uint8_t* am_ptr(bam_aux_get(_bp,amtag));
-        if (nullptr == am_ptr)  return false;
-        static const char smtag[] = {'S','M'};
-        uint8_t* sm_ptr(bam_aux_get(_bp,smtag));
-        if (nullptr == sm_ptr)  return false;
-        return (is_int_code(am_ptr[0]) &&
-                is_int_code(sm_ptr[0]) &&
-                (0 == bam_aux2i(am_ptr)) &&
-                (0 == bam_aux2i(sm_ptr)));
-    }
-
     const uint32_t* raw_cigar() const
     {
         return bam_get_cigar(_bp);

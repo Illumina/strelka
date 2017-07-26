@@ -42,9 +42,6 @@ getTier2OptionsDescription(
     ("tier2-no-mismatch-density-filter",
      po::value(&opt.is_tier2_no_mismatch_density_filter)->zero_tokens(),
      "Don't apply mismatch density filter to tier2 data.")
-    ("tier2-no-filter-unanchored",
-     po::value(&opt.is_tier2_no_filter_unanchored)->zero_tokens(),
-     "Don't apply unanchored pair filtration to tier2 data.")
     ("tier2-include-singleton",
      po::value(&opt.is_tier2_include_singleton)->zero_tokens(),
      "Don't filter singleton read pairs from tier2 data (will have no effect without rescue mode).")

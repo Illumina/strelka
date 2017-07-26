@@ -167,8 +167,6 @@ write_starling_legacy_options(
        "                    - Reads with mapping quality<n are marked as tier1 filtered. Such reads are not\n"
        "                      directly used for variant calling unless a tier2 value is defined in certain applications.\n"
        "                      Filtered reads may also still be used to compute locus quality metrics (default score: " << default_opt.min_mapping_quality << ")\n"
-       " -filter-unanchored - Don't use unanchored read pairs during variant calling. Unanchored read pairs have a single-read\n"
-       "                      mapping score of zero in both reads of the pair\n"
        " -include-singleton - Include paired reads with unmapped mates\n"
        " -include-anomalous - Include paired reads which are not part of a 'proper pair' (anomalous orientation or insert size)\n"
        " -print-evidence    - Print the observed data at single site events (does not include indels)\n"

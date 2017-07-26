@@ -29,7 +29,6 @@ struct Tier2Options
             (is_tier2_min_mapping_quality ||
              is_tier2_mismatch_density_filter_count ||
              is_tier2_no_mismatch_density_filter ||
-             is_tier2_no_filter_unanchored ||
              is_tier2_include_singleton ||
              is_tier2_include_anomalous ||
              is_tier2_indel_nonsite_match_prob);
@@ -42,7 +41,6 @@ struct Tier2Options
     bool is_tier2_mismatch_density_filter_count = false;
 
     bool is_tier2_no_mismatch_density_filter = false;
-    bool is_tier2_no_filter_unanchored = false;
     bool is_tier2_include_singleton = false;
     bool is_tier2_include_anomalous = false;
 

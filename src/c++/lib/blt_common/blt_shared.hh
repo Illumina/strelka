@@ -165,7 +165,6 @@ struct blt_read_counts
     unsigned unmapped = 0;
     unsigned secondary = 0;
     unsigned supplement = 0;
-    unsigned unanchored = 0;
     unsigned large_ref_deletion = 0;
     unsigned align_score_filter = 0;
 

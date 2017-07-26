@@ -155,10 +155,6 @@ struct starling_base_options : public blt_options
     bool is_smoothed_alignments = true;
     double smoothed_lnp_range = std::log(10.);
 
-    // filter reads where both reads of pair have SE score 0, temp fix
-    // for internal analysis:
-    bool is_filter_unanchored = false;
-
     std::string realignedReadFilenamePrefix;
 
     double indel_nonsite_match_prob = 0.25;

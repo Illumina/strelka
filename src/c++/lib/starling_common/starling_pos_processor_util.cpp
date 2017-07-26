@@ -242,7 +242,6 @@ is_usable_read_mapping(const starling_base_options& opt,
                        const bool is_tier2 =false)
 {
     int current_min_mapping_quality(opt.min_mapping_quality);
-    bool is_filter_unanchored(opt.is_filter_unanchored);
     bool is_include_singleton(opt.is_include_singleton);
     bool is_include_anomalous(opt.is_include_anomalous);
     if (is_tier2)
@@ -250,10 +249,6 @@ is_usable_read_mapping(const starling_base_options& opt,
         if (opt.tier2.is_tier2_min_mapping_quality)
         {
             current_min_mapping_quality=opt.tier2.tier2_min_mapping_quality;
-        }
-        if (opt.tier2.is_tier2_no_filter_unanchored)
-        {
-            is_filter_unanchored=false;
         }
         if (opt.tier2.is_tier2_include_singleton)
         {
@@ -263,12 +258,6 @@ is_usable_read_mapping(const starling_base_options& opt,
         {
             is_include_anomalous=true;
         }
-    }
-
-    if (is_filter_unanchored &&
-        read.is_unanchored())
-    {
-        return false;
     }
 
     if (read.is_paired())
