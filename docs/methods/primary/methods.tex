@@ -217,9 +217,19 @@ Following all preliminary parameter estimation tasks, the primary variant callin
 
 Reads from the input alignment files are read in as the first step of the variant calling operation, and certain read types are immediately filtered out. These are reads marked as (1) not passing filters (2) PCR/optical duplicates (3) unmapped (4) secondary or (5) supplemental.
 
-After filtration the remaining read alignments are subject to the following normalizations: (1) All indels are left-shifted (moved to a lower position) such that the total number of alignment mismatches does not increase with each 1-base left-shift operation (2) Adjacent indels are merged (3) Indels are simplified by identifying any portion of a set of adjacent insert/delete edits which can be matched to the reference, for example, given reference 'ACTGC' and read 'ACGC', the CIGAR '2M1I2D1M' will be simplified to '2M1D2M' (4) Indels at or left-shifted to the edge of the read are simplified if possible, possibly changing the alignment start position.
+In addition to filtering out reads which are never used in the variant calling process, the remaining reads are classified into one of several categories which will determine for what roles the read is used in all downstream steps. These categories are: (1) Tier1 reads: these are the reads considered to be the most reliable and are used for all aspects of variant calling (2) Tier2 reads: these reads are recognized as lower quality evidence than tier1, they are used for verification of somatic calls as described further below (3) Sub-mapped reads: these are the least reliable reads which are retained, together with tier1 and tier2 reads, to make accurate observations of the locus via variant classification features such as the RMS Mapping Quality.
 
-\subsection{Short Haplotyping}
+For the germline and somatic calling models reads are classified as tier 1 if they have a
+\begin{enumerate}
+    \item mapping quality of 20 or higher
+    \item mapped mate read (if paired)
+    \item 'proper-pair' with their mate read (if paired)
+\end{enumerate}
+All other unfiltered input reads are classified as sub-mapped in the germline model and as tier2 reads in the somatic model.
+
+After filtration and read classification the remaining read alignments are subject to the following normalizations: (1) All indels are left-shifted (moved to a lower position) such that the total number of alignment mismatches does not increase with each 1-base left-shift operation (2) Adjacent indels are merged (3) Indels are simplified by identifying any portion of a set of adjacent insert/delete edits which can be matched to the reference, for example, given reference 'ACTGC' and read 'ACGC', the CIGAR '2M1I2D1M' will be simplified to '2M1D2M' (4) Indels at or left-shifted to the edge of the read are simplified if possible, possibly changing the alignment start position.
+
+\subsection{Haplotype model}
 
 Alignments in polymorphic regions are prone to errors, often leading to false variant calls. To cope with this problem, state-of-the-art germline variant callers like GATK and Platypus use local de novo assembly to reconstruct haplotypes in these regions and use them to improve variant calls. We employ a similar haplotyping approach called {\em short haplotyping}. For runtime efficiency, the haplotyping approach is applied only to relatively short regions ($\leq 250$ by default) where dense variants are expected. Also, currently it is enabled only in germline variant calling.
 

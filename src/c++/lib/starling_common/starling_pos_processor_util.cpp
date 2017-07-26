@@ -269,7 +269,7 @@ is_usable_read_mapping(const starling_base_options& opt,
         const bool is_anomalous((! is_singleton) && (! read.is_proper_pair()));
         if        ((! is_include_singleton) && is_singleton)
         {
-            return false; // singleton
+            return false;
         }
         else if ((! is_include_anomalous) && is_anomalous)
         {

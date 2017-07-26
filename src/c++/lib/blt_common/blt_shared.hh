@@ -100,7 +100,10 @@ struct blt_options
     bool is_print_evidence = false;
     bool is_print_all_site_evidence = false;
 
+    /// If true, use reads with unmapped mates for variant calling
     bool is_include_singleton = false;
+
+    /// If true, use non proper-pair reads for variant calling
     bool is_include_anomalous = false;
 
     int max_vexp_iterations = 0;
