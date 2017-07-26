@@ -102,7 +102,7 @@ strelka_streams(
     const prog_info& pinfo,
     const bam_hdr_t& header,
     const StrelkaSampleSetSummary& ssi)
-    : base_t(opt,pinfo,ssi.size())
+    : base_t(ssi.size())
 {
     {
         using namespace STRELKA_SAMPLE_TYPE;

@@ -515,9 +515,6 @@ private:
     void
     write_reads(const pos_t pos);
 
-    void
-    write_candidate_indels_pos(const pos_t pos);
-
     /// maintain stats for depth, etc...
     void
     process_pos_stats(

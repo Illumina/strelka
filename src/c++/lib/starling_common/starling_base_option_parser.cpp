@@ -190,10 +190,6 @@ write_starling_legacy_options(
        "                    - If there are more than x candidate indels per base intersecting a read, then realignment\n"
        "                      is truncated to only allow individual indel toggles of the starting alignments for that read.\n"
        "                      x must be greater than 0  (default: " << default_opt.max_candidate_indel_density << ")\n"
-       " -candidate-indel-file file\n"
-       "                      write out all candidate indels before realignment and genotyping\n"
-       " -write-candidate-indels-only\n"
-       "                      Skip all analysis steps besides writing candidate indels (only valid when -candidate-indel-file is given)\n"
        " -realigned-read-file file\n"
        "                    - Write reads which have had their alignments altered during realignemnt to a BAM file.\n"
        " -realign-submapped-reads\n"
@@ -229,12 +225,6 @@ finalize_legacy_starling_options(
         {
             pinfo.usage("genome-size must be greater than 0");
         }
-    }
-
-    if (opt.is_write_candidate_indels_only &&
-        opt.candidate_indel_filename.empty())
-    {
-        pinfo.usage("Cannot specify -write-candidate-indels-only without providing candidate indel filename.");
     }
 
     validate_blt_opt(pinfo,opt);

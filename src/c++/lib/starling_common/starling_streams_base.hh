@@ -37,21 +37,14 @@
 
 struct starling_streams_base
 {
+    explicit
     starling_streams_base(
-        const starling_base_options& opt,
-        const prog_info& pinfo,
         const unsigned sampleCount);
 
     bam_dumper*
     realign_bam_ptr(const unsigned sampleIndex) const
     {
         return _realign_bam_ptr[sampleIndex].get();
-    }
-
-    std::ostream*
-    candidate_indel_osptr() const
-    {
-        return _candidate_indel_osptr.get();
     }
 
     unsigned
@@ -67,28 +60,11 @@ protected:
         const bam_hdr_t& header);
 
     static
-    std::ostream*
-    initialize_candidate_indel_file(
-        const starling_base_options& opt,
-        const prog_info& pinfo,
-        const std::string& filename);
-
-    static
     void
     open_ofstream(const prog_info& pinfo,
                   const std::string& filename,
                   const char* label,
                   std::ofstream& fos);
-
-    /// write first few meta-data lines for a legacy blt/starling
-    /// variant output file:
-    ///
-    static
-    void
-    write_file_audit(
-        const prog_info& pinfo,
-        const char* const cmdline,
-        std::ostream& os);
 
     /// write the first few meta-data lines for a vcf file:
     ///
@@ -102,6 +78,5 @@ protected:
 
     std::vector<std::unique_ptr<bam_dumper>> _realign_bam_ptr;
 private:
-    std::unique_ptr<std::ostream> _candidate_indel_osptr;
     unsigned _sampleCount;
 };

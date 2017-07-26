@@ -881,14 +881,6 @@ process_pos(const int stage_no,
             for (unsigned sampleIndex(0); sampleIndex<getSampleCount(); ++sampleIndex)
                 _getActiveRegionDetector(sampleIndex).updateEndPosition(pos);
         }
-
-        if (_opt.is_write_candidate_indels())
-        {
-            if (is_pos_reportable(pos))
-            {
-                write_candidate_indels_pos(pos);
-            }
-        }
     }
     else if (stage_no==STAGE::READ_BUFFER)
     {
@@ -900,19 +892,9 @@ process_pos(const int stage_no,
             sif.read_buff.dump_pos(pos,log_os);
         }
 #endif
-        //        consolidate_candidate_indel_pos(pos);
-
-        if (! _opt.is_write_candidate_indels_only)
-        {
-            //        clean_pos(pos);
-            align_pos(pos);
-            pileup_pos_reads(pos);
-            // if(_opt.is_realigned_read_file) {
-            //     rebuffer_pos_reads(pos);
-            // }
-
-            write_reads(pos);
-        }
+        align_pos(pos);
+        pileup_pos_reads(pos);
+        write_reads(pos);
 
         if (is_active_region_detector_enabled())
         {
@@ -922,63 +904,60 @@ process_pos(const int stage_no,
     }
     else if (stage_no==STAGE::POST_ALIGN)
     {
-        if (! _opt.is_write_candidate_indels_only)
+        static const pos_t precedingCallRegionDistance(200);
+
+        // start variant calling if pos is either:
+        // (1) in a call region
+        // (2) no more than precedingCallRegionDistance bases upstream of a call region
+        //
+        // All variant callers run in case (1). In case (2) we only run variant callers which accumulate history
+        // from position to position. At this time, the only such variant caller is the germline indel caller,
+        // which stores history over muliptle calls in order to (more) correctly handle overlapping indels.
+        //
+        // Note here that "reportable range" refers the region of responsible for this variant calling process
+        // but "call region" may represent several subrgions of the reportable range if a call regions BED file
+        // is given (otherwise "call region" is equal to "reportable range")
+
+        const bool isPosInPrimaryReportingRegion(is_pos_reportable(pos));
+
+        /// is this position reportable in the VCF output?
+        bool isPosReportable(false);
+
+        /// is this position upstream of one that is reportable in the VCF output by no more than
+        /// precedingCallRegionDistance bases?
+        ///
+        bool isPosPrecedingReportable(false);
+
+        if (not isPosInPrimaryReportingRegion)
         {
-            static const pos_t precedingCallRegionDistance(200);
-
-            // start variant calling if pos is either:
-            // (1) in a call region
-            // (2) no more than precedingCallRegionDistance bases upstream of a call region
-            //
-            // All variant callers run in case (1). In case (2) we only run variant callers which accumulate history
-            // from position to position. At this time, the only such variant caller is the germline indel caller,
-            // which stores history over muliptle calls in order to (more) correctly handle overlapping indels.
-            //
-            // Note here that "reportable range" refers the region of responsible for this variant calling process
-            // but "call region" may represent several subrgions of the reportable range if a call regions BED file
-            // is given (otherwise "call region" is equal to "reportable range")
-
-            const bool isPosInPrimaryReportingRegion(is_pos_reportable(pos));
-
-            /// is this position reportable in the VCF output?
-            bool isPosReportable(false);
-
-            /// is this position upstream of one that is reportable in the VCF output by no more than
-            /// precedingCallRegionDistance bases?
-            ///
-            bool isPosPrecedingReportable(false);
-
-            if (not isPosInPrimaryReportingRegion)
+            isPosPrecedingReportable = (is_pos_preceding_reportable_range(pos) and is_pos_reportable(pos+precedingCallRegionDistance));
+            if (_opt.isUseCallRegions())
             {
-                isPosPrecedingReportable = (is_pos_preceding_reportable_range(pos) and is_pos_reportable(pos+precedingCallRegionDistance));
-                if (_opt.isUseCallRegions())
+                if (isPosPrecedingReportable)
                 {
-                    if (isPosPrecedingReportable)
-                    {
-                        isPosPrecedingReportable = _callRegions.isIntersectRegion(known_pos_range2((pos-precedingCallRegionDistance),pos));
-                    }
+                    isPosPrecedingReportable = _callRegions.isIntersectRegion(known_pos_range2((pos-precedingCallRegionDistance),pos));
+                }
+            }
+        }
+        else
+        {
+            if (_opt.isUseCallRegions())
+            {
+                isPosReportable = _callRegions.isIntersectRegion(pos);
+                if (not isPosReportable)
+                {
+                    isPosPrecedingReportable = _callRegions.isIntersectRegion(known_pos_range2((pos-precedingCallRegionDistance),pos));
                 }
             }
             else
             {
-                if (_opt.isUseCallRegions())
-                {
-                    isPosReportable = _callRegions.isIntersectRegion(pos);
-                    if (not isPosReportable)
-                    {
-                        isPosPrecedingReportable = _callRegions.isIntersectRegion(known_pos_range2((pos-precedingCallRegionDistance),pos));
-                    }
-                }
-                else
-                {
-                    isPosReportable = true;
-                }
+                isPosReportable = true;
             }
+        }
 
-            if (isPosReportable or isPosPrecedingReportable)
-            {
-                process_pos_variants(pos, isPosPrecedingReportable);
-            }
+        if (isPosReportable or isPosPrecedingReportable)
+        {
+            process_pos_variants(pos, isPosPrecedingReportable);
         }
 
         if (is_active_region_detector_enabled())
@@ -1128,40 +1107,6 @@ insert_hap_cand(const pos_t pos,
     // assume pos is already valid:
 
     sample(sample_no).bc_buff.insert_hap_cand(pos,is_tier1,read_seq,qual,offset);
-}
-
-
-
-void
-starling_pos_processor_base::
-write_candidate_indels_pos(
-    const pos_t pos)
-{
-    const pos_t output_pos(pos+1);
-    std::ostream& bos(*_streams.candidate_indel_osptr());
-
-    auto indelIter(getIndelBuffer().positionIterator(pos));
-    const auto indelIterEnd(getIndelBuffer().positionIterator(pos + 1));
-
-    for (; indelIter!=indelIterEnd; ++indelIter)
-    {
-        const IndelKey& indelKey(indelIter->first);
-        const IndelData& indelData(getIndelData(indelIter));
-        if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
-        bos << _chromName << "\t"
-            << output_pos << "\t"
-            << INDEL::get_index_label(indelKey.type) << "\t";
-        if (indelKey.is_breakpoint())
-        {
-            bos << 0 << "\t" << indelData.getBreakpointInsertSeq();
-        }
-        else
-        {
-            bos << indelKey.deletionLength << "\t"
-                << indelKey.insert_seq();
-        }
-        bos << "\n";
-    }
 }
 
 

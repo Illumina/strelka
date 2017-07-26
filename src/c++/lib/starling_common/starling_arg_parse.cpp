@@ -58,8 +58,6 @@ legacy_starling_arg_parse(
 
     bool is_realigned_read_file(false);
 
-    bool is_cif(false);
-
     bool is_inmp(false);
 
     bool local_is_min_vexp(false);
@@ -169,14 +167,6 @@ legacy_starling_arg_parse(
         else if (ad.argstr[i]=="-include-anomalous")
         {
             opt.is_include_anomalous = true;
-        }
-        else if (ad.argstr[i]=="-candidate-indel-file")
-        {
-            set_filename_arg(i,ad,is_cif,opt.candidate_indel_filename);
-        }
-        else if (ad.argstr[i]=="-write-candidate-indels-only")
-        {
-            opt.is_write_candidate_indels_only=true;
         }
         else if (ad.argstr[i]=="-h")
         {

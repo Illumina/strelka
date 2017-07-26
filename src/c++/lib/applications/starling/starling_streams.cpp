@@ -61,7 +61,7 @@ starling_streams(
     const prog_info& pinfo,
     const std::vector<std::reference_wrapper<const bam_hdr_t>>& bamHeaders,
     const std::vector<std::string>& sampleNames)
-    : base_t(opt, pinfo, sampleNames.size()),
+    : base_t(sampleNames.size()),
       _sampleNames(sampleNames)
 {
     assert(not bamHeaders.empty());

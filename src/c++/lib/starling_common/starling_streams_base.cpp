@@ -54,33 +54,6 @@ open_ofstream(const prog_info& pinfo,
 
 static
 void
-write_audit(
-    const prog_info& pinfo,
-    const char* const cmdline,
-    std::ostream& os,
-    const char* const prefix = 0)
-{
-    if (prefix) os << prefix;
-    os << "CMDLINE " << cmdline << "\n";
-
-    if (prefix) os << prefix;
-    os << "PROGRAM_VERSION " << pinfo.version() << "\n";
-
-    if (prefix) os << prefix;
-
-    static const unsigned bufferSize(256);
-    char timeBuffer[bufferSize];
-
-    const time_t result(time(nullptr));
-    strftime(timeBuffer, bufferSize, "%c", localtime(&result));
-
-    os << "START_TIME " << timeBuffer << "\n";
-}
-
-
-
-static
-void
 write_vcf_audit(
     const starling_base_options& opt,
     const prog_info& pinfo,
@@ -109,31 +82,6 @@ write_vcf_audit(
         os << "##contig=<ID=" << header.target_name[i]
            << ",length=" << header.target_len[i] << ">\n";
     }
-}
-
-
-
-static
-void
-write_file_audit(
-    const prog_info& pinfo,
-    const char* const cmdline,
-    std::ostream& os)
-{
-    write_audit(pinfo,cmdline,os,"#$ ");
-    os << "#\n";
-}
-
-
-
-void
-starling_streams_base::
-write_file_audit(
-    const prog_info& pinfo,
-    const char* const cmdline,
-    std::ostream& os)
-{
-    ::write_file_audit(pinfo,cmdline,os);
 }
 
 
@@ -179,42 +127,11 @@ initialize_realign_bam(
 
 
 
-std::ostream*
-starling_streams_base::
-initialize_candidate_indel_file(
-    const starling_base_options& opt,
-    const prog_info& pinfo,
-    const std::string& filename)
-{
-    const char* const cmdline(opt.cmdline.c_str());
-
-    std::ofstream* fosptr(new std::ofstream);
-    std::ofstream& fos(*fosptr);
-    open_ofstream(pinfo,filename,"candidate-indel",fos);
-
-    fos << "# ** " << pinfo.name();
-    fos << " candidate-indel file **\n";
-    write_file_audit(pinfo,cmdline,fos);
-    fos << "#\n";
-    fos << "#$ COLUMNS seq_name pos type length seq\n";
-
-    return fosptr;
-}
-
-
-
 starling_streams_base::
 starling_streams_base(
-    const starling_base_options& opt,
-    const prog_info& pinfo,
     const unsigned sampleCount)
     : _realign_bam_ptr(sampleCount),
       _sampleCount(sampleCount)
 {
     assert(_sampleCount > 0);
-
-    if (opt.is_write_candidate_indels())
-    {
-        _candidate_indel_osptr.reset(initialize_candidate_indel_file(opt,pinfo,opt.candidate_indel_filename));
-    }
 }

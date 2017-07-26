@@ -35,7 +35,7 @@ snoise_streams(
     const prog_info& pinfo,
     const bam_hdr_t& header,
     const unsigned sampleCount)
-    : base_t(opt, pinfo, sampleCount),
+    : base_t(sampleCount),
       _snoise_osptr(&std::cout)
 {
     const char* const cmdline(opt.cmdline.c_str());

@@ -35,7 +35,7 @@ SequenceErrorCountsStreams(
     const SequenceErrorCountsOptions& opt,
     const prog_info& pinfo,
     const bam_hdr_t& header)
-    : base_t(opt, pinfo, 1)
+    : base_t(1)
 {
     assert(getSampleCount() == 1);
     _sampleName = get_bam_header_sample_name(header);

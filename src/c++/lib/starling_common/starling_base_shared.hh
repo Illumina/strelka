@@ -54,12 +54,6 @@ struct starling_base_options : public blt_options
     }
 
     bool
-    is_write_candidate_indels() const
-    {
-        return (! candidate_indel_filename.empty());
-    }
-
-    bool
     is_realigned_read_file() const
     {
         return (not realignedReadFilenamePrefix.empty());
@@ -167,9 +161,6 @@ struct starling_base_options : public blt_options
 
     std::string realignedReadFilenamePrefix;
     //std::string bam_seq_name;
-
-    std::string candidate_indel_filename;
-    bool is_write_candidate_indels_only = false;
 
     double indel_nonsite_match_prob = 0.25;
 
