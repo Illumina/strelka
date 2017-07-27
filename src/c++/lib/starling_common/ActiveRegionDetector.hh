@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Sangtae Kim
 ///
 
@@ -36,16 +36,13 @@
 #include <set>
 
 
-/// detects active regions
+/// \brief Detects active regions
 ///
-/// active regions are short genome segments where variation is sufficiently dense to trigger special haplotype handling methods
+/// Active regions are short genome segments where variation is sufficiently dense to trigger special haplotype
+/// detection and handling methods
 class ActiveRegionDetector
 {
 public:
-
-    /// maximum buffer size in bases (must be larger than the maximum read size + max indel size
-    static const unsigned MaxBufferSize = 1000u;
-
     /// max distance between two variants to be placed in the same active region
     static const unsigned MaxDistanceBetweenTwoVariants = 13u;
 
@@ -139,7 +136,6 @@ private:
 
     void setPosToActiveRegionIdMap(pos_range activeRegionRange);
     void processActiveRegion();
+
+    void closeExistingActiveRegion();
 };
-
-
-

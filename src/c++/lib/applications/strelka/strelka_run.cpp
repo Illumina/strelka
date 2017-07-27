@@ -217,9 +217,13 @@ strelka_run(
     strelka_pos_processor posProcessor(opt, dopt, ref, fileStreams, statsManager);
 
     // parse and sanity check regions
-    const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilenames.front());
+    assert ((! opt.is_short_haplotyping_enabled) && "Region border size must be updated if haplotyping is enabled");
+    const unsigned supplementalRegionBorderSize(opt.max_indel_size);
+
+        const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilenames.front());
     std::vector<AnalysisRegionInfo> regionInfoList;
-    getStrelkaAnalysisRegions(opt, referenceAlignmentFilename, referenceHeaderInfo, regionInfoList);
+    getStrelkaAnalysisRegions(opt, referenceAlignmentFilename, referenceHeaderInfo, supplementalRegionBorderSize,
+                              regionInfoList);
 
     for (const auto& regionInfo : regionInfoList)
     {
@@ -236,7 +240,7 @@ strelka_run(
             {
                 AnalysisRegionInfo subRegionInfo;
                 getStrelkaAnalysisRegionInfo(regionInfo.regionChrom, subRegionRange.begin_pos(), subRegionRange.end_pos(),
-                                             opt.max_indel_size, subRegionInfo);
+                                             supplementalRegionBorderSize, subRegionInfo);
                 callRegion(opt, subRegionInfo, readCounts, ref, streamData, posProcessor);
             }
         }

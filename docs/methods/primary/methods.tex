@@ -209,25 +209,31 @@ Following all preliminary parameter estimation tasks, the primary variant callin
 
 \paragraph{Genome segmentation} Given a maximum segment size (default is 12 Mb), each chromosome is partitioned into a set of nearly equal size segments such that each does not exceed the maximum. Each genome segment larger than 200Kb can be directly distributed to a worker process for variant calling, smaller segments are grouped together such that each worker process handles a batch of genome segments which have a total length of less than 200Kb. Grouping small segments better amortizes the startup and bookkeeping costs of each variant calling process in cases where large numbers of small contigs need to be handled, such as for decoys and unplaced contigs in the human hg38 reference.
 
-\paragraph{Segment boundaries} It is important that the segmentation is not allowed to alter the variant calling results at the segmentation point. To prevent this each variant calling process expands its targeted calling range by a fixed amount and completes all elements of the variant calling operation in the expanded region with the exception of writing variant output. In this way regional operation such as haplotype modeling can be applied consistently across the segment boundary in most cases. By default each genome segment is expanded by 150 bases for this purpose (A fixed 100 base offset plus the maximum indel size).
+\paragraph{Segment boundaries} When a chromosome is divided into multiple segments, it is important that variant calling results across segment boundaries are identical to the results of calling the entire chromosome using a single variant calling process. To ensure that this is the case, in each variant calling process the targeted genome segment is expanded by a fixed size to create small border regions preceding and following the original target region. In these border regions the variant caller completes all parts of the variant calling operation except for writing any output. In this way regional operations such as haplotype modeling will be applied consistently across segment boundaries. The region expansion size is 100 bases plus the variant caller's maximum indel size (50). In the case of germline calling, the expansion size is further increased by the haplotype model's maximum active region size (250).
 
 \section{Variant Discovery}
 
 \subsection{Input Read Processing}
 
-Reads from the input alignment files are read in as the first step of the variant calling operation, and certain read types are immediately filtered out. These are reads marked as (1) not passing filters (2) PCR/optical duplicates (3) unmapped (4) secondary or (5) supplemental.
+Reads from the input alignment files are read in as the first step of the variant calling operation, and certain read types are immediately filtered out. These are reads marked as not passing filters, PCR/optical duplicates, unmapped, secondary or supplemental.
 
-In addition to filtering out reads which are never used in the variant calling process, the remaining reads are classified into one of several categories which will determine for what roles the read is used in all downstream steps. These categories are: (1) Tier1 reads: these are the reads considered to be the most reliable and are used for all aspects of variant calling (2) Tier2 reads: these reads are recognized as lower quality evidence than tier1, they are used for verification of somatic calls as described further below (3) Sub-mapped reads: these are the least reliable reads which are retained, together with tier1 and tier2 reads, to make accurate observations of the locus via variant classification features such as the RMS Mapping Quality.
-
-For the germline and somatic calling models reads are classified as tier 1 if they have a
+In addition to filtering out reads which are never used in the variant calling process, the remaining reads are classified into one of several categories which will determine the roles for which the read is used in all downstream steps. These categories are
 \begin{enumerate}
-    \item mapping quality of 20 or higher
-    \item mapped mate read (if paired)
-    \item 'proper-pair' with their mate read (if paired)
+    \item Tier1 reads: these are the reads considered to be the most reliable and are used for all aspects of variant calling.
+    \item Tier2 reads: these reads are recognized as lower quality evidence than tier1, they are used for verification of somatic calls as described further below.
+    \item Sub-mapped reads: these are the least reliable reads which are retained, together with tier1 and tier2 reads, to make accurate observations of the locus via variant classification features such as the root mean square mapping quality for all reads covering the locus.
 \end{enumerate}
-All other unfiltered input reads are classified as sub-mapped in the germline model and as tier2 reads in the somatic model.
 
-After filtration and read classification the remaining read alignments are subject to the following normalizations: (1) All indels are left-shifted (moved to a lower position) such that the total number of alignment mismatches does not increase with each 1-base left-shift operation (2) Adjacent indels are merged (3) Indels are simplified by identifying any portion of a set of adjacent insert/delete edits which can be matched to the reference, for example, given reference 'ACTGC' and read 'ACGC', the CIGAR '2M1I2D1M' will be simplified to '2M1D2M' (4) Indels at or left-shifted to the edge of the read are simplified if possible, possibly changing the alignment start position.
+For the germline and somatic calling models reads are classified as tier1 if they have a mapping quality of 20 or higher, and if paired, a mate read which is mapped and marked as a 'proper-pair'. All other unfiltered input reads are classified as sub-mapped in the germline model and as tier2 reads in the somatic model.
+
+Input read alignments are also subject to the following normalizations:
+\begin{enumerate}
+    \item Indels are left-shifted (moved to a lower position) such that the total number of alignment mismatches does not increase with each single-base left-shift operation.
+    \item Adjacent indels are merged, for instance the alignment indicated by CIGAR '10M1I2I10M' would be simplified to '10M3I10M' and '10M2D1I3D10M' would be simplified to '10M5D1I10M'
+    \item Indels are simplified by identifying any portion of a set of adjacent insert/delete edits which can be matched to the reference, for example, given reference 'ACTGC' and read 'ACGC', the CIGAR '2M1I2D1M' will be simplified to '2M1D2M'
+    \item Indels on (or left-shifted to) the edge of the read are simplified, possibly changing the alignment start position. For instance an alignment CIGAR of "1D10M" at position 100 is transformed to "10M" at position 101.
+\end{enumerate}
+These normalization steps do not alter the alignment's soft-clipping.
 
 \subsection{Haplotype model}
 

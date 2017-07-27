@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE( test_normalizeAlignment )
     // This example case suggested by Aaron Halpern in review.
     // The original left design would left shift only if the mismatch
     // count did not change, but it seems reasonable that left-shifting
-    // if the mistmatch count does not get worse is reasonable, and
+    // if the mismatch count does not get worse is reasonable, and
     // consistent with the "collapsing of reference matching 1I1D patterns
     // as well (which is also a match-increasing transformation).
     //

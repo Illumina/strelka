@@ -17,11 +17,12 @@
 //
 //
 
-///
+/// \file
 /// \author Sangtae Kim
 ///
 
 #include "ActiveRegionDetector.hh"
+
 
 void
 ActiveRegionDetector::clearReadBuffer(const pos_t pos)
@@ -64,6 +65,23 @@ ActiveRegionDetector::processActiveRegion()
 
 
 void
+ActiveRegionDetector::closeExistingActiveRegion()
+{
+    // close the existing active region
+    assert (_activeRegionStartPos < _anchorPosFollowingPrevVariant);
+
+    pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
+    _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleIndex,
+                                _aligner, _readBuffer, _indelBuffer, _candidateSnvBuffer);
+    setPosToActiveRegionIdMap(activeRegionRange);
+
+    // we have no existing active region at this point
+    _numVariants = 0;
+    _activeRegionStartPos = 0;
+}
+
+
+void
 ActiveRegionDetector::updateEndPosition(const pos_t pos)
 {
     _readBuffer.setEndPos(pos+1);
@@ -97,17 +115,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
     {
         if (_numVariants >= MinNumVariantsPerRegion )
         {
-            // close the existing active region
-            assert (_activeRegionStartPos < _anchorPosFollowingPrevVariant);
-
-            pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
-            _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleIndex,
-                                        _aligner, _readBuffer, _indelBuffer, _candidateSnvBuffer);
-            setPosToActiveRegionIdMap(activeRegionRange);
-
-            // we have no existing acive region at this point
-            _numVariants = 0;
-            _activeRegionStartPos = 0;
+            closeExistingActiveRegion();
         }
         else
         {
@@ -153,13 +161,7 @@ void ActiveRegionDetector::clear()
         if (_anchorPosFollowingPrevVariant < 0)
             _anchorPosFollowingPrevVariant = (_readBuffer.getEndPos()-1);
 
-        // close the existing active region
-        assert (_activeRegionStartPos < _anchorPosFollowingPrevVariant);
-
-        pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
-        _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleIndex,
-                                    _aligner, _readBuffer, _indelBuffer, _candidateSnvBuffer);
-        setPosToActiveRegionIdMap(activeRegionRange);
+        closeExistingActiveRegion();
     }
 
     processActiveRegion();

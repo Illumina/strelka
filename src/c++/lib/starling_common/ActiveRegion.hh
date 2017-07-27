@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Sangtae Kim
 ///
 
@@ -37,7 +37,6 @@
 #include <options/SmallAssemblerOptions.hh>
 #include <options/IterativeAssemblerOptions.hh>
 
-typedef std::vector<RangeMap<pos_t,uint8_t>> RangeSet;
 typedef std::map<std::string, std::vector<align_id_t>> HaplotypeToAlignIdSet;
 typedef uint8_t HaplotypeId;
 

@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -52,49 +52,57 @@ struct AnalysisRegionInfo
     /// Analysis range padded by indel size + extra constant pad (used for reference region)
     known_pos_range2 refRegionRange;
 
-    /// Region formatted into a samtools region string, e.g. "chr20:100-200"
+    /// Region formatted into an htslib region string, e.g. "chr20:100-200"
     std::string streamerRegion;
 };
 
 
-/// convert to string format expected by samtools/htslib
+/// Convert a genome segmetn into the region string format expected by htslib
 std::string
 getSamtoolsRegionString(
     const std::string& chromName,
     const known_pos_range2& range);
 
 
-/// given a genome segment for analysis described by chrom, beginPos, endPos,
-/// produce various related region objects used to manage edge-effects
+/// Given a genome segment for analysis described by chrom, beginPos, endPos,
+/// produce various related region objects used to manage genome segment boundary artifacts
 ///
 /// \param[in] beginPos start position (zero-indexed, closed)
 /// \param[in] endPos end position (zero-indexed, open)
+/// \param[in] supplementalRegionBorderSize The amount of padding to add to the region border to reduce variant calling
+///                artifacts at segment boundaries - this padding is added as a supplement to a fixed minimum
 void
 getStrelkaAnalysisRegionInfo(
     const std::string& chrom,
     const int32_t beginPos,
     const int32_t endPos,
-    const unsigned maxIndelSize,
+    const unsigned supplementalRegionBorderSize,
     AnalysisRegionInfo& rinfo);
 
 
-/// given an input samtools region string for analysis, produce various related
+/// Given an input samtools region string for analysis, produce various related
 /// region objects used to manage edge-effects
 ///
 /// \param region[in] samtools formatted analysis region string
+/// \param[in] supplementalRegionBorderSize The amount of padding to add to the region border to reduce variant calling
+///                artifacts at segment boundaries - this padding is added as a supplement to a fixed minimum
 void
 getStrelkaAnalysisRegionInfo(
     const std::string& region,
-    const unsigned maxIndelSize,
+    const unsigned supplementalRegionBorderSize,
     AnalysisRegionInfo& rinfo);
 
 
-/// parse and sanity check regions
+/// Parse and sanity check regions
 ///
-/// TODO reorg this into a different module
+/// \param[in] supplementalRegionBorderSize The amount of padding to add to the region border to reduce variant calling
+///                artifacts at segment boundaries - this padding is added as a supplement to a fixed minimum
+///
+/// \TODO reorg this into a different module
 void
 getStrelkaAnalysisRegions(
     const starling_base_options& opt,
     const std::string& referenceAlignmentFilename,
     const bam_header_info& referenceHeaderInfo,
+    const unsigned supplementalRegionBorderSize,
     std::vector<AnalysisRegionInfo>& regionInfoList);

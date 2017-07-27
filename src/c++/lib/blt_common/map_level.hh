@@ -35,7 +35,7 @@ enum index_t
     TIER1_MAPPED, ///< The read has a high-quality mapping which is approximated as true for most purposes
     TIER2_MAPPED, ///< The read has a lower-quality mapping, and thus is only used for specialized tasks, eg. normal sample evidence to disprove a putative somatic hypothesis
     SUB_MAPPED,   ///< Any mapped read which does not meet tier 1 or 2 criteria
-    UNMAPPED      ///< The read is unampped
+    UNMAPPED      ///< The read is unmapped
 };
 
 inline

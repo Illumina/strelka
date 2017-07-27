@@ -379,7 +379,7 @@ processInputReadAlignment(
         return;
     }
 
-    // Now that 'alignment-free' filtration is finished, sanity-check/fitler/normalize the remaining mapped reads
+    // Now that 'alignment-free' filtration is finished, sanity-check/filter/normalize the remaining mapped reads
     // based on the read's alignment.
     //
     // Note there is logic below assuming that unmapped reads need to be handled even though these

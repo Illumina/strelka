@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -62,15 +62,15 @@ getStrelkaAnalysisRegionInfo(
     const std::string& chrom,
     const int32_t beginPos,
     const int32_t endPos,
-    const unsigned maxIndelSize,
+    const unsigned supplementalRegionBorderSize,
     AnalysisRegionInfo& rinfo)
 {
     rinfo.regionChrom = chrom;
     rinfo.regionRange.set_range(beginPos, endPos);
 
-    static const pos_t streamerRegionPadSize(100);
+    static const pos_t fixedRegionBorderSize(100);
     rinfo.streamerRegionRange = rinfo.regionRange;
-    rinfo.streamerRegionRange.expandBy(streamerRegionPadSize + maxIndelSize);
+    rinfo.streamerRegionRange.expandBy(fixedRegionBorderSize + supplementalRegionBorderSize);
     rinfo.streamerRegionRange.makeNonNegative();
 
     rinfo.streamerRegion = getSamtoolsRegionString(rinfo.regionChrom, rinfo.streamerRegionRange);
@@ -86,12 +86,12 @@ getStrelkaAnalysisRegionInfo(
 void
 getStrelkaAnalysisRegionInfo(
     const std::string& region,
-    const unsigned maxIndelSize,
+    const unsigned supplementalRegionBorderSize,
     AnalysisRegionInfo& rinfo)
 {
     int32_t regionBeginPos(0), regionEndPos(0);
     parse_bam_region(region.c_str(), rinfo.regionChrom, regionBeginPos, regionEndPos);
-    getStrelkaAnalysisRegionInfo(rinfo.regionChrom, regionBeginPos, regionEndPos, maxIndelSize, rinfo);
+    getStrelkaAnalysisRegionInfo(rinfo.regionChrom, regionBeginPos, regionEndPos, supplementalRegionBorderSize, rinfo);
 }
 
 
@@ -101,6 +101,7 @@ getStrelkaAnalysisRegions(
     const starling_base_options& opt,
     const std::string& referenceAlignmentFilename,
     const bam_header_info& referenceHeaderInfo,
+    const unsigned supplementalRegionBorderSize,
     std::vector<AnalysisRegionInfo>& regionInfoList)
 {
     /// TODO add test that regions do not intersect
@@ -111,7 +112,7 @@ getStrelkaAnalysisRegions(
     {
         const std::string& region(opt.regions[regionIndex]);
         auto& regionInfo(regionInfoList[regionIndex]);
-        getStrelkaAnalysisRegionInfo(region, opt.max_indel_size, regionInfo);
+        getStrelkaAnalysisRegionInfo(region, supplementalRegionBorderSize, regionInfo);
 
         // check that target region chrom exists in bam headers:
         if (not referenceHeaderInfo.chrom_to_index.count(regionInfo.regionChrom))

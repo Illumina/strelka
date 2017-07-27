@@ -325,9 +325,14 @@ starling_run(
     const bam_header_info referenceHeaderInfo(referenceHeader);
 
     // parse and sanity check regions
+    unsigned supplementalRegionBorderSize(opt.max_indel_size);
+    if (opt.is_short_haplotyping_enabled)
+    {
+        supplementalRegionBorderSize += ActiveRegion::MaxRefSpanToBypassAssembly;
+    }
     const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilenames.front());
     std::vector<AnalysisRegionInfo> regionInfoList;
-    getStrelkaAnalysisRegions(opt, referenceAlignmentFilename, referenceHeaderInfo, regionInfoList);
+    getStrelkaAnalysisRegions(opt, referenceAlignmentFilename, referenceHeaderInfo, supplementalRegionBorderSize, regionInfoList);
 
     for (const auto& regionInfo : regionInfoList)
     {
@@ -345,7 +350,7 @@ starling_run(
             {
                 AnalysisRegionInfo subRegionInfo;
                 getStrelkaAnalysisRegionInfo(regionInfo.regionChrom, subRegionRange.begin_pos(), subRegionRange.end_pos(),
-                                             opt.max_indel_size, subRegionInfo);
+                                             supplementalRegionBorderSize, subRegionInfo);
                 callRegion(opt, subRegionInfo, fileStreams, sampleIndexToPloidyVcfSampleIndex, ploidyVcfSampleCount,
                            readCounts, ref, streamData, posProcessor);
             }

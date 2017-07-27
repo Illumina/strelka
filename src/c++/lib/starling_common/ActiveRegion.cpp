@@ -181,7 +181,7 @@ bool ActiveRegion::processHaplotypesWithAssembly()
     }
 
     HaplotypeToAlignIdSet haplotypeToAlignIdSet;
-    unsigned isNonRefHaplotypeFound(false);
+    bool isNonRefHaplotypeFound(false);
 
     std::string refStr;
     _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
@@ -190,9 +190,9 @@ bool ActiveRegion::processHaplotypesWithAssembly()
     std::cerr << _sampleIndex << "\t" << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tAssembly"<< std::endl;
 #endif
 
-    for (unsigned i(0); i<contigs.size(); ++i)
+    for (unsigned contigIndex(0); contigIndex<contigs.size(); ++contigIndex)
     {
-        const std::string& contig(contigs[i].seq);
+        const std::string& contig(contigs[contigIndex].seq);
         // ignore if the contig does not contain prefix anchor
         auto start(contig.find(prefixAnchor));
         if (start == std::string::npos) continue;
@@ -211,7 +211,7 @@ bool ActiveRegion::processHaplotypesWithAssembly()
 
         auto alignIds = std::vector<align_id_t>();
         bool containsUniqueRead(false);
-        for (unsigned readIndex : contigs[i].supportReads)
+        for (unsigned readIndex : contigs[contigIndex].supportReads)
         {
             const auto& assemblyReadInfo(assemblyReadOutput[readIndex]);
             if (assemblyReadInfo.isPseudo)
