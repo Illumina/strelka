@@ -50,34 +50,39 @@ struct ContextGenotypePriors
         const double theta)
     {
         static const double log0(-std::numeric_limits<double>::infinity());
+	/// Penalty for calling a genotype that includes allele 1 but excludes allele 0 (which has more support) 
+	static const double allele0SkipPenalty(theta);
+	// TODO: (1) add 1-allele0SkipPenalty factor when allele 0 is present and allele 1 is absent
+	//       (2) adjust homref probabilities such that everything sums to 1
+	//       (3) experiment with the value of allele0SkipPenalty
 
         _isInitialized = true;
 
         priorNAlleleDiploid[AG_GENOTYPE::HOMREF] = std::log(1. - (theta * 3. / 2.));
         priorNAlleleDiploid[AG_GENOTYPE::HOM0] = std::log(theta / 2.);
         priorNAlleleDiploid[AG_GENOTYPE::HET0] = std::log(theta);
-        priorNAlleleDiploid[AG_GENOTYPE::HOM1] = std::log(theta * theta / 2);
-        priorNAlleleDiploid[AG_GENOTYPE::HET1] = std::log(theta * theta);
+        priorNAlleleDiploid[AG_GENOTYPE::HOM1] = std::log(theta * allele0SkipPenalty / 2);
+        priorNAlleleDiploid[AG_GENOTYPE::HET1] = std::log(theta * allele0SkipPenalty);
         priorNAlleleDiploid[AG_GENOTYPE::HET01] = std::log(theta * theta);
 
         priorNAlleleDiploidPolymorphic[AG_GENOTYPE::HOMREF] = std::log(0.25);
         priorNAlleleDiploidPolymorphic[AG_GENOTYPE::HOM0] = std::log(0.25);
         priorNAlleleDiploidPolymorphic[AG_GENOTYPE::HET0] = std::log(0.5);
-        priorNAlleleDiploidPolymorphic[AG_GENOTYPE::HOM1] = std::log(0.25 * theta);
-        priorNAlleleDiploidPolymorphic[AG_GENOTYPE::HET1] = std::log(0.5 * theta);
+        priorNAlleleDiploidPolymorphic[AG_GENOTYPE::HOM1] = std::log(0.25 * allele0SkipPenalty);
+        priorNAlleleDiploidPolymorphic[AG_GENOTYPE::HET1] = std::log(0.5 * allele0SkipPenalty);
         priorNAlleleDiploidPolymorphic[AG_GENOTYPE::HET01] = std::log(0.5 * theta);
 
         priorNAlleleHaploid[AG_GENOTYPE::HOMREF] = std::log(1. - theta);
         priorNAlleleHaploid[AG_GENOTYPE::HOM0] = std::log(theta);
         priorNAlleleHaploid[AG_GENOTYPE::HET0] = log0;
-        priorNAlleleHaploid[AG_GENOTYPE::HOM1] = std::log(theta * theta);
+        priorNAlleleHaploid[AG_GENOTYPE::HOM1] = std::log(theta * allele0SkipPenalty);
         priorNAlleleHaploid[AG_GENOTYPE::HET1] = log0;
         priorNAlleleHaploid[AG_GENOTYPE::HET01] = log0;
 
         priorNAlleleHaploidPolymorphic[AG_GENOTYPE::HOMREF] = std::log(0.5);
         priorNAlleleHaploidPolymorphic[AG_GENOTYPE::HOM0] = std::log(0.5);
         priorNAlleleHaploidPolymorphic[AG_GENOTYPE::HET0] = log0;
-        priorNAlleleHaploidPolymorphic[AG_GENOTYPE::HOM1] = std::log(0.5 * theta);
+        priorNAlleleHaploidPolymorphic[AG_GENOTYPE::HOM1] = std::log(0.5 * allele0SkipPenalty);
         priorNAlleleHaploidPolymorphic[AG_GENOTYPE::HET1] = log0;
         priorNAlleleHaploidPolymorphic[AG_GENOTYPE::HET01] = log0;
     }
