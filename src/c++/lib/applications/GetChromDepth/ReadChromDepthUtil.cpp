@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -361,11 +361,14 @@ getChromSegments(
 
 double
 readChromDepthFromAlignment(
-    const std::string& statsAlignmentFile,
+    const std::string& referenceFile,
+    const std::string& alignmentFile,
     const std::string& chromName)
 {
-    bam_streamer read_stream(statsAlignmentFile.c_str());
-    const bam_header_info bamHeader(read_stream.get_header());
+    bam_streamer read_stream(alignmentFile.c_str(), referenceFile.c_str());
+
+    const bam_hdr_t& header(read_stream.get_header());
+    const bam_header_info bamHeader(header);
 
     const auto& chromToIndex(bamHeader.chrom_to_index);
     const auto chromIter(chromToIndex.find(chromName));
@@ -374,7 +377,7 @@ readChromDepthFromAlignment(
         using namespace illumina::common;
 
         std::ostringstream oss;
-        oss << "ERROR: Can't find chromosome name '" << chromName << "' in BAM/CRAM file: '" << statsAlignmentFile << "\n";
+        oss << "ERROR: Can't find chromosome name '" << chromName << "' in BAM/CRAM file: '" << alignmentFile << "\n";
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 
@@ -412,7 +415,7 @@ readChromDepthFromAlignment(
     }
 #endif
 
-    /// loop through segments until convergence criteria are met, or we run out of data:
+    // loop through segments until convergence criteria are met, or we run out of data:
     static const unsigned maxCycle(10);
     bool isFinished(false);
     for (unsigned cycleIndex(0); cycleIndex<maxCycle; cycleIndex++)

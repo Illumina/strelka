@@ -129,7 +129,7 @@ def _getDepthShared(self,taskPrefix, dependencies, bamList, outputPath, depthFun
     return nextStepWait
 
 
-def getDepthFromAlignments(self, bamList, outputPath, taskPrefix="",dependencies=None) :
+def getDepthFromAlignments(self, bamList, outputPath, taskPrefix="", dependencies=None) :
     """
     estimate chrom depth directly from BAM/CRAM file
     """
@@ -154,15 +154,11 @@ def getDepthFromAlignments(self, bamList, outputPath, taskPrefix="",dependencies
             group = []
             headSize = 0
 
-            isSkipEnabled = hasattr(params, 'chromIsSkipped')
-
             chromCount = len(params.chromSizes)
             assert(len(params.chromOrder) == chromCount)
             for chromIndex in range(chromCount) :
                 chromLabel = params.chromOrder[chromIndex]
-
-                if isSkipEnabled :
-                    if chromLabel in params.chromIsSkipped : continue
+                if chromLabel in params.chromIsSkipped : continue
 
                 chromSize = params.chromSizes[chromLabel]
                 if headSize+chromSize <= minSize :
@@ -180,7 +176,7 @@ def getDepthFromAlignments(self, bamList, outputPath, taskPrefix="",dependencies
             if len(chromGroup) > 1 :
                 cid += "_to_"+getRobustChromId(chromGroup[-1][0], chromGroup[-1][1])
             tmpFiles.append(os.path.join(tmpDir,outputFilename+"_"+cid))
-            cmd = [self.params.getChromDepthBin,"--align-file",bamFile,"--output",tmpFiles[-1]]
+            cmd = [self.params.getChromDepthBin,"--ref", self.params.referenceFasta, "--align-file", bamFile, "--output", tmpFiles[-1]]
             for (chromIndex,chromLabel) in chromGroup :
                 cmd.extend(["--chrom",chromLabel])
             scatterTasks.add(self.addTask(preJoin(taskPrefix,"estimateChromDepth_"+cid),cmd,dependencies=dirTask))

@@ -109,7 +109,7 @@ getSequenceErrorCountsRun(
     ////////////////////////////////////////
     // setup streamData:
     //
-    HtsMergeStreamer streamData;
+    HtsMergeStreamer streamData(opt.referenceFilename);
 
     // additional data structures required in the region loop below, which are filled in as a side effect of
     // streamData initialization:

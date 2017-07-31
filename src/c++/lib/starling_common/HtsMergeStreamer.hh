@@ -79,14 +79,19 @@ template <> inline index_t getStreamType<bed_streamer>()
 }
 
 template <typename T>
-T* htsTypeFactory(const char* name, const char* region, const bool /*unused*/)
+T* htsTypeFactory(const char* htsFilename, const char* /*referenceFilename*/, const char* region, const bool /*isRequireNormalized*/)
 {
-    return new T(name, region);
+    return new T(htsFilename, region);
 }
 template <>
-inline vcf_streamer* htsTypeFactory(const char* name, const char* region, const bool isRequireNormalized)
+inline bam_streamer* htsTypeFactory(const char* htsFilename, const char* referenceFilename, const char* region, const bool /*isRequireNormalized*/)
 {
-    return new vcf_streamer(name, region, isRequireNormalized);
+    return new bam_streamer(htsFilename, referenceFilename, region);
+}
+template <>
+inline vcf_streamer* htsTypeFactory(const char* htsFilename, const char* /*referenceFilename*/, const char* region, const bool isRequireNormalized)
+{
+    return new vcf_streamer(htsFilename, region, isRequireNormalized);
 }
 }
 
@@ -96,7 +101,7 @@ struct HtsMergeStreamer
 {
     explicit
     HtsMergeStreamer(
-        const char* region = nullptr);
+        const std::string& referenceFilename);
 
     /// register* methods:
     ///
@@ -111,15 +116,15 @@ struct HtsMergeStreamer
     ///
     const bam_streamer&
     registerBam(
-        const char* bamFilename,
+        const std::string& bamFilename,
         const unsigned index = 0)
     {
-        return registerHtsType(bamFilename,index,_data._bam);
+        return registerHtsType(bamFilename, index,_data._bam);
     }
 
     const bed_streamer&
     registerBed(
-        const char* bedFilename,
+        const std::string& bedFilename,
         const unsigned index = 0)
     {
         return registerHtsType(bedFilename,index,_data._bed);
@@ -127,7 +132,7 @@ struct HtsMergeStreamer
 
     const vcf_streamer&
     registerVcf(
-        const char* vcfFilename,
+        const std::string& vcfFilename,
         const unsigned index = 0,
         const bool isRequireNormalized = true)
     {
@@ -136,9 +141,9 @@ struct HtsMergeStreamer
 
     /// resets the region over which all files scanned
     ///
-    /// \param region[in] samtools-formated genomic region (nullptr not allowed)
+    /// \param region[in] samtools-formatted genomic region string
     void
-    resetRegion(const char* region);
+    resetRegion(const std::string& region);
 
 
     /// Advances to the next HTS record in the merged stream
@@ -280,7 +285,7 @@ private:
     template <typename T>
     const T&
     registerHtsType(
-        const char* htsFilename,
+        const std::string& htsFilename,
         const unsigned index,
         std::vector<std::unique_ptr<T>>& htsStreamerVec,
         const bool isRequireNormalized = false)
@@ -289,7 +294,7 @@ private:
         assert(! _isStreamBegin);
         const unsigned htsTypeIndex(htsStreamerVec.size());
         const unsigned orderIndex(_order.size());
-        htsStreamerVec.emplace_back(HTS_TYPE::htsTypeFactory<T>(htsFilename, getRegionPtr(), isRequireNormalized));
+        htsStreamerVec.emplace_back(HTS_TYPE::htsTypeFactory<T>(htsFilename.c_str(), _referenceFilename.c_str(), getRegionPtr(), isRequireNormalized));
         _order.emplace_back(htsType, index, htsTypeIndex);
         queueItem(orderIndex);
         return *(htsStreamerVec.back());
@@ -335,6 +340,7 @@ private:
 
 
     /////// data:
+    std::string _referenceFilename;
     std::string _region;
     HtsData _data;
     std::vector<OrderData> _order;
@@ -344,4 +350,3 @@ private:
     typedef std::priority_queue<HtsRecordSortData> queue_t;
     queue_t _streamQueue;
 };
-

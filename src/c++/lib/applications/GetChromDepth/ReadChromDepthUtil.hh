@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -26,10 +26,11 @@
 #include <string>
 
 
-/// fast chrom depth estimator for BAM/CRAM files
+/// Fast chrom depth estimator for BAM/CRAM files
 ///
 /// return average chromosome depth
 double
 readChromDepthFromAlignment(
-    const std::string& statsAlignmentFile,
+    const std::string& referenceFile,
+    const std::string& alignmentFile,
     const std::string& chromName);

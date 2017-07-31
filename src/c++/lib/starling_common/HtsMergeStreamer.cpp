@@ -31,8 +31,8 @@
 
 HtsMergeStreamer::
 HtsMergeStreamer(
-    const char* region)
-    : _region(region == nullptr ? "" : region)
+    const std::string& referenceFilename)
+    : _referenceFilename(referenceFilename)
 {}
 
 
@@ -93,10 +93,11 @@ queueItem(
 
 void
 HtsMergeStreamer::
-resetRegion(const char* region)
+resetRegion(const std::string& region)
 {
-    assert(nullptr != region);
+    assert(! region.empty());
 
+    _region = region;
     _isStreamBegin = false;
     _isStreamEnd = false;
     _streamQueue = queue_t(); // why no .clear() for queues?
@@ -107,15 +108,15 @@ resetRegion(const char* region)
         const auto& orderData(_order[streamIndex]);
         if (orderData.htsType == HTS_TYPE::BAM)
         {
-            getHtsStreamer(streamIndex, _data._bam).resetRegion(region);
+            getHtsStreamer(streamIndex, _data._bam).resetRegion(region.c_str());
         }
         else if (orderData.htsType == HTS_TYPE::BED)
         {
-            getHtsStreamer(streamIndex, _data._bed).resetRegion(region);
+            getHtsStreamer(streamIndex, _data._bed).resetRegion(region.c_str());
         }
         else if (orderData.htsType == HTS_TYPE::VCF)
         {
-            getHtsStreamer(streamIndex, _data._vcf).resetRegion(region);
+            getHtsStreamer(streamIndex, _data._vcf).resetRegion(region.c_str());
         }
         else
         {
