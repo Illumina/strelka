@@ -43,7 +43,14 @@ struct SequenceErrorCountsPosProcessor : public starling_pos_processor_base
         const SequenceErrorCountsStreams& fileStreams,
         RunStatsManager& statsManager);
 
+    /// Notify this object that the region is being reset
     void reset() override;
+
+    /// Notify this object that the process is completing (without error)
+    ///
+    /// This is the point where all one-time statistical summaries which
+    /// may span multiple regions are completed.
+    void completeProcessing();
 
     void resetRegion(
         const std::string& chromName,

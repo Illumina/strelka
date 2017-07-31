@@ -93,6 +93,20 @@ void
 SequenceErrorCountsPosProcessor::
 reset()
 {
+    base_t::reset();
+
+    _excludedRegions.clear();
+    _knownVariants.clear();
+}
+
+
+
+void
+SequenceErrorCountsPosProcessor::
+completeProcessing()
+{
+    reset();
+
     _counts.save(_opt.countsFilename.c_str());
 
     if (! _opt.nonEmptySiteCountFilename.empty())
@@ -101,10 +115,6 @@ reset()
         outs.getStream() << "nonEmptySiteCount\t" << _nonEmptySiteCount << "\n";
     }
 
-    base_t::reset();
-
-    _excludedRegions.clear();
-    _knownVariants.clear();
     _nonEmptySiteCount = 0;
 }
 
@@ -382,6 +392,8 @@ SequenceErrorCountsPosProcessor::
 process_pos_error_counts(
     const pos_t pos)
 {
+    if (! is_pos_reportable(pos)) return;
+
     const unsigned sampleCount(getSampleCount());
 
     // the error counts workflow can only be called for a single sample:

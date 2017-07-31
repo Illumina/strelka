@@ -115,7 +115,6 @@ getSequenceErrorCountsRun(
     // streamData initialization:
     std::vector<std::reference_wrapper<const bam_hdr_t>> bamHeaders;
     {
-
         if (opt.alignFileOpt.alignmentFilenames.size() > 1)
         {
             using namespace illumina::common;
@@ -155,14 +154,14 @@ getSequenceErrorCountsRun(
 
     // parse and sanity check regions
     const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilenames.front());
-    std::vector<AnalysisRegionInfo> regionInfo;
-    getStrelkaAnalysisRegions(opt, referenceAlignmentFilename, referenceHeaderInfo, regionInfo);
+    std::vector<AnalysisRegionInfo> regionInfoList;
+    getStrelkaAnalysisRegions(opt, referenceAlignmentFilename, referenceHeaderInfo, regionInfoList);
 
-    for (const auto& rinfo : regionInfo)
+    for (const auto& regionInfo : regionInfoList)
     {
-        posProcessor.resetRegion(rinfo.regionChrom, rinfo.regionRange);
-        streamData.resetRegion(rinfo.streamerRegion.c_str());
-        setRefSegment(opt, rinfo.regionChrom, rinfo.refRegionRange, ref);
+        posProcessor.resetRegion(regionInfo.regionChrom, regionInfo.regionRange);
+        streamData.resetRegion(regionInfo.streamerRegion.c_str());
+        setRefSegment(opt, regionInfo.regionChrom, regionInfo.refRegionRange, ref);
 
         while (streamData.next())
         {
@@ -170,7 +169,7 @@ getSequenceErrorCountsRun(
             const HTS_TYPE::index_t currentHtsType(streamData.getCurrentType());
             const unsigned currentIndex(streamData.getCurrentIndex());
 
-            if (currentPos >= rinfo.streamerRegionRange.end_pos()) break;
+            if (currentPos >= regionInfo.streamerRegionRange.end_pos()) break;
 
             // wind posProcessor forward to position behind buffer head:
             posProcessor.set_head_pos(currentPos - 1);
@@ -259,5 +258,5 @@ getSequenceErrorCountsRun(
             }
         }
     }
-    posProcessor.reset();
+    posProcessor.completeProcessing();
 }
