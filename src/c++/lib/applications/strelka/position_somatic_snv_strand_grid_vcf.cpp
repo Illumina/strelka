@@ -187,7 +187,10 @@ get_scoring_features(
         }
     }
 
-    smod.features.set(SOMATIC_SNV_SCORING_FEATURES::SomaticSNVQualityGivenGermlineGenotype,rs.from_ntype_qphred);
+    {
+        const int from_ref_qphred((rs.ntype == NTYPE::REF) ? rs.from_ntype_qphred : 0 );
+        smod.features.set(SOMATIC_SNV_SCORING_FEATURES::SomaticSNVQualityGivenHomRefGermlineGenotype, from_ref_qphred);
+    }
 
     static const bool isNormalSample(true);
     get_single_sample_scoring_features(opt,dopt,n1_cpi,n2_cpi, normChromDepth, isNormalSample,smod);

@@ -775,7 +775,7 @@ Features used in each model are listed here and definitions are provided further
 
     \item Somatic SNV features:
     \begin{itemize}
-        \item \texttt{SomaticSNVQualityGivenGermlineGenotype}
+        \item \texttt{SomaticSNVQualityGivenHomRefGermlineGenotype}
         \item \texttt{NormalSampleRelativeTotalLocusDepth}
         \item \texttt{TumorSampleAltAlleleFraction}
         \item \texttt{RMSMappingQuality}
@@ -788,7 +788,7 @@ Features used in each model are listed here and definitions are provided further
     \end{itemize}
     \item Somatic Indel features:
     \begin{itemize}
-        \item \texttt{SomaticIndelQualityGivenGermlineGenotype}
+        \item \texttt{SomaticIndelQualityGivenHomRefGermlineGenotype}
         \item \texttt{TumorSampleReadPosRankSum}
         \item \texttt{TumorSampleLogSymmetricStrandOddsRatio}
         \item \texttt{RepeatUnitLength}
@@ -832,13 +832,13 @@ The LowDepth filter mentioned above is applied to all germline and somatic calls
     \end{itemize}
     \item SNV-specific filter conditions:
     \begin{itemize}
-        \item \texttt{SomaticSNVQualityGivenGermlineGenotype} ~ SNV is filtered if this value is less than 15 or if the most likely normal sample genotype at the site is not homozygous reference
+        \item \texttt{SomaticSNVQualityGivenHomRefGermlineGenotype} ~ SNV is filtered if this value is less than 15
         \item \texttt{SiteFilteredBasecallFrac} ~ SNV is filtered if this value is greater than or equal to 0.4
         \item \texttt{SpanningDeletionFraction} ~ SNV is filtered if this value is greater than 0.75
     \end{itemize}
     \item Indel-specific filter conditions:
     \begin{itemize}
-        \item \texttt{SomaticIndelQualityGivenGermlineGenotype} ~ Indel is filtered if this value is less than 40 or if the most likely normal sample genotype for the somatic allele is not homozygous reference
+        \item \texttt{SomaticIndelQualityGivenHomRefGermlineGenotype} ~ Indel is filtered if this value is less than 40
         \item \texttt{IndelWindowFilteredBasecallFrac} ~ Indel is filtered if this value is greater than or equal to 0.3
     \end{itemize}
 \end{itemize}
@@ -915,7 +915,7 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
 
 \begin{itemize}
 
-    \item \texttt{SomaticSNVQualityGivenGermlineGenotype} ~ Posterior probability of a somatic SNV conditioned on given germline genotype. This feature matches INFO/QSS\_NT in the VCF output.
+    \item \texttt{SomaticSNVQualityGivenHomRefGermlineGenotype} ~ Posterior probability of a somatic SNV conditioned on a homozygous reference germline genotype. When INFO/NT is "ref", this feature matches INFO/QSS\_NT in the VCF output.
 
     \item \texttt{NormalSampleRelativeTotalLocusDepth} ~ This feature matches the germline \texttt{RelativeTotalLocusDepth} feature, except that it reflects the depth of only the matched normal sample.
 
@@ -936,7 +936,7 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
 
     \item \texttt{TumorSampleFilteredDepthFraction} ~ The fraction of reads that were filtered out of the tumor sample before calling the variant locus.
 
-    \item \texttt{SomaticIndelQualityGivenGermlineGenotype} ~ Posterior probability of a somatic indel conditioned on given germline genotype. This feature matches INFO/QSI\_NT in the VCF output.
+    \item \texttt{SomaticIndelQualityGivenHomRefGermlineGenotype} ~ Posterior probability of a somatic indel conditioned on a homozygous reference germline genotype. When INFO/NT is "ref", this feature matches INFO/QSI\_NT in the VCF output.
 
     \item \texttt{TumorSampleLogSymmetricStrandOddsRatio} ~ Log of the symmetric strand odds ratio of allele counts $log{\left( \frac{r_{fwd} a_{rev}} {r_{rev} a_{fwd}} + \frac{r_{rev} a_{fwd}} {r_{fwd} a_{rev}}\right)}$, given reference $(r_{fwd},r_{rev})$ and non-reference $(a_{fwd},a_{rev})$ confident counts of the tumor sample's tier1 observations (see: ``\nameref{sec:somatic_tiers}'').
 
