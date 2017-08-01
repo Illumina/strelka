@@ -74,7 +74,7 @@ getAlleleSequencingErrorQscore(
     // When alleleObservationCount is an alternate allele (and the only alternate allele), alleleErrorProb
     // is related to the probability that the locus is non-variant
     double alleleErrorProb = getAlleleSequencingErrorProb(
-        alleleObservationCount, totalObservationCount, expectedObservationQscore);
+                                 alleleObservationCount, totalObservationCount, expectedObservationQscore);
 
     if (alleleErrorProb <= 0) return maxQScore;
     return std::min(maxQScore, error_prob_to_qphred(alleleErrorProb));

@@ -868,11 +868,11 @@ updateContinuousSnvLocusWithSampleInfo(
         }
 
         sampleInfo.gqx = sampleInfo.genotypeQualityPolymorphic =
-            starling_continuous_variant_caller::getAlleleSequencingErrorQscore(
-                continuousSiteSampleInfo.continuousAlleleDepth,
-                continuousSiteSampleInfo.continuousTotalDepth,
-                opt.continuousFrequencyCallerExpectedObservationQuality,
-                opt.continuousFrequencyCallerMaxQscore);
+                             starling_continuous_variant_caller::getAlleleSequencingErrorQscore(
+                                 continuousSiteSampleInfo.continuousAlleleDepth,
+                                 continuousSiteSampleInfo.continuousTotalDepth,
+                                 opt.continuousFrequencyCallerExpectedObservationQuality,
+                                 opt.continuousFrequencyCallerMaxQscore);
     }
 }
 
@@ -1908,11 +1908,11 @@ updateContinuousIndelLocusWithSampleInfo(
     const GermlineIndelSampleInfo& indelSampleInfo(locus.getIndelSample(sampleIndex));
 
     sampleInfo.gqx = sampleInfo.genotypeQualityPolymorphic =
-        starling_continuous_variant_caller::getAlleleSequencingErrorQscore(
-            indelSampleInfo.legacyReportInfo.n_confident_indel_reads,
-            indelSampleInfo.legacyReportInfo.total_confident_reads(),
-            opt.continuousFrequencyCallerExpectedObservationQuality,
-            opt.continuousFrequencyCallerMaxQscore);
+                         starling_continuous_variant_caller::getAlleleSequencingErrorQscore(
+                             indelSampleInfo.legacyReportInfo.n_confident_indel_reads,
+                             indelSampleInfo.legacyReportInfo.total_confident_reads(),
+                             opt.continuousFrequencyCallerExpectedObservationQuality,
+                             opt.continuousFrequencyCallerMaxQscore);
 
     // use diploid gt codes as a convenient way to summarize the continuous variant calls:
     static const VcfGenotype hetGtIndex(0,1);

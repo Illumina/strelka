@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE( qscore_calculation )
     for (const auto& item :  SampleValues)
     {
         const int FinalQValue = starling_continuous_variant_caller::getAlleleSequencingErrorQscore(item[1], item[0],
-                                                                                                   20, 100);
+                                20, 100);
         BOOST_REQUIRE_EQUAL(FinalQValue, item[2]);
     }
 }
