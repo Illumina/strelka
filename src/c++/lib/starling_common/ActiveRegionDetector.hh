@@ -64,11 +64,13 @@ public:
     ActiveRegionDetector(
         const reference_contig_segment& ref,
         IndelBuffer& indelBuffer,
+        CandidateSnvBuffer& candidateSnvBuffer,
         unsigned maxIndelSize,
         unsigned sampleIndex) :
         _ref(ref),
         _readBuffer(ref, indelBuffer),
         _indelBuffer(indelBuffer),
+        _candidateSnvBuffer(candidateSnvBuffer),
         _maxIndelSize(maxIndelSize),
         _sampleIndex(sampleIndex),
         _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
@@ -86,11 +88,6 @@ public:
     ActiveRegionReadBuffer& getReadBuffer()
     {
         return _readBuffer;
-    }
-
-    const CandidateSnvBuffer& getCandidateSnvBuffer() const
-    {
-        return _candidateSnvBuffer;
     }
 
     ActiveRegionId getActiveRegionId(const pos_t pos) const
@@ -115,7 +112,7 @@ private:
     ActiveRegionReadBuffer _readBuffer;
 
     IndelBuffer& _indelBuffer;
-    CandidateSnvBuffer _candidateSnvBuffer;
+    CandidateSnvBuffer& _candidateSnvBuffer;
 
     const unsigned _maxIndelSize;
     const unsigned _sampleIndex;

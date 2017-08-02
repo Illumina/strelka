@@ -25,13 +25,14 @@
 #include "CandidateSnvBuffer.hh"
 
 void CandidateSnvBuffer::addCandidateSnv(
+    const unsigned sampleIndex,
     const pos_t pos,
     const char baseChar,
     const HaplotypeId haplotypeId,
     const float altHaplotypeCountRatio)
 {
     assert (haplotypeId == 1 || haplotypeId == 2);
-    HaplotypeIdAndCountRatio& haplotypeIdForBase = _candidateSnvBuffer.getRef(pos);
+    HaplotypeIdAndCountRatio& haplotypeIdForBase = _candidateSnvBuffer[sampleIndex].getRef(pos);
     switch (baseChar)
     {
     case 'A':
@@ -52,21 +53,21 @@ void CandidateSnvBuffer::addCandidateSnv(
     haplotypeIdForBase.altHaplotypeCountRatio += altHaplotypeCountRatio;
 }
 
-bool CandidateSnvBuffer::isCandidateSnv(const pos_t pos, const char baseChar) const
+bool CandidateSnvBuffer::isCandidateSnv(const unsigned sampleIndex, const pos_t pos, const char baseChar) const
 {
     const auto baseIndex(static_cast<BASE_ID::index_t>(base_to_id(baseChar)));
     if (baseIndex == BASE_ID::ANY) return false;
-    return (getHaplotypeId(pos, baseIndex) != 0);
+    return (getHaplotypeId(sampleIndex, pos, baseIndex) != 0);
 }
 
-HaplotypeId CandidateSnvBuffer::getHaplotypeId(const pos_t pos, const BASE_ID::index_t baseIndex) const
+HaplotypeId CandidateSnvBuffer::getHaplotypeId(const unsigned sampleIndex, const pos_t pos, const BASE_ID::index_t baseIndex) const
 {
-    if (not _candidateSnvBuffer.isKeyPresent(pos))
+    if (not _candidateSnvBuffer[sampleIndex].isKeyPresent(pos))
     {
         return static_cast<HaplotypeId>(0); // haplotype ID 0 means there's no candidate SNV at the position
     }
 
-    const auto haplotypeIdForBase(_candidateSnvBuffer.getConstRef(pos));
+    const auto haplotypeIdForBase(_candidateSnvBuffer[sampleIndex].getConstRef(pos));
     switch (baseIndex)
     {
     case BASE_ID::A:
@@ -83,13 +84,14 @@ HaplotypeId CandidateSnvBuffer::getHaplotypeId(const pos_t pos, const BASE_ID::i
     return static_cast<HaplotypeId>(0);
 }
 
-float CandidateSnvBuffer::getAltHaplotypeCountRatio(const pos_t pos) const
+float CandidateSnvBuffer::getAltHaplotypeCountRatio(const unsigned sampleIndex, const pos_t pos) const
 {
-    if (not _candidateSnvBuffer.isKeyPresent(pos))
+    const auto& sampleCandidateSnvBuffer(_candidateSnvBuffer[sampleIndex]);
+    if (not sampleCandidateSnvBuffer.isKeyPresent(pos))
     {
         return 0.0f;
     }
-    return _candidateSnvBuffer.getConstRef(pos).altHaplotypeCountRatio;
+    return sampleCandidateSnvBuffer.getConstRef(pos).altHaplotypeCountRatio;
 }
 
 bool CandidateSnvBuffer::empty() const
@@ -97,7 +99,7 @@ bool CandidateSnvBuffer::empty() const
     return _candidateSnvBuffer.empty();
 }
 
-void CandidateSnvBuffer::clearUpToPos(const pos_t pos)
+void CandidateSnvBuffer::clearUpToPos(const unsigned sampleIndex, const pos_t pos)
 {
-    _candidateSnvBuffer.eraseTo(pos);
+    _candidateSnvBuffer[sampleIndex].eraseTo(pos);
 }

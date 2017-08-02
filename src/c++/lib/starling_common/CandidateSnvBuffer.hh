@@ -61,36 +61,62 @@ typedef RangeMap<pos_t,HaplotypeIdAndCountRatio, ClearHaplotypeIdForBase> Sample
 class CandidateSnvBuffer
 {
 public:
-    explicit CandidateSnvBuffer()
+    explicit CandidateSnvBuffer(const unsigned sampleCount):
+            _sampleCount(sampleCount),
+            _candidateSnvBuffer(sampleCount)
     {}
 
     void addCandidateSnv(
+        const unsigned sampleIndex,
         const pos_t pos,
         const char baseChar,
         const HaplotypeId haplotypeId,
         const float altHaplotypeCountRatio);
 
-    /// Checks if baseChar is a candidate SNV allele at this position
+    /// Checks if baseChar is a candidate SNV allele at this position in the specified sample
+    /// \param sampleIndex sample index
     /// \param pos reference position
     /// \param baseChar read base
     /// \return true if the base matches a candidate SNV allele at this position
-    bool isCandidateSnv(const pos_t pos, const char baseChar) const;
+    bool isCandidateSnv(const unsigned sampleIndex, const pos_t pos, const char baseChar) const;
+
+    /// Checks if baseChar is a candidate SNV allele at this position in any sample
+    /// \param pos reference position
+    /// \param baseChar read base
+    /// \return true if the base matches a candidate SNV allele at this position in any sample
+    bool isCandidateSnvAnySample(const pos_t pos, const char baseChar) const
+    {
+        for (unsigned sampleIndex=0u; sampleIndex<_sampleCount; ++sampleIndex)
+            if (isCandidateSnv(sampleIndex, pos, baseChar))
+                return true;
+
+        return false;
+    }
 
     /// Gets the haplotype ID for the input single base allele
+    /// \param sampleIndex sample index
     /// \param pos reference position
     /// \param baseIndex base index of the allele
     /// \return 0 if it's not appearing in non-ref haplotype.
     /// 1 or 2 if it appears in one non-ref haplotype
     /// 3 if it appears in both non-ref haplotype (i.e. hetalt SNV)
-    HaplotypeId getHaplotypeId(const pos_t pos, const BASE_ID::index_t baseIndex) const;
+    HaplotypeId getHaplotypeId(const unsigned sampleIndex, const pos_t pos, const BASE_ID::index_t baseIndex) const;
 
-    float getAltHaplotypeCountRatio(const pos_t pos) const;
+    float getAltHaplotypeCountRatio(const unsigned sampleIndex, const pos_t pos) const;
 
     bool empty() const;
 
     /// Clear all candidate SNVs up to the specified position
+    /// \param sampleIndex sample index
     /// \param pos position
-    void clearUpToPos(const pos_t pos);
+    void clearUpToPos(const unsigned sampleIndex, const pos_t pos);
+
+    void clearSnvs()
+    {
+        for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
+            _candidateSnvBuffer[sampleIndex].clear();
+    }
 private:
-    SampleCandidateSnvMap _candidateSnvBuffer;
+    unsigned _sampleCount;
+    std::vector<SampleCandidateSnvMap> _candidateSnvBuffer;
 };
