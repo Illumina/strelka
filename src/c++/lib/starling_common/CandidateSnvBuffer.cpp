@@ -62,12 +62,13 @@ bool CandidateSnvBuffer::isCandidateSnv(const unsigned sampleIndex, const pos_t 
 
 HaplotypeId CandidateSnvBuffer::getHaplotypeId(const unsigned sampleIndex, const pos_t pos, const BASE_ID::index_t baseIndex) const
 {
-    if (not _candidateSnvBuffer[sampleIndex].isKeyPresent(pos))
+    const auto& sampleCandidateSnvBuffer(_candidateSnvBuffer[sampleIndex]);
+    if (not sampleCandidateSnvBuffer.isKeyPresent(pos))
     {
         return static_cast<HaplotypeId>(0); // haplotype ID 0 means there's no candidate SNV at the position
     }
 
-    const auto haplotypeIdForBase(_candidateSnvBuffer[sampleIndex].getConstRef(pos));
+    const auto haplotypeIdForBase(sampleCandidateSnvBuffer.getConstRef(pos));
     switch (baseIndex)
     {
     case BASE_ID::A:

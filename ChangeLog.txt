@@ -1,4 +1,4 @@
-- STREL-650 Change MMDF relax method
+- STREL-650 Fix allele filtration to synchronize across multiple samples
 - STREL-651 Fix sequence error counting bounds
 - STREL-633 Update htslib/samtools to v1.5
 v2.8.0
