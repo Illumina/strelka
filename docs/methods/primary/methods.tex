@@ -351,8 +351,9 @@ For SNVs, all three possible non-reference alleles are considered at any potenti
 % dgt.strand_bias=std::max(lhood_fwd[tgt],lhood_rev[tgt])-lhood[tgt];
 
 \subsubsection{Basecall quality adjustment for dependent errors}
+\label{sec:DepSiteErrorAdjustment}
 
-A data transformation specific to germline SNV is the heuristic adjustment of the joint error probability calculated from multiple observations of the same basecall on each strand of the genome. The goal of this adjustment is to account for error dependencies between observations at the same site and strand. The method accomplishes this by treating the highest quality base call of each allele from each strand as independent observations (and thus leaving their associated base call quality scores unmodified) but all other basecall observations of each allele and strand have their qualities adjusted to increase the joint error probability of that allele above the error expected from independent basecall observations.
+A data transformation specific to germline SNV calling is the heuristic adjustment of the joint error probability calculated from multiple observations of the same basecall on each strand of the genome. The goal of this adjustment is to account for error dependencies between observations at the same site and strand. The method accomplishes this by treating the highest quality base call of each allele from each strand as independent observations (and thus leaving their associated base call quality scores unmodified) but all other basecall observations of each allele and strand have their qualities adjusted to increase the joint error probability of that allele above the error expected from independent basecall observations.
 
 This basecall quality adjustment is motivated by analysis of predicted vs. observed multiple-basecall consensus qualities, which suggest that observed quality is lower than that of the consensus quality predicted under an assumption that each basecall represents an independent observation. This dependence is much greater for same-strand basecalls compared to opposite-strand basecalls. Within the set of same-strand basecalls this dependence is greater for read pairs which both have one or more neighboring mismatches to the reference. These trends are represented in the model using the heuristic described below.
 
@@ -361,7 +362,7 @@ When evaluating each site genotype, for each allele which does not occur in the 
 First solve for the weighted neighbor mismatch fraction, $z$
 \begin{equation*}
 z = \frac{\sum_{i \in N}{c(i)w(i)}}{\sum_{i \in N}{w(i)}},w(i) = ln (e_i 4/3)
-\end{equation*} 
+\end{equation*}
 
 where the neighbor mismatch indicator function c(i) is
 \begin{equation*}
@@ -376,7 +377,7 @@ Next, use $z$ to solve for $e^{\prime}_i$
 
 \begin{equation*}
 \begin{array}{lcl}
-    x & = & e^{\max(v_i \sum_{0}^{i-1}{((1-z)d_0+zd_1)})}_i \\
+    x & = & e^{\max(v, \sum_{0}^{i-1}{((1-z)d_0+zd_1)})}_i \\
     f & = & (1-x)/1-e_i \\
     e^{\prime}_i & = & fx + (1-f)(3/4) \\
 \end{array}
@@ -405,17 +406,17 @@ Note the limit $v$ is introduced to improve the behavior of the heuristic on hig
 \label{sec:ReadBackedPhasing}
 As previously noted, Strelka defines an active region around dense variants and infers 2 haplotypes for the region. These haplotypes are used to phase SNVs and indels within the same active region. The phasing is conducted after scoring and genotyping. For each heterozygous variant belonging to an active region, Strelka checks which haplotype the variant is lying on. If the variant is lying on either of the two haplotypes, it is marked phased and the haplotype ID (0 or 1) is recorded to appropriately write the genotype allele order (e.g. 0|1 or 1|0).
 
-\subsubsection{Basecall quality adjustment for mapping error}
+\subsubsection{Mapping accuracy adjustment in the SNV model}
 
 % NOTE this needs to move to a somatic/germline shared section
 
-For both germline and somatic SNV models, basecall qualities are reduced to reflect the joint confidence in basecall and mapping accuracy. The adjusted basecall quality used by the SNV calling models is
+For both germline and somatic SNV models, basecall error probabilities are adjusted to reflect both sequencing and read mapping error. The adjusted basecall error probability is
 
 \begin{equation*}
-e_{b^{\prime|}} = (1-e_m)e_b + e_m 3/4
+e_{b^{\prime}} = (1-e_m)e_b + e_m 3/4
 \end{equation*}
 
-where $e_b$ is the basecalling error estimated by the sequencer and $e_m$ is the mapping error. Note that this quality score adjustment is applied prior to any of the dependent error basecall adjustment heuristics used by the germline SNV caller.
+where $e_b$ is the basecall error probability estimated by the sequencer and $e_m$ is the read mapping error probability. Note that this adjustment is applied prior to any of the dependent error basecall adjustment heuristics used by the germline SNV caller (see \ref{sec:DepSiteErrorAdjustment}).
 
 \subsection{Somatic Model}
 \label{sec:somatic}
