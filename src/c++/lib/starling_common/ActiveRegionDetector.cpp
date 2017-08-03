@@ -102,21 +102,14 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
     pos_t posToProcess(pos-1);
     if (posToProcess < 0) return;
 
+
     bool isCurrentPosCandidateVariant = _readBuffer.isCandidateVariant(posToProcess);
     const bool isDepthZero = _readBuffer.isDepthZero(posToProcess);
-    if (isDepthZero)
+    // depth 0 position can be a candidate variant pos
+    // but cannot open a new active region
+    if (isDepthZero and (_numVariants == 0u))
     {
-        // A position with depth 0 can become a candidate variant position
-        if (_numVariants == 0)
-        {
-            // but depth 0 position cannot open a new active region
-            isCurrentPosCandidateVariant = false;
-        }
-        else if ((_prevVariantPos >= _readBuffer.getBeginPos()) && _readBuffer.isDepthZero(_prevVariantPos))
-        {
-            // if depth of previous variant position is zero, it cannot become candidate
-            isCurrentPosCandidateVariant = false;
-        }
+        isCurrentPosCandidateVariant = false;
     }
 
     const bool isAnchor = _readBuffer.isAnchor(posToProcess) and (not isCurrentPosCandidateVariant);
