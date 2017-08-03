@@ -102,7 +102,23 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
     pos_t posToProcess(pos-1);
     if (posToProcess < 0) return;
 
-    const bool isCurrentPosCandidateVariant = _readBuffer.isCandidateVariant(posToProcess);
+    bool isCurrentPosCandidateVariant = _readBuffer.isCandidateVariant(posToProcess);
+    const bool isDepthZero = _readBuffer.isDepthZero(posToProcess);
+    if (isDepthZero)
+    {
+        // A position with depth 0 can become a candidate variant position
+        if (_numVariants == 0)
+        {
+            // but depth 0 position cannot open a new active region
+            isCurrentPosCandidateVariant = false;
+        }
+        else if ((_prevVariantPos >= _readBuffer.getBeginPos()) && _readBuffer.isDepthZero(_prevVariantPos))
+        {
+            // if depth of previous variant position is zero, it cannot become candidate
+            isCurrentPosCandidateVariant = false;
+        }
+    }
+
     const bool isAnchor = _readBuffer.isAnchor(posToProcess) and (not isCurrentPosCandidateVariant);
 
     if (!isCurrentPosCandidateVariant and !isAnchor) return;
@@ -155,9 +171,23 @@ void ActiveRegionDetector::clear()
 
     if (_numVariants >= MinNumVariantsPerRegion)
     {
-        if (_activeRegionStartPos < 0)
+        bool isStartPosUndetermined = (_activeRegionStartPos < 0);
+        bool isEndPosUndetermined = (_anchorPosFollowingPrevVariant < 0);
+
+        if (isStartPosUndetermined && isEndPosUndetermined)
+        {
+            // There's no anchor both upstream and downstream of this active region.
+            if (_readBuffer.getBeginPos() >= _readBuffer.getEndPos())
+            {
+                // This happens very rarely when the AR covers the entire region.
+                // Simply ignore this.
+                return;
+            }
+        }
+
+        if (isStartPosUndetermined)
             _activeRegionStartPos = _readBuffer.getBeginPos();
-        if (_anchorPosFollowingPrevVariant < 0)
+        if (isEndPosUndetermined)
             _anchorPosFollowingPrevVariant = (_readBuffer.getEndPos()-1);
 
         closeExistingActiveRegion();
