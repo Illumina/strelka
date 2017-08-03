@@ -481,7 +481,7 @@ updateSnvLocusWithSampleInfo(
         if (allele0Index > 0)
         {
             maxGt.setAllele0HaplotypeId(
-                candidateSnvBuffer.getHaplotypeId(
+                candidateSnvBuffer.getHaplotypeId(sampleIndex,
                     locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex)
             );
         }
@@ -492,12 +492,12 @@ updateSnvLocusWithSampleInfo(
         if (allele1Index > 0)
         {
             maxGt.setAllele1HaplotypeId(
-                candidateSnvBuffer.getHaplotypeId(
+                candidateSnvBuffer.getHaplotypeId(sampleIndex,
                     locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
             );
         }
     }
-    maxGt.addAltAlleleHaplotypeCountRatio(candidateSnvBuffer.getAltHaplotypeCountRatio(locus.pos));
+    maxGt.addAltAlleleHaplotypeCountRatio(candidateSnvBuffer.getAltHaplotypeCountRatio(sampleIndex, locus.pos));
 }
 
 
@@ -682,7 +682,7 @@ process_pos_snp_digt(
         ActiveRegionId activeRegionId(getActiveRegionDetector(sampleIndex).getActiveRegionId(pos));
         updateSnvLocusWithSampleInfo(
             _opt, sample(sampleIndex), callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex],
-            allDgt[sampleIndex], sampleIndex, activeRegionId, getActiveRegionDetector(sampleIndex).getCandidateSnvBuffer(), *locusPtr, homRefLogProb);
+            allDgt[sampleIndex], sampleIndex, activeRegionId, getCandidateSnvBuffer(), *locusPtr, homRefLogProb);
     }
 
     // add sample-independent info:

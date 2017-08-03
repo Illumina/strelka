@@ -42,6 +42,7 @@ double
 score_candidate_alignment(
     const starling_base_options& opt,
     const IndelBuffer& indelBuffer,
+    const unsigned sampleIndex,
     const CandidateSnvBuffer& candidateSnvBuffer,
     const read_segment& rseg,
     const candidate_alignment& cal,

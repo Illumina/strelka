@@ -539,7 +539,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
         case ALIGNPATH::SEQ_MISMATCH:
             for (unsigned i(0); i<segmentLength; ++i)
             {
-                _candidateSnvBuffer.addCandidateSnv(referencePos, haploptypeSeq[haplotypePosOffset], haplotypeId, altHaplotypeCountRatio);
+                _candidateSnvBuffer.addCandidateSnv(_sampleIndex, referencePos, haploptypeSeq[haplotypePosOffset], haplotypeId, altHaplotypeCountRatio);
 
                 ++referencePos;
                 ++haplotypePosOffset;

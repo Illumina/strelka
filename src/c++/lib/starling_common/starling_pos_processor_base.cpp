@@ -245,6 +245,7 @@ starling_pos_processor_base(
     , _sample(sampleCount)
     , _pileupCleaner(opt)
     , _indelBuffer(opt,dopt,ref)
+    , _candidateSnvBuffer(sampleCount)
     , _activeRegionDetector(sampleCount)
 {
     assert(sampleCount != 0);
@@ -288,7 +289,7 @@ resetActiveRegionDetector()
     for (unsigned sampleIndex(0); sampleIndex<getSampleCount(); ++sampleIndex)
     {
         _activeRegionDetector[sampleIndex].reset(
-            new ActiveRegionDetector(_ref, _indelBuffer, _opt.max_indel_size, sampleIndex)
+            new ActiveRegionDetector(_ref, _indelBuffer, _candidateSnvBuffer, _opt.max_indel_size, sampleIndex)
         );
     }
 }
@@ -389,6 +390,7 @@ resetRegionBase(
 
     _forced_output_pos.clear();
     _indelBuffer.clearIndels();
+    _candidateSnvBuffer.clearSnvs();
 
     /// TODO, it might be better to have some kind of regionReset() on this structure
     ///  -- not clear how to do this accurately, so for now we just nuke and replace the entire object
@@ -759,7 +761,7 @@ align_pos(const pos_t pos)
 
             try
             {
-                realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,sampleIndex, _activeRegionDetector[sampleIndex]->getCandidateSnvBuffer(), rseg,
+                realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,sampleIndex, _candidateSnvBuffer, rseg,
                                        getIndelBuffer());
             }
             catch (...)
@@ -899,7 +901,10 @@ process_pos(const int stage_no,
         if (is_active_region_detector_enabled())
         {
             for (unsigned sampleIndex(0); sampleIndex<getSampleCount(); ++sampleIndex)
+            {
                 _getActiveRegionDetector(sampleIndex).clearUpToPos(pos);
+                _candidateSnvBuffer.clearUpToPos(sampleIndex, pos);
+            }
         }
 
         // everything else:
@@ -1260,7 +1265,7 @@ pileup_read_segment(
     if ((! is_submapped) && _opt.is_max_win_mismatch)
     {
         const rc_segment_bam_seq ref_bseq(_ref);
-        create_mismatch_filter_map(_opt,best_al,ref_bseq,bseq,read_begin,read_end, _activeRegionDetector[sampleIndex]->getCandidateSnvBuffer(), _rmi);
+        create_mismatch_filter_map(_opt,best_al,ref_bseq,bseq,read_begin,read_end, _candidateSnvBuffer, _rmi);
         if (_opt.tier2.is_tier2_mismatch_density_filter_count)
         {
             const int max_pass(_opt.tier2.tier2_mismatch_density_filter_count);

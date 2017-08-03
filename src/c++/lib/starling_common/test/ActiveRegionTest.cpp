@@ -76,10 +76,11 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
     const int depth = 50;
 
     TestIndelBuffer testBuffer(ref);
+    CandidateSnvBuffer testSnvBuffer(sampleCount);
 
     std::vector<std::unique_ptr<ActiveRegionDetector>> activeRegionDetector(sampleCount);
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-        activeRegionDetector[sampleIndex].reset(new ActiveRegionDetector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleIndex));
+        activeRegionDetector[sampleIndex].reset(new ActiveRegionDetector(ref, testBuffer.getIndelBuffer(), testSnvBuffer, maxIndelSize, sampleIndex));
 
     const auto snvPos = std::set<pos_t>({2, 4, 5});
 
@@ -123,15 +124,15 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
     {
         for (pos_t pos(0); pos<refLength; ++pos)
         {
-            if ((sampleIndex == 1) and (snvPos.find(pos) != snvPos.end()))
+            if (snvPos.find(pos) != snvPos.end())
             {
                 // SNV
-                BOOST_REQUIRE_EQUAL(activeRegionDetector[sampleIndex]->getCandidateSnvBuffer().isCandidateSnv(pos, 'A'), true);
+                BOOST_REQUIRE_EQUAL(testSnvBuffer.isCandidateSnvAnySample(pos, 'A'), true);
             }
             else
             {
                 // No SNV
-                BOOST_REQUIRE_EQUAL(activeRegionDetector[sampleIndex]->getCandidateSnvBuffer().isCandidateSnv(pos, 'A'), false);
+                BOOST_REQUIRE_EQUAL(testSnvBuffer.isCandidateSnvAnySample(pos, 'A'), false);
             }
         }
     }
@@ -144,11 +145,13 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
     ref.seq() = "TCTCT";
 
     const unsigned maxIndelSize = 50;
+    const int sampleCount = 1;
     const unsigned sampleIndex = 0;
 
     TestIndelBuffer testBuffer(ref);
+    CandidateSnvBuffer testSnvBuffer(sampleCount);
 
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleIndex);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), testSnvBuffer, maxIndelSize, sampleIndex);
 
     const int depth = 50;
 
@@ -212,11 +215,13 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
     ref.seq() = refSeq;
 
     const unsigned maxIndelSize = 50;
+    const int sampleCount = 1;
     const unsigned sampleIndex = 0;
 
     TestIndelBuffer testBuffer(ref);
+    CandidateSnvBuffer testSnvBuffer(sampleCount);
 
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleIndex);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), testSnvBuffer, maxIndelSize, sampleIndex);
 
     // fake reading reads
     const int depth = 50;
@@ -252,8 +257,8 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
         detector.clear();
 
         // check if polySites are correctly set
-        BOOST_REQUIRE_EQUAL(detector.getCandidateSnvBuffer().isCandidateSnv(startPosition + snvOffsets[0], 'G'), true);
-        BOOST_REQUIRE_EQUAL(detector.getCandidateSnvBuffer().isCandidateSnv(startPosition + snvOffsets[1], 'G'), true);
+        BOOST_REQUIRE_EQUAL(testSnvBuffer.isCandidateSnv(sampleIndex, startPosition + snvOffsets[0], 'G'), true);
+        BOOST_REQUIRE_EQUAL(testSnvBuffer.isCandidateSnv(sampleIndex, startPosition + snvOffsets[1], 'G'), true);
     }
 }
 
@@ -264,11 +269,13 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
     ref.seq() = "GTCC";
 
     const unsigned maxIndelSize = 50;
+    const unsigned sampleCount = 1;
     const unsigned sampleIndex = 0;
 
     TestIndelBuffer testBuffer(ref);
+    CandidateSnvBuffer testSnvBuffer(sampleCount);
 
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), maxIndelSize, sampleIndex);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), testSnvBuffer, maxIndelSize, sampleIndex);
 
     const int depth = 50;
 
