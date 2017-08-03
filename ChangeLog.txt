@@ -1,3 +1,4 @@
+- STREL-653 Fix haplotyping misbehavior in depth 0 positons
 v2.8.1
 - STREL-650 Fix allele filtration to synchronize across multiple samples
 - STREL-651 Fix sequence error counting bounds

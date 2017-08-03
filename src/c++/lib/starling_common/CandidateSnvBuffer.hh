@@ -104,6 +104,7 @@ public:
 
     float getAltHaplotypeCountRatio(const unsigned sampleIndex, const pos_t pos) const;
 
+    /// Returns true if no candidate SNV exists in any sample
     bool empty() const;
 
     /// Clear all candidate SNVs up to the specified position

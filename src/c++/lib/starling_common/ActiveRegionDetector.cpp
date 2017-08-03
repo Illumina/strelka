@@ -102,7 +102,16 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
     pos_t posToProcess(pos-1);
     if (posToProcess < 0) return;
 
-    const bool isCurrentPosCandidateVariant = _readBuffer.isCandidateVariant(posToProcess);
+
+    bool isCurrentPosCandidateVariant = _readBuffer.isCandidateVariant(posToProcess);
+    const bool isDepthZero = _readBuffer.isDepthZero(posToProcess);
+    // depth 0 position can be a candidate variant pos
+    // but cannot open a new active region
+    if (isDepthZero and (_numVariants == 0u))
+    {
+        isCurrentPosCandidateVariant = false;
+    }
+
     const bool isAnchor = _readBuffer.isAnchor(posToProcess) and (not isCurrentPosCandidateVariant);
 
     if (!isCurrentPosCandidateVariant and !isAnchor) return;
@@ -155,12 +164,20 @@ void ActiveRegionDetector::clear()
 
     if (_numVariants >= MinNumVariantsPerRegion)
     {
-        if (_activeRegionStartPos < 0)
-            _activeRegionStartPos = _readBuffer.getBeginPos();
-        if (_anchorPosFollowingPrevVariant < 0)
-            _anchorPosFollowingPrevVariant = (_readBuffer.getEndPos()-1);
+        bool isStartPosUndetermined = (_activeRegionStartPos < 0);
+        bool isEndPosUndetermined = (_anchorPosFollowingPrevVariant < 0);
 
-        closeExistingActiveRegion();
+        // if both the start and end pos are undetermined
+        // and read buffer size is zero, do not close the active region
+        if (!isStartPosUndetermined || !isEndPosUndetermined
+            || (_readBuffer.getBeginPos() < _readBuffer.getEndPos()))
+        {
+            if (isStartPosUndetermined)
+                _activeRegionStartPos = _readBuffer.getBeginPos();
+            if (isEndPosUndetermined)
+                _anchorPosFollowingPrevVariant = (_readBuffer.getEndPos()-1);
+            closeExistingActiveRegion();
+        }
     }
 
     processActiveRegion();

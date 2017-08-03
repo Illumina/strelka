@@ -194,6 +194,12 @@ public:
     /// \return true if pos is candidate variant, false otherwise
     bool isCandidateVariant(const pos_t pos) const;
 
+    /// Checks if the depth is zero at pos
+    bool isDepthZero(const pos_t pos) const
+    {
+        return (getDepth(pos) == 0u);
+    }
+
 private:
     enum VariantType
     {
