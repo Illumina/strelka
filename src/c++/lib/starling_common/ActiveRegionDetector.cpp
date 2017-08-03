@@ -167,23 +167,17 @@ void ActiveRegionDetector::clear()
         bool isStartPosUndetermined = (_activeRegionStartPos < 0);
         bool isEndPosUndetermined = (_anchorPosFollowingPrevVariant < 0);
 
-        if (isStartPosUndetermined && isEndPosUndetermined)
+        // if both the start and end pos are undetermined
+        // and read buffer size is zero, do not close the active region
+        if (!isStartPosUndetermined || !isEndPosUndetermined
+            || (_readBuffer.getBeginPos() < _readBuffer.getEndPos()))
         {
-            // There's no anchor both upstream and downstream of this active region.
-            if (_readBuffer.getBeginPos() >= _readBuffer.getEndPos())
-            {
-                // This happens very rarely when the AR covers the entire region.
-                // Simply ignore this.
-                return;
-            }
+            if (isStartPosUndetermined)
+                _activeRegionStartPos = _readBuffer.getBeginPos();
+            if (isEndPosUndetermined)
+                _anchorPosFollowingPrevVariant = (_readBuffer.getEndPos()-1);
+            closeExistingActiveRegion();
         }
-
-        if (isStartPosUndetermined)
-            _activeRegionStartPos = _readBuffer.getBeginPos();
-        if (isEndPosUndetermined)
-            _anchorPosFollowingPrevVariant = (_readBuffer.getEndPos()-1);
-
-        closeExistingActiveRegion();
     }
 
     processActiveRegion();

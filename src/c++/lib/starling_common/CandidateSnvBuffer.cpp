@@ -98,8 +98,12 @@ float CandidateSnvBuffer::getAltHaplotypeCountRatio(const unsigned sampleIndex, 
 bool CandidateSnvBuffer::empty() const
 {
     for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
+    {
         if (!(_candidateSnvBuffer[sampleIndex].empty()))
+        {
             return false;
+        }
+    }
     return true;
 }
 
