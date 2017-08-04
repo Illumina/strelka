@@ -490,7 +490,7 @@ process_pos_error_counts(
         // be relatively intolerant of anything interesting happening in the local sequence neighborhood:
         static const double snvMMDRMaxFrac(0.05);
 
-        const snp_pos_info& sinfo(sif.bc_buff.get_pos(pos));
+        const snp_pos_info& sinfo(sif.basecallBuffer.get_pos(pos));
         unsigned fcount(0);
         for (const base_call& bc : sinfo.calls)
         {
@@ -721,7 +721,7 @@ process_pos_error_counts(
 
     // background depth is always one minus position to be consistent with indel report:
     const pos_t depth_pos(pos - 1);
-    const snp_pos_info& spi(sif.bc_buff.get_pos(depth_pos));
+    const snp_pos_info& spi(sif.basecallBuffer.get_pos(depth_pos));
     const unsigned depth(spi.calls.size());
 
     for (const auto& value : indelObservations)

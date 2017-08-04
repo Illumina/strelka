@@ -359,14 +359,16 @@ public:
         bool is_candidate_indel = false;
     };
 
-    /// if true, allele is suggested from a source other than the aligned sequencing data, and
-    /// automatically is promoted to candidate status
+    /// If true, allele is suggested from a source other than the aligned sequencing data, and
+    /// automatically promoted to candidate status
     bool is_external_candidate = false;
 
-    /// if true, allele is automatically promoted to candidate status and must be scored in
+    /// If true, allele is automatically promoted to candidate status and must be scored in
     /// the final call output, even if there is no support for the allele in any input sample
     bool isForcedOutput = false;
 
+    /// If true, the allele intersects an active region and has not been filtered out as noise based
+    /// based on haplotype analysis
     bool isConfirmedInActiveRegion = false;
 
     /// status is used to facilitate efficient computation of candidate status by caching the result

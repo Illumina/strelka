@@ -1710,8 +1710,8 @@ process_pos_indel_digt(const pos_t pos)
                 ActiveRegionId activeRegionId(getActiveRegionDetector(sampleIndex).getActiveRegionId(pos));
                 updateIndelLocusWithSampleInfo(
                     _opt, _dopt, topVariantAlleleGroup, topVariantAlleleIndexPerSample[sampleIndex], emptyGroup,
-                    sampleInfo.sample_opt,
-                    callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex, activeRegionId, sampleInfo.bc_buff, *locusPtr,
+                    sampleInfo.sampleOptions,
+                    callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex, activeRegionId, sampleInfo.basecallBuffer, *locusPtr,
                     homRefLogProb);
             }
 
@@ -1864,8 +1864,8 @@ process_pos_indel_digt(const pos_t pos)
                 ActiveRegionId activeRegionId(getActiveRegionDetector(sampleIndex).getActiveRegionId(pos));
                 updateIndelLocusWithSampleInfo(
                     _opt, _dopt, fakeForcedOutputAlleleGroup, fakeTopVariantAlleleIndexPerSample, topVariantAlleleGroup,
-                    sif.sample_opt, callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex, activeRegionId,
-                    sif.bc_buff, *locusPtr, homRefLogProb);
+                    sif.sampleOptions, callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex, activeRegionId,
+                    sif.basecallBuffer, *locusPtr, homRefLogProb);
             }
 
             // add sample-independent info:
@@ -1955,7 +1955,7 @@ process_pos_indel_continuous(const pos_t pos)
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
             updateContinuousIndelLocusWithSampleInfo(
-                _opt, _dopt, topVariantAlleleGroup, sampleIndex, sample(sampleIndex).bc_buff, *locusPtr);
+                _opt, _dopt, topVariantAlleleGroup, sampleIndex, sample(sampleIndex).basecallBuffer, *locusPtr);
         }
 
         // add sample-independent info:

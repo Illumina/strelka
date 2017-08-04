@@ -297,7 +297,7 @@ is unavailable at the throw site. Example code is:
 ```c++
 try
 {
-    realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,rseg,sif.getIndelBuffer());
+    realign_and_score_read(_opt,_dopt,sif.sampleOptions,_ref,realign_buffer_range,rseg,sif.getIndelBuffer());
 }
 catch (...)
 {

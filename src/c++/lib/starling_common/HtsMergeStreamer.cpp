@@ -27,8 +27,6 @@
 
 #include "boost/optional.hpp"
 
-#include <sstream>
-
 
 
 HtsMergeStreamer::

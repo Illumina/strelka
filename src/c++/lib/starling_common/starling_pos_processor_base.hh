@@ -176,9 +176,9 @@ protected:
         const known_pos_range2& reportRange);
 
     bool
-    isChromSet() const
+    isChromNameInitialized() const
     {
-        return (not _chromName.empty());
+        return (! _chromName.empty());
     }
 
     struct pos_win_avgs
@@ -287,17 +287,17 @@ public:
             const starling_base_options& opt,
             const reference_contig_segment& ref,
             read_id_counter* ricp)
-            : bc_buff(ref)
-            , read_buff(ricp)
-            , sample_opt(opt)
+            : basecallBuffer(ref)
+            , readBuffer(ricp)
+            , sampleOptions(opt)
             , wav()
         {}
 
         void
         resetRegion()
         {
-            bc_buff.clear();
-            read_buff.clear();
+            basecallBuffer.clear();
+            readBuffer.clear();
             estdepth_buff.clear();
             estdepth_buff_tier2.clear();
             wav.resetRegion();
@@ -305,12 +305,12 @@ public:
             ploidyRegions.clear();
         }
 
-        pos_basecall_buffer bc_buff;
-        starling_read_buffer read_buff;
+        pos_basecall_buffer basecallBuffer;
+        starling_read_buffer readBuffer;
         depth_buffer estdepth_buff; // provide an early estimate of read depth before realignment.
         depth_buffer estdepth_buff_tier2; // provide an early estimate of read depth before realignment.
 
-        starling_sample_options sample_opt;
+        starling_sample_options sampleOptions;
 
         // regional basecall average windows:
         pos_win_avgs wav;
@@ -460,10 +460,10 @@ private:
         const read_segment& rseg,
         const unsigned sampleIndex);
 
-    /// Run init_read_segment for all spliced read segments buffered at the current position
+    /// Initialize all spliced read segments buffered at the given position
     ///
     void
-    init_read_segment_pos(const pos_t pos);
+    initializeSplicedReadSegmentsAtPos(const pos_t pos);
 
     /// For all reads buffered at the current position:
     /// 1) determine the set of candidate indels that the read overlaps
@@ -580,8 +580,8 @@ private:
             for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
             {
                 const sample_info& sif(sample(sampleIndex));
-                if (! sif.read_buff.empty()) return false;
-                if (! sif.bc_buff.empty()) return false;
+                if (! sif.readBuffer.empty()) return false;
+                if (! sif.basecallBuffer.empty()) return false;
             }
             if (! _indelBuffer.empty()) return false;
             if (! _candidateSnvBuffer.empty()) return false;
@@ -629,7 +629,7 @@ protected:
     // read-length data structure used to compute mismatch density filter:
     read_mismatch_info _rmi;
 
-    // largest delete length observed for any one indel (but not greater than max_delete_size)
+    /// Largest delete length observed for any one indel (but not greater than max_delete_size)
     unsigned _largest_indel_ref_span;
 
     // largest

@@ -18,7 +18,6 @@
 //
 
 /// \file
-///
 /// \author Chris Saunders
 ///
 
@@ -32,7 +31,6 @@ std::ostream&
 operator<<(std::ostream& os,
            const read_key& rk)
 {
-
     os << rk.qname() << '/' << rk.read_no();
     return os;
 }

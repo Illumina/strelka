@@ -564,7 +564,7 @@ insert_read(
         return retval;
     }
 
-    starling_read_buffer& rbuff(sample(sampleIndex).read_buff);
+    starling_read_buffer& rbuff(sample(sampleIndex).readBuffer);
 
     // check whether the read buffer has reached max capacity
     if (_opt.isMaxBufferedReads())
@@ -690,12 +690,12 @@ init_read_segment(
 
 void
 starling_pos_processor_base::
-init_read_segment_pos(const pos_t pos)
+initializeSplicedReadSegmentsAtPos(const pos_t pos)
 {
     const unsigned sampleCount(getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        read_segment_iter ri(sample(sampleIndex).read_buff.get_pos_read_segment_iter(pos));
+        read_segment_iter ri(sample(sampleIndex).readBuffer.get_pos_read_segment_iter(pos));
         for (read_segment_iter::ret_val r; true; ri.next())
         {
             r=ri.get_ptr();
@@ -751,7 +751,7 @@ align_pos(const pos_t pos)
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         sample_info& sif(sample(sampleIndex));
-        read_segment_iter ri(sif.read_buff.get_pos_read_segment_iter(pos));
+        read_segment_iter ri(sif.readBuffer.get_pos_read_segment_iter(pos));
         for (read_segment_iter::ret_val r; true; ri.next())
         {
             r=ri.get_ptr();
@@ -761,7 +761,7 @@ align_pos(const pos_t pos)
 
             try
             {
-                realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,sampleIndex, _candidateSnvBuffer, rseg,
+                realign_and_score_read(_opt,_dopt,sif.sampleOptions,_ref,realign_buffer_range,sampleIndex, _candidateSnvBuffer, rseg,
                                        getIndelBuffer());
             }
             catch (...)
@@ -805,7 +805,7 @@ process_pos(const int stage_no,
     log_os << "pos,stage_no: " << pos << " " << stage_no << "\n";
 #endif
 
-    assert(isChromSet());
+    assert(isChromNameInitialized());
 
     if (empty()) return;
 
@@ -813,31 +813,27 @@ process_pos(const int stage_no,
 
     if        (stage_no==STAGE::HEAD)
     {
-        init_read_segment_pos(pos);
+        initializeSplicedReadSegmentsAtPos(pos);
         if (is_active_region_detector_enabled())
         {
-            for (unsigned sampleIndex(0); sampleIndex<getSampleCount(); ++sampleIndex)
+            for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+            {
                 _getActiveRegionDetector(sampleIndex).updateEndPosition(pos);
+            }
         }
     }
     else if (stage_no==STAGE::READ_BUFFER)
     {
-#if 0
-        for (unsigned s(0); s<_n_samples; ++s)
-        {
-            sample_info& sif(sample(s));
-            sif.indel_buff.dump_pos(pos,log_os);
-            sif.read_buff.dump_pos(pos,log_os);
-        }
-#endif
         align_pos(pos);
         pileup_pos_reads(pos);
         write_reads(pos);
 
         if (is_active_region_detector_enabled())
         {
-            for (unsigned sampleIndex(0); sampleIndex<getSampleCount(); ++sampleIndex)
+            for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+            {
                 _getActiveRegionDetector(sampleIndex).clearReadBuffer(pos);
+            }
         }
     }
     else if (stage_no==STAGE::POST_ALIGN)
@@ -900,7 +896,7 @@ process_pos(const int stage_no,
 
         if (is_active_region_detector_enabled())
         {
-            for (unsigned sampleIndex(0); sampleIndex<getSampleCount(); ++sampleIndex)
+            for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
             {
                 _getActiveRegionDetector(sampleIndex).clearUpToPos(pos);
                 _candidateSnvBuffer.clearUpToPos(sampleIndex, pos);
@@ -923,7 +919,7 @@ process_pos(const int stage_no,
     {
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
-            sample(sampleIndex).read_buff.clear_to_pos(pos);
+            sample(sampleIndex).readBuffer.clear_to_pos(pos);
         }
     }
     else if (stage_no==STAGE::CLEAR_INDEL_BUFFER)
@@ -942,7 +938,7 @@ process_pos(const int stage_no,
             // while phasing block is being built:
             if (! is_save_pileup_buffer())
             {
-                sif.bc_buff.clear_to_pos(pos);
+                sif.basecallBuffer.clear_to_pos(pos);
             }
         }
     }
@@ -966,7 +962,7 @@ insert_pos_submap_count(const pos_t pos,
 {
     // assume pos has been pre-checked:
 
-    sample(sample_no).bc_buff.insert_pos_submap_count(pos);
+    sample(sample_no).basecallBuffer.insert_pos_submap_count(pos);
 }
 
 
@@ -978,7 +974,7 @@ insert_pos_spandel_count(const pos_t pos,
 {
     // assume pos has been pre-checked:
 
-    sample(sample_no).bc_buff.insert_pos_spandel_count(pos);
+    sample(sample_no).basecallBuffer.insert_pos_spandel_count(pos);
 }
 
 
@@ -996,7 +992,7 @@ updateGermlineScoringMetrics(
     const bool is_submapped)
 {
     // assume pos is already valid:
-    auto& bcbuff(sample(sample_no).bc_buff);
+    auto& bcbuff(sample(sample_no).basecallBuffer);
     bcbuff.updateGermlineScoringMetrics(_ref.get_base(pos), pos, call_id, qscore, mapq, cycle, distanceFromReadEdge, is_submapped);
 }
 
@@ -1013,7 +1009,7 @@ updateSomaticScoringMetrics(
     const uint16_t readLength)
 {
     // assume pos is already valid:
-    auto& bcbuff(sample(sample_no).bc_buff);
+    auto& bcbuff(sample(sample_no).basecallBuffer);
     if (is_tier1 && (sample_no != 0) && (! is_call_filter))
     {
         bcbuff.update_read_pos_ranksum(_ref.get_base(pos),pos,call_id,readPos);
@@ -1031,7 +1027,7 @@ insert_pos_basecall(const pos_t pos,
 {
     // assume pos is already valid:
 
-    sample(sample_no).bc_buff.insert_pos_basecall(pos,is_tier1,bc);
+    sample(sample_no).basecallBuffer.insert_pos_basecall(pos,is_tier1,bc);
 }
 
 
@@ -1065,7 +1061,7 @@ rebuffer_pos_reads(const pos_t pos)
     {
         sample_info& sif(sample(sampleIndex));
         std::vector<read_pos_t> new_read_pos;
-        read_segment_iter ri(sif.read_buff.get_pos_read_segment_iter(pos));
+        read_segment_iter ri(sif.readBuffer.get_pos_read_segment_iter(pos));
         for (read_segment_iter::ret_val r; true; ri.next())
         {
             r=ri.get_ptr();
@@ -1083,7 +1079,7 @@ rebuffer_pos_reads(const pos_t pos)
         const unsigned nr(new_read_pos.size());
         for (unsigned i(0); i<nr; ++i)
         {
-            sif.read_buff.rebuffer_read_segment(new_read_pos[i].first.first,
+            sif.readBuffer.rebuffer_read_segment(new_read_pos[i].first.first,
                                                 new_read_pos[i].first.second,
                                                 new_read_pos[i].second);
         }
@@ -1106,7 +1102,7 @@ write_reads(const pos_t pos)
         if (nullptr == bamd_ptr) continue;
         bam_dumper& bamd(*bamd_ptr);
 
-        read_segment_iter ri(sample(sampleIndex).read_buff.get_pos_read_segment_iter(pos));
+        read_segment_iter ri(sample(sampleIndex).readBuffer.get_pos_read_segment_iter(pos));
         read_segment_iter::ret_val r;
 
         while (true)
@@ -1131,7 +1127,7 @@ pileup_pos_reads(const pos_t pos)
     const unsigned sampleCount(getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        read_segment_iter ri(sample(sampleIndex).read_buff.get_pos_read_segment_iter(pos));
+        read_segment_iter ri(sample(sampleIndex).readBuffer.get_pos_read_segment_iter(pos));
         read_segment_iter::ret_val r;
         while (true)
         {
@@ -1363,7 +1359,7 @@ pileup_read_segment(
                 }
 
                 // always update MAPQ (even when we don't want EVS metrics)
-                sample(sampleIndex).bc_buff.insert_mapq_count(ref_pos,mapq);
+                sample(sampleIndex).basecallBuffer.insert_mapq_count(ref_pos,mapq);
 
                 // update extended feature metrics (including submapped reads):
                 if (_opt.is_compute_germline_scoring_metrics())
@@ -1494,7 +1490,7 @@ process_pos_sample_stats(
 {
     sample_info& sif(sample(sample_no));
 
-    const snp_pos_info& pi(sif.bc_buff.get_pos(pos));
+    const snp_pos_info& pi(sif.basecallBuffer.get_pos(pos));
 
     static const bool is_include_tier2(false);
     _pileupCleaner.CleanPileupFilter(pi,is_include_tier2,sif.cpi);

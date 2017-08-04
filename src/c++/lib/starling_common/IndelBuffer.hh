@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -32,7 +32,7 @@
 #include <vector>
 
 
-/// coordinate indel information across multiple samples
+/// Coordinate indel information across multiple samples
 ///
 struct IndelBuffer
 {

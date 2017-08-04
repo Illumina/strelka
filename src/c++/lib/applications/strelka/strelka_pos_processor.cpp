@@ -55,7 +55,7 @@ strelka_pos_processor(
     sample_info& tumor_sif(sample(TUMOR));
 
     // set sample-specific parameter overrides:
-    normal_sif.sample_opt.min_read_bp_flank = opt.normal_sample_min_read_bp_flank;
+    normal_sif.sampleOptions.min_read_bp_flank = opt.normal_sample_min_read_bp_flank;
 
     // setup indel buffer samples:
     {
@@ -181,8 +181,8 @@ process_pos_snp_somatic(const pos_t pos)
     {
         const bool is_include_tier2(t!=0);
         if (is_include_tier2 && (! _opt.tier2.is_tier2())) continue;
-        _pileupCleaner.CleanPileup(normal_sif.bc_buff.get_pos(pos),is_include_tier2,*(normal_cpi_ptr[t]));
-        _pileupCleaner.CleanPileup(tumor_sif.bc_buff.get_pos(pos),is_include_tier2,*(tumor_cpi_ptr[t]));
+        _pileupCleaner.CleanPileup(normal_sif.basecallBuffer.get_pos(pos),is_include_tier2,*(normal_cpi_ptr[t]));
+        _pileupCleaner.CleanPileup(tumor_sif.basecallBuffer.get_pos(pos),is_include_tier2,*(tumor_cpi_ptr[t]));
     }
 
     // note single-sample anomaly filtration won't apply here (more of
@@ -350,8 +350,8 @@ process_pos_indel_somatic(const pos_t pos)
 
             static const bool is_use_alt_indel(true);
             _dopt.sicaller_grid().get_somatic_indel(_opt,_dopt,
-                                                    normal_sif.sample_opt,
-                                                    tumor_sif.sample_opt,
+                                                    normal_sif.sampleOptions,
+                                                    tumor_sif.sampleOptions,
                                                     indelKey, indelData, NORMAL,TUMOR,
                                                     is_use_alt_indel,
                                                     siInfo.sindel);
@@ -364,10 +364,10 @@ process_pos_indel_somatic(const pos_t pos)
                 for (unsigned t(0); t<2; ++t)
                 {
                     const bool is_include_tier2(t!=0);
-                    getAlleleSampleReportInfo(_opt, _dopt, indelKey, normalIndelSampleData, normal_sif.bc_buff,
+                    getAlleleSampleReportInfo(_opt, _dopt, indelKey, normalIndelSampleData, normal_sif.basecallBuffer,
                                               is_include_tier2, is_use_alt_indel,
                                               siInfo.nisri[t]);
-                    getAlleleSampleReportInfo(_opt, _dopt, indelKey, tumorIndelSampleData, tumor_sif.bc_buff,
+                    getAlleleSampleReportInfo(_opt, _dopt, indelKey, tumorIndelSampleData, tumor_sif.basecallBuffer,
                                               is_include_tier2, is_use_alt_indel,
                                               siInfo.tisri[t]);
                 }
@@ -399,7 +399,7 @@ process_pos_indel_somatic(const pos_t pos)
                     const align_id_t read_id(i->first);
                     const ReadPathScores& lnp(i->second);
                     const ReadPathScores pprob(indel_lnp_to_pprob(_dopt,lnp));
-                    const starling_read* srptr(sif.read_buff.get_read(read_id));
+                    const starling_read* srptr(sif.readBuffer.get_read(read_id));
 
                     report_os << "read key: ";
                     if (nullptr==srptr) report_os << "UNKNOWN_KEY";
