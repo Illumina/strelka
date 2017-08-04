@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Sangtae Kim
 ///
 
@@ -27,6 +27,12 @@
 #include <blt_util/reference_contig_segment.hh>
 #include <vector>
 
+/// Helper object for ActiveRegionReadBuffer which identifies STR tracks in the reference
+///
+/// This object's primary role is to find "anchor" positions in the reference, where an anchor
+/// means a position of sufficiently high local sequence complexity that it can be used as an
+/// edge to an active region.
+///
 class ReferenceRepeatFinder
 {
 public:
@@ -50,7 +56,10 @@ public:
         return _isAnchor[pos % _maxBufferSize];
     }
 
+    /// \TODO What does this method do?
     void initRepeatSpan(pos_t pos);
+
+    /// \TODO How about this one?
     void updateRepeatSpan(pos_t pos);
 
 private:

@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Sangtae Kim
 ///
 
@@ -27,6 +27,7 @@
 #include "blt_util/algo_util.hh"
 
 #include "boost/algorithm/string.hpp"
+#include "boost/make_unique.hpp"
 
 // compile with this macro to get verbose output:
 //#define DEBUG_ACTIVE_REGION
@@ -39,7 +40,7 @@ void ActiveRegion::processHaplotypes()
 
     // if the active region is not included in the read buffer or if it is too large,
     // bypass haplotyping
-    if (!isRangeValid || (_posRange.size() > MaxRefSpanToBypassAssembly))
+    if ((! isRangeValid) || (_posRange.size() > MaxRefSpanToBypassAssembly))
     {
         doNotUseHaplotyping();
     }
@@ -417,12 +418,12 @@ bool ActiveRegion::processSelectedHaplotypes(
             largestCount = count;
 
             secondBestHaplotypePtrList.clear();
-            if (bestHaplotypePtr != nullptr)
+            if (bestHaplotypePtr)
                 secondBestHaplotypePtrList.push_back(std::move(bestHaplotypePtr));
 
             if (not isReference)
             {
-                bestHaplotypePtr = std::unique_ptr<std::string>(new std::string(haplotype));
+                bestHaplotypePtr.reset(new std::string(haplotype));
             }
         }
         else if (count > secondLargestCount)
@@ -431,7 +432,7 @@ bool ActiveRegion::processSelectedHaplotypes(
             secondBestHaplotypePtrList.clear();
             if (not isReference)
             {
-                secondBestHaplotypePtrList.push_back(std::unique_ptr<std::string>(new std::string(haplotype)));
+                secondBestHaplotypePtrList.push_back(boost::make_unique<std::string>(haplotype));
             }
         }
         else
@@ -439,7 +440,7 @@ bool ActiveRegion::processSelectedHaplotypes(
             // tie at secondLargestCount
             if (not isReference)
             {
-                secondBestHaplotypePtrList.push_back(std::unique_ptr<std::string>(new std::string(haplotype)));
+                secondBestHaplotypePtrList.push_back(boost::make_unique<std::string>(haplotype));
             }
         }
     }
@@ -469,7 +470,7 @@ bool ActiveRegion::processSelectedHaplotypes(
     // top haplotypes are selected. Now process them.
     //
     uint8_t haplotypeId(1);
-    if (bestHaplotypePtr != nullptr)
+    if (bestHaplotypePtr)
     {
         const auto& haplotype(*bestHaplotypePtr);
         const auto& alignIdList(haplotypeToAlignIdSet[haplotype]);
@@ -512,6 +513,8 @@ void ActiveRegion::convertToPrimitiveAlleles(
     pos_t referencePos;
     AlignmentResult<int> result;
     referencePos = _posRange.begin_pos;
+
+    // \TODO: this aligner is already left-shifting, why was the extra left-shift logic added below?
     _aligner.align(haploptypeSeq.cbegin(),haploptypeSeq.cend(),reference.cbegin(),reference.cend(),result);
 
     const ALIGNPATH::path_t& alignPath = result.align.apath;
@@ -524,12 +527,11 @@ void ActiveRegion::convertToPrimitiveAlleles(
 
     unsigned numVariants(0);
     const float altHaplotypeCountRatio(alignIdList.size()/static_cast<float>(totalNumReads));
-    for (unsigned pathIndex(0); pathIndex<alignPath.size(); ++pathIndex)
+    for (const auto& pathSegment : alignPath)
     {
-        const ALIGNPATH::path_segment& pathSegment(alignPath[pathIndex]);
-        unsigned segmentLength = pathSegment.length;
+        const unsigned segmentLength = pathSegment.length;
 
-        std::unique_ptr<IndelKey> indelKeyPtr = nullptr;
+        std::unique_ptr<IndelKey> indelKeyPtr;
         switch (pathSegment.type)
         {
         case ALIGNPATH::SEQ_MATCH:
@@ -569,7 +571,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
 
                 if (prevBase != 'N')
                 {
-                    indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(insertPos, INDEL::INDEL, 0, insertSeq.c_str()));
+                    indelKeyPtr.reset(new IndelKey(insertPos, INDEL::INDEL, 0, insertSeq.c_str()));
                     ++numVariants;
                 }
             }
@@ -597,7 +599,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
 
                 if (prevBase != 'N')
                 {
-                    indelKeyPtr = std::unique_ptr<IndelKey>(new IndelKey(deletePos, INDEL::INDEL, segmentLength));
+                    indelKeyPtr.reset(new IndelKey(deletePos, INDEL::INDEL, segmentLength));
                     ++numVariants;
                 }
             }
@@ -613,7 +615,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
             assert(false && "Unexpected alignment segment");
         }
 
-        if (indelKeyPtr != nullptr)
+        if (indelKeyPtr)
         {
             for (const auto alignId : alignIdList)
             {
@@ -630,6 +632,8 @@ void ActiveRegion::convertToPrimitiveAlleles(
             indelDataPtr->isConfirmedInActiveRegion = true;
 
             indelDataPtr->getSampleData(_sampleIndex).haplotypeId += haplotypeId;
+
+            // TODO: why is this a plus? we can't add ratios....
             indelDataPtr->getSampleData(_sampleIndex).altAlleleHaplotypeCountRatio += altHaplotypeCountRatio;
 
             // TODO: perform candidacy test here

@@ -25,7 +25,6 @@
 
 #include <blt_util/reference_contig_segment.hh>
 #include <vector>
-#include <iostream>
 #include "starling_types.hh"
 #include "indel.hh"
 #include "IndelBuffer.hh"
@@ -45,28 +44,32 @@ struct ReadInfo
     unsigned numReads;
 };
 
+/// Helper object for ActiveRegionDetector: Tracks variant and anchor evidence per position, together with the read
+/// ids supporting these
 class ActiveRegionReadBuffer
 {
 public:
 
-    // maximum buffer size in bases (must be larger than the maximum read size + max indel size
+    /// Maximum buffer size in bases (must be larger than the maximum read size + max indel size
     static const unsigned MaxBufferSize = 1000u;
 
-    // maximum read depth
-    // TODO: dynamically calculate maximum depth
+    /// Maximum read depth
+    /// TODO: dynamically calculate maximum depth
     static const unsigned MaxDepth = 1000u;
 
     static const unsigned MinNumVariantsPerPosition = 9u;
 
     static const pos_t MaxAssemblyPadding = (pos_t)9u;
 
-    // maximum repeat unit to consider
+    /// Maximum repeat unit to consider
     static const unsigned MaxRepeatUnitLength = 50u;
 
     static const unsigned MinRepeatSpan = (pos_t)3u;
 
-    // variant count to add for a single mismatch or indel
+    /// Variant evidence weight for a mismatched basecall
     static const int MismatchWeight = 1;
+
+    /// Variant evidence weight for an indel
     static const int IndelWeight = 4;
 
     // minimum alternative allele fraction to call a position as a candidate variant
@@ -218,7 +221,10 @@ private:
 
     pos_range _readBufferRange;
 
+    /// Stores the number of variant observations (including soft-clip) per position
     std::vector<unsigned> _variantCounter;
+
+    /// Store the number of non-clipped observations per position
     std::vector<unsigned> _depth;
 
     // for haplotypes

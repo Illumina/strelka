@@ -23,19 +23,18 @@
 
 #pragma once
 
-#include "blt_util/blt_types.hh"
-#include "starling_common/starling_types.hh"
-#include "alignment/GlobalAligner.hh"
-#include "blt_util/align_path.hh"
-#include "IndelBuffer.hh"
 #include "ActiveRegionReadBuffer.hh"
 #include "CandidateSnvBuffer.hh"
+#include "IndelBuffer.hh"
+#include "alignment/GlobalAligner.hh"
+#include "blt_util/align_path.hh"
+#include "blt_util/blt_types.hh"
+#include "options/IterativeAssemblerOptions.hh"
+#include "starling_common/starling_types.hh"
 
-#include <string>
 #include <map>
 #include <set>
-#include <options/SmallAssemblerOptions.hh>
-#include <options/IterativeAssemblerOptions.hh>
+#include <string>
 
 typedef std::map<std::string, std::vector<align_id_t>> HaplotypeToAlignIdSet;
 typedef uint8_t HaplotypeId;

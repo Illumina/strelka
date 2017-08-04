@@ -26,20 +26,26 @@
 #include "ActiveRegion.hh"
 #include "blt_util/blt_types.hh"
 #include "starling_read_segment.hh"
-#include "indel.hh"
 #include "IndelBuffer.hh"
 #include "ActiveRegionReadBuffer.hh"
 #include "CandidateSnvBuffer.hh"
 
-#include <vector>
 #include <list>
-#include <set>
 
 
 /// \brief Detects active regions
 ///
 /// Active regions are short genome segments where variation is sufficiently dense to trigger special haplotype
 /// detection and handling methods
+///
+/// Active regions are defined so as to cluster a group of nearby variant candidates so that they can be handled by
+/// haplotype analysis. Given a particular cluster of variant the active region is extended so that it starts and
+/// ends at an 'anchor' point, a non-STR region appropriate for defining the endpoint of an active region so as to
+/// avoid common artifacts associated with partial representation of an STR.
+///
+/// A major supporting component of the detector is the ActiveRegionReadBuffer, which does not store reads directly
+/// but tracks variant and soft-clipping events per-position, and the associated read ids supporting each event.
+///
 class ActiveRegionDetector
 {
 public:
@@ -120,10 +126,18 @@ private:
     bool _isBeginning;
     pos_t _activeRegionStartPos;
     pos_t _anchorPosFollowingPrevVariant;
+
+    /// Previous position classified as an anchor (anchors are non-STR loci that can be used to 'anchor' the edges
+    /// of an active region)
     pos_t _prevAnchorPos;
+
+    /// Previous position classified as a variant
     pos_t _prevVariantPos;
+
+    /// The number of variants identified so far in the current candidate active region
     unsigned _numVariants;
 
+    /// TODO: Why does the object support multiple active regions when processActiveRegions will only process one. Why is this a list?
     std::list<ActiveRegion> _activeRegions;
 
     // aligner to be used in active regions
@@ -136,3 +150,4 @@ private:
 
     void closeExistingActiveRegion();
 };
+
