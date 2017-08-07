@@ -514,7 +514,12 @@ void ActiveRegion::convertToPrimitiveAlleles(
     AlignmentResult<int> result;
     referencePos = _posRange.begin_pos;
 
-    // \TODO: this aligner is already left-shifting, why was the extra left-shift logic added below?
+    // Note that the aligner already left-shifts indels, but extra left-shifting is implemented below
+    // because of reference edge artifacts, for example:
+    //
+    // There are cases that the active region was not triggered at the right position.
+    // E.g. ref: GTCGAT, AR: TCGAT, Hap: T[ATAT]CGAT. In this case, T->TATAT should be left-shifted.
+    //
     _aligner.align(haploptypeSeq.cbegin(),haploptypeSeq.cend(),reference.cbegin(),reference.cend(),result);
 
     const ALIGNPATH::path_t& alignPath = result.align.apath;
@@ -633,7 +638,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
 
             indelDataPtr->getSampleData(_sampleIndex).haplotypeId += haplotypeId;
 
-            // TODO: why is this a plus? we can't add ratios....
+            // All retios have the same denominator, so addition is valid:
             indelDataPtr->getSampleData(_sampleIndex).altAlleleHaplotypeCountRatio += altHaplotypeCountRatio;
 
             // TODO: perform candidacy test here

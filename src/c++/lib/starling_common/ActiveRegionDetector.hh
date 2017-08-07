@@ -137,7 +137,7 @@ private:
     /// The number of variants identified so far in the current candidate active region
     unsigned _numVariants;
 
-    /// TODO: Why does the object support multiple active regions when processActiveRegions will only process one. Why is this a list?
+    /// \TODO Why does the object support multiple active regions when processActiveRegions will only process one. Why is this a list? (STREL-655)
     std::list<ActiveRegion> _activeRegions;
 
     // aligner to be used in active regions

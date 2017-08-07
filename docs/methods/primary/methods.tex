@@ -217,9 +217,9 @@ Following all preliminary parameter estimation tasks, the primary variant callin
 
 The input alignment files are scanned for reads as the first step of the variant calling operation. Reads are immediately filtered out if they are marked as not passing filters, PCR/optical duplicates, unmapped, secondary or supplemental. The remaining reads are categorized to determine how the read will be used in downstream steps. The categories are
 \begin{enumerate}
-    \item Tier1 reads: The most reliable read mappings which are used for all aspects of variant calling.
-    \item Tier2 reads: Less reliable reads than tier1, these are used for verification of somatic calls as described further below.
-    \item Sub-mapped reads: The least reliable reads, these are retained, together with tier1 and tier2 reads, to enable  variant classification features such as the root mean square mapping quality for all reads covering the variant locus.
+    \item Tier1 reads have the most reliable alignments. These are used for all aspects of variant calling.
+    \item Tier2 reads have less reliable alignments than tier1. These are used for verification of somatic calls as described further below.
+    \item Sub-mapped reads have the least reliable alignments. These are retained, together with tier1 and tier2 reads, to enable  variant classification features, such as the root mean square mapping quality for all reads covering a variant locus.
 \end{enumerate}
 
 For the germline and somatic calling models reads are classified as tier1 if they have a mapping quality of 20 or higher, and if paired, a mate read which is mapped and marked as a 'proper-pair'. All other unfiltered input reads are classified as sub-mapped in the germline model and as tier2 reads in the somatic model.

@@ -56,10 +56,10 @@ public:
         return _isAnchor[pos % _maxBufferSize];
     }
 
-    /// \TODO What does this method do?
+    /// \TODO What does this method do? (STREL-656)
     void initRepeatSpan(pos_t pos);
 
-    /// \TODO How about this one?
+    /// \TODO How about this one? (STREL-656)
     void updateRepeatSpan(pos_t pos);
 
 private:
