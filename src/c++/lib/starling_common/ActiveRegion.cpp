@@ -65,7 +65,9 @@ void ActiveRegion::processHaplotypes()
 bool ActiveRegion::processHaplotypesWithCounting()
 {
     ReadInfo readInfo;
-    _readBuffer.getReadSegments(_posRange, readInfo, false);
+
+    static const bool includePartialReads(false);
+    _readBuffer.getReadSegments(_posRange, readInfo, includePartialReads);
 
     unsigned numReads(readInfo.numReads);
     unsigned numReadsCoveringFullRegion((unsigned int) readInfo.readSegments.size());
@@ -92,7 +94,9 @@ bool ActiveRegion::processHaplotypesWithCounting()
     std::cerr << _sampleIndex << "\t" << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tCounting"<< std::endl;
 #endif
 
-    return processSelectedHaplotypes(haplotypeToAlignIdSet, numReads);
+    processSelectedHaplotypes(haplotypeToAlignIdSet, numReads);
+
+    return true;
 }
 
 
@@ -237,7 +241,9 @@ bool ActiveRegion::processHaplotypesWithAssembly()
     if (not isNonRefHaplotypeFound)
         return false;
 
-    return processSelectedHaplotypes(haplotypeToAlignIdSet, totalNumReads);
+    processSelectedHaplotypes(haplotypeToAlignIdSet, totalNumReads);
+
+    return true;
 }
 
 void ActiveRegion::doNotUseHaplotyping()
@@ -385,7 +391,7 @@ isFilterSecondHaplotypeAsSequencerPhasingNoise(
 
 
 
-bool ActiveRegion::processSelectedHaplotypes(
+void ActiveRegion::processSelectedHaplotypes(
     HaplotypeToAlignIdSet& haplotypeToAlignIdSet,
     const unsigned totalNumReads)
 {
@@ -495,8 +501,6 @@ bool ActiveRegion::processSelectedHaplotypes(
 #endif
         }
     }
-
-    return true;
 }
 
 void ActiveRegion::convertToPrimitiveAlleles(
@@ -624,22 +628,25 @@ void ActiveRegion::convertToPrimitiveAlleles(
         {
             for (const auto alignId : alignIdList)
             {
-                IndelObservationData indelObservationData;
                 const auto& alignInfo(_readBuffer.getAlignInfo(alignId));
+                IndelObservationData indelObservationData;
                 indelObservationData.iat = alignInfo.indelAlignType;
                 indelObservationData.id = alignId;
                 _indelBuffer.addIndelObservation(alignInfo.sampleIndex, {*indelKeyPtr, indelObservationData});
             }
-            auto* indelDataPtr(_indelBuffer.getIndelDataPtr(*indelKeyPtr));
-            assert(indelDataPtr != nullptr && "Missing indelData");
+            IndelData* indelDataPtr(_indelBuffer.getIndelDataPtr(*indelKeyPtr));
+            assert((indelDataPtr != nullptr) && "Missing indelData");
 
-            // determine whether this indel is candidate or private
+            // Allow this indel to become a candidate (subject to other tests):
             indelDataPtr->isConfirmedInActiveRegion = true;
 
-            indelDataPtr->getSampleData(_sampleIndex).haplotypeId += haplotypeId;
+            // Update sample-specific indel details:
+            IndelSampleData& indelSampleData(indelDataPtr->getSampleData(_sampleIndex));
+
+            indelSampleData.haplotypeId += haplotypeId;
 
             // All retios have the same denominator, so addition is valid:
-            indelDataPtr->getSampleData(_sampleIndex).altAlleleHaplotypeCountRatio += altHaplotypeCountRatio;
+            indelSampleData.altAlleleHaplotypeCountRatio += altHaplotypeCountRatio;
 
             // TODO: perform candidacy test here
         }

@@ -40,6 +40,7 @@ struct AlignInfo
 
 struct ReadInfo
 {
+    /// \TODO how is numReads different than readSegments.size()?
     std::vector<std::pair<align_id_t, std::string>> readSegments;
     unsigned numReads;
 };
