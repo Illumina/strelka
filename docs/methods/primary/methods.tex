@@ -451,7 +451,7 @@ The posterior probability over tumor and normal genotypes $P(G_t,G_n \mid D)$ is
 	P(G_t = \texttt{som} \mid D) = \sum_{G_n \in \{ \texttt{ref}, \texttt{het}, \texttt{hom} \}}{P(G_t=\texttt{som},G_n \mid D)}.
 \end{equation}
 
-As previously discussed, this somatic variant probability is not ideal for detecting variants of interest because it does not distinguish somatic variant types. We therefore associate somatic calls with the probability of somatic variation {\em and} the normal sample genotype being $\texttt{ref}$ (QSS\_NT for SNVs and QSI\_NT for indels), i.e., $P(G_t = \texttt{som}, G_n = \texttt{ref} \mid D)$. All Strelka quality scores discussed below express these values.
+As previously discussed, this somatic variant probability is not ideal for detecting variants of interest because it does not distinguish somatic variant types. We therefore associate somatic calls with the probability of somatic variation {\em and} the normal sample genotype being $\texttt{ref}$ (QSS\_NT for SNVs and QSI\_NT for indels), i.e. $P(G_t = \texttt{som}, G_n = \texttt{ref} \mid D)$. In practice, this is done by setting the scores to zero whenever a non-reference genotype is called in the normal sample, which is equivalent to approximating $P(D_n \mid G_n = \texttt{ref})$ as $0$ whenever it is below the calling threshold. This approximation is applied to the quality score that is passed to the empirical scoring sep and also to the final output after empirical scoring.
 
 
 \subsubsection{Tiered observations}
