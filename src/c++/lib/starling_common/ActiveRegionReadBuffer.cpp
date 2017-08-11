@@ -190,7 +190,7 @@ void ActiveRegionReadBuffer::setEndPos(const pos_t endPos)
 
 void ActiveRegionReadBuffer::getReadSegments(
     const pos_range& posRange,
-    ReadInfo& readInfo,
+    ActiveRegionReadInfo& readInfo,
     const bool includePartialReads,
     const unsigned minReadSegmentLength) const
 {
@@ -249,10 +249,10 @@ void ActiveRegionReadBuffer::getReadSegments(
         const auto& haplotype(entry.second);
         if (haplotype.length() < minReadSegmentLength) continue;
 
-        readInfo.readSegments.push_back(entry);
+        readInfo.readSegmentsForHaplotypeGeneration.push_back(entry);
     }
 
-    readInfo.numReads = (unsigned)(allAlignIds.size());
+    readInfo.numReadsAlignedToActiveRegion = (unsigned)(allAlignIds.size());
 }
 
 bool ActiveRegionReadBuffer::isCandidateVariant(const pos_t pos) const

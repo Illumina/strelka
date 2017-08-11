@@ -27,7 +27,7 @@
 #include <string>
 
 
-/// information added to each read in the process of assembly
+/// Information added to each read in the process of assembly
 ///
 struct AssemblyReadInfo
 {
@@ -39,5 +39,4 @@ struct AssemblyReadInfo
 
 
 typedef std::vector<std::string> AssemblyReadInput;
-typedef std::vector<bool> AssemblyReadReversal;
 typedef std::vector<AssemblyReadInfo> AssemblyReadOutput;

@@ -126,10 +126,12 @@ private:
     std::set<align_id_t> _alignIdSoftClipped;
 
     /// Select the top haplotypes and convert these into primitive alleles
+    ///
+    /// \param[in] totalNumHaplotypingReads Total number of reads eligible for the haplotype generation process
     void
     processSelectedHaplotypes(
         HaplotypeToAlignIdSet& haplotypeToAlignIdSet,
-        const unsigned totalNumReads);
+        const unsigned totalNumHaplotypingReads);
 
     /// Create haplotypes using counting and process variants
     /// \return true if haplotype generation succeeds, false otherwise
@@ -143,9 +145,12 @@ private:
     void doNotUseHaplotyping();
 
     /// Convert the haplotype into primitive alleles and update _indelBuffer and _candidateSnvBuffer
+    ///
+    /// \param[in] totalNumHaplotypingReads Total number of reads eligible for the haplotype generation process, such
+    ///               that alignIdList.size()/totalNumHaplotypingReads gives a meaning read count support ratio
     void convertToPrimitiveAlleles(
         const std::string& haploptypeSeq,
         const std::vector<align_id_t>& alignIdList,
-        const unsigned totalNumReads,
+        const unsigned totalNumHaplotypingReads,
         const uint8_t haplotypeId);
 };

@@ -38,11 +38,16 @@ struct AlignInfo
     bool isForwardStrand;
 };
 
-struct ReadInfo
+struct ActiveRegionReadInfo
 {
-    /// \TODO how is numReads different than readSegments.size()?
-    std::vector<std::pair<align_id_t, std::string>> readSegments;
-    unsigned numReads;
+    /// Count of reads aligning to the active region, including reads which may not qualify for haplotype
+    /// generation for various (configurable) reasons such as soft-clipping, partial coverage, etc...
+    unsigned numReadsAlignedToActiveRegion;
+
+    /// List of read segments which are eligible as haplotype generation input
+    ///
+    /// Invariant for this structure is (readSegmentsForHaplotypeGeneration.size() <= numReadsAlignedToActiveRegion)
+    std::vector<std::pair<align_id_t, std::string>> readSegmentsForHaplotypeGeneration;
 };
 
 /// Helper object for ActiveRegionDetector: Tracks variant and anchor evidence per position, together with the read
@@ -160,7 +165,7 @@ public:
     /// \param includePartialReads if true, only reads fully covering the region will be retrieved
     void getReadSegments(
         const pos_range& posRange,
-        ReadInfo& readInfo,
+        ActiveRegionReadInfo& readInfo,
         const bool includePartialReads,
         const unsigned minReadSegmentLength = 1u) const;
 
