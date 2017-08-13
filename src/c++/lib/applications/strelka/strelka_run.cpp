@@ -77,7 +77,7 @@ callRegion(
             // range by the bam reading functions
             //
             // /// get potential bounds of the read based only on current_pos:
-            // const known_pos_range any_read_bounds(current_pos-max_indel_size,current_pos+MAX_READ_SIZE+max_indel_size);
+            // const known_pos_range any_read_bounds(current_pos-maxIndelSize,current_pos+MAX_READ_SIZE+maxIndelSize);
             // if( posProcessor.is_range_outside_report_influence_zone(any_read_bounds) ) continue;
 
             // Approximate begin range filter: (removed for RNA-Seq)
@@ -94,7 +94,7 @@ callRegion(
             {
                 if (vcfRecord.is_indel())
                 {
-                    process_candidate_indel(opt.max_indel_size, vcfRecord, posProcessor);
+                    process_candidate_indel(opt.maxIndelSize, vcfRecord, posProcessor);
                 }
                 else
                 {
@@ -109,7 +109,7 @@ callRegion(
                 {
                     static const unsigned sample_no(0);
                     static const bool is_forced_output(true);
-                    process_candidate_indel(opt.max_indel_size, vcfRecord, posProcessor, sample_no, is_forced_output);
+                    process_candidate_indel(opt.maxIndelSize, vcfRecord, posProcessor, sample_no, is_forced_output);
                 }
                 else if (vcfRecord.is_snv() or vcfRecord.is_ref_site())
                 {
@@ -218,7 +218,7 @@ strelka_run(
 
     // parse and sanity check regions
     assert ((! opt.is_short_haplotyping_enabled) && "Region border size must be updated if haplotyping is enabled");
-    const unsigned supplementalRegionBorderSize(opt.max_indel_size);
+    const unsigned supplementalRegionBorderSize(opt.maxIndelSize);
 
         const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilenames.front());
     std::vector<AnalysisRegionInfo> regionInfoList;

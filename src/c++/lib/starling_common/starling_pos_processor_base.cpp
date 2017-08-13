@@ -54,7 +54,7 @@ const double STARLING_LARGEST_READ_SIZE_PAD(1.25);
 const unsigned HAPLOTYPING_PADDING(200);
 
 // largest indel_size grows dynamically with observed indel size until
-// hitting max_indel_size. Initialized to the follow value prior to
+// hitting maxIndelSize. Initialized to the follow value prior to
 // observation:
 
 
@@ -240,7 +240,7 @@ starling_pos_processor_base(
     , _streams(fileStreams)
     , _statsManager(statsManager)
     , _rmi(STARLING_INIT_LARGEST_READ_SIZE)
-    , _largest_indel_ref_span(opt.max_indel_size)
+    , _largest_indel_ref_span(opt.maxIndelSize)
     , _largest_total_indel_ref_span_per_read(_largest_indel_ref_span)
     , _sample(sampleCount)
     , _pileupCleaner(opt)
@@ -289,7 +289,7 @@ resetActiveRegionDetector()
     for (unsigned sampleIndex(0); sampleIndex<getSampleCount(); ++sampleIndex)
     {
         _activeRegionDetector[sampleIndex].reset(
-            new ActiveRegionDetector(_ref, _indelBuffer, _candidateSnvBuffer, _opt.max_indel_size, sampleIndex)
+            new ActiveRegionDetector(_ref, _indelBuffer, _candidateSnvBuffer, _opt.maxIndelSize, sampleIndex)
         );
     }
 }
@@ -329,8 +329,8 @@ starling_pos_processor_base::
 update_largest_indel_ref_span(const unsigned is)
 {
     if (is<=_largest_indel_ref_span) return;
-    assert(is<=_opt.max_indel_size);
-    _largest_indel_ref_span=std::min(is,_opt.max_indel_size);
+    assert(is<=_opt.maxIndelSize);
+    _largest_indel_ref_span=std::min(is,_opt.maxIndelSize);
     update_largest_total_indel_ref_span_per_read(is);
     update_stageman();
 }
@@ -382,7 +382,7 @@ resetRegionBase(
     // note that reseting these 'largest indel seen' values shouldn't really be necessary/important,
     // but it contributes to easier verification that a series of regions put into the caller will
     // give the same result as those regions processed one at a time
-    _largest_indel_ref_span = _opt.max_indel_size;
+    _largest_indel_ref_span = _opt.maxIndelSize;
     _largest_total_indel_ref_span_per_read = _largest_indel_ref_span;
 
     const pos_range pr(_reportRange.begin_pos(), _reportRange.end_pos());
@@ -452,7 +452,7 @@ insert_indel(
         _stagemanPtr->validate_new_pos_value(obs.key.pos,STAGE::READ_BUFFER);
 
         // dynamically scale maximum indel size:
-        const unsigned len(std::min(static_cast<unsigned>((obs.key.delete_length())),_opt.max_indel_size));
+        const unsigned len(std::min(static_cast<unsigned>((obs.key.delete_length())),_opt.maxIndelSize));
         update_largest_indel_ref_span(len);
 
 
@@ -673,7 +673,7 @@ init_read_segment(
     try
     {
         const unsigned total_indel_ref_span_per_read =
-            addAlignmentIndelsToPosProcessor(_opt.max_indel_size, _ref,
+            addAlignmentIndelsToPosProcessor(_opt.maxIndelSize, _ref,
                                              al, bseq, *this, iat, rseg.id(), sampleIndex, rseg.get_segment_edge_pin(),
                                              rseg.map_qual() == 0);
 
@@ -761,8 +761,9 @@ align_pos(const pos_t pos)
 
             try
             {
-                realign_and_score_read(_opt,_dopt,sif.sampleOptions,_ref,realign_buffer_range,sampleIndex, _candidateSnvBuffer, rseg,
-                                       getIndelBuffer());
+                realignAndScoreRead(_opt, _dopt, sif.sampleOptions, _ref, realign_buffer_range, sampleIndex,
+                                    _candidateSnvBuffer, rseg,
+                                    getIndelBuffer());
             }
             catch (...)
             {
@@ -1157,7 +1158,7 @@ pileup_read_segment(
     else
     {
         // detect whether this read has no alignments with indels we can handle:
-        if (! rseg.is_any_nonovermax(_opt.max_indel_size)) return;
+        if (! rseg.is_any_nonovermax(_opt.maxIndelSize)) return;
     }
 
     const alignment& best_al(*best_al_ptr);

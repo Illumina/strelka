@@ -17,24 +17,24 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
 #pragma once
 
 #include "alignment.hh"
-#include "candidate_alignment.hh"
+#include "CandidateAlignment.hh"
 
 
-typedef std::vector<const candidate_alignment*> cal_pool_t;
+typedef std::vector<const CandidateAlignment*> cal_pool_t;
 
 
 /// given a set of high scoring alignments, compare them to identify ambiguous
-/// segments on the alignment ends. Take the alignment for best_cal_id and
+/// segments on the alignment ends. Take the alignment for bestAlignmentIndex and
 /// soft-clip any such ambiguous regions
 void
-get_clipped_alignment_from_cal_pool(
-    const cal_pool_t& max_cal_pool,
-    const unsigned best_cal_id,
-    alignment& al);
+getClippedAlignmentFromTopAlignmentPool(
+    const cal_pool_t& topAlignmentPtrs,
+    const unsigned bestAlignmentIndex,
+    alignment& clippedAlignment);

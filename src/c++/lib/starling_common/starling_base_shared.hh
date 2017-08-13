@@ -107,7 +107,7 @@ struct starling_base_options : public blt_options
 
     // maximum indel size which can be represented by starling
     // (formerly a static value)
-    unsigned max_indel_size = 150;
+    unsigned maxIndelSize = 150;
 
     // Do we test indel observation counts to determine if these are significant enough
     // to create an indel candidate? This should be true for any normal variant caller,

@@ -1004,7 +1004,7 @@ process_pos_indel(
     if (_opt.is_bsnp_diploid())
     {
         // STREL-392 for this variant type to synchronize correctly across independent processes setup to call adjacent
-        // regions of the genome, we need to go through a dummy calling operation for approx 'max_indel_size' bases
+        // regions of the genome, we need to go through a dummy calling operation for approx 'maxIndelSize' bases
         // before starting to report calls, so this methods is called even when "isPosPrecedingReportableRange"
         // is true. This helps us to correctly handle groups of large/overlapping deletions which might span the
         // segmented genome boundary between two processes. Without this step is is possible to duplicate or drop

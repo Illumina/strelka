@@ -50,7 +50,7 @@ typedef std::pair<IndelKey, indel_present_t > indel_status_t;
 
 /// first: alignment likelihood
 /// second: alignment
-typedef std::pair<double,const candidate_alignment*> align_info_t;
+typedef std::pair<double,const CandidateAlignment*> align_info_t;
 typedef std::map<indel_status_t,align_info_t> iks_map_t;
 
 
@@ -66,7 +66,7 @@ updateIndelScoringInfo(
     const bool is_indel_present,
     const IndelKey& ik_present,
     const double path_lnp,
-    const candidate_alignment* cal_ptr)
+    const CandidateAlignment* cal_ptr)
 {
     const indel_status_t mkey(std::make_pair(ik_call,std::make_pair(is_indel_present,ik_present)));
 
@@ -239,8 +239,8 @@ typedef std::set<std::pair<IndelKey,IndelKey> > indel_pair_set;
 static
 bool
 is_equiv_candidate(
-    const candidate_alignment& cal1,
-    const candidate_alignment& cal2,
+    const CandidateAlignment& cal1,
+    const CandidateAlignment& cal2,
     indel_pair_set& equiv_keys)
 {
     equiv_keys.clear();
@@ -304,12 +304,12 @@ void
 late_indel_normalization_filter(
     const starling_base_options& opt,
     const IndelBuffer& indelBuffer,
-    const std::set<candidate_alignment>& candAlignments,
+    const std::set<CandidateAlignment>& candAlignments,
     const std::vector<double>& candAlignmentScores,
     indel_set_t nonnorm_indels,
     std::vector<bool>& isFilterCandAlignment,
     double& maxCandAlignmentScore,
-    const candidate_alignment*& maxCandAlignmentPtr)
+    const CandidateAlignment*& maxCandAlignmentPtr)
 {
     const unsigned candAlignmentCount(candAlignments.size());
 
@@ -319,9 +319,9 @@ late_indel_normalization_filter(
     // go through alignment x alignments in best->worst score
     // order -- to do so start out with the sort order:
     std::vector<std::pair<double,unsigned> > sortedScores;
-    std::vector<const candidate_alignment*> candAlignmentPtrs;
+    std::vector<const CandidateAlignment*> candAlignmentPtrs;
     {
-        std::set<candidate_alignment>::const_iterator si(candAlignments.begin());
+        std::set<CandidateAlignment>::const_iterator si(candAlignments.begin());
         for (unsigned candAlignmentIndex(0); candAlignmentIndex<candAlignmentCount; ++candAlignmentIndex,++si)
         {
             sortedScores.push_back(std::make_pair(candAlignmentScores[candAlignmentIndex],candAlignmentIndex));
@@ -458,11 +458,11 @@ score_indels(
     const read_segment& rseg,
     IndelBuffer& indelBuffer,
     const unsigned sampleIndex,
-    const std::set<candidate_alignment>& candAlignments,
+    const std::set<CandidateAlignment>& candAlignments,
     const bool is_incomplete_search,
     const std::vector<double>& candAlignmentScores,
     double maxCandAlignmentScore,
-    const candidate_alignment* maxCandAlignmentPtr)
+    const CandidateAlignment* maxCandAlignmentPtr)
 {
     static const bool is_safe_mode(true);
 
@@ -527,7 +527,7 @@ score_indels(
     // 3) the read overlaps at least one indel breakpoint by at least option:min_read_bp_flank bases in at least one candidate alignment
     //
 
-    const candidate_alignment& maxCandAlignment(*maxCandAlignmentPtr);
+    const CandidateAlignment& maxCandAlignment(*maxCandAlignmentPtr);
 
     indel_set_t indelsToEvaluate;
     const indel_set_t& indelsInMaxCandAlignment(maxCandAlignment.getIndels());
@@ -570,7 +570,7 @@ score_indels(
             // (2) on that alignment, test for breakpoint overlap
             // (3) filter the candidate indel if overlap < min
             {
-                const candidate_alignment* maxCandAlignmentForIndelPtr(nullptr);
+                const CandidateAlignment* maxCandAlignmentForIndelPtr(nullptr);
                 if (isIndelInMaxCandAlignment)
                 {
                     maxCandAlignmentForIndelPtr = &maxCandAlignment;
@@ -578,10 +578,10 @@ score_indels(
                 else
                 {
                     double maxScore(0);
-                    std::set<candidate_alignment>::const_iterator candAlignmentIter(candAlignments.begin()),candAlignmentIter_end(candAlignments.end());
+                    std::set<CandidateAlignment>::const_iterator candAlignmentIter(candAlignments.begin()),candAlignmentIter_end(candAlignments.end());
                     for (unsigned candAlignmentIndex(0); candAlignmentIter!=candAlignmentIter_end; ++candAlignmentIter,++candAlignmentIndex)
                     {
-                        const candidate_alignment& candAlignment(*candAlignmentIter);
+                        const CandidateAlignment& candAlignment(*candAlignmentIter);
                         const bool isMaxCandAlignment(&candAlignment == &maxCandAlignment);
                         if (isMaxCandAlignment) continue;
 
@@ -679,10 +679,10 @@ score_indels(
     //
     iks_map_t indelScoringInfo;
     {
-        std::set<candidate_alignment>::const_iterator candAlignmentIter(candAlignments.begin()),candAlignmentIter_end(candAlignments.end());
+        std::set<CandidateAlignment>::const_iterator candAlignmentIter(candAlignments.begin()),candAlignmentIter_end(candAlignments.end());
         for (unsigned candAlignmentIndex(0); candAlignmentIter!=candAlignmentIter_end; ++candAlignmentIter,++candAlignmentIndex)
         {
-            const candidate_alignment& candAlignment(*candAlignmentIter);
+            const CandidateAlignment& candAlignment(*candAlignmentIter);
             const bool isMaxCandAlignment(&candAlignment == &maxCandAlignment);
 
             if (isFilterCandAlignment[candAlignmentIndex])

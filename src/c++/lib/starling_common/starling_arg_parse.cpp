@@ -150,7 +150,7 @@ legacy_starling_arg_parse(
         }
         else if (ad.argstr[i]=="-max-indel-size")
         {
-            set_arg(i,ad,is_max_indel_size,opt.max_indel_size);
+            set_arg(i,ad,is_max_indel_size,opt.maxIndelSize);
         }
         else if (ad.argstr[i]=="-all-warnings")
         {

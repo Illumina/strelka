@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -32,7 +32,7 @@
 
 
 known_pos_range
-get_strict_alignment_range(const alignment& al)
+getStrictAlignmentRange(const alignment& al)
 {
     const pos_t asize(apath_ref_length(al.path));
 

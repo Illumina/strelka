@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "candidate_alignment.hh"
+#include "CandidateAlignment.hh"
 
 #include "starling_common/IndelBuffer.hh"
 #include "starling_common/starling_read.hh"
@@ -33,18 +33,18 @@
 /// \return Score of candidate alignment \p cal for read segment \p rseg
 ///
 /// The score is essentially `P(read | haplotype)`, where read=rseg and haplotype=ref+candidate alignment. This
-/// is 'essentially' instead of 'exactly' becuase Strelka's haplotype model is not fully carried forward to
+/// is 'essentially' instead of 'exactly' because Strelka's haplotype model is not fully carried forward to
 /// this point, so we have a collection of candidate indels and SNV positions rather than strict haplotype (set)
 /// that the read is scored against. It is also an approximation because we're only considering a single alignment
 /// of the read to the target haplotype.
 ///
 double
-score_candidate_alignment(
+scoreCandidateAlignment(
     const starling_base_options& opt,
     const IndelBuffer& indelBuffer,
     const unsigned sampleIndex,
     const CandidateSnvBuffer& candidateSnvBuffer,
-    const read_segment& rseg,
-    const candidate_alignment& cal,
+    const read_segment& readSegment,
+    const CandidateAlignment& cal,
     const reference_contig_segment& ref);
 

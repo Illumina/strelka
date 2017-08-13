@@ -186,7 +186,7 @@ scoreMatchSegment(const starling_base_options& opt,
 static
 IndelKey
 getMatchingIndelKey(
-    const candidate_alignment& cal,
+    const CandidateAlignment& cal,
     const pos_t ref_head_pos,
     const unsigned delete_length,
     const unsigned insert_length,
@@ -244,7 +244,7 @@ const std::string&
 getInsertSeq(
     const IndelKey& indelKey,
     const IndelBuffer& indelBuffer,
-    const candidate_alignment& cal)
+    const CandidateAlignment& cal)
 {
     if (indelKey.is_breakpoint())
     {
@@ -267,13 +267,13 @@ getInsertSeq(
 
 
 double
-score_candidate_alignment(
+scoreCandidateAlignment(
     const starling_base_options& opt,
     const IndelBuffer& indelBuffer,
     const unsigned sampleIndex,
     const CandidateSnvBuffer& candidateSnvBuffer,
-    const read_segment& rseg,
-    const candidate_alignment& cal,
+    const read_segment& readSegment,
+    const CandidateAlignment& cal,
     const reference_contig_segment& ref)
 {
     using namespace ALIGNPATH;
@@ -285,8 +285,8 @@ score_candidate_alignment(
 
     double alignmentLogProb(0.);
     const rc_segment_bam_seq ref_bseq(ref);
-    const bam_seq read_bseq(rseg.get_bam_read());
-    const uint8_t* qual(rseg.qual());
+    const bam_seq read_bseq(readSegment.get_bam_read());
+    const uint8_t* qual(readSegment.qual());
 
     const path_t& path(cal.al.path);
 

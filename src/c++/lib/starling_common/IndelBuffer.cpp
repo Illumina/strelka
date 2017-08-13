@@ -54,7 +54,7 @@ rangeIterator(
 {
     const IndelKey end_range_key(end_pos);
     const iterator end(_indelBuffer.lower_bound(end_range_key));
-    const IndelKey begin_range_key(begin_pos-static_cast<pos_t>(_opt.max_indel_size));
+    const IndelKey begin_range_key(begin_pos-static_cast<pos_t>(_opt.maxIndelSize));
     iterator begin(_indelBuffer.lower_bound(begin_range_key));
     for (; begin!=end; ++begin)
     {
@@ -81,7 +81,7 @@ rangeIterator(
 {
     const IndelKey end_range_key(end_pos);
     const const_iterator end(_indelBuffer.lower_bound(end_range_key));
-    const IndelKey begin_range_key(begin_pos-static_cast<pos_t>(_opt.max_indel_size));
+    const IndelKey begin_range_key(begin_pos-static_cast<pos_t>(_opt.maxIndelSize));
     const_iterator begin(_indelBuffer.lower_bound(begin_range_key));
     for (; begin!=end; ++begin)
     {

@@ -22,7 +22,7 @@
 ///
 
 
-#include "candidate_alignment.hh"
+#include "CandidateAlignment.hh"
 #include "normalizeAlignment.hh"
 #include "starling_pos_processor_indel_util.hh"
 #include "starling_read_filter_shared.hh"

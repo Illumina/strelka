@@ -33,7 +33,7 @@ bool
 alignment::
 is_overmax(const unsigned max_indel_size) const
 {
-    // test if any individual indel exceeds max_indel_size
+    // test if any individual indel exceeds maxIndelSize
     using namespace ALIGNPATH;
     const unsigned as(path.size());
     for (unsigned i(0); i<as; ++i)
@@ -58,7 +58,7 @@ operator<<(std::ostream& os,
     os << "ALIGNMENT pos: " << al.pos
        << " strand: " << (al.is_fwd_strand? 'F' : 'R')
        << " path: " << apath_to_cigar(al.path);
-    //    if(al.is_overmax(max_indel_size)) os << " overmax";
+    //    if(al.is_overmax(maxIndelSize)) os << " overmax";
     if (al.is_seq_swap()) os << " seq_swap";
     os << "\n";
 

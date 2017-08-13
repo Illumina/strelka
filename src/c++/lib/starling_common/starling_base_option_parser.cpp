@@ -197,7 +197,7 @@ write_starling_legacy_options(
        "                    - Turn off ambiguous read trimming after realignment.\n"
        " -max-indel-size    - Sets the maximum size for indels processed for indel genotype calling and realignment.\n"
        "                      Increasing this value should lead to an approx linear increase in memory consumption.\n"
-       "                      (default: " << default_opt.max_indel_size << ")\n"
+       "                      (default: " << default_opt.maxIndelSize << ")\n"
        "\n"
        " -all-warnings      - print all warnings (default: errors and low-frequency warnings only)\n"
        "\n"

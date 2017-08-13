@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -82,8 +82,8 @@ struct ref_map_type
     }
 #endif
 
-    map_t type;
-    pos_t pos;
+    map_t type; ///< State of the read alignment to the reference at this position
+    pos_t pos; ///< Reference position
 };
 
 }
@@ -164,8 +164,9 @@ get_alignment_ref_map(
 
 static
 void
-mark_ref_map_conflicts(const alignment& al,
-                       std::vector<ref_map_type>& ref_map)
+mark_ref_map_conflicts(
+    const alignment& al,
+    std::vector<ref_map_type>& ref_map)
 {
     using namespace ALIGNPATH;
 
@@ -253,13 +254,14 @@ extend_or_add_sc(alignment& al,
 
 
 
-/// transform an alignment to contain the specified leading and trailing soft-clip lengths
+/// \breif Transform an alignment to contain the specified leading and trailing soft-clip lengths
 ///
 static
 void
-soft_clip_alignment(alignment& al,
-                    const unsigned leading_clip,
-                    const unsigned trailing_clip)
+soft_clip_alignment(
+    alignment& al,
+    const unsigned leading_clip,
+    const unsigned trailing_clip)
 {
     using namespace ALIGNPATH;
 
@@ -340,17 +342,17 @@ soft_clip_alignment(alignment& al,
 
 
 void
-get_clipped_alignment_from_cal_pool(
-    const cal_pool_t& max_cal_pool,
-    const unsigned best_cal_id,
-    alignment& al)
+getClippedAlignmentFromTopAlignmentPool(
+    const cal_pool_t& topAlignmentPtrs,
+    const unsigned bestAlignmentIndex,
+    alignment& clippedAlignment)
 {
-    const unsigned n_cal(max_cal_pool.size());
-    assert(n_cal>0);
-    assert(best_cal_id<n_cal);
+    const unsigned topAlignmentCount(topAlignmentPtrs.size());
+    assert(topAlignmentCount>0);
+    assert(bestAlignmentIndex<topAlignmentCount);
 
-    al=max_cal_pool[best_cal_id]->al;
-    if (n_cal==1) return;
+    clippedAlignment=topAlignmentPtrs[bestAlignmentIndex]->al;
+    if (topAlignmentCount==1) return;
 
     // create read_pos->ref_pos map for first alignment -- start
     // marking off the conflict positions in other alignments:
@@ -359,17 +361,17 @@ get_clipped_alignment_from_cal_pool(
     // vector index is read position
     // vector value contains ref position + some type info
     std::vector<ref_map_type> ref_map;
-    get_alignment_ref_map(al,ref_map);
+    get_alignment_ref_map(clippedAlignment, ref_map);
 #ifdef DEBUG_ALIGN_CLIP
     std::cerr << "VARMIT: initial ref_map:\n";
     dump_ref_map(ref_map,std::cerr);
 #endif
-    for (unsigned i(0); i<n_cal; ++i)
+    for (unsigned alignmentIndex(0); alignmentIndex<topAlignmentCount; ++alignmentIndex)
     {
-        if (i==best_cal_id) continue;
-        mark_ref_map_conflicts(max_cal_pool[i]->al,ref_map);
+        if (alignmentIndex==bestAlignmentIndex) continue;
+        mark_ref_map_conflicts(topAlignmentPtrs[alignmentIndex]->al, ref_map);
 #ifdef DEBUG_ALIGN_CLIP
-        std::cerr << "VARMIT: modified ref_map round " << i << ":\n";
+        std::cerr << "VARMIT: modified ref_map round " << alignmentIndex << ":\n";
         dump_ref_map(ref_map,std::cerr);
 #endif
     }
@@ -409,14 +411,14 @@ get_clipped_alignment_from_cal_pool(
 
     if (leading_clip>=trailing_clip)
     {
-        al.clear();
+        clippedAlignment.clear();
         return;
     }
 
     if ((leading_clip!=0) ||
         (trailing_clip!=read_size))
     {
-        soft_clip_alignment(al,leading_clip,trailing_clip);
+        soft_clip_alignment(clippedAlignment,leading_clip,trailing_clip);
     }
 }
 

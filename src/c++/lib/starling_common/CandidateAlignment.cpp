@@ -17,11 +17,7 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
-#include "candidate_alignment.hh"
+#include "CandidateAlignment.hh"
 
 #include "blt_util/align_path_util.hh"
 
@@ -34,7 +30,7 @@
 std::ostream&
 operator<<(
     std::ostream& os,
-    const candidate_alignment& cal)
+    const CandidateAlignment& cal)
 {
     os << "CANDIDATE_ALIGNMENT: " << cal.al;
     os << "CANDIDATE_ALIGNMENT_LEAD: " << cal.leading_indel_key;
@@ -59,11 +55,9 @@ bam_seq_to_str(
 
 
 
-// get the keys of the indels present in the candidate alignment
-//
 void
-get_alignment_indels(
-    const candidate_alignment& cal,
+getAlignmentIndels(
+    const CandidateAlignment& cal,
     const read_segment& rseg,
     const unsigned max_indel_size,
     indel_set_t& indels)

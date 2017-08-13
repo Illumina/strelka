@@ -25,7 +25,7 @@
 
 
 // Breakpoints refer to both insertions and deletions which exceed
-// the method's max_indel_size. In this case we try to account for the
+// the method's maxIndelSize. In this case we try to account for the
 // breakpoint during realignment (to improve snp-calling), but do not
 // attempt to call the indel using the same methods used for small indels.
 //
