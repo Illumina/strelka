@@ -184,7 +184,7 @@ calculateScoringFeatures(
 
     {
         const int from_ref_qphred((rs.ntype == NTYPE::REF) ? rs.from_ntype_qphred : 0 );
-        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::SomaticIndelQualityGivenHomRefGermlineGenotype, from_ref_qphred);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::SomaticIndelQualityAndHomRefGermlineGenotype, from_ref_qphred);
     }
 
     const double tumorSampleReadPosRankSum(siInfo.tisri[0].readpos_ranksum.get_z_stat());

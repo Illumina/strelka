@@ -189,7 +189,7 @@ get_scoring_features(
 
     {
         const int from_ref_qphred((rs.ntype == NTYPE::REF) ? rs.from_ntype_qphred : 0 );
-        smod.features.set(SOMATIC_SNV_SCORING_FEATURES::SomaticSNVQualityGivenHomRefGermlineGenotype, from_ref_qphred);
+        smod.features.set(SOMATIC_SNV_SCORING_FEATURES::SomaticSNVQualityAndHomRefGermlineGenotype, from_ref_qphred);
     }
 
     static const bool isNormalSample(true);

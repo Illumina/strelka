@@ -94,7 +94,7 @@ def main():
 
         data_remaining = dataset
 
-        if f == "SomaticSNVQualityGivenHomRefGermlineGenotype":
+        if f == "SomaticSNVQualityAndHomRefGermlineGenotype":
             strelka_f = (dataset["NT"] == "ref") & \
                         (dataset["N_FDP_RATE"] < 0.4) & \
                         (dataset["T_FDP_RATE"] < 0.4) & \
@@ -108,7 +108,7 @@ def main():
             strelka_f_fps = strelka_def_f[
                 strelka_def_f["tag"] == "FP"].shape[0]
             data_remaining = dataset[True == strelka_f]
-        elif f == "SomaticIndelQualityGivenHomRefGermlineGenotype":
+        elif f == "SomaticIndelQualityAndHomRefGermlineGenotype":
             strelka_f_ref = (dataset["NT"] == "ref")
             strelka_f_ihpol = (dataset["InterruptedHomopolymerLength"] <= 14)
             strelka_f_bcnoise = (dataset["bcn"] < 0.3)

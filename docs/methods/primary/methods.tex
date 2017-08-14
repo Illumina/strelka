@@ -15,6 +15,8 @@
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
 
+% GLOBALLY change all typewriter fonts to enable hyphenation:
+\DeclareFontFamily{\encodingdefault}{\ttdefault}{\hyphenchar\font=`\-}
 
 \title{'Methods for Strelka Small Variant Caller'}
 
@@ -444,15 +446,22 @@ Here $D$ refers to the sequencing data from both samples. The likelihood term ab
 
 \noindent where $F_t$, $F_n$ refer to tumor and normal allele frequencies and $D_t$ and $D_n$ indicate tumor and normal sample data. In the above equation, the sample-specific allele frequency likelihoods $P(D_t \mid F_t)$ and $P(D_n \mid F_n)$ are as described in Section \ref{sec:shared_lik}. The genotype prior probability $P(G_t, G_n)$ and the joint allele-frequency distribution $P(F_t,F_n \mid G_t,G_n)$ are detailed below.
 
-The posterior probability over tumor and normal genotypes $P(G_t,G_n \mid D)$ is used to compute the {\em somatic variant probability} (QSS for SNVs and QSI for indels).
+The posterior probability over tumor and normal genotypes $P(G_t,G_n \mid D)$ is used to compute the {\em somatic variant probability} (reported in the output as \texttt{QSS} for SNVs and \texttt{QSI} for indels).
 
 \begin{equation}
 \label{eqn:somVarProb}
 	P(G_t = \texttt{som} \mid D) = \sum_{G_n \in \{ \texttt{ref}, \texttt{het}, \texttt{hom} \}}{P(G_t=\texttt{som},G_n \mid D)}.
 \end{equation}
 
-As previously discussed, this somatic variant probability is not ideal for detecting variants of interest because it does not distinguish somatic variant types. We therefore associate somatic calls with the joint probability of somatic variation and the maximum likelihood normal sample genotype: $$\max_{G_n} P(G_t = \texttt{som}, G_n \mid D).$$ The Strelka quality scores discussed in this section express this value, which we name QSS\_NT for SNVs and QSI\_NT for indels. In section \ref{sec:EVS}, we define the SomaticSNVAndHomRefGermlineGenotypeQuality and SomaticIndelAndHomRefGermlineGenotypeQuality features used for empirical variant scoring and filtering. These features are identical to QSS\_NT and QSI\_NT when the normal genotype has been called as homref, but are set to zero otherwise -- equivalent to approximating $P(D_n \mid G_n = \texttt{ref})$ as $0$ whenever it is below the calling threshold.
-% TODO: check technical correctness of above description and possibly rephrase
+As previously discussed, this somatic variant probability is not ideal for detecting variants of interest because it does not distinguish somatic variant types. We therefore associate somatic calls with the joint probability of somatic variation and the maximum likelihood normal sample genotype:
+
+\begin{equation*}
+\max_{G_n} P(G_t = \texttt{som}, G_n \mid D)
+\end{equation*}
+
+The Strelka quality scores discussed in this section express this value, which we report in the output as \texttt{QSS\_NT} for SNVs and \texttt{QSI\_NT} for indels. In section \ref{sec:ScoringFeatures}, we define the \texttt{SomaticSNVQualityAndHomRefGermlineGenotype} and \texttt{SomaticIndelQualityAndHomRefGermlineGenotype} features used for empirical variant scoring and filtering. These features are identical to \texttt{QSS\_NT} and \texttt{QSI\_NT} when the normal genotype has been called as homref, but are set to zero otherwise -- equivalent to approximating $P(D_n \mid G_n = \texttt{ref})$ as $0$ whenever it is below the calling threshold.
+
+% TODO: check technical correctness of above description wrt tier1/tier2 handling, and possibly rephrase
 
 \subsubsection{Tiered observations}
 \label{sec:somatic_tiers}
@@ -527,11 +536,11 @@ The continuous allele frequencies modeled above are efficiently computed by divi
 
 \subsubsection{Somatic callability track}
 
-The somatic variant calling workflow optionally provides a somatic callability track expressing, for each reference position, whether there is sufficient sequencing evidence to confidently assert either (1) the presence of a somatic SNV or (2) the absence of a somatic SNV with somatic variant frequency of 10\% or higher. Evidence for the presence of a somatic SNV is quantified by the QSS score described above in equation \ref{eqn:somVarProb}. Evidence for the absence of a somatic SNV is quantified by the \emph{non-somatic SNV probability} (or the equivalent phred-scaled score, NQSS) described below. A reference position is marked as "callable" in the somatic callability track if QSS $\ge$ 15 or NQSS $\ge$ 15.
+The somatic variant calling workflow optionally provides a somatic callability track expressing, for each reference position, whether there is sufficient sequencing evidence to confidently assert either (1) the presence of a somatic SNV or (2) the absence of a somatic SNV with somatic variant frequency of 10\% or higher. Evidence for the presence of a somatic SNV is quantified by the \texttt{QSS} score described above in equation \ref{eqn:somVarProb}. Evidence for the absence of a somatic SNV is quantified by the \emph{non-somatic SNV probability} (or the equivalent phred-scaled score, \texttt{NQSS}) described below. A reference position is marked as "callable" in the somatic callability track if \texttt{QSS} $\ge$ 15 or \texttt{NQSS} $\ge$ 15.
 
-The NQSS score is computed from the same sample-specific allele frequency likelihoods, $P(D_t \mid F_t)$ and $P(D_n \mid F_n)$, used to compute QSS; however, the genotype prior probability $P(G_t, G_n)$ and the joint allele-frequency distributions $P(F_t,F_n \mid G_t,G_n)$ are adjusted as described below.
+The \texttt{NQSS} score is computed from the same sample-specific allele frequency likelihoods, $P(D_t \mid F_t)$ and $P(D_n \mid F_n)$, used to compute \texttt{QSS}; however, the genotype prior probability $P(G_t, G_n)$ and the joint allele-frequency distributions $P(F_t,F_n \mid G_t,G_n)$ are adjusted as described below.
 
-The diploid genotype prior used for the NQSS score is
+The diploid genotype prior used for the \texttt{NQSS} score is
 
 \begin{equation*}
 P(G_n\mid \text{NQSS})=
@@ -542,7 +551,7 @@ P(G_n\mid \text{NQSS})=
 \end{cases}
 \end{equation*}
 
-The prior distribution over somatic genotypes is uniform, thus the full genotype prior used for the NQSS score is
+The prior distribution over somatic genotypes is uniform, thus the full genotype prior used for the \texttt{NQSS} score is
 
 \begin{equation*}
 P(G_t, G_n \mid \text{NQSS}) =
@@ -553,7 +562,7 @@ P(G_n \mid \text{NQSS})/2 & \text{if } G_t = \texttt{som}. \\
 \end{equation*}
 
 
-The joint allele-frequency distribution used for the NQSS score is
+The joint allele-frequency distribution used for the \texttt{NQSS} score is
 
 \begin{equation*}
 P(F_t, F_n \mid G_t = \texttt{nonsom}, G_n, \text{NQSS})=
@@ -681,7 +690,6 @@ The alternate and total allele counts for SNVs represent the total counts of non
 The alternate allele count for indels is the number of reads supporting the indel allele in question versus all other alleles at the locus with a posterior probability of at least $x_{min}$. The total count reflects the number of reads supporting any allele at the locus with posterior probability of at least $x_{min}$. The value used for $x_{min}$ is 0.51.
 
 \section{Filtration and Empirical Scoring}
-\label{sec:EVS}
 
 The variant calling models (both germline and somatic) provide useful representations of the sequencing data at putative variant loci; however, there is additional information not used by the models which is predictive of call accuracy. These may be metrics such as the number of reads or alleles which are filtered out of the call quality computation, the quality of alignments in the region around the putative variant or various allele/strand/quality biases indicative of assay or mapping artifacts. As a final step in the variant calling process, such additional information is enumerated as a set of predictive features and used to improve call precision for a given recall level beyond what can be achieved from the core variant calling model alone. These additional features are employed in the final step of variant calling in one of two ways:
 
@@ -694,6 +702,7 @@ The variant calling models (both germline and somatic) provide useful representa
 
 
 \subsection{EVS model}
+\label{sec:EVSModel}
 
 Empirical variant scoring in Strelka uses pre-trained random forest models taking EVS features as input to produce the probability of an erroneous variant call. For each of germline, RNA-seq, and somatic variant calling, there are two separate trained random forest models and feature sets for the two high-level variant categories, SNVs and indels. Strelka is intended to run with models which have been pre-trained on a combined training data set representing a wide variety of sample-prep and sequencing assays. Note that although scripts are provided to recreate the EVS model training procedure, there is no intention for the models to be retrained for each input sequencing dataset to be analyzed (this is in contrast to dynamic re-scoring systems such as the GATK VQSR procedure \cite{depristo2011}).
 
@@ -776,7 +785,7 @@ Features used in each model are listed here and definitions are provided further
 
     \item Somatic SNV features:
     \begin{itemize}
-        \item \texttt{SomaticSNVQualityGivenHomRefGermlineGenotype}
+        \item \texttt{SomaticSNVQualityAndHomRefGermlineGenotype}
         \item \texttt{NormalSampleRelativeTotalLocusDepth}
         \item \texttt{TumorSampleAltAlleleFraction}
         \item \texttt{RMSMappingQuality}
@@ -789,7 +798,7 @@ Features used in each model are listed here and definitions are provided further
     \end{itemize}
     \item Somatic Indel features:
     \begin{itemize}
-        \item \texttt{SomaticIndelQualityGivenHomRefGermlineGenotype}
+        \item \texttt{SomaticIndelQualityAndHomRefGermlineGenotype}
         \item \texttt{TumorSampleReadPosRankSum}
         \item \texttt{TumorSampleLogSymmetricStrandOddsRatio}
         \item \texttt{RepeatUnitLength}
@@ -833,19 +842,20 @@ The LowDepth filter mentioned above is applied to all germline and somatic calls
     \end{itemize}
     \item SNV-specific filter conditions:
     \begin{itemize}
-        \item \texttt{SomaticSNVQualityGivenHomRefGermlineGenotype} ~ SNV is filtered if this value is less than 15
+        \item \texttt{SomaticSNVQualityAndHomRefGermlineGenotype} ~ SNV is filtered if this value is less than 15
         \item \texttt{SiteFilteredBasecallFrac} ~ SNV is filtered if this value is greater than or equal to 0.4
         \item \texttt{SpanningDeletionFraction} ~ SNV is filtered if this value is greater than 0.75
     \end{itemize}
     \item Indel-specific filter conditions:
     \begin{itemize}
-        \item \texttt{SomaticIndelQualityGivenHomRefGermlineGenotype} ~ Indel is filtered if this value is less than 40
+        \item \texttt{SomaticIndelQualityAndHomRefGermlineGenotype} ~ Indel is filtered if this value is less than 40
         \item \texttt{IndelWindowFilteredBasecallFrac} ~ Indel is filtered if this value is greater than or equal to 0.3
     \end{itemize}
 \end{itemize}
 
 
 \subsection{EVS/hard-filter feature descriptions}
+\label{sec:ScoringFeatures}
 
 \subsubsection{Shared features}
 \begin{itemize}
@@ -897,7 +907,7 @@ The LowDepth filter mentioned above is applied to all germline and somatic calls
 
     \item \texttt{SamplePrimaryAltAlleleDepth} ~ The confident observation count of the best-supported non-reference allele at the variant locus.
 
-    \item \texttt{VariantAlleleQuality} ~ The model-based variant quality value reflecting confidence that the called variant is present in at least one sample, regardless of genotype. This feature matches QUAL in the VCF spec
+    \item \texttt{VariantAlleleQuality} ~ The model-based variant quality value reflecting confidence that the called variant is present in at least one sample, regardless of genotype. This feature matches \texttt{QUAL} in the VCF spec
 
     \item \texttt{SampleMeanDistanceFromReadEdge} ~ For all non-reference basecall observations in one sample at a candidate SNV site, report the mean distance to the closest edge of each alternate basecall's read. Distance is measured in read-coordinates, zero-indexed, and is allowed to have a maximum value of 20.
 
@@ -916,7 +926,7 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
 
 \begin{itemize}
 
-    \item \texttt{SomaticSNVQualityGivenHomRefGermlineGenotype} ~ Posterior probability of a somatic SNV conditioned on a homozygous reference germline genotype. When INFO/NT is "ref", this feature matches INFO/QSS\_NT in the VCF output.
+    \item \texttt{SomaticSNVQualityAndHomRefGermlineGenotype} ~ Posterior probability of a somatic SNV conditioned on a homozygous reference germline genotype. When \texttt{INFO/NT} is "ref", this feature matches \texttt{INFO/QSS\_NT} in the VCF output.
 
     \item \texttt{NormalSampleRelativeTotalLocusDepth} ~ This feature matches the germline \texttt{RelativeTotalLocusDepth} feature, except that it reflects the depth of only the matched normal sample.
 
@@ -937,7 +947,7 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
 
     \item \texttt{TumorSampleFilteredDepthFraction} ~ The fraction of reads that were filtered out of the tumor sample before calling the variant locus.
 
-    \item \texttt{SomaticIndelQualityGivenHomRefGermlineGenotype} ~ Posterior probability of a somatic indel conditioned on a homozygous reference germline genotype. When INFO/NT is "ref", this feature matches INFO/QSI\_NT in the VCF output.
+    \item \texttt{SomaticIndelQualityAndHomRefGermlineGenotype} ~ Posterior probability of a somatic indel conditioned on a homozygous reference germline genotype. When \texttt{INFO/NT} is "ref", this feature matches \texttt{INFO/QSI\_NT} in the VCF output.
 
     \item \texttt{TumorSampleLogSymmetricStrandOddsRatio} ~ Log of the symmetric strand odds ratio of allele counts $log{\left( \frac{r_{fwd} a_{rev}} {r_{rev} a_{fwd}} + \frac{r_{rev} a_{fwd}} {r_{fwd} a_{rev}}\right)}$, given reference $(r_{fwd},r_{rev})$ and non-reference $(a_{fwd},a_{rev})$ confident counts of the tumor sample's tier1 observations (see: ``\nameref{sec:somatic_tiers}'').
 

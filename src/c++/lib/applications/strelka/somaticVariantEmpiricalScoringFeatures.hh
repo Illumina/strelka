@@ -51,7 +51,7 @@ struct SOMATIC_SNV_SCORING_FEATURES : public FeatureSet
      */
     enum index_t
     {
-        SomaticSNVQualityGivenHomRefGermlineGenotype,
+        SomaticSNVQualityAndHomRefGermlineGenotype,
         NormalSampleRelativeTotalLocusDepth,
         TumorSampleAltAlleleFraction,
         RMSMappingQuality,
@@ -70,8 +70,8 @@ struct SOMATIC_SNV_SCORING_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-        case SomaticSNVQualityGivenHomRefGermlineGenotype:
-            return "SomaticSNVQualityGivenHomRefGermlineGenotype";
+        case SomaticSNVQualityAndHomRefGermlineGenotype:
+            return "SomaticSNVQualityAndHomRefGermlineGenotype";
         case TumorSampleAltAlleleFraction:
             return "TumorSampleAltAlleleFraction";
         case RMSMappingQuality:
@@ -212,7 +212,7 @@ struct SOMATIC_INDEL_SCORING_FEATURES : public FeatureSet
      */
     enum index_t
     {
-        SomaticIndelQualityGivenHomRefGermlineGenotype,
+        SomaticIndelQualityAndHomRefGermlineGenotype,
         TumorSampleReadPosRankSum,
         TumorSampleLogSymmetricStrandOddsRatio,
         IndelRepeatCount,
@@ -237,8 +237,8 @@ struct SOMATIC_INDEL_SCORING_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-        case SomaticIndelQualityGivenHomRefGermlineGenotype:
-            return "SomaticIndelQualityGivenHomRefGermlineGenotype";
+        case SomaticIndelQualityAndHomRefGermlineGenotype:
+            return "SomaticIndelQualityAndHomRefGermlineGenotype";
         case TumorSampleReadPosRankSum:
             return "TumorSampleReadPosRankSum";
         case TumorSampleLogSymmetricStrandOddsRatio:
