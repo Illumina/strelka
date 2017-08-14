@@ -451,8 +451,8 @@ The posterior probability over tumor and normal genotypes $P(G_t,G_n \mid D)$ is
 	P(G_t = \texttt{som} \mid D) = \sum_{G_n \in \{ \texttt{ref}, \texttt{het}, \texttt{hom} \}}{P(G_t=\texttt{som},G_n \mid D)}.
 \end{equation}
 
-As previously discussed, this somatic variant probability is not ideal for detecting variants of interest because it does not distinguish somatic variant types. We therefore associate somatic calls with the probability of somatic variation {\em and} the normal sample genotype being $\texttt{ref}$ (QSS\_NT for SNVs and QSI\_NT for indels), i.e. $P(G_t = \texttt{som}, G_n = \texttt{ref} \mid D)$. In practice, this is done by setting the scores to zero whenever a non-reference genotype is called in the normal sample, which is equivalent to approximating $P(D_n \mid G_n = \texttt{ref})$ as $0$ whenever it is below the calling threshold. This approximation is applied to the quality score that is passed to the empirical scoring sep and also to the final output after empirical scoring.
-
+As previously discussed, this somatic variant probability is not ideal for detecting variants of interest because it does not distinguish somatic variant types. We therefore associate somatic calls with the joint probability of somatic variation and the maximum likelihood normal sample genotype: $$\max_{G_n} P(G_t = \texttt{som}, G_n \mid D).$$ The Strelka quality scores discussed in this section express this value, which we name QSS\_NT for SNVs and QSI\_NT for indels. In section \ref{sec:EVS}, we define the SomaticSNVAndHomRefGermlineGenotypeQuality and SomaticIndelAndHomRefGermlineGenotypeQuality features used for empirical variant scoring and filtering. These features are identical to QSS\_NT and QSI\_NT when the normal genotype has been called as homref, but are set to zero otherwise -- equivalent to approximating $P(D_n \mid G_n = \texttt{ref})$ as $0$ whenever it is below the calling threshold.
+% TODO: check technical correctness of above description and possibly rephrase
 
 \subsubsection{Tiered observations}
 \label{sec:somatic_tiers}
@@ -681,6 +681,7 @@ The alternate and total allele counts for SNVs represent the total counts of non
 The alternate allele count for indels is the number of reads supporting the indel allele in question versus all other alleles at the locus with a posterior probability of at least $x_{min}$. The total count reflects the number of reads supporting any allele at the locus with posterior probability of at least $x_{min}$. The value used for $x_{min}$ is 0.51.
 
 \section{Filtration and Empirical Scoring}
+\label{sec:EVS}
 
 The variant calling models (both germline and somatic) provide useful representations of the sequencing data at putative variant loci; however, there is additional information not used by the models which is predictive of call accuracy. These may be metrics such as the number of reads or alleles which are filtered out of the call quality computation, the quality of alignments in the region around the putative variant or various allele/strand/quality biases indicative of assay or mapping artifacts. As a final step in the variant calling process, such additional information is enumerated as a set of predictive features and used to improve call precision for a given recall level beyond what can be achieved from the core variant calling model alone. These additional features are employed in the final step of variant calling in one of two ways:
 
