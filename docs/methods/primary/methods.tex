@@ -25,19 +25,38 @@
 \DeclareFontFamily{\encodingdefault}{\ttdefault}{\hyphenchar\font=`\-}
 
 
-\title{'Methods for Strelka Small Variant Caller'}
+%---------------------------------------------------------------------
+% Custom commands and environments:
+%
 
+% Environment to enable raggedright for a single paragraph
+\newenvironment{raggedParagraph}[1]
+{
+    \begin{paragraph} {#1}
+        \raggedright
+    }
+    { 
+    \end{paragraph}
+}
 
 % simple scientific notation:
 \newcommand{\e}[1]{\ensuremath{\times 10^{#1}}}
+
+
+
+
+%---------------------------------------------------------------------
+
+
+\title{'Methods for Strelka Small Variant Caller'}
+
+
 
 \begin{document}
 
 \maketitle
 
 \tableofcontents
-
-
 
 \section{Purpose}
 
@@ -223,7 +242,7 @@ Following all preliminary parameter estimation tasks, the primary variant callin
 
 \paragraph{Segment boundaries} When a chromosome is divided into multiple segments, it is important that variant calling results across segment boundaries are identical to the results of calling the entire chromosome using a single variant calling process. To ensure that this is the case, in each variant calling process the targeted genome segment is expanded by a fixed size to create small border regions preceding and following the original target region. In these border regions the variant caller completes all parts of the variant calling operation except for writing any output. In this way regional operations such as haplotype modeling will be applied consistently across segment boundaries. The region expansion size is 100 bases plus the variant caller's maximum indel size (50). In the case of germline calling, the expansion size is further increased by the haplotype model's maximum active region size (250).
 
-\section{Variant Discovery}
+\section{Variant discovery and evidence filtration}
 
 \subsection{Input Read Processing}
 
@@ -284,7 +303,7 @@ The first noise reduction step identifies and filters candidates based on the ex
 If there is more than one remaining haplotype, an additional filtration step is applied to reduce candidates produced by phasing noise in the sequencing process across a homopolymer. The test assumes that the candidate haplotype with the highest read support, $h_1$ is true, and identifies whether the candidate haplotype with next highest level of read support, $h_2$ is a phasing noise artifact introduced while reading $h_1$. The conditions which trigger this filter are as follows (1) $h_1$ and $h_2$ are the same length with only one mismatching basecall (2) all reads supporting $h_2$ are observed on only one strand and (3) the basecall mismatch between $h_1$ and $h_2$ occurs at one of the ends of the sequence, and causes $h_2$ to contain an uninterrupted homopolymer at least 11 bases long. If these conditions are met, all haplotype candidates besides $h_1$ are filtered from further consideration.
 
 \subsubsection{Primitive allele discovery}
-After filtration, the remaining candidate haplotypes are aligned to the reference using a global aligner that employs an affine gap penalty function with the following parameters: match score 1, mismatch penalty 4, gap opening penalty 5, and gap extension penalty 1. From the alignment, primitive alleles (SNVs and indels of size 50 and smaller) are identified and marked {\em discovered} in an active region. These discovered primitive alleles are used to improve SNV and indel calling by (1) relaxing the mismatch density filter (described in \ref{sec:BasecallFiltrationFromContext}), (2) improving indel candidacy (described in \ref{sec:IndelCandidacy}), and (3) phasing SNVs and indels within the same active region (described in \ref{sec:ReadBackedPhasing}).
+After filtration, the remaining candidate haplotypes are aligned to the reference using a global aligner that employs an affine gap penalty function with the following parameters: match score 1, mismatch penalty 4, gap opening penalty 5, and gap extension penalty 1. From the alignment, primitive alleles (SNVs and indels of size 50 and smaller) are identified and marked {\em discovered} in an active region. These discovered primitive alleles are used to improve SNV and indel calling by (1) relaxing the mismatch density filter (described in \ref{sec:MismatchDensityFilter}), (2) improving indel candidacy (described in \ref{sec:IndelCandidacy}), and (3) phasing SNVs and indels within the same active region (described in \ref{sec:ReadBackedPhasing}).
 
 \subsection{Indel candidacy}
 \label{sec:IndelCandidacy}
@@ -309,12 +328,11 @@ p_{error} = P(X >= n_i \mid N, e_l) = \sum_{x = n_i}^{N} P(x \mid N, e_l)
 The current indel candidacy test is suspected to be a poor fit to indel error behavior in the data. This particular combination of model, input parameters and rejection thresholds empirically functions reasonably well, but there is poor theoretical justification for all three. It would be particularly beneficial to revamp this model to be compatible with adaptive indel estimation in future work.
 
 
-\paragraph{Implementation details}
-{\raggedright
+\begin{raggedParagraph}{Implementation details}
 
 The indel candidacy test is contained in class \verb|IndelBuffer|, and triggered by its predicate method \verb|is_candidate_indel|. The above described candidacy logic is primarily implemented in \verb|isCandidateIndelImplTest|. To achieve a practical runtime the above described binomial p-value test is implemented using a cached Poisson approximation to the binomial, as implemented by helper class \verb|min_count_binom_gte_cache|.
 
-} % raggedright
+\end{raggedParagraph}
 
 \fi % IncludeDevelopmentDetail
 
@@ -324,18 +342,18 @@ The indel candidacy test is contained in class \verb|IndelBuffer|, and triggered
 
 Following the discovery of candidate alleles (optionally including haplotype modeling), reads are realigned in the context of these candidates. This realignment step has two primary functions, the first is to generate a set of alignments which represent the most likely alignment for the read when constrained to various alternate alleles at each locus. Such alignments are used to assess the read's relative support for different indel alleles as part of downstream indel calling models (more detail on this usage is described in \ref{sec:PerReadLikelihood}). The second function is to find a single \textit{representative} alignment to using for SNV calling. The representative alignment is optimized for a number of criteria such that it is often, but not always, the most probable alignment.
 
-\paragraph{Alignment search}
+\subsubsection{Alignment search}
 The alignment search used during the realignment step is based on the assumption that at least one segment of each input read alignment is already correct, and thus can be used to seed an improved alignment based on a sparse set of intersecting candidate indels. The search proceeds as follows. Each read has a starting alignment provided by some input alignment file, as well as a trial indel set. This trial indel set contains intersecting candidate indels, in addition to any non-candidate indels already present in the starting alignment. If the read does not intersect any candidate indels, no realignment is performed, and the search procedure returns only the input read's starting alignment.
 
 If the read does intersect at least one candidate indel, a set of alignments is built from the starting alignment by recursively toggling indels from the trial set. Each indel is toggled from an existing parent alignment to create two child alignments where the previous alignment is preserved on the left or right side of the toggled indel. New candidate indels are added to the trial set when intersected by child alignments extending beyond the range of its parent. Note that for RNA input, the above procedure will be executed independently for each exon.
 
 This above search process is efficient for the case where a read intersects only one or two candidate indels. Due to exponential complexity with the trial set size, heuristics are used to curtail the alignment search in regions with high candidate indel density. Specifically, the search recursion depth is limited to no more than 5, and will be set lower if required such that the number of enumerated alignments does not exceed 5000.
 
-\paragraph{Soft-clipped segment handling}
+\subsubsection{Soft-clipped segment handling}
 
 By default, prior to a read being realigned, any soft-clipped segment on the leading and trailing edge of the starting alignment is unrolled to force the segment to be aligned to the reference. This treatment assumes that most soft-clipping reflects an indel which has not yet been included in the read's starting alignment.
 
-\paragraph{Creation of a representative alignment}
+\subsubsection{Creation of a representative alignment}
 
 The representative read alignment used for SNV calling is usually the most probable alignment found during the above alignment search, but some allowance is made for an alignment which is nearly the most likely yet more parsimonious. This procedure considers the likelihood of each alignment as described in section \ref{sec:PerReadLikelihood}, and any alignment with a likelihood within a factor of 10 of the most likely is eligible to be representative. Within this eligible pool of alignment candidates, the representative alignment is chosen if it has the (1) fewest indels, (2) fewest non-candidate indels, (3) lowest total insertion length, or (4) lowest total deletion length. The criteria are applied in the order given and the first to produce a representive is used.
 
@@ -349,24 +367,63 @@ For RNA analysis the above procedure is slightly adjusted. First, the eligible p
 
 The unconventional alignment search method used here has favorable runtime when its input assumptions are approximately true, however this comes with several costs. (1) The complexity of the search method is exponential with the number of indels intersecting the alignment. As discussed about this is mitigated with heuristics but remains a problematic feature (2) Assumes that the likelihood of a read for a given haplotype will be approximated by a single most likely alignment -- pairHMM and other alternative approaches could improve on this approximation with a more precise approach (3) The method introduces substantial additional code complexity compared to a more standard method.
 
-\paragraph{Implementation details}
-{\raggedright
+\begin{raggedParagraph}{Implementation details}
 
 Read realignment is executed once for each read, starting from the entry-point function \verb|realignAndScoreRead|, from which all alignments are enumerated for the read in the private function \verb|getCandidateAlignments|. Representative alignment selection and soft-clipping is implemented by the function \verb|scoreCandidateAlignments|.
 
-} % raggedright
+\end{raggedParagraph}
 
 \fi % IncludeDevelopmentDetail
 
+\subsection{Basecall quality adjustment and filtration}
 
-\subsection{Basecall filtration from local read context}
-\label{sec:BasecallFiltrationFromContext}
+\subsubsection{Mapping error adjustment}
 
-{\tt TODO: description of the mismatch density filter (MMDF)}
-%Strelka filters out fractions of reads, where the densities of mismatches and indels are high.
+For both germline and somatic SNV models, basecall error probabilities are adjusted to reflect the joint probability of sequencing and read mapping error. The adjusted basecall error probability is
 
-If short haplotyping is enabled, SNVs discovered in active regions are used to relax the MMDF. For this, the active region detector records all the SNVs discovered in active regions separately for each sample. When the mismatch density is calculated for a read, any mismatch at position matching a candidate SNV is exempted from measuring the mismatch density.
+\begin{equation*}
+e_{b^{\prime}} = (1-e_m)e_b + e_m 3/4
+\end{equation*}
 
+where $e_b$ is the basecall error probability estimated by the sequencer and $e_m$ is the read mapping error probability.
+
+
+\subsubsection{Basecall filtration}
+
+Following read realignment and mapping error adjustment, additional basecall filtration steps are conducted for SNV-calling and depth estimation. Note that these steps do not impact indel calling. The filtration steps are:
+
+\begin{enumerate}
+    \item In the germline SNV model, basecalls with mapping-adjusted qualities of 17 or less are filtered out. No such filtration is used by the somatic SNV model. 
+    \item Any ambiguous basecall is filtered out. Any contiguous trailing sequence of ambiguous basecalls on a read cause the end of the read to be effectively trimmed off for variant calling purposes. For the purpose of this filter, an ambiguous basecall is any which indicates more than one base.
+    \item The \textit{mismatch density filter} (described below) is applied to a basecall if the local read context is highly diverged form the reference or a local haplotype candidate.
+\end{enumerate}
+
+These filtered base calls are not used for SNV calling, but derivative terms such as the filtered basecall fraction may be used in downstream variant call filtration or empirical scoring features (see section \ref{sec:FiltrationAndScoring}).
+
+
+\paragraph{Mismatch density filter}
+\label{sec:MismatchDensityFilter}
+
+The mismatch density filter is run on all reads to mask out sections of the read having an unexpectedly high density of disagreements with the reference or other locally proposed haplotype candidates. This filter removes a basecall from consideration if more than $M$ mismatches occur between the read and the reference within a window of 41 bases. This 41 base window is typically centered at the site in question unless restricted by the edge of the read, in which case it extends 41 bases into the read from the edge. Note that each indel is counted as as a single mismatch, and that differences with the reference that agree with a local haplotype candidate are not counted as mismatches for the purpose of this filter (see below).
+
+For germline variant calling, the mismatch threshold $M$ is set to 2. For somatic variant calling $M$ is set to 3 when calling at the tier1 evidence level and 10 at the tier2 level (see section \ref{sec:SomaticEvidenceTiers}).
+
+The haplotype model used during germline calling enables this filter to be applied more precisely be ignoring mismatches corresponding to local candidate haplotypes. To improve the degree to which this filtration is consistent across of set of jointly analyzed samples, an SNV from a candidate haplotype proposed in any sample can be used in all samples to prevent counting the corresponding base as a mismatch for filtration purposes.
+
+
+\ifx\IncludeDevelopmentDetail
+
+\paragraph{Design discussion}
+
+Given a haplotype model applied to all calling modes (including somatic), we could eliminate the mismatch density filter and instead apply a term expressing 'how surprising is this haplotype given level X of divergence from the reference?' as part of the genotype stage. On the other hand, if there is a long-term need for such a filter, it would be helpful to eliminate the fixed window size if 41, and instead weigh mismatches as a function of distance from the call position.
+
+\begin{raggedParagraph}{Implementation details}
+    
+Most basecall filtration steps are executed in method \verb|starling_pos_processor_base::pileup_read_segment|. The mismatch density filter in particular is efficiently precomputed for each read in the \verb|create_mismatch_filter_map| function.
+
+\end{raggedParagraph}
+
+\fi % IncludeDevelopmentDetail
 
 \section{Variant Probability Model}
 \subsection{Germline Model}
@@ -418,7 +475,7 @@ For SNVs, all three possible non-reference alleles are considered at any potenti
 \subsubsection{Basecall quality adjustment for dependent errors}
 \label{sec:DepSiteErrorAdjustment}
 
-A data transformation specific to germline SNV calling is the heuristic adjustment of the joint error probability calculated from multiple observations of the same basecall on each strand of the genome. The goal of this adjustment is to account for error dependencies between observations at the same site and strand. The method accomplishes this by treating the highest quality base call of each allele from each strand as independent observations (and thus leaving their associated base call quality scores unmodified) but all other basecall observations of each allele and strand have their qualities adjusted to increase the joint error probability of that allele above the error expected from independent basecall observations.
+A data transformation specific to germline SNV calling is the heuristic adjustment of the joint error probability calculated from multiple observations of the same basecall on each strand of the genome. The goal of this adjustment is to account for error dependencies between observations at the same site and strand. The method accomplishes this by treating the highest quality basecall of each allele from each strand as independent observations (and thus leaving their associated basecall quality scores unmodified) but all other basecall observations of each allele and strand have their qualities adjusted to increase the joint error probability of that allele above the error expected from independent basecall observations.
 
 This basecall quality adjustment is motivated by analysis of predicted vs. observed multiple-basecall consensus qualities, which suggest that observed quality is lower than that of the consensus quality predicted under an assumption that each basecall represents an independent observation. This dependence is much greater for same-strand basecalls compared to opposite-strand basecalls. Within the set of same-strand basecalls this dependence is greater for read pairs which both have one or more neighboring mismatches to the reference. These trends are represented in the model using the heuristic described below.
 
@@ -442,9 +499,9 @@ Next, use $z$ to solve for $e^{\prime}_i$
 
 \begin{equation*}
 \begin{array}{lcl}
-    x & = & e^{\max(v, \sum_{0}^{i-1}{((1-z)d_0+zd_1)})}_i \\
-    f & = & (1-x)/1-e_i \\
-    e^{\prime}_i & = & fx + (1-f)(3/4) \\
+x & = & e^{\max(v, \sum_{0}^{i-1}{((1-z)d_0+zd_1)})}_i \\
+f & = & (1-x)/1-e_i \\
+e^{\prime}_i & = & fx + (1-f)(3/4) \\
 \end{array}
 \end{equation*}
 
@@ -462,26 +519,25 @@ v & = & 0.25 \\
 
 Note the limit $v$ is introduced to improve the behavior of the heuristic on higher-depth data.
 
-%    A site basecall could be incorrect because of sequencing error or because its read was incorrectly mapped to the genome. To account for this the model uses a mapped basecall error of
-%    e_(b’)=(1-e_m ) e_b+e_m 3/4
 
+\ifx\IncludeDevelopmentDetail
+
+\paragraph{Design discussion}
+
+The site dependency adjustment is both ad-hoc and has a high runtime cost (due ot the sorting step), and thus represents a strong improvement opportunity. The ideal solution would be a model-based fit of site error dependency from real data which could be reflected back in the SNV calling model.
+
+\begin{raggedParagraph}{Implementation details}
+
+Site-dependent basecall quality adjustments are implemented in \verb|adjust_joint_eprob|.
+
+\end{raggedParagraph}
+
+\fi % IncludeDevelopmentDetail
 
 
 \subsubsection{Germline Variant Phasing}
 \label{sec:ReadBackedPhasing}
-As previously noted, Strelka defines an active region around dense variants and infers 2 haplotypes for the region. These haplotypes are used to phase SNVs and indels within the same active region. The phasing is conducted after scoring and genotyping. For each heterozygous variant belonging to an active region, Strelka checks which haplotype the variant is lying on. If the variant is lying on either of the two haplotypes, it is marked phased and the haplotype ID (0 or 1) is recorded to appropriately write the genotype allele order (e.g. 0|1 or 1|0).
-
-\subsubsection{Mapping accuracy adjustment in the SNV model}
-
-% NOTE this needs to move to a somatic/germline shared section
-
-For both germline and somatic SNV models, basecall error probabilities are adjusted to reflect both sequencing and read mapping error. The adjusted basecall error probability is
-
-\begin{equation*}
-e_{b^{\prime}} = (1-e_m)e_b + e_m 3/4
-\end{equation*}
-
-where $e_b$ is the basecall error probability estimated by the sequencer and $e_m$ is the read mapping error probability. Note that this adjustment is applied prior to any of the dependent error basecall adjustment heuristics used by the germline SNV caller (see \ref{sec:DepSiteErrorAdjustment}).
+As previously noted, Strelka defines an active region around dense variants and infers 2 haplotypes for the region. These haplotypes are used to phase SNVs and indels within the same active region. The phasing is conducted after scoring and genotyping. For each heterozygous variant belonging to an active region, Strelka checks which haplotype the variant is lying on. If the variant is lying on either of the two haplotypes, it is marked phased and the haplotype ID (0 or 1) is recorded to appropriately write the genotype allele order (e.g. \verb/0|1/ or \verb/1|0/).
 
 \subsection{Somatic Model}
 \label{sec:somatic}
@@ -521,8 +577,8 @@ The Strelka quality scores discussed in this section express this value, which w
 
 % TODO: check technical correctness of above description wrt tier1/tier2 handling, and possibly rephrase
 
-\subsubsection{Tiered observations}
-\label{sec:somatic_tiers}
+\subsubsection{Evidence tiers}
+\label{sec:SomaticEvidenceTiers}
 
 TODO
 
@@ -749,6 +805,7 @@ The alternate and total allele counts for SNVs represent the total counts of non
 The alternate allele count for indels is the number of reads supporting the indel allele in question versus all other alleles at the locus with a posterior probability of at least $x_{min}$. The total count reflects the number of reads supporting any allele at the locus with posterior probability of at least $x_{min}$. The value used for $x_{min}$ is 0.51.
 
 \section{Filtration and Empirical Scoring}
+\label{sec:FiltrationAndScoring}
 
 The variant calling models (both germline and somatic) provide useful representations of the sequencing data at putative variant loci; however, there is additional information not used by the models which is predictive of call accuracy. These may be metrics such as the number of reads or alleles which are filtered out of the call quality computation, the quality of alignments in the region around the putative variant or various allele/strand/quality biases indicative of assay or mapping artifacts. As a final step in the variant calling process, such additional information is enumerated as a set of predictive features and used to improve call precision for a given recall level beyond what can be achieved from the core variant calling model alone. These additional features are employed in the final step of variant calling in one of two ways:
 
@@ -989,7 +1046,7 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
 
     \item \texttt{NormalSampleRelativeTotalLocusDepth} ~ This feature matches the germline \texttt{RelativeTotalLocusDepth} feature, except that it reflects the depth of only the matched normal sample.
 
-    \item \texttt{TumorSampleAltAlleleFraction} ~ Fraction of the tumor sample's tier1 observations which are not the reference allele (see: ``\nameref{sec:somatic_tiers}''). This is restricted to a maximum of 0.5 to prevent the model from overtraining against high somatic allele frequencies (these might be common e.g. for loss of heterozygosity regions from liquid tumors).
+    \item \texttt{TumorSampleAltAlleleFraction} ~ Fraction of the tumor sample's tier1 observations which are not the reference allele (see: ``\nameref{sec:SomaticEvidenceTiers}''). This is restricted to a maximum of 0.5 to prevent the model from overtraining against high somatic allele frequencies (these might be common e.g. for loss of heterozygosity regions from liquid tumors).
 
     \item \texttt{RMSMappingQuality} ~ Root mean square read mapping quality of all reads spanning the variant in all samples. This feature matches INFO/MQ in the VCF spec.
 
@@ -998,7 +1055,7 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
     \item \texttt{TumorSampleStrandBias} ~ Log ratio of the tumor-sample somatic allele likelihood computed assuming the somatic allele occurs on only one strand vs both strands
     (thus higher values indicate greater bias).
 
-    \item \texttt{TumorSampleReadPosRankSum} ~ Z-score of Mann-Whitney U test for reference vs non-reference allele read positions in the tumor sample's tier1 observations (see: ``\nameref{sec:somatic_tiers}'').
+    \item \texttt{TumorSampleReadPosRankSum} ~ Z-score of Mann-Whitney U test for reference vs non-reference allele read positions in the tumor sample's tier1 observations (see: ``\nameref{sec:SomaticEvidenceTiers}'').
 
     \item \texttt{AlleleCountLogOddsRatio} ~ The log odds ratio of allele counts $log{\frac{r_t a_n} {r_n a_t}}$, given reference $(r_t,r_n)$ and non-reference $(a_t,a_n)$ allele counts for the tumor and normal sample pair.
 
@@ -1008,7 +1065,7 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
 
     \item \texttt{SomaticIndelQualityAndHomRefGermlineGenotype} ~ Posterior probability of a somatic indel conditioned on a homozygous reference germline genotype. When \texttt{INFO/NT} is "ref", this feature matches \texttt{INFO/QSI\_NT} in the VCF output.
 
-    \item \texttt{TumorSampleLogSymmetricStrandOddsRatio} ~ Log of the symmetric strand odds ratio of allele counts $log{\left( \frac{r_{fwd} a_{rev}} {r_{rev} a_{fwd}} + \frac{r_{rev} a_{fwd}} {r_{fwd} a_{rev}}\right)}$, given reference $(r_{fwd},r_{rev})$ and non-reference $(a_{fwd},a_{rev})$ confident counts of the tumor sample's tier1 observations (see: ``\nameref{sec:somatic_tiers}'').
+    \item \texttt{TumorSampleLogSymmetricStrandOddsRatio} ~ Log of the symmetric strand odds ratio of allele counts $log{\left( \frac{r_{fwd} a_{rev}} {r_{rev} a_{fwd}} + \frac{r_{rev} a_{fwd}} {r_{fwd} a_{rev}}\right)}$, given reference $(r_{fwd},r_{rev})$ and non-reference $(a_{fwd},a_{rev})$ confident counts of the tumor sample's tier1 observations (see: ``\nameref{sec:SomaticEvidenceTiers}'').
 
     \item \texttt{RepeatUnitLength} ~ The length of the somatic indel allele's \emph{repeat unit}. The \emph{repeat unit} is the smallest possible sequence such that the inserted/deleted sequence can be formed by concatenating multiple copies of it.
 
@@ -1016,9 +1073,9 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
 
     \item \texttt{RefRepeatCount} ~ The number of times the somatic indel allele's \emph{repeat unit} occurs in the reference sequence.
 
-    \item \texttt{TumorSampleIndelNoiseLogOdds} ~ Log ratio of the frequency of the candidate indel vs all other indels at the same locus in the tumor sample. The frequencies are computed from reads which confidently support a single allele at the locus, and only include reads which qualify as tier1 observations in the tumor sample (see: ``\nameref{sec:somatic_tiers}'').
+    \item \texttt{TumorSampleIndelNoiseLogOdds} ~ Log ratio of the frequency of the candidate indel vs all other indels at the same locus in the tumor sample. The frequencies are computed from reads which confidently support a single allele at the locus, and only include reads which qualify as tier1 observations in the tumor sample (see: ``\nameref{sec:SomaticEvidenceTiers}'').
 
-    \item \texttt{TumorNormalIndelAlleleLogOdds} ~ Log ratio of the frequency of the candidate indel in the tumor vs normal samples. The frequencies are computed from reads which confidently support a single allele at the locus, and only include reads which qualify as tier1 observations in each sample (see: ``\nameref{sec:somatic_tiers}'').
+    \item \texttt{TumorNormalIndelAlleleLogOdds} ~ Log ratio of the frequency of the candidate indel in the tumor vs normal samples. The frequencies are computed from reads which confidently support a single allele at the locus, and only include reads which qualify as tier1 observations in each sample (see: ``\nameref{sec:SomaticEvidenceTiers}'').
 
     \item \texttt{SiteFilteredBasecallFrac} ~ The maximum value over all samples of \texttt{SampleSiteFilteredBasecallFrac}, which is the fraction of basecalls at a site which have been removed by the mismatch density filter in a given sample.
 
