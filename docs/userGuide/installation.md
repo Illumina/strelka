@@ -11,6 +11,7 @@ Strelka User Guide - Installation
 * [Runtime prerequisites](#runtime-prerequisites)
 * [Operating System Guidelines](#operating-system-guidelines)
     * [Linux](#linux)
+    * [OS X](#os-x)
     * [Windows](#windows)
 * [Linux Package Additions](#linux-package-additions)
     * [Ubuntu 14.04 and 16.04](#ubuntu-1404-and-1604)
@@ -24,13 +25,18 @@ Strelka User Guide - Installation
 [//]: # (END automated TOC section, any edits will be overwritten on next source refresh)
 
 
-For Strelka users it is strongly recommended to start from one of the
-release distributions of the source code. Acquiring the source via a
-git clone or archive could result in missing version number entries,
-undesirably stringent build requirements, or an unstable development
-version between releases. Additional build notes for Strelka developers
-can be found in the [strelka developer guide][developerGuide].
+It is recommended to start from one of the [binary distributions on
+the Strelka releases page][releases] if a suitable version is available
+(note that the CentOS 5 binary distribution is expected to support a
+large variety of linux systems).  If building from source start from
+the release distributions of the source code, also provided on the
+[Strelka releases page][releases]. Cloning/archiving the source
+directly from git could result in missing version number entries,
+undesirably stringent build requirements or an unstable development
+version between releases. Additional build notes for Strelka developers can
+be found in the [developer guide][developerGuide].
 
+[releases]:https://github.com/Illumina/strelka/releases
 [DeveloperGuide]:../developerGuide/README.md
 
 
@@ -40,7 +46,6 @@ can be found in the [strelka developer guide][developerGuide].
 
 [tcistatus]:https://travis-ci.org/Illumina/strelka.svg?branch=master
 [tcihome]:https://travis-ci.org/Illumina/strelka
-
 
 Strelka requires a compiler supporting most of the C++11 standard. These
 are the current minimum versions enforced by the build system:
@@ -62,6 +67,11 @@ Strelka is known to build and run on the following linux distributions
 
 - Ubuntu 12.04, 14.04, 16.04
 - CentOS 5, 6, 7
+
+##### OS X
+
+Strelka builds and passes basic tests on OS X 10.9, but full WGS analyses
+are not tested for this platform.
 
 ##### Windows
 
@@ -115,6 +125,7 @@ procedure is:
 
 Example (building on 4 cores):
 
+    wget https://github.com/Illumina/strelka/releases/download/v${STRELKA_VERSION}/strelka-${STRELKA_VERSION}.release_src.tar.bz2
     tar -xjf strelka-${STRELKA_VERSION}.release_src.tar.bz2
     mkdir build && cd build
     # Ensure that CC and CXX are updated to target compiler if needed, e.g.:
