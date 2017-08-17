@@ -26,7 +26,7 @@
 #include "blt_util/log.hh"
 
 #include <cassert>
-
+#include <iostream>
 
 
 static
