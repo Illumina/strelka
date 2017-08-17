@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE( simple_indel_test )
     ScoringModelManager cm(opt, dopt.gvcf);
 
     std::shared_ptr<variant_pipe_stage_base> next(new DummyVariantSink);
-    VariantOverlapResolver overlap(cm, rcs, next);
+    VariantOverlapResolver overlap(cm, next);
 
     IndelKey indelKey;
     const IndelData indelData(1,indelKey);
