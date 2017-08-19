@@ -179,6 +179,26 @@ Somatic analysis provides somatic variants in the following two files:
 The somatic variant caller can also optionally produce a callability track,
 see the [somatic callability](#somatic-callability) section below for details.
 
+##### Somatic variant allele frequencies
+
+The somatic allele frequency estimate in the tumor sample is not directly available in the VCF output. A recommend way to extract such a value from the strelka VCF record is:
+
+* Somatic SNVs:
+```
+refCounts = Value of FORMAT column $REF + “U” (e.g. if REF="A" then use the value in FOMRAT/AU)
+altCounts = Value of FORMAT column $ALT + “U” (e.g. if ALT="T" then use the value in FOMRAT/TU)
+tier1RefCounts = First comma-delimited value from $refCounts
+tier1AltCounts = First comma-delimited value from $altCounts
+Somatic allele freqeuncy is $tier1AltCounts / ($tier1AltCounts + $tier1RefCounts)
+```
+
+* Somatic indels:
+```
+tier1RefCounts = First comma-delimited value from FORMAT/TAR
+tier1AltCounts = First comma-delimited value from FORMAT/TIR
+Somatic allele freqeuncy is $tier1AltCounts / ($tier1AltCounts + $tier1RefCounts)
+```
+
 ### Statistics
 
 Additional diagnostic output is provided in `${STRELKA_ANALYSIS_PATH}/results/stats`
