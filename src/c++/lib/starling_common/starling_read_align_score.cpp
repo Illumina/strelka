@@ -99,7 +99,7 @@ private:
 #endif
 
 
-/// \breif Score an insertion segment.
+/// \brief Score an insertion segment.
 ///
 /// Note that running the \p lnp parameter through as a reference creates more
 /// floating point stability compared to returning the score of the insertion segment only.

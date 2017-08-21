@@ -1079,7 +1079,7 @@ is_cal_pool_contains_candidate(const starling_base_options& client_opt,
 /// \brief Record 'best' re-alignment for the purpose of defining a single realigned read
 ///
 /// Note that 'best' is not always the most probable alignment. This routine will optionally
-/// add soft-cliping if the top candidate alignment pool suggests ambiguous edge regions.
+/// add soft-clipping if the top candidate alignment pool suggests ambiguous edge regions.
 ///
 /// \param topAlignmentPtrs[in] pointers to high scoring candidate alignments
 /// \param bestAlignmentPtr[in] pointer to the 'best' alignment as determined by the caller;
@@ -1204,13 +1204,13 @@ getCandidateAlignment(
 
 
 
-/// \brief Score the candidate alignments and identify/create alignments with privilaged roles in downstream calling
+/// \brief Score the candidate alignments and identify/create alignments with privileged roles in downstream calling
 ///
 /// The three operations performed here are:
 /// (1) Score the candidate alignments
 /// (2) Identify the highest scoring alignment
 /// (3) Identify the 'representative' alignment to use for downstream SNV calling. This is chosen based on
-///     a combination of high score and low-complexity.
+///     a combination of high score and low complexity.
 ///
 static
 void

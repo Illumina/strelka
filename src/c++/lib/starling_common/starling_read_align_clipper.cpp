@@ -254,7 +254,7 @@ extend_or_add_sc(alignment& al,
 
 
 
-/// \breif Transform an alignment to contain the specified leading and trailing soft-clip lengths
+/// \brief Transform an alignment to contain the specified leading and trailing soft-clip lengths
 ///
 static
 void

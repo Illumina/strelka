@@ -34,7 +34,7 @@
 ///        select a 'best' alignment to use for SNV calling.
 ///
 /// A single best alignment is created for SNV calling, but for indel calling we
-/// us a pool of alternate alignments to capture the likelihood of the read supporting
+/// use a pool of alternate alignments to capture the likelihood of the read supporting
 /// or not supporting each allele.
 ///
 /// Note search is for most likely realignment to a pool of potential
