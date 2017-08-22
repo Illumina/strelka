@@ -404,7 +404,7 @@ where $e_b$ is the basecall error probability estimated by the sequencer and $e_
 
 
 \subsubsection{Basecall filtration}
-
+\label{sec:BasecallFiltration}
 Following read realignment and mapping error adjustment, additional basecall filtration steps are conducted for SNV calling and depth estimation. Note that these steps do not impact indel calling. The filtration steps are:
 
 \begin{enumerate}
@@ -816,7 +816,7 @@ P(error) = \frac{\gamma(k,\lambda)}{(k-1)!}
 
 The fixed observation error, $e$, is set from a quality score of 17 for both SNVs and indels.
 
-The alternate and total allele counts for SNVs represent the total counts of non-filtered basecalls supporting the allele of interest and all alleles, respectively. The total count includes not only all possible basecalls aligning at the site but also reads with deletions spanning the site. Basecalls are filtered if they are ambiguous, have a quality score of less than 17 or if the basecall is flagged by the mismatch density filter (see above).
+The alternate and total allele counts for SNVs represent the total counts of non-filtered basecalls supporting the allele of interest and all alleles, respectively. The total count includes not only all possible basecalls aligning at the site but also reads with deletions spanning the site. Basecalls are filtered as described in section \ref{sec:BasecallFiltration}.
 
 The alternate allele count for indels is the number of reads supporting the indel allele in question versus all other alleles at the locus with a posterior probability of at least $x_{min}$. The total count reflects the number of reads supporting any allele at the locus with posterior probability of at least $x_{min}$. The value used for $x_{min}$ is 0.51.
 
