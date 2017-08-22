@@ -32,7 +32,7 @@ bool
 read_segment::
 is_tier1_mapping() const
 {
-    return sread().is_tier1_mapping();
+    return _sread.is_tier1_mapping();
 }
 
 
@@ -41,7 +41,7 @@ bool
 read_segment::
 is_tier1or2_mapping() const
 {
-    return sread().is_tier1or2_mapping();
+    return _sread.is_tier1or2_mapping();
 }
 
 
@@ -50,7 +50,7 @@ unsigned
 read_segment::
 full_read_size() const
 {
-    return sread()._read_rec.read_size();
+    return _sread._read_rec.read_size();
 }
 
 
@@ -58,7 +58,7 @@ bam_seq
 read_segment::
 get_bam_read() const
 {
-    return bam_seq(bam_get_seq(sread().get_brp()),_size,_offset);
+    return bam_seq(bam_get_seq(_sread.get_brp()),_size,_offset);
 }
 
 
@@ -67,7 +67,7 @@ const uint8_t*
 read_segment::
 qual() const
 {
-    return bam_get_qual(sread().get_brp())+_offset;
+    return bam_get_qual(_sread.get_brp())+_offset;
 }
 
 
@@ -76,7 +76,7 @@ align_id_t
 read_segment::
 id() const
 {
-    return sread().id();
+    return _sread.id();
 }
 
 
@@ -85,7 +85,7 @@ read_key
 read_segment::
 key() const
 {
-    return sread().key();
+    return _sread.key();
 }
 
 
@@ -94,7 +94,7 @@ MAPLEVEL::index_t
 read_segment::
 genome_align_maplev() const
 {
-    return sread().genome_align_maplev;
+    return _sread._inputAlignmentMapLevel;
 }
 
 
@@ -103,17 +103,9 @@ uint8_t
 read_segment::
 map_qual() const
 {
-    return sread().map_qual();
+    return _sread.map_qual();
 }
 
-
-
-bool
-read_segment::
-is_full_segment() const
-{
-    return (read_size() == sread()._read_rec.read_size());
-}
 
 
 std::pair<bool,bool>
@@ -121,11 +113,11 @@ read_segment::
 get_segment_edge_pin() const
 {
     std::pair<bool,bool> res(false,false);
-    const seg_id_t n_seg(sread().segment_count());
+    const seg_id_t n_seg(_sread.segment_count());
     for (unsigned i(0); i<n_seg; ++i)
     {
         const seg_id_t seg_id(i+1);
-        if (this==&(sread().get_segment(seg_id)))
+        if (this==&(_sread.get_segment(seg_id)))
         {
             if (i!=0) res.first=true;
             if ((i+1)!=n_seg) res.second=true;
@@ -141,13 +133,8 @@ bool
 read_segment::
 is_any_nonovermax(const unsigned max_indel_size) const
 {
-
-    const read_segment& rseg(*this);
-
-    if ((! rseg.genome_align().empty()) &&
-        (! rseg.genome_align().is_overmax(max_indel_size))) return true;
-
-    return false;
+    return (! getInputAlignment().empty()) &&
+           (! getInputAlignment().is_overmax(max_indel_size));
 }
 
 
@@ -157,7 +144,7 @@ read_segment::
 is_valid() const
 {
     const read_segment& rseg(*this);
-    const alignment& al(rseg.genome_align());
+    const alignment& al(rseg.getInputAlignment());
 
     if (al.empty()) return false;
 
@@ -172,7 +159,7 @@ short_report(std::ostream& os,
              const read_segment& rseg)
 {
 
-    if (! rseg.genome_align().empty()) os << "GENOME " << rseg.genome_align();
+    if (!rseg.getInputAlignment().empty()) os << "GENOME " << rseg.getInputAlignment();
     os << "is_realigned? " << rseg.is_realigned << "\n";
     if (rseg.is_realigned)
     {

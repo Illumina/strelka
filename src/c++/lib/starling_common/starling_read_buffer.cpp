@@ -48,7 +48,7 @@ align_id_t
 starling_read_buffer::
 add_read_alignment(
     const bam_record& br,
-    const alignment& al,
+    const alignment& inputAlignment,
     const MAPLEVEL::index_t maplev)
 {
     assert(! br.is_unmapped());
@@ -56,13 +56,10 @@ add_read_alignment(
     align_id_t this_read_id;
 
     this_read_id=next_id();
-    _read_data[this_read_id] = new starling_read(br);
+    _read_data[this_read_id] = new starling_read(br, inputAlignment, maplev);
     starling_read& sread(*(_read_data[this_read_id]));
 
     sread.id() = this_read_id;
-
-    sread.set_genome_align(al);
-    sread.genome_align_maplev = maplev;
 
     // deal with segmented reads now:
     if (sread.is_segmented())
@@ -71,14 +68,14 @@ add_read_alignment(
         for (unsigned i(0); i<n_seg; ++i)
         {
             const uint8_t seg_no(i+1);
-            const pos_t seg_buffer_pos(get_alignment_buffer_pos(sread.get_segment(seg_no).genome_align()));
+            const pos_t seg_buffer_pos(get_alignment_buffer_pos(sread.get_segment(seg_no).getInputAlignment()));
             sread.get_segment(seg_no).buffer_pos = seg_buffer_pos;
             (_pos_group[seg_buffer_pos]).insert(std::make_pair(this_read_id,seg_no));
         }
     }
     else
     {
-        const pos_t buffer_pos(get_alignment_buffer_pos(al));
+        const pos_t buffer_pos(get_alignment_buffer_pos(inputAlignment));
         const seg_id_t seg_id(0);
         sread.get_full_segment().buffer_pos = buffer_pos;
         (_pos_group[buffer_pos]).insert(std::make_pair(this_read_id,seg_id));

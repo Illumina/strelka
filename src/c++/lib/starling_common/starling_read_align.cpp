@@ -70,7 +70,7 @@ known_pos_range
 getReadAlignmentZone(
     const read_segment& rseg)
 {
-    const alignment& al(rseg.genome_align());
+    const alignment& al(rseg.getInputAlignment());
     assert (! al.empty());
     return get_alignment_zone(al,rseg.read_size());
 }
@@ -1286,7 +1286,7 @@ scoreCandidateAlignments(
     {
         const CandidateAlignment* max_allowed_cal_ptr(nullptr);
         is_cal_allowed.resize(candAlignments.size(),true);
-        const known_pos_range startingAlignmentRange(getStrictAlignmentRange(readSegment.genome_align()));
+        const known_pos_range startingAlignmentRange(getStrictAlignmentRange(readSegment.getInputAlignment()));
 
         unsigned cal_index(0);
         for (auto cal_iter(cal_set_begin); cal_iter!=cal_set_end; ++cal_iter,++cal_index)
@@ -1408,7 +1408,7 @@ scoreCandidateAlignments(
 
         if (path_lnp >= smooth_path_lnp)
         {
-            if (not (softClippedInputAlignment == readSegment.genome_align()))
+            if (not (softClippedInputAlignment == readSegment.getInputAlignment()))
             {
                 readSegment.is_realigned = true;
                 readSegment.realignment = softClippedInputAlignment;
@@ -1664,7 +1664,7 @@ normalizeInputAlignmentIndels(
     const bool is_remove_leading_edge_indels(! end_pin.first);
     const bool is_remove_trailing_edge_indels(! end_pin.second);
 
-    const alignment& inputAlignment(rseg.genome_align());
+    const alignment& inputAlignment(rseg.getInputAlignment());
 
     const alignment* alignmentPtr(&inputAlignment);
     alignment noEdgeIndelAlignment;
@@ -1697,7 +1697,7 @@ realignAndScoreRead(
         exit(EXIT_FAILURE);
     }
 
-    const alignment& inputAlignment(rseg.genome_align());
+    const alignment& inputAlignment(rseg.getInputAlignment());
     assert (! inputAlignment.empty());
 
     if (! inputAlignment.is_realignable(opt.maxIndelSize)) return;

@@ -39,13 +39,12 @@
 //
 struct starling_segmented_read
 {
-    explicit
-    starling_segmented_read(const seg_id_t size)
-        : _seg_info(size) {}
-
     void
-    set_segment(const seg_id_t seg_no,
-                const read_segment& rseg);
+    pushNewReadSegment(
+        const uint16_t size,
+        const uint16_t offset,
+        const starling_read& sread,
+        const alignment& inputAlignment);
 
     read_segment&
     get_segment(const seg_id_t seg_no);
@@ -65,19 +64,19 @@ private:
 
 
 
-//
-// captures the concept of read as required by starling
-//
-// all alignment info is fwd-strand
-//
+/// Represents a single read and associated per-read data as required by strelka calling models
+///
 struct starling_read : private boost::noncopyable
 {
-    starling_read(const bam_record& br);
-
-    // enters full alignment, and handles segment setup for splice
-    // sites:
-    void
-    set_genome_align(const alignment& al);
+    /// \param br a representation of the read's htslib BAM record
+    /// \param inputAlignment read alignment proposed by a mapper or other external tool
+    /// \param inputAlignmentMapLevel mapping confidence classification for the input mapping
+    ///
+    /// This ctor handles segment setup for spliced reads.
+    starling_read(
+        const bam_record& br,
+        const alignment& inputAlignment,
+        const MAPLEVEL::index_t inputAlignmentMapLevel);
 
     // nonconst because we update the BAM record with the best
     // alignment if the read has been realigned:
@@ -91,6 +90,12 @@ struct starling_read : private boost::noncopyable
     }
 
     uint8_t map_qual() const;
+
+    MAPLEVEL::index_t
+    getInputAlignmentMapLevel() const
+    {
+        return _inputAlignmentMapLevel;
+    }
 
     align_id_t& id()
     {
@@ -140,7 +145,7 @@ struct starling_read : private boost::noncopyable
         if (seg_no>0)
         {
             assert(is_segmented() && (seg_no<=segment_count()));
-            return _segment_ptr->get_segment(seg_no);
+            return static_cast<const starling_segmented_read&>(*_segment_ptr).get_segment(seg_no);
         }
         return _full_read;
     }
@@ -172,15 +177,14 @@ private:
     bool
     is_tier1or2_mapping() const;
 
-    // update full segment with sub-segment realignments
+    /// update full segment with sub-segment realignments
     void
     update_full_segment();
 
-public:
-    // read mapper quality categories
-    MAPLEVEL::index_t genome_align_maplev;
+    /// Mapping quality category for the input read
+    MAPLEVEL::index_t _inputAlignmentMapLevel;
 
-private:
+    /// Internal alignment id created and used only within Strelka
     align_id_t _id;
     bam_record _read_rec;
     read_segment _full_read;

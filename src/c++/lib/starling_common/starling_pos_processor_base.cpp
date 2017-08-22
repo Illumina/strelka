@@ -640,7 +640,7 @@ starling_pos_processor_base::
 load_read_in_depth_buffer(const read_segment& rseg,
                           const unsigned sample_no)
 {
-    const alignment& al(rseg.genome_align());
+    const alignment& al(rseg.getInputAlignment());
     if (al.empty()) return;
 
     const MAPLEVEL::index_t maplev(rseg.genome_align_maplev());
@@ -663,7 +663,7 @@ init_read_segment(
     const read_segment& rseg,
     const unsigned sampleIndex)
 {
-    const alignment& al(rseg.genome_align());
+    const alignment& al(rseg.getInputAlignment());
     if (al.empty()) return;
 
     const MAPLEVEL::index_t maplev(rseg.genome_align_maplev());
@@ -1039,7 +1039,7 @@ pos_t
 get_new_read_pos(const read_segment& rseg)
 {
     // get the best alignment for the read:
-    const alignment* best_al_ptr(&(rseg.genome_align()));
+    const alignment* best_al_ptr(&(rseg.getInputAlignment()));
     if (rseg.is_realigned) best_al_ptr=&(rseg.realignment);
 
     if (best_al_ptr->empty()) return rseg.buffer_pos;     // a grouper contig read which was not realigned...
@@ -1150,7 +1150,7 @@ pileup_read_segment(
     const unsigned sampleIndex)
 {
     // get the best alignment for the read:
-    const alignment* best_al_ptr(&(rseg.genome_align()));
+    const alignment* best_al_ptr(&(rseg.getInputAlignment()));
     if (rseg.is_realigned)
     {
         best_al_ptr=&(rseg.realignment);
@@ -1183,7 +1183,7 @@ pileup_read_segment(
 
     // check that read has not been realigned too far to the left:
     //
-    // A warning has already been issues for this at the end of realignment:
+    // A warning has already been issued for this at the end of the realignment procedure:
     //
     if (rseg.is_realigned && rseg.is_invalid_realignment) return;
 

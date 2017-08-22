@@ -377,22 +377,24 @@ BOOST_AUTO_TEST_CASE( test_realign_and_score_read )
 
         // the read segment is the hardest piece of this to mock up:
         // 1) mock up the underlying bam record:
-        bam_record br;
-        br.set_qname("FOOREAD");
+        bam_record bamRead;
+        bamRead.set_qname("FOOREAD");
         const char read[] = "GTACGG";
         const uint8_t qual[] = {40, 40, 40, 40, 40, 40};
-        br.set_readqual(read, qual);
+        bamRead.set_readqual(read, qual);
 
         // set alignment
         alignment al;
         al.pos = 2;
         ALIGNPATH::cigar_to_apath("5M1S", al.path);
-        br.get_data()->core.pos = al.pos;
-        edit_bam_cigar(al.path, *br.get_data());
+
+        // set bam record from alignment
+        bam1_t& br(*(bamRead.get_data()));
+        br.core.pos = al.pos;
+        edit_bam_cigar(al.path, br);
 
         // 2) mock up the starling read
-        starling_read sread(br);
-        sread.set_genome_align(al);
+        starling_read sread(bamRead, al, MAPLEVEL::UNKNOWN);
 
         // 3) finally, get read_segment from starling_read
         read_segment& rseg(sread.get_full_segment());

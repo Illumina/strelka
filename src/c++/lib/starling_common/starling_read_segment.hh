@@ -28,7 +28,6 @@
 #include "starling_common/starling_read_key.hh"
 
 #include <iosfwd>
-#include <map>
 
 
 typedef uint8_t seg_id_t;
@@ -43,20 +42,25 @@ struct starling_read;
 ///
 struct read_segment
 {
-    read_segment(const uint16_t size=0,
-                 const uint16_t offset=0,
-                 const starling_read* sread_ptr=nullptr)
+    /// \param size Length of the read segment
+    /// \param offset Offset of the read segment within the full read
+    /// \param sread Reference to the full read
+    /// \param inputAlignment Alignment of the read segment before realignment (must not be empty)
+    read_segment(
+        const uint16_t size,
+        const uint16_t offset,
+        const starling_read& sread,
+        const alignment& inputAlignment)
         : is_realigned(false),
           is_invalid_realignment(false),
           buffer_pos(0),
           _size(size),
           _offset(offset),
-          _sread_ptr(sread_ptr) {}
-
-#if 0
-    MAPLEVEL::index_t
-    effective_maplevel() const;
-#endif
+          _sread(sread),
+          _inputAlignment(inputAlignment)
+    {
+        assert(! _inputAlignment.empty());
+    }
 
     bool
     is_tier1_mapping() const;
@@ -96,11 +100,11 @@ struct read_segment
     /// check that object is valid and self-consistent;
     bool is_valid() const;
 
-    /// original alignment before re-aligning
+    /// Get the read's input alignment prior to any realignment or clipping modifications
     const alignment&
-    genome_align() const
+    getInputAlignment() const
     {
-        return _genome_align;
+        return _inputAlignment;
     }
 
     // these methods just repeat from the parent read:
@@ -125,37 +129,14 @@ struct read_segment
     std::pair<bool,bool>
     get_segment_edge_pin() const;
 
-    /// \returns NULL for non-realigned contig reads
-    const alignment*
-    get_best_alignment() const
+    /// Return either the read's starting alignment or its realignment if it has been realigned
+    const alignment&
+    getBestAlignment() const
     {
-        if       (is_realigned)
-        {
-            return &(realignment);
-        }
-        else if (! genome_align().empty())
-        {
-            return &(genome_align());
-        }
-        return nullptr;
+        if (is_realigned) return realignment;
+        return getInputAlignment();
     }
 
-//    const bool is_mate_unmapped(){return this->sread().is_mate_unmapped();}
-
-private:
-    friend struct starling_read;
-
-    bool
-    is_full_segment() const;
-
-    const starling_read& sread() const
-    {
-        return *_sread_ptr;
-    }
-
-private:
-    alignment _genome_align;
-public:
     alignment realignment;
     bool is_realigned;
     bool is_invalid_realignment;
@@ -164,7 +145,9 @@ public:
 private:
     uint16_t _size;
     uint16_t _offset;
-    const starling_read* _sread_ptr;
+    const starling_read& _sread;
+    /// Read alignment as provided from the alignment input (BAM file, etc...)
+    const alignment _inputAlignment;
 };
 
 

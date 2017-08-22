@@ -480,15 +480,17 @@ private:
     void
     rebuffer_pos_reads(const pos_t pos);
 
-    /// convert reads buffered at position into a position basecall
-    /// "pileup" to allow for downstream depth and snp calculations
+    /// Add reads buffered at position into a basecall pileup
+    /// to allow for downstream depth and site genotyping calculations
     ///
     void
     pileup_pos_reads(const pos_t pos);
 
+    /// Add a single read segment into the the basecall pileup
     void
-    pileup_read_segment(const read_segment& rseg,
-                        const unsigned sampleIndex);
+    pileup_read_segment(
+        const read_segment& rseg,
+        const unsigned sampleIndex);
 
     void
     write_reads(const pos_t pos);
