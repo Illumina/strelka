@@ -405,16 +405,19 @@ where $e_b$ is the basecall error probability estimated by the sequencer and $e_
 
 \subsubsection{Basecall filtration}
 \label{sec:BasecallFiltration}
-Following read realignment and mapping error adjustment, additional basecall filtration steps are conducted for SNV calling and depth estimation. Note that these steps do not impact indel calling. The filtration steps are:
+Following read realignment and mapping error adjustment, additional basecall filtration steps are conducted for SNV calling and depth estimation. This filtration has two intended purposes, (1) to filter noisy obsevations from the SNV calling process, and (2) to provide statistics on the fraction of basecalls filtered at each site. The filtered basecall fraction may be used in downstream variant filtration routines (see section \ref{sec:FiltrationAndScoring}). Note that these steps do not impact indel calling.
+
+The first filtration stage consists of a single step to trim off any contiguous series of ambiguous basecalls from the end from the read. Any basecalls trimmed off in this stage are not recorded in the counts of filtered basecalls at each site used for downstream variant filtration.
+
+The steps of the second filtration stage are:
 
 \begin{enumerate}
     \item In the germline SNV model, basecalls with mapping-adjusted qualities of 17 or less are filtered out. No such filtration is used by the somatic SNV model. 
-    \item Any ambiguous basecall is filtered out. \todo{Further distinguish the two types of ambiguous basecall filtration. How is end of read filtration different than the filtration of all other ambiguous bases?} Any contiguous trailing sequence of ambiguous basecalls on a read cause the end of the read to be effectively trimmed off for variant calling purposes. For the purpose of this filter, an ambiguous basecall is any which indicates more than one base.
+    \item Any ambiguous basecalls remainng after the first filtration stage are filtered out.
     \item The \textit{mismatch density filter} (described below) is applied to a basecall if the local read context is highly diverged from the reference or a local haplotype candidate.
 \end{enumerate}
 
-These filtered base calls are not used for SNV calling, but derivative terms such as the filtered basecall fraction may be used in downstream variant call filtration or empirical scoring features (see section \ref{sec:FiltrationAndScoring}).
-
+Any basecalls trimmed off in the second stage are  recorded in the counts of filtered basecalls at each site, and thus may impact downstream variant filtration.
 
 \paragraph{Mismatch density filter}
 \label{sec:MismatchDensityFilter}

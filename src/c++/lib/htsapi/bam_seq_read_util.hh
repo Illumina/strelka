@@ -25,9 +25,11 @@
 
 #include "htsapi/bam_seq.hh"
 
-
-void
-get_read_fwd_strand_skip(const bam_seq& bseq,
-                         const bool is_fwd_strand,
-                         unsigned& begin_skip,
-                         unsigned& end_skip);
+/// Return the number of contiguous N's from the late-cycle edge of the read
+///
+/// For example, for read="NNACGTNNN",
+/// ...the return value is 3 if isFwdStrand=true and 2 if ifFwdStrand=false
+unsigned
+getReadAmbiguousEndLength(
+    const bam_seq& bseq,
+    const bool isFwdStrand);

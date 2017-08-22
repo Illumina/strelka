@@ -1214,19 +1214,25 @@ pileup_read_segment(
         if (al_end_pos <= _reportRange.begin_pos()) return;
     }
 
-    // find trimmed sections (as defined by the CASAVA 1.0 caller)
-    unsigned fwd_strand_begin_skip(0);
-    unsigned fwd_strand_end_skip(0);
-    get_read_fwd_strand_skip(bseq,
-                             best_al.is_fwd_strand,
-                             fwd_strand_begin_skip,
-                             fwd_strand_end_skip);
-
-    assert(read_size>=fwd_strand_end_skip);
+    /// Find ambiguous sections of the read to trim off
+    const unsigned readAmbiguousEndLength(getReadAmbiguousEndLength(bseq, best_al.is_fwd_strand));
+    assert(read_size>=readAmbiguousEndLength);
 
     // read_begin,read_end define a zero-indexed, half-open range in read-coordinates: [read_begin, read_end)
-    unsigned read_begin(fwd_strand_begin_skip);
-    unsigned read_end(read_size-fwd_strand_end_skip);
+    unsigned read_begin(0);
+    unsigned read_end(read_size);
+
+    if (readAmbiguousEndLength > 0)
+    {
+        if (best_al.is_fwd_strand)
+        {
+            read_end -= readAmbiguousEndLength;
+        }
+        else
+        {
+            read_begin += readAmbiguousEndLength;
+        }
+    }
 
     // don't add positions close to the read edge (this is used for error stats estimation)
     if (_opt.minDistanceFromReadEdge > 0)
@@ -1319,12 +1325,11 @@ pileup_read_segment(
                     qscore = qphred_to_mapped_qphred(qscore,adjustedMapq);
                 }
 
+                const unsigned end_trimmed_read_len(read_end-read_begin);
                 unsigned align_strand_read_pos(read_pos);
-                unsigned end_trimmed_read_len(read_end);
                 if (! best_al.is_fwd_strand)
                 {
                     align_strand_read_pos=read_size-(read_pos+1);
-                    end_trimmed_read_len=read_size-fwd_strand_begin_skip;
                 }
 
                 bool current_call_filter( true );
