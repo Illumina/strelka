@@ -605,7 +605,7 @@ insert_read(
         load_read_in_depth_buffer(sread_ptr->get_full_segment(),sampleIndex);
 
         // update other data for only the first read segment
-        const seg_id_t seg_id(sread_ptr->is_segmented() ? 1 : 0 );
+        const seg_id_t seg_id(sread_ptr->isSpliced() ? 1 : 0 );
         init_read_segment(sread_ptr->get_segment(seg_id),sampleIndex);
     }
 
@@ -1110,7 +1110,7 @@ write_reads(const pos_t pos)
         {
             r=ri.get_ptr();
             if (nullptr==r.first) break;
-            if (r.first->segment_count()==r.second)
+            if (r.first->getExonCount()==r.second)
             {
                 r.first->write_bam(bamd);
             }

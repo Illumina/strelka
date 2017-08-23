@@ -36,39 +36,6 @@
 
 
 
-void
-starling_segmented_read::
-pushNewReadSegment(
-    const uint16_t size,
-    const uint16_t offset,
-    const starling_read& sread,
-    const alignment& inputAlignment)
-{
-    _seg_info.emplace_back(size, offset, sread, inputAlignment);
-}
-
-
-
-read_segment&
-starling_segmented_read::
-get_segment(const seg_id_t seg_no)
-{
-    assert(seg_no != 0);
-    return _seg_info[seg_no-1];
-}
-
-
-
-const read_segment&
-starling_segmented_read::
-get_segment(const seg_id_t seg_no) const
-{
-    assert(seg_no != 0);
-    return _seg_info[seg_no-1];
-}
-
-
-
 starling_read::
 starling_read(
     const bam_record& br,
@@ -79,52 +46,48 @@ starling_read(
       _read_rec(br),
       _full_read(_read_rec.read_size(), 0, *this, inputAlignment)
 {
+    const seg_id_t exonCount(apath_exon_count(inputAlignment.path));
+    if (exonCount <= 1) return;
+
     //
     // additional logic below only applies for spliced RNA-Seq alignments:
     //
-    const seg_id_t readSegmentCount(apath_exon_count(inputAlignment.path));
-    if (readSegmentCount<=1) return;
-
-    // deal with segmented reads now:
-    assert(! is_segmented());
-    _segment_ptr.reset(new starling_segmented_read());
 
     using namespace ALIGNPATH;
 
-    seg_id_t seg_id(1);
-    pos_t read_pos(0);
-    pos_t ref_pos(inputAlignment.pos);
-    pos_t seg_start_read_pos(read_pos);
-    pos_t seg_start_ref_pos(ref_pos);
-    path_t seg_path;
+    pos_t readPos(0);
+    pos_t refPos(inputAlignment.pos);
+
+    pos_t exonStartReadPos(readPos);
+    pos_t exonStartRefPos(refPos);
+    path_t exonAlignmentPath;
 
     const unsigned as(inputAlignment.path.size());
     for (unsigned i(0); i<as; ++i)
     {
         const path_segment& ps(inputAlignment.path[i]);
-        const pos_t last_read_pos(read_pos);
-        if (is_segment_type_ref_length(ps.type)) ref_pos += ps.length;
-        if (is_segment_type_read_length(ps.type)) read_pos += ps.length;
+        const pos_t lastReadPos(readPos);
+        if (is_segment_type_ref_length(ps.type)) refPos += ps.length;
+        if (is_segment_type_read_length(ps.type)) readPos += ps.length;
 
-        if (ps.type!=SKIP) seg_path.push_back(ps);
+        if (ps.type!=SKIP) exonAlignmentPath.push_back(ps);
 
         if (ps.type==SKIP || ((i+1)==as))
         {
-            const pos_t end_read_pos( (ps.type==SKIP) ?
-                                      last_read_pos : read_pos );
-            assert(end_read_pos>seg_start_read_pos);
-            const unsigned size(end_read_pos-seg_start_read_pos);
+            const pos_t endReadPos( (ps.type==SKIP) ?
+                                      lastReadPos : readPos );
+            assert(endReadPos>exonStartReadPos);
+            const unsigned exonReadSize(endReadPos-exonStartReadPos);
             alignment exonAlignment;
-            exonAlignment.path=seg_path;
-            exonAlignment.pos=seg_start_ref_pos;
+            exonAlignment.path=exonAlignmentPath;
+            exonAlignment.pos=exonStartRefPos;
             exonAlignment.is_fwd_strand=inputAlignment.is_fwd_strand;
 
-            _segment_ptr->pushNewReadSegment(size, seg_start_read_pos, *this, exonAlignment);
+            _exonInfo.emplace_back(exonReadSize, exonStartReadPos, *this, exonAlignment);
 
-            seg_id++;
-            seg_start_read_pos=read_pos;
-            seg_start_ref_pos=ref_pos;
-            seg_path.clear();
+            exonStartReadPos=readPos;
+            exonStartRefPos=refPos;
+            exonAlignmentPath.clear();
         }
     }
 }
@@ -150,22 +113,6 @@ is_tier1or2_mapping() const
 
 
 
-uint8_t
-starling_read::
-map_qual() const
-{
-    if (!get_full_segment().getInputAlignment().empty())
-    {
-        return _read_rec.map_qual();
-    }
-    else
-    {
-        return 255;
-    }
-}
-
-
-
 void
 starling_read::
 update_full_segment()
@@ -176,13 +123,13 @@ update_full_segment()
     bool is_new_realignment(false);
 
     // first determine if anything even needs to be done:
-    const unsigned n_seg(segment_count());
-    for (unsigned i(0); i<n_seg; ++i)
+    const unsigned exonCount(getExonCount());
+    for (unsigned exonIndex(0); exonIndex<exonCount; ++exonIndex)
     {
-        const seg_id_t seg_id(i+1);
-        const read_segment& rseg(get_segment(seg_id));
+        const seg_id_t segmentIndex(exonIndex+1);
+        const read_segment& rseg(get_segment(segmentIndex));
         if (! rseg.is_realigned) continue;
-        if (rseg.realignment== rseg.getInputAlignment()) continue;
+        if (rseg.realignment == rseg.getInputAlignment()) continue;
         is_new_realignment=true;
         break;
     }
@@ -191,35 +138,35 @@ update_full_segment()
 
     // sew together segment reads:
     fullseg.is_realigned=true;
-    alignment& fal(fullseg.realignment);
-    assert(fal.empty());
-    pos_t ref_pos(0);
-    for (unsigned i(0); i<n_seg; ++i)
+    alignment& fullRealignment(fullseg.realignment);
+    assert(fullRealignment.empty());
+    pos_t refPos(0);
+    for (unsigned exonIndex(0); exonIndex<exonCount; ++exonIndex)
     {
         using namespace ALIGNPATH;
-        const seg_id_t seg_id(i+1);
-        const read_segment& rseg(get_segment(seg_id));
-        const alignment& ral(rseg.is_realigned ? rseg.realignment : rseg.getInputAlignment() );
-        assert(! ral.empty());
-        if (i==0)
+        const seg_id_t segmentIndex(exonIndex+1);
+        const read_segment& exonSegment(get_segment(segmentIndex));
+        const alignment& exonAlignment(exonSegment.getBestAlignment());
+        assert(! exonAlignment.empty());
+        if (exonIndex==0)
         {
-            fal.pos=ral.pos;
-            fal.is_fwd_strand=is_fwd_strand();
+            fullRealignment.pos=exonAlignment.pos;
+            fullRealignment.is_fwd_strand=is_fwd_strand();
         }
         else
         {
             // add the exon:
             path_segment ps;
             ps.type = SKIP;
-            assert(ral.pos>ref_pos);
-            ps.length = ral.pos-ref_pos;
-            fal.path.push_back(ps);
+            assert(exonAlignment.pos>refPos);
+            ps.length = exonAlignment.pos-refPos;
+            fullRealignment.path.push_back(ps);
         }
-        ref_pos=ral.pos;
-        for (const path_segment& ps : ral.path)
+        refPos=exonAlignment.pos;
+        for (const path_segment& ps : exonAlignment.path)
         {
-            if (is_segment_type_ref_length(ps.type)) ref_pos += ps.length;
-            fal.path.push_back(ps);
+            if (is_segment_type_ref_length(ps.type)) refPos += ps.length;
+            fullRealignment.path.push_back(ps);
         }
     }
 }
@@ -230,7 +177,7 @@ void
 starling_read::
 write_bam(bam_dumper& bamd)
 {
-    if (is_segmented()) update_full_segment();
+    if (isSpliced()) update_full_segment();
 
     const read_segment& rseg(get_full_segment());
 
@@ -318,12 +265,12 @@ operator<<(std::ostream& os,
     os << "full_segment_info:\n";
     os << sr.get_full_segment();
 
-    const seg_id_t sc(sr.segment_count());
-    for (unsigned i(0); i<sc; ++i)
+    const seg_id_t exonCount(sr.getExonCount());
+    for (unsigned exonIndex(0); exonIndex<exonCount; ++exonIndex)
     {
-        const seg_id_t seg_id(i+1);
-        os << "partial_segment " << static_cast<unsigned>(seg_id) << " :\n";
-        short_report(os,sr.get_segment(seg_id));
+        const seg_id_t segmentIndex(exonIndex+1);
+        os << "partial_segment " << static_cast<unsigned>(segmentIndex) << " :\n";
+        short_report(os,sr.get_segment(segmentIndex));
     }
 
     return os;

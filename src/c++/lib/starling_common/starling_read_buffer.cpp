@@ -62,9 +62,9 @@ add_read_alignment(
     sread.id() = this_read_id;
 
     // deal with segmented reads now:
-    if (sread.is_segmented())
+    if (sread.isSpliced())
     {
-        const uint8_t n_seg(sread.segment_count());
+        const uint8_t n_seg(sread.getExonCount());
         for (unsigned i(0); i<n_seg; ++i)
         {
             const uint8_t seg_no(i+1);
@@ -147,7 +147,7 @@ clear_iter(
         // segment: -- note this assumes that two segments will not
         // occur at the same position:
         //
-        if (seg_id != srp->segment_count()) continue;
+        if (seg_id != srp->getExonCount()) continue;
 
         // remove from simple lookup structures and delete read itself:
         _read_data.erase(k);

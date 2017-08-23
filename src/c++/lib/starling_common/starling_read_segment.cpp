@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -113,7 +113,7 @@ read_segment::
 get_segment_edge_pin() const
 {
     std::pair<bool,bool> res(false,false);
-    const seg_id_t n_seg(_sread.segment_count());
+    const seg_id_t n_seg(_sread.getExonCount());
     for (unsigned i(0); i<n_seg; ++i)
     {
         const seg_id_t seg_id(i+1);
@@ -159,11 +159,10 @@ short_report(std::ostream& os,
              const read_segment& rseg)
 {
 
-    if (!rseg.getInputAlignment().empty()) os << "GENOME " << rseg.getInputAlignment();
+    if (!rseg.getInputAlignment().empty()) os << "INPUT " << rseg.getInputAlignment();
     os << "is_realigned? " << rseg.is_realigned << "\n";
     if (rseg.is_realigned)
     {
-        //os << "REALIGN_path_log_lhood: " << rseg.realign_path_lnp << "\n";
         os << "REALIGN " << rseg.realignment;
     }
     os << "buffer_pos: " << rseg.buffer_pos << "\n";
