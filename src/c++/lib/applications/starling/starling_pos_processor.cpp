@@ -1319,7 +1319,7 @@ getPriorIndex(
 ///
 /// \param contrastGroup these are alleles meant to be grouped together into an "other" category, such as that reported
 ///                      as the <*> allele in VCF
-/// \param basecallBuffer[inout] see updateIndelSampleInfo
+/// \param[in,out] basecallBuffer see updateIndelSampleInfo
 static
 void
 updateIndelLocusWithSampleInfo(

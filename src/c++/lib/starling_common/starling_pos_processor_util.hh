@@ -91,7 +91,7 @@ convert_vcfrecord_to_indel_allele(
 ///
 /// This is typically used for candidate indel input from a vcf record.
 ///
-/// \param is_forced_output[in] If true, then genotyping results must appear in the output for this indel.
+/// \param[in] is_forced_output If true, then genotyping results must appear in the output for this indel.
 void
 process_candidate_indel(
     const unsigned max_indel_size,

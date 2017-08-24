@@ -1081,10 +1081,10 @@ is_cal_pool_contains_candidate(const starling_base_options& client_opt,
 /// Note that 'best' is not always the most probable alignment. This routine will optionally
 /// add soft-clipping if the top candidate alignment pool suggests ambiguous edge regions.
 ///
-/// \param topAlignmentPtrs[in] pointers to high scoring candidate alignments
-/// \param bestAlignmentPtr[in] pointer to the 'best' alignment as determined by the caller;
+/// \param[in] topAlignmentPtrs pointers to high scoring candidate alignments
+/// \param[in] bestAlignmentPtr pointer to the 'best' alignment as determined by the caller;
 ///          the 'best' alignment must be present in the top alignment set
-/// \param realignment[out] the final realignment output by this function
+/// \param[out] realignment the final realignment output by this function
 static
 void
 finishRealignment(

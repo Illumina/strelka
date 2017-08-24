@@ -59,7 +59,7 @@ getAlleleGroupSupportingReadIds(
 
 /// enumerate (log of) read likelihood P(read | allele) for read 'readId' over all ref + all alt alleles in 'alleleGroup'
 ///
-/// \param alleleLogLhood[out] log likelihood for each allele, set to dimension "alleleGroup.alleles.size() + 1",
+/// \param[out] alleleLogLhood log likelihood for each allele, set to dimension "alleleGroup.alleles.size() + 1",
 ///                   with an extra reference allele state represented at the begining of the array
 ///
 void
@@ -111,7 +111,7 @@ selectTopOrthogonalAllelesInSample(
 /// top alleles over all samples, and use an approximate global ranking based
 /// on the within-sample rankings
 ///
-/// \param topVariantAlleleIndexPerSample[out] index of most likely alt per sample, where index references topAlleleGroup order, no initialization conditions required on input
+/// \param[out] topVariantAlleleIndexPerSample index of most likely alt per sample, where index references topAlleleGroup order, no initialization conditions required on input
 void
 selectTopOrthogonalAllelesInAllSamples(
     const unsigned sampleCount,

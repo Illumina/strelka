@@ -139,9 +139,9 @@ struct HtsMergeStreamer
         return registerHtsType(vcfFilename,index,_data._vcf, isRequireNormalized);
     }
 
-    /// resets the region over which all files scanned
+    /// Reset the region over which all files scanned
     ///
-    /// \param region[in] samtools-formatted genomic region string
+    /// \param[in] region samtools-formatted genomic region string
     void
     resetRegion(const std::string& region);
 
