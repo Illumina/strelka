@@ -1523,7 +1523,7 @@ getCandidateAlignments(
 
     // Get indel set and indel order for the input alignment:
     const known_pos_range exemplar_pr(get_soft_clip_alignment_range(cal.al));
-    add_indels_in_range(rseg.id(), indelBuffer, exemplar_pr, sampleId, indel_status_map, indel_order);
+    add_indels_in_range(rseg.getReadIndex(), indelBuffer, exemplar_pr, sampleId, indel_status_map, indel_order);
 
 #ifdef DEBUG_ALIGN
     std::cerr << "VARMIT exemplar alignment range: " << exemplar_pr << "\n";
@@ -1614,7 +1614,7 @@ getCandidateAlignments(
     // launch recursive re-alignment routine starting from the current exemplar alignment:
     static const unsigned start_depth(0);
     static const unsigned start_toggle_depth(0);
-    candidate_alignment_search(opt, dopt, rseg.id(), cal_read_length, indelBuffer, sampleId, realign_buffer_range, cal_set,
+    candidate_alignment_search(opt, dopt, rseg.getReadIndex(), cal_read_length, indelBuffer, sampleId, realign_buffer_range, cal_set,
                                warn, indel_status_map,
                                indel_order, start_depth, start_toggle_depth, exemplar_pr, opt.max_read_indel_toggle,
                                cal);

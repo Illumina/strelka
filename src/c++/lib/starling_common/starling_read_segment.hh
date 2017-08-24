@@ -109,13 +109,13 @@ struct read_segment
 
     // these methods just repeat from the parent read:
     align_id_t
-    id() const;
+    getReadIndex() const;
 
     read_key
     key() const;
 
     MAPLEVEL::index_t
-    genome_align_maplev() const;
+    getInputAlignmentMapLevel() const;
 
     uint8_t
     map_qual() const;

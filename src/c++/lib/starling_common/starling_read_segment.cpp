@@ -74,9 +74,9 @@ qual() const
 
 align_id_t
 read_segment::
-id() const
+getReadIndex() const
 {
-    return _sread.id();
+    return _sread.getReadIndex();
 }
 
 
@@ -92,7 +92,7 @@ key() const
 
 MAPLEVEL::index_t
 read_segment::
-genome_align_maplev() const
+getInputAlignmentMapLevel() const
 {
     return _sread._inputAlignmentMapLevel;
 }
@@ -179,7 +179,7 @@ operator<<(std::ostream& os,
 {
 
     os << "key: " << rseg.key() << "\n";
-    os << "id: " << rseg.id() << "\n";
+    os << "id: " << rseg.getReadIndex() << "\n";
 
     const bam_seq bseq(rseg.get_bam_read());
     os << "seq:  " << bseq << "\n";

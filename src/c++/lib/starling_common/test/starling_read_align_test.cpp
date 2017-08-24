@@ -394,7 +394,7 @@ BOOST_AUTO_TEST_CASE( test_realign_and_score_read )
         edit_bam_cigar(al.path, br);
 
         // 2) mock up the starling read
-        starling_read sread(bamRead, al, MAPLEVEL::UNKNOWN);
+        starling_read sread(bamRead, al, MAPLEVEL::UNKNOWN, 0);
 
         // 3) finally, get read_segment from starling_read
         read_segment& rseg(sread.get_full_segment());

@@ -605,8 +605,8 @@ insert_read(
         load_read_in_depth_buffer(sread_ptr->get_full_segment(),sampleIndex);
 
         // update other data for only the first read segment
-        const seg_id_t seg_id(sread_ptr->isSpliced() ? 1 : 0 );
-        init_read_segment(sread_ptr->get_segment(seg_id),sampleIndex);
+        const seg_id_t firstReadSegmentIndex(sread_ptr->isSpliced() ? 1 : 0 );
+        init_read_segment(sread_ptr->get_segment(firstReadSegmentIndex),sampleIndex);
     }
 
     return retval;
@@ -643,7 +643,7 @@ load_read_in_depth_buffer(const read_segment& rseg,
     const alignment& al(rseg.getInputAlignment());
     if (al.empty()) return;
 
-    const MAPLEVEL::index_t maplev(rseg.genome_align_maplev());
+    const MAPLEVEL::index_t maplev(rseg.getInputAlignmentMapLevel());
     const bool is_usable_mapping(MAPLEVEL::TIER1_MAPPED == maplev);
     if (is_usable_mapping)
     {
@@ -666,7 +666,7 @@ init_read_segment(
     const alignment& al(rseg.getInputAlignment());
     if (al.empty()) return;
 
-    const MAPLEVEL::index_t maplev(rseg.genome_align_maplev());
+    const MAPLEVEL::index_t maplev(rseg.getInputAlignmentMapLevel());
     const INDEL_ALIGN_TYPE::index_t iat(translate_maplev_to_indel_type(maplev));
 
     const bam_seq bseq(rseg.get_bam_read());
@@ -674,7 +674,7 @@ init_read_segment(
     {
         const unsigned total_indel_ref_span_per_read =
             addAlignmentIndelsToPosProcessor(_opt.maxIndelSize, _ref,
-                                             al, bseq, *this, iat, rseg.id(), sampleIndex, rseg.get_segment_edge_pin(),
+                                             al, bseq, *this, iat, rseg.getReadIndex(), sampleIndex, rseg.get_segment_edge_pin(),
                                              rseg.map_qual() == 0);
 
         update_largest_total_indel_ref_span_per_read(total_indel_ref_span_per_read);
@@ -1073,7 +1073,7 @@ rebuffer_pos_reads(const pos_t pos)
             if ((new_pos!=pos) &&
                 (_stagemanPtr->is_new_pos_value_valid(new_pos,STAGE::POST_ALIGN)))
             {
-                new_read_pos.push_back(std::make_pair(std::make_pair(rseg.id(),r.second),new_pos));
+                new_read_pos.push_back(std::make_pair(std::make_pair(rseg.getReadIndex(),r.second),new_pos));
             }
         }
 

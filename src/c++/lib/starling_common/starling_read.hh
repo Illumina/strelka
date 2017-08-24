@@ -53,7 +53,8 @@ struct starling_read : private boost::noncopyable
     starling_read(
         const bam_record& br,
         const alignment& inputAlignment,
-        const MAPLEVEL::index_t inputAlignmentMapLevel);
+        const MAPLEVEL::index_t inputAlignmentMapLevel,
+        const align_id_t readIndex);
 
     // This is not const because we update the BAM record with the best
     // alignment if the read has been realigned:
@@ -77,13 +78,9 @@ struct starling_read : private boost::noncopyable
         return _inputAlignmentMapLevel;
     }
 
-    align_id_t& id()
+    align_id_t getReadIndex() const
     {
-        return _id;
-    }
-    align_id_t id() const
-    {
-        return _id;
+        return _readIndex;
     }
 
     read_key
@@ -163,10 +160,10 @@ private:
     update_full_segment();
 
     /// Mapping quality category for the input read
-    MAPLEVEL::index_t _inputAlignmentMapLevel;
+    const MAPLEVEL::index_t _inputAlignmentMapLevel;
 
-    /// Internal alignment id created and used only within Strelka
-    align_id_t _id;
+    /// Internal alignment index created and used only within Strelka
+    const align_id_t _readIndex;
     bam_record _read_rec;
     read_segment _full_read;
 

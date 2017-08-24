@@ -40,9 +40,10 @@ starling_read::
 starling_read(
     const bam_record& br,
     const alignment& inputAlignment,
-    const MAPLEVEL::index_t inputAlignmentMapLevel)
+    const MAPLEVEL::index_t inputAlignmentMapLevel,
+    const align_id_t readIndex)
     : _inputAlignmentMapLevel(inputAlignmentMapLevel),
-      _id(0),
+      _readIndex(readIndex),
       _read_rec(br),
       _full_read(_read_rec.read_size(), 0, *this, inputAlignment)
 {
@@ -258,7 +259,7 @@ std::ostream&
 operator<<(std::ostream& os,
            const starling_read& sr)
 {
-    os << "STARLING_READ id: " << sr.id()
+    os << "STARLING_READ id: " << sr.getReadIndex()
        << " mapping_type: " << MAPLEVEL::get_label(sr.getInputAlignmentMapLevel())
        << "\n";
 

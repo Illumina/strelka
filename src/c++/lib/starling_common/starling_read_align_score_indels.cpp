@@ -615,8 +615,8 @@ score_indels(
                         const bool is_tier1_read(rseg.is_tier1_mapping());
                         IndelSampleData& indelSampleData(getIndelData(indelIter).getSampleData(sampleIndex));
 
-                        if (is_tier1_read) indelSampleData.suboverlap_tier1_read_ids.insert(rseg.id());
-                        else               indelSampleData.suboverlap_tier2_read_ids.insert(rseg.id());
+                        if (is_tier1_read) indelSampleData.suboverlap_tier1_read_ids.insert(rseg.getReadIndex());
+                        else               indelSampleData.suboverlap_tier2_read_ids.insert(rseg.getReadIndex());
                     }
                     continue;
                 }
@@ -1063,7 +1063,7 @@ score_indels(
                 IndelData* evaluationIndelDataPtr(indelBuffer.getIndelDataPtr(evaluationIndel));
                 assert(nullptr != evaluationIndelDataPtr);
                 IndelSampleData& evaluationIndelSampleData(evaluationIndelDataPtr->getSampleData(sampleIndex));
-                evaluationIndelSampleData.read_path_lnp[rseg.id()] = rps;
+                evaluationIndelSampleData.read_path_lnp[rseg.getReadIndex()] = rps;
             }
 
 #ifdef DEBUG_ALIGN
