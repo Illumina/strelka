@@ -155,8 +155,8 @@ get_scoring_features(
     const snv_result_set& rs,
     strelka_shared_modifiers_snv& smod)
 {
-    uint16_t medianReadPos=-1;
-    uint16_t medianReadPosVar=-1;
+    uint16_t medianReadPos=0;
+    uint16_t medianReadPosVar=0;
     if (! t1_cpi.rawPileup().nonReferenceAlleleReadPositionInfo.empty())
     {
         const auto& apos(t1_cpi.rawPileup().nonReferenceAlleleReadPositionInfo);
