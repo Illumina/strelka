@@ -172,7 +172,7 @@ position_nonref_2allele_test(
     {
         pprob[i] = lhood[i] + prior[i];
     }
-    normalize_ln_distro(pprob,pprob+NR2TEST::SIZE,nrc.max_gt);
+    normalizeLogDistro(pprob, pprob + NR2TEST::SIZE, nrc.max_gt);
 
     nrc.snp_qphred=error_prob_to_qphred(pprob[NR2TEST::REF]+pprob[NR2TEST::NONREF_MF_NOISE]);
     nrc.max_gt_qphred=error_prob_to_qphred(prob_comp(pprob,pprob+NR2TEST::SIZE,nrc.max_gt));

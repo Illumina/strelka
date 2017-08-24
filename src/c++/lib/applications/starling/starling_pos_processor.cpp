@@ -1042,6 +1042,10 @@ addIndelAllelesToLocus(
     }
 }
 
+
+
+/// Get the length of the common prefix of the reference and all ALT alleles
+///
 /// STREL-275: Added to address the bug that the REF and ALTs share a common prefix of length >1.
 /// This problem happened when an internal and external deletions overlap and
 /// the flanking sequences happened to be the same. E.g.
@@ -1067,16 +1071,18 @@ addIndelAllelesToLocus(
 /// \param locus locus to be investigated
 /// \param ref reference
 /// \return the length of the common prefix of the reference and all ALT alleles
-static unsigned getCommonPrefixLength(
+static
+unsigned
+getCommonPrefixLength(
     const GermlineIndelLocusInfo& locus,
     const reference_contig_segment& ref)
 {
     const auto& locusRange(locus.range());
 
     unsigned minLenCommonPrefix(locusRange.size());
-    for (auto& indelAllele : locus.getIndelAlleles())
+    for (const auto& indelAllele : locus.getIndelAlleles())
     {
-        auto& indelKey = indelAllele.indelKey;
+        const auto& indelKey = indelAllele.indelKey;
 
         unsigned lenCommonPrefix(indelKey.pos - locusRange.begin_pos());
         bool isOutsideOfCommonPrefix = false;
@@ -1095,12 +1101,16 @@ static unsigned getCommonPrefixLength(
             for (pos_t pos(indelKey.right_pos()); pos<locusRange.end_pos(); ++pos)
             {
                 if (ref.get_base(locusRange.begin_pos()+lenCommonPrefix) != ref.get_base(pos))
+                {
                     break;
+                }
                 ++lenCommonPrefix;
             }
         }
         if (lenCommonPrefix < minLenCommonPrefix)
+        {
             minLenCommonPrefix = lenCommonPrefix;
+        }
     }
 
     return minLenCommonPrefix;
@@ -1417,7 +1427,7 @@ updateIndelLocusWithSampleInfo(
     }
 
     unsigned maxGenotypeIndex(0);
-    normalize_ln_distro(std::begin(genotypePosterior), std::end(genotypePosterior), maxGenotypeIndex);
+    normalizeLogDistro(std::begin(genotypePosterior), std::end(genotypePosterior), maxGenotypeIndex);
 
     sampleInfo.genotypeQualityPolymorphic = error_prob_to_qphred(prob_comp(std::begin(genotypePosterior), std::end(genotypePosterior), maxGenotypeIndex));
 
@@ -1454,7 +1464,7 @@ updateIndelLocusWithSampleInfo(
         assert(false and "Unexpected ploidy value");
     }
 
-    normalize_ln_distro(std::begin(genotypePosterior), std::end(genotypePosterior), maxGenotypeIndex);
+    normalizeLogDistro(std::begin(genotypePosterior), std::end(genotypePosterior), maxGenotypeIndex);
 
     sampleInfo.genotypeQuality = error_prob_to_qphred(prob_comp(std::begin(genotypePosterior), std::end(genotypePosterior), maxGenotypeIndex));
 
@@ -1495,9 +1505,9 @@ updateIndelLocusWithSampleInfo(
 
 
 
-/// determine if an allele group is reportable
+/// Determine if an allele group is reportable at \p pos
 ///
-/// \return true if alleles exist and no alleles are less than pos.
+/// \return True if alleleGroup is not empty, and no allele positions are less than pos.
 static
 bool
 isAlleleGroupReportable(
@@ -1522,7 +1532,7 @@ isAlleleGroupReportable(
 /// Find all indel alleles at the current position which are either forced or viable candidates for
 /// variant calling.
 ///
-/// \param[out] orthogonalVariantAlleles All alleles at this position which meet acceptance critieria
+/// \param[out] orthogonalVariantAlleles All alleles at this position which meet acceptance criteria
 static
 void
 getIndelAllelesAtPosition(
@@ -1658,10 +1668,12 @@ process_pos_indel_digt(const pos_t pos)
     {
         // Track the top alt allele within each sample -- this is used as a temporary crutch to transfer the previous prior
         // calculation from single to multi-sample, and should be removed when a mature prior scheme is put in place
-        std::vector<unsigned> topVariantAlleleIndexPerSample(sampleCount);
+        std::vector<unsigned> topVariantAlleleIndexPerSample;
 
         // Rank input alleles to pick the top N per sample, where N=ploidy, and then aggregate and rank the top
         // per-sample alleles over all samples
+        //
+        // TODO: Note that the global allele ranking is unused by this particular function call, and could be optimized out.
         selectTopOrthogonalAllelesInAllSamples(
             sampleCount, callerPloidy, orthogonalVariantAlleles, topVariantAlleleGroup, topVariantAlleleIndexPerSample);
 
@@ -1702,7 +1714,7 @@ process_pos_indel_digt(const pos_t pos)
             // (the locus interface requires that this is done before any other locus information is added):
             addIndelAllelesToLocus(topVariantAlleleGroup, isForcedOutput, *locusPtr);
 
-            // add sample-dependent info:
+            // Add sample-dependent info to locus:
             double homRefLogProb(0);
             for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
             {
@@ -1715,16 +1727,17 @@ process_pos_indel_digt(const pos_t pos)
                     homRefLogProb);
             }
 
-            // add sample-independent info:
+            // Add sample-independent info to locus:
             locusPtr->anyVariantAlleleQuality = ln_error_prob_to_qphred(homRefLogProb);
 
             // get common prefix length
-
             if (locusPtr->getAltAlleleCount() > 1)
             {
                 unsigned commonPrefixLength(getCommonPrefixLength(*locusPtr, _ref));
                 if (commonPrefixLength > 0)
+                {
                     locusPtr->setCommonPrefix(commonPrefixLength);
+                }
             }
 
             if (locusPtr->isVariantLocus())

@@ -147,7 +147,7 @@ updateSupportingReadStats(
         alleleHood = integrate_out_sites(dopt, nsite, alleleHood, isTier2Pass);
     }
     unsigned maxIndex(0);
-    normalize_ln_distro(alleleLoglhoods.begin(),alleleLoglhoods.end(),maxIndex);
+    normalizeLogDistro(alleleLoglhoods.begin(), alleleLoglhoods.end(), maxIndex);
 
     bool isConfidentAlleleFound(false);
     const unsigned fullAlleleCount(alleleLoglhoods.size());

@@ -2,24 +2,28 @@
 
 \usepackage{natbib}
 
-% for equation*
+% for equation*:
 \usepackage{amsmath}
 
-% for scalebox,...
+% for scalebox:
 \usepackage{graphics}
 
-% hide hyperref links  with pdfborder (more portable than hidelinks option)
+% for automated hyperlinks on sections and \ref's:
+% - hide hyperref links with white pdfborder (this is more portable than the hidelinks option)
 \usepackage[pdfborder={0 0 0}]{hyperref}
 
-% for pseudocode
+% for comment environment:
+\usepackage{verbatim}
+
+% for pseudocode:
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
 
-% for \todo command
+% for \todo command:
 \usepackage{todonotes}
 
-% make the default todo note a little less noisy:
-\presetkeys{todonotes}{backgroundcolor=cyan!20,linecolor=cyan!40}{}
+% - change default todo note color/font to make it a little less distracting
+\presetkeys{todonotes}{backgroundcolor=cyan!20,linecolor=cyan!40, size=\footnotesize}{}
 
 % Defining this variable turns on extra sections which should be useful from a development
 % perspective, but would not typically be included in a theoretical methods description.
@@ -53,7 +57,8 @@
 % simple scientific notation:
 \newcommand{\e}[1]{\ensuremath{\times 10^{#1}}}
 
-
+% set cardinality
+\newcommand{\setSize}[1]{\ensuremath{\lvert{#1}\rvert}}
 
 
 %---------------------------------------------------------------------
@@ -74,7 +79,9 @@
 On any release branch, the methods described here should reflect the default implementation in the source repository containing this document.
 
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Workflow overview}
 
 Strelka comprises several workflows to call small variants from mapped sequencing data. Supported small variant calling workflows include detection of germline variants in a set of samples, and somatic variants from matched tumor-normal sample pairs.
@@ -97,7 +104,9 @@ The methods below describe several core components shared by all application wor
 The details of the shared and application specific model steps are provided below.
 
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Preliminary parameter estimation}
 
 Various aggregate statistics may be estimated from the sequencing data prior to the start of the primary variant calling procedure.
@@ -263,6 +272,10 @@ e_i(1,r) = e_d(1,r) = 100 * e_{l} \exp(f_r(\log(e_{h})-\log(e_{l}))
 
 Finally, $e_{\text{ref}}$ is again set to a constant factor \todo{insert value} times the corresponding $e_i$.
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Variant calling workflow}
 
 Following all preliminary parameter estimation tasks, the primary variant calling operation is initiated. Variant calling tasks can be divided among a set of worker processes running in parallel, with each worker process handling one or more segments of the genome. For each genome segment, a worker process completes all phases of variant calling described below in a single operation transitioning from the lowest to highest position in the targeted genome segment. When all genome segments have been processed their intermediate results are merged into the complete output files.
@@ -271,8 +284,13 @@ Following all preliminary parameter estimation tasks, the primary variant callin
 
 \paragraph{Segment boundaries} When a chromosome is divided into multiple segments, it is important that variant calling results across segment boundaries are identical to the results of calling the entire chromosome using a single variant calling process. To ensure that this is the case, in each variant calling process the targeted genome segment is expanded by a fixed size to create small border regions preceding and following the original target region. In these border regions the variant caller completes all parts of the variant calling operation except for writing any output. In this way regional operations such as haplotype modeling will be applied consistently across segment boundaries. The region expansion size is 100 bases plus the variant caller's maximum indel size (50). In the case of germline calling, the expansion size is further increased by the haplotype model's maximum active region size (250).
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Variant discovery and evidence filtration}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Input read processing}
 
 The input alignment files are scanned for reads as the first step of the variant calling operation. Reads are immediately filtered out if they are marked as not passing primary analysis filters, PCR/optical duplicates, unmapped, secondary or supplemental. The remaining reads are categorized to determine how the read will be used in downstream steps. The categories are
@@ -293,6 +311,7 @@ Input read alignments are also normalized as follows:
 \end{enumerate}
 These normalization steps do not alter the alignment's soft-clipping.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Haplotype model}
 
 Each sample's ploidy introduces constraints that can be used to reduce errors due to sequencing noise, incorrect read mapping, inconsistent alignment to low-complexity sequence and regions where the reference serves as a poor template for the sample. In a simple haplotype model, such as that described in FreeBayes \cite{garrison2012}, candidate haplotypes can be identified from existing read alignments. More advanced haplotype generation methods are less dependent on the input read alignments, often using local assembly as a means to identify longer consensus haplotypes in the context of sequencing noise and high levels of variation from the reference, such as the haplotype generation methods used in Platypus \cite{rimmer2014} and GATK HaplotypeCaller \cite{depristo2011}, among others.
@@ -339,10 +358,13 @@ If there is more than one remaining haplotype, an additional filtration step is 
 \subsubsection{Primitive allele discovery}
 After filtration, the remaining candidate haplotypes are aligned to the reference using a global aligner that employs an affine gap penalty function with the following parameters: match score 1, mismatch penalty 4, gap opening penalty 5, and gap extension penalty 1. From the alignment, primitive alleles (SNVs and indels of size 50 and smaller) are identified and marked {\em discovered} in an active region. These discovered primitive alleles are used to improve SNV and indel calling by (1) relaxing the mismatch density filter (described in \ref{sec:MismatchDensityFilter}), (2) improving indel candidacy (described in \ref{sec:IndelCandidacy}), and (3) phasing SNVs and indels within the same active region (described in \ref{sec:ReadBackedPhasing}).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Indel candidacy}
 \label{sec:IndelCandidacy}
 
-Strelka uses indel candidacy as a preliminary filter to eliminate indel observations from consideration as variants if they are very likely to have been generated by error processes.  A candidate indel variant must minimally have 2 reads supporting it in at least one sample. If haplotype modeling is enabled, a candidate indel belonging to an active region where haplotyping was successful must also have been discovered through haplotype alignment in at least one sample. If an indel observation satisfies these conditions, Strelka evaluates its candidacy status using a one-sided binomial exact test, with the null hypothesis being that the indel coverage is generated by indel error processes.
+Strelka uses indel candidacy as a preliminary filter to eliminate indel observations from consideration as variants if they are very likely to have been generated by error processes. Any indel which becomes a candidate will be considered during read realignment and indel genotyping in all samples.
+
+To become a candidate, an indel variant must minimally have 2 reads supporting it in at least one sample. If haplotype modeling is enabled, a candidate indel belonging to an active region where haplotyping was successful must also have been discovered through haplotype alignment in at least one sample. If an indel observation satisfies these conditions, Strelka evaluates its candidacy status using a one-sided binomial exact test, with the null hypothesis being that the indel coverage is generated by indel error processes.
 
 Given a total locus coverage of $N$, indel coverage of $n_i$, and an indel error rate of $e_l$ (described below in section \nameref{sec:indel_error}), we define the probability of some coverage $x$ being generated at the locus due to indel error as
 \begin{equation*}
@@ -355,6 +377,10 @@ p_{error} = P(X >= n_i \mid N, e_l) = \sum_{x = n_i}^{N} P(x \mid N, e_l)
 
 \noindent The indel is considered a candidate variant if $p_{error} < p_{reject}$, where $p_{reject}$ is the rejection threshold for the null hypothesis. The default value of $p_{reject}$ is $1\e{-9}$.
 
+\paragraph{External candidate input}
+
+The above process describes how indel candidates are discovered from the input read alignment either directly or via additional processing in the haplotype model. Strelka also allows the user to specify indel candidates from one or more VCF files. Each such indel VCF can optionally include a \emph{forced genotype} specification, which means that the given indel allele must be genotyped and emitted in the VCF output, even when there is no evidence to support the allele. Regardless of the \emph{forced genotype} status, all external candidates input are automatically considered candidate variants and are treated in subsequent realignment and genotyping stages in the same way as a candidate discovered directly from the input alignment data.
+
 \ifx\IncludeDevelopmentDetail
 
 \paragraph{Design discussion}
@@ -364,14 +390,14 @@ The current indel candidacy test is suspected to be a poor fit to indel error be
 
 \begin{raggedParagraph}{Implementation details}
 
-The indel candidacy test is contained in class \verb|IndelBuffer|, and triggered by its predicate method \verb|is_candidate_indel|. The above described candidacy logic is primarily implemented in \verb|isCandidateIndelImplTest|. To achieve a practical runtime the above described binomial p-value test is implemented using a cached Poisson approximation to the binomial, as implemented by helper class \verb|min_count_binom_gte_cache|.
+The indel candidacy test is contained in class \verb|IndelBuffer|, and triggered by its predicate method \verb|isCandidateIndel|. The above described candidacy logic is primarily implemented in \verb|isCandidateIndelImplTest|. To achieve a practical runtime the above described binomial p-value test is implemented using a cached Poisson approximation to the binomial, as implemented by helper class \verb|min_count_binom_gte_cache|.
 
 \end{raggedParagraph}
 
 \fi % IncludeDevelopmentDetail
 
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Read realignment}
 \label{sec:realignment}
 
@@ -412,6 +438,7 @@ Read realignment is executed once for each read, starting from the entry-point f
 
 \fi % IncludeDevelopmentDetail
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Basecall quality adjustment and filtration}
 
 \subsubsection{Mapping error adjustment}
@@ -465,6 +492,109 @@ Most basecall filtration steps are executed in method \verb|starling_pos_process
 
 \fi % IncludeDevelopmentDetail
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Overlapping indel filtration}
+
+Following candidate allele identification and realignment, additional steps are taken in both the germline and somatic variant calling pipelines to filter excessive numbers of overlapping/conflicting candidate alleles at the same locus. In the germline model this filtration is based on the ploidy of the region and serves a similar role to the filtration performed in the earlier haplotype modeling step. In the somatic model this filtration is performed without any attempt to estimate the characteristics and number of tumor sub-clones, so it is currently employed as an heuristic approximation.
+
+\subsubsection{Overlapping indel filtration in the germline caller}
+
+In the germline model, overlapping indel alleles can be filtered at each locus based on the expected ploidy of each region in each sample. As mentioned above, this process partially replicates the ploidy-based noise filtration that occurs in the haplotype model, but it remains an important step for several reasons, (1) there are variant loci where the haplotype model does not operate for various reasons, for instance because no active region was triggered, assembly failed, the region was too large, etc (2) the overlapping allele filtration step described below is different than that performed in the haplotype model in that it occurs after read realignment and is based on the likelihood of reads to support each of the overlapping alleles in question, rather than being based on simple read counts.
+
+A summary of the germline model overlapping allele filtration procedure is as follows. Given an expected ploidy $p_s$ for the position of interest in each sample $s$, we identify all overlapping indel alleles at that position, rank these by read likelihood support in each sample and retain no more than $p_s$ non-reference alleles in each sample. We then consider all indel alleles at other positions which overlap with those we have retained at the position of interest. This expanded set of indel alleles is again ranked by relative read likelihood support such that no more than $p_s$ non-reference alleles in each sample. The filtration is divided into two phases based on the position of interest because additional heuristics need to be applied in the second phase to resolve alleles with an unknown phasing relationship.
+
+Note that the per-sample ploidy value $p_s$ can be specified by region in each sample as user input to Strelka, and defaults to 2 otherwise. Only ploidy values of 1 or 2 will currently be handled by the methods below.
+
+\paragraph{Resolving overlapping indels indexed to a single position}
+
+Each position in the genome is processed in left to right order. For each position, the first step in indel calling is to find the set $A$ of all indel candidate alleles at that position in addition to the reference allele. Note that the indel position is assigned as the first position following the left-most breakpoint of the left-shifted indel.
+
+For each sample $s$, all reads in that sample $d \in D_s$ are identified for which the read likelihood $P(d \mid a)$ has been computed for all alleles $a \in A$ \todo{link to the criteria used to decide whether to compute $P(d \mid a)$, this should be something like "the read overlaps a breakpoint of $a$  by at least 5 bases, and the likelihood for the reference allele is always included"}. Note the set of reads found for this purpose is not restricted to tier1 reads. The allele likelihood for each read $P(d \mid a)$ is transformed to an allele probability $P(a \mid d)$ assuming a uniform prior on $A$, such that the total support $t_s(a)$ for each allele $a$ in the sample can be found from
+
+\begin{equation}
+\label{eq:perSampleAlleleSupport}
+t_s(a) = \sum_{d \in D_s}{P(a \mid d)}
+\end{equation}
+
+Within each sample, alleles are assigned a rank $k_s(a)$ from highest to lowest $t_s(a)$ values. The top-ranked $p_s$ alleles are selected for consideration in the next processing step. If the reference allele was not in the top $p_s$ alleles, it is added into the set as well. This process yields the filtered per-sample and global allele sets $A^{\prime}_s$ and $A^{\prime}$.
+\begin{comment}
+% Commenting out for now because forced genotype indel writeup is being deprioritized until other sections are done.
+Note that any \emph{forced genotype} indel alleles removed from consideration here will be revisited in a subsequent step to ensure that they are genotyped and emitted in the final VCF output.
+\end{comment}
+
+\paragraph{Resolving overlapping indels indexed to multiple positions}
+
+The next step of the locus allele-selection procedure resolves any additional overlapping indels at other positions, if these exist. To do so, we first define \emph{overlapping indels} as two indels which intersect or are adjacent, such that they could not both be present in the same haplotype. In the procedure below we are constrained to only consider a set of alleles for filtration (and subsequently genotyping), where all alleles in the set are overlapping. For the set of position-specific alleles considered above this property must be true, but additional steps are taken to ensure the overlapping property holds when considering indels at other positions, as described below.
+
+All indels indexed to locations other than the targeted position which overlap all alleles in $A^{\prime}$ are found, forming the extended candidate allele set $A_x$. As above, the total read support for each of these alleles is used to generate a per-sample ranking of the extended allele set $k_s(a), a \in A_x$. This per-sample rank is used to generate a heuristic sum of ranks over all samples which provides an approximate score for ranking alleles across all samples
+
+\begin{equation*}
+t(a) = \sum_{s \in S}{\setSize{A_x} - k_s(a) + 1}
+\end{equation*}
+
+$B_x$, a mutually-overlapping subset $A_x$, is then found using the following iterative procedure.
+$B_x$ is initially empty. Each allele $a \in A_x$ is tested in order from highest to lowest $t(a)$ value, to see if it overlaps with all alleles in $B_x$. If so, the allele is added to $B_x$, before iterating to the next lowest-scoring allele in $A_x$.
+\todo{Konrad: Not sure how to handle the above, I couldn't describe the logic without introducing a kind of "pseudo-code in prose", including a mutating definition of $B_x$, curious about thoughts on cleaner way to convey this?}
+
+As a final step, the overlapping alleles are combined with the original position specific allele set to undergo ploidy-based selection. To do so, per-sample allele support is computed for combined allele set $B = A^{\prime} \cup B_x$, as in equation \ref{eq:perSampleAlleleSupport} above, to find the per-sample allele support $t_s(a), a \in B$. This support is then used to rank alleles in each sample and apply ploidy-based filtration for each sample to produce the final set of alleles to be evaluated at each locus.
+
+
+\begin{comment}
+% Commenting out for now because it is not clear where the global ranking has any important impact on inference. It does impact the order the alleles are written to the VCF record, but does it do anything more substantial?
+
+Global allele Ranking
+
+Following the ranking and selection of top alleles in individual samples, alleles are ranked over based on a sample-wide support score $t(a)$. This is found by a simple heuristic based on the sum of per-sample ranks computed above
+
+\begin{equation*}
+t(a) = \sum_{s \in S}{\max(0, p_s - k_s(a) + 1)}
+\end{equation*}
+
+\end{comment}
+
+
+\begin{comment}
+
+\paragraph{Recovering forced genotype indels}
+% Commenting out for now because forced genotype indel writeup is being deprioritized until other sections are done.
+
+Indels which have been marked with a \emph{forced genotype} status must be genotyped and emited in the output VCF even if there is no supporting evidence for them in the sample. The purpose of this output is to allow the absence of the allele to be asserted in a way that can be distinguished from low-coverage or inability of the sequencing reads to differentiate thee allele (due to, e.g. a long STR). Any forced genotype indels which have been filtered from the standard genotyping process by the above processes are re-evaluated individually in a separate pipeline to genotype and emit forced indels which are not output as variants.
+
+IT works like this....
+
+\end{comment}
+
+
+\ifx\IncludeDevelopmentDetail
+
+\paragraph{Design discussion}
+
+The above procedure should be improved on at least two primary directions. (1) It acts almost independently of the haplotype model, while fulfilling a similar role (ploidy-based noise filtration), so it should be adapted to act at the haplotype level when this information is available, while retaining an ability to function on those loci where haplotype assembly may occasionally not succeed. (2) It should more consistently treat SNVs, so that it simply becomes overlapping \emph{allele} resolution, instead of a step specific to indels.
+
+In a similar direction to haplotye model incorporation, the definition of overlapping alleles used here is limiting, in that the indels are only considered in their left-shifted positions. Ideally the above procedure would move to whole haplotype ranking and selection, but where evaluation of individual alleles is required, these should be considered as sequence replacements over the entire STR tract they impact.
+
+As noted in the methods above, allele ranking and noise filtration does not employ any population genetics model and is not expected to perform well in large cohorts. For the targeted use case of individuals and small families it is observed to perform well.
+
+\begin{raggedParagraph}{Implementation details}
+    
+    The entry point for these procedures are in method \verb|starling_pos_processor::process_pos_indel_digt()|.
+    
+\end{raggedParagraph}
+
+\fi % IncludeDevelopmentDetail
+
+
+\subsubsection{Overlapping indel filtration in the somatic caller}
+
+\todo[inline]{This is mostly straight copy/paste from strelka1 paper right now... still need to adapt in}
+
+As described above, in the process of realignment xxxxxxxxxxxx evaluating each indel we choose the highest scoring alignment which includes and excludes the indel. Usually the alignment which excludes the evaluated indel will be the reference allele, but the protocol does allow for the presence of an overlapping indel in this alternate alignment, providing an approximate method for overlapping indel calling. Many of these overlapping indel sites correspond to spurious indel hotspots, so additional filtration is used to reduce loci where the alternate indel alleles suggest more than two haplotypes. The filtration scheme enumerates an approximate measure of support for each allele $S_a$ by summing the probability of each allele for a given read over all reads. We then require that the allele in question have an $S_a$ value among the two highest for all overlapping alleles at the locus, and that the total $S_a$ value of the top two alleles is at least 90\% of the total for the top three. The allele probabilities for each read used to compute $S_a$ are taken from the posterior probability over all alternate indel alleles for a given read, where this posterior is computed from the alternate alignment likelihoods for each allele $P(l)$ assuming a uniform prior probability over the set of indel alleles.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Variant Probability Model}
 \subsection{Germline Model}
 \label{sec:germline}
@@ -580,10 +710,11 @@ Site-dependent basecall quality adjustments are implemented in \verb|adjust_join
 \label{sec:ReadBackedPhasing}
 As previously noted, Strelka defines an active region around dense variants and infers 2 haplotypes for the region. These haplotypes are used to phase SNVs and indels within the same active region. The phasing is conducted after scoring and genotyping. For each heterozygous variant belonging to an active region, Strelka checks which haplotype the variant is lying on. If the variant is lying on either of the two haplotypes, it is marked phased and the haplotype ID (0 or 1) is recorded to appropriately write the genotype allele order (e.g. \verb/0|1/ or \verb/1|0/).
 
+
 \subsection{Somatic Model}
 \label{sec:somatic}
 
-\todo{Update quality score names in this section}
+\todo[inline]{Update quality score names in this section}
 The somatic calling model assumes that the samples are from diploid individuals. For both SNVs and indels, the normal genotype state space is the set of unphased diploid genotypes with no more than one non-reference allele, $G_n \in \{ \texttt{ref}, \texttt{het}, \texttt{hom}\}$, where $\texttt{ref}$, $\texttt{het}$, and $\texttt{hom}$ refer to the normal genotype being reference, heterozygous, and homozygous, respectively. The tumor genotype has two states $G_t \in \{ \texttt{nonsom}, \texttt{som} \}$, where $\texttt{nonsom}$ and $\texttt{som}$ indicate the absence and presence of somatic mutation in the tumor sample, respectively. The method approximates a posterior probability on the joint tumor and normal genotypes.
 
 \begin{align*}
@@ -830,6 +961,10 @@ The alternate and total allele counts for SNVs represent the total counts of non
 
 The alternate allele count for indels is the number of reads supporting the indel allele in question versus all other alleles at the locus with a posterior probability of at least $x_{min}$. The total count reflects the number of reads supporting any allele at the locus with posterior probability of at least $x_{min}$. The value used for $x_{min}$ is 0.51.
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Filtration and Empirical Scoring}
 \label{sec:FiltrationAndScoring}
 

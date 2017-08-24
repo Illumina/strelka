@@ -398,7 +398,7 @@ debug_dump_digt_lhood(const blt_float_t* lhood,
     }
 
     unsigned max_gt(0);
-    normalize_ln_distro(pprob,pprob+DIGT::SIZE,max_gt);
+    normalizeLogDistro(pprob, pprob + DIGT::SIZE, max_gt);
 
     os << std::setprecision(3) << std::fixed;
     for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
@@ -426,7 +426,7 @@ calculate_result_set(const blt_float_t* lhood,
         pprob[gt] = lhood[gt] + lnprior[gt];
     }
 
-    normalize_ln_distro(pprob.begin(), pprob.end(),rs.max_gt);
+    normalizeLogDistro(pprob.begin(), pprob.end(), rs.max_gt);
 
     rs.ref_pprob=pprob[ref_gt];
     rs.snp_qphred=error_prob_to_qphred(pprob[ref_gt]);

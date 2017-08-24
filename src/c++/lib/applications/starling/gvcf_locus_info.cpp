@@ -113,20 +113,6 @@ operator<<(
 
 
 
-void
-GermlineIndelLocusInfo::
-getOffsetError(
-    const unsigned offset) const
-{
-    using namespace illumina::common;
-
-    std::ostringstream oss;
-    oss << "ERROR: indel locus site offset '" << offset << "' exceeds exceeds locus size '" << _range.size() << "'\n";
-    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-}
-
-
-
 std::ostream&
 operator<<(
     std::ostream& os,

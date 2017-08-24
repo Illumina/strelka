@@ -117,7 +117,7 @@ position_nonref_test(const snp_pos_info& pi,
     {
         pprob[i] = lhood[i] + prior[i];
     }
-    normalize_ln_distro(pprob,pprob+NRTEST::SIZE,nrc.max_gt);
+    normalizeLogDistro(pprob, pprob + NRTEST::SIZE, nrc.max_gt);
 
     nrc.snp_qphred=error_prob_to_qphred(pprob[NRTEST::REF]);
     nrc.max_gt_qphred=error_prob_to_qphred(prob_comp(pprob,pprob+NRTEST::SIZE,nrc.max_gt));

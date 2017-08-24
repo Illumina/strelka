@@ -626,9 +626,10 @@ struct GermlineIndelLocusInfo : public LocusInfo
         }
     }
 
-
-    // Added to address STREL-275
-    // set if the reference and all alt sequences have a common prefix
+    /// Fix locus for the case that all alleles share a common prefix
+    ///
+    /// This was added to address STREL-275. Ideally we would design the genotyping method to never input
+    /// shared prefix loci in the first place, This is a temporary patch to prevent invalid output for now.
     void
     setCommonPrefix(const unsigned commonPrefixLength)
     {
@@ -693,14 +694,10 @@ struct GermlineIndelLocusInfo : public LocusInfo
     }
 
 private:
-
-    void
-    getOffsetError(const unsigned offset) const;
-
     std::vector<GermlineIndelAlleleInfo> _indelAlleleInfo;
     std::vector<GermlineIndelSampleInfo> _indelSampleInfo;
 
-    /// the reference range of all indel alleles at this locus:
+    /// The reference range of all indel alleles at this locus:
     known_pos_range2 _range;
 
     unsigned _commonPrefixLength;

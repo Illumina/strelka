@@ -27,12 +27,13 @@
 #include <vector>
 
 
-/// generalization of overlapping alleles:
+/// A generalization of overlapping alleles:
 ///
 struct OrthogonalVariantAlleleCandidateGroup
 {
     typedef IndelBuffer::const_iterator AlleleIter_t;
 
+    /// \return The merged reference range of all alleles in the group
     known_pos_range
     getReferenceRange() const;
 

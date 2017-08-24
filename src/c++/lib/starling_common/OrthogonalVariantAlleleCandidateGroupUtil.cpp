@@ -137,7 +137,9 @@ getAlleleLogLhoodFromRead(
 {
     const unsigned nonrefAlleleCount(alleleGroup.size());
     const unsigned fullAlleleCount(nonrefAlleleCount+1);
-    const unsigned refAlleleIndex(0);
+
+    // reference allele is fixed at index 0 by convention
+    static const unsigned refAlleleIndex(0);
 
     alleleLogLhood.resize(fullAlleleCount);
 
@@ -145,10 +147,10 @@ getAlleleLogLhoodFromRead(
     bool isPartialAlleleCoverage(false);
     for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<nonrefAlleleCount; nonrefAlleleIndex++)
     {
-        const IndelSampleData& isd(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleIndex));
+        const IndelSampleData& indelSampleData(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleIndex));
 
-        const auto iditer(isd.read_path_lnp.find(readId));
-        if (iditer==isd.read_path_lnp.end())
+        const auto iditer(indelSampleData.read_path_lnp.find(readId));
+        if (iditer==indelSampleData.read_path_lnp.end())
         {
             isPartialAlleleCoverage=true;
             continue;
@@ -175,10 +177,10 @@ getAlleleLogLhoodFromRead(
     {
         for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex < nonrefAlleleCount; nonrefAlleleIndex++)
         {
-            const IndelSampleData& isd(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleIndex));
+            const IndelSampleData& indelSampleData(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleIndex));
 
-            const auto iditer(isd.read_path_lnp.find(readId));
-            if (iditer != isd.read_path_lnp.end()) continue;
+            const auto iditer(indelSampleData.read_path_lnp.find(readId));
+            if (iditer != indelSampleData.read_path_lnp.end()) continue;
 
             alleleLogLhood[nonrefAlleleIndex+1] = alleleLogLhood[refAlleleIndex];
         }
@@ -196,7 +198,7 @@ getAlleleNaivePosteriorFromRead(
 {
     getAlleleLogLhoodFromRead(sampleIndex, alleleGroup, readId, alleleProb);
     unsigned maxIndex(0);
-    normalize_ln_distro(alleleProb.begin(),alleleProb.end(),maxIndex);
+    normalizeLogDistro(alleleProb.begin(), alleleProb.end(), maxIndex);
 }
 
 
@@ -218,6 +220,7 @@ rankOrthogonalAllelesInSample(
     const unsigned fullAlleleCount(nonrefAlleleCount+1);
     static const unsigned refAlleleIndex(0);
 
+    // For each allele, sum the posterior support from all reads
     std::vector<double> support(fullAlleleCount,0.);
     for (const auto readId : readIds)
     {
@@ -284,14 +287,15 @@ selectTopOrthogonalAllelesInAllSamples(
 
     topAlleleGroup.clear();
 
-    // this structure is used to create an approximate allele rank over all samples
+    // This structure is used to create an approximate allele rank over all samples
     std::map<IndelKey,unsigned> topVariantAlleleKeyScore;
 
+    // Record the most likely non-reference allele at this locus in each sample
     std::vector<IndelKey> topVariantAllelePerSample;
 
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
-        // in each sample, rank and select top N alleles, N=callerPloidy, and accumulate these top alleles
+        // In each sample, rank and select top N alleles, N=callerPloidy, and accumulate these top alleles
         // over all samples in topAlleleGroup
         //
         const unsigned sampleCallerPloidy(callerPloidy[sampleIndex]);
@@ -300,7 +304,8 @@ selectTopOrthogonalAllelesInAllSamples(
         selectTopOrthogonalAllelesInSample(sampleIndex, inputAlleleGroup, sampleCallerPloidy,
                                            topAlleleGroupInSample);
 
-        // set topAlleleGroup and topVariantAlleleKeyScore
+        // Iterate over the top alleles from this sample to update
+        // topAlleleGroup and topVariantAlleleKeyScore
         const unsigned topAllelesInSampleCount(topAlleleGroupInSample.size());
         for (unsigned alleleIndex(0); alleleIndex < topAllelesInSampleCount; alleleIndex++)
         {
@@ -308,14 +313,19 @@ selectTopOrthogonalAllelesInAllSamples(
             auto indelKeyIter(topVariantAlleleKeyScore.find(indelKey));
             if (indelKeyIter == topVariantAlleleKeyScore.end())
             {
+                // When allele is observed the first time, set up a new entry in the scoring map, and add the
+                // allele to topAlleleGroup
                 auto retVal = topVariantAlleleKeyScore.insert(std::make_pair(indelKey,0));
                 indelKeyIter = retVal.first;
                 topAlleleGroup.addVariantAllele(topAlleleGroupInSample.iter(alleleIndex));
             }
+
+            // Add the (ploidy-adjusted) rank of the allele to the allele's score:
+            assert(alleleIndex < sampleCallerPloidy);
             indelKeyIter->second += (sampleCallerPloidy-alleleIndex);
         }
 
-        // set topVariantAllelePerSample:
+        // Set topVariantAllelePerSample:
         if (topAllelesInSampleCount>0)
         {
             const IndelKey& indelKey(topAlleleGroupInSample.key(0));
@@ -329,7 +339,7 @@ selectTopOrthogonalAllelesInAllSamples(
 
     assert(topVariantAllelePerSample.size() == sampleCount);
 
-    // approximately rank topVariantAlleleGroup alleles based on sample rankings
+    // Rank topAlleleGroup alleles based on the approximate pan-sample support score in topVariantAlleleKeyScore
     if (sampleCount > 1)
     {
         std::vector<int> support;
@@ -350,7 +360,7 @@ selectTopOrthogonalAllelesInAllSamples(
         }
     }
 
-    // convert top variant per sample from indel key to topAlleleGroup index:
+    // Convert top variant per sample from indel key to topAlleleGroup index:
     {
         std::map<IndelKey,unsigned> indelIndex;
         const unsigned topAllelesCount(topAlleleGroup.size());
@@ -456,19 +466,20 @@ addAllelesAtOtherPositions(
     const unsigned sampleCount,
     const std::vector<unsigned>& callerPloidy,
     const pos_t pos,
-    const pos_t largest_total_indel_ref_span_per_read,
+    const pos_t largestTotalIndelRefSpanPerRead,
     const IndelBuffer& indelBuffer,
     OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     std::vector<unsigned>& topVariantAlleleIndexPerSample)
 {
-    const pos_t minIndelBufferPos(pos-largest_total_indel_ref_span_per_read);
+    const pos_t minIndelBufferPos(pos-largestTotalIndelRefSpanPerRead);
 
     const unsigned inputAlleleCount(alleleGroup.size());
     assert(inputAlleleCount!=0);
 
     bool isEveryAltOrthogonal(true);
 
-    // first get the set of candidate alt alleles from positions other than 'pos'
+    // First get the set of new candidate alt alleles from positions other than 'pos', and store these in
+    // newAltAlleleGroup
     //
     OrthogonalVariantAlleleCandidateGroup newAltAlleleGroup;
     {
@@ -534,9 +545,10 @@ addAllelesAtOtherPositions(
             std::map<IndelKey, unsigned> newAltAlleleKeyScore;
             for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
             {
-                // rank alt alleles and include from highest to lowest unless interference clique is broken:
+                // Rank alt alleles and include from highest to lowest unless interference clique is broken:
                 //
-                /// TODO shouldn't this ranking be done wrt all alleles and not just the new alts?
+                // TODO: This ranking is currently done wrt only the newAltAllele set. It seems like it should be done
+                // TODO: wrt newAltAllele+inputAlleleGroup instead.
                 unsigned referenceRank(0);
                 OrthogonalVariantAlleleCandidateGroup rankedNewAltAlleleGroupPerSample;
                 rankOrthogonalAllelesInSample(sampleIndex, newAltAlleleGroup, rankedNewAltAlleleGroupPerSample,
@@ -549,6 +561,8 @@ addAllelesAtOtherPositions(
                     auto indelKeyIter(newAltAlleleKeyScore.find(indelKey));
                     if (indelKeyIter == newAltAlleleKeyScore.end())
                     {
+                        // Initialize indel in score map and global allele list if it hasn't been observed
+                        // in another sample already:
                         auto retVal = newAltAlleleKeyScore.insert(std::make_pair(indelKey, 0));
                         indelKeyIter = retVal.first;
                         rankedNewAltAlleleGroup.addVariantAllele(rankedNewAltAlleleGroupPerSample.iter(alleleIndex));
@@ -560,8 +574,8 @@ addAllelesAtOtherPositions(
             }
 
 
-            // approximately rank rankedNewAltAlleleGroup alleles based on sample rankings, if sampleCount ==1 this
-            // has already been done
+            // Rank rankedNewAltAlleleGroup alleles based on approximate global scoring computed above in
+            // newAltAlleleKeyScore, if sampleCount == 1 the alleles have already been ranked based on read-support.
             if (sampleCount > 1)
             {
                 std::vector<int> support;
@@ -583,8 +597,8 @@ addAllelesAtOtherPositions(
             }
         }
 
+        // Now that the new alleles have been ranked, test them in rank order for conflicting with each other
         newAltAlleleGroup.clear();
-
         for (const auto& rankedNewAltAlleleIter : rankedNewAltAlleleGroup.alleles)
         {
             bool isGroupOrthogonal(true);

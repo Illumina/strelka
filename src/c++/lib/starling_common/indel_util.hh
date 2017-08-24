@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -27,7 +27,7 @@
 #include "starling_common/indel.hh"
 
 
-/// are the two indels overlapping or adjacent?
+/// Return true if the two indels are overlapping or adjacent
 bool
 is_indel_conflict(
     const IndelKey& indelKey1,

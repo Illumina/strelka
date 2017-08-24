@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #pragma once
 
 #include "gvcf_aggregator.hh"
@@ -30,7 +26,7 @@
 #include "starling_common/starling_pos_processor_base.hh"
 
 
-///
+/// \brief Coordinate the germline-specific details of variant calling
 ///
 struct starling_pos_processor : public starling_pos_processor_base
 {
@@ -110,6 +106,6 @@ private:
     RegionTracker _nocompress_regions;
 
     /// The furthest upstream position already covered by a variant indel locus.
-    /// Further indel output is supressed until going past this point.
+    /// Further indel output is suppressed until going past this point.
     pos_t _variantLocusAlreadyOutputToPos = -1;
 };
