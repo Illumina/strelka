@@ -16,7 +16,7 @@
 \usepackage[noend]{algpseudocode}
 
 
-\title{`Methods for Strelka Small Variant Caller'}
+\title{Methods for Strelka Small Variant Caller}
 
 
 % simple scientific notation:
@@ -36,7 +36,7 @@ On any release branch, the methods described here should reflect the default imp
 
 
 
-\section{Workflow Overview}
+\section{Workflow overview}
 
 Strelka comprises several workflows to call small variants from mapped sequencing data. Supported small variant calling workflows include detection of germline variants in a set of samples, and somatic variants from matched tumor-normal sample pairs.
 
@@ -59,7 +59,7 @@ The details of the shared and application specific model steps are provided belo
 
 
 
-\section{Preliminary Parameter Estimation}
+\section{Preliminary parameter estimation}
 
 Various aggregate statistics may be estimated from the sequencing data prior to the start of the primary variant calling procedure.
 
@@ -84,9 +84,11 @@ The depth estimation procedure is run separately for each non-tumor sample, and 
 The objective of the depth estimation step is to find the expected depth and/or depth distribution for each copy number state or plasmid -- at present dividing this estimation to run separately on each chromosome is a reasonable approximation towards this goal. An improvement would be to estimate the depth distribution properties jointly over each copy number state and plasmid.
 
 
-\subsection{Indel Error Rate Estimation}
+\subsection{Indel error rate estimation}
 \label{sec:indel_error_est}
 For germline variant calling, indel sequencing errors are modeled as a process which occurs independently in each read, with some fixed probably of an indel error occurring as a function of the local sequence STR context. These error probabilities are estimated in two steps: (1) indel error count analysis and (2) parameter estimation. In the first step, mapped sequencing data are analyzed at a subset of sites from across the genome to produce error counts for various sequencing contexts. In the second step, the counts are used to estimate the parameters of interest.
+
+For somatic variant calling, this adaptive indel error modelling step is not yet available; instead, a simpler non-adaptive approach is used.
 
 \subsubsection{Indel error count analysis}
 At every site that is to be used for the rate estimation process (see Section \ref{sec:error_estimation_implementation}), we need to count the number of reads supporting each potential variant at that site and accumulate these counts by context.
@@ -96,12 +98,12 @@ First, the reads are filtered as a pre-processing step based on the following cr
         \item Read fails platform quality test.
         \item Read is a PCR/optical duplicate.
         \item Read is not mapped.
-        \item Read is not a ``proper pair''.
+        \item Read is not a \emph{proper pair}.
         \item Read input alignment contains more than 2 indels.
     \end{enumerate}
 Reads with MAPQ scores below 60 are kept but not used to generate the error counts.
 
-The counting process uses the same mapped read scanning and realignment strategy used by the small variant caller {\tt TODO: add reference to somewhere in the document - what exactly does this refer to?}, with the following differences:
+The counting process uses the same mapped read realignment strategy used by the variant calling process (section \ref{sec:realignment}), with the following differences:
  \begin{enumerate}
     \item \label{no_threshold_for_indel} There is no threshold for indel candidacy.
     \item \label{no_indel_errors_allowed} No indel errors are allowed when read likelihood for each indel allele is computed.
@@ -109,15 +111,15 @@ The counting process uses the same mapped read scanning and realignment strategy
     \item The whole locus is skipped if more than 4 overlapping allele candidates are found.
     \item The locus is skipped if the set of overlapping alleles at a locus are not all mutually incompatible with the same haplotype. {\tt TODO: rephrase, unclear}
     \item Variant and non-variant observations that are within 10 bases of the beginning or end of a read are filtered out.
-    \item Error counts are not collected in regions where the pileup depth is more than 3 times the chromosome mean. (The number of contexts affected by such filtration is recorded so that it is still possible to verify the total number of contexts observed during the counting process.)
+    \item Error counts are not collected in regions where the pileup depth is more than 3 times the chromosome mean.
  \end{enumerate}
 
-Note that item \ref{no_threshold_for_indel} means that an alignment gap observed once in an input read is treated as a ``candidate'' for the purpose of error evaluation. Hence, an attempt is made to realign all other reads to that indel, and in the process the likelihood of each read supporting the given indel is found. {\tt TODO: do we then pick the maximum likelihood and increment the corresponding hard count?} Item \ref{no_indel_errors_allowed} above means that the read likelihoods are based on explaining the observations via basecalling errors only.
+Note that item \ref{no_threshold_for_indel} means that an alignment gap observed once in an input read is treated as a \emph{candidate} for the purpose of error evaluation. Hence, an attempt is made to realign all other reads to that indel, and in the process the likelihood of each read supporting the given indel is found. {\tt TODO: do we then pick the maximum likelihood and increment the corresponding hard count?} Item \ref{no_indel_errors_allowed} above means that the read likelihoods are based on explaining the observations via basecalling errors only.
 
 The extracted data are stored in a compact binary file format. A given sequence context $\left\{ s,r \right\}$ has two parameters, short tandem repeat (STR) pattern size ($s$) and STR pattern repeat count ($r$). Each STR tract $i$ with pattern size $s$ and repeat count $r$ is counted as a single observation for $\left\{ s,r \right\}$ and the resulting count vector $c_j$ for that observation (with elements $c_j(y), y \in Y,$ corresponding to the observed set of alleles $Y$) is included in the set of site-specific count observations $C(s,r)$. Reference Ns are not included. Any ambiguity in the assignment is resolved by choosing the lowest applicable value of $s$ for the site. {\tt TODO: perhaps add detail here? Specifically for deciding where the STR begins and ends when there is potential overlap, e.g. is AACAC treated as s=2,r=2 rather than s=1,r=2? How about AAACAC? AAAAAAAACAC? AAAAACACACACACACACAC?}
 
-\subsubsection{Indel error model parameter estimation}
-We model the counts obtained above as having been generated by two-state mixture processes, with an independent process existing for each context. Every site is modeled as belonging to either the \emph{clean} state (generating essentially no indel errors) or the \emph{noisy} state (generating indel errors independently across reads according to a set of error probabilities to be estimated), with the state-specific models being a simplified version (based on hard observation counts rather than per-read likelihoods) of the full likelihood model presented in sections \ref{sec:germline} and \ref{sec:shared}.
+\subsubsection{Adaptive indel error model parameter estimation}
+We model indel errors as generated by two-state mixture processes, with an independent process existing for each context. Every site is modeled as belonging to either the \emph{clean} state (generating essentially no indel errors) or the \emph{noisy} state (generating indel errors independently across reads according to a set of error probabilities to be estimated). The state-specific models, in turn, describe the generation of the counts obtained above as another mixture process -- this time mixing over possible genotypes. Taken together, these model components are a simplified version (based on hard observation counts rather than per-read likelihoods) of the full likelihood model presented later in sections \ref{sec:germline} and \ref{sec:shared}.
 
 For every context $\left\{ s,r \right\}$ we define the following parameters, which together comprise $\Theta(s,r)$:
 \begin{itemize}
@@ -130,7 +132,7 @@ For every context $\left\{ s,r \right\}$ we define the following parameters, whi
 \item $e_{\text{ref},\text{clean}}(s,r)$: the clean-state probability of an indel error resulting in reversion to reference
 \item $\theta_s(s,r)$: the probability (related to Watterson's theta [CITE]) that two alleles drawn randomly from the human population at a site with the given context will differ by an indel mutation {\tt TODO: is this correct? I made up a definition that will avoid counting snv differences}
 \end{itemize}
-For simplicity, we set all of the clean-state error probabilities to a small constant value: $1 \times 10^{-8}$. We also (for no good reason {\tt TODO: put a positive spin on this}) set $e_{\text{ref}}$ to $0.01$ during parameter estimation and to a constant factor (default value: TODO) times the corresponding $e_i$ or $e_d$ during variant calling (section \ref{sec:shared}). The indel mutation rates $\theta_s$ were pre-estimated from chromosomes 1-22 on a fixed training data set and are used as constant values in the current workflow -- this is based on the assumption that the mutation rate does not vary across different sequencing runs or samples. The remaining parameters are estimated on a per-sample basis {\tt TODO: is this correct for multi-sample?} by maximizing the likelihood of the observed counts:
+For simplicity, we set all of the clean-state error probabilities to a small constant value: $1 \times 10^{-8}$. We also (for no good reason {\tt TODO: put a positive spin on this}) set $e_{\text{ref}}$ to $0.01$ during parameter estimation and to a constant factor (default value: {\tt TODO}) times the corresponding $e_i$ or $e_d$ during variant calling (section \ref{sec:shared}). The indel mutation rates $\theta_s$ were pre-estimated from chromosomes 1-22 on a fixed training data set and are used as constant values in the current workflow -- this is based on the assumption that the mutation rate does not vary across different sequencing runs or samples. The remaining parameters are estimated on a per-sample basis {\tt TODO: is this correct for multi-sample?} by maximizing the likelihood of the observed counts:
 
 \begin{equation*}
 P(C(s,r) \mid \Theta(s,r))=\prod_{j: c_j\in C(s,r)}P(c_j \mid \Theta(s,r)),
@@ -165,7 +167,7 @@ The heterozygous and homozygous genotype likelihoods are approximated by finding
 The heterozygous likelihood is
 
 \begin{equation*}
-P (c \mid n, g_{\text{het}}, \Theta) = m_c 0.5^{c(y_{var}) + c(ref)} \prod_{y \in Y, y \not\in \{y_{var},ref\}} r(y)^{c(y)}.
+P (c \mid n, g_{\text{het}}, \Theta) = m_c 0.5^{c(y_{\text{var}}) + c(\text{ref})} \prod_{y \in Y, y \not\in \{y_{\text{var}},\text{ref}\}} r(y)^{c(y)}.
 \end{equation*}
 
 Note that in this form, we remove the impact of all indel errors except for those that would mutate the reference allele into something other than $y_{var}$. This approximation should lead to a greater distortion of results as indel error rates become large and as greater asymmetry develops between the rate of error from $ref$ to $y_{var}$ vs $y_{var}$ to $ref$.
@@ -173,36 +175,21 @@ Note that in this form, we remove the impact of all indel errors except for thos
 The homozygous likelihood is
 
 \begin{equation*}
-P (c \mid n, g_{\text{homalt}}, \Theta) = m_c (1-e_{ref})^{c(y_{var})} {e_{ref}}^{c(ref)} \prod_{y \in Y, y \not\in \{y_{var},ref\}} r(y)^{c(y)}
+P (c \mid n, g_{\text{homalt}}, \Theta) = m_c (1-e_{\text{ref}})^{c(y_{\text{var}})} {e_{\text{ref}}}^{c(\text{ref})} \prod_{y \in Y, y \not\in \{y_{\text{var}},\text{ref}\}} r(y)^{c(y)}
 \end{equation*}
 
-where $e_{ref}$ is set to a constant value of 0.01. As discussed for the heterozygous likelihood, the simplified representation of error terms such as $e_{ref}$ here are likely to introduce distortions in indel contexts with higher error rates.
+where $e_{\text{ref}}$ is set to a constant value of 0.01. As discussed for the heterozygous likelihood, the simplified representation of error terms such as $e_{\text{ref}}$ here are likely to introduce distortions in indel contexts with higher error rates.
 
-Finally, because observed $\theta_{indel}$ values can become very high for long homopolymers, hetalt variants start to become important enough to include in the model. Just as with heterozygous variants, the hetalt state is approximated by finding the top two most likely non-reference indel alleles, $y_{var}$, $y_{var2}$ and computing the likelihood with these values fixed. The likelihood of this genotype is
+Finally, because observed $\theta_s$ values can become very high for long homopolymers, hetalt variants start to become important enough to include in the model. Just as with heterozygous variants, the hetalt state is approximated by finding the top two most likely non-reference indel alleles, $y_{\text{var}}$, $y_{\text{var2}}$ and computing the likelihood with these values fixed. The likelihood of this genotype is
 
 \begin{equation*}
-P (c \mid n, g_{\text{hetalt}}, \Theta) = m_c 0.5^{c(y_{var})+c(y_{var2})} {e_{ref}}^{c(ref)} \prod_{y \in Y, y \not\in \{y_{var},y_{var2},ref\}} r(y)^{c(y)}.
+P (c \mid n, g_{\text{hetalt}}, \Theta) = m_c 0.5^{c(y_{\text{var}})+c(y_{\text{var2}})} {e_{\text{ref}}}^{c(\text{ref})} \prod_{y \in Y, y \not\in \{y_{\text{var}},y_{\text{var2}},\text{ref}\}} r(y)^{c(y)}.
 \end{equation*}
 
 In order to reduce complexity, only homopolymer repeats ($s=1$) up to repeat count 16 ($2\leq r \leq 16$) and dinucleotide repeats ($s=2$) up to repeat count 9 ($2\leq r \leq 9$) are of interest. We assume that the parameters for contexts with a given repeat pattern size $p$ ($C(s,2),C(s,3),...,C(s,R)$) follow a log-linear model dependent on the repeat count $r$. This allows us to consider only the contexts with the minimum and maximum repeat counts for a given STR length during parameter estimation: ($C(1,2)$, $C(1,16)$, $C(2,2)$, and $C(2,9)$). The parameters for the remaining contexts are interpolated using a log-linear model estimated from those contexts. Additionally, the parameters for the non-STR context ($C(1,1)$) are also estimated.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-{\tt
-\subsubsection{Indel Error Model}
-TODO: this is an old section, used to be further down in the doc, and is now being removed entirely. Chris, can you confirm that none of what is commented out here is still relevant?}
-%\label{sec:indel_error}
-%Indel errors are approximated as a process which occurs independently in each read, with some fixed probably of an indel error occurring as a function of the local sequence STR context. Strelka's indel error parameters are currently set to pre-estimated values based on empirical observation of indel calling performance for both germline and somatic indel detection.
-%
-%The default indel error rates used by strelka are a function of the local homopolymer context length $l_{\text{STR}}$, so any expansion or contraction of a homopolymer sequence has an error rate indexed on the homopolymer length in the presumed source haplotype upon which the indel error process occurred. All other types of indels, including dinucleotide tract indels and mutations of homopolymers which do not represent simple expansion/contraction events, have $l_{\text{STR}}$ set to one. By observation, the indel error rates are set to a log-linear ramp as a function of $l_{\text{STR}}$
-%
-%\begin{equation*}
-%P(error \mid l_{\text{STR}}) = e_{l} \exp(f_{\text{STR}}(\log(e_{h})-\log(e_{l})))
-%\end{equation*}
-%
-%\noindent where the constant indel errors set for low and high STR lengths are $e_{l} = 5\e{-5}$ and $e_{h} = 3\e{-4}$, and the fraction of high STR length is $f_{\text{STR}} = \max((l_{\text{STR}}-1),15)/15$.
-%
-%As a special case, the germline indel genotyping model uses higher error rates to heuristically account for assembly and mapping errors. This is currently a scaling factor of 100, $P(error_{\text{germline}} \mid l_{\text{STR}}) = 100 * P(error \mid l_{\text{STR}})$
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+When eventually using the estimated parameters for variant calling (section \ref{sec:shared}) we assume that all sites at which candidate haplotypes have been generated belong to the noisy state, so that the mixture model formulation is not needed. For this reason, only the noisy-state error probabilities are passed on for downstream use.
+% Note: the main cost of ignoring the clean state may be to reduce recall on homref calls (a metric we care about so little we haven't even bothered to measure it). More generally, it should lower our confidence in calls (whether homref or variants) at clean sites.
 
 \subsubsection{Implementation}
 \label{sec:error_estimation_implementation}
@@ -214,6 +201,25 @@ If the reference sequence is determined to be acceptable for the estimation proc
 After determining the set and order of estimation intervals, error counting and parameter estimation proceeds independently for each sample. In each sample, counting tasks are launched in order from the estimation interval list up to the number of available workers in the workflow. As each counting procedure completes, the number of sites with non-zero sequence coverage is summed into a running total from all completed tasks. Additional tasks from the estimation interval list are launched until the total coverage of non-empty sites from completed tasks is greater than or equal to 50 Mb. When this site coverage goal is reached, tasks which are no longer needed are canceled, and the workflow waits for tasks to complete so as to cover the smallest continuous series of estimation intervals from the beginning of the estimation interval list which provide coverage of 50 Mb or greater. The workflow waits for this continuous series of tasks so that the final set of counts is deterministic regardless of the completion order of the launched estimation tasks.
 
 Once the counting procedure has completed for a given sample, all of the estimation interval count files are merged, and parameter estimation is conducted according to the procedure outlined above. If parameter estimation fails to converge after the maximum allowed iterations or the estimated error rates fall outside of valid estimation ranges, then the estimation procedure is canceled for the given sample, and the default static parameter set is used for that sample instead.
+
+\subsubsection{Non-adaptive indel error model}
+\label{sec:non_adaptive_indel_error}
+{\tt TODO: I needed to change the equations here to define $e_i$, $e_d$, and $e_{ref}$ as above, am simply guessing that we use $e_i=e_d$ with $e_{ref}$ set the same way as before. Is this correct?}
+When adaptive indel error modeling is not enabled, the indel error parameters are set to pre-estimated values based on empirical observation of indel calling performance. The default indel error rates are a function of the homopolymer context length $r$ only; for all other types of indels, including dinucleotide tract indels and mutations of homopolymers which do not represent simple expansion/contraction events, we set $(s,r) = (1,1)$. The indel error rates are set to a log-linear ramp as a function of $r$:
+
+\begin{equation*}
+e_i(1,r) = e_d(1,r) = e_{l} \exp(f_r(\log(e_{h})-\log(e_{l})))
+\end{equation*}
+
+\noindent where the constant indel errors set for low and high STR lengths are $e_{l} = 5\e{-5}$ and $e_{h} = 3\e{-4}$, and $f_r = \max((r-1),15)/15$.
+
+As a special case, the non-adaptive germline indel genotyping model uses higher error rates to heuristically account for assembly and mapping errors. This is currently a scaling factor of 100: 
+
+\begin{equation*}
+e_i(1,r) = e_d(1,r) = 100 * e_{l} \exp(f_r(\log(e_{h})-\log(e_{l}))
+\end{equation*}
+
+Finally, $e_{\text{ref}}$ is again set to a constant factor {\tt TODO} times the corresponding $e_i$.
 
 \section{Variant calling workflow}
 
@@ -234,14 +240,14 @@ The input alignment files are scanned for reads as the first step of the variant
     \item Sub-mapped reads have the least reliable alignments. These are retained, together with tier1 and tier2 reads, to enable  variant classification features, such as the root mean square mapping quality for all reads covering a variant locus.
 \end{enumerate}
 
-For the germline and somatic calling models reads are classified as tier1 if they have a mapping quality of 20 or higher, and if paired, a mate read which is mapped and marked as a 'proper-pair'. All other unfiltered input reads are classified as sub-mapped in the germline model and as tier2 reads in the somatic model.
+For the germline and somatic calling models reads are classified as tier1 if they have a mapping quality of 20 or higher, and if paired, a mate read which is mapped and marked as a \emph{proper-pair}. All other unfiltered input reads are classified as sub-mapped in the germline model and as tier2 reads in the somatic model.
 
 Input read alignments are also subject to the following normalizations:
 \begin{enumerate}
     \item Indels are left-shifted (moved to a lower position) such that the total number of alignment mismatches does not increase with each single-base left-shift operation.
-    \item Adjacent indels are merged, for instance the alignment indicated by CIGAR '10M1I2I10M' would be simplified to '10M3I10M' and '10M2D1I3D10M' would be simplified to '10M5D1I10M'
-    \item Indels are simplified by identifying any portion of a set of adjacent insert/delete edits which can be matched to the reference, for example, given reference 'ACTGC' and read 'ACGC', the CIGAR '2M1I2D1M' will be simplified to '2M1D2M'
-    \item Indels on (or left-shifted to) the edge of the read are simplified, possibly changing the alignment start position. For instance an alignment CIGAR of "1D10M" at position 100 is transformed to "10M" at position 101.
+    \item Adjacent indels are merged, for instance the alignment indicated by CIGAR `10M1I2I10M' would be simplified to `10M3I10M' and `10M2D1I3D10M' would be simplified to `10M5D1I10M'
+    \item Indels are simplified by identifying any portion of a set of adjacent insert/delete edits which can be matched to the reference, for example, given reference `ACTGC' and read `ACGC', the CIGAR `2M1I2D1M' will be simplified to `2M1D2M'
+    \item Indels on (or left-shifted to) the edge of the read are simplified, possibly changing the alignment start position. For instance an alignment CIGAR of `1D10M' at position 100 is transformed to `10M' at position 101.
 \end{enumerate}
 These normalization steps do not alter the alignment's soft-clipping.
 
@@ -291,7 +297,7 @@ If short haplotyping is enabled, SNVs discovered in active regions are used to r
 
 Strelka uses indel candidacy as a preliminary filter to eliminate indel observations from consideration as variants if they are very likely to have been generated by error processes.  A candidate indel variant must minimally have 2 reads supporting it in at least one sample. If haplotype modeling is enabled, a candidate indel belonging to an active region where haplotyping was successful must also have been discovered through haplotype alignment in at least one sample. If an indel observation satisfies these conditions, Strelka evaluates its candidacy status using a one-sided binomial exact test, with the null hypothesis being that the indel coverage is generated by indel error processes.
 
-Given a total locus coverage of $N$, indel coverage of $n_i$, and an indel error rate of $e_l$ (described below in ``\nameref{sec:indel_error}''), we define the probability of some coverage $x$ being generated at the locus due to indel error as
+Given a total locus coverage of $N$, indel coverage of $n_i$, and an indel error rate of $e_l$ (described below in section \nameref{sec:indel_error}), we define the probability of some coverage $x$ being generated at the locus due to indel error as
 \begin{equation*}
 P(x \mid N, e_l) = \binom {N} {x} e^{x}_l (1 - e_l)^{N - x}
 \end{equation*}
@@ -304,6 +310,7 @@ p_{error} = P(X >= n_i \mid N, e_l) = \sum_{x = n_i}^{N} P(x \mid N, e_l)
 
 
 \subsection{Read Realignment}
+\label{sec:realignment}
 
 \subsubsection{Handling of soft-clipped segments during realignment}
 
@@ -316,14 +323,14 @@ During RNA-Seq analysis, a similar soft-clipping approach is taken, except that 
 \section{Variant Probability Model}
 \subsection{Germline Model}
 \label{sec:germline}
-At every site where a non-reference candidate allele has been proposed, Strelka calculates posterior probabilities for a range of hypotheses. Each hypothesis describes the sample as a mixture of haplotypes, each occurring at a specified frequency in the sample. In the germline case, the hypotheses correspond to the canonical diploid genotypes: ``homref'' (a single-component mixture containing only the reference haplotype at 100\% frequency), ``het'' (a two-component mixture containing the reference and one alternative haplotype, each at 50\% frequency), ``homalt'' (a single-component mixture containing a non-reference haplotype at 100\% frequency), and ``hetalt'' (a two-component mixture containing two different non-reference haplotypes, each at 50\% frequency). For each site at which one or more candidate variants have been proposed (all three possible non-reference variants for SNVs or up to two non-reference variants for indels), the valid genotype configurations involving those variants are considered as hypotheses. 
+At every site where a non-reference candidate allele has been proposed, Strelka calculates posterior probabilities for a range of hypotheses. Each hypothesis describes the sample as a mixture of haplotypes, each occurring at a specified frequency in the sample. In the germline case, the hypotheses correspond to the canonical diploid genotypes: \emph{homref} (a single-component mixture containing only the reference haplotype at 100\% frequency), \emph{het} (a two-component mixture containing the reference and one alternative haplotype, each at 50\% frequency), \emph{homalt} (a single-component mixture containing a non-reference haplotype at 100\% frequency), and \emph{hetalt} (a two-component mixture containing two different non-reference haplotypes, each at 50\% frequency). For each site at which one or more candidate variants have been proposed (all three possible non-reference variants for SNVs or up to two non-reference variants for indels), the valid genotype configurations involving those variants are considered as hypotheses. 
 
 The posterior probability of a hypothesis $H$ conditioned on the observed data $D$ and $Q$ is:
 
-\begin{equation}
+\begin{equation*}
 \label{eq:posterior}
 P(H \mid D,Q) \propto P(D \mid H,Q)P(H).
-\end{equation}
+\end{equation*}
 
 The hypothesis-specific likelihood $P(D \mid H,Q)$ is calculated as described in section \ref{sec:shared}. The hypothesis priors depend on the corresponding genotype priors $P(G)$ and on a factor $k$ that applies to genotypes that encompass more than one hypothesis.
 
@@ -333,7 +340,7 @@ Strelka considers two models for the genotype prior distributions $P(G)$, result
 \label{sec:germline_genomic_prior}
 This model assumes that mutations arise with probability $\theta_s$ (the Watterson theta [CITE]), with independent mutation events required to produce hetalt genotypes. The homalt genotype corresponds to a mutation in the reference sequence.
 
-\begin{equation}
+\begin{equation*}
 P(G) = \left\{
 \begin{array}{lcl}
 \theta_s & \mathrm{if} & \mathrm{het}\\
@@ -341,11 +348,11 @@ P(G) = \left\{
 {\theta_s}^2 & \mathrm{if} & \mathrm{hetalt}\\
 1-\frac{3\theta_s}{2}-{\theta_S}^2 & \mathrm{if} & \mathrm{homref}
 \end{array} \right.
-\end{equation}
+\end{equation*}
 
 \subsubsection{Polymorphic site prior}
 This model assumes that the site in question is already polymorphic in the population, with two circulating alleles at 50\% population frequency in Hardy-Weinberg equilibrium. In addition, secondary mutations resulting in hetalt genotypes can arise with probability $\theta_s$:
-\begin{equation}
+\begin{equation*}
 P(G) = \left\{
 \begin{array}{lcl}
 \frac{1-\theta_s}{2} & \mathrm{if} & \mathrm{het}\\
@@ -353,7 +360,7 @@ P(G) = \left\{
 \theta_s & \mathrm{if} & \mathrm{hetalt}\\
 \frac{1-\theta_s}{4} & \mathrm{if} & \mathrm{homref}
 \end{array} \right.
-\end{equation}
+\end{equation*}
 
 \subsubsection{Within-genotype multiplier}
 For SNVs, all three possible non-reference alleles are considered at any potential variant site, and the prior weight for het and hom genotypes is divided as $P(H) = \frac{P(G)}{3}$. For indels, two non-reference alleles are considered; the reference allele is labeled $0$, the non-reference allele that has a larger number of supporting reads (as determined during the candidacy step) is labeled $1$ and the other (if observed) non-reference allele is labeled $2$. The hypotheses then include $H_{01}$ (het genotype, with the true allele having received more support than any noise allele) and $H_{02}$ (het genotype, with the noise allele having received more support than the true allele), and similar for the hom hypotheses $H_{11}$ and $H_{22}$. The prior weight for the het and hom genotypes are then divided according to the probability $k$ of the a noise allele receiving more support than the true allele, e.g. $P(H_{02} = kP(het)$. Due to the rarity of cases where $H_{22}$ and $H_{02}$ are applicable the results are not very sensitive to the value of $k$, so for simplicity we set $k=\theta_s$.
@@ -453,7 +460,7 @@ Here $D$ refers to the sequencing data from both samples. The likelihood term ab
 The posterior probability over tumor and normal genotypes $P(G_t,G_n \mid D)$ is used to compute the {\em somatic variant probability} (QSS for SNVs and QSI for indels).
 
 \begin{equation}
-\label{eqn:somVarProb}
+\label{eq:somVarProb}
 	P(G_t = \texttt{som} \mid D) = \sum_{G_n \in \{ \texttt{ref}, \texttt{het}, \texttt{hom} \}}{P(G_t=\texttt{som},G_n \mid D)}.
 \end{equation}
 
@@ -533,7 +540,7 @@ The continuous allele frequencies modeled above are efficiently computed by divi
 
 \subsubsection{Somatic callability track}
 
-The somatic variant calling workflow optionally provides a somatic callability track expressing, for each reference position, whether there is sufficient sequencing evidence to confidently assert either (1) the presence of a somatic SNV or (2) the absence of a somatic SNV with somatic variant frequency of 10\% or higher. Evidence for the presence of a somatic SNV is quantified by the QSS score described above in equation \ref{eqn:somVarProb}. Evidence for the absence of a somatic SNV is quantified by the \emph{non-somatic SNV probability} (or the equivalent phred-scaled score, NQSS) described below. A reference position is marked as "callable" in the somatic callability track if QSS $\ge$ 15 or NQSS $\ge$ 15.
+The somatic variant calling workflow optionally provides a somatic callability track expressing, for each reference position, whether there is sufficient sequencing evidence to confidently assert either (1) the presence of a somatic SNV or (2) the absence of a somatic SNV with somatic variant frequency of 10\% or higher. Evidence for the presence of a somatic SNV is quantified by the QSS score described above in equation \ref{eq:somVarProb}. Evidence for the absence of a somatic SNV is quantified by the \emph{non-somatic SNV probability} (or the equivalent phred-scaled score, NQSS) described below. A reference position is marked as "callable" in the somatic callability track if QSS $\ge$ 15 or NQSS $\ge$ 15.
 
 The NQSS score is computed from the same sample-specific allele frequency likelihoods, $P(D_t \mid F_t)$ and $P(D_n \mid F_n)$, used to compute QSS; however, the genotype prior probability $P(G_t, G_n)$ and the joint allele-frequency distributions $P(F_t,F_n \mid G_t,G_n)$ are adjusted as described below.
 
@@ -588,43 +595,43 @@ This section describes components of the probability model shared by the germlin
 
 Given a hypothesis $H$ consisting of a list of haplotypes along with their hypothesized frequencies in the sample, the hypothesis-specific likelihood $P(D \mid H,Q)$ of the observed set of reads is calculated in the same way for both germline and somatic hypotheses:
 
-\begin{equation}
+\begin{equation*}
 \label{eq:geno_lik}
 P(D \mid H,Q) = \prod_{(d,q) \in (D,Q)} P(d \mid H,q).
-\end{equation}
+\end{equation*}
 
-Here we assume that all sites at which candidate haplotypes have been generated belong to the noisy state (see section \ref{sec:indel_error_est}), so that the mixture model formulation used to estimate adaptive germline indel error probabilities is not needed here. We are also assuming independence of individual reads $d$ [TODO rephrase after we have a section explaining what is done to relax this assumption] and ignoring strand bias, which could potentially be modeled if strand information for each read were included alongside basecall quality information.
+Here we assume independence of individual reads $d$ [TODO rephrase after we have a section explaining what is done to relax this assumption] and ignore strand bias, which could potentially be modeled if strand information for each read were included alongside basecall quality information.
 % Note: the main cost of ignoring the clean state may be to reduce recall on homref calls (a metric we care about so little we haven't even bothered to measure it). More generally, it should lower our confidence in calls (whether homref or variants) at clean sites.
 
-We consider that each read is generated from one of the haplotypes that exist in the sample (the ``generating haplotype''). With the hypothesis $H$ having been specified as a list of haplotypes $h_i$ with corresponding frequencies $f_i$, the likelihood for an individual read can be expressed in terms of per-read likelihoods conditioned on each of the potential generating haplotypes:
-\begin{eqnarray}
+We consider that each read is generated from one of the haplotypes that exist in the sample (the \emph{generating haplotype}). With the hypothesis $H$ having been specified as a list of haplotypes $h_i$ with corresponding frequencies $f_i$, the likelihood for an individual read can be expressed in terms of per-read likelihoods conditioned on each of the potential generating haplotypes:
+\begin{eqnarray*}
 P(d \mid H,q) & = & \sum_i P(h_i \mid H)P(d \mid h_i,q)\\
 & = & \sum_i f_i P(d \mid h_i,q).
-\end{eqnarray}
+\end{eqnarray*}
 
 \subsubsection{Per-read likelihood}
 The per-read likelihood $P(d \mid h,q)$ is the probability of an individual read $d$, given its associated basecall qualities $q$ and a generating haplotype $h$. In a complete probabilistic implementation (e.g. using a pair HMM), this likelihood would be computed by summing over all possible pairwise alignments $A$ in which $d$ is aligned to $h$. However, Strelka saves computation by enumerating a small number of candidate alignments and using the maximum alignment-specific likelihood to approximate the marginal likelihood:
 
-\begin{eqnarray}
+\begin{eqnarray*}
 \label{eq:read_lik}
 P(d \mid h,q) & = & \sum_A P(d,A \mid h,q)\\
 & \approx & \max_A P(d,A \mid h,q)
-\end{eqnarray}
+\end{eqnarray*}
 
 {\bf Alignment generation:}
-Strelka generates only a limited set of alignments to be considered in equation \ref{eq:read_lik}, in addition to the alignment to the reference sequence that was generated by the mapper. Given $K$ non-reference candidate indel alleles that have been identified in the active region, Strelka attempts to construct a generating haplotype for each of the $2^K$ subsets of these alleles (any candidate indel allele can be either present or absent in the haplotype) by considering all ungapped alignments that are anchored at either the start or end of a candidate indel.
+Strelka generates only a limited set of alignments to be considered in addition to the alignment to the reference sequence that was generated by the mapper. Given $K$ non-reference candidate indel alleles that have been identified in the active region, Strelka attempts to construct a generating haplotype for each of the $2^K$ subsets of these alleles (any candidate indel allele can be either present or absent in the haplotype) by considering all ungapped alignments that are anchored at either the start or end of a candidate indel.
 
 In addition, if two generating haplotypes $h_1$ and $h_2$ differ by a single insertion being absent in $h_1$ but present in $h_2$, the ungapped alignment to $h_1$ is used to construct a gapped alignment to $h_2$ by inserting a gap in the read at the inserted positions. Conversely, the ungapped alignment to $h_2$ is used to construct a gapped alignment to $h_1$ by inserting a gap in $h_1$ at the inserted positions.
 
 {\bf Alignment-specific likelihood:}
 The alignment-specific likelihood scores can be factorized as follows:
-\begin{equation}
+\begin{equation*}
 \label{eq:al_lik}
 P(d,A \mid h,q) = P(d \mid A,h,q)P(A \mid h,q) = P(d \mid A,h,q)P(A \mid h).
-\end{equation}
+\end{equation*}
 
-Ignoring possible context effects and accepting the basecall quality scores (with possible modification prior to this step; see section XXX) at face value, the first term in equation \ref{eq:al_lik} is a product of emission scores:
-\begin{eqnarray}
+Ignoring possible context effects and accepting the basecall quality scores (with possible modification prior to this step; see section XXX) at face value, the first term is a product of emission scores:
+\begin{eqnarray*}
 P(d \mid A,h,q) & = & \prod_k P(d_k \mid a_k,q_k)\\
 & = & \prod_k \left\{
                         \begin{array}{lcl}
@@ -633,14 +640,13 @@ P(d \mid A,h,q) & = & \prod_k P(d_k \mid a_k,q_k)\\
                              \frac{1}{4} & \mathrm{if} & a_k=\mathrm{softclip}.
                         \end{array}
                       \right.
-\end{eqnarray}
+\end{eqnarray*}
 where $d_k$ and $q_k$ are the $k$th base in $d$ and its corresponding quality score (the probability of the call being correct) and $a_k$ is the character in $h$ to which $d_k$ has been aligned or, if $d_k$ is aligned to a gap, the character to which it was aligned in the ungapped alignment from which the gapped alignment was constructed.
 % We don't actually obey the above rule for gaps, resulting in incorrect scores.
 % Not mentioned here (too detailed for this doc) is d_i=N (with score of 1).
 
-{\tt TODO: below we describe the germline case; add details of what is used for indel error probabilities in somatic.}
-The second term in equation \ref{eq:al_lik} is a product of state transition probabilities, using the adaptively estimated noisy-state indel error probabilities $e_i(s,r)$, $e_d(s,r)$, and $e_{\text{ref}}(s,r)$ (see section \ref{sec:indel_error_est}) to penalize alignments whenever the read contains an indel with respect to the generating haplotype:
-\begin{equation}
+The second term in equation \ref{eq:al_lik} is a product of state transition probabilities, using the indel error probabilities $e_i(s,r)$, $e_d(s,r)$, and $e_{\text{ref}}(s,r)$ described in section \ref{sec:indel_error_est} to penalize alignments whenever the read contains an indel with respect to the generating haplotype:
+\begin{equation*}
 \label{eq:transition_probs}
 P(A \mid h) = \prod_k \left\{
 \begin{array}{ll}
@@ -649,8 +655,8 @@ e_d(s_k,r_k)(1-e_i(s_k,r_k)) & \textrm{for~non-reference~deletions}\\
 e_{\text{ref}}(s_k,r_k) & \textrm{for~reversion~to~reference},
 \end{array}
 \right.
-\end{equation}
-where the product is taken over all positions $k$ at which a gap is opened and ``reversion to reference'' refers to indels that result in the reference allele being generated even though the generating haplotype contained a non-reference allele at position $k$. The above model results in unnormalized probabilities; to obtain normalized probabilities it would also be necessary to multiply by the corresponding complementary probabilities whenever a gap fails to open, but Strelka ignores these complementary terms. It also ignores the possibility of simultaneous insertion and deletion errors in the same read at the same site, since alignments corresponding to that case are not considered.
+\end{equation*}
+where the product is taken over all positions $k$ at which a gap is opened and \emph{reversion to reference} refers to indels that result in the reference allele being generated even though the generating haplotype contained a non-reference allele at position $k$. The above model results in unnormalized probabilities; to obtain normalized probabilities it would also be necessary to multiply by the corresponding complementary probabilities whenever a gap fails to open, but Strelka ignores these complementary terms. It also ignores the possibility of simultaneous insertion and deletion errors in the same read at the same site, since alignments corresponding to that case are not considered.
 % Note: In STREL-629 (https://git.illumina.com/Bioinformatics/strelkadev/pull/215) we tried adding the missing terms where a gap fails to open, but in isolation this change hurts performance.
 
 \subsection{Pooled Sample Model}
@@ -861,7 +867,7 @@ The LowDepth filter mentioned above is applied to all germline and somatic calls
 
     \item \texttt{SampleReadPosRankSum} ~ Z-score of Mann-Whitney U test for reference vs alternate allele read positions in one sample.
 
-    \item \texttt{RelativeTotalLocusDepth} ~ Locus depth relative to expectation: this is the ratio of total read depth at the variant locus in all samples over the total expected depth in all samples. Depth at the variant locus includes reads at any mapping quality. Expected depth is taken from the preliminary depth estimation step defined above in ``\nameref{sec:depth_est}''. This value is set to 1 in exome and targeted analyses, because it is problematic to define expected depth in this case.
+    \item \texttt{RelativeTotalLocusDepth} ~ Locus depth relative to expectation: this is the ratio of total read depth at the variant locus in all samples over the total expected depth in all samples. Depth at the variant locus includes reads at any mapping quality. Expected depth is taken from the preliminary depth estimation step defined above in section \nameref{sec:depth_est}. This value is set to 1 in exome and targeted analyses, because it is problematic to define expected depth in this case.
 
     \item \texttt{SampleUsedDepthFraction} ~ The ratio of reads used to genotype the locus over the total number of reads at the variant locus in one sample. Reads are not used if the mapping quality is less than the minimum threshold, if the local read alignment fails the mismatch density filter or if the basecall is ambiguous.
 
@@ -910,7 +916,7 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
 
     \item \texttt{NormalSampleRelativeTotalLocusDepth} ~ This feature matches the germline \texttt{RelativeTotalLocusDepth} feature, except that it reflects the depth of only the matched normal sample.
 
-    \item \texttt{TumorSampleAltAlleleFraction} ~ Fraction of the tumor sample's tier1 observations which are not the reference allele (see: ``\nameref{sec:somatic_tiers}''). This is restricted to a maximum of 0.5 to prevent the model from overtraining against high somatic allele frequencies (these might be common e.g. for loss of heterozygosity regions from liquid tumors).
+    \item \texttt{TumorSampleAltAlleleFraction} ~ Fraction of the tumor sample's tier1 observations which are not the reference allele (see section \nameref{sec:somatic_tiers}). This is restricted to a maximum of 0.5 to prevent the model from overtraining against high somatic allele frequencies (these might be common e.g. for loss of heterozygosity regions from liquid tumors).
 
     \item \texttt{RMSMappingQuality} ~ Root mean square read mapping quality of all reads spanning the variant in all samples. This feature matches INFO/MQ in the VCF spec.
 
@@ -919,7 +925,7 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
     \item \texttt{TumorSampleStrandBias} ~ Log ratio of the tumor-sample somatic allele likelihood computed assuming the somatic allele occurs on only one strand vs both strands
     (thus higher values indicate greater bias).
 
-    \item \texttt{TumorSampleReadPosRankSum} ~ Z-score of Mann-Whitney U test for reference vs non-reference allele read positions in the tumor sample's tier1 observations (see: ``\nameref{sec:somatic_tiers}'').
+    \item \texttt{TumorSampleReadPosRankSum} ~ Z-score of Mann-Whitney U test for reference vs non-reference allele read positions in the tumor sample's tier1 observations (see section \nameref{sec:somatic_tiers}).
 
     \item \texttt{AlleleCountLogOddsRatio} ~ The log odds ratio of allele counts $log{\frac{r_t a_n} {r_n a_t}}$, given reference $(r_t,r_n)$ and non-reference $(a_t,a_n)$ allele counts for the tumor and normal sample pair.
 
@@ -929,7 +935,7 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
 
     \item \texttt{SomaticIndelQualityGivenGermlineGenotype} ~ Posterior probability of a somatic indel conditioned on given germline genotype. This feature matches INFO/QSI\_NT in the VCF output.
 
-    \item \texttt{TumorSampleLogSymmetricStrandOddsRatio} ~ Log of the symmetric strand odds ratio of allele counts $log{\left( \frac{r_{fwd} a_{rev}} {r_{rev} a_{fwd}} + \frac{r_{rev} a_{fwd}} {r_{fwd} a_{rev}}\right)}$, given reference $(r_{fwd},r_{rev})$ and non-reference $(a_{fwd},a_{rev})$ confident counts of the tumor sample's tier1 observations (see: ``\nameref{sec:somatic_tiers}'').
+    \item \texttt{TumorSampleLogSymmetricStrandOddsRatio} ~ Log of the symmetric strand odds ratio of allele counts $log{\left( \frac{r_{fwd} a_{rev}} {r_{rev} a_{fwd}} + \frac{r_{rev} a_{fwd}} {r_{fwd} a_{rev}}\right)}$, given reference $(r_{fwd},r_{rev})$ and non-reference $(a_{fwd},a_{rev})$ confident counts of the tumor sample's tier1 observations (see section \nameref{sec:somatic_tiers}).
 
     \item \texttt{RepeatUnitLength} ~ The length of the somatic indel allele's \emph{repeat unit}. The \emph{repeat unit} is the smallest possible sequence such that the inserted/deleted sequence can be formed by concatenating multiple copies of it.
 
@@ -937,9 +943,9 @@ Note that for somatic features "all samples" refers to the tumor and matched nor
 
     \item \texttt{RefRepeatCount} ~ The number of times the somatic indel allele's \emph{repeat unit} occurs in the reference sequence.
 
-    \item \texttt{TumorSampleIndelNoiseLogOdds} ~ Log ratio of the frequency of the candidate indel vs all other indels at the same locus in the tumor sample. The frequencies are computed from reads which confidently support a single allele at the locus, and only include reads which qualify as tier1 observations in the tumor sample (see: ``\nameref{sec:somatic_tiers}'').
+    \item \texttt{TumorSampleIndelNoiseLogOdds} ~ Log ratio of the frequency of the candidate indel vs all other indels at the same locus in the tumor sample. The frequencies are computed from reads which confidently support a single allele at the locus, and only include reads which qualify as tier1 observations in the tumor sample (see section \nameref{sec:somatic_tiers}).
 
-    \item \texttt{TumorNormalIndelAlleleLogOdds} ~ Log ratio of the frequency of the candidate indel in the tumor vs normal samples. The frequencies are computed from reads which confidently support a single allele at the locus, and only include reads which qualify as tier1 observations in each sample (see: ``\nameref{sec:somatic_tiers}'').
+    \item \texttt{TumorNormalIndelAlleleLogOdds} ~ Log ratio of the frequency of the candidate indel in the tumor vs normal samples. The frequencies are computed from reads which confidently support a single allele at the locus, and only include reads which qualify as tier1 observations in each sample (see section \nameref{sec:somatic_tiers}).
 
     \item \texttt{SiteFilteredBasecallFrac} ~ The maximum value over all samples of \texttt{SampleSiteFilteredBasecallFrac}, which is the fraction of basecalls at a site which have been removed by the mismatch density filter in a given sample.
 
