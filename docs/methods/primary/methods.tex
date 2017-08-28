@@ -321,7 +321,16 @@ Haplotype generation for an active region is considered unsuccessful if the asse
 
 \subsubsection{Haplotype assembly}
 \label{sec:HaplotypeAssembler}
-\todo[inline]{Add description of iterative assembler}
+
+\todo[inline]{Sangtae: Detail on which reads go into the assembly process?}
+
+\todo[inline]{Xiaoyu: Update assembler description below to reflect older version that is in Strelka?}
+
+The selected reads are assembled using a simple algorithm implicitly based on the popular de Bruijn graph approach originated by Pevzner \citep{pevzner2001}. We note here that the orientation of each unmapped assembly read is determined by the orientation of its mapped partner, avoiding the need to deduce this during the assembly. Assembly is attempted over a series of word sizes, starting from a minimum value which is increased until repeat filtration criteria are met or the maximum word size is reached. The method currently uses a minimum word size of 41 and maximum size 76, the word size is incremented by 5.
+
+For a given word size $k$, a word list is made of all $k$-mers present in the input reads. A seed list, as a subset of the word list, is also made by excluding the $k$-mers that form a cycle of size less than 50 in the graph. The most frequent $k$-mer in the seed list, given it has the most supporting reads, is selected as a seed for the resulting contig assembly. The contig is extended from that seed in each direction by choosing $k$-mers from the word list having a $k-1$ overlap with the contig end. To avoid haplotype switching, reads that support the contig are tracked at each extension point. When there are multiple potential extensions, a $k$-mer is selected so that the current extension has the highest consistency of supporting reads with the previous extensions. The extension ends when there is no overlapping $k$-mer from a previous supporting read, or when the selected $k$-mer has already occurred in the contig (i.e. being repetitive). The contig is then collected, and each $k$-mer used to contruct the contig is removed from the seed list if contained. The contig construction procedure is repeated to generate multiple contigs until all seeds in the list are exhausted. If any of the returned contigs ends at a repetitive $k$-mer, the word size is incremented by one step, and the contig assembly procedure is restarted. All the contigs generated with the previous word size is considered as psuedo reads to roll in the next iteration of contig assembly, similar to the assembly method described in \cite{tigra2014}.
+
+Finally, a greedy procedure is applied to select the constructed contigs in the order of the number of effective supporting reads and contig length. An effective supporting read cannot be a psuedo read, nor support any contigs that have been selected previously. The selection process is repeated until there is no more contig available with the minimum number of effective supporting reads (defaults to 2), or the maximum number of assembled contigs (defaults to 10) is met.
 
 \subsubsection{Haplotype filtration}
 
