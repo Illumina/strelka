@@ -408,7 +408,7 @@ processInputReadAlignment(
 
             std::ostringstream oss;
             oss << "ERROR: Read length implied by mapped alignment (" << as << ") does not match read length ("
-                   << rs << ") in alignment record:\n";
+                << rs << ") in alignment record:\n";
             read_stream.report_state(oss);
             BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }

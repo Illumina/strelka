@@ -62,8 +62,8 @@ class CandidateSnvBuffer
 {
 public:
     explicit CandidateSnvBuffer(const unsigned sampleCount):
-            _sampleCount(sampleCount),
-            _candidateSnvBuffer(sampleCount)
+        _sampleCount(sampleCount),
+        _candidateSnvBuffer(sampleCount)
     {}
 
     void addCandidateSnv(

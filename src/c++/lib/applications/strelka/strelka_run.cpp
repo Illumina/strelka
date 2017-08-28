@@ -220,7 +220,7 @@ strelka_run(
     assert ((! opt.is_short_haplotyping_enabled) && "Region border size must be updated if haplotyping is enabled");
     const unsigned supplementalRegionBorderSize(opt.maxIndelSize);
 
-        const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilenames.front());
+    const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilenames.front());
     std::vector<AnalysisRegionInfo> regionInfoList;
     getStrelkaAnalysisRegions(opt, referenceAlignmentFilename, referenceHeaderInfo, supplementalRegionBorderSize,
                               regionInfoList);

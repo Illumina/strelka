@@ -46,7 +46,7 @@
     \begin{paragraph} {#1}
         \raggedright
     }
-    { 
+    {
     \end{paragraph}
 }
 
@@ -178,7 +178,7 @@ where
 P(d \vert \Theta)=\sum_{g\in G}P(d \vert \Theta,g)P(g)
 \end{equation*}
  given possible genotypes $G=\{g_{ref},g_{het},g_{hom},g_{althet}\}$. The genotype priors are a function of $\theta$ as follows:
- 
+
 \todo{merge with other prior descriptions when they get added to the document}
 
 \begin{equation*}
@@ -279,7 +279,7 @@ These normalization steps do not alter the alignment's soft-clipping.
 
 \subsection{Haplotype model}
 
-Each sample's haplotype structure introduces constraints that can be used to reduce errors due to sequencing noise, incorrect read mapping, inconsistent alignment to low-complexity sequence and regions where the reference serves as a poor template for the sample. In a simple haplotype model, such as that described in FreeBayes \cite{garrison2012}, candidate haplotypes can be identified from existing read alignments. More advanced haplotype generation methods are less dependent on the input read alignments, often using local assembly as a means to identify longer consensus haplotypes in the context of sequencing noise and high levels of variation from the reference, such as the haplotype generation methods used in Platypus \cite{rimmer2014} and GATK HaplotypeCaller \cite{depristo2011} among others. 
+Each sample's haplotype structure introduces constraints that can be used to reduce errors due to sequencing noise, incorrect read mapping, inconsistent alignment to low-complexity sequence and regions where the reference serves as a poor template for the sample. In a simple haplotype model, such as that described in FreeBayes \cite{garrison2012}, candidate haplotypes can be identified from existing read alignments. More advanced haplotype generation methods are less dependent on the input read alignments, often using local assembly as a means to identify longer consensus haplotypes in the context of sequencing noise and high levels of variation from the reference, such as the haplotype generation methods used in Platypus \cite{rimmer2014} and GATK HaplotypeCaller \cite{depristo2011} among others.
 
 Strelka's own haplotype model includes both simple alignment-based and assembly-based approaches to haplotype generation, where the appropriate method is selected for each region to optimize runtime without loss of calling precision. Candidate haplotypes are processed through various denoising steps and regional complexity statistics are made available to the variant caller's end-stage empirical variant scoring scheme to reflect reduced variant confidence in regions where sequencing data poorly fit the expected haplotype count.
 
@@ -309,7 +309,7 @@ Haplotype generation for an active region is considered unsuccessful if the asse
 
 \subsubsection{Haplotype filtration}
 
-If haplotype generation is successful (using either counting or assembly methods), then haplotype candidates are next filtered to reduce potential noise. 
+If haplotype generation is successful (using either counting or assembly methods), then haplotype candidates are next filtered to reduce potential noise.
 
 The first noise reduction step identifies and filters candidates based on the expected sample ploidy (assumed to be diploid in the current procedure). To do so, the candidate haplotypes are ranked by decreasing number of supporting reads after removing any candidates with less than 3 supporting reads. Among the set of candidates with the highest level of read count support, the first one generated in the candidacy process is selected and removed from the ranked list. The set of candidates with the highest number of supporting reads in the remainder of ranked list are also selected, but only if this would result in a total of 2 or fewer non-reference selected haplotypes. Any non-selected candidate haplotypes are filtered from further consideration.
 
@@ -412,7 +412,7 @@ The first filtration stage consists of a single step to trim off any contiguous 
 The steps of the second filtration stage are:
 
 \begin{enumerate}
-    \item In the germline SNV model, basecalls with mapping-adjusted qualities of 17 or less are filtered out. No such filtration is used by the somatic SNV model. 
+    \item In the germline SNV model, basecalls with mapping-adjusted qualities of 17 or less are filtered out. No such filtration is used by the somatic SNV model.
     \item Any ambiguous basecalls remainng after the first filtration stage are filtered out.
     \item The \textit{mismatch density filter} (described below) is applied to a basecall if the local read context is highly diverged from the reference or a local haplotype candidate.
 \end{enumerate}
@@ -436,7 +436,7 @@ The haplotype model used during germline calling enables this filter to be appli
 Given a haplotype model applied to all calling modes (including somatic), we could eliminate the mismatch density filter and instead apply a term expressing 'how surprising is this haplotype given level X of divergence from the reference?' as part of the genotype stage. On the other hand, if there is a long-term need for such a filter, it would be helpful to eliminate the fixed window size of 41, and instead weigh mismatches as a function of distance from the call position.
 
 \begin{raggedParagraph}{Implementation details}
-    
+
 Most basecall filtration steps are executed in method \verb|starling_pos_processor_base::pileup_read_segment|. The mismatch density filter in particular is efficiently precomputed for each read in the \verb|create_mismatch_filter_map| function.
 
 \end{raggedParagraph}
@@ -446,7 +446,7 @@ Most basecall filtration steps are executed in method \verb|starling_pos_process
 \section{Variant Probability Model}
 \subsection{Germline Model}
 \label{sec:germline}
-At every site where a non-reference candidate allele has been proposed, Strelka calculates posterior probabilities for a range of hypotheses. Each hypothesis describes the sample as a mixture of haplotypes, each occurring at a specified frequency in the sample. In the germline case, the hypotheses correspond to the canonical diploid genotypes: ``homref'' (a single-component mixture containing only the reference haplotype at 100\% frequency), ``het'' (a two-component mixture containing the reference and one alternative haplotype, each at 50\% frequency), ``homalt'' (a single-component mixture containing a non-reference haplotype at 100\% frequency), and ``hetalt'' (a two-component mixture containing two different non-reference haplotypes, each at 50\% frequency). For each site at which one or more candidate variants have been proposed (all three possible non-reference variants for SNVs or up to two non-reference variants for indels), the valid genotype configurations involving those variants are considered as hypotheses. 
+At every site where a non-reference candidate allele has been proposed, Strelka calculates posterior probabilities for a range of hypotheses. Each hypothesis describes the sample as a mixture of haplotypes, each occurring at a specified frequency in the sample. In the germline case, the hypotheses correspond to the canonical diploid genotypes: ``homref'' (a single-component mixture containing only the reference haplotype at 100\% frequency), ``het'' (a two-component mixture containing the reference and one alternative haplotype, each at 50\% frequency), ``homalt'' (a single-component mixture containing a non-reference haplotype at 100\% frequency), and ``hetalt'' (a two-component mixture containing two different non-reference haplotypes, each at 50\% frequency). For each site at which one or more candidate variants have been proposed (all three possible non-reference variants for SNVs or up to two non-reference variants for indels), the valid genotype configurations involving those variants are considered as hypotheses.
 
 The posterior probability of a hypothesis $H$ conditioned on the observed data $D$ and $Q$ is:
 

@@ -1081,8 +1081,8 @@ rebuffer_pos_reads(const pos_t pos)
         for (unsigned i(0); i<nr; ++i)
         {
             sif.readBuffer.rebuffer_read_segment(new_read_pos[i].first.first,
-                                                new_read_pos[i].first.second,
-                                                new_read_pos[i].second);
+                                                 new_read_pos[i].first.second,
+                                                 new_read_pos[i].second);
         }
     }
 }

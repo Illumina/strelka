@@ -482,7 +482,7 @@ updateSnvLocusWithSampleInfo(
         {
             maxGt.setAllele0HaplotypeId(
                 candidateSnvBuffer.getHaplotypeId(sampleIndex,
-                    locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex)
+                                                  locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex)
             );
         }
     }
@@ -493,7 +493,7 @@ updateSnvLocusWithSampleInfo(
         {
             maxGt.setAllele1HaplotypeId(
                 candidateSnvBuffer.getHaplotypeId(sampleIndex,
-                    locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
+                                                  locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
             );
         }
     }

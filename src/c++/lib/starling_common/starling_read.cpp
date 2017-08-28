@@ -76,7 +76,7 @@ starling_read(
         if (ps.type==SKIP || ((i+1)==as))
         {
             const pos_t endReadPos( (ps.type==SKIP) ?
-                                      lastReadPos : readPos );
+                                    lastReadPos : readPos );
             assert(endReadPos>exonStartReadPos);
             const unsigned exonReadSize(endReadPos-exonStartReadPos);
             alignment exonAlignment;
