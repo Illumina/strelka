@@ -130,7 +130,7 @@ The objective of the depth estimation step is to find the expected depth and/or 
 \label{sec:indel_error_est}
 For germline variant calling, indel sequencing errors are modeled as a process which occurs independently in each read, with some fixed probably of an indel error occurring as a function of the local sequence STR context. These error probabilities are estimated in two steps: (1) indel error count analysis and (2) parameter estimation. In the first step, mapped sequencing data are analyzed at a subset of sites from across the genome to produce error counts for various sequencing contexts. In the second step, the counts are used to estimate the parameters of interest.
 
-For somatic variant calling, this adaptive indel error modelling step is not yet available; instead, a simpler non-adaptive approach is used.
+For somatic variant calling, this adaptive indel error modeling step is not yet available; instead, a simpler non-adaptive approach is used.
 
 \subsubsection{Indel error count analysis}
 At every site that is to be used for the rate estimation process (see Section \ref{sec:error_estimation_implementation}), we need to count the number of reads supporting each potential variant at that site and accumulate these counts by context.
@@ -151,14 +151,14 @@ The counting process uses the same mapped read realignment strategy used by the 
     \item \label{no_indel_errors_allowed} No indel errors are allowed when read likelihood for each indel allele is computed.
     \item There is no restriction on the number of overlapping allele candidates based on ploidy.
     \item The whole locus is skipped if more than 4 overlapping allele candidates are found.
-    \item The locus is skipped if the set of overlapping alleles at a locus are not all mutually incompatible with the same haplotype. {\tt TODO: rephrase, unclear}
+    \item The locus is skipped if the set of overlapping alleles at a locus are not all mutually incompatible with the same haplotype. \todo{rephrase, unclear}
     \item Variant and non-variant observations that are within 10 bases of the beginning or end of a read are filtered out.
     \item Error counts are not collected in regions where the pileup depth is more than 3 times the chromosome mean.
  \end{enumerate}
 
-Note that item \ref{no_threshold_for_indel} means that an alignment gap observed once in an input read is treated as a \emph{candidate} for the purpose of error evaluation. Hence, an attempt is made to realign all other reads to that indel, and in the process the likelihood of each read supporting the given indel is found. {\tt TODO: do we then pick the maximum likelihood and increment the corresponding hard count?} Item \ref{no_indel_errors_allowed} above means that the read likelihoods are based on explaining the observations via basecalling errors only.
+Note that item \ref{no_threshold_for_indel} means that an alignment gap observed once in an input read is treated as a \emph{candidate} for the purpose of error evaluation. Hence, an attempt is made to realign all other reads to that indel, and in the process the likelihood of each read supporting the given indel is found. \todo{do we then pick the maximum likelihood and increment the corresponding hard count?} Item \ref{no_indel_errors_allowed} above means that the read likelihoods are based on explaining the observations via basecalling errors only.
 
-The extracted data are stored in a compact binary file format. A given sequence context $\left\{ s,r \right\}$ has two parameters, short tandem repeat (STR) pattern size ($s$) and STR pattern repeat count ($r$). Each STR tract $i$ with pattern size $s$ and repeat count $r$ is counted as a single observation for $\left\{ s,r \right\}$ and the resulting count vector $c_j$ for that observation (with elements $c_j(y), y \in Y,$ corresponding to the observed set of alleles $Y$) is included in the set of site-specific count observations $C(s,r)$. Reference Ns are not included. Any ambiguity in the assignment is resolved by choosing the lowest applicable value of $s$ for the site. {\tt TODO: perhaps add detail here? Specifically for deciding where the STR begins and ends when there is potential overlap, e.g. is AACAC treated as s=2,r=2 rather than s=1,r=2? How about AAACAC? AAAAAAAACAC? AAAAACACACACACACACAC?}
+The extracted data are stored in a compact binary file format. A given sequence context $\left\{ s,r \right\}$ has two parameters, short tandem repeat (STR) pattern size ($s$) and STR pattern repeat count ($r$). Each STR tract $i$ with pattern size $s$ and repeat count $r$ is counted as a single observation for $\left\{ s,r \right\}$ and the resulting count vector $c_j$ for that observation (with elements $c_j(y), y \in Y,$ corresponding to the observed set of alleles $Y$) is included in the set of site-specific count observations $C(s,r)$. Reference Ns are not included. Any ambiguity in the assignment is resolved by choosing the lowest applicable value of $s$ for the site. \todo{perhaps add detail here? Specifically for deciding where the STR begins and ends when there is potential overlap, e.g. is AACAC treated as s=2,r=2 rather than s=1,r=2? How about AAACAC? AAAAAAAACAC? AAAAACACACACACACACAC?}
 
 \subsubsection{Adaptive indel error model parameter estimation}
 We model indel errors as generated by two-state mixture processes, with an independent process existing for each context. Every site is modeled as belonging to either the \emph{clean} state (generating essentially no indel errors) or the \emph{noisy} state (generating indel errors independently across reads according to a set of error probabilities to be estimated). The state-specific models, in turn, describe the generation of the counts obtained above as another mixture process -- this time mixing over possible genotypes. Taken together, these model components are a simplified version (based on hard observation counts rather than per-read likelihoods) of the full likelihood model presented later in sections \ref{sec:germline} and \ref{sec:shared}.
@@ -172,9 +172,9 @@ For every context $\left\{ s,r \right\}$ we define the following parameters, whi
 \item $e_{i,\text{clean}}(s,r)$: the clean-state probability of an insertion error resulting in a non-reference variant
 \item $e_{d,\text{clean}}(s,r)$: the clean-state probability of a deletion error resulting in a non-reference variant
 \item $e_{\text{ref},\text{clean}}(s,r)$: the clean-state probability of an indel error resulting in reversion to reference
-\item $\theta_s(s,r)$: the probability (related to Watterson's theta [CITE]) that two alleles drawn randomly from the human population at a site with the given context will differ by an indel mutation {\tt TODO: is this correct? I made up a definition that will avoid counting snv differences}
+\item $\theta_s(s,r)$: the probability (related to Watterson's theta [CITE]) that two alleles drawn randomly from the human population at a site with the given context will differ by an indel mutation \todo{is this correct? I made up a definition that will avoid counting snv differences}
 \end{itemize}
-For simplicity, we set all of the clean-state error probabilities to a small constant value: $1 \times 10^{-8}$. We also (for no good reason {\tt TODO: put a positive spin on this}) set $e_{\text{ref}}$ to $0.01$ during parameter estimation and to a constant factor (default value: {\tt TODO}) times the corresponding $e_i$ or $e_d$ during variant calling (section \ref{sec:shared}). The indel mutation rates $\theta_s$ were pre-estimated from chromosomes 1-22 on a fixed training data set and are used as constant values in the current workflow -- this is based on the assumption that the mutation rate does not vary across different sequencing runs or samples. The remaining parameters are estimated on a per-sample basis {\tt TODO: is this correct for multi-sample?} by maximizing the likelihood of the observed counts:
+For simplicity, we set all of the clean-state error probabilities to a small constant value: $1 \times 10^{-8}$. We also (for no good reason \todo{put a positive spin on this}) set $e_{\text{ref}}$ to $0.01$ during parameter estimation and to a constant factor (default value: \todo{insert default value}) times the corresponding $e_i$ or $e_d$ during variant calling (section \ref{sec:shared}). The indel mutation rates $\theta_s$ were pre-estimated from chromosomes 1-22 on a fixed training data set and are used as constant values in the current workflow -- this is based on the assumption that the mutation rate does not vary across different sequencing runs or samples. The remaining parameters are estimated on a per-sample basis \todo{is this correct for multi-sample?} by maximizing the likelihood of the observed counts:
 
 \begin{equation*}
 P(C(s,r) \mid \Theta(s,r))=\prod_{j: c_j\in C(s,r)}P(c_j \mid \Theta(s,r)),
@@ -246,7 +246,7 @@ Once the counting procedure has completed for a given sample, all of the estimat
 
 \subsubsection{Non-adaptive indel error model}
 \label{sec:non_adaptive_indel_error}
-{\tt TODO: I needed to change the equations here to define $e_i$, $e_d$, and $e_{ref}$ as above, am simply guessing that we use $e_i=e_d$ with $e_{ref}$ set the same way as before. Is this correct?}
+\todo{I needed to change the equations here to define $e_i$, $e_d$, and $e_{ref}$ as above, am simply guessing that we use $e_i=e_d$ with $e_{ref}$ set the same way as before. Is this correct?}
 When adaptive indel error modeling is not enabled, the indel error parameters are set to pre-estimated values based on empirical observation of indel calling performance. The default indel error rates are a function of the homopolymer context length $r$ only; for all other types of indels, including dinucleotide tract indels and mutations of homopolymers which do not represent simple expansion/contraction events, we set $(s,r) = (1,1)$. The indel error rates are set to a log-linear ramp as a function of $r$:
 
 \begin{equation*}
@@ -255,13 +255,13 @@ e_i(1,r) = e_d(1,r) = e_{l} \exp(f_r(\log(e_{h})-\log(e_{l})))
 
 \noindent where the constant indel errors set for low and high STR lengths are $e_{l} = 5\e{-5}$ and $e_{h} = 3\e{-4}$, and $f_r = \max((r-1),15)/15$.
 
-As a special case, the non-adaptive germline indel genotyping model uses higher error rates to heuristically account for assembly and mapping errors. This is currently a scaling factor of 100: 
+As a special case, the non-adaptive somatic indel genotyping model uses higher error rates to heuristically account for assembly and mapping errors. This is currently a scaling factor of 100: \todo{Clean up description of this special case.}
 
 \begin{equation*}
 e_i(1,r) = e_d(1,r) = 100 * e_{l} \exp(f_r(\log(e_{h})-\log(e_{l}))
 \end{equation*}
 
-Finally, $e_{\text{ref}}$ is again set to a constant factor {\tt TODO} times the corresponding $e_i$.
+Finally, $e_{\text{ref}}$ is again set to a constant factor \todo{insert value} times the corresponding $e_i$.
 
 \section{Variant calling workflow}
 
