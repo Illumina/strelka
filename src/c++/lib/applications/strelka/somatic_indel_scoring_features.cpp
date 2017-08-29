@@ -181,7 +181,12 @@ calculateScoringFeatures(
     strelka_shared_modifiers_indel& smod)
 {
     const indel_result_set& rs(siInfo.sindel.rs);
-    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::SomaticIndelQualityGivenGermlineGenotype, rs.from_ntype_qphred);
+
+    {
+        const int from_ref_qphred((rs.ntype == NTYPE::REF) ? rs.from_ntype_qphred : 0 );
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::SomaticIndelQualityAndHomRefGermlineGenotype, from_ref_qphred);
+    }
+
     const double tumorSampleReadPosRankSum(siInfo.tisri[0].readpos_ranksum.get_z_stat());
     smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::TumorSampleReadPosRankSum, tumorSampleReadPosRankSum);
     smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::TumorSampleLogSymmetricStrandOddsRatio, std::log(makeSymmetric(getSampleStrandOddsRatio (siInfo.tisri[0]))));

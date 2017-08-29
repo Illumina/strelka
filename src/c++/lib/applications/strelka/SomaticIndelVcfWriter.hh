@@ -85,7 +85,7 @@ struct SomaticIndelVcfWriter
 
     /// add final information required
     ///
-    /// \param maxChromDepth[in] max expected normal sample depth for this chromosome
+    /// \param[in] maxChromDepth max expected normal sample depth for this chromosome
     void
     addIndelWindowData(
         const std::string& chromName,

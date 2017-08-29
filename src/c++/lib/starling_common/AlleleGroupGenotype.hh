@@ -50,11 +50,11 @@ struct ContextGenotypePriors
         const double theta)
     {
         static const double log0(-std::numeric_limits<double>::infinity());
-	/// Penalty for calling a genotype that includes allele 1 but excludes allele 0 (which has more support) 
-	static const double allele0SkipPenalty(theta);
-	// TODO: (1) add 1-allele0SkipPenalty factor when allele 0 is present and allele 1 is absent
-	//       (2) adjust homref probabilities such that everything sums to 1
-	//       (3) experiment with the value of allele0SkipPenalty
+        /// Penalty for calling a genotype that includes allele 1 but excludes allele 0 (which has more support)
+        static const double allele0SkipPenalty(theta);
+        // TODO: (1) add 1-allele0SkipPenalty factor when allele 0 is present and allele 1 is absent
+        //       (2) adjust homref probabilities such that everything sums to 1
+        //       (3) experiment with the value of allele0SkipPenalty
 
         _isInitialized = true;
 

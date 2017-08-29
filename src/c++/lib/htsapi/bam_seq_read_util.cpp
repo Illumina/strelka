@@ -26,43 +26,28 @@
 
 
 
-static
-void
-get_read_align_strand_end_skip(const bam_seq& bseq,
-                               unsigned& end_skip)
+unsigned
+getReadAmbiguousEndLength(
+    const bam_seq& bseq,
+    const bool isFwdStrand)
 {
-    unsigned read_end(bseq.size());
-
-    while (read_end>0)
+    if (isFwdStrand)
     {
-        if (bseq.get_char(read_end-1)=='N') read_end--;
-        else break;
-    }
-
-    end_skip=bseq.size()-read_end;
-}
-
-
-
-void
-get_read_fwd_strand_skip(const bam_seq& bseq,
-                         const bool is_fwd_strand,
-                         unsigned& begin_skip,
-                         unsigned& end_skip)
-{
-    begin_skip=0;
-    if (is_fwd_strand)
-    {
-        get_read_align_strand_end_skip(bseq,end_skip);
+        unsigned read_end(bseq.size());
+        while ((read_end>0) && (bseq.get_char(read_end-1)=='N'))
+        {
+            read_end--;
+        }
+        return (bseq.size()-read_end);
     }
     else
     {
-        end_skip=0;
         const unsigned bsize(bseq.size());
-        while (begin_skip<bsize)
+        unsigned read_start(0);
+        while ((read_start<bsize) && (bseq.get_char(read_start)=='N'))
         {
-            if (bseq.get_char(begin_skip)=='N') begin_skip++;
-            else break;
+            read_start++;
         }
+        return read_start;
     }
 }

@@ -24,13 +24,7 @@
 #include "blt_common/blt_shared.hh"
 #include "blt_common/position_snp_call_pprob_digt.hh"
 
-#include "blt_util/log.hh"
-
-#include <cstdlib>
-
-#include <iomanip>
 #include <iostream>
-#include <sstream>
 
 
 // arbitrary... but things will be a total mess if not capped somewhere:
@@ -46,7 +40,7 @@ blt_deriv_options(
 
 
 
-/// dtor required to be in the cpp so that unique ptr can access complete data type
+// dtor required to be in the cpp so that unique ptr can access complete data type
 blt_deriv_options::
 ~blt_deriv_options() {}
 

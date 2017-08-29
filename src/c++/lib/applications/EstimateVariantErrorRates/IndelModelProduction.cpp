@@ -577,7 +577,6 @@ checkEstimatedModel() const
         std::ostringstream oss;
         oss << "ERROR: indel error model has not been estimated '\n";
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-        return false;
     }
 
     // check estimated STR params
@@ -609,7 +608,3 @@ isValidErrorRate(
              (errorRate >= _maxErrorRate) ||
              (errorRate <= _minErrorRate));
 }
-
-
-
-

@@ -126,7 +126,7 @@ getSnvLocusInfo(
     std::unique_ptr<GermlineDiploidSiteLocusInfo> siteInfo(
         new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, pos, base_to_id(refBaseChar)));
 
-    siteInfo->addAltSiteAllele((const BASE_ID::index_t) base_to_id(altBaseChar));
+    siteInfo->addAltSiteAllele(static_cast<BASE_ID::index_t>(base_to_id(altBaseChar)));
 
     auto& siteSampleInfo(siteInfo->getSample(sampleIndex));
     siteSampleInfo.setActiveRegionId(activeRegionId);

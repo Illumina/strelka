@@ -43,7 +43,7 @@ gvcf_aggregator(
     std::shared_ptr<variant_pipe_stage_base> nextPipeStage(_gvcfWriterPtr);
     if (opt.is_ploidy_prior)
     {
-        std::shared_ptr<variant_pipe_stage_base> variantOverlapResolver(new VariantOverlapResolver(_scoringModels, ref, nextPipeStage));
+        std::shared_ptr<variant_pipe_stage_base> variantOverlapResolver(new VariantOverlapResolver(_scoringModels, nextPipeStage));
         _variantPhaserPtr.reset(new VariantPhaser(opt, sampleCount, variantOverlapResolver));
         nextPipeStage = _variantPhaserPtr;
     }

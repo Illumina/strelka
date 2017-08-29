@@ -21,6 +21,7 @@
 
 #include "calibration/IndelErrorModel.hh"
 #include "errorAnalysis/SequenceErrorCounts.hh"
+
 class IndelModelProduction
 {
 public:
@@ -28,6 +29,7 @@ public:
         const SequenceErrorCounts& counts,
         const std::string& thetaFilename,
         const std::string& outputFilename);
+
     void estimateIndelErrorRates();
 
     void exportModel() const;
@@ -54,6 +56,3 @@ private:
     const double _maxErrorRate = .3;
     const double _minErrorRate = .0;
 };
-
-
-

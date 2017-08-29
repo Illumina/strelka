@@ -83,7 +83,7 @@ getStrelkaAnalysisRegionInfo(
 /// Given an input samtools region string for analysis, produce various related
 /// region objects used to manage edge-effects
 ///
-/// \param region[in] samtools formatted analysis region string
+/// \param[in] region samtools formatted analysis region string
 /// \param[in] supplementalRegionBorderSize The amount of padding to add to the region border to reduce variant calling
 ///                artifacts at segment boundaries - this padding is added as a supplement to a fixed minimum
 void

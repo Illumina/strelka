@@ -22,7 +22,7 @@
 ///
 
 
-#include "candidate_alignment.hh"
+#include "CandidateAlignment.hh"
 #include "normalizeAlignment.hh"
 #include "starling_pos_processor_indel_util.hh"
 #include "starling_read_filter_shared.hh"
@@ -408,7 +408,7 @@ processInputReadAlignment(
 
             std::ostringstream oss;
             oss << "ERROR: Read length implied by mapped alignment (" << as << ") does not match read length ("
-                   << rs << ") in alignment record:\n";
+                << rs << ") in alignment record:\n";
             read_stream.report_state(oss);
             BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }

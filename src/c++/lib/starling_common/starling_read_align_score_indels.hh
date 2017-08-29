@@ -24,7 +24,7 @@
 #pragma once
 
 
-#include "candidate_alignment.hh"
+#include "CandidateAlignment.hh"
 
 #include "starling_common/IndelBuffer.hh"
 #include "starling_common/starling_read_segment.hh"
@@ -48,8 +48,8 @@ score_indels(
     const read_segment& rseg,
     IndelBuffer& indelBuffer,
     const unsigned sampleIndex,
-    const std::set<candidate_alignment>& candAlignments,
+    const std::set<CandidateAlignment>& candAlignments,
     const bool is_incomplete_search,
     const std::vector<double>& candAlignmentScores,
     double maxCandAlignmentScore,
-    const candidate_alignment* maxCandAlignmentPtr);
+    const CandidateAlignment* maxCandAlignmentPtr);

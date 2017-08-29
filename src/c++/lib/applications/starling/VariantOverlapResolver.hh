@@ -16,10 +16,9 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
-/*
- *  Created on: Jun 3, 2015
- *      Author: jduddy
- */
+
+/// \file
+/// \author John Duddy
 
 #pragma once
 
@@ -42,11 +41,9 @@ struct VariantOverlapResolver : public variant_pipe_stage_base
 {
     VariantOverlapResolver(
         const ScoringModelManager& scoringModels,
-        const reference_contig_segment& ref,
         std::shared_ptr<variant_pipe_stage_base> destination)
         : variant_pipe_stage_base(destination)
         , _scoringModels(scoringModels)
-        , _ref(ref)
         , _bufferedVariantIndelRange(-1, -1)
     {
         // this component doesn't make any sense without a destination:
@@ -108,7 +105,6 @@ private:
     }
 
     const ScoringModelManager& _scoringModels;
-    const reference_contig_segment& _ref;
 
     /// Union of buffered variant indel ranges
     known_pos_range2 _bufferedVariantIndelRange;

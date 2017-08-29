@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE( test_alignment_range_types )
     al.pos = 100;
     ALIGNPATH::cigar_to_apath("2S2I2M2I2S",al.path);
 
-    known_pos_range pr1 = get_strict_alignment_range(al);
+    known_pos_range pr1 = getStrictAlignmentRange(al);
     BOOST_REQUIRE_EQUAL(pr1,known_pos_range(100,102));
 
     known_pos_range pr2 = get_soft_clip_alignment_range(al);

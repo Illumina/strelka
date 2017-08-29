@@ -34,52 +34,29 @@
 #include <memory>
 
 
-// helper class for starling_read to support the recently nailed-on
-// notion of exons
-//
-struct starling_segmented_read
-{
-    explicit
-    starling_segmented_read(const seg_id_t size)
-        : _seg_info(size) {}
-
-    void
-    set_segment(const seg_id_t seg_no,
-                const read_segment& rseg);
-
-    read_segment&
-    get_segment(const seg_id_t seg_no);
-
-    const read_segment&
-    get_segment(const seg_id_t seg_no) const;
-
-    seg_id_t
-    segment_count() const
-    {
-        return _seg_info.size();
-    }
-
-private:
-    std::vector<read_segment> _seg_info;
-};
-
-
-
-//
-// captures the concept of read as required by starling
-//
-// all alignment info is fwd-strand
-//
+/// Represents a single read and associated per-read data as required by strelka calling models
+///
+/// This class mostly provides structure to handle rna-seq reads, in which case each exon is handled
+/// semi-independently as a "read segment"
+///
 struct starling_read : private boost::noncopyable
 {
-    starling_read(const bam_record& br);
+    /// \param br a representation of the read's htslib BAM record
+    /// \param inputAlignment read alignment proposed by a mapper or other external tool
+    /// \param inputAlignmentMapLevel mapping confidence classification for the input mapping
+    ///
+    /// This ctor handles segment setup for spliced reads.
+    ///
+    /// Note that the alignment and map-level info can all be derived from the bam_record, but it is
+    /// passed into the ctor here only becuase it would have had to been computed anyway given strelka's
+    /// current worklow
+    starling_read(
+        const bam_record& br,
+        const alignment& inputAlignment,
+        const MAPLEVEL::index_t inputAlignmentMapLevel,
+        const align_id_t readIndex);
 
-    // enters full alignment, and handles segment setup for splice
-    // sites:
-    void
-    set_genome_align(const alignment& al);
-
-    // nonconst because we update the BAM record with the best
+    // This is not const because we update the BAM record with the best
     // alignment if the read has been realigned:
     void
     write_bam(bam_dumper& bamd);
@@ -90,15 +67,20 @@ struct starling_read : private boost::noncopyable
         return _read_rec.is_fwd_strand();
     }
 
-    uint8_t map_qual() const;
-
-    align_id_t& id()
+    uint8_t map_qual() const
     {
-        return _id;
+        return _read_rec.map_qual();
     }
-    align_id_t id() const
+
+    MAPLEVEL::index_t
+    getInputAlignmentMapLevel() const
     {
-        return _id;
+        return _inputAlignmentMapLevel;
+    }
+
+    align_id_t getReadIndex() const
+    {
+        return _readIndex;
     }
 
     read_key
@@ -108,39 +90,40 @@ struct starling_read : private boost::noncopyable
     }
 
     bool
-    is_segmented() const
+    isSpliced() const
     {
-        return static_cast<bool>(_segment_ptr);
+        return (! _exonInfo.empty());
     }
 
     seg_id_t
-    segment_count() const
+    getExonCount() const
     {
-        if (is_segmented())
-        {
-            return _segment_ptr->segment_count();
-        }
-        return 0;
+        return _exonInfo.size();
     }
 
+    /// \brief Request a segment of the read
+    ///
+    /// \param segmentIndex The index value of 0 is reserved for the full alignment, and subsequent values refer to
+    ///                  each exon
     read_segment&
-    get_segment(seg_id_t seg_no)
+    get_segment(const seg_id_t segmentIndex)
     {
-        if (seg_no>0)
+        if (segmentIndex > 0)
         {
-            assert(is_segmented() && (seg_no<=segment_count()));
-            return _segment_ptr->get_segment(seg_no);
+            assert(isSpliced() && (segmentIndex <= getExonCount()));
+            return _exonInfo[segmentIndex - 1];
         }
         return _full_read;
     }
 
+    /// Const variant of get_segment method
     const read_segment&
-    get_segment(seg_id_t seg_no) const
+    get_segment(const seg_id_t segmentIndex) const
     {
-        if (seg_no>0)
+        if (segmentIndex > 0)
         {
-            assert(is_segmented() && (seg_no<=segment_count()));
-            return _segment_ptr->get_segment(seg_no);
+            assert(isSpliced() && (segmentIndex <= getExonCount()));
+            return _exonInfo[segmentIndex - 1];
         }
         return _full_read;
     }
@@ -172,19 +155,20 @@ private:
     bool
     is_tier1or2_mapping() const;
 
-    // update full segment with sub-segment realignments
+    /// Update full read segment with a realignment which integrates all individual exon realignments
     void
     update_full_segment();
 
-public:
-    // read mapper quality categories
-    MAPLEVEL::index_t genome_align_maplev;
+    /// Mapping quality category for the input read
+    const MAPLEVEL::index_t _inputAlignmentMapLevel;
 
-private:
-    align_id_t _id;
+    /// Internal alignment index created and used only within Strelka
+    const align_id_t _readIndex;
     bam_record _read_rec;
     read_segment _full_read;
-    std::unique_ptr<starling_segmented_read> _segment_ptr;
+
+    /// Store details of each exon if the read is spliced
+    std::vector<read_segment> _exonInfo;
 };
 
 

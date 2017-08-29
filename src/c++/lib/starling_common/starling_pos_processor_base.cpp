@@ -54,7 +54,7 @@ const double STARLING_LARGEST_READ_SIZE_PAD(1.25);
 const unsigned HAPLOTYPING_PADDING(200);
 
 // largest indel_size grows dynamically with observed indel size until
-// hitting max_indel_size. Initialized to the follow value prior to
+// hitting maxIndelSize. Initialized to the follow value prior to
 // observation:
 
 
@@ -240,7 +240,7 @@ starling_pos_processor_base(
     , _streams(fileStreams)
     , _statsManager(statsManager)
     , _rmi(STARLING_INIT_LARGEST_READ_SIZE)
-    , _largest_indel_ref_span(opt.max_indel_size)
+    , _largest_indel_ref_span(opt.maxIndelSize)
     , _largest_total_indel_ref_span_per_read(_largest_indel_ref_span)
     , _sample(sampleCount)
     , _pileupCleaner(opt)
@@ -289,7 +289,7 @@ resetActiveRegionDetector()
     for (unsigned sampleIndex(0); sampleIndex<getSampleCount(); ++sampleIndex)
     {
         _activeRegionDetector[sampleIndex].reset(
-            new ActiveRegionDetector(_ref, _indelBuffer, _candidateSnvBuffer, _opt.max_indel_size, sampleIndex)
+            new ActiveRegionDetector(_ref, _indelBuffer, _candidateSnvBuffer, _opt.maxIndelSize, sampleIndex)
         );
     }
 }
@@ -329,8 +329,8 @@ starling_pos_processor_base::
 update_largest_indel_ref_span(const unsigned is)
 {
     if (is<=_largest_indel_ref_span) return;
-    assert(is<=_opt.max_indel_size);
-    _largest_indel_ref_span=std::min(is,_opt.max_indel_size);
+    assert(is<=_opt.maxIndelSize);
+    _largest_indel_ref_span=std::min(is,_opt.maxIndelSize);
     update_largest_total_indel_ref_span_per_read(is);
     update_stageman();
 }
@@ -382,7 +382,7 @@ resetRegionBase(
     // note that reseting these 'largest indel seen' values shouldn't really be necessary/important,
     // but it contributes to easier verification that a series of regions put into the caller will
     // give the same result as those regions processed one at a time
-    _largest_indel_ref_span = _opt.max_indel_size;
+    _largest_indel_ref_span = _opt.maxIndelSize;
     _largest_total_indel_ref_span_per_read = _largest_indel_ref_span;
 
     const pos_range pr(_reportRange.begin_pos(), _reportRange.end_pos());
@@ -452,7 +452,7 @@ insert_indel(
         _stagemanPtr->validate_new_pos_value(obs.key.pos,STAGE::READ_BUFFER);
 
         // dynamically scale maximum indel size:
-        const unsigned len(std::min(static_cast<unsigned>((obs.key.delete_length())),_opt.max_indel_size));
+        const unsigned len(std::min(static_cast<unsigned>((obs.key.delete_length())),_opt.maxIndelSize));
         update_largest_indel_ref_span(len);
 
 
@@ -605,8 +605,8 @@ insert_read(
         load_read_in_depth_buffer(sread_ptr->get_full_segment(),sampleIndex);
 
         // update other data for only the first read segment
-        const seg_id_t seg_id(sread_ptr->is_segmented() ? 1 : 0 );
-        init_read_segment(sread_ptr->get_segment(seg_id),sampleIndex);
+        const seg_id_t firstReadSegmentIndex(sread_ptr->isSpliced() ? 1 : 0 );
+        init_read_segment(sread_ptr->get_segment(firstReadSegmentIndex),sampleIndex);
     }
 
     return retval;
@@ -640,10 +640,10 @@ starling_pos_processor_base::
 load_read_in_depth_buffer(const read_segment& rseg,
                           const unsigned sample_no)
 {
-    const alignment& al(rseg.genome_align());
+    const alignment& al(rseg.getInputAlignment());
     if (al.empty()) return;
 
-    const MAPLEVEL::index_t maplev(rseg.genome_align_maplev());
+    const MAPLEVEL::index_t maplev(rseg.getInputAlignmentMapLevel());
     const bool is_usable_mapping(MAPLEVEL::TIER1_MAPPED == maplev);
     if (is_usable_mapping)
     {
@@ -663,18 +663,18 @@ init_read_segment(
     const read_segment& rseg,
     const unsigned sampleIndex)
 {
-    const alignment& al(rseg.genome_align());
+    const alignment& al(rseg.getInputAlignment());
     if (al.empty()) return;
 
-    const MAPLEVEL::index_t maplev(rseg.genome_align_maplev());
+    const MAPLEVEL::index_t maplev(rseg.getInputAlignmentMapLevel());
     const INDEL_ALIGN_TYPE::index_t iat(translate_maplev_to_indel_type(maplev));
 
     const bam_seq bseq(rseg.get_bam_read());
     try
     {
         const unsigned total_indel_ref_span_per_read =
-            addAlignmentIndelsToPosProcessor(_opt.max_indel_size, _ref,
-                                             al, bseq, *this, iat, rseg.id(), sampleIndex, rseg.get_segment_edge_pin(),
+            addAlignmentIndelsToPosProcessor(_opt.maxIndelSize, _ref,
+                                             al, bseq, *this, iat, rseg.getReadIndex(), sampleIndex, rseg.get_segment_edge_pin(),
                                              rseg.map_qual() == 0);
 
         update_largest_total_indel_ref_span_per_read(total_indel_ref_span_per_read);
@@ -761,8 +761,9 @@ align_pos(const pos_t pos)
 
             try
             {
-                realign_and_score_read(_opt,_dopt,sif.sampleOptions,_ref,realign_buffer_range,sampleIndex, _candidateSnvBuffer, rseg,
-                                       getIndelBuffer());
+                realignAndScoreRead(_opt, _dopt, sif.sampleOptions, _ref, realign_buffer_range, sampleIndex,
+                                    _candidateSnvBuffer, rseg,
+                                    getIndelBuffer());
             }
             catch (...)
             {
@@ -1038,7 +1039,7 @@ pos_t
 get_new_read_pos(const read_segment& rseg)
 {
     // get the best alignment for the read:
-    const alignment* best_al_ptr(&(rseg.genome_align()));
+    const alignment* best_al_ptr(&(rseg.getInputAlignment()));
     if (rseg.is_realigned) best_al_ptr=&(rseg.realignment);
 
     if (best_al_ptr->empty()) return rseg.buffer_pos;     // a grouper contig read which was not realigned...
@@ -1072,7 +1073,7 @@ rebuffer_pos_reads(const pos_t pos)
             if ((new_pos!=pos) &&
                 (_stagemanPtr->is_new_pos_value_valid(new_pos,STAGE::POST_ALIGN)))
             {
-                new_read_pos.push_back(std::make_pair(std::make_pair(rseg.id(),r.second),new_pos));
+                new_read_pos.push_back(std::make_pair(std::make_pair(rseg.getReadIndex(),r.second),new_pos));
             }
         }
 
@@ -1080,8 +1081,8 @@ rebuffer_pos_reads(const pos_t pos)
         for (unsigned i(0); i<nr; ++i)
         {
             sif.readBuffer.rebuffer_read_segment(new_read_pos[i].first.first,
-                                                new_read_pos[i].first.second,
-                                                new_read_pos[i].second);
+                                                 new_read_pos[i].first.second,
+                                                 new_read_pos[i].second);
         }
     }
 }
@@ -1109,7 +1110,7 @@ write_reads(const pos_t pos)
         {
             r=ri.get_ptr();
             if (nullptr==r.first) break;
-            if (r.first->segment_count()==r.second)
+            if (r.first->getExonCount()==r.second)
             {
                 r.first->write_bam(bamd);
             }
@@ -1149,7 +1150,7 @@ pileup_read_segment(
     const unsigned sampleIndex)
 {
     // get the best alignment for the read:
-    const alignment* best_al_ptr(&(rseg.genome_align()));
+    const alignment* best_al_ptr(&(rseg.getInputAlignment()));
     if (rseg.is_realigned)
     {
         best_al_ptr=&(rseg.realignment);
@@ -1157,7 +1158,7 @@ pileup_read_segment(
     else
     {
         // detect whether this read has no alignments with indels we can handle:
-        if (! rseg.is_any_nonovermax(_opt.max_indel_size)) return;
+        if (! rseg.is_any_nonovermax(_opt.maxIndelSize)) return;
     }
 
     const alignment& best_al(*best_al_ptr);
@@ -1182,7 +1183,7 @@ pileup_read_segment(
 
     // check that read has not been realigned too far to the left:
     //
-    // A warning has already been issues for this at the end of realignment:
+    // A warning has already been issued for this at the end of the realignment procedure:
     //
     if (rseg.is_realigned && rseg.is_invalid_realignment) return;
 
@@ -1213,19 +1214,25 @@ pileup_read_segment(
         if (al_end_pos <= _reportRange.begin_pos()) return;
     }
 
-    // find trimmed sections (as defined by the CASAVA 1.0 caller)
-    unsigned fwd_strand_begin_skip(0);
-    unsigned fwd_strand_end_skip(0);
-    get_read_fwd_strand_skip(bseq,
-                             best_al.is_fwd_strand,
-                             fwd_strand_begin_skip,
-                             fwd_strand_end_skip);
-
-    assert(read_size>=fwd_strand_end_skip);
+    /// Find ambiguous sections of the read to trim off
+    const unsigned readAmbiguousEndLength(getReadAmbiguousEndLength(bseq, best_al.is_fwd_strand));
+    assert(read_size>=readAmbiguousEndLength);
 
     // read_begin,read_end define a zero-indexed, half-open range in read-coordinates: [read_begin, read_end)
-    unsigned read_begin(fwd_strand_begin_skip);
-    unsigned read_end(read_size-fwd_strand_end_skip);
+    unsigned read_begin(0);
+    unsigned read_end(read_size);
+
+    if (readAmbiguousEndLength > 0)
+    {
+        if (best_al.is_fwd_strand)
+        {
+            read_end -= readAmbiguousEndLength;
+        }
+        else
+        {
+            read_begin += readAmbiguousEndLength;
+        }
+    }
 
     // don't add positions close to the read edge (this is used for error stats estimation)
     if (_opt.minDistanceFromReadEdge > 0)
@@ -1318,12 +1325,11 @@ pileup_read_segment(
                     qscore = qphred_to_mapped_qphred(qscore,adjustedMapq);
                 }
 
+                const unsigned end_trimmed_read_len(read_end-read_begin);
                 unsigned align_strand_read_pos(read_pos);
-                unsigned end_trimmed_read_len(read_end);
                 if (! best_al.is_fwd_strand)
                 {
                     align_strand_read_pos=read_size-(read_pos+1);
-                    end_trimmed_read_len=read_size-fwd_strand_begin_skip;
                 }
 
                 bool current_call_filter( true );

@@ -155,8 +155,8 @@ get_scoring_features(
     const snv_result_set& rs,
     strelka_shared_modifiers_snv& smod)
 {
-    uint16_t medianReadPos=-1;
-    uint16_t medianReadPosVar=-1;
+    uint16_t medianReadPos=0;
+    uint16_t medianReadPosVar=0;
     if (! t1_cpi.rawPileup().nonReferenceAlleleReadPositionInfo.empty())
     {
         const auto& apos(t1_cpi.rawPileup().nonReferenceAlleleReadPositionInfo);
@@ -187,7 +187,10 @@ get_scoring_features(
         }
     }
 
-    smod.features.set(SOMATIC_SNV_SCORING_FEATURES::SomaticSNVQualityGivenGermlineGenotype,rs.from_ntype_qphred);
+    {
+        const int from_ref_qphred((rs.ntype == NTYPE::REF) ? rs.from_ntype_qphred : 0 );
+        smod.features.set(SOMATIC_SNV_SCORING_FEATURES::SomaticSNVQualityAndHomRefGermlineGenotype, from_ref_qphred);
+    }
 
     static const bool isNormalSample(true);
     get_single_sample_scoring_features(opt,dopt,n1_cpi,n2_cpi, normChromDepth, isNormalSample,smod);

@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -30,18 +30,23 @@
 #include "CandidateSnvBuffer.hh"
 
 
-/// search for most likely realignments of the read and score alternate
-/// indel states in preparation for indel genotype calling
+/// \brief Search for a set of alternate alignments for each read, score them, and
+///        select a 'best' alignment to use for SNV calling.
+///
+/// A single best alignment is created for SNV calling, but for indel calling we
+/// use a pool of alternate alignments to capture the likelihood of the read supporting
+/// or not supporting each allele.
 ///
 /// Note search is for most likely realignment to a pool of potential
 /// haplotypes formed by all possible candidate indel combinations. This
 /// means there are not penalties for candidate indels if we think about the
 /// realignment wrt the reference haplotype.
 ///
-/// \param realign_buffer_range range in reference coordinates in which read is allowed to realign to (due to buffering constraints)
+/// \param realign_buffer_range The range (in reference coordinates) in which the read is allowed to realign
+///          (due to buffering constraints)
 ///
 void
-realign_and_score_read(
+realignAndScoreRead(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sample_opt,

@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_SUITE( starling_read_align )
 
 /// \brief Return the alignment resulting from inserting a single indel into a standard background:
 static
-candidate_alignment
+CandidateAlignment
 test_indel_placement(
     const IndelKey& indelKey,
     const pos_t read_start_pos = 0)
@@ -70,21 +70,21 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
     {
         // basic delete
         IndelKey ik(1050,INDEL::INDEL,10);
-        candidate_alignment cal = test_indel_placement(ik);
+        CandidateAlignment cal = test_indel_placement(ik);
         path_compare("50M10D15M1D35M",cal.al.path);
     }
 
     {
         // basic insert
         IndelKey ik(1050,INDEL::INDEL, 0, insertSeq10);
-        candidate_alignment cal = test_indel_placement(ik);
+        CandidateAlignment cal = test_indel_placement(ik);
         path_compare("50M10I25M1D15M",cal.al.path);
     }
 
     {
         // basic swap
         IndelKey ik(1050,INDEL::INDEL, 5, insertSeq10);
-        candidate_alignment cal = test_indel_placement(ik);
+        CandidateAlignment cal = test_indel_placement(ik);
         path_compare("50M5D10I20M1D20M",cal.al.path);
     }
 
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
     {
         // trailing edge insert
         IndelKey ik(1091,INDEL::INDEL, 0, insertSeq10);
-        candidate_alignment cal = test_indel_placement(ik);
+        CandidateAlignment cal = test_indel_placement(ik);
         path_compare("75M1D15M10I",cal.al.path);
         BOOST_CHECK_EQUAL(cal.trailing_indel_key,ik);
     }
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
     {
         // trailing edge insert
         IndelKey ik(1096,INDEL::INDEL, 0, insertSeq10);
-        candidate_alignment cal = test_indel_placement(ik);
+        CandidateAlignment cal = test_indel_placement(ik);
         path_compare("75M1D20M5I",cal.al.path);
         BOOST_CHECK_EQUAL(cal.trailing_indel_key,ik);
     }
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
     {
         // trailing edge insert miss
         IndelKey ik(1101,INDEL::INDEL, 0, insertSeq10);
-        candidate_alignment cal = test_indel_placement(ik);
+        CandidateAlignment cal = test_indel_placement(ik);
         path_compare("75M1D25M",cal.al.path);
         BOOST_CHECK_EQUAL(cal.trailing_indel_key.type,INDEL::NONE);
     }
@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
     {
         // leading edge insert miss
         IndelKey ik(1000,INDEL::INDEL, 0, insertSeq10);
-        candidate_alignment cal = test_indel_placement(ik);
+        CandidateAlignment cal = test_indel_placement(ik);
         path_compare("75M1D25M",cal.al.path);
         BOOST_CHECK_EQUAL(cal.leading_indel_key.type,INDEL::NONE);
         BOOST_CHECK_EQUAL(cal.al.pos,1000);
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
     {
         // leading edge insert
         IndelKey ik(1000,INDEL::INDEL, 0, insertSeq10);
-        candidate_alignment cal = test_indel_placement(ik,5);
+        CandidateAlignment cal = test_indel_placement(ik,5);
         path_compare("5I75M1D20M",cal.al.path);
         BOOST_CHECK_EQUAL(cal.leading_indel_key,ik);
         BOOST_CHECK_EQUAL(cal.al.pos,1000);
@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
     {
         // leading edge swap
         IndelKey ik(1000,INDEL::INDEL, 5, insertSeq10);
-        candidate_alignment cal = test_indel_placement(ik,5);
+        CandidateAlignment cal = test_indel_placement(ik,5);
         path_compare("5I5D70M1D25M",cal.al.path);
         BOOST_CHECK_EQUAL(cal.leading_indel_key,ik);
         BOOST_CHECK_EQUAL(cal.al.pos,1000);
@@ -143,7 +143,7 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
     {
         // leading edge delete:
         IndelKey ik(1000,INDEL::INDEL,10);
-        candidate_alignment cal = test_indel_placement(ik);
+        CandidateAlignment cal = test_indel_placement(ik);
         path_compare("10D65M1D35M",cal.al.path);
         BOOST_CHECK_EQUAL(cal.leading_indel_key,ik);
         BOOST_CHECK_EQUAL(cal.al.pos,1000);
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
     {
         // trailing edge delete:
         IndelKey ik(1101,INDEL::INDEL,10);
-        candidate_alignment cal = test_indel_placement(ik);
+        CandidateAlignment cal = test_indel_placement(ik);
         path_compare("75M1D25M10D",cal.al.path);
         BOOST_CHECK_EQUAL(cal.trailing_indel_key,ik);
         BOOST_CHECK_EQUAL(cal.al.pos,1000);
@@ -161,7 +161,7 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
     {
         // trailing off-edge delete:
         IndelKey ik(1102,INDEL::INDEL,10);
-        candidate_alignment cal = test_indel_placement(ik);
+        CandidateAlignment cal = test_indel_placement(ik);
         path_compare("75M1D25M",cal.al.path);
         BOOST_CHECK_EQUAL(cal.leading_indel_key.type,INDEL::NONE);
         BOOST_CHECK_EQUAL(cal.al.pos,1000);
@@ -342,7 +342,7 @@ BOOST_AUTO_TEST_CASE( test_realign_and_score_read )
     // is a test to ensure that in situations where it makes no sense to force an edge-softclip to the match
     // state, that the realigner does not do so (see STREL-459)
     //
-    // this also demos the full procedure required to mock realign_and_score_read, which suggest a number of
+    // this also demos the full procedure required to mock realignAndScoreRead, which suggest a number of
     // helpful test utility functions -- in particular generating a bam_record object directly from a valid
     // SAM string
     {
@@ -377,22 +377,24 @@ BOOST_AUTO_TEST_CASE( test_realign_and_score_read )
 
         // the read segment is the hardest piece of this to mock up:
         // 1) mock up the underlying bam record:
-        bam_record br;
-        br.set_qname("FOOREAD");
+        bam_record bamRead;
+        bamRead.set_qname("FOOREAD");
         const char read[] = "GTACGG";
         const uint8_t qual[] = {40, 40, 40, 40, 40, 40};
-        br.set_readqual(read, qual);
+        bamRead.set_readqual(read, qual);
 
         // set alignment
         alignment al;
         al.pos = 2;
         ALIGNPATH::cigar_to_apath("5M1S", al.path);
-        br.get_data()->core.pos = al.pos;
-        edit_bam_cigar(al.path, *br.get_data());
+
+        // set bam record from alignment
+        bam1_t& br(*(bamRead.get_data()));
+        br.core.pos = al.pos;
+        edit_bam_cigar(al.path, br);
 
         // 2) mock up the starling read
-        starling_read sread(br);
-        sread.set_genome_align(al);
+        starling_read sread(bamRead, al, MAPLEVEL::UNKNOWN, 0);
 
         // 3) finally, get read_segment from starling_read
         read_segment& rseg(sread.get_full_segment());
@@ -400,7 +402,8 @@ BOOST_AUTO_TEST_CASE( test_realign_and_score_read )
         // create an active region detector instance
         const CandidateSnvBuffer candidateSnvBuffer(1);
 
-        realign_and_score_read(opt, dopt, sample_opt, ref, realign_buffer_range, sampleIndex, candidateSnvBuffer, rseg, indelBuffer);
+        realignAndScoreRead(opt, dopt, sample_opt, ref, realign_buffer_range, sampleIndex, candidateSnvBuffer, rseg,
+                            indelBuffer);
 
         BOOST_REQUIRE(not rseg.is_realigned);
     }

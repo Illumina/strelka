@@ -127,8 +127,8 @@ updateGenotypeLogLhoodFromAlleleLogLhood(
 
 
 ///
-/// \param alleleLhood[inout] allele likelihoods, note that these are altered to include nsite and
-///                           be normalized in this func, 0 index is reference
+/// \param[in,out] alleleLhood allele likelihoods, note that these are altered to include nsite and
+///                            be normalized in this func, 0 index is reference
 /// \param locusReadStats
 ///
 static

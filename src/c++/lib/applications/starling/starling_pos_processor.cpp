@@ -482,7 +482,7 @@ updateSnvLocusWithSampleInfo(
         {
             maxGt.setAllele0HaplotypeId(
                 candidateSnvBuffer.getHaplotypeId(sampleIndex,
-                    locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex)
+                                                  locus.pos, locus.getSiteAlleles()[allele0Index-1].baseIndex)
             );
         }
     }
@@ -493,7 +493,7 @@ updateSnvLocusWithSampleInfo(
         {
             maxGt.setAllele1HaplotypeId(
                 candidateSnvBuffer.getHaplotypeId(sampleIndex,
-                    locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
+                                                  locus.pos, locus.getSiteAlleles()[allele1Index-1].baseIndex)
             );
         }
     }
@@ -1004,7 +1004,7 @@ process_pos_indel(
     if (_opt.is_bsnp_diploid())
     {
         // STREL-392 for this variant type to synchronize correctly across independent processes setup to call adjacent
-        // regions of the genome, we need to go through a dummy calling operation for approx 'max_indel_size' bases
+        // regions of the genome, we need to go through a dummy calling operation for approx 'maxIndelSize' bases
         // before starting to report calls, so this methods is called even when "isPosPrecedingReportableRange"
         // is true. This helps us to correctly handle groups of large/overlapping deletions which might span the
         // segmented genome boundary between two processes. Without this step is is possible to duplicate or drop
@@ -1319,7 +1319,7 @@ getPriorIndex(
 ///
 /// \param contrastGroup these are alleles meant to be grouped together into an "other" category, such as that reported
 ///                      as the <*> allele in VCF
-/// \param basecallBuffer[inout] see updateIndelSampleInfo
+/// \param[in,out] basecallBuffer see updateIndelSampleInfo
 static
 void
 updateIndelLocusWithSampleInfo(

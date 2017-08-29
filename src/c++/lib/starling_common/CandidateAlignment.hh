@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #pragma once
 
 #include "alignment.hh"
@@ -30,16 +26,16 @@
 #include <cassert>
 
 
-/// a richer alignment format used by the realignment routine
+/// \brief A rich alignment format used by the realignment routine
 ///
 /// compared to a regular alignment this adds the insert sequence
 /// for each indel (by keeping indel keys instead of a CIGAR), and
 /// special fields for (possibly incomplete) edge indels.
 ///
-struct candidate_alignment
+struct CandidateAlignment
 {
     bool
-    operator<(const candidate_alignment& rhs) const
+    operator<(const CandidateAlignment& rhs) const
     {
         if (al < rhs.al) return true;
         if (not (al == rhs.al)) return false;
@@ -81,15 +77,15 @@ private:
 };
 
 
-std::ostream& operator<<(std::ostream& os, const candidate_alignment& cal);
+std::ostream& operator<<(std::ostream& os, const CandidateAlignment& cal);
 
 
 
-// get the keys of the indels present in the candidate alignment
-//
+/// \brief Get the keys of the indels present in the candidate alignment
+///
 void
-get_alignment_indels(
-    const candidate_alignment& cal,
+getAlignmentIndels(
+    const CandidateAlignment& cal,
     const read_segment& rseg,
     const unsigned max_indel_size,
     indel_set_t& indels);

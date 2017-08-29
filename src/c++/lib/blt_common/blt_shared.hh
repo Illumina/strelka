@@ -17,13 +17,14 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
 #pragma once
 
 #include "blt_util/blt_types.hh"
+#include "blt_util/PolymorphicObject.hh"
 #include "blt_util/pos_range.hh"
 #include "blt_util/seq_util.hh"
 
@@ -46,11 +47,8 @@ enum index_t
 
 
 
-struct blt_options
+struct blt_options : public PolymorphicObject
 {
-    blt_options() {}
-    virtual ~blt_options() {}
-
     void
     validate() const
     {

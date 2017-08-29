@@ -86,7 +86,7 @@ struct starling_read_buffer : private boost::noncopyable
     align_id_t
     add_read_alignment(
         const bam_record& br,
-        const alignment& al,
+        const alignment& inputAlignment,
         const MAPLEVEL::index_t maplev);
 
     /// adjust read segment's buffer position to new_buffer_pos,
@@ -172,8 +172,12 @@ private:
     clear_iter(
         const pos_group_t::iterator i);
 
+    /// \brief Generates a unique read id for each strelka process
+    ///
+    /// Currently this just means that we increment the read id as each read is observed when merging reads from
+    /// multiple samples. Our scheme currently assumes a single thread so there is no sychronization required here.
     align_id_t
-    next_id() const
+    getNextReadIndex() const
     {
         return _ricp->next();
     }

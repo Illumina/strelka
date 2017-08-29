@@ -22,7 +22,7 @@
 ///
 
 #include "alignment_util.hh"
-#include "candidate_alignment.hh"
+#include "CandidateAlignment.hh"
 #include "starling_read_util.hh"
 
 #include "starling_common/starling_read_buffer.hh"
@@ -48,43 +48,37 @@ align_id_t
 starling_read_buffer::
 add_read_alignment(
     const bam_record& br,
-    const alignment& al,
+    const alignment& inputAlignment,
     const MAPLEVEL::index_t maplev)
 {
     assert(! br.is_unmapped());
 
-    align_id_t this_read_id;
+    const align_id_t readIndex(getNextReadIndex());
+    _read_data[readIndex] = new starling_read(br, inputAlignment, maplev, readIndex);
+    starling_read& sread(*(_read_data[readIndex]));
 
-    this_read_id=next_id();
-    _read_data[this_read_id] = new starling_read(br);
-    starling_read& sread(*(_read_data[this_read_id]));
-
-    sread.id() = this_read_id;
-
-    sread.set_genome_align(al);
-    sread.genome_align_maplev = maplev;
-
-    // deal with segmented reads now:
-    if (sread.is_segmented())
+    if (sread.isSpliced())
     {
-        const uint8_t n_seg(sread.segment_count());
-        for (unsigned i(0); i<n_seg; ++i)
+        // deal with spliced reads now:
+        const uint8_t exonCount(sread.getExonCount());
+        for (unsigned exonIndex(0); exonIndex<exonCount; ++exonIndex)
         {
-            const uint8_t seg_no(i+1);
-            const pos_t seg_buffer_pos(get_alignment_buffer_pos(sread.get_segment(seg_no).genome_align()));
-            sread.get_segment(seg_no).buffer_pos = seg_buffer_pos;
-            (_pos_group[seg_buffer_pos]).insert(std::make_pair(this_read_id,seg_no));
+            const uint8_t readSegmentIndex(exonIndex+1);
+            auto& readSegment(sread.get_segment(readSegmentIndex));
+            const pos_t seg_buffer_pos(get_alignment_buffer_pos(readSegment.getInputAlignment()));
+            readSegment.buffer_pos = seg_buffer_pos;
+            (_pos_group[seg_buffer_pos]).insert(std::make_pair(readIndex,readSegmentIndex));
         }
     }
     else
     {
-        const pos_t buffer_pos(get_alignment_buffer_pos(al));
+        const pos_t buffer_pos(get_alignment_buffer_pos(inputAlignment));
         const seg_id_t seg_id(0);
         sread.get_full_segment().buffer_pos = buffer_pos;
-        (_pos_group[buffer_pos]).insert(std::make_pair(this_read_id,seg_id));
+        (_pos_group[buffer_pos]).insert(std::make_pair(readIndex,seg_id));
     }
 
-    return this_read_id;
+    return readIndex;
 }
 
 
@@ -150,7 +144,7 @@ clear_iter(
         // segment: -- note this assumes that two segments will not
         // occur at the same position:
         //
-        if (seg_id != srp->segment_count()) continue;
+        if (seg_id != srp->getExonCount()) continue;
 
         // remove from simple lookup structures and delete read itself:
         _read_data.erase(k);

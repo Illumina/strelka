@@ -17,8 +17,8 @@
 //
 //
 
-///
-/// \brief misc utilities to summarize and/or transform alignment objects
+/// \file
+/// \brief Utilities to summarize and/or transform alignment objects
 ///
 
 #pragma once
@@ -30,21 +30,21 @@
 #include "starling_common/indel.hh"
 
 
-/// Provides conservative ref coordinate bounds of an alignment
+/// Provide conservative ref coordinate bounds of an alignment
 ///
 /// leading/trailing insertions and soft-clip will
 /// not be counted if using this range
 ///
 known_pos_range
-get_strict_alignment_range(const alignment& al);
+getStrictAlignmentRange(const alignment& al);
 
-/// Provides ref coordinate bounds of an alignment when edge insertions
+/// Provide ref coordinate bounds of an alignment when edge insertions
 /// are converted to match, but soft-clip segments are left as-is
 ///
 known_pos_range
 get_soft_clip_alignment_range(const alignment& al);
 
-/// Provides ref coordinate bounds of an alignment when edge insertions
+/// Provide ref coordinate bounds of an alignment when edge insertions
 /// and soft clip are converted to match.
 ///
 /// For instance pos=10 CIGAR=2S2M2S should return [8,15)
@@ -53,7 +53,7 @@ known_pos_range
 get_alignment_range(const alignment& al);
 
 
-/// Provides the largest reasonable ref coordinate bounds of an alignment by
+/// Provide the largest reasonable ref coordinate bounds of an alignment by
 /// starting from get_alignment_range() output, and requiring that
 /// the end of the alignment range is equal to at least
 /// range_start+seq_length and the start of the alignment range is
@@ -82,7 +82,7 @@ matchify_edge_insertions(
     const bool is_match_leading_edge,
     const bool is_match_trailing_edge);
 
-/// replicates behavior of matchify_edge_insertions() with an additional
+/// replicate behavior of matchify_edge_insertions() with an additional
 /// step to remove edge deletions
 ///
 alignment

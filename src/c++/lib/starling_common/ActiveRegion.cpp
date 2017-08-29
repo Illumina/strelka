@@ -64,18 +64,21 @@ void ActiveRegion::processHaplotypes()
 
 bool ActiveRegion::processHaplotypesWithCounting()
 {
-    ReadInfo readInfo;
-    _readBuffer.getReadSegments(_posRange, readInfo, false);
+    static const bool includePartialReads(false);
+    ActiveRegionReadInfo readInfo;
+    _readBuffer.getReadSegments(_posRange, readInfo, includePartialReads);
 
-    unsigned numReads(readInfo.numReads);
-    unsigned numReadsCoveringFullRegion((unsigned int) readInfo.readSegments.size());
+    // give up counting in the degenerate case of no read support:
+    if (readInfo.numReadsAlignedToActiveRegion == 0) return false;
 
-    // if there are not enough reads fully covering the region, give up counting
-    if ((numReads == 0) or (numReadsCoveringFullRegion < MinFracReadsCoveringRegion*numReads))
+    const unsigned numReadsCoveringFullRegion((unsigned int) readInfo.readSegmentsForHaplotypeGeneration.size());
+
+    // give up counting if there are not enough reads fully covering the region
+    if (numReadsCoveringFullRegion < (MinFracReadsCoveringRegion*readInfo.numReadsAlignedToActiveRegion))
         return false;
 
     HaplotypeToAlignIdSet haplotypeToAlignIdSet;
-    for (const auto& entry : readInfo.readSegments)
+    for (const auto& entry : readInfo.readSegmentsForHaplotypeGeneration)
     {
         align_id_t alignId = entry.first;
 
@@ -92,7 +95,12 @@ bool ActiveRegion::processHaplotypesWithCounting()
     std::cerr << _sampleIndex << "\t" << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tCounting"<< std::endl;
 #endif
 
-    return processSelectedHaplotypes(haplotypeToAlignIdSet, numReads);
+    /// \TODO Consider whether we should pass in the total reads touching the active region (readInfo.numReadsAlignedToActiveRegion)
+    ///       instead of the total count of reads eligible as haplotype generation input (numReadsCoveringFullRegion), which seems
+    ///       closer to the input parameter's intention, and makes ratios more consistent with assembly-generated haplotypes.
+    processSelectedHaplotypes(haplotypeToAlignIdSet, readInfo.numReadsAlignedToActiveRegion);
+
+    return true;
 }
 
 
@@ -132,17 +140,21 @@ bool ActiveRegion::processHaplotypesWithAssembly()
     unsigned minReadSegmentLength((unsigned int) (prefixAnchor.size() + suffixAnchor.size()));
 
     // get read segments
-    ReadInfo readInfo;
-    _readBuffer.getReadSegments(pos_range(beginPos, endPos), readInfo, true, minReadSegmentLength);
+    static const bool includePartialReads(true);
+    ActiveRegionReadInfo readInfo;
+    _readBuffer.getReadSegments(pos_range(beginPos, endPos), readInfo, includePartialReads, minReadSegmentLength);
+
+    /// \TODO: In the check below, it may be more consistent to replace "numReadsAlignedToActiveRegion" with the count
+    ///        of reads which are eligible to go into the assembler: "readSegmentsForHaplotypeGeneration.size()"
 
     // too many reads; do not perform assembly (too time-consuming)
-    if (readInfo.numReads > MinNumReadsToBypassAssembly)
+    if (readInfo.numReadsAlignedToActiveRegion > MinNumReadsToBypassAssembly)
         return false;   // assembly fail; bypass indels later
 
     AssemblyReadInput reads;
     std::vector<align_id_t> readIndexToAlignId;
 
-    for (const auto& entry : readInfo.readSegments)
+    for (const auto& entry : readInfo.readSegmentsForHaplotypeGeneration)
     {
         align_id_t alignId = entry.first;
 
@@ -174,11 +186,11 @@ bool ActiveRegion::processHaplotypesWithAssembly()
     // perform assembly
     runIterativeAssembler(assembleOption, reads, assemblyReadOutput, contigs);
 
-    unsigned totalNumReads(0);
-    for (auto assemblyReadInfo : assemblyReadOutput)
+    unsigned totalNumReadsUsedInAssembly(0);
+    for (const auto& assemblyReadInfo : assemblyReadOutput)
     {
         if (assemblyReadInfo.isUsed and (not assemblyReadInfo.isPseudo))
-            ++totalNumReads;
+            ++totalNumReadsUsedInAssembly;
     }
 
     HaplotypeToAlignIdSet haplotypeToAlignIdSet;
@@ -237,7 +249,9 @@ bool ActiveRegion::processHaplotypesWithAssembly()
     if (not isNonRefHaplotypeFound)
         return false;
 
-    return processSelectedHaplotypes(haplotypeToAlignIdSet, totalNumReads);
+    processSelectedHaplotypes(haplotypeToAlignIdSet, totalNumReadsUsedInAssembly);
+
+    return true;
 }
 
 void ActiveRegion::doNotUseHaplotyping()
@@ -385,9 +399,9 @@ isFilterSecondHaplotypeAsSequencerPhasingNoise(
 
 
 
-bool ActiveRegion::processSelectedHaplotypes(
+void ActiveRegion::processSelectedHaplotypes(
     HaplotypeToAlignIdSet& haplotypeToAlignIdSet,
-    const unsigned totalNumReads)
+    const unsigned totalNumHaplotypingReads)
 {
     // determine threshold to select 2 haplotypes with the largest counts
     unsigned largestCount(0);
@@ -474,7 +488,7 @@ bool ActiveRegion::processSelectedHaplotypes(
     {
         const auto& haplotype(*bestHaplotypePtr);
         const auto& alignIdList(haplotypeToAlignIdSet[haplotype]);
-        convertToPrimitiveAlleles(haplotype, alignIdList, totalNumReads, haplotypeId);
+        convertToPrimitiveAlleles(haplotype, alignIdList, totalNumHaplotypingReads, haplotypeId);
         ++haplotypeId;
 #ifdef DEBUG_ACTIVE_REGION
         std::cerr << haplotype << '\t' << alignIdList.size() << std::endl;
@@ -488,21 +502,19 @@ bool ActiveRegion::processSelectedHaplotypes(
         {
             const auto& haplotype(*haplotypePtr);
             const auto& alignIdList(haplotypeToAlignIdSet[haplotype]);
-            convertToPrimitiveAlleles(haplotype, alignIdList, totalNumReads, haplotypeId);
+            convertToPrimitiveAlleles(haplotype, alignIdList, totalNumHaplotypingReads, haplotypeId);
             ++haplotypeId;
 #ifdef DEBUG_ACTIVE_REGION
             std::cerr << haplotype << '\t' << alignIdList.size() << std::endl;
 #endif
         }
     }
-
-    return true;
 }
 
 void ActiveRegion::convertToPrimitiveAlleles(
     const std::string& haploptypeSeq,
     const std::vector<align_id_t>& alignIdList,
-    const unsigned totalNumReads,
+    const unsigned totalNumHaplotypingReads,
     const uint8_t haplotypeId)
 {
     std::string reference;
@@ -530,8 +542,9 @@ void ActiveRegion::convertToPrimitiveAlleles(
         assert(false && "Unexpected alignment segment");
     }
 
+    const float altHaplotypeCountRatio(alignIdList.size()/static_cast<float>(totalNumHaplotypingReads));
+
     unsigned numVariants(0);
-    const float altHaplotypeCountRatio(alignIdList.size()/static_cast<float>(totalNumReads));
     for (const auto& pathSegment : alignPath)
     {
         const unsigned segmentLength = pathSegment.length;
@@ -624,22 +637,25 @@ void ActiveRegion::convertToPrimitiveAlleles(
         {
             for (const auto alignId : alignIdList)
             {
-                IndelObservationData indelObservationData;
                 const auto& alignInfo(_readBuffer.getAlignInfo(alignId));
+                IndelObservationData indelObservationData;
                 indelObservationData.iat = alignInfo.indelAlignType;
                 indelObservationData.id = alignId;
                 _indelBuffer.addIndelObservation(alignInfo.sampleIndex, {*indelKeyPtr, indelObservationData});
             }
-            auto* indelDataPtr(_indelBuffer.getIndelDataPtr(*indelKeyPtr));
-            assert(indelDataPtr != nullptr && "Missing indelData");
+            IndelData* indelDataPtr(_indelBuffer.getIndelDataPtr(*indelKeyPtr));
+            assert((indelDataPtr != nullptr) && "Missing indelData");
 
-            // determine whether this indel is candidate or private
+            // Allow this indel to become a candidate (subject to other tests):
             indelDataPtr->isConfirmedInActiveRegion = true;
 
-            indelDataPtr->getSampleData(_sampleIndex).haplotypeId += haplotypeId;
+            // Update sample-specific indel details:
+            IndelSampleData& indelSampleData(indelDataPtr->getSampleData(_sampleIndex));
+
+            indelSampleData.haplotypeId += haplotypeId;
 
             // All retios have the same denominator, so addition is valid:
-            indelDataPtr->getSampleData(_sampleIndex).altAlleleHaplotypeCountRatio += altHaplotypeCountRatio;
+            indelSampleData.altAlleleHaplotypeCountRatio += altHaplotypeCountRatio;
 
             // TODO: perform candidacy test here
         }

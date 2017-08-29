@@ -32,7 +32,7 @@ class StrelkaIndelFeatures(VcfFeatureSet):
 
     def trainingfeatures(self):
         """ Return a list of columns that are features to use for EVS model training """
-        return ["SomaticIndelQualityGivenGermlineGenotype",
+        return ["SomaticIndelQualityAndHomRefGermlineGenotype",
                 "TumorSampleReadPosRankSum",
                 "TumorSampleLogSymmetricStrandOddsRatio",
                 "IndelRepeatCount",
