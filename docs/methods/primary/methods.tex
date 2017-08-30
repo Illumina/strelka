@@ -501,7 +501,7 @@ Following candidate allele identification and realignment, additional steps are 
 
 In the germline model, overlapping indel alleles can be filtered at each locus based on the expected ploidy of each region in each sample. As mentioned above, this process partially replicates the ploidy-based noise filtration that occurs in the haplotype model, but it remains an important step for several reasons, (1) there are variant loci where the haplotype model does not operate for various reasons, for instance because no active region was triggered, assembly failed, the region was too large, etc (2) the overlapping allele filtration step described below is different than that performed in the haplotype model in that it occurs after read realignment and is based on the likelihood of reads to support each of the overlapping alleles in question, rather than being based on simple read counts.
 
-A summary of the germline model overlapping allele filtration procedure is as follows. Given an expected ploidy $p_s$ for the position of interest in each sample $s$, we identify all overlapping indel alleles at that position, rank these by read likelihood support in each sample and retain no more than $p_s$ non-reference alleles in each sample. We then consider all indel alleles at other positions which overlap with those we have retained at the position of interest. This expanded set of indel alleles is again ranked by relative read likelihood support such that no more than $p_s$ non-reference alleles in each sample. The filtration is divided into two phases based on the position of interest because additional heuristics need to be applied in the second phase to resolve alleles with an unknown phasing relationship.
+A summary of the germline model overlapping allele filtration procedure is as follows. Given an expected ploidy $p_s$ for the position of interest in each sample $s$, we identify all overlapping indel alleles at that position, rank these by read likelihood support in each sample and retain no more than $p_s$ non-reference alleles in each sample. We then consider all indel alleles at other positions which overlap with those we have retained at the position of interest. This expanded set of indel alleles is again ranked and filtered by relative read likelihood support to retain only the $p_s$ best supported alleles in each sample. The filtration is divided into two stages based on the position of interest because additional heuristics need to be applied in the second stage to handle non-overlapping alleles which may present in the same haplotype.
 
 Note that the per-sample ploidy value $p_s$ can be specified by region in each sample as user input to Strelka, and defaults to 2 otherwise. Only ploidy values of 1 or 2 will currently be handled by the methods below.
 
@@ -576,9 +576,9 @@ In a similar direction to haplotye model incorporation, the definition of overla
 As noted in the methods above, allele ranking and noise filtration does not employ any population genetics model and is not expected to perform well in large cohorts. For the targeted use case of individuals and small families it is observed to perform well.
 
 \begin{raggedParagraph}{Implementation details}
-    
+
     The entry point for these procedures are in method \verb|starling_pos_processor::process_pos_indel_digt()|.
-    
+
 \end{raggedParagraph}
 
 \fi % IncludeDevelopmentDetail
@@ -586,10 +586,28 @@ As noted in the methods above, allele ranking and noise filtration does not empl
 
 \subsubsection{Overlapping indel filtration in the somatic caller}
 
-\todo[inline]{This is mostly straight copy/paste from strelka1 paper right now... still need to adapt in}
+The somatic model uses some similar approaches as the germline model for overlapping candidate indel filtration. In the somatic model's approach, each candidate indel allele is evaluated as an independent operation. For the candidate indel in question, all overlapping candidate indels (at any starting position) are found, and together with the reference allele form the overlapping indel allele set $A$. Next, all reads in both the tumor and normal samples $d \in D$ are identified for which the read likelihood has been computed for alleles $a \in A$ \todo{link to the criteria used to decide to compute the read likelihood}. The allele likelihood for each read $P(d \mid a)$ is transformed to an allele probability $P(a \mid d)$ assuming a uniform prior on $A$, such that the total support $t(a)$ for each allele $a$ can be found from
 
-As described above, in the process of realignment xxxxxxxxxxxx evaluating each indel we choose the highest scoring alignment which includes and excludes the indel. Usually the alignment which excludes the evaluated indel will be the reference allele, but the protocol does allow for the presence of an overlapping indel in this alternate alignment, providing an approximate method for overlapping indel calling. Many of these overlapping indel sites correspond to spurious indel hotspots, so additional filtration is used to reduce loci where the alternate indel alleles suggest more than two haplotypes. The filtration scheme enumerates an approximate measure of support for each allele $S_a$ by summing the probability of each allele for a given read over all reads. We then require that the allele in question have an $S_a$ value among the two highest for all overlapping alleles at the locus, and that the total $S_a$ value of the top two alleles is at least 90\% of the total for the top three. The allele probabilities for each read used to compute $S_a$ are taken from the posterior probability over all alternate indel alleles for a given read, where this posterior is computed from the alternate alignment likelihoods for each allele $P(l)$ assuming a uniform prior probability over the set of indel alleles.
+\begin{equation*}
+\label{eq:perSomaticModelAlleleSupport}
+t(a) = \sum_{d \in D}{P(a \mid d)}
+\end{equation*}
 
+The candidate indel in question is filtered from consideration in the somatic variant calling pipeline if its support score $t(a)$ is not in the top 2 among all $a \in A$, and if the total of the top 2 support scores is less than 90\% of total support score of the top 3 alleles.
+
+\ifx\IncludeDevelopmentDetail
+
+\paragraph{Design discussion}
+
+This filter is likely to be too broad, possibly removing large numbers of TP for a small gain in precision. It should be replaced with a haplotype model adapted for the somatic case.
+
+\begin{raggedParagraph}{Implementation details}
+
+The filtration test is implemented in the predicate \verb|is_multi_indel_allele|, as part of the \verb|somatic_indel_grid.cpp| module.
+
+\end{raggedParagraph}
+
+\fi % IncludeDevelopmentDetail
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -598,7 +616,7 @@ As described above, in the process of realignment xxxxxxxxxxxx evaluating each i
 \section{Variant Probability Model}
 \subsection{Germline Model}
 \label{sec:germline}
-At every site where a non-reference candidate allele has been proposed, Strelka calculates posterior probabilities for a range of hypotheses. Each hypothesis describes the sample as a mixture of haplotypes, each occurring at a specified frequency in the sample. In the germline case, the hypotheses correspond to the canonical diploid genotypes: \emph{homref} (a single-component mixture containing only the reference haplotype at 100\% frequency), \emph{het} (a two-component mixture containing the reference and one alternative haplotype, each at 50\% frequency), \emph{homalt} (a single-component mixture containing a non-reference haplotype at 100\% frequency), and \emph{hetalt} (a two-component mixture containing two different non-reference haplotypes, each at 50\% frequency). For each site at which one or more candidate variants have been proposed (all three possible non-reference variants for SNVs or up to two non-reference variants for indels), the valid genotype configurations involving those variants are considered as hypotheses. 
+At every site where a non-reference candidate allele has been proposed, Strelka calculates posterior probabilities for a range of hypotheses. Each hypothesis describes the sample as a mixture of haplotypes, each occurring at a specified frequency in the sample. In the germline case, the hypotheses correspond to the canonical diploid genotypes: \emph{homref} (a single-component mixture containing only the reference haplotype at 100\% frequency), \emph{het} (a two-component mixture containing the reference and one alternative haplotype, each at 50\% frequency), \emph{homalt} (a single-component mixture containing a non-reference haplotype at 100\% frequency), and \emph{hetalt} (a two-component mixture containing two different non-reference haplotypes, each at 50\% frequency). For each site at which one or more candidate variants have been proposed (all three possible non-reference variants for SNVs or up to two non-reference variants for indels), the valid genotype configurations involving those variants are considered as hypotheses.
 
 The posterior probability of a hypothesis $H$ conditioned on the observed data $D$ and $Q$ is:
 

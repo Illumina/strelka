@@ -89,6 +89,14 @@ get_indel_het_grid_lhood(const starling_base_options& opt,
     }
 }
 
+
+
+/// Test if the current target indel should be filtered becuase of other indels overlapping it.
+///
+/// This function will return true if the indel is not one of the top two indels by read support at the locus,
+/// or if the top two alleles do not have 90% support among the top 3 overlapping alleles.
+///
+/// \return True if the indel should be filtered
 static
 bool
 is_multi_indel_allele(
@@ -159,7 +167,7 @@ is_multi_indel_allele(
 
     // the rejection criteria is resolved at this point, but one more
     // flag is set below as an interesting utility for users to
-    // quickly find/filter the 'legitimate' overlapping indels:
+    // quickly find/filter the non-rejected overlapping indels:
     //
     is_overlap=((scores[0].second!=REF) && (scores[1].second!=REF));
 
