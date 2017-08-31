@@ -501,7 +501,7 @@ Following candidate allele identification and realignment, additional steps are 
 
 In the germline model, overlapping indel alleles can be filtered at each locus based on the expected ploidy of each region in each sample. As mentioned above, this process partially replicates the ploidy-based noise filtration that occurs in the haplotype model, but it remains an important step for several reasons, (1) there are variant loci where the haplotype model does not operate for various reasons, for instance because no active region was triggered, assembly failed, the region was too large, etc (2) the overlapping allele filtration step described below is different than that performed in the haplotype model in that it occurs after read realignment and is based on the likelihood of reads to support each of the overlapping alleles in question, rather than being based on simple read counts.
 
-A summary of the germline model overlapping allele filtration procedure is as follows. Given an expected ploidy $p_s$ for the position of interest in each sample $s$, we identify all overlapping indel alleles at that position, rank these by read likelihood support in each sample and retain no more than $p_s$ non-reference alleles in each sample. We then consider all indel alleles at other positions which overlap with those we have retained at the position of interest. This expanded set of indel alleles is again ranked and filtered by relative read likelihood support to retain only the $p_s$ best supported alleles in each sample. The filtration is divided into two stages based on the position of interest because additional heuristics need to be applied in the second stage to handle non-overlapping alleles which may present in the same haplotype.
+A summary of the germline model overlapping allele filtration procedure is as follows. Given an expected ploidy $p_s$ for the position of interest in each sample $s$, we identify all overlapping indel alleles at that position, rank these by read likelihood support in each sample and retain no more than $p_s$ non-reference alleles in each sample. We then consider all indel alleles at other positions which overlap with those we have retained at the position of interest. This expanded set of indel alleles is again ranked by read likelihood support so as to retain no more than $p_s$ non-reference alleles in each sample. The filtration is divided into two stages based on the position of interest because additional heuristics need to be applied in the second stage to handle non-overlapping alleles which may present in the same haplotype.
 
 Note that the per-sample ploidy value $p_s$ can be specified by region in each sample as user input to Strelka, and defaults to 2 otherwise. Only ploidy values of 1 or 2 will currently be handled by the methods below.
 
@@ -516,7 +516,7 @@ For each sample $s$, all reads in that sample $d \in D_s$ are identified for whi
 t_s(a) = \sum_{d \in D_s}{P(a \mid d)}
 \end{equation}
 
-Within each sample, alleles are assigned a rank $k_s(a)$ from highest to lowest $t_s(a)$ values. The top-ranked $p_s$ alleles are selected for consideration in the next processing step. If the reference allele was not in the top $p_s$ alleles, it is added into the set as well. This process yields the filtered per-sample and global allele sets $A^{\prime}_s$ and $A^{\prime}$.
+Within each sample, alleles are assigned a rank $k_s(a)$ from highest to lowest $t_s(a)$ values. The top-ranked $p_s$ alleles are selected for consideration in the next processing step. If the reference allele was not in the top $p_s$ alleles, it is added into the set as well. This process yields the filtered allele set $A^{\prime}$.
 \begin{comment}
 % Commenting out for now because forced genotype indel writeup is being deprioritized until other sections are done.
 Note that any \emph{forced genotype} indel alleles removed from consideration here will be revisited in a subsequent step to ensure that they are genotyped and emitted in the final VCF output.
@@ -524,7 +524,7 @@ Note that any \emph{forced genotype} indel alleles removed from consideration he
 
 \paragraph{Resolving overlapping indels indexed to multiple positions}
 
-The next step of the locus allele-selection procedure resolves any additional overlapping indels at other positions, if these exist. To do so, we first define \emph{overlapping indels} as two indels which intersect or are adjacent, such that they could not both be present in the same haplotype. In the procedure below we are constrained to only consider a set of alleles for filtration (and subsequently genotyping), where all alleles in the set are overlapping. For the set of position-specific alleles considered above this property must be true, but additional steps are taken to ensure the overlapping property holds when considering indels at other positions, as described below.
+The next step of the locus allele-selection procedure resolves any additional overlapping indels at other positions, if these exist. To do so, we first define \emph{overlapping indels} as two indels which intersect or are adjacent, such that they could not both be present in the same haplotype. In the procedure below we are constrained to only consider a set of alleles for filtration (and subsequently genotyping), where all alleles in the set are overlapping. For the set of position-specific alleles $A$ previous considered, this property must be true, but additional measures are taken to ensure the mutually overlapping property holds when considering indels at other positions, as described below.
 
 All indels indexed to locations other than the targeted position which overlap all alleles in $A^{\prime}$ are found, forming the extended candidate allele set $A_x$. As above, the total read support for each of these alleles is used to generate a per-sample ranking of the extended allele set $k_s(a), a \in A_x$. This per-sample rank is used to generate a heuristic sum of ranks over all samples which provides an approximate score for ranking alleles across all samples
 
@@ -532,11 +532,9 @@ All indels indexed to locations other than the targeted position which overlap a
 t(a) = \sum_{s \in S}{\setSize{A_x} - k_s(a) + 1}
 \end{equation*}
 
-$B_x$, a mutually-overlapping subset $A_x$, is then found using the following iterative procedure.
-$B_x$ is initially empty. Each allele $a \in A_x$ is tested in order from highest to lowest $t(a)$ value, to see if it overlaps with all alleles in $B_x$. If so, the allele is added to $B_x$, before iterating to the next lowest-scoring allele in $A_x$.
-\todo{Konrad: Not sure how to handle the above, I couldn't describe the logic without introducing a kind of "pseudo-code in prose", including a mutating definition of $B_x$, curious about thoughts on cleaner way to convey this?}
+$B$, a mutually-overlapping superset of $A^{\prime}$, is then found using the following iterative procedure. $B$ is initialized to contain all alleles in $A^{\prime}$, Each allele $a \in A_x$ is tested in order from highest to lowest $t(a)$ value, to see if it overlaps with all alleles in $B$. If so, the allele is added to $B$, before iterating to the next lowest-scoring allele in $A_x$.
 
-As a final step, the overlapping alleles are combined with the original position specific allele set to undergo ploidy-based selection. To do so, per-sample allele support is computed for combined allele set $B = A^{\prime} \cup B_x$, as in equation \ref{eq:perSampleAlleleSupport} above, to find the per-sample allele support $t_s(a), a \in B$. This support is then used to rank alleles in each sample and apply ploidy-based filtration for each sample to produce the final set of alleles to be evaluated at each locus.
+As a final step, per-sample allele support is computed for the combined extended allele set $B$, as in equation \ref{eq:perSampleAlleleSupport} above, to find the per-sample allele support $t_s(a), a \in B$. This support is then used to rank alleles in each sample and apply ploidy-based filtration for each sample to produce the final set of alleles to be evaluated at each locus.
 
 
 \begin{comment}
