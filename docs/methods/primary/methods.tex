@@ -588,7 +588,7 @@ The somatic model uses some similar approaches as the germline model for overlap
 t(a) = \sum_{d \in D}{P(a \mid d)}
 \end{equation*}
 
-The candidate indel in question is filtered from consideration in the somatic variant calling pipeline if its support score $t(a)$ is not in the top 2 among all $a \in A$, and if the total of the top 2 support scores is less than 90\% of total support score of the top 3 alleles.
+The candidate indel in question is filtered from consideration in the somatic variant calling pipeline if its support score $t(a)$ is not in the top 2 among all $a \in A$. Additionally, the candidate indel is filtered out if a 3rd allele exists and it has greater than 10\% support among the top 3 alleles.
 
 \ifx\IncludeDevelopmentDetail
 
