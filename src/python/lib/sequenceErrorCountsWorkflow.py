@@ -35,7 +35,7 @@ sys.path.append(os.path.abspath(pyflowDir))
 
 from configBuildTimeInfo import workflowVersion
 from pyflow import WorkflowRunner
-from sharedWorkflow import getMkdirCmd, getRmdirCmd, runDepthFromAlignments
+from sharedWorkflow import getMkdirCmd, getRmdirCmd, getDepthFromAlignments
 from strelkaSharedWorkflow import getTotalKnownReferenceSize, runCount, SharedPathInfo, \
                            StrelkaSharedCallWorkflow, StrelkaSharedWorkflow
 from workflowUtil import ensureDir, preJoin, getNextGenomeSegment
@@ -53,7 +53,7 @@ def strelkaGermlineRunDepthFromAlignments(self,taskPrefix="getChromDepth",depend
         return set()
 
     outputPath=self.paths.getChromDepth()
-    return runDepthFromAlignments(self, bamList, outputPath, taskPrefix, dependencies)
+    return getDepthFromAlignments(self, bamList, outputPath, taskPrefix, dependencies)
 
 
 
