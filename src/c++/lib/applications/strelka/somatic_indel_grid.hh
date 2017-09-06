@@ -17,6 +17,7 @@
 //
 //
 
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -31,7 +32,11 @@
 #include "boost/utility.hpp"
 
 
-
+/// Object to manage the somatic indel probability model
+///
+/// This is formatted as an object only to help with pre-computation of the
+/// prior.
+///
 struct somatic_indel_caller_grid : private boost::noncopyable
 {
     explicit somatic_indel_caller_grid(const strelka_options& opt);
@@ -53,5 +58,6 @@ private:
     blt_float_t _ln_som_match;
     blt_float_t _ln_som_mismatch;
 
-    blt_float_t _bare_lnprior[SOMATIC_DIGT::SIZE];
+    /// Germline genotype prior used for somatic indel calling
+    blt_float_t _germlineGenotypeLogPrior[SOMATIC_DIGT::SIZE];
 };

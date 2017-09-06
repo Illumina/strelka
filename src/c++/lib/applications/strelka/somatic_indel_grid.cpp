@@ -17,6 +17,7 @@
 //
 //
 
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -44,7 +45,6 @@
 #endif
 
 
-
 // For:
 //
 // homozygous state: S
@@ -60,7 +60,7 @@ somatic_indel_caller_grid(const strelka_options& opt)
     : _ln_som_match(log1p_switch(-opt.somatic_indel_rate)),
       _ln_som_mismatch(std::log(opt.somatic_indel_rate))
 {
-    calculate_bare_lnprior(opt.bindel_diploid_theta, _bare_lnprior);
+    calculateGermlineGenotypeLogPrior(opt.bindel_diploid_theta, _germlineGenotypeLogPrior);
 }
 
 static
@@ -91,7 +91,7 @@ get_indel_het_grid_lhood(const starling_base_options& opt,
 
 
 
-/// Test if the current target indel should be filtered becuase of other indels overlapping it.
+/// Test if the current target indel should be filtered because of other indels overlapping it.
 ///
 /// This function will return true if the indel is not one of the top two indels by read support at the locus,
 /// or if the top two alleles do not have 90% support among the top 3 overlapping alleles.
@@ -176,7 +176,6 @@ is_multi_indel_allele(
 
 
 
-///
 void
 somatic_indel_caller_grid::
 get_somatic_indel(
@@ -281,7 +280,7 @@ get_somatic_indel(
             (float)logSharedIndelErrorRateComplement,
             normal_lhood_float,
             tumor_lhood_float,
-            _bare_lnprior,
+            _germlineGenotypeLogPrior,
             _ln_som_match,
             _ln_som_mismatch,
             tier_rs[i]

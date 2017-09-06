@@ -17,6 +17,7 @@
 //
 //
 
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -45,7 +46,7 @@ somatic_snv_caller_strand_grid(const strelka_options& opt)
       _ln_som_match(log1p_switch(-opt.somatic_snv_rate)),
       _ln_som_mismatch(std::log(opt.somatic_snv_rate))
 {
-    calculate_bare_lnprior(opt.bsnp_diploid_theta, _bare_lnprior);
+    calculateGermlineGenotypeLogPrior(opt.bsnp_diploid_theta, _germlineGenotypeLogPrior);
 
     const blt_float_t strand_sse_rate(opt.shared_site_error_rate*opt.shared_site_error_strand_bias_fraction);
     const blt_float_t nostrand_sse_rate(opt.shared_site_error_rate-strand_sse_rate);
@@ -297,7 +298,7 @@ position_somatic_snv_call(
                                   _ln_csse_rate,  // ln (1 - shared_error_rate)
                                   normal_lhood,
                                   tumor_lhood,
-                                  _bare_lnprior,
+                                  _germlineGenotypeLogPrior,
                                   _ln_som_match,_ln_som_mismatch,
                                   sgt.is_forced_output,
                                   tier_rs[i]);

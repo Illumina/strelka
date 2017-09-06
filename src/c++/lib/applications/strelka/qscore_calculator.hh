@@ -27,10 +27,14 @@
 #include "blt_util/blt_types.hh"
 
 
-/// \brief Calculates diploid prior probabilities
+/// \brief Calculates diploid germline variant prior probabilities used in the somatic variant model
+///
+/// Prior distribution is returned in log-space
 void
-calculate_bare_lnprior(const double theta,
-                       blt_float_t* bare_lnprior);
+calculateGermlineGenotypeLogPrior(
+    const double theta,
+    blt_float_t* germlineGenotypeLogPrior);
+
 
 /// \brief Calculates somatic variant quality scores
 ///
@@ -43,7 +47,7 @@ calculate_result_set_grid(
     const blt_float_t logSharedErrorRateComplement,
     const blt_float_t* normal_lhood,
     const blt_float_t* tumor_lhood,
-    const blt_float_t* bare_lnprior,
+    const blt_float_t* germlineGenotypeLogPrior,
     const blt_float_t lnmatch,
     const blt_float_t lnmismatch,
     result_set& rs);

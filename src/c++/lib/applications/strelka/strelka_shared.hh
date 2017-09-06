@@ -113,9 +113,11 @@ struct strelka_options : public starling_base_options
 
     std::string tumor_realigned_read_filename;
 
+    /// Expected rate of somatic SNVs
     double somatic_snv_rate = 0.000001;
     std::string somatic_snv_filename;
 
+    /// Expected rate of somatic indels
     double somatic_indel_rate = 0.000001;
     std::string somatic_indel_filename;
 

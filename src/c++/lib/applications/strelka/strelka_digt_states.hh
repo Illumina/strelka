@@ -17,22 +17,20 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 /// \author Sangtae Kim
 ///
 
 #pragma once
 
-//#include "somatic_result_set.hh"
-
-//#include "starling_common/starling_indel_call_pprob_digt.hh"
 #include "blt_util/blt_types.hh"
 
 #include <iosfwd>
 #include <vector>
 
 
+/// Enumerate allowed germline genotype states in the somatic model
 namespace SOMATIC_DIGT
 {
 enum index_t

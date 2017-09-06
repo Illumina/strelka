@@ -17,11 +17,12 @@
 //
 //
 
+/// \file
+///
 /// variation on the original strawman snv caller -- implements a
 /// compile-time specified grid in allele frequency space and requires
 /// similar frequency as definition of non-somatic.
 ///
-
 /// \author Chris Saunders
 ///
 
@@ -34,7 +35,7 @@
 #include "blt_common/position_snp_call_pprob_digt.hh"
 
 
-// object used to pre-compute priors:
+/// Object used to pre-compute somatic snv priors
 struct somatic_snv_caller_strand_grid
 {
     explicit somatic_snv_caller_strand_grid(
@@ -58,5 +59,6 @@ private:
     blt_float_t _ln_som_match;
     blt_float_t _ln_som_mismatch;
 
-    blt_float_t _bare_lnprior[SOMATIC_DIGT::SIZE];
+    /// Germline genotype prior used for somatic SNV calling
+    blt_float_t _germlineGenotypeLogPrior[SOMATIC_DIGT::SIZE];
 };

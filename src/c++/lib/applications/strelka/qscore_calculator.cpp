@@ -32,12 +32,13 @@
 
 
 void
-calculate_bare_lnprior(const double theta,
-                       blt_float_t* bare_lnprior)
+calculateGermlineGenotypeLogPrior(
+    const double theta,
+    blt_float_t* germlineGenotypeLogPrior)
 {
-    bare_lnprior[SOMATIC_DIGT::REF] = (blt_float_t) log1p_switch(-(3.*theta)/2.);
-    bare_lnprior[SOMATIC_DIGT::HOM] = (blt_float_t) std::log(theta/2.);
-    bare_lnprior[SOMATIC_DIGT::HET] = (blt_float_t) std::log(theta);
+    germlineGenotypeLogPrior[SOMATIC_DIGT::REF] = (blt_float_t) log1p_switch(-(3.*theta)/2.);
+    germlineGenotypeLogPrior[SOMATIC_DIGT::HOM] = (blt_float_t) std::log(theta/2.);
+    germlineGenotypeLogPrior[SOMATIC_DIGT::HET] = (blt_float_t) std::log(theta);
 }
 
 
@@ -49,7 +50,7 @@ calculate_result_set_grid(
     const blt_float_t logSharedErrorRateComplement,
     const blt_float_t* normal_lhood,
     const blt_float_t* tumor_lhood,
-    const blt_float_t* bare_lnprior,
+    const blt_float_t* germlineGenotypeLogPrior,
     const blt_float_t lnmatch,
     const blt_float_t lnmismatch,
     result_set& rs)
@@ -120,7 +121,7 @@ calculate_result_set_grid(
             }
 
             // logP(Gn=ngt, Gt=tgt)
-            double log_genotype_prior = bare_lnprior[ngt] + ((tgt == 0) ? lnmatch : lnmismatch);
+            double log_genotype_prior = germlineGenotypeLogPrior[ngt] + ((tgt == 0) ? lnmatch : lnmismatch);
 
             // log(P(G)) + log(D|G)
             // log(D|G)
