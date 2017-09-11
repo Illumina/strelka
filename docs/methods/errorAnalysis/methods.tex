@@ -206,7 +206,7 @@ The heterozygous and homozygous genotype likelihoods are approximated by finding
 The heterozygous likelihood is:
 
 \begin{equation*}
-P (d \vert \theta, g_{het}) = m_c 0.5^{c(y_{var}) + c(ref)} \prod_{y \in Y, y \not\in \{y_{var},ref\}} r(y)^{c(y)}
+P (d \vert \theta, g_{het}) = m_c 0.5^{c(y_{var}) + c(ref)} \prod_{y \in Y \setminus \{y_{var},ref\}} r(y)^{c(y)}
 \end{equation*}
 
 ...note that in this form, we remove the impact of all indel errors except for those that would mutate the reference allele into something other than $y_{var}$. This approximation should lead to a greater distortion of results as indel error rates become large and as greater asymmetry develops between the rate of error from $ref$ to $y_{var}$ vs $y_{var}$ to $ref$.
@@ -214,7 +214,7 @@ P (d \vert \theta, g_{het}) = m_c 0.5^{c(y_{var}) + c(ref)} \prod_{y \in Y, y \n
 The homozygous likelihood is:
 
 \begin{equation*}
-P (d \vert \theta, g_{hom}) = m_c (1-e_{ref})^{c(y_{var})} {e_{ref}}^{c(ref)} \prod_{y \in Y, y \not\in \{y_{var},ref\}} r(y)^{c(y)}
+P (d \vert \theta, g_{hom}) = m_c (1-e_{ref})^{c(y_{var})} {e_{ref}}^{c(ref)} \prod_{y \in Y \setminus \{y_{var},ref\}} r(y)^{c(y)}
 \end{equation*}
 
 ...where $e_{ref}$ is set to a constant value of 0.01. As discussed for the heterozygous likelihood, the simplified representation of error terms such as $e_{ref}$ here are likely to introduce distortions in indel contexts with higher error rates.
@@ -222,7 +222,7 @@ P (d \vert \theta, g_{hom}) = m_c (1-e_{ref})^{c(y_{var})} {e_{ref}}^{c(ref)} \p
 Finally, because observed $\theta_{indel}$ values can become very high for long homopolymers, hetalt variants start to become important enough to include in the model. Just as with heterozygous variants, the hetalt state is approximated by finding the top two most likely non-reference indel alleles, $y_{var}$, $y_{var2}$ and computing the likelihood with these values fixed. The likelihood of this genotype is:
 
 \begin{equation*}
-P (d \vert \theta, g_{hetalt}) = m_c 0.5^{c(y_{var})+c(y_{var2})} {e_{ref}}^{c(ref)} \prod_{y \in Y, y \not\in \{y_{var},y_{var2},ref\}} r(y)^{c(y)}
+P (d \vert \theta, g_{hetalt}) = m_c 0.5^{c(y_{var})+c(y_{var2})} {e_{ref}}^{c(ref)} \prod_{y \in Y \setminus \{y_{var},y_{var2},ref\}} r(y)^{c(y)}
 \end{equation*}
 
 

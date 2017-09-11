@@ -218,7 +218,7 @@ The heterozygous and homozygous genotype likelihoods are approximated by finding
 The heterozygous likelihood is
 
 \begin{equation*}
-P (c \mid n, g_{\text{het}}, \Theta) = m_c 0.5^{c(y_{\text{var}}) + c(\text{ref})} \prod_{y \in Y, y \not\in \{y_{\text{var}},\text{ref}\}} r(y)^{c(y)}.
+P (c \mid n, g_{\text{het}}, \Theta) = m_c 0.5^{c(y_{\text{var}}) + c(\text{ref})} \prod_{y \in Y \setminus \{y_{\text{var}},\text{ref}\}} r(y)^{c(y)}.
 \end{equation*}
 
 Note that in this form, we remove the impact of all indel errors except for those that would mutate the reference allele into something other than $y_{var}$. This approximation should lead to a greater distortion of results as indel error rates become large and as greater asymmetry develops between the rate of error from $ref$ to $y_{var}$ vs $y_{var}$ to $ref$.
@@ -226,7 +226,7 @@ Note that in this form, we remove the impact of all indel errors except for thos
 The homozygous likelihood is
 
 \begin{equation*}
-P (c \mid n, g_{\text{homalt}}, \Theta) = m_c (1-e_{\text{ref}})^{c(y_{\text{var}})} {e_{\text{ref}}}^{c(\text{ref})} \prod_{y \in Y, y \not\in \{y_{\text{var}},\text{ref}\}} r(y)^{c(y)}
+P (c \mid n, g_{\text{homalt}}, \Theta) = m_c (1-e_{\text{ref}})^{c(y_{\text{var}})} {e_{\text{ref}}}^{c(\text{ref})} \prod_{y \in Y \setminus \{y_{\text{var}},\text{ref}\}} r(y)^{c(y)}
 \end{equation*}
 
 where $e_{\text{ref}}$ is set to a constant value of 0.01. As discussed for the heterozygous likelihood, the simplified representation of error terms such as $e_{\text{ref}}$ here are likely to introduce distortions in indel contexts with higher error rates.
@@ -234,7 +234,7 @@ where $e_{\text{ref}}$ is set to a constant value of 0.01. As discussed for the 
 Finally, because observed $\theta_s$ values can become very high for long homopolymers, hetalt variants start to become important enough to include in the model. Just as with heterozygous variants, the hetalt state is approximated by finding the top two most likely non-reference indel alleles, $y_{\text{var}}$, $y_{\text{var2}}$ and computing the likelihood with these values fixed. The likelihood of this genotype is
 
 \begin{equation*}
-P (c \mid n, g_{\text{hetalt}}, \Theta) = m_c 0.5^{c(y_{\text{var}})+c(y_{\text{var2}})} {e_{\text{ref}}}^{c(\text{ref})} \prod_{y \in Y, y \not\in \{y_{\text{var}},y_{\text{var2}},\text{ref}\}} r(y)^{c(y)}.
+P (c \mid n, g_{\text{hetalt}}, \Theta) = m_c 0.5^{c(y_{\text{var}})+c(y_{\text{var2}})} {e_{\text{ref}}}^{c(\text{ref})} \prod_{y \in Y \setminus \{y_{\text{var}},y_{\text{var2}},\text{ref}\}} r(y)^{c(y)}.
 \end{equation*}
 
 In order to reduce complexity, only homopolymer repeats ($s=1$) up to repeat count 16 ($2\leq r \leq 16$) and dinucleotide repeats ($s=2$) up to repeat count 9 ($2\leq r \leq 9$) are of interest. We assume that the parameters for contexts with a given repeat pattern size $p$ ($C(s,2),C(s,3),...,C(s,R)$) follow a log-linear model dependent on the repeat count $r$. This allows us to consider only the contexts with the minimum and maximum repeat counts for a given STR length during parameter estimation: ($C(1,2)$, $C(1,16)$, $C(2,2)$, and $C(2,9)$). The parameters for the remaining contexts are interpolated using a log-linear model estimated from those contexts. Additionally, the parameters for the non-STR context ($C(1,1)$) are also estimated.
