@@ -222,6 +222,27 @@ add_custom_target(${THIS_JSONCPP} DEPENDS "${JSONCPP_FINAL_TASK}")
 
 
 #
+# rapidjson
+#
+set(RAPIDJSON_PREFIX "rapidjson-1.1.0")
+set(RAPIDJSON_DIR "${CMAKE_CURRENT_BINARY_DIR}/${RAPIDJSON_PREFIX}")
+superset(RAPIDJSON_INCLUDE_DIR "${RAPIDJSON_DIR}/include")
+
+
+add_custom_command(
+        OUTPUT ${RAPIDJSON_INCLUDE_DIR}
+        COMMAND ${CMAKE_COMMAND} -E remove_directory "${RAPIDJSON_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${RAPIDJSON_PREFIX}.tar.bz2"
+        COMMENT "Unpacking rapidjson package")
+
+set (RAPIDJSON_FINAL_TASK ${RAPIDJSON_INCLUDE_DIR})
+
+set(THIS_RAPIDJSON "${THIS_PROJECT_NAME}_rapidjson")
+add_custom_target(${THIS_RAPIDJSON} DEPENDS "${RAPIDJSON_FINAL_TASK}")
+
+
+
+#
 # codemin
 #
 set(CODEMIN_PREFIX "CodeMin-1.0.5")
@@ -270,7 +291,7 @@ add_custom_target(${THIS_PYFLOW} DEPENDS "${PYFLOW_DEPENDS}")
 
 # tie results back to parent:
 #
-add_dependencies(${THIS_OPT} ${THIS_SAMTOOLS} ${THIS_JSONCPP} ${THIS_CODEMIN} ${THIS_PYFLOW})
+add_dependencies(${THIS_OPT} ${THIS_SAMTOOLS} ${THIS_JSONCPP} ${THIS_RAPIDJSON} ${THIS_CODEMIN} ${THIS_PYFLOW})
 
 if (NOT WIN32)
     add_dependencies(${THIS_OPT} ${THIS_BGZFX})

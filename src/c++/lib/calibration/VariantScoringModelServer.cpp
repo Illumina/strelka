@@ -27,6 +27,11 @@
 #include "blt_util/log.hh"
 #include "common/Exceptions.hh"
 
+#include "rapidjson/document.h"
+#include "rapidjson/filereadstream.h"
+
+#include <cstdio>
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -55,6 +60,15 @@ VariantScoringModelServer(
     const SCORING_CALL_TYPE::index_t callType,
     const SCORING_VARIANT_TYPE::index_t variantType)
 {
+    rapidjson::Document doc;
+    {
+        FILE* tmpFilePtr = fopen(model_file.c_str(), "rb");
+        char readBuffer[65536];
+        rapidjson::FileReadStream inputFileStream(tmpFilePtr, readBuffer, sizeof(readBuffer));
+        doc.ParseStream(inputFileStream);
+        fclose(tmpFilePtr);
+    }
+
     Json::Value root;
     {
         std::ifstream file(model_file, std::ifstream::binary);
