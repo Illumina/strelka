@@ -22,7 +22,6 @@
 
 #include "RandomForestModel.hh"
 
-#include "blt_util/log.hh"
 #include "blt_util/parse_util.hh"
 #include "common/Exceptions.hh"
 
@@ -41,7 +40,7 @@ enum index_t
 };
 
 static
-const std::string
+const char*
 get_label(const index_t i)
 {
     switch (i)
@@ -61,20 +60,45 @@ get_label(const index_t i)
 
 
 
+static
+void
+missingNodeError(
+    const char* key)
+{
+    std::ostringstream oss;
+    oss << "ERROR: Can't find expected node '" << key << "' in  json scoring model file.";
+    BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+}
+
+
+
+static
+void
+wrongValueTypeError(
+    const char* key,
+    const char* keyType)
+{
+    std::ostringstream oss;
+    oss << "ERROR: Node '" << key << "' in json scoring model file does not have expected type '" << keyType << "'.";
+    BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+}
+
+
+
 template <typename L, typename R>
 void
 RandomForestModel::
 parseTreeNode(
-    const Json::Value& v,
-    TreeNode<L,R>& val)
+    const rapidjson::Value& v,
+    TreeNode<L, R>& val)
 {
     assert(! val.isInit);
-    assert(v.isArray());
-    assert(v.size() == 2);
+    assert(v.IsArray());
+    assert(v.Size() == 2);
 
     val.isInit = true;
-    val.left = static_cast<L>(v[0].asDouble());
-    val.right = static_cast<R>(v[1].asDouble());
+    val.left = static_cast<L>(v[0].GetDouble());
+    val.right = static_cast<R>(v[1].GetDouble());
 }
 
 
@@ -83,55 +107,62 @@ void
 RandomForestModel::
 Deserialize(
     const unsigned expectedFeatureCount,
-    const Json::Value& root)
+    const rapidjson::Value& root)
 {
     clear();
 
     using namespace DTREE_NODE_TYPE;
 
-    //TODO read in other RF specific values
+    auto getNodeMember = [](const rapidjson::Value& node, const char* label) -> const rapidjson::Value&
+    {
+        const rapidjson::Value::ConstMemberIterator iter(node.FindMember(label));
+        if (iter == node.MemberEnd()) missingNodeError(label);
+        return iter->value;
+    };
 
     // Loop through all the trees
-    const Json::Value jmodels = root["Model"];
-    const unsigned treeCount(jmodels.size());
-    for (unsigned treeIndex = 0; treeIndex < treeCount; ++treeIndex)
+    static const char* modelLabel = "Model";
+    const rapidjson::Value& rfTreeArray(getNodeMember(root, modelLabel));
+    if (! rfTreeArray.IsArray()) wrongValueTypeError(modelLabel, "array");
+
+    for (const auto& treeValue : rfTreeArray.GetArray())
     {
         _forest.emplace_back();
-        DecisionTree& dtree(_forest.back());
+        DecisionTree& decisionTree(_forest.back());
 
-        // loop through the three parameter categories (TREE,VOTE, DECISION) for each tree
+        // loop through the three parameter categories (TREE, VOTE, DECISION) for each tree
         for (int i(0); i<SIZE; ++i)
         {
             const index_t nodeTypeIndex(static_cast<index_t>(i));
-            const Json::Value tree_cat = jmodels[treeIndex][get_label(nodeTypeIndex)];
+            const rapidjson::Value& treeCategoryValue(getNodeMember(treeValue, get_label(nodeTypeIndex)));
 
             // loop over all the nodes in the tree
-            for (Json::Value::const_iterator it = tree_cat.begin(); it != tree_cat.end(); ++it)
+            for (const auto& treeNode : treeCategoryValue.GetObject())
             {
                 using namespace illumina::blt_util;
-                const unsigned nodeIndex(parse_unsigned_rvalue(it.key().asCString()));
-                if (dtree.data.size() <= nodeIndex) dtree.data.resize(nodeIndex+1);
+                const unsigned decisionTreeNodeIndex(parse_unsigned_rvalue(treeNode.name.GetString()));
+                if (decisionTree.data.size() <= decisionTreeNodeIndex)
+                {
+                    decisionTree.data.resize(decisionTreeNodeIndex+1);
+                }
 
-                const Json::Value value = (*it);
-                DecisionTreeNode& node(dtree.data[nodeIndex]);
+                DecisionTreeNode& decisionTreeNode(decisionTree.data[decisionTreeNodeIndex]);
                 switch (nodeTypeIndex)
                 {
                 case TREE:
-                    parseTreeNode(value,node.tree);
+                    parseTreeNode(treeNode.value, decisionTreeNode.tree);
                     break;
                 case VOTE:
-                    parseTreeNode(value,node.vote);
+                    parseTreeNode(treeNode.value, decisionTreeNode.vote);
                     break;
                 case DECISION:
-                    parseTreeNode(value,node.decision);
-                    if (node.decision.left >= static_cast<int>(expectedFeatureCount))
+                    parseTreeNode(treeNode.value, decisionTreeNode.decision);
+                    if (decisionTreeNode.decision.left >= static_cast<int>(expectedFeatureCount))
                     {
-                        using namespace illumina::common;
-
                         std::ostringstream oss;
-                        oss << "ERROR: scoring model max feature index: " << node.decision.left
+                        oss << "ERROR: scoring model max feature index: " << decisionTreeNode.decision.left
                             << " is inconsistent with expected feature count " << expectedFeatureCount;
-                        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                        BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
                     }
                     break;
                 default:

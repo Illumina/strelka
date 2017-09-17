@@ -74,11 +74,9 @@ void
 missingNodeError(
     const char* key)
 {
-    using namespace illumina::common;
-
     std::ostringstream oss;
     oss << "ERROR: Can't find expected node '" << key << "' in  json scoring model file.";
-    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
 }
 
 
@@ -89,11 +87,9 @@ wrongValueTypeError(
     const char* key,
     const char* keyType)
 {
-    using namespace illumina::common;
-
     std::ostringstream oss;
     oss << "ERROR: Node '" << key << "' in json scoring model file does not have expected type '" << keyType << "'.";
-    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
 }
 
 

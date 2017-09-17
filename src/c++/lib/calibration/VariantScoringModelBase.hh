@@ -16,9 +16,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
-/*
- *      Author: Morten Kallberg
- */
 
 #pragma once
 
@@ -27,6 +24,9 @@
 #include <vector>
 
 
+/// \brief Base for any variant scoring model producing an empirical variant probability given an input
+///        array of predictive features
+///
 struct VariantScoringModelBase : public PolymorphicObject
 {
     typedef std::vector<double> featureInput_t;

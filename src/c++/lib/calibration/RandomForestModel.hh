@@ -24,7 +24,7 @@
 
 #include "VariantScoringModelBase.hh"
 
-#include "json/json.h"
+#include "rapidjson/document.h"
 
 #include <cassert>
 
@@ -33,16 +33,13 @@
 
 struct RandomForestModel : public VariantScoringModelBase
 {
-    RandomForestModel() {}
-
-    bool isInit() const
-    {
-        return (! _forest.empty());
-    }
+    RandomForestModel() = default;
 
     double getProb(const featureInput_t& features) const override;
 
-    void Deserialize(const unsigned expectedFeatureCount, const Json::Value& root);
+    void Deserialize(
+        const unsigned expectedFeatureCount,
+        const rapidjson::Value& root);
 
 private:
     template <typename L, typename R>
@@ -78,8 +75,8 @@ private:
     template <typename L, typename R>
     void
     parseTreeNode(
-        const Json::Value& v,
-        TreeNode<L,R>& val);
+        const rapidjson::Value& v,
+        TreeNode<L, R>& val);
 
     double
     getDecisionTreeProb(

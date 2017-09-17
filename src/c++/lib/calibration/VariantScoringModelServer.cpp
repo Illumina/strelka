@@ -99,7 +99,7 @@ VariantScoringModelServer(
         if (_meta.modelType == "RandomForest")
         {
             std::unique_ptr<RandomForestModel> rfModel(new RandomForestModel());
-     //       rfModel->Deserialize(featureMap.size(), varModels);
+            rfModel->Deserialize(featureMap.size(), varModels);
             _model = std::move(rfModel);
         }
         else
