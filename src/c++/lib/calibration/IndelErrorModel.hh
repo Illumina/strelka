@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "IndelErrorModelMetadata.hh"
 #include "IndelErrorRateSet.hh"
 
 #include "starling_common/AlleleReportInfo.hh"
@@ -80,8 +79,6 @@ private:
         const unsigned sampleIndexUsed(_isUseSampleSpecificErrorRates ? sampleIndex : 0);
         return _sampleErrorRates[sampleIndexUsed];
     }
-
-    IndelErrorModelMetadata _meta;
 
     bool _isUseSampleSpecificErrorRates = false;
 
