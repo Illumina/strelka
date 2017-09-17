@@ -68,7 +68,7 @@
                 },
                 "FilterCutoff":
                 {
-                    "description": "recommended minimum phred-scaled quality score which should be PASS'd",
+                    "description": "Recommended minimum phred-scaled quality score which should be PASS'd",
                     "type": "number",
                     "minimum": 0
                 },
@@ -89,7 +89,7 @@
 
         "RandomForestModel" :
         {
-            "description": "array of objects, each object is a decision tree from the random forest",
+            "description": "Array of objects, each object is a decision tree from the random forest",
             "type" : "array",
             "minItems" : 1,
             "items" : {

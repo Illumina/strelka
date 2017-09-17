@@ -27,7 +27,6 @@
 #include "blt_util/log.hh"
 #include "common/Exceptions.hh"
 
-#include "rapidjson/document.h"
 #include "rapidjson/filereadstream.h"
 
 #include <cstdio>
@@ -41,14 +40,12 @@
 static
 void
 modelParseError(
-    const std::string& model_file,
+    const std::string& modelFile,
     const std::string& key)
 {
-    using namespace illumina::common;
-
     std::ostringstream oss;
-    oss << "ERROR: Can't find node '" << key << "' in scoring model file: '" << model_file << "'";
-    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    oss << "ERROR: Can't find node '" << key << "' in json scoring model file: '" << modelFile << "'";
+    BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
 }
 
 
@@ -56,45 +53,53 @@ modelParseError(
 VariantScoringModelServer::
 VariantScoringModelServer(
     const VariantScoringModelMetadata::featureMap_t& featureMap,
-    const std::string& model_file,
+    const std::string& modelFile,
     const SCORING_CALL_TYPE::index_t callType,
     const SCORING_VARIANT_TYPE::index_t variantType)
 {
-    rapidjson::Document doc;
+    rapidjson::Document document;
     {
-        FILE* tmpFilePtr = fopen(model_file.c_str(), "rb");
+        FILE* tmpFilePtr = fopen(modelFile.c_str(), "rb");
         char readBuffer[65536];
         rapidjson::FileReadStream inputFileStream(tmpFilePtr, readBuffer, sizeof(readBuffer));
-        doc.ParseStream(inputFileStream);
+        if (document.ParseStream(inputFileStream).HasParseError())
+        {
+            std::ostringstream oss;
+            oss << "ERROR: Failed to parse json scoring model file: '" << modelFile << "'";
+            BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+        }
         fclose(tmpFilePtr);
     }
 
-    Json::Value root;
+    if (! document.IsObject())
     {
-        std::ifstream file(model_file, std::ifstream::binary);
-        file >> root;
+        std::ostringstream oss;
+        oss << "ERROR: Unexpected root data type in json scoring model file: '" << modelFile << "'";
+        BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
     }
 
-    static const std::string model_type("CalibrationModels");
-    const Json::Value models = root[model_type];
-    if (models.isNull()) modelParseError(model_file,model_type);
+    auto getNodeMember = [&](const rapidjson::Value& node, const char* label) -> const rapidjson::Value&
+    {
+        const rapidjson::Value::ConstMemberIterator iter(node.FindMember(label));
+        if (iter == node.MemberEnd()) modelParseError(modelFile, label);
+        return iter->value;
+    };
 
-    const std::string call_type(SCORING_CALL_TYPE::get_label(callType));
-    const Json::Value callmodels = models[call_type];
-    if (callmodels.isNull()) modelParseError(model_file,call_type);
+    static const std::string modelTypeLabel("CalibrationModels");
+    const rapidjson::Value& models(getNodeMember(document, modelTypeLabel.c_str()));
 
-    const std::string var_type(SCORING_VARIANT_TYPE::get_label(variantType));
-    const Json::Value varmodel = callmodels[var_type];
-    if (varmodel.isNull()) modelParseError(model_file,var_type);
+    const rapidjson::Value& callModels(getNodeMember(models, SCORING_CALL_TYPE::get_label(callType)));
+
+    const rapidjson::Value& varModels(getNodeMember(callModels, SCORING_VARIANT_TYPE::get_label(variantType)));
 
     try
     {
-        _meta.Deserialize(featureMap,varmodel);
+        _meta.Deserialize(featureMap, varModels);
 
-        if (_meta.ModelType == "RandomForest")
+        if (_meta.modelType == "RandomForest")
         {
             std::unique_ptr<RandomForestModel> rfModel(new RandomForestModel());
-            rfModel->Deserialize(featureMap.size(),varmodel);
+     //       rfModel->Deserialize(featureMap.size(), varModels);
             _model = std::move(rfModel);
         }
         else
@@ -104,7 +109,7 @@ VariantScoringModelServer(
     }
     catch (...)
     {
-        log_os << "Exception caught while attempting to parse scoring model file '" << model_file << "'\n";
+        log_os << "ERROR: Exception caught while attempting to parse scoring model file '" << modelFile << "'\n";
         throw;
     }
 }

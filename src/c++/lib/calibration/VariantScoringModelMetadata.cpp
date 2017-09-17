@@ -69,6 +69,35 @@ get_label(const index_t i)
 
 
 
+static
+void
+missingNodeError(
+    const char* key)
+{
+    using namespace illumina::common;
+
+    std::ostringstream oss;
+    oss << "ERROR: Can't find expected node '" << key << "' in  json scoring model file.";
+    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+}
+
+
+
+static
+void
+wrongValueTypeError(
+    const char* key,
+    const char* keyType)
+{
+    using namespace illumina::common;
+
+    std::ostringstream oss;
+    oss << "ERROR: Node '" << key << "' in json scoring model file does not have expected type '" << keyType << "'.";
+    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+}
+
+
+
 /// remove newline and quotes from string
 static
 std::string
@@ -124,7 +153,9 @@ featureMapOrderError(
     using namespace illumina::common;
 
     std::ostringstream oss;
-    oss << "ERROR: Scoring model feature '" << fname << "' is at position " << foundIdx << " in {calltype}VariantEmpiricalScoringFeatures.hh but at position " << expectedIdx << " in json model file. Check that feature order in the two sources correspond.\n";
+    oss << "ERROR: Scoring model feature '" << fname << "' is at position " << foundIdx
+        << " in {calltype}VariantEmpiricalScoringFeatures.hh but at position " << expectedIdx
+        << " in json model file. Check that feature order in the two sources correspond.\n";
     BOOST_THROW_EXCEPTION(LogicException(oss.str()));
 }
 
@@ -134,57 +165,87 @@ void
 VariantScoringModelMetadata::
 Deserialize(
     const featureMap_t& featureMap,
-    const Json::Value& root)
+    const rapidjson::Value& root)
 {
     using namespace SMODEL_ENTRY_TYPE;
-    date  = Clean_string(root[get_label(DATE)].asString());
-    ModelType = root[get_label(MODELTYPE)].asString();
-    filterCutoff = root[get_label(FILTERCUTOFF)].asDouble();
+
+    auto getNodeMember = [](const rapidjson::Value& node, const char* label) -> const rapidjson::Value&
+    {
+        const rapidjson::Value::ConstMemberIterator iter(node.FindMember(label));
+        if (iter == node.MemberEnd()) missingNodeError(label);
+        return iter->value;
+    };
+
+    const rapidjson::Value& dateValue(getNodeMember(root, get_label(DATE)));
+    if (! dateValue.IsString()) wrongValueTypeError(get_label(DATE), "string");
+    date = Clean_string(dateValue.GetString());
+
+    const rapidjson::Value& modelTypeValue(getNodeMember(root, get_label(MODELTYPE)));
+    if (! modelTypeValue.IsString()) wrongValueTypeError(get_label(MODELTYPE), "string");
+    modelType = modelTypeValue.GetString();
+
+    const rapidjson::Value& filterCutoffValue(getNodeMember(root, get_label(FILTERCUTOFF)));
+    if (! filterCutoffValue.IsNumber()) wrongValueTypeError(get_label(FILTERCUTOFF), "number");
+    filterCutoff = filterCutoffValue.GetDouble();
 
     // read optional calibration items:
-    const Json::Value caliRoot = root[get_label(CALIBRATION)];
-    if (not caliRoot.isNull())
+    const rapidjson::Value::ConstMemberIterator calibrationRootIter(root.FindMember(get_label(CALIBRATION)));
+    if (calibrationRootIter != root.MemberEnd())
     {
-        probPow = caliRoot.get("Power", probPow).asDouble();
-        probScale = caliRoot.get("Scale", probScale).asDouble();
+        const rapidjson::Value& calibrationRoot(calibrationRootIter->value);
+        if (! calibrationRoot.IsObject())
+        {
+            wrongValueTypeError(get_label(CALIBRATION), "object");
+        }
+
+        auto optionalDoubleKeyUpdate = [&](const char* label, double& val)
+        {
+            const rapidjson::Value::ConstMemberIterator iter(calibrationRoot.FindMember(label));
+            if (iter != calibrationRoot.MemberEnd())
+            {
+                if (! iter->value.IsNumber()) wrongValueTypeError(label, "number");
+                val = iter->value.GetDouble();
+            }
+        };
+
+        optionalDoubleKeyUpdate("Power", probPow);
+        optionalDoubleKeyUpdate("Scale", probScale);
     }
 
     // read and validate features:
-    const Json::Value featureRoot = root[get_label(FEATURES)];
-    assert(!featureRoot.isNull());
+    const rapidjson::Value& featureRoot(getNodeMember(root, get_label(FEATURES)));
+    if (! featureRoot.IsArray()) wrongValueTypeError(get_label(FEATURES), "array");
 
     const auto fend(featureMap.end());
 
     unsigned expectedIndex=0;
-    for (const auto& val : featureRoot)
+    for (const auto& val : featureRoot.GetArray())
     {
-        const std::string fname(val.asString());
-        const auto fiter(featureMap.find(fname));
+        const std::string featureName(val.GetString());
+        const auto fiter(featureMap.find(featureName));
         if (fiter == fend)
         {
-            featureMapError(featureMap,fname);
+            featureMapError(featureMap, featureName);
         }
         if (expectedIndex != fiter->second)
         {
-            featureMapOrderError(fname,expectedIndex,fiter->second);
+            featureMapOrderError(featureName, expectedIndex, fiter->second);
         }
         expectedIndex++;
     }
 
     if (expectedIndex != featureMap.size())
     {
-        using namespace illumina::common;
-
         std::ostringstream oss;
         oss << "ERROR: scoring feature count specified in modelfile (" << expectedIndex << ")"
             << " does not match expected feature count (" << featureMap.size() << ")\n";
         {
             bool isFirst(true);
             oss << "\tModelfile features: {";
-            for (const auto& val : featureRoot)
+            for (const auto& val : featureRoot.GetArray())
             {
                 if (not isFirst) oss << ",";
-                oss << val.asString();
+                oss << val.GetString();
                 isFirst=false;
             }
             oss << "}\n";
@@ -201,7 +262,7 @@ Deserialize(
             oss << "}\n";
         }
         oss << "\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
     }
 }
 

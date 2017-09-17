@@ -22,13 +22,14 @@
 
 #pragma once
 
-#include "json/json.h"
+#define RAPIDJSON_HAS_STDSTRING 1
+#include "rapidjson/document.h"
 
 #include <map>
 #include <string>
 
 
-/// parse common meta-data format shared for all variant scoring models
+/// Parse common meta-data format shared for all variant scoring models
 ///
 struct VariantScoringModelMetadata
 {
@@ -38,10 +39,10 @@ struct VariantScoringModelMetadata
 
     void Deserialize(
         const featureMap_t& featureMap,
-        const Json::Value& root);
+        const rapidjson::Value& root);
 
     std::string date;
-    std::string ModelType;
+    std::string modelType;
 
     /// as part of an optional calibration component to all models, raise the raw prob by this power before reporting:
     double probPow = 1.;
@@ -52,4 +53,3 @@ struct VariantScoringModelMetadata
     /// Phred-scale threshold: PASS variants will be >= filterCutoff
     double filterCutoff;
 };
-
