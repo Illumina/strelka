@@ -810,7 +810,7 @@ P(F_t, F_n \mid G_t = \texttt{nonsom}, G_n)=
 \begin{equation*}
 P(F_t, F_n \mid G_t = \texttt{som}, G_n = \texttt{ref})=
 \begin{cases}
-	(1-\mu)U(F_t) & \text{ if } F_t \neq F_n \text{ and } F_n \leq \tau F_t \\
+	U(F_t) U(F_t,F_n) & \text{ if } F_t \neq F_n \text{ and } F_n \leq \tau F_t \\
 	0 & \text{ otherwise } \\
 \end{cases}
 \end{equation*}
@@ -819,12 +819,12 @@ P(F_t, F_n \mid G_t = \texttt{som}, G_n = \texttt{ref})=
 \begin{equation*}
 P(F_t, F_n \mid G_t = \texttt{som}, G_n \neq \texttt{ref})=
 \begin{cases}
-	(1-\mu)U(F_t) & \text{ if } F_t \neq F_n \text{ and } \mathcal{C}(F_n, G_n) = 1 \\
+	U(F_t) & \text{ if } F_t \neq F_n \text{ and } \mathcal{C}(F_n, G_n) = 1 \\
 	0 & \text{ otherwise } \\
 \end{cases}
 \end{equation*}
 
-\noindent Here, $\tau$ represents the {\em contamination tolerance}, $U(F_t)$ refers to a uniform distribution over the allowed tumor allele frequencies and $\mu$ indicates the noise term. The contamination tolerance term is introduced to allow for contamination in the normal sample by some fraction of tumor cells. This is particularly useful for analyses of liquid tumors, where normal sample is almost always contaminated by tumor cells. The contamination tolerance is set to $0.15$. The noise term abstracts various sequencing, read mapping and assembly issues which could produce an unexpected allele frequency shared in the tumor and normal samples. For SNVs, the noise contribution is set to $\mu_{\text{SNV}} = 5\e{-10}$. For indels, it is dynamically estimated as described in Section xxx.
+\noindent Here, $\tau$ represents the {\em contamination tolerance}, $U(F_t)$ refers to a uniform distribution over the allowed tumor allele frequencies, $U(F_t,F_n)$ refers to a uniform distribution over the allowed normal allele frequencies given $F_n \leq \tau F_t$ and $\mu$ indicates the noise term shared by the normal and tumor samples. The contamination tolerance term is introduced to allow for contamination in the normal sample by some fraction of tumor cells. This is particularly useful for analyses of liquid tumors, where normal sample is almost always contaminated by tumor cells. The contamination tolerance is set to $0.15$. The noise term abstracts various sequencing, read mapping and assembly issues which could produce an unexpected allele frequency shared in the tumor and normal samples. For SNVs, the noise contribution is set to $\mu_{\text{SNV}} = 5\e{-10}$. For indels, it is dynamically estimated as described in Section xxx.
 
 % The description of the strand-bias model is not included here because it is not used in the quality score calculation.
 

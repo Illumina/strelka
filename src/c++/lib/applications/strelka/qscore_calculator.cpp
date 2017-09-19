@@ -86,25 +86,49 @@ calculate_result_set_grid(
 
                     if (tgt == 0)    // non-somatic
                     {
-                        if (normal_freq_index != tumor_freq_index) continue; // P(fn != ft | Gn = Gt) = 0
+                        if (normal_freq_index != tumor_freq_index) continue; // P(Fn != Ft | Gt = nonsom, Gn) = 0
 
                         lprior_freq = (normal_freq_index == ngt) ? logSharedErrorRateComplement : logSharedErrorRate+log_error_mod;
                     }
                     else    // somatic
                     {
-                        if (normal_freq_index == tumor_freq_index) continue; // P(fn = ft | Gn != Gt) = 0
+                        if (normal_freq_index == tumor_freq_index) continue; // P(Fn = Ft | Gt = som, Gn) = 0
                         if (ngt != SOMATIC_DIGT::REF)
                         {
-                            if (normal_freq_index != ngt)
+                            // P(Ft, Fn | Gt = som, Gn != ref)
+                            if (normal_freq_index != ngt) // 0 if C(Fn, Gn) = 0
                                 continue;
-                            lprior_freq = log_error_mod + logSharedErrorRateComplement;
+
+                            lprior_freq = log_error_mod; // U(Ft) otherwise
                         }
                         else
                         {
-                            if (normal_freq_index == ngt || (consider_norm_contam && normal_freq_index == SOMATIC_DIGT::SIZE))
-                                lprior_freq = log_error_mod + ln_one_half;
+                            // P(Ft, Fn | Gt = som, Gn = ref)
+                            if (!consider_norm_contam)
+                            {
+                                // Ft is not big. Don't tolerate Fn != 0. U(Ft,Fn) = 1.
+                                if (normal_freq_index == 0)
+                                {
+                                    lprior_freq = log_error_mod;    // Fn = 0
+                                }
+                                else
+                                {
+                                    continue;
+                                }
+                            }
                             else
-                                continue;
+                            {
+                                // Ft is big. Tolerate Fn = DIGT_GRID::RATIO_INCREMENT (0.05 by default).
+                                // U(Ft,Fn) = 0.5 because Fn = 0 or DIGT_GRID::RATIO_INCREMENT
+                                if ((normal_freq_index == ngt) || (normal_freq_index == SOMATIC_DIGT::SIZE))
+                                {
+                                    lprior_freq = log_error_mod + ln_one_half;  // Fn <= contam_tolerance*Ft
+                                }
+                                else
+                                {
+                                    continue; // Fn > contam_tolerance*Ft
+                                }
+                            }
                         }
                     }
                     double lsum = lprior_freq + normal_lhood[normal_freq_index] + tumor_lhood[tumor_freq_index];
