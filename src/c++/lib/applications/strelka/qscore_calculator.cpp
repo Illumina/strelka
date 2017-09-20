@@ -76,8 +76,8 @@ calculate_result_set_grid(
             {
                 blt_float_t tumor_freq = DIGT_GRID::get_fraction_from_index(tumor_freq_index);
 
-                // this flag is set if tumor_freq is large.
-                // if it is set, normal_freq==DIGT_GRID::RATIO_INCREMENT is considered as "canonical" frequency rather than noise
+                // consider_norm_contam = true if contam_tolerance*Ft >= DIGT_GRID::RATIO_INCREMENT (0.05 by default)
+                // if consider_norm_contam is false, we don't need to consider normal contamination.
                 bool consider_norm_contam = contam_tolerance*tumor_freq >= DIGT_GRID::RATIO_INCREMENT;
 
                 for (unsigned normal_freq_index(0); normal_freq_index<DIGT_GRID::PRESTRAND_SIZE; ++normal_freq_index)
@@ -106,10 +106,11 @@ calculate_result_set_grid(
                             // P(Ft, Fn | Gt = som, Gn = ref)
                             if (!consider_norm_contam)
                             {
-                                // Ft is not big. Don't tolerate Fn != 0. U(Ft,Fn) = 1.
                                 if (normal_freq_index == 0)
                                 {
-                                    lprior_freq = log_error_mod;    // Fn = 0
+                                    // P(Ft, Fn | Gt = som, Gn = ref) != 0 only when Fn == 0
+                                    // Given this Ft, we allow only a single Fn value, so U(Fn|Ft) = 1.
+                                    lprior_freq = log_error_mod;    // Fn == 0
                                 }
                                 else
                                 {
@@ -118,15 +119,18 @@ calculate_result_set_grid(
                             }
                             else
                             {
-                                // Ft is big. Tolerate Fn = DIGT_GRID::RATIO_INCREMENT (0.05 by default).
-                                // U(Ft,Fn) = 0.5 because Fn = 0 or DIGT_GRID::RATIO_INCREMENT
+                                // contam_tolerance*Ft >= DIGT_GRID::RATIO_INCREMENT (0.05 by default)
                                 if ((normal_freq_index == ngt) || (normal_freq_index == SOMATIC_DIGT::SIZE))
                                 {
-                                    lprior_freq = log_error_mod + ln_one_half;  // Fn <= contam_tolerance*Ft
+                                    // Prob(Ft, Fn | Gt = som, Gn = ref) != 0
+                                    // when Fn=0 or Fn=DIGT_GRID::RATIO_INCREMENT (0.05 by default)
+                                    // i.e. Fn <= contam_tolerance*Ft and Fn <= DIGT_GRID::RATIO_INCREMENT
+                                    // Given this Ft, we allow two Fn values. So, U(Fn|Ft) = 0.5.
+                                    lprior_freq = log_error_mod + ln_one_half;
                                 }
                                 else
                                 {
-                                    continue; // Fn > contam_tolerance*Ft
+                                    continue;
                                 }
                             }
                         }
