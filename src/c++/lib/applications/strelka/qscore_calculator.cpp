@@ -76,8 +76,8 @@ calculate_result_set_grid(
             {
                 blt_float_t tumor_freq = DIGT_GRID::get_fraction_from_index(tumor_freq_index);
 
-                // this flag is set if tumor_freq is large.
-                // if it is set, normal_freq==DIGT_GRID::RATIO_INCREMENT is considered as "canonical" frequency rather than noise
+                // consider_norm_contam = true if contam_tolerance*Ft >= DIGT_GRID::RATIO_INCREMENT (0.05 by default)
+                // if consider_norm_contam is false, we don't need to consider normal contamination.
                 bool consider_norm_contam = contam_tolerance*tumor_freq >= DIGT_GRID::RATIO_INCREMENT;
 
                 for (unsigned normal_freq_index(0); normal_freq_index<DIGT_GRID::PRESTRAND_SIZE; ++normal_freq_index)
@@ -86,25 +86,53 @@ calculate_result_set_grid(
 
                     if (tgt == 0)    // non-somatic
                     {
-                        if (normal_freq_index != tumor_freq_index) continue; // P(fn != ft | Gn = Gt) = 0
+                        if (normal_freq_index != tumor_freq_index) continue; // P(Fn != Ft | Gt = nonsom, Gn) = 0
 
                         lprior_freq = (normal_freq_index == ngt) ? logSharedErrorRateComplement : logSharedErrorRate+log_error_mod;
                     }
                     else    // somatic
                     {
-                        if (normal_freq_index == tumor_freq_index) continue; // P(fn = ft | Gn != Gt) = 0
+                        if (normal_freq_index == tumor_freq_index) continue; // P(Fn = Ft | Gt = som, Gn) = 0
                         if (ngt != SOMATIC_DIGT::REF)
                         {
-                            if (normal_freq_index != ngt)
+                            // P(Ft, Fn | Gt = som, Gn != ref)
+                            if (normal_freq_index != ngt) // 0 if C(Fn, Gn) = 0
                                 continue;
-                            lprior_freq = log_error_mod + logSharedErrorRateComplement;
+
+                            lprior_freq = log_error_mod; // U(Ft) otherwise
                         }
                         else
                         {
-                            if (normal_freq_index == ngt || (consider_norm_contam && normal_freq_index == SOMATIC_DIGT::SIZE))
-                                lprior_freq = log_error_mod + ln_one_half;
+                            // P(Ft, Fn | Gt = som, Gn = ref)
+                            if (!consider_norm_contam)
+                            {
+                                if (normal_freq_index == 0)
+                                {
+                                    // P(Ft, Fn | Gt = som, Gn = ref) != 0 only when Fn == 0
+                                    // Given this Ft, we allow only a single Fn value, so U(Fn|Ft) = 1.
+                                    lprior_freq = log_error_mod;    // Fn == 0
+                                }
+                                else
+                                {
+                                    continue;
+                                }
+                            }
                             else
-                                continue;
+                            {
+                                // contam_tolerance*Ft >= DIGT_GRID::RATIO_INCREMENT (0.05 by default)
+                                if ((normal_freq_index == ngt) || (normal_freq_index == SOMATIC_DIGT::SIZE))
+                                {
+                                    // Prob(Ft, Fn | Gt = som, Gn = ref) != 0
+                                    // when Fn=0 or Fn=DIGT_GRID::RATIO_INCREMENT (0.05 by default)
+                                    // i.e. Fn <= contam_tolerance*Ft and Fn <= DIGT_GRID::RATIO_INCREMENT
+                                    // Given this Ft, we allow two Fn values. So, U(Fn|Ft) = 0.5.
+                                    lprior_freq = log_error_mod + ln_one_half;
+                                }
+                                else
+                                {
+                                    continue;
+                                }
+                            }
                         }
                     }
                     double lsum = lprior_freq + normal_lhood[normal_freq_index] + tumor_lhood[tumor_freq_index];
