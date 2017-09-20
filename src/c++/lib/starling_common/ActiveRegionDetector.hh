@@ -30,8 +30,6 @@
 #include "ActiveRegionReadBuffer.hh"
 #include "CandidateSnvBuffer.hh"
 
-#include <list>
-
 
 /// \brief Detects active regions
 ///
@@ -137,8 +135,7 @@ private:
     /// The number of variants identified so far in the current candidate active region
     unsigned _numVariants;
 
-    /// \TODO Why does the object support multiple active regions when processActiveRegions will only process one. Why is this a list? (STREL-655)
-    std::list<ActiveRegion> _activeRegions;
+    std::unique_ptr<ActiveRegion> _activeRegion;
 
     // aligner to be used in active regions
     GlobalAligner<int> _aligner;
