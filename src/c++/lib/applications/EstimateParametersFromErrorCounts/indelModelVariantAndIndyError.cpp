@@ -71,7 +71,8 @@ contextLogLhood(
     const double theta(std::exp(logTheta));
     const double logNoIndelPrior(std::log(1-(theta*3./2.+(theta*theta))));
 
-    const double logNoIndelRefRate(std::log(1-std::exp(logInsertErrorRate))+std::log(1-std::exp(logDeleteErrorRate)));
+    //const double logNoIndelRefRate(std::log(1-std::exp(logInsertErrorRate))+std::log(1-std::exp(logDeleteErrorRate)));
+    const double logNoIndelRefRate(std::log(1-std::exp(logInsertErrorRate)-std::exp(logDeleteErrorRate)));
 
     double logLhood(0.);
     for (const auto& obs : observations)

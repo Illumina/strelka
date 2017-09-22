@@ -191,7 +191,7 @@ The reference genotype likelihood is:
 P ( d \vert \theta, g_{ref}) = m_c \prod_{y \in Y} r(y)^{c(y)}
 \end{equation*}
 
-...where $c(y)$ is the supporting observation count of allele $y$ and $r(y)$ is the error rate or $y$, set to $e_i$ if $y$ is an insertion allele type, $e_d$ if $y$ is a deletion allele type, and $(1-e_i) (1-e_d)$ for the reference allele type.
+...where $c(y)$ is the supporting observation count of allele $y$ and $r(y)$ is the error rate or $y$, set to $e_i$ if $y$ is an insertion allele type, $e_d$ if $y$ is a deletion allele type, and $(1-(e_i+e_d))$ for the reference allele type.
 
 Note that $m_c$ is the corresponding multinomial coefficient:
 

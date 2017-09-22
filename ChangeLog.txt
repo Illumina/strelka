@@ -1,3 +1,4 @@
+- STREL-705 Correct reference term in indel error estimation
 - STREL-632 Correct somatic joint allele-frequency prior
 - STREL-652 Improve somatic EVS feature consistency
 - STREL-647 Improve CRAM reference handling

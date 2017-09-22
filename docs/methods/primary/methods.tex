@@ -200,7 +200,7 @@ P(c_j \mid n_j, \Theta)=\sum_{g\in G}P(c_j \mid n_j, g, \Theta)P(g)
 \end{equation*}
 given possible genotypes $G=\{ g_{\text{homref}}, g_{\text{het}}, g_{\text{homalt}}, g_{\text{hetalt}} \}$. The genotype prior $P(g)$ is a function of $\theta_s$ as given by the genomic prior defined in section \ref{sec:germline_genomic_prior}.
 
-Let $c(y)$ be the supporting observation count and $r(y)$ be the expected observation rate of allele $y$ when the true allele is the reference. In the noisy state $r(y)$ is either $e_i$, $e_d$, or $(1-e_i)(1-e_d)$ depending on the allele type insertion, deletion, or reference; corresponding quantities apply in the clean state. Then the reference genotype likelihood can be given as
+Let $c(y)$ be the supporting observation count and $r(y)$ be the expected observation rate of allele $y$ when the true allele is the reference. In the noisy state $r(y)$ is either $e_i$, $e_d$, or $(1-(e_i+e_d))$ depending on the allele type insertion, deletion, or reference; corresponding quantities apply in the clean state. Then the reference genotype likelihood can be given as
 
 \begin{equation*}
 P(c \mid n, g_{\text{homref}}, \Theta)=m_c \prod_{y \in Y}r(y)^{c(y)}
