@@ -195,13 +195,13 @@ class PathInfo(SharedPathInfo):
     def __init__(self, params) :
         super(PathInfo,self).__init__(params)
 
-    def getTmpSegmentCountsPath(self, segStr) :
+    def getTmpSegmentErrorCountsPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "strelkaErrorCounts.%s.bin" % (segStr))
 
     def getTmpObservedIndelBedPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "strelkaObservedIndel.%s.bed" % segStr)
 
-    def getCountsOutputPath(self) :
+    def getErrorCountsOutputPath(self) :
         return os.path.join( self.params.variantsDir, "strelkaErrorCounts.bin")
 
     def getObservedIndelBedPath(self) :
