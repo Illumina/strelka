@@ -55,10 +55,10 @@ ActiveRegionDetector::setPosToActiveRegionIdMap(pos_range activeRegionRange)
 void
 ActiveRegionDetector::processActiveRegion()
 {
-    if (not _activeRegions.empty())
+    if (_activeRegion != nullptr)
     {
-        _activeRegions.front().processHaplotypes();
-        _activeRegions.pop_front();
+        _activeRegion->processHaplotypes();
+        _activeRegion.reset();
     }
 }
 
@@ -70,8 +70,8 @@ ActiveRegionDetector::closeExistingActiveRegion()
     assert (_activeRegionStartPos < _anchorPosFollowingPrevVariant);
 
     pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
-    _activeRegions.emplace_back(activeRegionRange, _ref, _maxIndelSize, _sampleIndex,
-                                _aligner, _readBuffer, _indelBuffer, _candidateSnvBuffer);
+    _activeRegion.reset(new ActiveRegion(activeRegionRange, _ref, _maxIndelSize, _sampleIndex,
+                                _aligner, _readBuffer, _indelBuffer, _candidateSnvBuffer));
     setPosToActiveRegionIdMap(activeRegionRange);
 
     // we have no existing active region at this point
@@ -94,7 +94,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
     }
 
     // process and pop active regions
-    if ((not _activeRegions.empty()) and (_activeRegions.front().getEndPosition() <= (pos_t)(pos-ActiveRegionReadBuffer::MaxAssemblyPadding)))
+    if ((_activeRegion != nullptr) and (_activeRegion->getEndPosition() <= (pos_t)(pos-ActiveRegionReadBuffer::MaxAssemblyPadding)))
     {
         processActiveRegion();
     }
