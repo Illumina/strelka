@@ -48,7 +48,7 @@ public:
     {
     }
 
-    /// checks if pos is an anchor position
+    /// Checks if pos is an anchor position (not belonging to a repeat)
     /// \param pos reference position
     /// \return true if pos is an anchor position, false otherwise
     bool isAnchor(pos_t pos) const
@@ -56,10 +56,12 @@ public:
         return _isAnchor[pos % _maxBufferSize];
     }
 
-    /// \TODO What does this method do? (STREL-656)
+    /// Read upstream and downstream and determine whether pos is within a repeat.
+    /// by updating _repeatSpan for [pos-2*_maxRepeatSpan+1,pos+2*_maxRepeatSpan-1]
     void initRepeatSpan(pos_t pos);
 
-    /// \TODO How about this one? (STREL-656)
+    /// Update _repeatSpan for pos assuming _repeatSpan has records for [pos-4*_maxRepeatSpan+2,pos-1]
+    /// If a repeat is detected at pos, set _isAnchor false appropriately for previous positions
     void updateRepeatSpan(pos_t pos);
 
 private:
@@ -68,7 +70,13 @@ private:
     const unsigned _maxBufferSize;
     const unsigned _minRepeatSpan;
 
-    // to record reference repeat count
+    /// _repeatSpan[posIndex][repeatUnitIndex] records
+    /// the longest span of repeats ending at pos (posIndex = pos % _maxBufferSize)
+    /// with the repeat unit length repeatUnitIndex (repeatUnitIntex = repeatUnitLength -1)
+    /// E.g. for _ref = "TATATACCCCCAATGAAAAA", _maxBufferSize = 20
+    /// _repeatSpan[5][1] = 6 (TATATA) and _repeatSpan[5][2]=3 (ATA)
+    /// if the _repeatSpan value is no less than repeatUnitLength*2,
+    /// the position is within a repeat
     std::vector<std::vector<unsigned>> _repeatSpan;
     std::vector<bool> _isAnchor;
 };
