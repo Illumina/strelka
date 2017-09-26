@@ -18,13 +18,12 @@
 //
 
 
-#include <iostream>
-
 #include "blt_util/log.hh"
 #include "EstimateVariantErrorRates.hh"
 #include "EPECOptions.hh"
 #include "IndelModelProduction.hh"
 
+#include <iostream>
 
 
 
@@ -39,14 +38,16 @@ runEPEC(
 
     IndelModelProduction indelModelProduction(counts, opt.thetaFilename, opt.outputFilename);
     indelModelProduction.estimateIndelErrorRates();
-    if (!indelModelProduction.checkEstimatedModel())
+    if (indelModelProduction.checkEstimatedModel())
     {
-        log_os << "WARNING: In EstimateVariantErrorRates on '" << counts.getSampleName() <<"', checkEstimatedModel() failed. Using  '" << opt.fallbackFilename << "' instead\n";
-        indelModelProduction.exportModelUsingInputJson(opt.fallbackFilename);
-        return;
+        indelModelProduction.exportModel();
     }
-    indelModelProduction.exportModel();
-
+    else
+    {
+        log_os << "WARNING: In EstimateVariantErrorRates on '" << counts.getSampleName()
+               <<"', checkEstimatedModel() failed. Using  '" << opt.fallbackFilename << "' instead\n";
+        indelModelProduction.exportModelUsingInputJson(opt.fallbackFilename);
+    }
 }
 
 

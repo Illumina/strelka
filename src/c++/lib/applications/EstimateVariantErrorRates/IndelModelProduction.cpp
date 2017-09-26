@@ -162,6 +162,8 @@ getObsLogLhood(
     return log_sum( log_sum(logHomPrior+hom,logHetPrior+het), log_sum(logNoIndelPrior+noindel,logAltHetPrior+althet) );
 }
 
+
+
 static
 double
 contextLogLhood(
@@ -219,16 +221,20 @@ contextLogLhood(
     return logLhood;
 }
 
+
+
 struct error_minfunc_model3 : public codemin::minfunc_interface<double>
 {
     explicit
     error_minfunc_model3(
-        const std::vector<ExportedIndelObservations>& observations, const double theta,
+        const std::vector<ExportedIndelObservations>& observations,
+        const double theta,
         const bool isLockTheta = false)
         : defaultLogTheta(theta),
           _obs(observations),
           _isLockTheta(isLockTheta)
     {}
+    
     unsigned dim() const override
     {
         return (_isLockTheta ? (MIN_PARAMS3::SIZE-1) : MIN_PARAMS3::SIZE);
@@ -319,7 +325,6 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
 #endif
 
     const double defaultLogTheta;
-    static const double initLogTheta;
     static const double maxLogTheta;
     static const double maxLogRate;
     static const double maxLogLocusRate;
@@ -330,10 +335,11 @@ private:
     double _params[MIN_PARAMS3::SIZE];
 };
 
-const double error_minfunc_model3::initLogTheta = std::log(1e-04);
 const double error_minfunc_model3::maxLogTheta = std::log(0.4);
 const double error_minfunc_model3::maxLogRate = std::log(0.5);
 const double error_minfunc_model3::maxLogLocusRate = std::log(1.0);
+
+
 
 static
 bool
@@ -421,6 +427,8 @@ estimateModelParams(
     return estimatedParams;
 }
 
+
+
 IndelModelProduction::
 IndelModelProduction(
     const SequenceErrorCounts& counts,
@@ -439,8 +447,9 @@ IndelModelProduction(
     }
 
     _thetas = IndelErrorModelJson::deserializeTheta(thetaFilename);
-
 }
+
+
 
 void
 IndelModelProduction::
@@ -499,9 +508,9 @@ IndelModelProduction::exportModel() const
     // add motif to json for all contexts
     for (unsigned repeatPatternIndex = 0; repeatPatternIndex < _repeatPatterns.size(); repeatPatternIndex++)
     {
-        auto errorModel = _adaptiveIndelErrorModels[repeatPatternIndex];
+        const AdaptiveIndelErrorModel& errorModel(_adaptiveIndelErrorModels[repeatPatternIndex]);
 
-        for (unsigned repeatCount = errorModel.lowRepeatCount; repeatCount <=errorModel.highRepeatCount(); repeatCount++)
+        for (unsigned repeatCount(errorModel.lowRepeatCount); repeatCount <= errorModel.highRepeatCount(); repeatCount++)
         {
             indelModelJson.addMotif(errorModel.repeatPatternSize(),
                                     repeatCount,
@@ -511,14 +520,18 @@ IndelModelProduction::exportModel() const
     }
 
     static const bool isStatic(false);
-    indelModelJson.serializeIndelErrorModel(indelModelJson.getSampleName(),
-                                            indelModelJson.generateMotifsNode(),
-                                            isStatic,
-                                            _outputFilename);
+    IndelErrorModelJson::serializeIndelErrorModel(
+        _counts.getSampleName(),
+        indelModelJson.generateMotifsNode(),
+        isStatic,
+        _outputFilename);
 }
 
+
+
 void
-IndelModelProduction::exportModelUsingInputJson(const std::string& jsonFilename) const
+IndelModelProduction::
+exportModelUsingInputJson(const std::string& jsonFilename) const
 {
     std::string jsonString;
     Json::Value root;
@@ -567,16 +580,17 @@ IndelModelProduction::exportModelUsingInputJson(const std::string& jsonFilename)
     IndelErrorModelJson::serializeIndelErrorModel(_counts.getSampleName(), motifs, isStatic, _outputFilename);
 }
 
+
+
 bool
 IndelModelProduction::
 checkEstimatedModel() const
 {
     if (!_isEstimated)
     {
-        using namespace illumina::common;
         std::ostringstream oss;
         oss << "ERROR: indel error model has not been estimated '\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
     }
 
     // check estimated STR params
@@ -598,6 +612,8 @@ checkEstimatedModel() const
 
     return true;
 }
+
+
 
 bool IndelModelProduction::
 isValidErrorRate(

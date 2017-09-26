@@ -111,6 +111,7 @@ public:
         unsigned highRepeatCount,
         const AdaptiveIndelErrorModelLogParams& lowLogParams,
         const AdaptiveIndelErrorModelLogParams& highLogParams);
+
 private:
     unsigned _repeatPatternSize = 0;
     unsigned _lowRepeatCount = lowRepeatCount;
@@ -125,6 +126,7 @@ public:
     {
         return _repeatPatternSize;
     }
+
     unsigned
     highRepeatCount() const
     {
@@ -134,6 +136,7 @@ public:
     double
     errorRate(
         const unsigned repeatCount) const;
+
     double
     noisyLocusRate(
         const unsigned repeatCount) const;
