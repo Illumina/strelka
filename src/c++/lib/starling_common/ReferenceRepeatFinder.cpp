@@ -45,7 +45,7 @@ void ReferenceRepeatFinder::updateRepeatSpan(pos_t pos)
             // repeat found
             if (repeatSpan == repeatUnitLength*2u or repeatSpan == _minRepeatSpan)
             {
-                // unset _isAnchor for pos [pos-repeatCount+1, pos-1]
+                // unset _isAnchor for pos [pos-repeatSpan+1, pos-1]
                 for (pos_t prevPos(pos-1u); prevPos > (pos_t)(pos-repeatSpan); --prevPos)
                 {
                     pos_t prevPosIndex(prevPos % _maxBufferSize);
@@ -59,18 +59,21 @@ void ReferenceRepeatFinder::updateRepeatSpan(pos_t pos)
 
 void ReferenceRepeatFinder::initRepeatSpan(pos_t pos)
 {
-    auto posIndex(pos % _maxBufferSize);
+    pos_t minPos = pos - 2*_maxRepeatUnitLength + 1;
+    if (minPos < _ref.get_offset())
+        minPos = _ref.get_offset();
 
-    // initialize _repeatSpan for pos
+    auto posIndex(minPos % _maxBufferSize);
+
+    // initialize _repeatSpan for minPos
     for (auto repeatUnitLength(1u); repeatUnitLength<=_maxRepeatUnitLength; ++repeatUnitLength)
     {
         auto repeatUnitIndex(repeatUnitLength-1);
         _repeatSpan[posIndex][repeatUnitIndex] = repeatUnitLength;
     }
 
-    // read ahead MaxRepeatUnitLength*2u to determine if this position is within repeat
-    // e.g. GTATCA|GTTAGTT
-    for (pos_t initPos(pos); initPos < (pos_t)(pos + _maxRepeatUnitLength*2u); ++initPos)
+    // Update repeatSpan information up to pos + _maxRepeatUnitLength*2 - 1
+    for (pos_t initPos(minPos); initPos < (pos_t)(pos + _maxRepeatUnitLength*2u); ++initPos)
     {
         updateRepeatSpan(initPos);
     }

@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE( test_findingAnchors )
 
     reference_contig_segment ref;
 
-    // all the bases are repeat except AATG
+    // all the bases are repeat except AATG (pos:11-14)
     ref.seq() = "TATATACCCCCAATGAAAAA";
     const pos_t length(ref.seq().length());
 
@@ -45,14 +45,19 @@ BOOST_AUTO_TEST_CASE( test_findingAnchors )
 
     ReferenceRepeatFinder repeatFinder(ref, maxRepeatLength, maxBufferSize, minRepeatSpan);
 
-    repeatFinder.initRepeatSpan(0u);
+    // Starting from TATAT|A|CCCCCAATGAAAAA
+    pos_t startingIndex(5u);
 
-    for (pos_t pos(1u); pos<length; ++pos)
+    // Read upstream and downstream and determine
+    // whether startingIndex is within a repeat
+    repeatFinder.initRepeatSpan(startingIndex);
+
+    for (pos_t pos(startingIndex+1); pos<length; ++pos)
     {
         repeatFinder.updateRepeatSpan(pos);
     }
 
-    for (pos_t pos(0); pos<length; ++pos)
+    for (pos_t pos(startingIndex); pos<length; ++pos)
     {
         if (pos >= 11 and pos <= 14)
             BOOST_CHECK(repeatFinder.isAnchor(pos));
