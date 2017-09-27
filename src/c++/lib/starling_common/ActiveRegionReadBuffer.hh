@@ -25,6 +25,7 @@
 
 #include <blt_util/reference_contig_segment.hh>
 #include <vector>
+#include <blt_util/known_pos_range2.hh>
 #include "starling_types.hh"
 #include "indel.hh"
 #include "IndelBuffer.hh"
@@ -141,14 +142,14 @@ public:
     /// \return begin position
     pos_t getBeginPos() const
     {
-        return _readBufferRange.begin_pos;
+        return _readBufferRange.begin_pos();
     }
 
     /// Gets the end position
     /// \return end position
     pos_t getEndPos() const
     {
-        return _readBufferRange.end_pos;
+        return _readBufferRange.end_pos();
     }
 
     /// Gets sample id and indel align type
@@ -164,7 +165,7 @@ public:
     /// \param readInfo read info object to store read segments
     /// \param includePartialReads if true, only reads fully covering the region will be retrieved
     void getReadSegments(
-        const pos_range& posRange,
+        const known_pos_range2& posRange,
         ActiveRegionReadInfo& readInfo,
         const bool includePartialReads,
         const unsigned minReadSegmentLength = 1u) const;
@@ -225,7 +226,7 @@ private:
 
     IndelBuffer& _indelBuffer;
 
-    pos_range _readBufferRange;
+    known_pos_range2 _readBufferRange;
 
     /// Stores the number of variant observations (including soft-clip) per position
     std::vector<unsigned> _variantCounter;

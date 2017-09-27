@@ -679,7 +679,7 @@ process_pos_snp_digt(
     double homRefLogProb(0);
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
-        ActiveRegionId activeRegionId(getActiveRegionDetector(sampleIndex).getActiveRegionId(pos));
+        ActiveRegionId activeRegionId(getActiveRegionDetector().getActiveRegionId(pos));
         updateSnvLocusWithSampleInfo(
             _opt, sample(sampleIndex), callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex],
             allDgt[sampleIndex], sampleIndex, activeRegionId, getCandidateSnvBuffer(), *locusPtr, homRefLogProb);
@@ -1719,7 +1719,7 @@ process_pos_indel_digt(const pos_t pos)
             for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
             {
                 auto& sampleInfo(sample(sampleIndex));
-                ActiveRegionId activeRegionId(getActiveRegionDetector(sampleIndex).getActiveRegionId(pos));
+                ActiveRegionId activeRegionId(getActiveRegionDetector().getActiveRegionId(pos));
                 updateIndelLocusWithSampleInfo(
                     _opt, _dopt, topVariantAlleleGroup, topVariantAlleleIndexPerSample[sampleIndex], emptyGroup,
                     sampleInfo.sampleOptions,
@@ -1874,7 +1874,7 @@ process_pos_indel_digt(const pos_t pos)
             for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
             {
                 auto& sif(sample(sampleIndex));
-                ActiveRegionId activeRegionId(getActiveRegionDetector(sampleIndex).getActiveRegionId(pos));
+                ActiveRegionId activeRegionId(getActiveRegionDetector().getActiveRegionId(pos));
                 updateIndelLocusWithSampleInfo(
                     _opt, _dopt, fakeForcedOutputAlleleGroup, fakeTopVariantAlleleIndexPerSample, topVariantAlleleGroup,
                     sif.sampleOptions, callerPloidy[sampleIndex], groupLocusPloidy[sampleIndex], sampleIndex, activeRegionId,

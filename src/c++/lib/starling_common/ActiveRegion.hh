@@ -69,7 +69,7 @@ public:
     /// \param indelBuffer indel buffer
     /// \param candidateSnvBuffer candidate SNV buffer
     /// \return active region object
-    ActiveRegion(const pos_range& posRange,
+    ActiveRegion(const known_pos_range2& posRange,
                  const reference_contig_segment& ref,
                  const unsigned maxIndelSize,
                  const unsigned sampleIndex,
@@ -85,13 +85,13 @@ public:
     /// \return begin position of the active region
     pos_t getBeginPosition() const
     {
-        return _posRange.begin_pos;
+        return _posRange.begin_pos();
     }
 
     /// \return begin position of the active region
     pos_t getEndPosition() const
     {
-        return _posRange.end_pos;
+        return _posRange.end_pos();
     }
 
     /// \param pos reference position
@@ -113,7 +113,7 @@ public:
     }
 
 private:
-    const pos_range _posRange;
+    const known_pos_range2 _posRange;
     const reference_contig_segment& _ref;
     const unsigned _maxIndelSize;
     const unsigned _sampleIndex;

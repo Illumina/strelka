@@ -44,7 +44,8 @@
 /// A major supporting component of the detector is the ActiveRegionReadBuffer, which does not store reads directly
 /// but tracks variant and soft-clipping events per-position, and the associated read ids supporting each event.
 ///
-class ActiveRegionDetector
+
+class SampleActiveRegionDetector
 {
 public:
     /// max distance between two variants to be placed in the same active region
@@ -53,31 +54,18 @@ public:
     /// min number of variants to form an active region
     static const unsigned MinNumVariantsPerRegion = 2u;
 
-    // alignment scores, same as bwa default values
-    static const int ScoreMatch = 1;
-    static const int ScoreMismatch = -4;
-    static const int ScoreOpen = -5;
-    static const int ScoreExtend = -1;
-    static const int ScoreOffEdge = -100;
-
     /// Creates an object that reads variant information and creates active regions
     /// \param ref reference segment
     /// \param indelBuffer indel buffer
     /// \param maxIndelSize maximum indel size
     /// \param sampleIndex sample Id
-    ActiveRegionDetector(
+    SampleActiveRegionDetector(
         const reference_contig_segment& ref,
         IndelBuffer& indelBuffer,
-        CandidateSnvBuffer& candidateSnvBuffer,
-        unsigned maxIndelSize,
-        unsigned sampleIndex) :
+        const unsigned sampleIndex) :
         _ref(ref),
         _readBuffer(ref, indelBuffer),
-        _indelBuffer(indelBuffer),
-        _candidateSnvBuffer(candidateSnvBuffer),
-        _maxIndelSize(maxIndelSize),
-        _sampleIndex(sampleIndex),
-        _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
+        _sampleIndex(sampleIndex)
     {
         _isBeginning = true;
         _activeRegionStartPos = -1;
@@ -94,31 +82,30 @@ public:
         return _readBuffer;
     }
 
-    ActiveRegionId getActiveRegionId(const pos_t pos) const
-    {
-        static const ActiveRegionId defaultActiveRegionId(-1);
-        return _posToActiveRegionIdMap.getConstRefDefault(pos, defaultActiveRegionId);
-    }
-
     void clearReadBuffer(const pos_t pos);
 
     /// update the active region end position. Creates an active region if needed.
     /// \param pos reference position
-    void updateEndPosition(const pos_t pos);
+    /// \return true if a new active region is created
+    bool updateEndPosition(const pos_t pos);
 
     /// clear active region detector
-    void clear();
+    bool clear();
 
-    void clearUpToPos(const pos_t pos);
+    known_pos_range2 getActiveRegionRange() const
+    {
+        return _activeRegionRange;
+    }
+
+    pos_t getActiveRegionStartPos() const
+    {
+        return _activeRegionStartPos;
+    }
 
 private:
     const reference_contig_segment& _ref;
     ActiveRegionReadBuffer _readBuffer;
 
-    IndelBuffer& _indelBuffer;
-    CandidateSnvBuffer& _candidateSnvBuffer;
-
-    const unsigned _maxIndelSize;
     const unsigned _sampleIndex;
 
     bool _isBeginning;
@@ -135,16 +122,163 @@ private:
     /// The number of variants identified so far in the current candidate active region
     unsigned _numVariants;
 
-    std::unique_ptr<ActiveRegion> _activeRegion;
-
-    // aligner to be used in active regions
-    GlobalAligner<int> _aligner;
-
-    RangeMap<pos_t, ActiveRegionId> _posToActiveRegionIdMap;
-
-    void setPosToActiveRegionIdMap(pos_range activeRegionRange);
-    void processActiveRegion();
+    known_pos_range2 _activeRegionRange;
 
     void closeExistingActiveRegion();
 };
 
+class ActiveRegionDetector
+{
+public:
+    // alignment scores, same as bwa default values
+    static const int ScoreMatch = 1;
+    static const int ScoreMismatch = -4;
+    static const int ScoreOpen = -5;
+    static const int ScoreExtend = -1;
+    static const int ScoreOffEdge = -100;
+
+    ActiveRegionDetector(
+            const reference_contig_segment& ref,
+            IndelBuffer& indelBuffer,
+            CandidateSnvBuffer& candidateSnvBuffer,
+            const unsigned maxIndelSize,
+            const unsigned sampleCount) :
+            _ref(ref),
+            _sampleCount(sampleCount),
+            _sampleActiveRegionDetector(sampleCount),
+            _indelBuffer(indelBuffer),
+            _candidateSnvBuffer(candidateSnvBuffer),
+            _maxIndelSize(maxIndelSize),
+            _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
+
+    {
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        {
+            _sampleActiveRegionDetector[sampleIndex].reset(
+                    new SampleActiveRegionDetector(ref, indelBuffer, sampleIndex));
+        }
+    }
+
+    ActiveRegionReadBuffer& getReadBuffer(const unsigned sampleIndex)
+    {
+        assert (sampleIndex < _sampleCount);
+        return _sampleActiveRegionDetector[sampleIndex]->getReadBuffer();
+    }
+
+    ActiveRegionId getActiveRegionId(const pos_t pos) const
+    {
+        static const ActiveRegionId defaultActiveRegionId(-1);
+        return _posToActiveRegionIdMap.getConstRefDefault(pos, defaultActiveRegionId);
+    }
+
+    void clearReadBuffer(const pos_t pos)
+    {
+        for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
+        {
+            _sampleActiveRegionDetector[sampleIndex]->clearReadBuffer(pos);
+        }
+    }
+
+    /// update the active region end position. Creates an active region if needed.
+    /// \param pos reference position
+    void updateEndPosition(const pos_t pos)
+    {
+        processExistingActiveRegion(pos);
+        for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
+        {
+            if (_sampleActiveRegionDetector[sampleIndex]->updateEndPosition(pos))
+            {
+                updateActiveRegionRange(sampleIndex);
+            }
+        }
+    }
+
+    /// clear active region detector
+    void clear()
+    {
+        for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
+        {
+            if (_sampleActiveRegionDetector[sampleIndex]->clear())
+            {
+                updateActiveRegionRange(sampleIndex);
+            }
+        }
+        if (_activeRegionRange.end_pos())
+            closeActiveRegion();
+    }
+
+    void clearUpToPos(const pos_t pos);
+
+    void updateActiveRegionRange(const unsigned sampleIndex)
+    {
+        const auto& sampleActiveRegionRange(getSampleActiveRegionDetector(sampleIndex).getActiveRegionRange());
+
+        if (_activeRegionRange.end_pos())
+        {
+            // _activeRegionRange is valid
+            _activeRegionRange.merge_range(sampleActiveRegionRange);
+        }
+        else
+        {
+            _activeRegionRange = sampleActiveRegionRange;
+        }
+    }
+
+    void processExistingActiveRegion(const pos_t pos)
+    {
+        auto activeRegionEndPos(_activeRegionRange.end_pos());
+        if (activeRegionEndPos &&
+                (activeRegionEndPos <= (pos_t)(pos-ActiveRegionReadBuffer::MaxAssemblyPadding)))
+        {
+            bool canCloseActiveRegion(true);
+            for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
+            {
+                auto unclosedActiveRegionStartPos(getSampleActiveRegionDetector(sampleIndex).getActiveRegionStartPos());
+                if (unclosedActiveRegionStartPos >= 0 && unclosedActiveRegionStartPos < activeRegionEndPos-1)
+                {
+                    canCloseActiveRegion = false;
+                    break;
+                }
+            }
+
+            if (canCloseActiveRegion)
+                closeActiveRegion();
+        }
+    }
+
+    void closeActiveRegion()
+    {
+        assert (_activeRegionRange.size() > 0);
+        for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
+        {
+            ActiveRegion activeRegion(_activeRegionRange,
+                                      _ref, _maxIndelSize, sampleIndex,
+                                      _aligner, _sampleActiveRegionDetector[sampleIndex]->getReadBuffer(),
+                                      _indelBuffer, _candidateSnvBuffer);
+            activeRegion.processHaplotypes();
+        }
+        setPosToActiveRegionIdMap(_activeRegionRange);
+        _activeRegionRange.clear();
+    }
+
+private:
+    const reference_contig_segment& _ref;
+    const unsigned _sampleCount;
+    std::vector<std::unique_ptr<SampleActiveRegionDetector>> _sampleActiveRegionDetector;
+    IndelBuffer& _indelBuffer;
+    CandidateSnvBuffer& _candidateSnvBuffer;
+    const unsigned _maxIndelSize;
+    // aligner to be used in active regions
+    GlobalAligner<int> _aligner;
+
+    known_pos_range2 _activeRegionRange;
+    RangeMap<pos_t, ActiveRegionId> _posToActiveRegionIdMap;
+
+    SampleActiveRegionDetector& getSampleActiveRegionDetector(unsigned sampleIndex)
+    {
+        assert(sampleIndex < _sampleCount);
+        return *(_sampleActiveRegionDetector[sampleIndex]);
+    }
+
+    void setPosToActiveRegionIdMap(known_pos_range2 activeRegionRange);
+};

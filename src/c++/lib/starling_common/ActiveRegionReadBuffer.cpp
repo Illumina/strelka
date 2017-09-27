@@ -172,11 +172,11 @@ bool ActiveRegionReadBuffer::getHaplotypeBase(const align_id_t id, const pos_t p
 
 void ActiveRegionReadBuffer::setEndPos(const pos_t endPos)
 {
-    const bool isPosJumped((_readBufferRange.end_pos+1) != endPos);
+    const bool isPosJumped((_readBufferRange.end_pos()+1) != endPos);
 
     const auto pos(endPos-1);
 
-    if ((not _readBufferRange.is_begin_pos) or isPosJumped)
+    if ((not _readBufferRange.end_pos()) or isPosJumped)
     {
         // initialization
         _readBufferRange.set_begin_pos(pos);
@@ -189,7 +189,7 @@ void ActiveRegionReadBuffer::setEndPos(const pos_t endPos)
 }
 
 void ActiveRegionReadBuffer::getReadSegments(
-    const pos_range& posRange,
+    const known_pos_range2& posRange,
     ActiveRegionReadInfo& readInfo,
     const bool includePartialReads,
     const unsigned minReadSegmentLength) const
@@ -199,7 +199,7 @@ void ActiveRegionReadBuffer::getReadSegments(
     std::set<align_id_t> invalidAlignIds;
     std::set<align_id_t> allAlignIds;
     // add haplotype bases
-    for (pos_t pos(posRange.begin_pos); pos<posRange.end_pos; ++pos)
+    for (pos_t pos(posRange.begin_pos()); pos<posRange.end_pos(); ++pos)
     {
         if (not _readBufferRange.is_pos_intersect(pos))
             continue;
@@ -212,7 +212,7 @@ void ActiveRegionReadBuffer::getReadSegments(
                 if (invalidAlignIds.count(alignId)) continue;
             }
 
-            if (pos == posRange.begin_pos)
+            if (pos == posRange.begin_pos())
                 alignIdToHaplotype[alignId] = std::string();
 
             std::string haplotypeBase;
@@ -231,7 +231,7 @@ void ActiveRegionReadBuffer::getReadSegments(
             if (includePartialReads or (not isSoftClipped))
                 alignIdToHaplotype[alignId] += haplotypeBase;
 
-            if (pos == (posRange.end_pos-1))    // last position
+            if (pos == (posRange.end_pos()-1))    // last position
                 alignIdsReachingEnd.insert(alignId);
         }
     }

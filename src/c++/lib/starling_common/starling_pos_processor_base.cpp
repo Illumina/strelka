@@ -246,7 +246,6 @@ starling_pos_processor_base(
     , _pileupCleaner(opt)
     , _indelBuffer(opt,dopt,ref)
     , _candidateSnvBuffer(sampleCount)
-    , _activeRegionDetector(sampleCount)
 {
     assert(sampleCount != 0);
 
@@ -286,12 +285,9 @@ void
 starling_pos_processor_base::
 resetActiveRegionDetector()
 {
-    for (unsigned sampleIndex(0); sampleIndex<getSampleCount(); ++sampleIndex)
-    {
-        _activeRegionDetector[sampleIndex].reset(
-            new ActiveRegionDetector(_ref, _indelBuffer, _candidateSnvBuffer, _opt.maxIndelSize, sampleIndex)
-        );
-    }
+    _activeRegionDetector.reset(
+        new ActiveRegionDetector(_ref, _indelBuffer, _candidateSnvBuffer, _opt.maxIndelSize, getSampleCount())
+    );
 }
 
 
@@ -363,8 +359,7 @@ reset()
     {
         _stagemanPtr->reset();
     }
-    for (unsigned sampleIndex(0); sampleIndex<getSampleCount(); ++sampleIndex)
-        _activeRegionDetector[sampleIndex]->clear();
+    _activeRegionDetector->clear();
 }
 
 
@@ -817,10 +812,7 @@ process_pos(const int stage_no,
         initializeSplicedReadSegmentsAtPos(pos);
         if (is_active_region_detector_enabled())
         {
-            for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-            {
-                _getActiveRegionDetector(sampleIndex).updateEndPosition(pos);
-            }
+            _getActiveRegionDetector().updateEndPosition(pos);
         }
     }
     else if (stage_no==STAGE::READ_BUFFER)
@@ -831,10 +823,7 @@ process_pos(const int stage_no,
 
         if (is_active_region_detector_enabled())
         {
-            for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-            {
-                _getActiveRegionDetector(sampleIndex).clearReadBuffer(pos);
-            }
+            _getActiveRegionDetector().clearReadBuffer(pos);
         }
     }
     else if (stage_no==STAGE::POST_ALIGN)
@@ -899,7 +888,7 @@ process_pos(const int stage_no,
         {
             for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
             {
-                _getActiveRegionDetector(sampleIndex).clearUpToPos(pos);
+                _getActiveRegionDetector().clearUpToPos(pos);
                 _candidateSnvBuffer.clearUpToPos(sampleIndex, pos);
             }
         }
