@@ -10,6 +10,7 @@
 - Verify alignment file extension at configuration time (MANTA-886)
 - Update minimum supported linux OS from Centos 5 to Centos 6 (STREL-720)
 - Move changelog to markdown format (STREL-571)
+- Generalize haplotyping method to generate more than 2 haplotypes depending on ploidy (STREL-701)
 
 ### Fixed
 - Fix germline empirical variant scoring (EVS) for haploid regions (STREL-678)

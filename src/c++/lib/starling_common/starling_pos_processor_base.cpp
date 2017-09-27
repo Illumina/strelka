@@ -286,7 +286,7 @@ starling_pos_processor_base::
 resetActiveRegionDetector()
 {
     _activeRegionDetector.reset(
-        new ActiveRegionDetector(_ref, _indelBuffer, _candidateSnvBuffer, _opt.maxIndelSize, getSampleCount())
+        new ActiveRegionDetector(_ref, _indelBuffer, _candidateSnvBuffer, _opt.maxIndelSize, getSampleCount(), _opt.isSomatic)
     );
 }
 

@@ -61,6 +61,12 @@ public:
     static const int ScoreExtend = -1;
     static const int ScoreOffEdge = -100;
 
+    // default ploidy
+    static const unsigned DefaultPloidy = 2;
+
+    // minimum alternative allele fraction to call a position as a candidate variant
+    const float MinAlternativeAlleleFraction = 0.2;
+
     /// Coordinates active region creation in all samples
     /// \param ref reference
     /// \param indelBuffer indel buffer
@@ -72,7 +78,9 @@ public:
         IndelBuffer& indelBuffer,
         CandidateSnvBuffer& candidateSnvBuffer,
         const unsigned maxIndelSize,
-        const unsigned sampleCount);
+        const unsigned sampleCount,
+        const bool isSomatic,
+        const unsigned defaultPloidy = DefaultPloidy);
 
     /// Gets an active region read buffer for the specified sample
     /// \param sampleIndex sample index
@@ -102,6 +110,9 @@ private:
     IndelBuffer& _indelBuffer;
     CandidateSnvBuffer& _candidateSnvBuffer;
     const unsigned _maxIndelSize;
+    const bool _isSomatic;
+    const unsigned _defaultPloidy;
+
     // aligner to be used in active regions
     GlobalAligner<int> _aligner;
 
@@ -134,8 +145,9 @@ private:
     /// \param indelBuffer indel buffer
     SampleActiveRegionDetector(
         const reference_contig_segment& ref,
-        IndelBuffer& indelBuffer)
-        : _readBuffer(ref, indelBuffer)
+        const float minAlternativeAlleleFraction,
+        IndelBuffer& indelBuffer) :
+        _readBuffer(ref, minAlternativeAlleleFraction, indelBuffer)
     {
         _isBeginning = true;
         clearCoordinates();

@@ -79,9 +79,6 @@ public:
     /// Variant evidence weight for an indel
     static const int IndelWeight = 4;
 
-    // minimum alternative allele fraction to call a position as a candidate variant
-    const float MinAlternativeAlleleFraction = 0.2;
-
     // if the fraction is larger than MinAlternativeAlleleFractionLowDepth
     // the position becomes candidate even if the number is lower than MinNumVariantsPerPosition
     const float MinAlternativeAlleleFractionLowDepth = 0.35;
@@ -91,9 +88,11 @@ public:
     /// \param indelBuffer indel buffer
     ActiveRegionReadBuffer(
         const reference_contig_segment& ref,
+        const float minAlternativeAlleleFraction,
         IndelBuffer& indelBuffer)
         :
         _ref(ref),
+        _minAlternativeAlleleFraction(minAlternativeAlleleFraction),
         _refRepeatFinder(ref, MaxRepeatUnitLength, MaxBufferSize, MinRepeatSpan),
         _indelBuffer(indelBuffer),
         _variantCounter(MaxBufferSize),
@@ -222,6 +221,8 @@ private:
     };
 
     const reference_contig_segment& _ref;
+    const float _minAlternativeAlleleFraction;
+
     ReferenceRepeatFinder _refRepeatFinder;
 
     IndelBuffer& _indelBuffer;

@@ -28,20 +28,27 @@ ActiveRegionDetector::ActiveRegionDetector(
     IndelBuffer& indelBuffer,
     CandidateSnvBuffer& candidateSnvBuffer,
     const unsigned maxIndelSize,
-    const unsigned sampleCount) :
+    const unsigned sampleCount,
+    const bool isSomatic,
+    const unsigned defaultPloidy) :
     _ref(ref),
     _sampleCount(sampleCount),
     _sampleActiveRegionDetector(sampleCount),
     _indelBuffer(indelBuffer),
     _candidateSnvBuffer(candidateSnvBuffer),
     _maxIndelSize(maxIndelSize),
+    _isSomatic(isSomatic),
+    _defaultPloidy(defaultPloidy),
     _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
 
 {
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
+//        float minAlternativeAlleleFraction = MinAlternativeAlleleFraction;
+//        if (_isSomatic && (sampleIndex != 0))
+//            minAlternativeAlleleFraction = 0.1f;
         _sampleActiveRegionDetector[sampleIndex].reset(
-            new SampleActiveRegionDetector(ref, indelBuffer));
+            new SampleActiveRegionDetector(ref, MinAlternativeAlleleFraction, indelBuffer));
     }
 }
 
@@ -146,13 +153,41 @@ void
 ActiveRegionDetector::closeActiveRegion()
 {
     assert (_synchronizedActiveRegion.size() > 0);
+
+    std::vector<std::string> normalHaplotypes;
+
     for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
     {
-        ActiveRegionProcessor activeRegionProcessor(_synchronizedActiveRegion,
-                                                    _ref, _maxIndelSize, sampleIndex,
-                                                    _aligner, _sampleActiveRegionDetector[sampleIndex]->getReadBuffer(),
-                                                    _indelBuffer, _candidateSnvBuffer);
-        activeRegionProcessor.processHaplotypes();
+        if (!_isSomatic)
+        {
+            ActiveRegionProcessor activeRegionProcessor(_synchronizedActiveRegion,
+                                                        _ref, _maxIndelSize, sampleIndex, _defaultPloidy,
+                                                        _aligner, _sampleActiveRegionDetector[sampleIndex]->getReadBuffer(),
+                                                        _indelBuffer, _candidateSnvBuffer);
+            activeRegionProcessor.processHaplotypes();
+        }
+        else
+        {
+            // These are experimental and currently not enabled.
+            if (sampleIndex == 0)
+            {
+                ActiveRegionProcessor activeRegionProcessor(_synchronizedActiveRegion,
+                                                            _ref, _maxIndelSize, sampleIndex, _defaultPloidy,
+                                                            _aligner, _sampleActiveRegionDetector[sampleIndex]->getReadBuffer(),
+                                                            _indelBuffer, _candidateSnvBuffer);
+                activeRegionProcessor.processHaplotypes();
+                normalHaplotypes = activeRegionProcessor.getSelectedHaplotypes();
+            }
+            else
+            {
+                ActiveRegionProcessor activeRegionProcessor(_synchronizedActiveRegion,
+                                                            _ref, _maxIndelSize, sampleIndex, 1u,
+                                                            _aligner, _sampleActiveRegionDetector[sampleIndex]->getReadBuffer(),
+                                                            _indelBuffer, _candidateSnvBuffer);
+                activeRegionProcessor.addHaplotypesToExclude(normalHaplotypes);
+                activeRegionProcessor.processHaplotypes();
+            }
+        }
     }
     setPosToActiveRegionIdMap(_synchronizedActiveRegion);
     _synchronizedActiveRegion.clear();

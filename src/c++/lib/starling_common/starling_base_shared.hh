@@ -90,6 +90,8 @@ struct starling_base_options : public blt_options
     // parameter to enable/disable short haplotype calling
     bool is_short_haplotyping_enabled = false;
 
+    bool isSomatic = false;
+
     // to contribute to a breakpoint likelihood, a read must have at least
     // this many bases on each side of the breakpoint:
     //

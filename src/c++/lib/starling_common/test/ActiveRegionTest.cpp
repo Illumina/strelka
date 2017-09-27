@@ -78,7 +78,8 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
     TestIndelBuffer testBuffer(ref);
     CandidateSnvBuffer testSnvBuffer(sampleCount);
 
-    ActiveRegionDetector activeRegionDetector(ref, testBuffer.getIndelBuffer(), testSnvBuffer, maxIndelSize, sampleCount);
+    ActiveRegionDetector activeRegionDetector(ref, testBuffer.getIndelBuffer(),
+                                              testSnvBuffer, maxIndelSize, sampleCount, false);
 
     const auto snvPos = std::set<pos_t>({2, 4, 5});
 
@@ -117,7 +118,7 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
         activeRegionDetector.clear();
     }
 
-    // check if polySites are correctly set
+    // check if isCandidateSnv are correctly set
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         for (pos_t pos(0); pos<refLength; ++pos)
@@ -149,7 +150,8 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
     TestIndelBuffer testBuffer(ref);
     CandidateSnvBuffer testSnvBuffer(sampleCount);
 
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), testSnvBuffer, maxIndelSize, sampleCount);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(),
+                                  testSnvBuffer, maxIndelSize, sampleCount, false);
 
     const int depth = 50;
 
@@ -219,7 +221,8 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
     TestIndelBuffer testBuffer(ref);
     CandidateSnvBuffer testSnvBuffer(sampleCount);
 
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), testSnvBuffer, maxIndelSize, sampleCount);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(),
+                                  testSnvBuffer, maxIndelSize, sampleCount, false);
 
     // fake reading reads
     const int depth = 50;
@@ -254,7 +257,7 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
         }
         detector.clear();
 
-        // check if polySites are correctly set
+        // check if isCandidateSnv are correctly set
         BOOST_REQUIRE_EQUAL(testSnvBuffer.isCandidateSnv(sampleIndex, startPosition + snvOffsets[0], 'G'), true);
         BOOST_REQUIRE_EQUAL(testSnvBuffer.isCandidateSnv(sampleIndex, startPosition + snvOffsets[1], 'G'), true);
     }
@@ -273,7 +276,8 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
     TestIndelBuffer testBuffer(ref);
     CandidateSnvBuffer testSnvBuffer(sampleCount);
 
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), testSnvBuffer, maxIndelSize, sampleCount);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(),
+                                  testSnvBuffer, maxIndelSize, sampleCount, false);
 
     const int depth = 50;
 
@@ -316,6 +320,100 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
     auto leftShiftedIndelKey = IndelKey(indelPos-1, INDEL::INDEL, 0, "TATA");
     const auto itr(testBuffer.getIndelBuffer().getIndelIter(leftShiftedIndelKey));
     BOOST_REQUIRE_EQUAL(itr->second.isConfirmedInActiveRegion, true);
+}
+
+BOOST_AUTO_TEST_CASE( test_selectingManyHaplotypes )
+{
+    reference_contig_segment ref;
+    ref.seq() = "GATCTGT";
+    const unsigned maxIndelSize(50);
+    const unsigned sampleCount(1);
+    const unsigned sampleIndex(0);
+    const unsigned depth(50);
+
+    TestIndelBuffer testBuffer(ref);
+    CandidateSnvBuffer testSnvBuffer(sampleCount);
+
+    unsigned defaultPloidy(3);
+    ActiveRegionDetector activeRegionDetector(ref, testBuffer.getIndelBuffer(),
+                                              testSnvBuffer, maxIndelSize, sampleCount, false, defaultPloidy);
+
+    const auto snvPos = std::set<pos_t>({2, 4});
+
+    pos_t refLength = (pos_t)ref.seq().length();
+
+    // create 4 haplotypes with differing bases at positions 2 and 4
+    // hap0 (no SNV): 20 reads => selected
+    // hap1 (SNV at 2): 13 haplotypes => selected
+    // hap2 (SNV at 4): 12 haplotypes => selected
+    // hap3 (SNV at 6): 5 haplotypes => not selected
+    for (unsigned alignId(0); alignId < depth; ++alignId)
+    {
+        bool isForwardStrand = ((alignId % 2) == 0);
+        activeRegionDetector.getReadBuffer(sampleIndex).setAlignInfo(
+                alignId, sampleIndex, INDEL_ALIGN_TYPE::GENOME_TIER1_READ, isForwardStrand);
+
+        bool isSnvAtPos2(false);
+        bool isSnvAtPos4(false);
+        bool isSnvAtPos6(false);
+        if (alignId < 20)
+        {
+            // no SNV
+        }
+        else if (alignId < 33)
+        {
+            isSnvAtPos2 = true;
+        }
+        else if (alignId < 45)
+        {
+            isSnvAtPos4 = true;
+        }
+        else
+        {
+            isSnvAtPos6 = true;
+        }
+
+        for (pos_t pos(0); pos<refLength; ++pos)
+        {
+
+            if ((isSnvAtPos2 && (pos == 2))
+                    || (isSnvAtPos4 && (pos == 4))
+                    || (isSnvAtPos6 && (pos == 6)))
+            {
+                // SNV position
+                activeRegionDetector.getReadBuffer(sampleIndex).insertMismatch(alignId, pos, 'A');
+            }
+            else
+            {
+                // No SNV
+                activeRegionDetector.getReadBuffer(sampleIndex).insertMatch(alignId, pos);
+            }
+        }
+    }
+
+    // Create and process active regions
+    for (pos_t pos(0); pos<refLength; ++pos)
+    {
+        activeRegionDetector.updateEndPosition(pos);
+    }
+    activeRegionDetector.clear();
+
+    // check if isCandidateSnv are correctly set
+    for (pos_t pos(0); pos<refLength; ++pos)
+    {
+        // pos 2 and 4 must be candidate SNV positions
+        // pos 6 must not be because hap3 was not selected
+        if ((pos == 2 || pos == 4))
+        {
+            // SNV
+            BOOST_REQUIRE_EQUAL(testSnvBuffer.isCandidateSnvAnySample(pos, 'A'), true);
+        }
+        else
+        {
+            // No SNV
+            BOOST_REQUIRE_EQUAL(testSnvBuffer.isCandidateSnvAnySample(pos, 'A'), false);
+        }
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
