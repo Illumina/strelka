@@ -114,39 +114,8 @@ struct IndelErrorRateSet
         const unsigned repeatingPatternSize,
         const unsigned patternRepeatCount,
         const double insertionErrorRate,
-        const double deletionErrorRate)
-    {
-        assert(repeatingPatternSize>0);
-        assert(patternRepeatCount>0);
-        assert(repeatingPatternSize <= maxRepeatingPatternSize);
-        assert(patternRepeatCount <= maxPatternRepeatCount);
-        if (repeatingPatternSize > _errorRates.size())
-        {
-            _errorRates.resize(repeatingPatternSize);
-        }
-
-        auto& repeatingPatternSizeRates(_errorRates[repeatingPatternSize-1]);
-
-        if (patternRepeatCount > repeatingPatternSizeRates.size())
-        {
-            repeatingPatternSizeRates.resize(patternRepeatCount);
-        }
-
-        IndelErrorRates& indelRates(repeatingPatternSizeRates[patternRepeatCount-1]);
-
-        assert(! indelRates.isInit);
-        indelRates.isInit=true;
-        indelRates.insertionErrorRate=insertionErrorRate;
-        indelRates.deletionErrorRate=deletionErrorRate;
-    }
-
-    void
-    addRate(
-        const unsigned repeatingPatternSize,
-        const unsigned patternRepeatCount,
-        const double insertionErrorRate,
         const double deletionErrorRate,
-        const double noisyLocusRate)
+        const double noisyLocusRate = 0)
     {
         assert(repeatingPatternSize>0);
         assert(patternRepeatCount>0);
