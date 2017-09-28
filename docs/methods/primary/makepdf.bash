@@ -16,7 +16,7 @@ mkdir -p $builddir
 mname=methods
 
 latexCmd() {
-  latex -halt-on-error -interaction=nonstopmode $1
+  pdflatex -halt-on-error -interaction=nonstopmode $1
 }
 
 do_latex_cmds() {
@@ -25,7 +25,6 @@ do_latex_cmds() {
   bibtex $file
   latexCmd $file
   latexCmd $file
-  dvipdf $file
 }
 
 for mm in $mname; do
@@ -34,7 +33,7 @@ cd $builddir
 cp ../packages/* .
 ln -sf $docdir/$mm.tex
 ln -sf $docdir/$mname.bib
-#ln -sf $docdir/figures
+ln -sf $docdir/figures
 do_latex_cmds $mm
 mv $mm.pdf $docdir 
 mv $mm.log $docdir
