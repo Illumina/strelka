@@ -19,6 +19,9 @@
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
 
+% for pdf figures
+\usepackage{pdfpages}
+
 % for \todo command:
 \usepackage{todonotes}
 
@@ -142,11 +145,10 @@ For germline variant calling, indel sequencing errors are modeled as a process t
 \begin{figure}
 \label{fig:PGM}
 \begin{tabular}{cc}
-\includegraphics[natwidth=0.4\textwidth]{figures/indel_error_model.png}
+    \includegraphics{figures/indelErrorPGMFigureA.pdf}
 &
-\includegraphics[natwidth=0.4\textwidth]{figures/variant_calling_model.png}
-\\
-{\bf a} & {\bf b}
+    \includegraphics{figures/indelErrorPGMFigureB.pdf} \\
+{\bf a} & {\bf b} \\
 \end{tabular}
 \caption{Structure of the germline indel error and variant calling models in probabilistic graphical model plate notation (some details omitted). {\bf (a) Indel error model.} At each locus $l$, a preliminary estimate of the indel allele count vector $C$ is modeled as a mixture binomial distribution governed by the two true haplotypes $h_1$ and $h_2$ (a function of the unobserved genotype hypothesis $H$), a set of indel error rates $e$ (unobserved) and the total count $X$ (observed). The error rates are selected from the full set of error parameters $E$ according to the sequence context (summarized as an integer pair denoting the size $s$ and number $r$ of STR repeats; observed) and a binary state variable $N$ (unobserved) categorizing the locus as clean (essentially zero error rates) or noisy (prone to indel errors). The genotype $H$ and the noisy-clean state variable $N$ are drawn from prior distributions that depend, respectively, on a context-specific mutation rate $\theta$ shared across samples and a context-specific noisy-state probability $p_n$. {\bf (b) Variant calling model.} The reads $d_j$ at every locus are modeled as depending on the corresponding base call quality strings $q_j$, the unobserved haplotype $h_j$ that generated the read, and the locus-specific error rates $e$. The read-specific haplotype is drawn from the set of haplotypes in the locus-specific hypothesis $H$, of which the prior again depends on a parameter selected from $\theta$ according to context. The error rates are again selected from the global vector $E$ of error parameters (now treated as fixed), with the difference that all loci analyzed by this model are assumed to be in the noisy state.}
 \end{figure}
