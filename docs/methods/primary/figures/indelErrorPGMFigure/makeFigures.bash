@@ -13,32 +13,29 @@ builddir=$docdir/build
 
 mkdir -p $builddir
 
-mname=methods
+mname="indelErrorPGMFigureA indelErrorPGMFigureB"
 
 latexCmd() {
-  pdflatex -halt-on-error -interaction=nonstopmode $1
+  latex -halt-on-error -interaction=nonstopmode $1
 }
 
 do_latex_cmds() {
   file=$1
   latexCmd $file
-  bibtex $file
-  latexCmd $file
-  latexCmd $file
+  dvipdf $file
+  pdfcrop $file.pdf $file.crop.pdf
+  mv $file.crop.pdf $file.pdf
 }
 
 for mm in $mname; do
 (
 cd $builddir
-cp ../packages/* .
 ln -sf $docdir/$mm.tex
-ln -sf $docdir/$mname.bib
-ln -sf $docdir/figures
+ln -sf $docdir/tikzlibrarybayesnet.code.tex
 do_latex_cmds $mm
-mv $mm.pdf $docdir 
-mv $mm.log $docdir
-rm -f $mm.*
+mv $mm.pdf $docdir
+rm -f *
 )
-done
 
+done
 
