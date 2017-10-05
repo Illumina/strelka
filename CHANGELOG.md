@@ -1,15 +1,39 @@
-v2.8.3
-- STREL-705 Correct reference term in indel error estimation
-- STREL-632 Correct somatic joint allele-frequency prior
-- STREL-652 Improve somatic EVS feature consistency
-- STREL-647 Improve CRAM reference handling
-v2.8.2
-- STREL-653 Fix haplotyping misbehavior in depth 0 positons
-v2.8.1
-- STREL-650 Fix allele filtration to synchronize across multiple samples
-- STREL-651 Fix sequence error counting bounds
-- STREL-633 Update htslib/samtools to v1.5
-v2.8.0
+## Unreleased
+
+### Changed
+- Move changelog to markdown format (STREL-571)
+
+## v2.8.3 - 2017-09-22
+
+This is a bugfix update from v2.8.2
+
+### Fixed
+* Make minor correction to the non-error term used during adaptive indel error estimation (STREL-705)
+* Make minor correction to somatic joint allele-frequency prior (STREL-632)
+* Improve somatic EVS feature consistency (STREL-652)
+* Improve CRAM reference handling (STREL-647)
+  * The reference provided as input during workflow configuration is now prioritized over the URI in the CRAM header. This makes it easier to work with any CRAM file which contains a local file path in the header.
+
+## v2.8.2 - 2017-08-03
+
+This is a minor bugfix update from v2.8.1
+
+### Fixed
+- Fix haplotype model issue occurring when contigs have no sequence coverage (STREL-653)
+
+## v2.8.1 - 2017-08-02
+
+This is minor bugfix update from v2.8.0
+
+### Fixed
+- Fix allele noise filtration to synchronize across multiple samples (STREL-650)
+- Fix minor inconsistency in sequence error counting genome segment bounds (STREL-651)
+- Update htslib/samtools to v1.5 for improved error detection/messages and CRAM support (STREL-633)
+
+## v2.8.0 - 2017-07-14
+
+This is a major feature update from v2.7.1
+
 - STREL-608 Fix hang after error during adaptive estimation
 - STREL-610 Fix workflow resumption after interrupt
 - STREL-557 Retrain somatic EVS on updated alignments and truth sets
@@ -49,7 +73,7 @@ v2.8.0
 - STREL-342 Use assembly to generate haplotypes in long active regions
 - STREL-251 Enable automatic germline EVS calibration
 - STREL-357 Add separate threshold for homref calls
-v2.7.1
+## v2.7.1
 - STREL-336 Fix incorrect indel normalizations
 - STREL-332 Revert to core somatic indel scoring with adjusted threshold
 - STREL-331 Left-shift indels inside of active regions
@@ -63,7 +87,7 @@ v2.7.1
 - STREL-274 Simplify variant filter logic in multi-sample germline gVCF(s)
 - STREL-269 Prevent indels larger than the max indel size from becoming candidate
 - STREL-267 Forced indel call does not appear in somatic output
-v2.7.0
+## v2.7.0
 - STREL-184 Enable somatic indel EVS
 - STREL-228 Improve runtime for references with many small contigs
 - STREL-210 Retrain germline EVS
@@ -80,14 +104,14 @@ v2.7.0
 - STREL-198 Update germline EVS using mixed training data (variety of platforms/chemistries/depths) 
 - STREL-154 Adjust active window size depending on neighboring sequences
 - STREL-188 Haplotype generation includes soft-clipped reads
-v2.6.0
+## v2.6.0
 - STREL-163 Update germline EVS model training with ambiguous call handling
 - STREL-122/STARKA-454 Updated somatic scoring model, integrate somatic indel EVS model
 - STREL-175 restore somatic callability tract
 - STREL-155 determine indel candidacy in active regions
 - STREL-75 fix sample limit in pedicure
 - STREL-118 relax MMDF using short haplotyping
-v2.5.0
+## v2.5.0
 - STREL-138 adjust indel theta based on hpol context in germline model
 - STREL-124 integrate new RF scoring model for germline variants
 - STREL-128 correctly call overlapping same pos/same length insertions
@@ -142,11 +166,11 @@ cycle for SNVs
 - WGSW-765 Failed SNV phasing if any of the original SNVs are not represented
   in the most common alleles
 - STARKA-241 turned on binom indel error model in starling and strelka
-v2.4.3
+## v2.4.3
 - STAR-66 Correct GT reported for ALT alleles at forced-output sites in
   continuous vf mode from "1/1" to "0/1" as appropriate.
 - WGSW-724 Do not print PLs for homref sites
-v2.4.2
+## v2.4.2
 - STAR-65 Take the minimum GQ/GQX when overlapping indels
 - STAR-64 Output forced indels & SNPs in continuous calling mode. Modify
   output of GQX to be per-call, not per-site. Fix flushing of compressed blocks
@@ -155,15 +179,15 @@ v2.4.2
 - STAR-60 Update codon phaser to correctly handle interaction between GT and
   alleles that are dropped due to low phasing support.
 - WGSW-711 Make inclusion of phasing-related headers conditional
-v2.4.1
+## v2.4.1
 - STAR-62 fix setting vqsrModelName on --exome
-v2.4.0
+## v2.4.0
 - STARKA-257 remap somatic SVN VQSR scores
 - STARKA-254 Add PL values for germline SNV and indel calls
 - STAR-54 Do not output homref call in continuous mode if the site has
   alt alleles
 - STAR-55 Make GT of block compressed areas with overlapping deletions "0"
-v2.3.14
+## v2.3.14
 - STAR-16 Continuous variant frequency calling (a.k.a. somatic)
 - TNW-371 Set MQ to 0 at forced calls with no coverage
 - STARKA-250 Remove hpol and ihpol indel filters
@@ -172,76 +196,76 @@ v2.3.14
 - STARKA-248 tolerate reference allele insert/delete alignments in read input
 - STARKA-237 new format for scoring and indel models
 - STARKA-239 update strelka VQSR and parameters for higher recall
-v2.3.13
+## v2.3.13
 - STAR-34: When SNVs are not phased due to low read depth (<10), add
 Unphased to INFO field
 - STAR-42: Support forced-output SNVs in the forced-output VCF.
-v2.3.12
+## v2.3.12
 - STAR-32: Trigger phasing of SNVs if an indel is encountered within the phasing interval.
 - STAR-14: Add --targeted-regions-bed parameter to Starling for flagging OffTarget positions. Also
   added --targetRegions to the python workflow wrapper.
 - Apply SiteConflict filter to block-compressed areas that overlap a filtered indel. This was a
   side-effect of a restructuring of the code, but was deemed to be more correct than the previous behavior.
-v2.3.11
+## v2.3.11
 - Modify workflow generation to remove use of reflection
-v2.3.10
+## v2.3.10
 - STARKA-234: make --exome flag affect indel-error-model, scoring-model and indel-ref-error-factor arguments to starling
 - WGSW-357 ensure that ploidy conflict filter is consistently applied for all
 records with no coverage/unknown genotype
-v2.3.9
+## v2.3.9
 - STARKA-231 correct codon phasing for insertions/small-fragments within the
 phasing range
-v2.3.8
+## v2.3.8
 - STARKA-227 Wrong Qscore value reported as GQX in overlapping indels
 - STARKA-226 codon phaser does not account for read N-trimming
 - WGSW-370 - force overlapping indels to use the same scoring model. If either is a complex indel (i.e. contains both an insertion and a deletion), then both uise the default model. Otherwise, both use the VQSR model, if enabled.
 - WGSW-358 - Make homref calls (GT=0/0) use the default model, not VQSR. This includes clinical indels/forced output.
-v2.3.7
+## v2.3.7
 - Fix VCF version labels
 - STARKA-221 remove non-vqsr depth filter labels in strelka somatic snv vcf
-v2.3.6
+## v2.3.6
 - STARKA-222 enable partial win32 build/visual studio development
 - WGSW-293, WGSW-297 re-update germline VQSR cutoffs to reduce trio conflicts
 - STARKA-220 improve build system versioning
 - STARKA-217 adjust codon phaser to match read and basecall filtration of
 non-phased variants, and align phased candidates near indels correctly
 - STARKA-191 add denovo calling model for parent/child trios
-v2.3.5
+## v2.3.5
 - WGSW-293, WGSW-297 update germline VQSR cutoffs to decrease excessive het/hom ratios, and hopefully reduce trio conflicts
 - STARKA-211 filter low-confidence het snp candidates from codon phaser input,
 changing phased block composition.
 - STARKA-214 fix vcf and bed concat for very high contig counts, including human ref w/ decoys
 - STARKA-215 roll back STARKA-198 (due to trio conflict elevation and anomolous gVCF records)
 - STARKA-210 fix very low frequency realigner assertion on contig edges
-v2.3.4
+## v2.3.4
 - STARKA-204 remove inconsistent filters at homref sites
 - STARKA-196 fix nocompress sites in empty regions
-v2.3.3
+## v2.3.3
 - STARKA-202 limit total read buffer size to prevent ultra-high depth memory exhuastion
 - STARKA-201 set memory requirements based on run context
 - STARKA-198 SNP records with FILTER LowGQX and GQX>30 (when running VQSR) fixed
-v2.3.2
+## v2.3.2
 - STARKA-190 apply VQSR to haploid regions
 - Fix somatic callability track tabix index generation
-v2.3.1
+## v2.3.1
 - STARKA-186 support CIGAR sequence match/mismatch (=/X) in input BAM
 - STARKA-185 turn off somatic VQSR when exome configuration is selected for
-v2.3.0
+## v2.3.0
 - STARKA-181 Use indel error estimates to improve indel quality computation
 - Update germline indel error settings to reflect MIB defaults
 - STARKA-163 Use indel error estimates to improve indel candidate selection
 - STARKA-179 Provide config option for somatic callability track
 - STARKA-178 Consolidate single strelka config for all aligners
 - Expand random forest tree count in somatic SNV VQSR
-v2.2.2
+## v2.2.2
 - STARKA-175 Update somatic SNV VQSR model to include MAPQ0 with improved
 normalization
 - STARKA-176 Prevent large deletions from locking indels outside of the
 realignment buffer.
 - STARKA-174 Prevent segfault due to libstdc++ bug in certain gcc versions
-v2.2.1
+## v2.2.1
 - STARKA-170 Add "--exome" config option for starling/strelka
-v2.2.0
+## v2.2.0
 - STARKA-166 add binomial-distribution-based allele bias predictors for Starling VQSR models
 - STARKA-165 patch LOH artifact in somatic VQSR output
 - STARKA-162 revise depth normalization in Starling VQSR
@@ -261,22 +285,22 @@ v2.2.0
 - STARKA-135 add strand bias feature
 - STARKA-138 add read position features to strelka SNV output
 - STARKA-136 add mapping info values to strelka SNV output
-v2.1.5
+## v2.1.5
 - Improve VQSR depth normalization
 - Add CRAM input support (still experimental pending samtools idxstats
 capability for CRAM)
-v2.1.4
+## v2.1.4
 - Turned ON DP filter for rule filters as default
 - Made scoring-model a configurable option for starling pyflow
 - Sync many blt_util changes with manta
 - Changed scoring model names to be case insensitive, added assertion for unknown model
 - Change minimum support gcc version to 4.7
 - Runtime opt: reduce excessive syscalls from position based std::map's
-v2.1.3
+## v2.1.3
 - STARKA-127 fix strelka workflow config file interface
 - STARKA-128 fix build with gcc-4.9.0, remove solexa q-scores
 - STARKA-125 add starling workflow and demo
-v2.1.2
+## v2.1.2
 - STARKA-124 fix strelka overlapping indel issue
 - STARKA-118 fix GSNAP alignment example: leading deletion in exon
 - Rolled back elimination of min-vexp and min-mismatch-window default settings, these are again required as command-line
@@ -284,68 +308,68 @@ v2.1.2
 - STARKA-113 Set parameter values according to Isis defaults
 - STARKA-130 Read buffer not being cleared in certain phasing context
 - STARKA-131 Codon-phasing crash when run with external indel candidates
-v2.1.1
+## v2.1.1
 - STARKA-111 transfer full strelka workflow v1 logic into starka
 - STARKA-58 Refit indel homopolymer model
 - STARKA-89 LowGQX filters for no-calls in reference/depth records around indels is not se
 - STARKA-91 Investigate low-depth passing hom alt calls in VQSR model
 - STARKA-112 bwamem + starling 2.1 crash
-v2.1
+## v2.1
 - STARKA-53 remove grouper legacy contig logic
 - STARKA-29 short-range SNP phasing and arbitrary phasing window
 - STARKA-57 HighRefRep should not be default rule-based filter for indels
-v2.0.21
+## v2.0.21
 - Minor VQSR fixes
 - STARKA-52 gVCF block compression filters not cleared on single record
-v2.0.20
+## v2.0.20
 - Added VQSR for indels
 - Updated VQSR model parameters
 - Updated homopolymer error-model
 - Modified block-compression parameters for better NextSeq compression
 - Added option for providing bed-file with sites that should not be block-compressed
 - STARKA-50 option to output somatic-callable bed file
-v2.0.17
+## v2.0.17
 - STARKA-48 Fixed formatting bug for high GQX
 - Header fix for adjusted Nova filters
-v2.0.16
+## v2.0.16
 - Adjusted filters for Nova release
-v2.0.15
+## v2.0.15
 - STARKA-47 Accept GATK-style bam indices
 - STARKA-43 Accept edge indel pattern produced by freeBayes/BamLeftAlign
 - STARKA-45 Filter indels greater than max indel size from candidate indel vcf
-v2.0.14
+## v2.0.14
 - STARKA-41 Fix consensus open-break-end error
-v2.0.13
+## v2.0.13
 - Skip BWA-mem supplementary reads
 - STARKA-37 Handle Skip-Delete-Skip pattern in tophat output
 - STARKA-23 Accept an input VCF file for which each alternate allele must be genotyped
 - STARKA-35 Fixed 255 q-score bug for RNAseq workflow
-v2.0.12
+## v2.0.12
 - STARKA-34 Properly handle insertions adjacent to introns
 - Filter out all open-breakends from vcf output
-v2.0.11
+## v2.0.11
 - STARKA-14 Add option to provide sample name in output VCF SAMPLE column
 - VQSR features
-v2.0.10
+## v2.0.10
 - STARKA-30 fix stability issue encounted with large indels in 2x400 reads
-v2.0.9
+## v2.0.9
 - STARKA-32 fix handling of another complex indel on read edge
-v2.0.8
+## v2.0.8
 - STARKA-27 correctly handle complex insert/delete indels for read edges
-v2.0.7
+## v2.0.7
 - STARKA-12 tolerate all edge insertions/deletions
 - STARKA-17 Add option to output gVCF with no block compression
 - STARKA-24 fix gVCF site records to correctly inherit spanning deletion filters
-v2.0.6
+## v2.0.6
 - Change makefile to build when cwd is not in PATH
-v2.0.5
+## v2.0.5
 - Associated with new parent strelka workflow release, no major changes from v2.0.4
-v2.0.4
+## v2.0.4
 - STARKA-21 Add command-line control for snv hpol filter. Set snv and indel hpol filters
 off by default.
 - STARKA-22 Reorganize build system around libraries, add unit test framework as
 part of every build and seed framework with a few tests for each library
-v2.0.3
+## v2.0.3
 - STARKA-16 fix gVCF output so that GT does not contain allele numbers which are
 not in the ALT tag
 - Add win32 compat fixes from Eric Roller
@@ -353,25 +377,25 @@ not in the ALT tag
 segments
 - STARKA-11 Samtools upgraded to 0.1.18 to resolve issues reported for
 strelka run with long-line version of hg19 reference.
-v2.0.2
+## v2.0.2
 - Add haplotype score option to command-line
-v2.0.1
+## v2.0.1
 - Added command-line controls for for "R8" indel filter and strand-bias
-v2.0.0
+## v2.0.0
 - First RC. No changes from v2.0a3
-v2.0a3
+## v2.0a3
 - Completed gVCF output to pass vcf-validator
 - added AD tags to snps and indels
 - added haplotypescore but left this turned off
 - added command-line controls for min-gqx,max-depth-factor and other filters/blocking thresholds
 - cleaned up other final details
-v2.0a2
+## v2.0a2
 - Bugfix: gVCF output was being written +1 past end of requested range
-v2.0a1
+## v2.0a1
 - initial version of starling with direct gVCF output
-v1.1.0
+## v1.1.0
 - Import all updates from starling/strelka maintained on the strelka
 standalone 0.4.10 tag.
-v1.0.0
+## v1.0.0
 - initial transfer of v1 starling/strelka from the public strelka release
 branch
