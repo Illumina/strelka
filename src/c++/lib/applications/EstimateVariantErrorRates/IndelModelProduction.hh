@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "calibration/IndelErrorModelJson.hh"
 #include "calibration/IndelErrorModel.hh"
 #include "errorAnalysis/SequenceErrorCounts.hh"
 
@@ -33,7 +34,9 @@ public:
 
     void estimateIndelErrorRates();
 
-    void exportModel() const;
+    IndelErrorModelJson generateIndelErrorModelJson() const;
+
+    void exportIndelErrorModelJson() const;
 
     void exportModelUsingInputJson(
         const std::string& jsonFilename) const;

@@ -21,13 +21,14 @@
 #include <iostream>
 #include <fstream>
 
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/ostreamwrapper.h"
 #include "common/Exceptions.hh"
 #include "blt_util/log.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
 
 #include "IndelModelProduction.hh"
-#include "calibration/IndelErrorModelJson.hh"
 
 //#define CODEMIN_DEBUG
 #define CODEMIN_USE_BOOST
@@ -494,37 +495,57 @@ estimateIndelErrorRates()
     _isEstimated = true;
 }
 
-void
-IndelModelProduction::exportModel() const
-{
-    IndelErrorModelJson indelModelJson(_counts.getSampleName());
+
+IndelErrorModelJson
+IndelModelProduction::generateIndelErrorModelJson() const {
+    IndelErrorModelBinomialMixture model;
     // add the non-STR params to all contexts with repeat count 1
     // this will show up as valid contexts during variant calling so we need to fill in these gaps
-    for (unsigned repeatPatternIndex = 0; repeatPatternIndex < _repeatPatterns.size(); repeatPatternIndex++)
-    {
-        indelModelJson.addMotif(_repeatPatterns[repeatPatternIndex], 1, std::exp(_nonSTRModelParams.logErrorRate), std::exp(_nonSTRModelParams.logNoisyLocusRate));
+    for (unsigned repeatPatternIndex = 0; repeatPatternIndex < _repeatPatterns.size(); repeatPatternIndex++) {
+        model.addMotif(IndelMotifBinomialMixture(_repeatPatterns[repeatPatternIndex],
+                                                 1,
+                                                 std::exp(_nonSTRModelParams.logErrorRate),
+                                                 std::exp(_nonSTRModelParams.logNoisyLocusRate))
+        );
     }
 
     // add motif to json for all contexts
-    for (unsigned repeatPatternIndex = 0; repeatPatternIndex < _repeatPatterns.size(); repeatPatternIndex++)
-    {
-        const AdaptiveIndelErrorModel& errorModel(_adaptiveIndelErrorModels[repeatPatternIndex]);
+    for (unsigned repeatPatternIndex = 0; repeatPatternIndex < _repeatPatterns.size(); repeatPatternIndex++) {
+        const AdaptiveIndelErrorModel &errorModel(_adaptiveIndelErrorModels[repeatPatternIndex]);
 
-        for (unsigned repeatCount(errorModel.lowRepeatCount); repeatCount <= errorModel.highRepeatCount(); repeatCount++)
-        {
-            indelModelJson.addMotif(errorModel.repeatPatternSize(),
-                                    repeatCount,
-                                    errorModel.errorRate(repeatCount),
-                                    errorModel.noisyLocusRate(repeatCount));
+        for (unsigned repeatCount(errorModel.lowRepeatCount);
+             repeatCount <= errorModel.highRepeatCount(); repeatCount++) {
+            model.addMotif(IndelMotifBinomialMixture(errorModel.repeatPatternSize(),
+                                                     repeatCount,
+                                                     errorModel.errorRate(repeatCount),
+                                                     errorModel.noisyLocusRate(repeatCount))
+            );
         }
     }
 
-    static const bool isStatic(false);
-    IndelErrorModelJson::serializeIndelErrorModel(
-        _counts.getSampleName(),
-        indelModelJson.generateMotifsNode(),
-        isStatic,
-        _outputFilename);
+    return IndelErrorModelJson(_counts.getSampleName(), model, false);
+}
+
+void
+IndelModelProduction::exportIndelErrorModelJson() const
+{
+    const auto modelJson = generateIndelErrorModelJson();
+    rapidjson::StringBuffer stringBuffer;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(stringBuffer);
+    writer.StartObject();
+    writer.String("sample");
+    writer.StartArray();
+
+    modelJson.serialize(writer);
+
+    writer.EndArray();
+    writer.EndObject();
+
+    std::ofstream ofs(_outputFilename);
+    ofs << stringBuffer.GetString();
+    if (!ofs.good())
+        throw std::runtime_error("Can't write the JSON string to file!");
+
 }
 
 
@@ -534,32 +555,26 @@ IndelModelProduction::
 exportModelUsingInputJson(const std::string& jsonFilename) const
 {
     std::string jsonString;
-    Json::Value root;
+    rapidjson::Document root;
+
     {
         std::ifstream ifs(jsonFilename, std::ifstream::binary);
         std::stringstream buffer;
         buffer << ifs.rdbuf();
         jsonString = buffer.str();
     }
-    Json::Reader reader;
-    if (!reader.parse(jsonString, root))
-    {
-        using namespace illumina::common;
 
-        std::ostringstream oss;
-        oss << "Failed to parse JSON " << jsonFilename << " " << reader.getFormattedErrorMessages() << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-    }
+    root.Parse(jsonString.c_str());
 
-    Json::Value samples = root["sample"];
-    if (samples.isNull() || samples.empty())
+    auto samples(root["sample"].GetArray());
+    if (samples.Empty())
     {
         using namespace illumina::common;
         std::ostringstream oss;
         oss << "ERROR: no samples in indel error model file '" << jsonFilename << "'\n";
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
-    else if (samples.size() > 1)
+    else if (samples.Size() > 1)
     {
         using namespace illumina::common;
         std::ostringstream oss;
@@ -567,17 +582,16 @@ exportModelUsingInputJson(const std::string& jsonFilename) const
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 
-    Json::Value motifs = samples[0]["motif"];
-    if (motifs.isNull() || motifs.empty())
-    {
-        using namespace illumina::common;
-        std::ostringstream oss;
-        oss << "ERROR: no motifs in indel error model file '" << jsonFilename << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-    }
+    samples[0]["sampleName"].SetString(_counts.getSampleName().c_str(), root.GetAllocator());
 
-    static const bool isStatic(true);
-    IndelErrorModelJson::serializeIndelErrorModel(_counts.getSampleName(), motifs, isStatic, _outputFilename);
+    std::ofstream ofs(_outputFilename);
+    rapidjson::OStreamWrapper osw(ofs);
+    rapidjson::Writer<rapidjson::OStreamWrapper> writer(osw);
+    root.Accept(writer);
+
+    if (!ofs.good())
+        throw std::runtime_error("Can't write the JSON string to file!");
+
 }
 
 

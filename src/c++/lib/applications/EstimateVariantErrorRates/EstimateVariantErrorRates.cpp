@@ -40,7 +40,7 @@ runEPEC(
     indelModelProduction.estimateIndelErrorRates();
     if (indelModelProduction.checkEstimatedModel())
     {
-        indelModelProduction.exportModel();
+        indelModelProduction.exportIndelErrorModelJson();
     }
     else
     {

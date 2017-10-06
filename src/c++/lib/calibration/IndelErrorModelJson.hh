@@ -16,23 +16,67 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
-
-#include "json/json.h"
+#include <map>
+#include "rapidjson/document.h"
 #include "IndelErrorRateSet.hh"
 
 class IndelMotifBinomialMixture
 {
 public:
-    unsigned repeatPatternSize = 0;
-    unsigned repeatCount = 0;
-    double indelRate = 0;
-    double noisyLocusRate = 0;
+    IndelMotifBinomialMixture(){}
+    IndelMotifBinomialMixture(const unsigned repeatPatternSize,
+                                const unsigned repeatCount,
+                                const double indelRate,
+                                const double noisyLocusRate):
+            _repeatPatternSize(repeatPatternSize)
+            , _repeatCount(repeatCount)
+            , _indelRate(indelRate)
+            , _noisyLocusRate(noisyLocusRate)
+    {}
+private:
+    unsigned _repeatPatternSize = 0;
+    unsigned _repeatCount = 0;
+    double _indelRate = 0;
+    double _noisyLocusRate = 0;
+public:
+    template <typename Writer>
+    void serialize(Writer& writer) const
+    {
+        writer.String("repeatPatternSize");
+        writer.Uint(_repeatPatternSize);
+        writer.String("repeatCount");
+        writer.Uint(_repeatCount);
+        writer.String("indelRate");
+        writer.Double(_indelRate);
+        writer.String("noisyLocusRate");
+        writer.Double(_noisyLocusRate);
+    }
 };
 
-class IndelModelBinomialMixture
+class IndelErrorModelBinomialMixture
 {
 public:
-    std::vector<IndelMotifBinomialMixture> motifs;
+    IndelErrorModelBinomialMixture(){};
+    void addMotif(const IndelMotifBinomialMixture &motif)
+    {
+        _motifs.push_back(motif);
+    }
+private:
+    std::vector<IndelMotifBinomialMixture> _motifs;
+public:
+    template <typename Writer>
+    void serialize(Writer& writer) const
+    {
+        writer.StartArray();
+
+        for(const IndelMotifBinomialMixture &motif:_motifs)
+        {
+            writer.StartObject();
+            motif.serialize(writer);
+            writer.EndObject();
+        }
+        writer.EndArray();
+    }
 };
 
 
@@ -46,42 +90,26 @@ public:
     ///
     /// \param[in] sampleName The sample name (typically the bam file path) used to estimate the model
     ///
+    /// \param[in] model The list of motifs estimated from the sample
+    ///
+    /// \param[in] isStatic Boolean flag indicating whether the model was estimated from the data
+    ///
     explicit
-    IndelErrorModelJson(const std::string& sampleName);
+    IndelErrorModelJson(const std::string& sampleName, const IndelErrorModelBinomialMixture& model, const bool isStatic);
 
-    /// \brief Adds the motif with the given parameters to the json object
-    ///
-    /// \param[in] repeatPatternSize The length of the repeat pattern
-    ///
-    /// \param[in] repeatCount Number of repetitions for the given repeatPatternSize
-    ///
-    /// \param[in] indelRate The estimated indel error rate
-    ///
-    /// \param[in] noisyLocusRate The probability that a locus is in a noisy state
-    ///
-    void addMotif(
-        unsigned repeatPatternSize,
-        unsigned repeatCount,
-        double indelRate,
-        double noisyLocusRate);
+    template <typename Writer>
+    void serialize(Writer& writer) const
+    {
+        writer.StartObject();
+        writer.String("sampleName");
+        writer.String(_sampleName.c_str());
+        writer.String("motif");
+        _model.serialize(writer);
+        writer.String("isStatic");
+        writer.Bool(_isStatic);
+        writer.EndObject();
+    }
 
-    // TODO: This isn't really serialization. Serialize the IndelErrorRateSet instead
-    /// \brief Serializes the model and writes it out to a json file
-    ///
-    /// \param[in] sampleName The sample name (typically the bam file path) used to estimate the model
-    ///
-    /// \param[in] motifsNode The json value to write out
-    ///
-    /// \param[in] isStatic Flag describing whether the model params were estimated from the specific sample or taken from the static model
-    ///
-    /// \param[in] filename The name of the json file to write to
-    ///
-    static void
-    serializeIndelErrorModel(
-        const std::string& sampleName,
-        const Json::Value& motifsNode,
-        const bool isStatic,
-        const std::string& filename);
 
     /// \brief Deserializes multiple json files and populates the IndelErrorRateSet object for each sample
     ///
@@ -99,8 +127,6 @@ public:
     deserializeTheta(
         const std::string& filename);
 
-    Json::Value
-    generateMotifsNode() const;
 
     std::string
     getSampleName() const
@@ -108,12 +134,10 @@ public:
         return _sampleName;
     }
 
-public:
-    IndelModelBinomialMixture model;
-
 private:
     std::string _sampleName;
-
+    IndelErrorModelBinomialMixture _model;
+    bool _isStatic;
 
 };
 

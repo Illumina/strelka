@@ -20,71 +20,18 @@
 #include <iostream>
 #include <fstream>
 
+#include "rapidjson/istreamwrapper.h"
 #include "common/Exceptions.hh"
 #include "blt_util/log.hh"
 #include "IndelErrorModelJson.hh"
 
 IndelErrorModelJson::
-IndelErrorModelJson(const std::string& sampleName)
+IndelErrorModelJson(const std::string& sampleName, const IndelErrorModelBinomialMixture& model, const bool isStatic)
     : _sampleName(sampleName)
+    , _model(model)
+    , _isStatic(isStatic)
 {}
 
-
-// move these to a more appropriate place later
-Json::Value
-IndelErrorModelJson::
-generateMotifsNode() const
-{
-    Json::Value motifs;
-    for (const auto& motifIt : model.motifs)
-    {
-        Json::Value motif;
-        motif["repeatPatternSize"] = motifIt.repeatPatternSize;
-        motif["repeatCount"] = motifIt.repeatCount;
-        motif["indelRate"] = motifIt.indelRate;
-        motif["noisyLocusRate"] = motifIt.noisyLocusRate;
-        motifs.append(motif);
-    }
-    return motifs;
-}
-
-void
-IndelErrorModelJson::
-serializeIndelErrorModel(
-    const std::string& sampleName,
-    const Json::Value& motifsNode,
-    const bool isStatic,
-    const std::string& filename)
-{
-    Json::StyledWriter writer;
-    Json::Value jsonRoot;
-    Json::Value samples;
-    Json::Value sample;
-    sample["sampleName"] = sampleName;
-    sample["motif"] = motifsNode;
-    sample["isStatic"] = isStatic;
-    samples.append(sample);
-    jsonRoot["sample"] = samples;
-
-    const std::string str = writer.write(jsonRoot);
-    std::ofstream out(filename);
-    out << str << "\n\n";
-}
-
-void
-IndelErrorModelJson::
-addMotif(unsigned repeatPatternSize,
-         unsigned repeatCount,
-         double indelRate,
-         double noisyLocusRate)
-{
-    IndelMotifBinomialMixture motif;
-    motif.repeatPatternSize = repeatPatternSize;
-    motif.repeatCount = repeatCount;
-    motif.indelRate = indelRate;
-    motif.noisyLocusRate = noisyLocusRate;
-    model.motifs.push_back(motif);
-}
 
 std::map<std::string, IndelErrorRateSet>
 IndelErrorModelJson::
@@ -93,26 +40,22 @@ deserializeIndelErrorModels(const std::vector<std::string>& modelFilenames)
     std::map<std::string, IndelErrorRateSet> modelMap;
     for (const auto& modelFilename : modelFilenames)
     {
-        std::string jsonString;
-        Json::Value root;
-        {
-            std::ifstream ifs(modelFilename, std::ifstream::binary);
-            std::stringstream buffer;
-            buffer << ifs.rdbuf();
-            jsonString = buffer.str();
-        }
-        Json::Reader reader;
-        if (!reader.parse(jsonString, root))
+
+        rapidjson::Document document;
+        std::ifstream ifs(modelFilename);
+
+        if(!ifs.is_open())
         {
             using namespace illumina::common;
-
             std::ostringstream oss;
-            oss << "Failed to parse JSON " << modelFilename << " " << reader.getFormattedErrorMessages() << "'\n";
+            oss << "ERROR: Cannot open indel error model file '" << modelFilename << "'\n";
             BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
+        rapidjson::IStreamWrapper isw(ifs);
+        document.ParseStream(isw);
 
-        Json::Value samples = root["sample"];
-        if (samples.isNull() || samples.empty())
+        const rapidjson::Value& samples(document["sample"]);
+        if (samples.Empty() || !samples.IsArray())
         {
             using namespace illumina::common;
             std::ostringstream oss;
@@ -121,12 +64,12 @@ deserializeIndelErrorModels(const std::vector<std::string>& modelFilenames)
         }
 
         // one json file could potentially have multiple samples
-        for (const auto& sample : samples)
+        for (rapidjson::Value::ConstValueIterator sample = samples.Begin(); sample != samples.End(); ++sample)
         {
-            std::string sampleName = sample["sampleName"].asString();
+            const std::string sampleName((*sample)["sampleName"].GetString());
             modelMap[sampleName] = IndelErrorRateSet();
-            Json::Value motifs = sample["motif"];
-            if (motifs.isNull() || motifs.empty())
+            const rapidjson::Value& motifs((*sample)["motif"]);
+            if (motifs.Empty()|| !motifs.IsArray())
             {
                 using namespace illumina::common;
                 std::ostringstream oss;
@@ -134,12 +77,12 @@ deserializeIndelErrorModels(const std::vector<std::string>& modelFilenames)
                 BOOST_THROW_EXCEPTION(LogicException(oss.str()));
             }
 
-            for (const auto& motifValue : motifs)
+            for (rapidjson::Value::ConstValueIterator motif = motifs.Begin(); motif != motifs.End(); ++motif)
             {
-                const double indelRate = motifValue["indelRate"].asDouble();
-                const double noisyLocusRate = motifValue["noisyLocusRate"].asDouble();
-                const unsigned repeatCount = motifValue["repeatCount"].asInt();
-                const unsigned repeatPatternSize = motifValue["repeatPatternSize"].asInt();
+                const double indelRate = (*motif)["indelRate"].GetDouble();
+                const double noisyLocusRate = (*motif)["noisyLocusRate"].GetDouble();
+                const unsigned repeatCount = (*motif)["repeatCount"].GetUint();
+                const unsigned repeatPatternSize = (*motif)["repeatPatternSize"].GetUint();
                 modelMap[sampleName].addRate(repeatPatternSize, repeatCount, indelRate, indelRate, noisyLocusRate);
             }
         }
@@ -153,37 +96,51 @@ IndelErrorModelJson::
 deserializeTheta(
     const std::string& filename)
 {
-    std::string jsonString;
-    Json::Value root;
-    {
-        std::ifstream ifs(filename, std::ifstream::binary);
-        std::stringstream buffer;
-        buffer << ifs.rdbuf();
-        jsonString = buffer.str();
-    }
-    Json::Reader reader;
-    reader.parse(jsonString, root);
-    Json::Value thetasRoot = root["thetas"];
-    if (thetasRoot.isNull() || thetasRoot.empty())
+    std::map<unsigned, std::vector<double>> thetasMap;
+
+    rapidjson::Document document;
+
+    std::ifstream ifs(filename, std::ifstream::binary);
+
+    if(!ifs.is_open())
     {
         using namespace illumina::common;
         std::ostringstream oss;
-        oss << "ERROR: no theta values in theta file '" << filename << "'\n";
+        oss << "ERROR: Cannot open theta file '" << filename << "'\n";
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 
-    std::map<unsigned, std::vector<double>> thetas;
+    rapidjson::IStreamWrapper isw(ifs);
+    document.ParseStream(isw);
 
-    for (const auto& thetasByPatternSize : thetasRoot)
+    const rapidjson::Value& thetas(document["thetas"]);
+    if (thetas.Empty() || !thetas.IsArray())
     {
-        std::vector<double> theta;
-        unsigned repeatPatternSize = thetasByPatternSize["repeatPatternSize"].asUInt();
-        Json::Value thetaValues = thetasByPatternSize["theta"];
-        for (const auto& thetaValue : thetaValues)
-        {
-            theta.push_back(thetaValue.asDouble());
-        }
-        thetas[repeatPatternSize] = theta;
+        using namespace illumina::common;
+        std::ostringstream oss;
+        oss << "ERROR: no thetas in theta file '" << filename << "'\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
-    return thetas;
+
+    for (rapidjson::Value::ConstValueIterator theta = thetas.Begin(); theta != thetas.End(); ++theta)
+    {
+        std::vector<double> thetaVector;
+        unsigned repeatPatternSize = (*theta)["repeatPatternSize"].GetUint();
+        const rapidjson::Value& thetaValues((*theta)["theta"]);
+
+        if (thetaValues.Empty() || !thetaValues.IsArray())
+        {
+            using namespace illumina::common;
+            std::ostringstream oss;
+            oss << "ERROR: no theta values in theta file '" << filename << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
+
+        for (rapidjson::Value::ConstValueIterator thetaValue = thetaValues.Begin(); thetaValue != thetaValues.End(); ++thetaValue)
+        {
+            thetaVector.push_back(thetaValue->GetDouble());
+        }
+        thetasMap[repeatPatternSize] = thetaVector;
+    }
+    return thetasMap;
 }
