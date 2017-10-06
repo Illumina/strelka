@@ -1,9 +1,13 @@
 ## Unreleased
-* Change active region detection method to create active regions shared by all samples (STREL-710)
 
 ### Changed
+- Change active region detection method to create active regions shared by all samples (STREL-710)
 - Verify alignment file extension at configuration time (MANTA-886)
 - Move changelog to markdown format (STREL-571)
+
+### Fixed
+- Fix germline EVS for haploid regions (STREL-678)
+  - Previously, EVS resulted in reduced recall in haploid regions such as non-PAR regions of chrX in male samples. After adding haploid training examples from NA12877 chrX, EVS can now usefully be turned on in these regions.
 
 ## v2.8.3 - 2017-09-22
 
