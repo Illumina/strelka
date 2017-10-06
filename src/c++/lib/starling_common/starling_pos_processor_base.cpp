@@ -888,7 +888,7 @@ process_pos(const int stage_no,
         {
             for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
             {
-                _getActiveRegionDetector().clearUpToPos(pos);
+                _getActiveRegionDetector().clearPosToActiveRegionIdMapUpToPos(pos);
                 _candidateSnvBuffer.clearUpToPos(sampleIndex, pos);
             }
         }

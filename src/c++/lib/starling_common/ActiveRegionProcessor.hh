@@ -39,8 +39,11 @@
 typedef std::map<std::string, std::vector<align_id_t>> HaplotypeToAlignIdSet;
 typedef uint8_t HaplotypeId;
 
-/// Represent all haplotypes found in the current active region
-class ActiveRegion
+/// A worker that
+/// (1) creates haplotypes,
+/// (2) align them to the reference to discover primitive alleles, and
+/// (3) put indels/SNVs into IndelBuffer and CandidateSnvBuffer for downstream processing
+class ActiveRegionProcessor
 {
 public:
     // if the number of reads is larger than MinNumReadsToBypassAssembly, assembly is not conducted
@@ -59,7 +62,7 @@ public:
     // Minimum supporting read count required to consider a haplotype for confirmation
     static const unsigned MinHaplotypeCount = 3u;
 
-    /// Creates an active region object
+    /// Creates an object for processing an active region
     /// \param posRange position range of the active region
     /// \param ref reference
     /// \param maxIndelSize max indel size
@@ -69,7 +72,7 @@ public:
     /// \param indelBuffer indel buffer
     /// \param candidateSnvBuffer candidate SNV buffer
     /// \return active region object
-    ActiveRegion(const known_pos_range2& posRange,
+    ActiveRegionProcessor(const known_pos_range2& posRange,
                  const reference_contig_segment& ref,
                  const unsigned maxIndelSize,
                  const unsigned sampleIndex,
@@ -80,18 +83,6 @@ public:
         _posRange(posRange), _ref(ref), _maxIndelSize(maxIndelSize), _sampleIndex(sampleIndex),
         _aligner(aligner), _readBuffer(readBuffer), _indelBuffer(indelBuffer), _candidateSnvBuffer(candidateSnvBuffer)
     {
-    }
-
-    /// \return begin position of the active region
-    pos_t getBeginPosition() const
-    {
-        return _posRange.begin_pos();
-    }
-
-    /// \return begin position of the active region
-    pos_t getEndPosition() const
-    {
-        return _posRange.end_pos();
     }
 
     /// \param pos reference position
@@ -105,13 +96,6 @@ public:
     /// Determine indel candidacy and register polymorphic sites to relax MMDF.
     void processHaplotypes();
 
-    /// Mark a read soft-clipped
-    /// \param alignId align id
-    void setSoftClipped(const align_id_t alignId)
-    {
-        _alignIdSoftClipped.insert(alignId);
-    }
-
 private:
     const known_pos_range2 _posRange;
     const reference_contig_segment& _ref;
@@ -122,8 +106,6 @@ private:
     const ActiveRegionReadBuffer& _readBuffer;
     IndelBuffer& _indelBuffer;
     CandidateSnvBuffer& _candidateSnvBuffer;
-
-    std::set<align_id_t> _alignIdSoftClipped;
 
     /// Select the top haplotypes and convert these into primitive alleles
     ///

@@ -21,7 +21,7 @@
 /// \author Sangtae Kim
 ///
 
-#include "ActiveRegion.hh"
+#include "ActiveRegionProcessor.hh"
 
 #include "assembly/IterativeAssembler.hh"
 #include "blt_util/algo_util.hh"
@@ -32,7 +32,7 @@
 // compile with this macro to get verbose output:
 //#define DEBUG_ACTIVE_REGION
 
-void ActiveRegion::processHaplotypes()
+void ActiveRegionProcessor::processHaplotypes()
 {
     // Check whether the active region is included in the read buffer
     const bool isRangeValid = (_posRange.begin_pos() >= _readBuffer.getBeginPos())
@@ -62,7 +62,7 @@ void ActiveRegion::processHaplotypes()
     }
 }
 
-bool ActiveRegion::processHaplotypesWithCounting()
+bool ActiveRegionProcessor::processHaplotypesWithCounting()
 {
     static const bool includePartialReads(false);
     ActiveRegionReadInfo readInfo;
@@ -104,7 +104,7 @@ bool ActiveRegion::processHaplotypesWithCounting()
 }
 
 
-bool ActiveRegion::processHaplotypesWithAssembly()
+bool ActiveRegionProcessor::processHaplotypesWithAssembly()
 {
     // Expand the region to include left/right anchors.
     // TODO: anchors may be too short if there are SNVs close to anchors
@@ -179,7 +179,7 @@ bool ActiveRegion::processHaplotypesWithAssembly()
     assembleOption.minWordLength = minReadSegmentLength;
 
     // maxWordLength must not be smaller than minWordLength.
-    unsigned maxWordLength(std::max(minReadSegmentLength, ActiveRegion::MaxAssemblyWordSize));
+    unsigned maxWordLength(std::max(minReadSegmentLength, ActiveRegionProcessor::MaxAssemblyWordSize));
     assembleOption.maxWordLength = maxWordLength;
     assembleOption.minCoverage = MinAssemblyCoverage;
 
@@ -254,7 +254,7 @@ bool ActiveRegion::processHaplotypesWithAssembly()
     return true;
 }
 
-void ActiveRegion::doNotUseHaplotyping()
+void ActiveRegionProcessor::doNotUseHaplotyping()
 {
 #ifdef DEBUG_ACTIVE_REGION
     std::cerr << _sampleIndex << "\t" << _posRange.begin_pos()+1 << '\t' << _posRange.end_pos() << "\tBypass"<< std::endl;
@@ -399,7 +399,7 @@ isFilterSecondHaplotypeAsSequencerPhasingNoise(
 
 
 
-void ActiveRegion::processSelectedHaplotypes(
+void ActiveRegionProcessor::processSelectedHaplotypes(
     HaplotypeToAlignIdSet& haplotypeToAlignIdSet,
     const unsigned totalNumHaplotypingReads)
 {
@@ -511,7 +511,7 @@ void ActiveRegion::processSelectedHaplotypes(
     }
 }
 
-void ActiveRegion::convertToPrimitiveAlleles(
+void ActiveRegionProcessor::convertToPrimitiveAlleles(
     const std::string& haploptypeSeq,
     const std::vector<align_id_t>& alignIdList,
     const unsigned totalNumHaplotypingReads,
