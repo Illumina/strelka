@@ -1,4 +1,5 @@
 ## Unreleased
+* Change active region detection method to create active regions shared by all samples (STREL-710)
 
 ### Changed
 - Move changelog to markdown format (STREL-571)

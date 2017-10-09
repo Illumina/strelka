@@ -23,65 +23,199 @@
 
 #include "ActiveRegionDetector.hh"
 
+ActiveRegionDetector::ActiveRegionDetector(
+        const reference_contig_segment& ref,
+        IndelBuffer& indelBuffer,
+        CandidateSnvBuffer& candidateSnvBuffer,
+        const unsigned maxIndelSize,
+        const unsigned sampleCount) :
+        _ref(ref),
+        _sampleCount(sampleCount),
+        _sampleActiveRegionDetector(sampleCount),
+        _indelBuffer(indelBuffer),
+        _candidateSnvBuffer(candidateSnvBuffer),
+        _maxIndelSize(maxIndelSize),
+        _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
+
+{
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    {
+        _sampleActiveRegionDetector[sampleIndex].reset(
+                new SampleActiveRegionDetector(ref, indelBuffer, sampleIndex));
+    }
+}
+
+ActiveRegionReadBuffer&
+ActiveRegionDetector::getReadBuffer(const unsigned sampleIndex)
+{
+    assert (sampleIndex < _sampleCount);
+    return _sampleActiveRegionDetector[sampleIndex]->getReadBuffer();
+}
+
+ActiveRegionId
+ActiveRegionDetector::getActiveRegionId(const pos_t pos) const
+{
+    static const ActiveRegionId defaultActiveRegionId(-1);
+    return _posToActiveRegionIdMap.getConstRefDefault(pos, defaultActiveRegionId);
+}
 
 void
 ActiveRegionDetector::clearReadBuffer(const pos_t pos)
 {
-    _readBuffer.clearPos(pos);
+    for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
+    {
+        _sampleActiveRegionDetector[sampleIndex]->clearReadBuffer(pos);
+    }
 }
 
 void
-ActiveRegionDetector::clearUpToPos(const pos_t pos)
+ActiveRegionDetector::updateEndPosition(const pos_t pos)
+{
+    processExistingActiveRegion(pos);
+    for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
+    {
+        auto activeRegion = _sampleActiveRegionDetector[sampleIndex]->updateEndPosition(pos);
+        if (activeRegion)
+        {
+            updateActiveRegionRange(std::move(activeRegion));
+        }
+    }
+}
+
+void
+ActiveRegionDetector::clear()
+{
+    for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
+    {
+        auto activeRegion = _sampleActiveRegionDetector[sampleIndex]->closeActiveRegionDetector();
+        if (activeRegion)
+        {
+            updateActiveRegionRange(std::move(activeRegion));
+        }
+    }
+    if (_synchronizedActiveRegion.end_pos())
+        closeActiveRegion();
+}
+
+void
+ActiveRegionDetector::clearPosToActiveRegionIdMapUpToPos(const pos_t pos)
 {
     _posToActiveRegionIdMap.eraseTo(pos);
 }
 
+void
+ActiveRegionDetector::updateActiveRegionRange(std::unique_ptr<ActiveRegion> activeRegion)
+{
+    const ActiveRegion& sampleActiveRegion(*activeRegion);
+
+    if (_synchronizedActiveRegion.end_pos())
+    {
+        // _activeRegionRange is valid
+        _synchronizedActiveRegion.merge_range(sampleActiveRegion);
+    }
+    else
+    {
+        _synchronizedActiveRegion = sampleActiveRegion;
+    }
+}
 
 void
-ActiveRegionDetector::setPosToActiveRegionIdMap(pos_range activeRegionRange)
+ActiveRegionDetector::processExistingActiveRegion(const pos_t pos)
 {
-    if (activeRegionRange.size() > ActiveRegion::MaxRefSpanToBypassAssembly)
+    auto activeRegionEndPos(_synchronizedActiveRegion.end_pos());
+    if (activeRegionEndPos &&
+        (activeRegionEndPos <= (pos_t)(pos-ActiveRegionReadBuffer::MaxAssemblyPadding)))
+    {
+        bool canCloseActiveRegion(true);
+        for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
+        {
+            const auto unclosedActiveRegionStartPos(getSampleActiveRegionDetector(sampleIndex).getActiveRegionStartPos());
+            if ((unclosedActiveRegionStartPos >= 0) && (unclosedActiveRegionStartPos < activeRegionEndPos-1))
+            {
+                canCloseActiveRegion = false;
+                break;
+            }
+        }
+
+        if (canCloseActiveRegion)
+            closeActiveRegion();
+    }
+}
+
+void
+ActiveRegionDetector::closeActiveRegion()
+{
+    assert (_synchronizedActiveRegion.size() > 0);
+    for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
+    {
+        ActiveRegionProcessor activeRegionProcessor(_synchronizedActiveRegion,
+                                  _ref, _maxIndelSize, sampleIndex,
+                                  _aligner, _sampleActiveRegionDetector[sampleIndex]->getReadBuffer(),
+                                  _indelBuffer, _candidateSnvBuffer);
+        activeRegionProcessor.processHaplotypes();
+    }
+    setPosToActiveRegionIdMap(_synchronizedActiveRegion);
+    _synchronizedActiveRegion.clear();
+}
+
+SampleActiveRegionDetector&
+ActiveRegionDetector::getSampleActiveRegionDetector(unsigned sampleIndex)
+{
+    assert(sampleIndex < _sampleCount);
+    return *(_sampleActiveRegionDetector[sampleIndex]);
+}
+
+
+void
+ActiveRegionDetector::setPosToActiveRegionIdMap(const ActiveRegion& activeRegionRange)
+{
+    if (activeRegionRange.size() > ActiveRegionProcessor::MaxRefSpanToBypassAssembly)
         return;
 
-    ActiveRegionId activeRegionId(activeRegionRange.begin_pos);
-    for (pos_t pos(activeRegionRange.begin_pos); pos<activeRegionRange.end_pos; ++pos)
+    ActiveRegionId activeRegionId(activeRegionRange.begin_pos());
+    for (pos_t pos(activeRegionRange.begin_pos()); pos<activeRegionRange.end_pos(); ++pos)
     {
         _posToActiveRegionIdMap.getRef(pos) = activeRegionId;
     }
 }
 
-
+void
+SampleActiveRegionDetector::clearCoordinates()
+{
+    _prevAnchorPos = -1;
+    _activeRegionStartPos = -1;
+    _anchorPosFollowingPrevVariant = -1;
+    _prevVariantPos = -1;
+    _numVariants = 0;
+}
 
 void
-ActiveRegionDetector::processActiveRegion()
+SampleActiveRegionDetector::clearReadBuffer(const pos_t pos)
 {
-    if (_activeRegion != nullptr)
-    {
-        _activeRegion->processHaplotypes();
-        _activeRegion.reset();
-    }
+    _readBuffer.clearPos(pos);
 }
 
 
-void
-ActiveRegionDetector::closeExistingActiveRegion()
+
+std::unique_ptr<ActiveRegion>
+SampleActiveRegionDetector::createActiveRegion()
 {
     // close the existing active region
     assert (_activeRegionStartPos < _anchorPosFollowingPrevVariant);
 
-    pos_range activeRegionRange(_activeRegionStartPos, _anchorPosFollowingPrevVariant + 1);
-    _activeRegion.reset(new ActiveRegion(activeRegionRange, _ref, _maxIndelSize, _sampleIndex,
-                                _aligner, _readBuffer, _indelBuffer, _candidateSnvBuffer));
-    setPosToActiveRegionIdMap(activeRegionRange);
+    auto activeRegionStartPos(_activeRegionStartPos);
+    auto activeRegionEndPos(_anchorPosFollowingPrevVariant);
 
     // we have no existing active region at this point
     _numVariants = 0;
     _activeRegionStartPos = 0;
+
+    return std::unique_ptr<ActiveRegion>(new ActiveRegion(activeRegionStartPos, activeRegionEndPos+1));
 }
 
 
-void
-ActiveRegionDetector::updateEndPosition(const pos_t pos)
+std::unique_ptr<ActiveRegion>
+SampleActiveRegionDetector::updateEndPosition(const pos_t pos)
 {
     _readBuffer.setEndPos(pos+1);
 
@@ -93,14 +227,8 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
         _isBeginning = false;
     }
 
-    // process and pop active regions
-    if ((_activeRegion != nullptr) and (_activeRegion->getEndPosition() <= (pos_t)(pos-ActiveRegionReadBuffer::MaxAssemblyPadding)))
-    {
-        processActiveRegion();
-    }
-
     pos_t posToProcess(pos-1);
-    if (posToProcess < 0) return;
+    if (posToProcess < 0) return nullptr;
 
 
     bool isCurrentPosCandidateVariant = _readBuffer.isCandidateVariant(posToProcess);
@@ -114,16 +242,17 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
 
     const bool isAnchor = _readBuffer.isAnchor(posToProcess) and (not isCurrentPosCandidateVariant);
 
-    if (!isCurrentPosCandidateVariant and !isAnchor) return;
+    if (!isCurrentPosCandidateVariant and !isAnchor) return nullptr;
 
 //    std::cout << (posToProcess+1) << "\t" << isCurrentPosCandidateVariant << '\t' << isAnchor << std::endl;
 
     unsigned distanceFromPrevVariant = (unsigned) (posToProcess - _prevVariantPos);
+    std::unique_ptr<ActiveRegion> activeRegion;
     if (distanceFromPrevVariant > MaxDistanceBetweenTwoVariants and _anchorPosFollowingPrevVariant >= 0)
     {
         if (_numVariants >= MinNumVariantsPerRegion )
         {
-            closeExistingActiveRegion();
+            activeRegion = createActiveRegion();
         }
         else
         {
@@ -156,12 +285,16 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
         _prevVariantPos = posToProcess;
         _anchorPosFollowingPrevVariant = -1;
     }
+
+    return activeRegion;
 }
 
-void ActiveRegionDetector::clear()
+std::unique_ptr<ActiveRegion>
+SampleActiveRegionDetector::closeActiveRegionDetector()
 {
-    if (_isBeginning) return;
+    if (_isBeginning) return nullptr;
 
+    std::unique_ptr<ActiveRegion> activeRegion;
     if (_numVariants >= MinNumVariantsPerRegion)
     {
         bool isStartPosUndetermined = (_activeRegionStartPos < 0);
@@ -176,14 +309,11 @@ void ActiveRegionDetector::clear()
                 _activeRegionStartPos = _readBuffer.getBeginPos();
             if (isEndPosUndetermined)
                 _anchorPosFollowingPrevVariant = (_readBuffer.getEndPos()-1);
-            closeExistingActiveRegion();
+            activeRegion = createActiveRegion();
         }
     }
 
-    processActiveRegion();
+    clearCoordinates();
 
-    _activeRegionStartPos = -1;
-    _anchorPosFollowingPrevVariant = -1;
-    _prevVariantPos = -1;
-    _numVariants = 0;
+    return std::move(activeRegion);
 }

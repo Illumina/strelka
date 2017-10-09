@@ -119,7 +119,7 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     ActiveRegionReadBuffer&
     getActiveRegionReadBuffer(const unsigned sampleIndex)
     {
-        return _getActiveRegionDetector(sampleIndex).getReadBuffer();
+        return _getActiveRegionDetector().getReadBuffer(sampleIndex);
     }
 
     /// in range [begin,end), is the estimated depth always below
@@ -392,20 +392,19 @@ protected:
     }
 
     const ActiveRegionDetector&
-    getActiveRegionDetector(const unsigned sampleIndex) const
+    getActiveRegionDetector() const
     {
-        assert (_activeRegionDetector[sampleIndex]);
-        return *_activeRegionDetector[sampleIndex];
+        assert (_activeRegionDetector);
+        return *_activeRegionDetector;
     }
 
 private:
     ActiveRegionDetector&
-    _getActiveRegionDetector(const unsigned sampleIndex)
+    _getActiveRegionDetector() const
     {
-        assert (_activeRegionDetector[sampleIndex]);
-        return *_activeRegionDetector[sampleIndex];
+        assert (_activeRegionDetector);
+        return *_activeRegionDetector;
     }
-
     void
     insert_pos_submap_count(const pos_t pos,
                             const unsigned sample_no);
@@ -660,5 +659,5 @@ protected:
 private:
     IndelBuffer _indelBuffer;
     CandidateSnvBuffer _candidateSnvBuffer;
-    std::vector<std::unique_ptr<ActiveRegionDetector>> _activeRegionDetector;
+    std::unique_ptr<ActiveRegionDetector> _activeRegionDetector;
 };

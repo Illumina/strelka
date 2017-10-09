@@ -21,7 +21,7 @@
 /// \author Sangtae Kim
 ///
 
-#include "ActiveRegion.hh"
+#include "ActiveRegionProcessor.hh"
 
 #include "assembly/IterativeAssembler.hh"
 #include "blt_util/algo_util.hh"
@@ -32,11 +32,11 @@
 // compile with this macro to get verbose output:
 //#define DEBUG_ACTIVE_REGION
 
-void ActiveRegion::processHaplotypes()
+void ActiveRegionProcessor::processHaplotypes()
 {
     // Check whether the active region is included in the read buffer
-    const bool isRangeValid = (_posRange.begin_pos >= _readBuffer.getBeginPos())
-                              && (_posRange.end_pos <= _readBuffer.getEndPos());
+    const bool isRangeValid = (_posRange.begin_pos() >= _readBuffer.getBeginPos())
+                              && (_posRange.end_pos() <= _readBuffer.getEndPos());
 
     // if the active region is not included in the read buffer or if it is too large,
     // bypass haplotyping
@@ -62,7 +62,7 @@ void ActiveRegion::processHaplotypes()
     }
 }
 
-bool ActiveRegion::processHaplotypesWithCounting()
+bool ActiveRegionProcessor::processHaplotypesWithCounting()
 {
     static const bool includePartialReads(false);
     ActiveRegionReadInfo readInfo;
@@ -91,8 +91,8 @@ bool ActiveRegion::processHaplotypesWithCounting()
 
 #ifdef DEBUG_ACTIVE_REGION
     std::string refStr;
-    _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
-    std::cerr << _sampleIndex << "\t" << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tCounting"<< std::endl;
+    _ref.get_substring(_posRange.begin_pos(), _posRange.size(), refStr);
+    std::cerr << _sampleIndex << "\t" << _posRange.begin_pos()+1 << '\t' << _posRange.end_pos() << '\t' << refStr << "\tCounting"<< std::endl;
 #endif
 
     /// \TODO Consider whether we should pass in the total reads touching the active region (readInfo.numReadsAlignedToActiveRegion)
@@ -104,17 +104,17 @@ bool ActiveRegion::processHaplotypesWithCounting()
 }
 
 
-bool ActiveRegion::processHaplotypesWithAssembly()
+bool ActiveRegionProcessor::processHaplotypesWithAssembly()
 {
     // Expand the region to include left/right anchors.
     // TODO: anchors may be too short if there are SNVs close to anchors
     // prefix anchor
     pos_t minBeginPos(0u);
-    if (_posRange.begin_pos > ActiveRegionReadBuffer::MaxAssemblyPadding)
-        minBeginPos = _posRange.begin_pos - ActiveRegionReadBuffer::MaxAssemblyPadding;
+    if (_posRange.begin_pos() > ActiveRegionReadBuffer::MaxAssemblyPadding)
+        minBeginPos = _posRange.begin_pos() - ActiveRegionReadBuffer::MaxAssemblyPadding;
     minBeginPos = std::max(_readBuffer.getBeginPos(), minBeginPos);
 
-    pos_t beginPos(_posRange.begin_pos);
+    pos_t beginPos(_posRange.begin_pos());
     for (; beginPos > minBeginPos; --beginPos)
     {
         // anchor should not include a variant position
@@ -122,8 +122,8 @@ bool ActiveRegion::processHaplotypesWithAssembly()
     }
 
     // suffix anchor
-    pos_t maxEndPos = std::min(_readBuffer.getEndPos(), _posRange.end_pos + ActiveRegionReadBuffer::MaxAssemblyPadding);
-    pos_t endPos(_posRange.end_pos);
+    pos_t maxEndPos = std::min(_readBuffer.getEndPos(), _posRange.end_pos() + ActiveRegionReadBuffer::MaxAssemblyPadding);
+    pos_t endPos(_posRange.end_pos());
     for (; endPos < maxEndPos; ++endPos)
     {
         if (_readBuffer.isCandidateVariant(endPos)) break;
@@ -131,18 +131,18 @@ bool ActiveRegion::processHaplotypesWithAssembly()
 
     // prefix anchor ends with the first base of the active region
     std::string prefixAnchor;
-    _ref.get_substring(beginPos, _posRange.begin_pos - beginPos + 1, prefixAnchor);
+    _ref.get_substring(beginPos, _posRange.begin_pos() - beginPos + 1, prefixAnchor);
 
     // suffix anchor starts with the last base of the active region
     std::string suffixAnchor;
-    _ref.get_substring(_posRange.end_pos-1, endPos-_posRange.end_pos + 1, suffixAnchor);
+    _ref.get_substring(_posRange.end_pos()-1, endPos-_posRange.end_pos() + 1, suffixAnchor);
 
     unsigned minReadSegmentLength((unsigned int) (prefixAnchor.size() + suffixAnchor.size()));
 
     // get read segments
     static const bool includePartialReads(true);
     ActiveRegionReadInfo readInfo;
-    _readBuffer.getReadSegments(pos_range(beginPos, endPos), readInfo, includePartialReads, minReadSegmentLength);
+    _readBuffer.getReadSegments(known_pos_range2(beginPos, endPos), readInfo, includePartialReads, minReadSegmentLength);
 
     /// \TODO: In the check below, it may be more consistent to replace "numReadsAlignedToActiveRegion" with the count
     ///        of reads which are eligible to go into the assembler: "readSegmentsForHaplotypeGeneration.size()"
@@ -179,7 +179,7 @@ bool ActiveRegion::processHaplotypesWithAssembly()
     assembleOption.minWordLength = minReadSegmentLength;
 
     // maxWordLength must not be smaller than minWordLength.
-    unsigned maxWordLength(std::max(minReadSegmentLength, ActiveRegion::MaxAssemblyWordSize));
+    unsigned maxWordLength(std::max(minReadSegmentLength, ActiveRegionProcessor::MaxAssemblyWordSize));
     assembleOption.maxWordLength = maxWordLength;
     assembleOption.minCoverage = MinAssemblyCoverage;
 
@@ -197,10 +197,10 @@ bool ActiveRegion::processHaplotypesWithAssembly()
     bool isNonRefHaplotypeFound(false);
 
     std::string refStr;
-    _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
+    _ref.get_substring(_posRange.begin_pos(), _posRange.size(), refStr);
 
 #ifdef DEBUG_ACTIVE_REGION
-    std::cerr << _sampleIndex << "\t" << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << '\t' << refStr << "\tAssembly"<< std::endl;
+    std::cerr << _sampleIndex << "\t" << _posRange.begin_pos()+1 << '\t' << _posRange.end_pos() << '\t' << refStr << "\tAssembly"<< std::endl;
 #endif
 
     for (unsigned contigIndex(0); contigIndex<contigs.size(); ++contigIndex)
@@ -254,16 +254,16 @@ bool ActiveRegion::processHaplotypesWithAssembly()
     return true;
 }
 
-void ActiveRegion::doNotUseHaplotyping()
+void ActiveRegionProcessor::doNotUseHaplotyping()
 {
 #ifdef DEBUG_ACTIVE_REGION
-    std::cerr << _sampleIndex << "\t" << _posRange.begin_pos+1 << '\t' << _posRange.end_pos << "\tBypass"<< std::endl;
+    std::cerr << _sampleIndex << "\t" << _posRange.begin_pos()+1 << '\t' << _posRange.end_pos() << "\tBypass"<< std::endl;
 #endif
 
-    assert(_posRange.end_pos > _posRange.begin_pos);
+    assert(_posRange.end_pos() > _posRange.begin_pos());
 
-    auto it(_indelBuffer.positionIterator(_posRange.begin_pos));
-    const auto it_end(_indelBuffer.positionIterator(_posRange.end_pos));
+    auto it(_indelBuffer.positionIterator(_posRange.begin_pos()));
+    const auto it_end(_indelBuffer.positionIterator(_posRange.end_pos()));
 
     for (; it!=it_end; ++it)
     {
@@ -399,7 +399,7 @@ isFilterSecondHaplotypeAsSequencerPhasingNoise(
 
 
 
-void ActiveRegion::processSelectedHaplotypes(
+void ActiveRegionProcessor::processSelectedHaplotypes(
     HaplotypeToAlignIdSet& haplotypeToAlignIdSet,
     const unsigned totalNumHaplotypingReads)
 {
@@ -414,7 +414,7 @@ void ActiveRegion::processSelectedHaplotypes(
     std::vector<std::unique_ptr<std::string>> secondBestHaplotypePtrList;
 
     std::string refStr;
-    _ref.get_substring(_posRange.begin_pos, _posRange.size(), refStr);
+    _ref.get_substring(_posRange.begin_pos(), _posRange.size(), refStr);
 
     for (const auto& entry : haplotypeToAlignIdSet)
     {
@@ -511,20 +511,20 @@ void ActiveRegion::processSelectedHaplotypes(
     }
 }
 
-void ActiveRegion::convertToPrimitiveAlleles(
+void ActiveRegionProcessor::convertToPrimitiveAlleles(
     const std::string& haploptypeSeq,
     const std::vector<align_id_t>& alignIdList,
     const unsigned totalNumHaplotypingReads,
     const uint8_t haplotypeId)
 {
     std::string reference;
-    _ref.get_substring(_posRange.begin_pos, _posRange.size(), reference);
+    _ref.get_substring(_posRange.begin_pos(), _posRange.size(), reference);
     if (reference == haploptypeSeq)
         return;
 
     pos_t referencePos;
     AlignmentResult<int> result;
-    referencePos = _posRange.begin_pos;
+    referencePos = _posRange.begin_pos();
 
     // Note that the aligner already left-shifts indels, but extra left-shifting is implemented below
     // because of reference edge artifacts, for example:

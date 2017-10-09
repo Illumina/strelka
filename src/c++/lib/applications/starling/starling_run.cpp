@@ -328,7 +328,7 @@ starling_run(
     unsigned supplementalRegionBorderSize(opt.maxIndelSize);
     if (opt.is_short_haplotyping_enabled)
     {
-        supplementalRegionBorderSize += ActiveRegion::MaxRefSpanToBypassAssembly;
+        supplementalRegionBorderSize += ActiveRegionProcessor::MaxRefSpanToBypassAssembly;
     }
     const auto& referenceAlignmentFilename(opt.alignFileOpt.alignmentFilenames.front());
     std::vector<AnalysisRegionInfo> regionInfoList;

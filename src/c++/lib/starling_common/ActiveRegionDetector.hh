@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "ActiveRegion.hh"
+#include "ActiveRegionProcessor.hh"
 #include "blt_util/blt_types.hh"
 #include "starling_read_segment.hh"
 #include "IndelBuffer.hh"
@@ -41,18 +41,19 @@
 /// ends at an 'anchor' point, a non-STR region appropriate for defining the endpoint of an active region so as to
 /// avoid common artifacts associated with partial representation of an STR.
 ///
+/// Active regions are synchronized and shared by all samples. 
+///
 /// A major supporting component of the detector is the ActiveRegionReadBuffer, which does not store reads directly
 /// but tracks variant and soft-clipping events per-position, and the associated read ids supporting each event.
 ///
+
+class SampleActiveRegionDetector;
+
+typedef known_pos_range2 ActiveRegion;
+
 class ActiveRegionDetector
 {
 public:
-    /// max distance between two variants to be placed in the same active region
-    static const unsigned MaxDistanceBetweenTwoVariants = 13u;
-
-    /// min number of variants to form an active region
-    static const unsigned MinNumVariantsPerRegion = 2u;
-
     // alignment scores, same as bwa default values
     static const int ScoreMatch = 1;
     static const int ScoreMismatch = -4;
@@ -60,32 +61,99 @@ public:
     static const int ScoreExtend = -1;
     static const int ScoreOffEdge = -100;
 
+    /// Coordinates active region creation in all samples
+    /// \param ref reference
+    /// \param indelBuffer indel buffer
+    /// \param candidateSnvBuffer candidate SNV buffer
+    /// \param maxIndelSize maximum indel size
+    /// \param sampleCount total sample count
+    ActiveRegionDetector(
+            const reference_contig_segment& ref,
+            IndelBuffer& indelBuffer,
+            CandidateSnvBuffer& candidateSnvBuffer,
+            const unsigned maxIndelSize,
+            const unsigned sampleCount);
+
+    /// Gets an active region read buffer for the specified sample
+    /// \param sampleIndex sample index
+    ActiveRegionReadBuffer& getReadBuffer(const unsigned sampleIndex);
+
+    /// Gets an active region ID for the specified position
+    /// \param pos reference position
+    /// \return active region ID or -1 if pos is not in an active region
+    ActiveRegionId getActiveRegionId(const pos_t pos) const;
+
+    /// Update the active region end position. Creates an active region if needed.
+    /// \param pos reference position
+    void updateEndPosition(const pos_t pos);
+
+    /// Clear the detector. Create an active region if there exists an unclosed one.
+    void clear();
+
+    /// Clear the active region read buffer at pos
+    void clearReadBuffer(const pos_t pos);
+
+    /// Clear the position to active region map
+    void clearPosToActiveRegionIdMapUpToPos(const pos_t pos);
+private:
+    const reference_contig_segment& _ref;
+    const unsigned _sampleCount;
+    std::vector<std::unique_ptr<SampleActiveRegionDetector>> _sampleActiveRegionDetector;
+    IndelBuffer& _indelBuffer;
+    CandidateSnvBuffer& _candidateSnvBuffer;
+    const unsigned _maxIndelSize;
+    // aligner to be used in active regions
+    GlobalAligner<int> _aligner;
+
+    ActiveRegion _synchronizedActiveRegion;
+    RangeMap<pos_t, ActiveRegionId> _posToActiveRegionIdMap;
+
+    SampleActiveRegionDetector& getSampleActiveRegionDetector(unsigned sampleIndex);
+    void setPosToActiveRegionIdMap(const ActiveRegion& activeRegionRange);
+    void updateActiveRegionRange(std::unique_ptr<ActiveRegion> activeRegion);
+    void processExistingActiveRegion(const pos_t pos);
+    void closeActiveRegion();
+};
+
+/// This class is responsible for detection of active regions for the specified sample
+/// All the methods are accessed by ActiveRegionDetector
+class SampleActiveRegionDetector
+{
+    friend class ActiveRegionDetector;
+
+private:
+    /// max distance between two variants to be placed in the same active region
+    static const unsigned MaxDistanceBetweenTwoVariants = 13u;
+
+    /// min number of variants to form an active region
+    static const unsigned MinNumVariantsPerRegion = 2u;
+
     /// Creates an object that reads variant information and creates active regions
     /// \param ref reference segment
     /// \param indelBuffer indel buffer
     /// \param maxIndelSize maximum indel size
     /// \param sampleIndex sample Id
-    ActiveRegionDetector(
-        const reference_contig_segment& ref,
-        IndelBuffer& indelBuffer,
-        CandidateSnvBuffer& candidateSnvBuffer,
-        unsigned maxIndelSize,
-        unsigned sampleIndex) :
-        _ref(ref),
-        _readBuffer(ref, indelBuffer),
-        _indelBuffer(indelBuffer),
-        _candidateSnvBuffer(candidateSnvBuffer),
-        _maxIndelSize(maxIndelSize),
-        _sampleIndex(sampleIndex),
-        _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
+    SampleActiveRegionDetector(
+            const reference_contig_segment& ref,
+            IndelBuffer& indelBuffer,
+            const unsigned sampleIndex) :
+            _ref(ref),
+            _readBuffer(ref, indelBuffer),
+            _sampleIndex(sampleIndex)
     {
         _isBeginning = true;
-        _activeRegionStartPos = -1;
-        _anchorPosFollowingPrevVariant = 1;
-        _prevAnchorPos = -1;
-        _prevVariantPos = -1;
-        _numVariants = 0;
+        clearCoordinates();
     }
+
+    /// Update the active region end position. Creates an active region if needed.
+    /// \param pos reference position
+    /// \return true if a new active region is created
+    std::unique_ptr<ActiveRegion> updateEndPosition(const pos_t pos);
+
+    /// Clear active region detector
+    /// It may create an active region if there's unclosed one.
+    /// \return an active regino object if a new active region is created
+    std::unique_ptr<ActiveRegion> closeActiveRegionDetector();
 
     /// Gets the read buffer
     /// \return read buffer
@@ -94,34 +162,26 @@ public:
         return _readBuffer;
     }
 
-    ActiveRegionId getActiveRegionId(const pos_t pos) const
-    {
-        static const ActiveRegionId defaultActiveRegionId(-1);
-        return _posToActiveRegionIdMap.getConstRefDefault(pos, defaultActiveRegionId);
-    }
+    void clearCoordinates();
 
     void clearReadBuffer(const pos_t pos);
 
-    /// update the active region end position. Creates an active region if needed.
-    /// \param pos reference position
-    void updateEndPosition(const pos_t pos);
 
-    /// clear active region detector
-    void clear();
+    pos_t getActiveRegionStartPos() const
+    {
+        return _activeRegionStartPos;
+    }
 
-    void clearUpToPos(const pos_t pos);
+    std::unique_ptr<ActiveRegion> createActiveRegion();
 
-private:
     const reference_contig_segment& _ref;
     ActiveRegionReadBuffer _readBuffer;
-
-    IndelBuffer& _indelBuffer;
-    CandidateSnvBuffer& _candidateSnvBuffer;
-
-    const unsigned _maxIndelSize;
     const unsigned _sampleIndex;
 
+    /// true if updateEndPosition(pos) has not been called.
     bool _isBeginning;
+
+    // An active region is created between [_activeRegionStartPos, _anchorPosFollowingPrevVariant
     pos_t _activeRegionStartPos;
     pos_t _anchorPosFollowingPrevVariant;
 
@@ -134,17 +194,4 @@ private:
 
     /// The number of variants identified so far in the current candidate active region
     unsigned _numVariants;
-
-    std::unique_ptr<ActiveRegion> _activeRegion;
-
-    // aligner to be used in active regions
-    GlobalAligner<int> _aligner;
-
-    RangeMap<pos_t, ActiveRegionId> _posToActiveRegionIdMap;
-
-    void setPosToActiveRegionIdMap(pos_range activeRegionRange);
-    void processActiveRegion();
-
-    void closeExistingActiveRegion();
 };
-
