@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include <blt_util/reference_contig_segment.hh>
 #include <vector>
-#include <blt_util/known_pos_range2.hh>
+#include "blt_util/reference_contig_segment.hh"
+#include "blt_util/known_pos_range2.hh"
 #include "starling_types.hh"
 #include "indel.hh"
 #include "IndelBuffer.hh"

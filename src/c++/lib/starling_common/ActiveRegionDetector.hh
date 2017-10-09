@@ -109,7 +109,7 @@ private:
     RangeMap<pos_t, ActiveRegionId> _posToActiveRegionIdMap;
 
     SampleActiveRegionDetector& getSampleActiveRegionDetector(unsigned sampleIndex);
-    void setPosToActiveRegionIdMap(ActiveRegion activeRegionRange);
+    void setPosToActiveRegionIdMap(const ActiveRegion& activeRegionRange);
     void updateActiveRegionRange(std::unique_ptr<ActiveRegion> activeRegion);
     void processExistingActiveRegion(const pos_t pos);
     void closeActiveRegion();
@@ -152,8 +152,8 @@ private:
 
     /// Clear active region detector
     /// It may create an active region if there's unclosed one.
-    /// \return true if a new active region is created
-    std::unique_ptr<ActiveRegion> clear();
+    /// \return an active regino object if a new active region is created
+    std::unique_ptr<ActiveRegion> closeActiveRegionDetector();
 
     /// Gets the read buffer
     /// \return read buffer

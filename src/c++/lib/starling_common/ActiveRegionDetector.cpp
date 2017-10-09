@@ -68,8 +68,6 @@ ActiveRegionDetector::clearReadBuffer(const pos_t pos)
     }
 }
 
-/// update the active region end position. Creates an active region if needed.
-/// \param pos reference position
 void
 ActiveRegionDetector::updateEndPosition(const pos_t pos)
 {
@@ -84,13 +82,12 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
     }
 }
 
-/// clear active region detector
 void
 ActiveRegionDetector::clear()
 {
     for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
     {
-        auto activeRegion = _sampleActiveRegionDetector[sampleIndex]->clear();
+        auto activeRegion = _sampleActiveRegionDetector[sampleIndex]->closeActiveRegionDetector();
         if (activeRegion)
         {
             updateActiveRegionRange(std::move(activeRegion));
@@ -109,7 +106,7 @@ ActiveRegionDetector::clearPosToActiveRegionIdMapUpToPos(const pos_t pos)
 void
 ActiveRegionDetector::updateActiveRegionRange(std::unique_ptr<ActiveRegion> activeRegion)
 {
-    const auto& sampleActiveRegion(*activeRegion);
+    const ActiveRegion& sampleActiveRegion(*activeRegion);
 
     if (_synchronizedActiveRegion.end_pos())
     {
@@ -132,8 +129,8 @@ ActiveRegionDetector::processExistingActiveRegion(const pos_t pos)
         bool canCloseActiveRegion(true);
         for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
         {
-            auto unclosedActiveRegionStartPos(getSampleActiveRegionDetector(sampleIndex).getActiveRegionStartPos());
-            if (unclosedActiveRegionStartPos >= 0 && unclosedActiveRegionStartPos < activeRegionEndPos-1)
+            const auto unclosedActiveRegionStartPos(getSampleActiveRegionDetector(sampleIndex).getActiveRegionStartPos());
+            if ((unclosedActiveRegionStartPos >= 0) && (unclosedActiveRegionStartPos < activeRegionEndPos-1))
             {
                 canCloseActiveRegion = false;
                 break;
@@ -170,7 +167,7 @@ ActiveRegionDetector::getSampleActiveRegionDetector(unsigned sampleIndex)
 
 
 void
-ActiveRegionDetector::setPosToActiveRegionIdMap(ActiveRegion activeRegionRange)
+ActiveRegionDetector::setPosToActiveRegionIdMap(const ActiveRegion& activeRegionRange)
 {
     if (activeRegionRange.size() > ActiveRegionProcessor::MaxRefSpanToBypassAssembly)
         return;
@@ -293,9 +290,9 @@ SampleActiveRegionDetector::updateEndPosition(const pos_t pos)
 }
 
 std::unique_ptr<ActiveRegion>
-SampleActiveRegionDetector::clear()
+SampleActiveRegionDetector::closeActiveRegionDetector()
 {
-    if (_isBeginning) return false;
+    if (_isBeginning) return nullptr;
 
     std::unique_ptr<ActiveRegion> activeRegion;
     if (_numVariants >= MinNumVariantsPerRegion)
