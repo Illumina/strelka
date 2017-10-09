@@ -58,7 +58,7 @@ This is a major feature update from v2.7.1
 - STREL-577 Fix bug creating negative size active regions
 - STREL-553 Standardize somatic EVS features
 - STREL-564 Add filter preventing low depth PASS calls
-- STREL-567 Change readConfidentSupportThreshold to 0.51 
+- STREL-567 Change readConfidentSupportThreshold to 0.51
 - STREL-524 Retrain germline EVS
 - STREL-519 Fix callRegions option thread utilization
 - STREL-459 Retain optimal soft-clipping for RNA analysis
@@ -75,7 +75,7 @@ This is a major feature update from v2.7.1
 - STREL-178 Replace codon phaser with variant phaser
 - STREL-356 Allow BED file to restrict variant calling regions
 - STREL-392 Fix overlap del handling across segments
-- STREL-405 Fix overcounting issue in error stats module 
+- STREL-405 Fix overcounting issue in error stats module
 - STREL-401 Remove read edge events from error stats module
 - STREL-342 Use assembly to generate haplotypes in long active regions
 - STREL-251 Enable automatic germline EVS calibration
@@ -108,7 +108,7 @@ This is a major feature update from v2.7.1
 - STREL-158 Support multi-sample in standard germline analysis
 - STREL-218 Tune indel parameters for improved het/hom ratio
 - STREL-216 Relax normalization requirement for indel candidates to a warning
-- STREL-198 Update germline EVS using mixed training data (variety of platforms/chemistries/depths) 
+- STREL-198 Update germline EVS using mixed training data (variety of platforms/chemistries/depths)
 - STREL-154 Adjust active window size depending on neighboring sequences
 - STREL-188 Haplotype generation includes soft-clipped reads
 ## v2.6.0
@@ -146,7 +146,7 @@ This is a major feature update from v2.7.1
 - STREL-27 refactor indel candidacy to uniformly test all indel types
 - STREL-24 fix off-by-one error in test leading to extra candidate indel noise
 - STARKA-388 add ADF/ADR tags to gVCF output
-- STARKA-393 stabilize forced long del genotyping in gVCF aggregator 
+- STARKA-393 stabilize forced long del genotyping in gVCF aggregator
 - STARKA-351 reorg all strelka documentation
 - PED-33 Forced outputs of SNVs for pedicure workflow
 - STARKA-310 train somatic EVS model from features in VCF output
@@ -155,7 +155,7 @@ This is a major feature update from v2.7.1
 - PED-48 bcftools compatibility in VCF, better sample naming
 - STARKA-335 restore breakend filters for germline gVCF output
 - PED Multi-sample calling introduced for SNVs and Indel + PL field added (tickets PED10-19)
-- STARKA-317 Enable CRAM input, improve per-chrom depth estimation 
+- STARKA-317 Enable CRAM input, improve per-chrom depth estimation
 - STARKA-306 fix rare chunk size boundary defect in RangeMap
 - STARKA-323 refactor STARKA-293 to allow reuse of general accelerated binom
 test

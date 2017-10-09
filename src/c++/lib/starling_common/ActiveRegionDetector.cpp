@@ -24,24 +24,24 @@
 #include "ActiveRegionDetector.hh"
 
 ActiveRegionDetector::ActiveRegionDetector(
-        const reference_contig_segment& ref,
-        IndelBuffer& indelBuffer,
-        CandidateSnvBuffer& candidateSnvBuffer,
-        const unsigned maxIndelSize,
-        const unsigned sampleCount) :
-        _ref(ref),
-        _sampleCount(sampleCount),
-        _sampleActiveRegionDetector(sampleCount),
-        _indelBuffer(indelBuffer),
-        _candidateSnvBuffer(candidateSnvBuffer),
-        _maxIndelSize(maxIndelSize),
-        _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
+    const reference_contig_segment& ref,
+    IndelBuffer& indelBuffer,
+    CandidateSnvBuffer& candidateSnvBuffer,
+    const unsigned maxIndelSize,
+    const unsigned sampleCount) :
+    _ref(ref),
+    _sampleCount(sampleCount),
+    _sampleActiveRegionDetector(sampleCount),
+    _indelBuffer(indelBuffer),
+    _candidateSnvBuffer(candidateSnvBuffer),
+    _maxIndelSize(maxIndelSize),
+    _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
 
 {
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         _sampleActiveRegionDetector[sampleIndex].reset(
-                new SampleActiveRegionDetector(ref, indelBuffer));
+            new SampleActiveRegionDetector(ref, indelBuffer));
     }
 }
 
@@ -149,9 +149,9 @@ ActiveRegionDetector::closeActiveRegion()
     for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
     {
         ActiveRegionProcessor activeRegionProcessor(_synchronizedActiveRegion,
-                                  _ref, _maxIndelSize, sampleIndex,
-                                  _aligner, _sampleActiveRegionDetector[sampleIndex]->getReadBuffer(),
-                                  _indelBuffer, _candidateSnvBuffer);
+                                                    _ref, _maxIndelSize, sampleIndex,
+                                                    _aligner, _sampleActiveRegionDetector[sampleIndex]->getReadBuffer(),
+                                                    _indelBuffer, _candidateSnvBuffer);
         activeRegionProcessor.processHaplotypes();
     }
     setPosToActiveRegionIdMap(_synchronizedActiveRegion);
@@ -319,3 +319,4 @@ SampleActiveRegionDetector::closeActiveRegionDetector()
 
     return activeRegion;
 }
+

@@ -72,14 +72,15 @@ public:
     /// \param indelBuffer indel buffer
     /// \param candidateSnvBuffer candidate SNV buffer
     /// \return active region object
-    ActiveRegionProcessor(const known_pos_range2& posRange,
-                 const reference_contig_segment& ref,
-                 const unsigned maxIndelSize,
-                 const unsigned sampleIndex,
-                 const GlobalAligner<int>& aligner,
-                 const ActiveRegionReadBuffer& readBuffer,
-                 IndelBuffer& indelBuffer,
-                 CandidateSnvBuffer& candidateSnvBuffer):
+    ActiveRegionProcessor(
+        const known_pos_range2& posRange,
+        const reference_contig_segment& ref,
+        const unsigned maxIndelSize,
+        const unsigned sampleIndex,
+        const GlobalAligner<int>& aligner,
+        const ActiveRegionReadBuffer& readBuffer,
+        IndelBuffer& indelBuffer,
+        CandidateSnvBuffer& candidateSnvBuffer):
         _posRange(posRange), _ref(ref), _maxIndelSize(maxIndelSize), _sampleIndex(sampleIndex),
         _aligner(aligner), _readBuffer(readBuffer), _indelBuffer(indelBuffer), _candidateSnvBuffer(candidateSnvBuffer)
     {

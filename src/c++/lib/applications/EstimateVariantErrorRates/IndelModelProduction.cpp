@@ -235,7 +235,7 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
           _obs(observations),
           _isLockTheta(isLockTheta)
     {}
-    
+
     unsigned dim() const override
     {
         return (_isLockTheta ? (MIN_PARAMS3::SIZE-1) : MIN_PARAMS3::SIZE);
@@ -497,29 +497,33 @@ estimateIndelErrorRates()
 
 
 IndelErrorModelJson
-IndelModelProduction::generateIndelErrorModelJson() const {
+IndelModelProduction::generateIndelErrorModelJson() const
+{
     IndelErrorModelBinomialMixture model;
     // add the non-STR params to all contexts with repeat count 1
     // this will show up as valid contexts during variant calling so we need to fill in these gaps
-    for (unsigned repeatPatternIndex = 0; repeatPatternIndex < _repeatPatterns.size(); repeatPatternIndex++) {
+    for (unsigned repeatPatternIndex = 0; repeatPatternIndex < _repeatPatterns.size(); repeatPatternIndex++)
+    {
         model.addMotif(IndelMotifBinomialMixture(_repeatPatterns[repeatPatternIndex],
                                                  1,
                                                  std::exp(_nonSTRModelParams.logErrorRate),
                                                  std::exp(_nonSTRModelParams.logNoisyLocusRate))
-        );
+                      );
     }
 
     // add motif to json for all contexts
-    for (unsigned repeatPatternIndex = 0; repeatPatternIndex < _repeatPatterns.size(); repeatPatternIndex++) {
-        const AdaptiveIndelErrorModel &errorModel(_adaptiveIndelErrorModels[repeatPatternIndex]);
+    for (unsigned repeatPatternIndex = 0; repeatPatternIndex < _repeatPatterns.size(); repeatPatternIndex++)
+    {
+        const AdaptiveIndelErrorModel& errorModel(_adaptiveIndelErrorModels[repeatPatternIndex]);
 
         for (unsigned repeatCount(errorModel.lowRepeatCount);
-             repeatCount <= errorModel.highRepeatCount(); repeatCount++) {
+             repeatCount <= errorModel.highRepeatCount(); repeatCount++)
+        {
             model.addMotif(IndelMotifBinomialMixture(errorModel.repeatPatternSize(),
                                                      repeatCount,
                                                      errorModel.errorRate(repeatCount),
                                                      errorModel.noisyLocusRate(repeatCount))
-            );
+                          );
         }
     }
 

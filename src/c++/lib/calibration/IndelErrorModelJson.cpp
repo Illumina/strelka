@@ -35,61 +35,69 @@ IndelErrorModelJson(const std::string& sampleName, const IndelErrorModelBinomial
 
 std::map<std::string, IndelErrorRateSet>
 IndelErrorModelJson::
-deserializeIndelErrorModels(const std::vector<std::string>& modelFilenames)
+generateIndelErrorRateSetMap(const std::vector<std::string>& modelFilenames)
 {
     std::map<std::string, IndelErrorRateSet> modelMap;
     for (const auto& modelFilename : modelFilenames)
     {
-
-        rapidjson::Document document;
-        std::ifstream ifs(modelFilename);
-
-        if(!ifs.is_open())
-        {
-            using namespace illumina::common;
-            std::ostringstream oss;
-            oss << "ERROR: Cannot open indel error model file '" << modelFilename << "'\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-        }
-        rapidjson::IStreamWrapper isw(ifs);
-        document.ParseStream(isw);
-
-        const rapidjson::Value& samples(document["sample"]);
-        if (samples.Empty() || !samples.IsArray())
-        {
-            using namespace illumina::common;
-            std::ostringstream oss;
-            oss << "ERROR: no samples in indel error model file '" << modelFilename << "'\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-        }
-
-        // one json file could potentially have multiple samples
-        for (rapidjson::Value::ConstValueIterator sample = samples.Begin(); sample != samples.End(); ++sample)
-        {
-            const std::string sampleName((*sample)["sampleName"].GetString());
-            modelMap[sampleName] = IndelErrorRateSet();
-            const rapidjson::Value& motifs((*sample)["motif"]);
-            if (motifs.Empty()|| !motifs.IsArray())
-            {
-                using namespace illumina::common;
-                std::ostringstream oss;
-                oss << "ERROR: no params for sample '" << sampleName << "' in indel error model file '" << modelFilename << "'\n";
-                BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-            }
-
-            for (rapidjson::Value::ConstValueIterator motif = motifs.Begin(); motif != motifs.End(); ++motif)
-            {
-                const double indelRate = (*motif)["indelRate"].GetDouble();
-                const double noisyLocusRate = (*motif)["noisyLocusRate"].GetDouble();
-                const unsigned repeatCount = (*motif)["repeatCount"].GetUint();
-                const unsigned repeatPatternSize = (*motif)["repeatPatternSize"].GetUint();
-                modelMap[sampleName].addRate(repeatPatternSize, repeatCount, indelRate, indelRate, noisyLocusRate);
-            }
-        }
-
+        loadIndelErrorRateSet(modelFilename, modelMap);
     }
     return modelMap;
 }
+
+void
+IndelErrorModelJson::
+loadIndelErrorRateSet(
+    const std::string& modelFilename,
+    std::map<std::string, IndelErrorRateSet>& modelMap)
+{
+    rapidjson::Document document;
+    std::ifstream ifs(modelFilename);
+
+    if (!ifs.is_open())
+    {
+        using namespace illumina::common;
+        std::ostringstream oss;
+        oss << "ERROR: Cannot open indel error model file '" << modelFilename << "'\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
+    rapidjson::IStreamWrapper isw(ifs);
+    document.ParseStream(isw);
+
+    const rapidjson::Value& samples(document["sample"]);
+    if (samples.Empty() || !samples.IsArray())
+    {
+        using namespace illumina::common;
+        std::ostringstream oss;
+        oss << "ERROR: no samples in indel error model file '" << modelFilename << "'\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
+
+    // one json file could potentially have multiple samples
+    for (rapidjson::Value::ConstValueIterator sample = samples.Begin(); sample != samples.End(); ++sample)
+    {
+        const std::string sampleName((*sample)["sampleName"].GetString());
+        modelMap[sampleName] = IndelErrorRateSet();
+        const rapidjson::Value& motifs((*sample)["motif"]);
+        if (motifs.Empty()|| !motifs.IsArray())
+        {
+            using namespace illumina::common;
+            std::ostringstream oss;
+            oss << "ERROR: no params for sample '" << sampleName << "' in indel error model file '" << modelFilename << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
+
+        for (rapidjson::Value::ConstValueIterator motif = motifs.Begin(); motif != motifs.End(); ++motif)
+        {
+            const double indelRate = (*motif)["indelRate"].GetDouble();
+            const double noisyLocusRate = (*motif)["noisyLocusRate"].GetDouble();
+            const unsigned repeatCount = (*motif)["repeatCount"].GetUint();
+            const unsigned repeatPatternSize = (*motif)["repeatPatternSize"].GetUint();
+            modelMap[sampleName].addRate(repeatPatternSize, repeatCount, indelRate, indelRate, noisyLocusRate);
+        }
+    }
+}
+
 
 std::map<unsigned, std::vector<double> >
 IndelErrorModelJson::
@@ -102,7 +110,7 @@ deserializeTheta(
 
     std::ifstream ifs(filename, std::ifstream::binary);
 
-    if(!ifs.is_open())
+    if (!ifs.is_open())
     {
         using namespace illumina::common;
         std::ostringstream oss;

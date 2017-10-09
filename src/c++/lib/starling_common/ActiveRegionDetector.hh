@@ -41,7 +41,7 @@
 /// ends at an 'anchor' point, a non-STR region appropriate for defining the endpoint of an active region so as to
 /// avoid common artifacts associated with partial representation of an STR.
 ///
-/// Active regions are synchronized and shared by all samples. 
+/// Active regions are synchronized and shared by all samples.
 ///
 /// A major supporting component of the detector is the ActiveRegionReadBuffer, which does not store reads directly
 /// but tracks variant and soft-clipping events per-position, and the associated read ids supporting each event.
@@ -68,11 +68,11 @@ public:
     /// \param maxIndelSize maximum indel size
     /// \param sampleCount total sample count
     ActiveRegionDetector(
-            const reference_contig_segment& ref,
-            IndelBuffer& indelBuffer,
-            CandidateSnvBuffer& candidateSnvBuffer,
-            const unsigned maxIndelSize,
-            const unsigned sampleCount);
+        const reference_contig_segment& ref,
+        IndelBuffer& indelBuffer,
+        CandidateSnvBuffer& candidateSnvBuffer,
+        const unsigned maxIndelSize,
+        const unsigned sampleCount);
 
     /// Gets an active region read buffer for the specified sample
     /// \param sampleIndex sample index
@@ -133,9 +133,9 @@ private:
     /// \param ref reference segment
     /// \param indelBuffer indel buffer
     SampleActiveRegionDetector(
-            const reference_contig_segment& ref,
-            IndelBuffer& indelBuffer) :
-            _readBuffer(ref, indelBuffer)
+        const reference_contig_segment& ref,
+        IndelBuffer& indelBuffer)
+        : _readBuffer(ref, indelBuffer)
     {
         _isBeginning = true;
         clearCoordinates();

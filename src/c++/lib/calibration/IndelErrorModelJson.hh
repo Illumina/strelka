@@ -23,15 +23,14 @@
 class IndelMotifBinomialMixture
 {
 public:
-    IndelMotifBinomialMixture(){}
     IndelMotifBinomialMixture(const unsigned repeatPatternSize,
-                                const unsigned repeatCount,
-                                const double indelRate,
-                                const double noisyLocusRate):
-            _repeatPatternSize(repeatPatternSize)
-            , _repeatCount(repeatCount)
-            , _indelRate(indelRate)
-            , _noisyLocusRate(noisyLocusRate)
+                              const unsigned repeatCount,
+                              const double indelRate,
+                              const double noisyLocusRate):
+        _repeatPatternSize(repeatPatternSize)
+        , _repeatCount(repeatCount)
+        , _indelRate(indelRate)
+        , _noisyLocusRate(noisyLocusRate)
     {}
 private:
     unsigned _repeatPatternSize = 0;
@@ -56,8 +55,7 @@ public:
 class IndelErrorModelBinomialMixture
 {
 public:
-    IndelErrorModelBinomialMixture(){};
-    void addMotif(const IndelMotifBinomialMixture &motif)
+    void addMotif(const IndelMotifBinomialMixture& motif)
     {
         _motifs.push_back(motif);
     }
@@ -69,7 +67,7 @@ public:
     {
         writer.StartArray();
 
-        for(const IndelMotifBinomialMixture &motif:_motifs)
+        for (const IndelMotifBinomialMixture& motif:_motifs)
         {
             writer.StartObject();
             motif.serialize(writer);
@@ -116,8 +114,11 @@ public:
     /// \param[in] modelFilenames The json filenames to deserialize
     ///
     static std::map<std::string, IndelErrorRateSet>
-    deserializeIndelErrorModels(
+    generateIndelErrorRateSetMap(
         const std::vector<std::string>& modelFilenames);
+
+    static void
+    loadIndelErrorRateSet(const std::string& modelFilename, std::map<std::string, IndelErrorRateSet>& modelMap);
 
     /// \brief Deserializes the theta values for each repeat pattern size
     ///
