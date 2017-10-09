@@ -168,59 +168,6 @@ if (NOT WIN32)
     install(PROGRAMS "${BGZIP9_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
 endif ()
 
-
-
-#
-# jsoncpp
-#
-set(JSONCPP_PREFIX "jsoncpp-0.10.4")
-set(JSONCPP_DIR "${CMAKE_CURRENT_BINARY_DIR}/${JSONCPP_PREFIX}")
-set(JSONCPP_BUILD_DIR "${JSONCPP_DIR}/build")
-set(JSONCPP_INSTALL_DIR "${JSONCPP_DIR}/install")
-superset(JSONCPP_INCLUDE_DIR "${JSONCPP_INSTALL_DIR}/include")
-superset(JSONCPP_LIBRARY "${JSONCPP_INSTALL_DIR}/lib/libjsoncpp.a")
-
-add_custom_command(
-    OUTPUT ${JSONCPP_BUILD_DIR}
-    COMMAND ${CMAKE_COMMAND} -E remove_directory "${JSONCPP_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${JSONCPP_PREFIX}.tar.bz2"
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${JSONCPP_BUILD_DIR}"
-    COMMENT "Unpacking jsoncpp package")
-
-set (JSONCPP_FINAL_TASK ${JSONCPP_DIR})
-
-if (WIN32)
-    # fake the header installation for win32 until we add real build support:
-    add_custom_command(
-        OUTPUT "${JSONCPP_INCLUDE_DIR}/json"
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${JSONCPP_INCLUDE_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E copy_directory "${JSONCPP_DIR}/include" "${JSONCPP_INCLUDE_DIR}"
-        DEPENDS ${JSONCPP_BUILD_DIR}
-        WORKING_DIRECTORY ${JSONCPP_BUILD_DIR}
-        COMMENT "Installing JsonCpp headers")
-
-    set (JSONCPP_FINAL_TASK "${JSONCPP_INCLUDE_DIR}/json")
-else ()
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        set (JSONCPP_CMAKE_CXX_FLAGS "-DCMAKE_CXX_FLAGS=-D_GLIBCXX_USE_CXX11_ABI=0")
-    endif ()
-    add_custom_command(
-        OUTPUT ${JSONCPP_LIBRARY}
-        COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIBS=ON -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX:PATH=${JSONCPP_INSTALL_DIR} -DCMAKE_C_COMPILER="${CMAKE_C_COMPILER}" -DCMAKE_CXX_COMPILER="${CMAKE_CXX_COMPILER}" ${JSONCPP_CMAKE_CXX_FLAGS} -G "Unix Makefiles" ${JSONCPP_DIR} > jsoncpp.config.log
-
-        COMMAND $(MAKE) install > jsoncpp.build.log
-        DEPENDS ${JSONCPP_BUILD_DIR}
-        WORKING_DIRECTORY ${JSONCPP_BUILD_DIR}
-        COMMENT "Building JsonCpp Library")
-
-    set (JSONCPP_FINAL_TASK ${JSONCPP_LIBRARY})
-endif ()
-
-set(THIS_JSONCPP "${THIS_PROJECT_NAME}_jsoncpp")
-add_custom_target(${THIS_JSONCPP} DEPENDS "${JSONCPP_FINAL_TASK}")
-
-
-
 #
 # rapidjson
 #
@@ -291,7 +238,7 @@ add_custom_target(${THIS_PYFLOW} DEPENDS "${PYFLOW_DEPENDS}")
 
 # tie results back to parent:
 #
-add_dependencies(${THIS_OPT} ${THIS_SAMTOOLS} ${THIS_JSONCPP} ${THIS_RAPIDJSON} ${THIS_CODEMIN} ${THIS_PYFLOW})
+add_dependencies(${THIS_OPT} ${THIS_SAMTOOLS} ${THIS_RAPIDJSON} ${THIS_CODEMIN} ${THIS_PYFLOW})
 
 if (NOT WIN32)
     add_dependencies(${THIS_OPT} ${THIS_BGZFX})
