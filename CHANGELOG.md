@@ -3,6 +3,7 @@
 ### Changed
 - Change active region detection method to create active regions shared by all samples (STREL-710)
 - Verify alignment file extension at configuration time (MANTA-886)
+- Update minimum supported linux OS from Centos 5 to Centos 6 (STREL-720)
 - Move changelog to markdown format (STREL-571)
 
 ### Fixed
@@ -14,11 +15,11 @@
 This is a bugfix update from v2.8.2
 
 ### Fixed
-* Make minor correction to the non-error term used during adaptive indel error estimation (STREL-705)
-* Make minor correction to somatic joint allele-frequency prior (STREL-632)
-* Improve somatic EVS feature consistency (STREL-652)
-* Improve CRAM reference handling (STREL-647)
-  * The reference provided as input during workflow configuration is now prioritized over the URI in the CRAM header. This makes it easier to work with any CRAM file which contains a local file path in the header.
+- Make minor correction to the non-error term used during adaptive indel error estimation (STREL-705)
+- Make minor correction to somatic joint allele-frequency prior (STREL-632)
+- Improve somatic EVS feature consistency (STREL-652)
+- Improve CRAM reference handling (STREL-647)
+  - The reference provided as input during workflow configuration is now prioritized over the URI in the CRAM header. This makes it easier to work with any CRAM file which contains a local file path in the header.
 
 ## v2.8.2 - 2017-08-03
 

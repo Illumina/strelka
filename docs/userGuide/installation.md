@@ -27,7 +27,7 @@ Strelka User Guide - Installation
 
 It is recommended to start from one of the [binary distributions on
 the Strelka releases page][releases] if a suitable version is available
-(note that the CentOS 5 binary distribution is expected to support a
+(note that the CentOS 6 binary distribution is expected to support a
 large variety of linux systems).  If building from source start from
 the release distributions of the source code, also provided on the
 [Strelka releases page][releases]. Cloning/archiving the source
@@ -50,13 +50,13 @@ be found in the [developer guide][developerGuide].
 Strelka requires a compiler supporting most of the C++11 standard. These
 are the current minimum versions enforced by the build system:
 
-* python 2.4+
+* python 2.6+
 * gcc 4.8+ OR clang 3.2+ (OR Visual Studio 2013+, see windows note below)
 * libz (including headers)
 
 ### Runtime prerequisites
 
-* python 2.4+
+* python 2.6+
 
 ### Operating System Guidelines
 
@@ -66,7 +66,7 @@ Strelka is known to build and run on the following linux distributions
 (with additional packages as described below):
 
 - Ubuntu 12.04, 14.04, 16.04
-- CentOS 5, 6, 7
+- CentOS 6, 7
 
 ##### OS X
 
@@ -102,16 +102,17 @@ possible for Visual Studio users. See the the [strelka developer guide][Develope
 
     yum install -y tar bzip2 make gcc gcc-c++ libstdc++-static zlib-devel
 
-##### CentOS 5 and 6
+##### CentOS 6
 
     yum install -y tar wget bzip2 make gcc gcc-c++ zlib-devel
-    # add gcc 4.8 from developer tools v2:
-    wget http://people.centos.org/tru/devtools-2/devtools-2.repo -O /etc/yum.repos.d/devtools-2.repo
-    yum install -y devtoolset-2-gcc devtoolset-2-gcc-c++ devtoolset-2-binutils
 
-    # Prior to build configuration, set CC/CXX to gcc 4.8:
-    export CC=/opt/rh/devtoolset-2/root/usr/bin/gcc
-    export CXX=/opt/rh/devtoolset-2/root/usr/bin/g++
+    # Add gcc 4.9 from developer tools v3:
+    yum install -y centos-release-scl
+    yum install -y devtoolset-3-gcc devtoolset-3-gcc-c++
+
+    # Prior to build configuration, set CC/CXX to gcc 4.9:
+    export CC=/opt/rh/devtoolset-3/root/usr/bin/gcc
+    export CXX=/opt/rh/devtoolset-3/root/usr/bin/g++
 
 ### Build procedure
 
