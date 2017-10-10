@@ -115,6 +115,7 @@ private:
     void closeActiveRegion();
 };
 
+
 /// This class is responsible for detection of active regions for the specified sample
 /// All the methods are accessed by ActiveRegionDetector
 class SampleActiveRegionDetector
@@ -131,15 +132,10 @@ private:
     /// Creates an object that reads variant information and creates active regions
     /// \param ref reference segment
     /// \param indelBuffer indel buffer
-    /// \param maxIndelSize maximum indel size
-    /// \param sampleIndex sample Id
     SampleActiveRegionDetector(
             const reference_contig_segment& ref,
-            IndelBuffer& indelBuffer,
-            const unsigned sampleIndex) :
-            _ref(ref),
-            _readBuffer(ref, indelBuffer),
-            _sampleIndex(sampleIndex)
+            IndelBuffer& indelBuffer) :
+            _readBuffer(ref, indelBuffer)
     {
         _isBeginning = true;
         clearCoordinates();
@@ -174,9 +170,7 @@ private:
 
     std::unique_ptr<ActiveRegion> createActiveRegion();
 
-    const reference_contig_segment& _ref;
     ActiveRegionReadBuffer _readBuffer;
-    const unsigned _sampleIndex;
 
     /// true if updateEndPosition(pos) has not been called.
     bool _isBeginning;

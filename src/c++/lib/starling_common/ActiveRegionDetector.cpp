@@ -41,7 +41,7 @@ ActiveRegionDetector::ActiveRegionDetector(
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         _sampleActiveRegionDetector[sampleIndex].reset(
-                new SampleActiveRegionDetector(ref, indelBuffer, sampleIndex));
+                new SampleActiveRegionDetector(ref, indelBuffer));
     }
 }
 
