@@ -1,14 +1,17 @@
 ## Unreleased
 
 ### Changed
+- Switch to RapidJSON library for all json parsing (STREL-696)
+  - Reduces germline calling memory usage ~10-fold due to improved parse of random forest rescoring models.
 - Change active region detection method to create active regions shared by all samples (STREL-710)
 - Verify alignment file extension at configuration time (MANTA-886)
 - Update minimum supported linux OS from Centos 5 to Centos 6 (STREL-720)
 - Move changelog to markdown format (STREL-571)
 
 ### Fixed
-- Fix germline EVS for haploid regions (STREL-678)
-  - Previously, EVS resulted in reduced recall in haploid regions such as non-PAR regions of chrX in male samples. After adding haploid training examples from NA12877 chrX, EVS can now usefully be turned on in these regions.
+- Fix germline empirical variant scoring (EVS) for haploid regions (STREL-678)
+  - Previously, EVS resulted in reduced recall for haploid regions such as non-PAR regions of chrX in male samples.
+    After adding haploid training examples from NA12877 chrX, EVS preformance for haploid regions is compariable to diploid.
 
 ## v2.8.3 - 2017-09-22
 
