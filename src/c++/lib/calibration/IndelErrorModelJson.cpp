@@ -16,14 +16,18 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
+
 #include <iomanip>
 #include <iostream>
 #include <fstream>
 
-#include "rapidjson/istreamwrapper.h"
+#include "rapidjson/document.h"
+#include "rapidjson/filereadstream.h"
 #include "common/Exceptions.hh"
 #include "blt_util/log.hh"
 #include "IndelErrorModelJson.hh"
+
+
 
 IndelErrorModelJson::
 IndelErrorModelJson(const std::string& sampleName, const IndelErrorModelBinomialMixture& model, const bool isStatic)
@@ -33,36 +37,33 @@ IndelErrorModelJson(const std::string& sampleName, const IndelErrorModelBinomial
 {}
 
 
-std::map<std::string, IndelErrorRateSet>
-IndelErrorModelJson::
-generateIndelErrorRateSetMap(const std::vector<std::string>& modelFilenames)
-{
-    std::map<std::string, IndelErrorRateSet> modelMap;
-    for (const auto& modelFilename : modelFilenames)
-    {
-        loadIndelErrorRateSet(modelFilename, modelMap);
-    }
-    return modelMap;
-}
 
+static
 void
-IndelErrorModelJson::
-loadIndelErrorRateSet(
+deserializeIndelErrorRateSet(
     const std::string& modelFilename,
     std::map<std::string, IndelErrorRateSet>& modelMap)
 {
     rapidjson::Document document;
-    std::ifstream ifs(modelFilename);
-
-    if (!ifs.is_open())
     {
-        using namespace illumina::common;
-        std::ostringstream oss;
-        oss << "ERROR: Cannot open indel error model file '" << modelFilename << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        FILE* tmpFilePtr = fopen(modelFilename.c_str(), "rb");
+        char readBuffer[65536];
+        rapidjson::FileReadStream inputFileStream(tmpFilePtr, readBuffer, sizeof(readBuffer));
+        if (document.ParseStream(inputFileStream).HasParseError())
+        {
+            std::ostringstream oss;
+            oss << "ERROR: Failed to parse json indel parameter file: '" << modelFilename << "'";
+            BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+        }
+        fclose(tmpFilePtr);
     }
-    rapidjson::IStreamWrapper isw(ifs);
-    document.ParseStream(isw);
+
+    if (!document.IsObject())
+    {
+        std::ostringstream oss;
+        oss << "ERROR: Unexpected root data type in json indel parameter file: '" << modelFilename << "'";
+        BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+    }
 
     const rapidjson::Value& samples(document["sample"]);
     if (samples.Empty() || !samples.IsArray())
@@ -99,34 +100,55 @@ loadIndelErrorRateSet(
 }
 
 
+
+std::map<std::string, IndelErrorRateSet>
+IndelErrorModelJson::
+generateIndelErrorRateSetMap(const std::vector<std::string>& modelFilenames)
+{
+    std::map<std::string, IndelErrorRateSet> modelMap;
+    for (const auto& modelFilename : modelFilenames)
+    {
+        deserializeIndelErrorRateSet(modelFilename, modelMap);
+    }
+    return modelMap;
+}
+
+
+
 std::map<unsigned, std::vector<double> >
 IndelErrorModelJson::
 deserializeTheta(
-    const std::string& filename)
+    const std::string& thetaFilename)
 {
     std::map<unsigned, std::vector<double>> thetasMap;
 
     rapidjson::Document document;
-
-    std::ifstream ifs(filename, std::ifstream::binary);
-
-    if (!ifs.is_open())
     {
-        using namespace illumina::common;
-        std::ostringstream oss;
-        oss << "ERROR: Cannot open theta file '" << filename << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        FILE* tmpFilePtr = fopen(thetaFilename.c_str(), "rb");
+        char readBuffer[65536];
+        rapidjson::FileReadStream inputFileStream(tmpFilePtr, readBuffer, sizeof(readBuffer));
+        if (document.ParseStream(inputFileStream).HasParseError())
+        {
+            std::ostringstream oss;
+            oss << "ERROR: Failed to parse json theta file: '" << thetaFilename << "'";
+            BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+        }
+        fclose(tmpFilePtr);
     }
 
-    rapidjson::IStreamWrapper isw(ifs);
-    document.ParseStream(isw);
+    if (!document.IsObject())
+    {
+        std::ostringstream oss;
+        oss << "ERROR: Unexpected root data type in json theta file: '" << thetaFilename << "'";
+        BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+    }
 
     const rapidjson::Value& thetas(document["thetas"]);
     if (thetas.Empty() || !thetas.IsArray())
     {
         using namespace illumina::common;
         std::ostringstream oss;
-        oss << "ERROR: no thetas in theta file '" << filename << "'\n";
+        oss << "ERROR: no thetas in theta file '" << thetaFilename << "'\n";
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 
@@ -140,7 +162,7 @@ deserializeTheta(
         {
             using namespace illumina::common;
             std::ostringstream oss;
-            oss << "ERROR: no theta values in theta file '" << filename << "'\n";
+            oss << "ERROR: no theta values in theta file '" << thetaFilename << "'\n";
             BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
 

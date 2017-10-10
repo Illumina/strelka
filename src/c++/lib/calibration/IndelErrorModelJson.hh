@@ -16,9 +16,12 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
-#include <map>
+
 #include "rapidjson/document.h"
 #include "IndelErrorRateSet.hh"
+
+#include <map>
+
 
 class IndelMotifBinomialMixture
 {
@@ -117,17 +120,13 @@ public:
     generateIndelErrorRateSetMap(
         const std::vector<std::string>& modelFilenames);
 
-    static void
-    loadIndelErrorRateSet(const std::string& modelFilename, std::map<std::string, IndelErrorRateSet>& modelMap);
-
     /// \brief Deserializes the theta values for each repeat pattern size
     ///
-    /// \param[in] filename The json filename to deserialize
+    /// \param[in] thetaFilename The json filename to deserialize
     ///
     static std::map<unsigned, std::vector<double> >
     deserializeTheta(
-        const std::string& filename);
-
+        const std::string& thetaFilename);
 
     std::string
     getSampleName() const
@@ -139,9 +138,4 @@ private:
     std::string _sampleName;
     IndelErrorModelBinomialMixture _model;
     bool _isStatic;
-
 };
-
-
-
-

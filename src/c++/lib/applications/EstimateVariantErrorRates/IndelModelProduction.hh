@@ -39,7 +39,7 @@ public:
     void exportIndelErrorModelJson() const;
 
     void exportModelUsingInputJson(
-        const std::string& jsonFilename) const;
+        const std::string& modelFilename) const;
 
     bool checkEstimatedModel() const;
 
