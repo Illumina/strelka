@@ -289,6 +289,8 @@ SampleActiveRegionDetector::updateEndPosition(const pos_t pos)
     return activeRegion;
 }
 
+
+
 std::unique_ptr<ActiveRegion>
 SampleActiveRegionDetector::closeActiveRegionDetector()
 {
@@ -315,5 +317,5 @@ SampleActiveRegionDetector::closeActiveRegionDetector()
 
     clearCoordinates();
 
-    return std::move(activeRegion);
+    return activeRegion;
 }
