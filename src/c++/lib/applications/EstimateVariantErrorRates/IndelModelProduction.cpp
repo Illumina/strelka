@@ -17,10 +17,6 @@
 //
 //
 
-#include <iomanip>
-#include <iostream>
-#include <fstream>
-
 #include "common/Exceptions.hh"
 #include "blt_util/log.hh"
 #include "blt_util/math_util.hh"
@@ -36,6 +32,10 @@
 //#define CODEMIN_DEBUG
 #define CODEMIN_USE_BOOST
 #include "minimize_conj_direction.h"
+
+#include <iomanip>
+#include <iostream>
+#include <fstream>
 
 namespace MIN_PARAMS3
 {
@@ -646,7 +646,8 @@ checkEstimatedModel() const
 
 
 
-bool IndelModelProduction::
+bool
+IndelModelProduction::
 isValidErrorRate(
     const double errorRate) const
 {

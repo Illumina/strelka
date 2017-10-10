@@ -17,7 +17,6 @@
 //
 //
 
-#include "rapidjson/document.h"
 #include "IndelErrorRateSet.hh"
 
 #include <map>
@@ -124,7 +123,7 @@ public:
     ///
     /// \param[in] thetaFilename The json filename to deserialize
     ///
-    static std::map<unsigned, std::vector<double> >
+    static std::map<unsigned, std::vector<double>>
     deserializeTheta(
         const std::string& thetaFilename);
 
