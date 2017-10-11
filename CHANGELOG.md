@@ -2,6 +2,7 @@
 * Change active region detection method to create active regions shared by all samples (STREL-710)
 
 ### Changed
+- Verify alignment file extension at configuration time (MANTA-886)
 - Move changelog to markdown format (STREL-571)
 
 ## v2.8.3 - 2017-09-22

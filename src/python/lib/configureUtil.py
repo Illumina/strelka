@@ -231,6 +231,17 @@ def checkFixTabixListOption(tabixList,label) :
         tabixList[index] = os.path.abspath(tabixFile)
 
 
+def checkForBamExtension(bamFile):
+    """
+    make sure the specified file ends with either ".bam" or ".cram"
+    """
+    extList = (".bam", ".cram")
+    for ext in extList:
+        if bamFile.endswith(ext): return
+
+    raise OptParseException("Input alignment files should be in BAM/CRAM format and with extension .bam/.cram: '%s'" % (bamFile))
+
+
 def checkForBamIndex(bamFile):
     """
     make sure bam file has an index
@@ -251,11 +262,12 @@ def checkForBamIndex(bamFile):
 
 def groomBamList(bamList, sampleLabel):
     """
-    check that bam/cram files exist and have an index, convert to abs path if they check out
+    check that bam/cram files exist, have ".bam/.cram" extention, and have an index, convert to abs path if they check out
     """
     if bamList is None : return
     for (index,bamFile) in enumerate(bamList) :
         bamList[index]=validateFixExistingFileArg(bamFile,"%s BAM/CRAM file" % (sampleLabel))
+        checkForBamExtension(bamList[index])
         checkForBamIndex(bamList[index])
 
 
