@@ -11,11 +11,17 @@ set -o nounset
 set -o xtrace
 
 
-boost_name=boost_1_56_0
+boost_name=boost_1_58_0
 output_name=${boost_name}_subset
 
+boost_tarball=$boost_name.tar.bz2
 
-tar -xjf $boost_name.tar.bz2
+if ! [ -f $boost_tarball ]; then
+    echo "Can't find input boost tarball"
+    exit 1
+fi
+
+tar -xjf $boost_tarball
 mv $boost_name $output_name
 
 for ddir in doc more status; do
@@ -30,7 +36,7 @@ done
 # remove unused libs:
 (
 cd  $output_name/libs
-ls | grep -v -e "^\(detail\|serialization\|timer\|chrono\|filesystem\|program_options\|system\|test\|wave\)$"  | xargs rm -rf
+ls | grep -v -e "^\(config\|detail\|serialization\|timer\|chrono\|filesystem\|program_options\|system\|test\|wave\)$"  | xargs rm -rf
 )
 
 # remove unused tools:
