@@ -282,19 +282,14 @@ class BamSetChecker(object):
         self.bamList=[]
         self.bamLabels=[]
 
-    def appendBams(self,inputBamList,inputLabel, isAllowEmpty = False) :
+    def appendBams(self, inputBamList, inputLabel) :
+        """
+        inputBamList must be non-empty
+        """
 
-        # note that we inherit a multi-bam capable infrastructure from manta, but then restrict usage
-        # to one bam from each sample (hopefully temporarily)
-        #
-        def checkBamList(bamList, label) :
-            if (bamList is None) or (len(bamList) == 0) :
-                raise OptParseException("No %s sample BAM/CRAM files specified" % (label))
+        if (inputBamList is None) or (len(inputBamList) == 0) :
+            raise OptParseException("No %s sample BAM/CRAM files specified" % (inputLabel))
 
-        if not isAllowEmpty :
-            checkBamList(inputBamList,inputLabel)
-
-        if inputBamList is None : return
         for inputBamFile in inputBamList :
             self.bamList.append(inputBamFile)
             self.bamLabels.append(inputLabel)
