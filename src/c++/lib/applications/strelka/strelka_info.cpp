@@ -17,11 +17,6 @@
 //
 //
 
-/// \file
-///
-/// \author Chris Saunders
-///
-
 #include "strelka_info.hh"
 #include "strelka_option_parser.hh"
 #include "strelka_shared.hh"

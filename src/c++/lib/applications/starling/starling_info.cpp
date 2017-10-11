@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "starling_info.hh"
 #include "starling_option_parser.hh"
 #include "starling_shared.hh"

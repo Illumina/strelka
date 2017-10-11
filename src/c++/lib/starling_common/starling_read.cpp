@@ -243,7 +243,10 @@ write_bam(bam_dumper& bamd)
     {
         std::string _oc_cigar;
         apath_to_cigar(rseg.getInputAlignment().path,_oc_cigar);
-        bam_aux_append(&br,octag,'Z', (_oc_cigar.size()+1),(uint8_t*) (_oc_cigar.c_str()));
+
+        // Do lots of ugly casting on svStr to fit htsapi signature. Usage is actually const in htslib:
+        bam_aux_append(&br,octag,'Z', (_oc_cigar.size()+1),
+                       reinterpret_cast<uint8_t*>(const_cast<char*>(_oc_cigar.c_str())));
     }
 
     // update cigar field:

@@ -277,7 +277,9 @@ starling_site_sim(
     // warning observed on x86_64 gcc 4.9.0 for this line but similar usage in strelka
     // site sim is ignored.
 #pragma GCC diagnostic push
+#ifndef __clang__
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
     dist_t cov_dist(sim_opt.coverage);
 #pragma GCC diagnostic pop
     vgen_t cov_gen(gen,cov_dist);

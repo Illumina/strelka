@@ -43,5 +43,5 @@ private:
     void doc() const override {}
 
     GetSequenceErrorCountsInfo() {}
-    virtual ~GetSequenceErrorCountsInfo() {}
+    ~GetSequenceErrorCountsInfo() override {}
 };

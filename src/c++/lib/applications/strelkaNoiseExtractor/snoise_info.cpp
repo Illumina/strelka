@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "snoise_info.hh"
 #include "snoise_option_parser.hh"
 #include "snoise_shared.hh"

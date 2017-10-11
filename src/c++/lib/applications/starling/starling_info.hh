@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #pragma once
 
 #include "starling_common/prog_info_base.hh"
@@ -47,5 +43,5 @@ private:
     void doc() const override {}
 
     starling_info() {}
-    virtual ~starling_info() {}
+    ~starling_info() override {}
 };

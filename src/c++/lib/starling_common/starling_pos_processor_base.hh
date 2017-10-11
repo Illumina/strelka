@@ -97,8 +97,7 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
         const unsigned sampleCount,
         RunStatsManager& statsManager);
 
-    virtual
-    ~starling_pos_processor_base();
+    ~starling_pos_processor_base() override;
 
     /// finish position report and reset structure to ground state:
     ///

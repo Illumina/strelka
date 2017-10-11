@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "prog_info_base.hh"
 
 #include "common/ProgramConfig.hh"
