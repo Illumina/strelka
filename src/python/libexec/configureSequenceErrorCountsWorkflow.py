@@ -32,7 +32,7 @@ sys.path.append(workflowDir)
 
 from configBuildTimeInfo import workflowVersion
 from strelkaSharedOptions import StrelkaSharedWorkflowOptionsBase
-from configureUtil import BamSetChecker, groomBamList, joinFile, OptParseException, checkOptionalTabixIndexedFile
+from configureUtil import BamSetChecker, groomBamList, joinFile, OptParseException, checkFixTabixIndexedFileOption
 from makeRunScript import makeRunScript
 from sequenceErrorCountsWorkflow import SequenceErrorCountsWorkflow
 from workflowUtil import ensureDir, exeFile
@@ -90,11 +90,6 @@ This script configures the Strelka sequence error counts workflow.
     def validateAndSanitizeOptions(self,options) :
 
         StrelkaSharedWorkflowOptionsBase.validateAndSanitizeOptions(self,options)
-
-        def checkFixTabixIndexedFileOption(tabixFile,label):
-            checkOptionalTabixIndexedFile(tabixFile,label)
-            if tabixFile is None : return None
-            return os.path.abspath(tabixFile)
 
         if options.excludedRegions is not None :
             for excludeIndex in range(len(options.excludedRegions)) :
