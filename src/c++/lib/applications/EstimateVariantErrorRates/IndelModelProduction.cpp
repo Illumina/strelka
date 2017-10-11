@@ -604,7 +604,7 @@ exportModelUsingInputJson(const std::string& modelFilename) const
 
     std::ofstream ofs(_outputFilename);
     rapidjson::OStreamWrapper osw(ofs);
-    rapidjson::Writer<rapidjson::OStreamWrapper> writer(osw);
+    rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(osw);
     document.Accept(writer);
 
     if (!ofs.good())
