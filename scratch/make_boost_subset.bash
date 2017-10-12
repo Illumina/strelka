@@ -10,14 +10,22 @@
 set -o nounset
 set -o xtrace
 
+rel2abs() {
+  pwd -P $1
+}
+
+thisDir=$(rel2abs $(dirname $0))
+
+mkdir -p output
+cd output
 
 boost_name=boost_1_58_0
 output_name=${boost_name}_subset
 
-boost_tarball=$boost_name.tar.bz2
+boost_tarball=$thisDir/$boost_name.tar.bz2
 
 if ! [ -f $boost_tarball ]; then
-    echo "Can't find input boost tarball"
+    echo "Can't find input boost tarball '$boost_tarball'"
     exit 1
 fi
 
