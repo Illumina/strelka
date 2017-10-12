@@ -21,8 +21,6 @@
 util -- simple utilities shared by bwa/gatk workflow objects
 """
 
-__author__ = "Chris Saunders"
-
 
 
 import os

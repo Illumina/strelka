@@ -32,6 +32,7 @@ sys.path.append(scriptDir)
 sys.path.append(os.path.join(scriptDir,"pyflow"))
 
 
+from checkChromSet import getTabixChromSet
 from pyflow import WorkflowRunner
 from sharedWorkflow import getMvCmd
 from workflowUtil import checkFile, cleanPyEnv, ensureDir, getFastaChromOrderSize, \
@@ -86,30 +87,28 @@ def getChromIsSkipped(self) :
         (self.params.callRegionsBed is None)) :
        return chromIsSkipped
 
+    def allChromosomes() :
+        """
+        Return a set of all chromosomes from the reference/alignments in this analysis
+        """
+        return set(self.params.chromOrder)
+
     # first check chromosome coverage of "regions" arguments
     if self.params.genomeRegionList is not None :
-        chromIsSkipped = set(self.params.chromOrder)
+        chromIsSkipped = allChromosomes()
         for genomeRegion in self.params.genomeRegionList :
             if genomeRegion["chrom"] in chromIsSkipped :
                 chromIsSkipped.remove(genomeRegion["chrom"])
 
-    # next further refine coverage based on callRegions BED file
+    # further refine coverage based on callRegions BED file
     if self.params.callRegionsBed is not None :
-        import subprocess
+        callRegionsChroms = getTabixChromSet(self.params.tabixBin, self.params.callRegionsBed)
+        chromsNotInCallRegions = allChromosomes() - callRegionsChroms
 
-        chromIsSkipped2 = set(self.params.chromOrder)
-
-        tabixCmd = [self.params.tabixBin,"-l", self.params.callRegionsBed]
-        proc=subprocess.Popen(tabixCmd,stdout=subprocess.PIPE)
-        for line in proc.stdout :
-            chrom = line.strip()
-            if chrom in chromIsSkipped2 :
-                chromIsSkipped2.remove(chrom)
-
-        proc.stdout.close()
-        proc.wait()
-
-        chromIsSkipped = chromIsSkipped | chromIsSkipped2
+        # Skip the union of:
+        # 1. chromosomes skipped already due to region arguments
+        # 2. chromosomes skipped due to callRegions bed track
+        chromIsSkipped = chromIsSkipped | chromsNotInCallRegions
 
     # if sequencing error estimation is turned on, make sure estimation targets are not skipped:
     if self.params.isEstimateSequenceError :

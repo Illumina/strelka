@@ -29,6 +29,7 @@ scriptName=os.path.basename(__file__)
 
 sys.path.append(scriptDir)
 
+from checkChromSet import getFastaInfo, getTabixChromSet
 from configureOptions import ConfigureWorkflowOptions
 from configureUtil import assertOptionExists, joinFile, OptParseException, \
                           validateFixExistingDirArg, validateFixExistingFileArg, \
@@ -226,10 +227,35 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
         checkFixTabixListOption(options.forcedGTList,"forced genotype vcf")
         options.callRegionsBed = checkFixTabixIndexedFileOption(options.callRegionsBed,"call-regions bed")
 
+        def extendedRegionStrList() :
+            """
+            A generator on the regionStrList which parses the (undocumented/possibly deprecated) '+' entry format
+            to specify multiple regions in a single argument.
+            """
+            for r in options.regionStrList :
+                for rr in r.split("+") :
+                    yield rr
+
         if (options.regionStrList is None) or (len(options.regionStrList) == 0) :
             options.genomeRegionList = None
         else :
-            options.genomeRegionList = [parseGenomeRegion(rr) for r in options.regionStrList for rr in r.split("+")]
+            options.genomeRegionList = [parseGenomeRegion(r) for r in extendedRegionStrList()]
+
+        # validate chromosome names appearing in region tags and callRegions bed file
+        if (options.callRegionsBed is not None) or (options.genomeRegionList is not None) :
+            refChromInfo = getFastaInfo(options.referenceFasta)
+            if options.callRegionsBed is not None :
+                for chrom in getTabixChromSet(options.tabixBin, options.callRegionsBed) :
+                    if chrom not in refChromInfo :
+                        raise OptParseException("Chromosome label '%s', in call regions bed file '%s', not found in reference genome." %
+                                                (chrom, options.callRegionsBed))
+
+            if options.genomeRegionList is not None :
+                for (genomeRegionIndex, genomeRegion) in enumerate(options.genomeRegionList) :
+                    chrom = genomeRegion["chrom"]
+                    if chrom not in refChromInfo :
+                        raise OptParseException("Chromosome label '%s', parsed from region argument '%s', not found in reference genome." %
+                                                (chrom, list(extendedRegionStrList())[genomeRegionIndex]))
 
         options.snvScoringModelFile=validateFixExistingFileArg(options.snvScoringModelFile,"SNV empirical scoring model file")
         options.indelScoringModelFile=validateFixExistingFileArg(options.indelScoringModelFile,"Indel empirical scoring model file")

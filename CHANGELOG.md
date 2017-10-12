@@ -4,6 +4,9 @@
 - Switch to RapidJSON library for all json parsing (STREL-696)
   - Reduces germline calling memory usage ~10-fold due to improved parse of random forest rescoring models.
 - Change active region detection method to create active regions shared by all samples (STREL-710)
+- Verify region/callRegion values at configuration time (STREL-724)
+  - Chromosome labels in BED records and region arguments must be found in the reference.
+- Verify run directory does not already exist (MANTA-1252)
 - Verify alignment file extension at configuration time (MANTA-886)
 - Update minimum supported linux OS from Centos 5 to Centos 6 (STREL-720)
 - Move changelog to markdown format (STREL-571)
