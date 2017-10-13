@@ -193,9 +193,8 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
             sorted   = self.paths.getTmpRealignBamPath(gid, label)
             sortList.append(sorted)
 
-            # adjust sorted to remove the ".bam" suffix
-            sorted = sorted[:-4]
-            sortCmd="\"%s\" sort \"%s\" \"%s\" && rm -f \"%s\"" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
+            sortCmd="\"%s\" sort \"%s\" -o \"%s\" && rm -f \"%s\"" %\
+                    (self.params.samtoolsBin, unsorted, sorted, unsorted)
 
             sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+label+"_"+gid)
             self.addTask(sortTaskLabel,sortCmd,dependencies=callTask,memMb=self.params.callMemMb)
