@@ -75,7 +75,8 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
                               "to estimate statistics from the input (such as expected depth per chromosome). "
                               "Only one BED file may be specified. (default: call the entire genome)")
         group.add_option("--runDir", type="string",metavar="DIR",
-                         help="Run script and run output will be written to this directory [required] (default: %default)")
+                         help="Name of directory to be created where run scripts and output will be written. "
+                              "This directory must not already exist. (default: %default)")
 
 
     def addExtendedGroupOptions(self,group) :
@@ -188,6 +189,8 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         assertOptionExists(options.runDir,"run directory")
         options.runDir=os.path.abspath(options.runDir)
+        if os.path.exists(options.runDir):
+            raise OptParseException("Targeted runDir already exists '%s'. Each analysis requires a separate runDir." % (options.runDir))
 
         assertOptionExists(options.referenceFasta,"reference fasta file")
         options.referenceFasta=validateFixExistingFileArg(options.referenceFasta,"reference fasta file")
