@@ -57,7 +57,7 @@ struct starling_streams : public starling_streams_base
 
 private:
     static
-    std::ostream*
+    std::unique_ptr<std::ostream>
     initialize_gvcf_file(
         const starling_options& opt,
         const prog_info& pinfo,

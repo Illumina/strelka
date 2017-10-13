@@ -29,7 +29,7 @@
 #include <iostream>
 
 
-std::ostream*
+std::unique_ptr<std::ostream>
 starling_streams::
 initialize_gvcf_file(
     const starling_options& opt,
@@ -50,7 +50,7 @@ initialize_gvcf_file(
 
         os << "##content=" << pinfo.name() << " germline small-variant calls\n";
     }
-    return fosPtr;
+    return std::unique_ptr<std::ostream>(fosPtr);
 }
 
 
@@ -70,14 +70,14 @@ starling_streams(
     if (opt.gvcf.is_gvcf_output())
     {
         const std::string gvcfVariantsPath(opt.gvcf.outputPrefix+"variants.vcf");
-        _gvcfVariantsStreamPtr.reset(initialize_gvcf_file(opt, pinfo, gvcfVariantsPath, "variants", referenceHeader));
+        _gvcfVariantsStreamPtr = initialize_gvcf_file(opt, pinfo, gvcfVariantsPath, "variants", referenceHeader);
         const unsigned sampleCount(getSampleCount());
         for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
             std::ostringstream sampleTag;
             sampleTag << "S" << (sampleIndex+1);
             const std::string gvcfSamplePath(opt.gvcf.outputPrefix+"genome." + sampleTag.str() + ".vcf");
-            _gvcfSampleStreamPtr.emplace_back(
+            _gvcfSampleStreamPtr.push_back(
                 initialize_gvcf_file(opt, pinfo, gvcfSamplePath, sampleTag.str().c_str(), referenceHeader));
         }
     }

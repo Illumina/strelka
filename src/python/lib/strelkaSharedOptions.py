@@ -70,12 +70,12 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
                               " (default: None)")
         group.add_option("--exome", "--targeted", dest="isExome", action="store_true",
                          help="Set options for exome or other targeted input: note in particular that this flag turns off high-depth filters")
-        group.add_option("--callRegions", dest="callRegionsBed",
+        group.add_option("--callRegions", dest="callRegionsBed", metavar="FILE",
                          help="Optionally provide a bgzip-compressed/tabix-indexed BED file containing the set of regions to call. "
                               "No VCF output will be provided outside of these regions. The full genome will still be used "
                               "to estimate statistics from the input (such as expected depth per chromosome). "
                               "Only one BED file may be specified. (default: call the entire genome)")
-        group.add_option("--runDir", type="string",metavar="DIR",
+        group.add_option("--runDir", type="string", metavar="DIR",
                          help="Name of directory to be created where run scripts and output will be written. "
                               "This directory must not already exist. (default: %default)")
 
@@ -229,7 +229,7 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         def extendedRegionStrList() :
             """
-            A generator on the regionStrList which parses the (undocumented/possibly deprecated) '+' entry format
+            A generator on the regionStrList which parses the (intentionally undocumented/possibly deprecated) '+' entry format
             to specify multiple regions in a single argument.
             """
             for r in options.regionStrList :
