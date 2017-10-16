@@ -48,7 +48,7 @@ ActiveRegionDetector::ActiveRegionDetector(
 //        if (_isSomatic && (sampleIndex != 0))
 //            minAlternativeAlleleFraction = 0.1f;
         _sampleActiveRegionDetector[sampleIndex].reset(
-            new SampleActiveRegionDetector(ref, MinAlternativeAlleleFraction, indelBuffer));
+            new SampleActiveRegionDetector(ref, MinAlternativeAlleleFraction, defaultPloidy, indelBuffer));
     }
 }
 
@@ -87,6 +87,13 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
             updateActiveRegionRange(std::move(activeRegion));
         }
     }
+}
+
+void
+ActiveRegionDetector::updateSamplePloidy(
+        const unsigned sampleIndex, const pos_t pos, const unsigned ploidy)
+{
+    _sampleActiveRegionDetector[sampleIndex]->updatePloidy(pos, ploidy);
 }
 
 void
@@ -158,10 +165,11 @@ ActiveRegionDetector::closeActiveRegion()
 
     for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
     {
+        unsigned ploidy(getPloidy(sampleIndex, _synchronizedActiveRegion));
         if (!_isSomatic)
         {
             ActiveRegionProcessor activeRegionProcessor(_synchronizedActiveRegion,
-                                                        _ref, _maxIndelSize, sampleIndex, _defaultPloidy,
+                                                        _ref, _maxIndelSize, sampleIndex, ploidy,
                                                         _aligner, _sampleActiveRegionDetector[sampleIndex]->getReadBuffer(),
                                                         _indelBuffer, _candidateSnvBuffer);
             activeRegionProcessor.processHaplotypes();
@@ -172,7 +180,7 @@ ActiveRegionDetector::closeActiveRegion()
             if (sampleIndex == 0)
             {
                 ActiveRegionProcessor activeRegionProcessor(_synchronizedActiveRegion,
-                                                            _ref, _maxIndelSize, sampleIndex, _defaultPloidy,
+                                                            _ref, _maxIndelSize, sampleIndex, ploidy,
                                                             _aligner, _sampleActiveRegionDetector[sampleIndex]->getReadBuffer(),
                                                             _indelBuffer, _candidateSnvBuffer);
                 activeRegionProcessor.processHaplotypes();
@@ -201,6 +209,13 @@ ActiveRegionDetector::getSampleActiveRegionDetector(unsigned sampleIndex)
 }
 
 
+unsigned
+ActiveRegionDetector::getPloidy(const unsigned sampleIndex, const ActiveRegion activeRegion) const
+{
+    return _sampleActiveRegionDetector[sampleIndex]->getPloidy(activeRegion);
+}
+
+
 void
 ActiveRegionDetector::setPosToActiveRegionIdMap(const ActiveRegion& activeRegionRange)
 {
@@ -212,6 +227,21 @@ ActiveRegionDetector::setPosToActiveRegionIdMap(const ActiveRegion& activeRegion
     {
         _posToActiveRegionIdMap.getRef(pos) = activeRegionId;
     }
+}
+
+unsigned
+SampleActiveRegionDetector::getPloidy(const pos_t pos)
+{
+    return _posToPloidyMap.getConstRefDefault(pos, _defaultPloidy);
+}
+
+unsigned
+SampleActiveRegionDetector::getPloidy(const ActiveRegion activeRegion)
+{
+    const auto leftPloidy(getPloidy(activeRegion.begin_pos()));
+    const auto rightPloidy(getPloidy(activeRegion.end_pos()-1));
+
+    return std::max(leftPloidy, rightPloidy);
 }
 
 void
@@ -228,6 +258,7 @@ void
 SampleActiveRegionDetector::clearReadBuffer(const pos_t pos)
 {
     _readBuffer.clearPos(pos);
+    _posToPloidyMap.eraseTo(pos);
 }
 
 
@@ -248,6 +279,11 @@ SampleActiveRegionDetector::createActiveRegion()
     return std::unique_ptr<ActiveRegion>(new ActiveRegion(activeRegionStartPos, activeRegionEndPos+1));
 }
 
+void
+SampleActiveRegionDetector::updatePloidy(const pos_t pos, const unsigned ploidy)
+{
+    _posToPloidyMap.getRef(pos) = ploidy;
+}
 
 std::unique_ptr<ActiveRegion>
 SampleActiveRegionDetector::updateEndPosition(const pos_t pos)

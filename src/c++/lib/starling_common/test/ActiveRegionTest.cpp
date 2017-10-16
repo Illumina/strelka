@@ -334,9 +334,8 @@ BOOST_AUTO_TEST_CASE( test_selectingManyHaplotypes )
     TestIndelBuffer testBuffer(ref);
     CandidateSnvBuffer testSnvBuffer(sampleCount);
 
-    unsigned defaultPloidy(3);
     ActiveRegionDetector activeRegionDetector(ref, testBuffer.getIndelBuffer(),
-                                              testSnvBuffer, maxIndelSize, sampleCount, false, defaultPloidy);
+                                              testSnvBuffer, maxIndelSize, sampleCount, false);
 
     const auto snvPos = std::set<pos_t>({2, 4});
 
@@ -391,9 +390,11 @@ BOOST_AUTO_TEST_CASE( test_selectingManyHaplotypes )
         }
     }
 
+    const unsigned ploidy(3u);
     // Create and process active regions
     for (pos_t pos(0); pos<refLength; ++pos)
     {
+        activeRegionDetector.updateSamplePloidy(sampleIndex, pos, ploidy);
         activeRegionDetector.updateEndPosition(pos);
     }
     activeRegionDetector.clear();

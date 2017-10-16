@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <blt_util/RegionTracker.hh>
 #include "ActiveRegionProcessor.hh"
 #include "blt_util/blt_types.hh"
 #include "starling_read_segment.hh"
@@ -95,6 +96,8 @@ public:
     /// \param pos reference position
     void updateEndPosition(const pos_t pos);
 
+    void updateSamplePloidy(const unsigned sampleIndex, const pos_t pos, const unsigned ploidy);
+
     /// Clear the detector. Create an active region if there exists an unclosed one.
     void clear();
 
@@ -120,6 +123,7 @@ private:
     RangeMap<pos_t, ActiveRegionId> _posToActiveRegionIdMap;
 
     SampleActiveRegionDetector& getSampleActiveRegionDetector(unsigned sampleIndex);
+    unsigned getPloidy(const unsigned sampleIndex, const ActiveRegion activeRegion) const;
     void setPosToActiveRegionIdMap(const ActiveRegion& activeRegionRange);
     void updateActiveRegionRange(std::unique_ptr<ActiveRegion> activeRegion);
     void processExistingActiveRegion(const pos_t pos);
@@ -146,12 +150,16 @@ private:
     SampleActiveRegionDetector(
         const reference_contig_segment& ref,
         const float minAlternativeAlleleFraction,
+        const unsigned defaultPloidy,
         IndelBuffer& indelBuffer) :
+        _defaultPloidy(defaultPloidy),
         _readBuffer(ref, minAlternativeAlleleFraction, indelBuffer)
     {
         _isBeginning = true;
         clearCoordinates();
     }
+
+    void updatePloidy(const pos_t pos, const unsigned ploidy);
 
     /// Update the active region end position. Creates an active region if needed.
     /// \param pos reference position
@@ -170,6 +178,10 @@ private:
         return _readBuffer;
     }
 
+    unsigned getPloidy(const pos_t pos);
+
+    unsigned getPloidy(const ActiveRegion activeRegion);
+
     void clearCoordinates();
 
     void clearReadBuffer(const pos_t pos);
@@ -181,6 +193,8 @@ private:
     }
 
     std::unique_ptr<ActiveRegion> createActiveRegion();
+
+    const unsigned _defaultPloidy;
 
     ActiveRegionReadBuffer _readBuffer;
 
@@ -200,4 +214,6 @@ private:
 
     /// The number of variants identified so far in the current candidate active region
     unsigned _numVariants;
+
+    RangeMap<pos_t, unsigned> _posToPloidyMap;
 };
