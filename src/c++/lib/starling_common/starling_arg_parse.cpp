@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "blt_common/blt_arg_parse_util.hh"
 #include "starling_common/starling_arg_parse.hh"
 
@@ -55,8 +51,6 @@ legacy_starling_arg_parse(
     bool is_max_vexp_iterations(false);
 
     bool is_max_indel_size(false);
-
-    bool is_realigned_read_file(false);
 
     bool is_inmp(false);
 
@@ -126,10 +120,6 @@ legacy_starling_arg_parse(
         else if (ad.argstr[i]=="-max-candidate-indel-density")
         {
             set_xrange_arg(i,ad,is_max_can_indel_density_set,opt.max_candidate_indel_density,false,true);
-        }
-        else if (ad.argstr[i]=="-realigned-read-file")
-        {
-            set_filename_arg(i,ad,is_realigned_read_file,opt.realignedReadFilenamePrefix);
         }
         else if (ad.argstr[i]=="-realign-submapped-reads")
         {

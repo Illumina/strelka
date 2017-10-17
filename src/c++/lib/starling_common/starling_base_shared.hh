@@ -155,6 +155,7 @@ struct starling_base_options : public blt_options
     bool is_smoothed_alignments = true;
     double smoothed_lnp_range = std::log(10.);
 
+    /// Path prefix for all realigned bam output files
     std::string realignedReadFilenamePrefix;
 
     double indel_nonsite_match_prob = 0.25;

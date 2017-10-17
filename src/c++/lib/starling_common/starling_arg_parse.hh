@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #pragma once
 
 #include "blt_common/blt_arg_parse_util.hh"

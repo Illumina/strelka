@@ -88,7 +88,7 @@ starling_streams(
         for (unsigned alignFileIndex(0); alignFileIndex < inputAlignFileCount; alignFileIndex++)
         {
             std::ostringstream rfile;
-            rfile << opt.realignedReadFilenamePrefix << ".S" << alignFileIndex << ".bam";
+            rfile << opt.realignedReadFilenamePrefix << "S" << (alignFileIndex+1) << ".bam";
             _realign_bam_ptr[alignFileIndex] = initialize_realign_bam(rfile.str(), bamHeaders[alignFileIndex]);
         }
     }

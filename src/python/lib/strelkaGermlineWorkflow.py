@@ -59,12 +59,12 @@ def strelkaGermlineGetDepthFromAlignments(self,taskPrefix="getChromDepth",depend
 class TempVariantCallingSegmentFilesPerSample :
     def __init__(self) :
         self.gvcf = []
+        self.bamRealign = []
 
 
 class TempVariantCallingSegmentFiles :
     def __init__(self, sampleCount) :
         self.variants = []
-        self.bamRealign = []
         self.stats = []
         self.sample = [TempVariantCallingSegmentFilesPerSample() for _ in range(sampleCount)]
 
@@ -130,9 +130,8 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     if self.params.isHighDepthFilter :
         segCmd.extend(["--chrom-depth-file", self.paths.getChromDepth()])
 
-    # TODO STREL-125 come up with new solution for outbams
     if self.params.isWriteRealignedBam :
-        segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(gid)])
+        segCmd.extend(["--realigned-output-prefix", self.paths.getTmpUnsortRealignBamPrefix(gid)])
 
     if self.params.noCompressBed is not None :
         segCmd.extend(['--nocompress-bed', self.params.noCompressBed])
@@ -163,7 +162,7 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
 
     def compressRawVcf(rawVcfFilename, label) :
         """
-        process each raw vcf file with header modifications and bgzip compression
+        Process each raw vcf file with header modifications and bgzip compression
         """
 
         compressedVariantsPath = rawVcfFilename +".gz"
@@ -195,19 +194,25 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
 
 
     if self.params.isWriteRealignedBam :
-        def sortRealignBam(sortList) :
-            unsorted = self.paths.getTmpUnsortRealignBamPath(gid)
-            sorted   = self.paths.getTmpRealignBamPath(gid)
+        def sortRealignBam(sampleIndex) :
+            """
+            Sort each raaligned bam output
+            """
+            sortList = segFiles.sample[sampleIndex].bamRealign
+
+            unsorted = self.paths.getTmpUnsortRealignBamPath(gid, sampleIndex)
+            sorted   = self.paths.getTmpSortRealignBamPath(gid, sampleIndex)
             sortList.append(sorted)
 
             sortCmd="\"%s\" sort \"%s\" -o \"%s\" && rm -f \"%s\"" %\
                     (self.params.samtoolsBin, unsorted, sorted, unsorted)
 
-            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+gid)
-            self.addTask(sortTaskLabel,sortCmd,dependencies=segTaskLabel,memMb=self.params.callMemMb)
+            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+ gid + "_" + self.paths.sampleLabel(sampleIndex))
+            self.addTask(sortTaskLabel,sortCmd,dependencies=segTaskLabel, memMb=self.params.callMemMb)
             nextStepWait.add(sortTaskLabel)
 
-        sortRealignBam(segFiles.bamRealign)
+        for sampleIndex in range(sampleCount) :
+            sortRealignBam(sampleIndex)
 
     return nextStepWait
 
@@ -259,11 +264,16 @@ def callGenome(self,taskPrefix="",dependencies=None):
     finishTasks.add(self.mergeRunStats(taskPrefix,completeSegmentsTask, segFiles.stats))
 
     if self.params.isWriteRealignedBam :
-        def finishBam(tmpList, output, label) :
-            cmd = bamListCatCmd(self.params.samtoolsBin, tmpList, output)
-            finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeBAM"), cmd, dependencies=completeSegmentsTask))
+        def catRealignedBam(sampleIndex) :
+            segmentlist = segFiles.sample[sampleIndex].bamRealign
+            output = self.paths.getRealignedBamPath(sampleIndex)
 
-        finishBam(segFiles.bamRealign, self.paths.getRealignedBamPath(), "realigned")
+            bamCatCmd = bamListCatCmd(self.params.samtoolsBin, segmentlist, output)
+            bamCatTaskLabel=preJoin(taskPrefix, "realignedBamCat_"+self.paths.sampleLabel(sampleIndex))
+            finishTasks.add(self.addTask(bamCatTaskLabel, bamCatCmd, dependencies=completeSegmentsTask))
+
+        for sampleIndex in range(sampleCount) :
+            catRealignedBam(sampleIndex)
 
     if not self.params.isRetainTempFiles :
         rmTmpCmd = getRmdirCmd() + [tmpSegmentDir]
@@ -346,26 +356,32 @@ class PathInfo(SharedPathInfo):
     def getTmpSegmentVariantsPath(self, segStr) :
         return self.getTmpSegmentGvcfPrefix(segStr) + "variants.vcf"
 
+    def sampleLabel(self, sampleIndex):
+        return "S%i" % (sampleIndex+1)
+
     def getTmpSegmentGvcfPath(self, segStr, sampleIndex) :
-        return self.getTmpSegmentGvcfPrefix(segStr) + "genome.S%i.vcf" % (sampleIndex+1)
+        return self.getTmpSegmentGvcfPrefix(segStr) + "genome.%s.vcf" % (self.sampleLabel(sampleIndex))
 
-    def getTmpUnsortRealignBamPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "%s.unsorted.realigned.bam" % (segStr))
+    def getTmpUnsortRealignBamPrefix(self, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "segment.%s.unsorted.realigned." % (segStr))
 
-    def getTmpRealignBamPath(self, segStr,) :
-        return os.path.join( self.getTmpSegmentDir(), "%s.realigned.bam" % (segStr))
+    def getTmpUnsortRealignBamPath(self, segStr, sampleIndex) :
+        return self.getTmpUnsortRealignBamPrefix(segStr) + "%s.bam" % (self.sampleLabel(sampleIndex))
+
+    def getTmpSortRealignBamPath(self, segStr, sampleIndex) :
+        return os.path.join( self.getTmpSegmentDir(), "segment.%s.sorted.realigned.%s.bam" % (segStr, self.sampleLabel(sampleIndex)))
 
     def getVariantsOutputPath(self) :
         return os.path.join( self.params.variantsDir, "variants.vcf.gz")
 
     def getGvcfOutputPath(self, sampleIndex) :
-        return os.path.join( self.params.variantsDir, "genome.S%i.vcf.gz" % (sampleIndex+1))
+        return os.path.join( self.params.variantsDir, "genome.%s.vcf.gz" % (self.sampleLabel(sampleIndex)))
 
     def getGvcfLegacyFilename(self) :
         return "genome.vcf.gz"
 
-    def getRealignedBamPath(self) :
-        return os.path.join( self.params.realignedDir, 'realigned.bam')
+    def getRealignedBamPath(self, sampleIndex) :
+        return os.path.join( self.params.realignedDir, 'realigned.%s.bam' % (self.sampleLabel(sampleIndex)))
 
     def getTmpSegmentNonemptySiteCountsPath(self, sampleIndex, segStr) :
         sampleIndexStr = str(sampleIndex).zfill(3)

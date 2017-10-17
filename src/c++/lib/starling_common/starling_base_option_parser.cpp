@@ -84,6 +84,8 @@ get_starling_base_option_parser(
      "Controls the realignment stringency. Lowering this value will increase the realignment speed at the expense of indel-call quality")
     ("retain-optimal-soft-clipping", po::value(&opt.isRetainOptimalSoftClipping)->zero_tokens(),
      "Retain input alignment soft-clipping if it outscores realignment with soft-clipping unrolled.")
+    ("realigned-output-prefix", po::value(&opt.realignedReadFilenamePrefix),
+     "Write reads which have had their alignments altered during realignemnt to a BAM file, with the given path prefix.")
     ;
 
     po::options_description indel_opt("indel-options");
@@ -188,8 +190,6 @@ write_starling_legacy_options(
        "                    - If there are more than x candidate indels per base intersecting a read, then realignment\n"
        "                      is truncated to only allow individual indel toggles of the starting alignments for that read.\n"
        "                      x must be greater than 0  (default: " << default_opt.max_candidate_indel_density << ")\n"
-       " -realigned-read-file file\n"
-       "                    - Write reads which have had their alignments altered during realignemnt to a BAM file.\n"
        " -realign-submapped-reads\n"
        "                    - When this argument is provided, even reads which fail the variant calling mapping thresholds\n"
        "                      are realigned using the same procedure as the variant calling reads.\n"
