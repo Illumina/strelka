@@ -15,6 +15,7 @@
 - Fix germline empirical variant scoring (EVS) for haploid regions (STREL-678)
   - Previously, EVS resulted in reduced recall for haploid regions such as non-PAR regions of chrX in male samples.
     After adding haploid training examples from NA12877 chrX, EVS preformance for haploid regions is compariable to diploid.
+- Fix debug option to provide realigned reads in bam output (STREL-721/[#15])
 
 ## v2.8.3 - 2017-09-22
 
