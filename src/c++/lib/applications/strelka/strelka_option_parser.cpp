@@ -37,13 +37,6 @@ get_strelka_option_parser(
 {
     po::options_description aligndesc(getOptionsDescription(opt.alignFileOpt));
 
-    po::options_description strelka_parse_opt_to("Tumor-sample output");
-    strelka_parse_opt_to.add_options()
-    ("tumor-realigned-read-file",
-     po::value(&opt.tumor_realigned_read_filename),
-     "Write tumor reads which have had their alignments altered during realignment to a BAM file.")
-    ;
-
     po::options_description strelka_parse_opt_sv("Somatic variant-calling");
     strelka_parse_opt_sv.add_options()
     ("somatic-snv-file",
@@ -121,8 +114,7 @@ get_strelka_option_parser(
 
     po::options_description strelka_parse_opt("Two-sample options");
     strelka_parse_opt
-    .add(aligndesc).add(strelka_parse_opt_to)
-    .add(strelka_parse_opt_sv).add(strelka_parse_opt_filter)
+    .add(aligndesc).add(strelka_parse_opt_sv).add(strelka_parse_opt_filter)
     .add(tier2_opt).add(score_opt);
 
     // final assembly

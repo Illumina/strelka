@@ -41,7 +41,6 @@ from workflowUtil import checkFile, cleanPyEnv, ensureDir, getFastaChromOrderSiz
 def getTotalKnownReferenceSize(referenceSizeFilePath) :
     """
     Return the total known reference size given the output file from countFastaBin
-    :return:
     """
 
     class ReferenceCountColumns :
@@ -192,9 +191,12 @@ class StrelkaSharedCallWorkflow(WorkflowRunner) :
 
 
 
-    def appendCommonGenomeSegmentCommandOptions(self, gsegGroup, segCmd) :
+    def appendCommonGenomeSegmentCommandOptions(self, gsegGroup, gid, segCmd) :
         """
         Append cmdline components to the cmd arg list that are common to multiple strelka workflows
+
+        @param gid Genome segment identifier string
+        @param segCmd Command argument list
         """
 
         for gseg in gsegGroup :
@@ -220,6 +222,9 @@ class StrelkaSharedCallWorkflow(WorkflowRunner) :
 
         if self.params.callRegionsBed is not None :
             segCmd.extend(['--call-regions-bed', self.params.callRegionsBed])
+
+        if self.params.isWriteRealignedBam :
+            segCmd.extend(["--realigned-output-prefix", self.paths.getTmpUnsortRealignBamPrefix(gid)])
 
         if self.params.extraVariantCallerArguments is not None :
             for arg in self.params.extraVariantCallerArguments.strip().split() :
@@ -281,6 +286,9 @@ class SharedPathInfo(object):
     def getReferenceSizePath(self) :
         return os.path.join( self.params.workDir, "referenceSize.tsv")
 
+    def getTmpUnsortRealignBamPrefix(self, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "segment.%s.unsorted.realigned." % (segStr))
+
 
 
 class StrelkaSharedWorkflow(WorkflowRunner) :
@@ -340,4 +348,3 @@ class StrelkaSharedWorkflow(WorkflowRunner) :
                 self.params.callMemMb = self.params.callSGEMemMb
             else :
                 self.params.callMemMb = self.params.callLocalMemMb
-

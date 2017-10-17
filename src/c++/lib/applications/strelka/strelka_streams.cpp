@@ -106,14 +106,17 @@ strelka_streams(
 {
     {
         using namespace STRELKA_SAMPLE_TYPE;
-        if (opt.is_realigned_read_file())
+        if (opt.isWriteRealignedReads())
         {
-            _realign_bam_ptr[NORMAL] = initialize_realign_bam(opt.realignedReadFilenamePrefix,header);
-        }
+            auto getBamPath = [&](const std::string& label)
+            {
+                std::ostringstream rfile;
+                rfile << opt.realignedReadFilenamePrefix << label << ".bam";
+                return rfile.str();
+            };
 
-        if (opt.is_tumor_realigned_read())
-        {
-            _realign_bam_ptr[TUMOR] = initialize_realign_bam(opt.tumor_realigned_read_filename,header);
+            _realign_bam_ptr[NORMAL] = initialize_realign_bam(getBamPath("normal"),header);
+            _realign_bam_ptr[TUMOR] = initialize_realign_bam(getBamPath("tumor"),header);
         }
     }
 

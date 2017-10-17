@@ -82,7 +82,7 @@ starling_streams(
         }
     }
 
-    if (opt.is_realigned_read_file())
+    if (opt.isWriteRealignedReads())
     {
         const unsigned inputAlignFileCount(bamHeaders.size());
         for (unsigned alignFileIndex(0); alignFileIndex < inputAlignFileCount; alignFileIndex++)

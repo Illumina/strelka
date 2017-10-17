@@ -82,7 +82,7 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
 
     segCmd = [ self.params.strelkaSomaticBin ]
 
-    self.appendCommonGenomeSegmentCommandOptions(gsegGroup, segCmd)
+    self.appendCommonGenomeSegmentCommandOptions(gsegGroup, gid, segCmd)
 
     segCmd.extend(["-min-mapping-quality",str(self.params.minTier1Mapq)])
     segCmd.extend(["-min-qscore","0"])
@@ -132,10 +132,6 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
         tmpCallablePath = self.paths.getTmpSegmentRegionPath(gid)
         segFiles.callable.append(tmpCallablePath+".gz")
         segCmd.extend(["--somatic-callable-regions-file", tmpCallablePath ])
-
-    if self.params.isWriteRealignedBam :
-        segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(gid, "normal")])
-        segCmd.extend(["--tumor-realigned-read-file",self.paths.getTmpUnsortRealignBamPath(gid, "tumor")])
 
     def addListCmdOption(optList,arg) :
         if optList is None : return
@@ -190,14 +186,14 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     if self.params.isWriteRealignedBam :
         def sortRealignBam(label, sortList) :
             unsorted = self.paths.getTmpUnsortRealignBamPath(gid, label)
-            sorted   = self.paths.getTmpRealignBamPath(gid, label)
+            sorted   = self.paths.getTmpSortRealignBamPath(gid, label)
             sortList.append(sorted)
 
             sortCmd="\"%s\" sort \"%s\" -o \"%s\" && rm -f \"%s\"" %\
                     (self.params.samtoolsBin, unsorted, sorted, unsorted)
 
-            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+label+"_"+gid)
-            self.addTask(sortTaskLabel,sortCmd,dependencies=callTask,memMb=self.params.callMemMb)
+            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_" + gid + "_" + label)
+            self.addTask(sortTaskLabel, sortCmd, dependencies=callTask, memMb=self.params.callMemMb)
             nextStepWait.add(sortTaskLabel)
 
         sortRealignBam("normal", segFiles.normalRealign)
@@ -244,12 +240,16 @@ def callGenome(self,taskPrefix="",dependencies=None):
                                             self.paths.getRegionOutputPath(), "callableRegions"))
 
     if self.params.isWriteRealignedBam :
-        def finishBam(tmpList, output, label) :
-            cmd = bamListCatCmd(self.params.samtoolsBin,tmpList,output)
-            finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeBAM"), cmd, dependencies=completeSegmentsTask))
+        def catRealignedBam(label, segmentList) :
+            output = self.paths.getRealignedBamPath(label)
 
-        finishBam(segFiles.normalRealign, self.paths.getRealignedBamPath("normal"), "realignedNormal")
-        finishBam(segFiles.tumorRealign, self.paths.getRealignedBamPath("tumor"), "realignedTumor")
+            bamCatCmd = bamListCatCmd(self.params.samtoolsBin, segmentList, output)
+            bamCatTaskLabel = preJoin(taskPrefix, "realignedBamCat_" + label)
+
+            finishTasks.add(self.addTask(bamCatTaskLabel, bamCatCmd, dependencies=completeSegmentsTask))
+
+        catRealignedBam("normal", segFiles.normalRealign)
+        catRealignedBam("tumor", segFiles.tumorRealign)
 
     if not self.params.isRetainTempFiles :
         rmTmpCmd = getRmdirCmd() + [tmpSegmentDir]
@@ -295,10 +295,10 @@ class PathInfo(SharedPathInfo):
         return os.path.join( self.getTmpSegmentDir(), "somatic.callable.regions.%s.bed" % (segStr))
 
     def getTmpUnsortRealignBamPath(self, segStr, label) :
-        return os.path.join( self.getTmpSegmentDir(), "%s.%s.unsorted.realigned.bam" % (label, segStr))
+        return self.getTmpUnsortRealignBamPrefix(segStr) + "%s.bam" % (label)
 
-    def getTmpRealignBamPath(self, segStr, label) :
-        return os.path.join( self.getTmpSegmentDir(), "%s.%s.realigned.bam" % (label, segStr))
+    def getTmpSortRealignBamPath(self, segStr, label) :
+        return os.path.join( self.getTmpSegmentDir(), "segment.%s.sorted.realigned.%s.bam" % (segStr, label))
 
     def getSnvOutputPath(self) :
         return os.path.join( self.params.variantsDir, "somatic.snvs.vcf.gz")
@@ -310,7 +310,7 @@ class PathInfo(SharedPathInfo):
         return os.path.join( self.params.regionsDir, 'somatic.callable.regions.bed.gz')
 
     def getRealignedBamPath(self, label) :
-        return os.path.join( self.params.realignedDir, '%s.realigned.bam' % (label))
+        return os.path.join( self.params.realignedDir, 'realigned.%s.bam' % (label))
 
 
 

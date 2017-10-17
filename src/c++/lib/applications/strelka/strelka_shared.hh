@@ -70,11 +70,6 @@ struct strelka_options : public starling_base_options
         is_compute_somatic_scoring_metrics = true;
     }
 
-    bool is_tumor_realigned_read() const
-    {
-        return (! tumor_realigned_read_filename.empty());
-    }
-
     bool is_somatic_snv() const
     {
         return (! somatic_snv_filename.empty());
@@ -110,8 +105,6 @@ struct strelka_options : public starling_base_options
     }
 
     TumorNormalAlignmentFileOptions alignFileOpt;
-
-    std::string tumor_realigned_read_filename;
 
     /// Expected rate of somatic SNVs
     double somatic_snv_rate = 0.000001;

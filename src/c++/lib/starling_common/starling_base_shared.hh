@@ -54,7 +54,7 @@ struct starling_base_options : public blt_options
     }
 
     bool
-    is_realigned_read_file() const
+    isWriteRealignedReads() const
     {
         return (not realignedReadFilenamePrefix.empty());
     }

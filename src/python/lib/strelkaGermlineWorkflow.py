@@ -89,7 +89,7 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
 
     segCmd = [ self.params.strelkaGermlineBin ]
 
-    self.appendCommonGenomeSegmentCommandOptions(gsegGroup, segCmd)
+    self.appendCommonGenomeSegmentCommandOptions(gsegGroup, gid, segCmd)
 
     segCmd.extend(["-min-mapping-quality",self.params.minMapq])
     segCmd.extend(["-max-window-mismatch", "2", "20" ])
@@ -129,9 +129,6 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
 
     if self.params.isHighDepthFilter :
         segCmd.extend(["--chrom-depth-file", self.paths.getChromDepth()])
-
-    if self.params.isWriteRealignedBam :
-        segCmd.extend(["--realigned-output-prefix", self.paths.getTmpUnsortRealignBamPrefix(gid)])
 
     if self.params.noCompressBed is not None :
         segCmd.extend(['--nocompress-bed', self.params.noCompressBed])
@@ -208,7 +205,7 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
                     (self.params.samtoolsBin, unsorted, sorted, unsorted)
 
             sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+ gid + "_" + self.paths.sampleLabel(sampleIndex))
-            self.addTask(sortTaskLabel,sortCmd,dependencies=segTaskLabel, memMb=self.params.callMemMb)
+            self.addTask(sortTaskLabel, sortCmd, dependencies=segTaskLabel, memMb=self.params.callMemMb)
             nextStepWait.add(sortTaskLabel)
 
         for sampleIndex in range(sampleCount) :
@@ -265,11 +262,11 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     if self.params.isWriteRealignedBam :
         def catRealignedBam(sampleIndex) :
-            segmentlist = segFiles.sample[sampleIndex].bamRealign
+            segmentList = segFiles.sample[sampleIndex].bamRealign
             output = self.paths.getRealignedBamPath(sampleIndex)
 
-            bamCatCmd = bamListCatCmd(self.params.samtoolsBin, segmentlist, output)
-            bamCatTaskLabel=preJoin(taskPrefix, "realignedBamCat_"+self.paths.sampleLabel(sampleIndex))
+            bamCatCmd = bamListCatCmd(self.params.samtoolsBin, segmentList, output)
+            bamCatTaskLabel = preJoin(taskPrefix, "realignedBamCat_" + self.paths.sampleLabel(sampleIndex))
             finishTasks.add(self.addTask(bamCatTaskLabel, bamCatCmd, dependencies=completeSegmentsTask))
 
         for sampleIndex in range(sampleCount) :
@@ -361,9 +358,6 @@ class PathInfo(SharedPathInfo):
 
     def getTmpSegmentGvcfPath(self, segStr, sampleIndex) :
         return self.getTmpSegmentGvcfPrefix(segStr) + "genome.%s.vcf" % (self.sampleLabel(sampleIndex))
-
-    def getTmpUnsortRealignBamPrefix(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "segment.%s.unsorted.realigned." % (segStr))
 
     def getTmpUnsortRealignBamPath(self, segStr, sampleIndex) :
         return self.getTmpUnsortRealignBamPrefix(segStr) + "%s.bam" % (self.sampleLabel(sampleIndex))
