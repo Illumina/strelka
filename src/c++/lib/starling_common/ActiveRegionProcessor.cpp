@@ -441,13 +441,12 @@ void ActiveRegionProcessor::selectHaplotypes(const HaplotypeToAlignIdSet &haplot
     });
 
     const string& topHaplotype(haplotypeAndCounts[0].second);
-    bool isReferenceSelected(topHaplotype == _refSegment);
-    addSelectedHaplotype(topHaplotype, haplotypeToAlignIdSet);
 
-    unsigned prevCount(haplotypeAndCounts[0].first);
+    unsigned prevCount(std::numeric_limits<unsigned>::max());
+    bool isReferenceSelected(false);
 
     vector<string> haplotypeBuffer;
-    for (unsigned i(1); i<haplotypeAndCounts.size(); ++i)
+    for (unsigned i(0); i<haplotypeAndCounts.size(); ++i)
     {
         const unsigned count(haplotypeAndCounts[i].first);
         const string &haplotype(haplotypeAndCounts[i].second);
