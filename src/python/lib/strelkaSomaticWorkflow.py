@@ -74,15 +74,15 @@ class TempVariantCallingSegmentFiles :
 def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=None) :
 
     assert(len(gsegGroup) != 0)
-    gid=gsegGroup[0].id
+    genomeSegmentLabel = gsegGroup[0].id
     if len(gsegGroup) > 1 :
-        gid += "_to_"+gsegGroup[-1].id
+        genomeSegmentLabel += "_to_"+gsegGroup[-1].id
 
     isFirstSegment = (len(segFiles.snv) == 0)
 
     segCmd = [ self.params.strelkaSomaticBin ]
 
-    self.appendCommonGenomeSegmentCommandOptions(gsegGroup, gid, segCmd)
+    self.appendCommonGenomeSegmentCommandOptions(gsegGroup, genomeSegmentLabel, segCmd)
 
     segCmd.extend(["-min-mapping-quality",str(self.params.minTier1Mapq)])
     segCmd.extend(["-min-qscore","0"])
@@ -120,16 +120,16 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     for bamPath in self.params.tumorBamList :
         segCmd.extend(["--tumor-align-file", bamPath])
 
-    tmpSnvPath = self.paths.getTmpSegmentSnvPath(gid)
+    tmpSnvPath = self.paths.getTmpSegmentSnvPath(genomeSegmentLabel)
     segFiles.snv.append(tmpSnvPath+".gz")
     segCmd.extend(["--somatic-snv-file ", tmpSnvPath ] )
 
-    tmpIndelPath = self.paths.getTmpSegmentIndelPath(gid)
+    tmpIndelPath = self.paths.getTmpSegmentIndelPath(genomeSegmentLabel)
     segFiles.indel.append(tmpIndelPath+".gz")
     segCmd.extend(["--somatic-indel-file", tmpIndelPath ] )
 
     if self.params.isOutputCallableRegions :
-        tmpCallablePath = self.paths.getTmpSegmentRegionPath(gid)
+        tmpCallablePath = self.paths.getTmpSegmentRegionPath(genomeSegmentLabel)
         segFiles.callable.append(tmpCallablePath+".gz")
         segCmd.extend(["--somatic-callable-regions-file", tmpCallablePath ])
 
@@ -140,7 +140,7 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
 
     addListCmdOption(self.params.noiseVcfList, '--noise-vcf')
 
-    segFiles.stats.append(self.paths.getTmpRunStatsPath(gid))
+    segFiles.stats.append(self.paths.getTmpRunStatsPath(genomeSegmentLabel))
     segCmd.extend(["--stats-file", segFiles.stats[-1]])
 
     if not isFirstSegment :
@@ -153,13 +153,13 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
 
     nextStepWait = set()
 
-    callTask=preJoin(taskPrefix,"callGenomeSegment_"+gid)
+    callTask=preJoin(taskPrefix,"callGenomeSegment_"+genomeSegmentLabel)
     self.addTask(callTask,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
 
     # fix vcf header to use parent pyflow cmdline instead of random segment command:
     compressWaitFor=callTask
     if isFirstSegment :
-        headerFixTask=preJoin(taskPrefix,"fixVcfHeader_"+gid)
+        headerFixTask=preJoin(taskPrefix,"fixVcfHeader_"+genomeSegmentLabel)
         def getHeaderFixCmd(fileName) :
             tmpName=fileName+".reheader.tmp"
             cmd  = "\"%s\" -E \"%s\"" % (sys.executable, self.params.vcfCmdlineSwapper)
@@ -175,24 +175,24 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
         self.addTask(headerFixTask, headerFixCmd, dependencies=callTask, isForceLocal=True)
         compressWaitFor=headerFixTask
 
-    compressTask=preJoin(taskPrefix,"compressSegmentOutput_"+gid)
+    compressTask=preJoin(taskPrefix,"compressSegmentOutput_"+genomeSegmentLabel)
     compressCmd="\"%s\" \"%s\" && \"%s\" \"%s\"" % (self.params.bgzipBin, tmpSnvPath, self.params.bgzipBin, tmpIndelPath)
     if self.params.isOutputCallableRegions :
-        compressCmd += " && \"%s\" \"%s\"" % (self.params.bgzipBin, self.paths.getTmpSegmentRegionPath(gid))
+        compressCmd += " && \"%s\" \"%s\"" % (self.params.bgzipBin, self.paths.getTmpSegmentRegionPath(genomeSegmentLabel))
 
     self.addTask(compressTask, compressCmd, dependencies=compressWaitFor, isForceLocal=True)
     nextStepWait.add(compressTask)
 
     if self.params.isWriteRealignedBam :
         def sortRealignBam(label, sortList) :
-            unsorted = self.paths.getTmpUnsortRealignBamPath(gid, label)
-            sorted   = self.paths.getTmpSortRealignBamPath(gid, label)
+            unsorted = self.paths.getTmpUnsortRealignBamPath(genomeSegmentLabel, label)
+            sorted   = self.paths.getTmpSortRealignBamPath(genomeSegmentLabel, label)
             sortList.append(sorted)
 
             sortCmd="\"%s\" sort \"%s\" -o \"%s\" && rm -f \"%s\"" %\
                     (self.params.samtoolsBin, unsorted, sorted, unsorted)
 
-            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_" + gid + "_" + label)
+            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_" + genomeSegmentLabel + "_" + label)
             self.addTask(sortTaskLabel, sortCmd, dependencies=callTask, memMb=self.params.callMemMb)
             nextStepWait.add(sortTaskLabel)
 
@@ -285,20 +285,20 @@ class PathInfo(SharedPathInfo):
     def __init__(self, params) :
         super(PathInfo,self).__init__(params)
 
-    def getTmpSegmentSnvPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "somatic.snvs.unfiltered.%s.vcf" % (segStr))
+    def getTmpSegmentSnvPath(self, genomeSegmentLabel) :
+        return os.path.join(self.getTmpSegmentDir(), "somatic.snvs.unfiltered.%s.vcf" % (genomeSegmentLabel))
 
-    def getTmpSegmentIndelPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "somatic.indels.unfiltered.%s.vcf" % (segStr))
+    def getTmpSegmentIndelPath(self, genomeSegmentLabel) :
+        return os.path.join(self.getTmpSegmentDir(), "somatic.indels.unfiltered.%s.vcf" % (genomeSegmentLabel))
 
-    def getTmpSegmentRegionPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "somatic.callable.regions.%s.bed" % (segStr))
+    def getTmpSegmentRegionPath(self, genomeSegmentLabel) :
+        return os.path.join(self.getTmpSegmentDir(), "somatic.callable.regions.%s.bed" % (genomeSegmentLabel))
 
-    def getTmpUnsortRealignBamPath(self, segStr, label) :
-        return self.getTmpUnsortRealignBamPrefix(segStr) + "%s.bam" % (label)
+    def getTmpUnsortRealignBamPath(self, genomeSegmentLabel, sampleLabel) :
+        return self.getTmpUnsortRealignBamPrefix(genomeSegmentLabel) + "%s.bam" % (sampleLabel)
 
-    def getTmpSortRealignBamPath(self, segStr, label) :
-        return os.path.join( self.getTmpSegmentDir(), "segment.%s.sorted.realigned.%s.bam" % (segStr, label))
+    def getTmpSortRealignBamPath(self, genomeSegmentLabel, sampleLabel) :
+        return os.path.join(self.getTmpSegmentDir(), "segment.%s.sorted.realigned.%s.bam" % (genomeSegmentLabel, sampleLabel))
 
     def getSnvOutputPath(self) :
         return os.path.join( self.params.variantsDir, "somatic.snvs.vcf.gz")
@@ -309,8 +309,8 @@ class PathInfo(SharedPathInfo):
     def getRegionOutputPath(self) :
         return os.path.join( self.params.regionsDir, 'somatic.callable.regions.bed.gz')
 
-    def getRealignedBamPath(self, label) :
-        return os.path.join( self.params.realignedDir, 'realigned.%s.bam' % (label))
+    def getRealignedBamPath(self, sampleLabel) :
+        return os.path.join(self.params.realignedDir, 'realigned.%s.bam' % (sampleLabel))
 
 
 

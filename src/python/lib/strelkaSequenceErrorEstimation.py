@@ -45,7 +45,7 @@ def countGenomeSegment(self, sampleIndex, gseg, segFiles, taskPrefix="", depende
     Extract sequencing error count data from the genome segment specified by gseg.bamRegion
     """
 
-    segStr = str(gseg.id)
+    genomeSegmentLabel = gseg.id
 
     segCmd = [ self.params.getCountsBin ]
 
@@ -54,10 +54,10 @@ def countGenomeSegment(self, sampleIndex, gseg, segFiles, taskPrefix="", depende
     segCmd.extend(["-genome-size", str(self.params.totalKnownReferenceSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
 
-    segFiles.counts.append(self.paths.getTmpSegmentErrorCountsPath(sampleIndex, segStr))
+    segFiles.counts.append(self.paths.getTmpSegmentErrorCountsPath(sampleIndex, genomeSegmentLabel))
     segCmd.extend(["--counts-file", segFiles.counts[-1]])
 
-    segFiles.nonEmptySiteCounts.append(self.paths.getTmpSegmentNonemptySiteCountsPath(sampleIndex, segStr))
+    segFiles.nonEmptySiteCounts.append(self.paths.getTmpSegmentNonemptySiteCountsPath(sampleIndex, genomeSegmentLabel))
     segCmd.extend(["--nonempty-site-count-file", segFiles.nonEmptySiteCounts[-1]])
 
     bamPath = self.params.bamList[sampleIndex]

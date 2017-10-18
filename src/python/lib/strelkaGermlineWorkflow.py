@@ -81,20 +81,20 @@ def gvcfSampleLabel(sampleIndex) :
 def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=None) :
 
     assert(len(gsegGroup) != 0)
-    gid=gsegGroup[0].id
+    genomeSegmentLabel = gsegGroup[0].id
     if len(gsegGroup) > 1 :
-        gid += "_to_"+gsegGroup[-1].id
+        genomeSegmentLabel += "_to_"+gsegGroup[-1].id
 
     isFirstSegment = (len(segFiles.variants) == 0)
 
     segCmd = [ self.params.strelkaGermlineBin ]
 
-    self.appendCommonGenomeSegmentCommandOptions(gsegGroup, gid, segCmd)
+    self.appendCommonGenomeSegmentCommandOptions(gsegGroup, genomeSegmentLabel, segCmd)
 
     segCmd.extend(["-min-mapping-quality",self.params.minMapq])
     segCmd.extend(["-max-window-mismatch", "2", "20" ])
 
-    segCmd.extend(["--gvcf-output-prefix", self.paths.getTmpSegmentGvcfPrefix(gid)])
+    segCmd.extend(["--gvcf-output-prefix", self.paths.getTmpSegmentGvcfPrefix(genomeSegmentLabel)])
     segCmd.extend(['--gvcf-min-gqx','15'])
     segCmd.extend(['--gvcf-min-homref-gqx','15'])
     segCmd.extend(['--gvcf-max-snv-strand-bias','10'])
@@ -104,7 +104,7 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     segCmd.extend(['-min-vexp', '0.25'])
     segCmd.extend(['--enable-read-backed-phasing'])
 
-    segFiles.stats.append(self.paths.getTmpRunStatsPath(gid))
+    segFiles.stats.append(self.paths.getTmpRunStatsPath(genomeSegmentLabel))
     segCmd.extend(["--stats-file", segFiles.stats[-1]])
 
     if self.params.isRNA:
@@ -151,7 +151,7 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
 
     segCmd.extend(['--theta-file', self.params.thetaParamFile])
 
-    segTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gid)
+    segTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+genomeSegmentLabel)
     self.addTask(segTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
 
     # clean up and compress genome segment files:
@@ -174,18 +174,18 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
 
         compressCmd += " | \"%s\" -c >| \"%s\"" % (self.params.bgzip9Bin, compressedVariantsPath)
 
-        compressTaskLabel=preJoin(taskPrefix,"compressGenomeSegment_"+gid+"_"+label)
+        compressTaskLabel=preJoin(taskPrefix,"compressGenomeSegment_"+genomeSegmentLabel+"_"+label)
         self.addTask(compressTaskLabel, compressCmd, dependencies=segTaskLabel, memMb=self.params.callMemMb)
         nextStepWait.add(compressTaskLabel)
         return compressedVariantsPath
 
-    rawVariantsPath = self.paths.getTmpSegmentVariantsPath(gid)
+    rawVariantsPath = self.paths.getTmpSegmentVariantsPath(genomeSegmentLabel)
     compressedVariantsPath = compressRawVcf(rawVariantsPath, "variants")
     segFiles.variants.append(compressedVariantsPath)
 
     sampleCount = len(self.params.bamList)
     for sampleIndex in range(sampleCount) :
-        rawVariantsPath = self.paths.getTmpSegmentGvcfPath(gid, sampleIndex)
+        rawVariantsPath = self.paths.getTmpSegmentGvcfPath(genomeSegmentLabel, sampleIndex)
         compressedVariantsPath = compressRawVcf(rawVariantsPath, gvcfSampleLabel(sampleIndex))
         segFiles.sample[sampleIndex].gvcf.append(compressedVariantsPath)
 
@@ -193,18 +193,18 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     if self.params.isWriteRealignedBam :
         def sortRealignBam(sampleIndex) :
             """
-            Sort each raaligned bam output
+            Sort each realigned bam output
             """
             sortList = segFiles.sample[sampleIndex].bamRealign
 
-            unsorted = self.paths.getTmpUnsortRealignBamPath(gid, sampleIndex)
-            sorted   = self.paths.getTmpSortRealignBamPath(gid, sampleIndex)
+            unsorted = self.paths.getTmpUnsortRealignBamPath(genomeSegmentLabel, sampleIndex)
+            sorted   = self.paths.getTmpSortRealignBamPath(genomeSegmentLabel, sampleIndex)
             sortList.append(sorted)
 
             sortCmd="\"%s\" sort \"%s\" -o \"%s\" && rm -f \"%s\"" %\
                     (self.params.samtoolsBin, unsorted, sorted, unsorted)
 
-            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+ gid + "_" + self.paths.sampleLabel(sampleIndex))
+            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+ genomeSegmentLabel + "_" + self.paths.sampleLabel(sampleIndex))
             self.addTask(sortTaskLabel, sortCmd, dependencies=segTaskLabel, memMb=self.params.callMemMb)
             nextStepWait.add(sortTaskLabel)
 
@@ -347,23 +347,23 @@ class PathInfo(SharedPathInfo):
     def __init__(self, params) :
         super(PathInfo,self).__init__(params)
 
-    def getTmpSegmentGvcfPrefix(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "segment.%s." % (segStr))
+    def getTmpSegmentGvcfPrefix(self, genomeSegmentLabel) :
+        return os.path.join(self.getTmpSegmentDir(), "segment.%s." % (genomeSegmentLabel))
 
-    def getTmpSegmentVariantsPath(self, segStr) :
-        return self.getTmpSegmentGvcfPrefix(segStr) + "variants.vcf"
+    def getTmpSegmentVariantsPath(self, genomeSegmentLabel) :
+        return self.getTmpSegmentGvcfPrefix(genomeSegmentLabel) + "variants.vcf"
 
     def sampleLabel(self, sampleIndex):
         return "S%i" % (sampleIndex+1)
 
-    def getTmpSegmentGvcfPath(self, segStr, sampleIndex) :
-        return self.getTmpSegmentGvcfPrefix(segStr) + "genome.%s.vcf" % (self.sampleLabel(sampleIndex))
+    def getTmpSegmentGvcfPath(self, genomeSegmentLabel, sampleIndex) :
+        return self.getTmpSegmentGvcfPrefix(genomeSegmentLabel) + "genome.%s.vcf" % (self.sampleLabel(sampleIndex))
 
-    def getTmpUnsortRealignBamPath(self, segStr, sampleIndex) :
-        return self.getTmpUnsortRealignBamPrefix(segStr) + "%s.bam" % (self.sampleLabel(sampleIndex))
+    def getTmpUnsortRealignBamPath(self, genomeSegmentLabel, sampleIndex) :
+        return self.getTmpUnsortRealignBamPrefix(genomeSegmentLabel) + "%s.bam" % (self.sampleLabel(sampleIndex))
 
-    def getTmpSortRealignBamPath(self, segStr, sampleIndex) :
-        return os.path.join( self.getTmpSegmentDir(), "segment.%s.sorted.realigned.%s.bam" % (segStr, self.sampleLabel(sampleIndex)))
+    def getTmpSortRealignBamPath(self, genomeSegmentLabel, sampleIndex) :
+        return os.path.join(self.getTmpSegmentDir(), "segment.%s.sorted.realigned.%s.bam" % (genomeSegmentLabel, self.sampleLabel(sampleIndex)))
 
     def getVariantsOutputPath(self) :
         return os.path.join( self.params.variantsDir, "variants.vcf.gz")
@@ -377,13 +377,13 @@ class PathInfo(SharedPathInfo):
     def getRealignedBamPath(self, sampleIndex) :
         return os.path.join( self.params.realignedDir, 'realigned.%s.bam' % (self.sampleLabel(sampleIndex)))
 
-    def getTmpSegmentNonemptySiteCountsPath(self, sampleIndex, segStr) :
+    def getTmpSegmentNonemptySiteCountsPath(self, sampleIndex, genomeSegmentLabel) :
         sampleIndexStr = str(sampleIndex).zfill(3)
-        return os.path.join( self.getTmpErrorEstimationDir(), "nonEmptySiteCounts.Sample%s.%s.tsv" % (sampleIndexStr,segStr))
+        return os.path.join(self.getTmpErrorEstimationDir(), "nonEmptySiteCounts.Sample%s.%s.tsv" % (sampleIndexStr, genomeSegmentLabel))
 
-    def getTmpSegmentErrorCountsPath(self, sampleIndex, segStr) :
+    def getTmpSegmentErrorCountsPath(self, sampleIndex, genomeSegmentLabel) :
         sampleIndexStr = str(sampleIndex).zfill(3)
-        return os.path.join( self.getTmpErrorEstimationDir(), "sequenceErrorCounts.Sample%s.%s.bin" % (sampleIndexStr,segStr))
+        return os.path.join(self.getTmpErrorEstimationDir(), "sequenceErrorCounts.Sample%s.%s.bin" % (sampleIndexStr, genomeSegmentLabel))
 
     def getErrorCountsOutputPath(self, sampleIndex) :
         sampleIndexStr = str(sampleIndex).zfill(3)

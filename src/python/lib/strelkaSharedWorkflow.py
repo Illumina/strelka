@@ -191,11 +191,11 @@ class StrelkaSharedCallWorkflow(WorkflowRunner) :
 
 
 
-    def appendCommonGenomeSegmentCommandOptions(self, gsegGroup, gid, segCmd) :
+    def appendCommonGenomeSegmentCommandOptions(self, gsegGroup, genomeSegmentLabel, segCmd) :
         """
         Append cmdline components to the cmd arg list that are common to multiple strelka workflows
 
-        @param gid Genome segment identifier string
+        @param genomeSegmentLabel Genome segment identifier string
         @param segCmd Command argument list
         """
 
@@ -224,7 +224,7 @@ class StrelkaSharedCallWorkflow(WorkflowRunner) :
             segCmd.extend(['--call-regions-bed', self.params.callRegionsBed])
 
         if self.params.isWriteRealignedBam :
-            segCmd.extend(["--realigned-output-prefix", self.paths.getTmpUnsortRealignBamPrefix(gid)])
+            segCmd.extend(["--realigned-output-prefix", self.paths.getTmpUnsortRealignBamPrefix(genomeSegmentLabel)])
 
         if self.params.extraVariantCallerArguments is not None :
             for arg in self.params.extraVariantCallerArguments.strip().split() :
