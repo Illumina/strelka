@@ -113,7 +113,6 @@ private:
     CandidateSnvBuffer& _candidateSnvBuffer;
     const unsigned _maxIndelSize;
     const bool _isSomatic;
-    const unsigned _defaultPloidy;
 
     // aligner to be used in active regions
     GlobalAligner<int> _aligner;
