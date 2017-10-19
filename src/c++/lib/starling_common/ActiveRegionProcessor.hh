@@ -137,10 +137,13 @@ private:
     /// \return true if haplotype generation succeeds, false otherwise
     bool generateHaplotypesWithAssembly();
 
-    void addSelectedHaplotype(const std::string &haplotype, const HaplotypeToAlignIdSet &haplotypeToAlignIdSet);
-
     /// Select the top haplotypes
     void selectHaplotypes(const HaplotypeToAlignIdSet& haplotypeToAlignIdSet);
+
+    void selectOrDropHaplotypesWithSameCount(
+        std::vector<std::string> &haplotypesWithSameCount,
+        const HaplotypeToAlignIdSet &haplotypeToAlignIdSet,
+        const bool isReferenceSelected);
 
     /// Do not use haplotyping to determine indel candidacy and MMDF relax positions
     void doNotUseHaplotyping();
@@ -150,6 +153,6 @@ private:
 
     /// Convert the haplotype into primitive alleles and update _indelBuffer and _candidateSnvBuffer
     void convertToPrimitiveAlleles(
-            const unsigned selectedHaplotypeIndex,
-            const HaplotypeId haplotypeId);
+        const unsigned selectedHaplotypeIndex,
+        const HaplotypeId haplotypeId);
 };

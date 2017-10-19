@@ -62,10 +62,9 @@ public:
     static const int ScoreExtend = -1;
     static const int ScoreOffEdge = -100;
 
-    // default ploidy
     static const unsigned DefaultPloidy = 2;
 
-    // minimum alternative allele fraction to call a position as a candidate variant
+    /// Minimum alternative allele fraction to call a position as a candidate variant
     const float MinAlternativeAlleleFraction = 0.2;
 
     /// Coordinates active region creation in all samples
@@ -180,7 +179,7 @@ private:
 
     unsigned getPloidy(const pos_t pos);
 
-    unsigned getPloidy(const ActiveRegion activeRegion);
+    unsigned getPloidy(const ActiveRegion& activeRegion);
 
     void clearCoordinates();
 

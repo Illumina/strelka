@@ -405,19 +405,6 @@ isFilterSecondHaplotypeAsSequencerPhasingNoise(
     }
 }
 
-
-void ActiveRegionProcessor::addSelectedHaplotype(
-        const std::string &haplotype, const HaplotypeToAlignIdSet &haplotypeToAlignIdSet)
-{
-#ifdef DEBUG_ACTIVE_REGION
-    std::cerr << haplotype << '\t' << haplotypeToAlignIdSet.at(haplotype).size() << std::endl;
-#endif
-
-    _selectedHaplotypes.push_back(haplotype);
-    const std::vector<align_id_t> alignIdList(haplotypeToAlignIdSet.at(haplotype));
-    _selectedAlignIdLists.push_back(alignIdList);
-}
-
 void ActiveRegionProcessor::selectHaplotypes(const HaplotypeToAlignIdSet &haplotypeToAlignIdSet)
 {
     using namespace std;
@@ -445,7 +432,16 @@ void ActiveRegionProcessor::selectHaplotypes(const HaplotypeToAlignIdSet &haplot
     unsigned prevCount(std::numeric_limits<unsigned>::max());
     bool isReferenceSelected(false);
 
-    vector<string> haplotypeBuffer;
+    // scan haplotypes and in reverse order of counts
+    // and put up to (_ploidy+1) haplotypes into _selectedHaplotypes
+    // haplotypes with the same count are stored in haplotypesWithSameCount
+    // and added or dropped together
+    // _selectedHaplotypes cannot store more than 2 alt haplotypes
+    // e.g if _ploidy == 2
+    // (15, ref), (12, hap1), (12, hap2) => _selectedHaplotypes = [ref, hap1, hap2]
+    // (15, ref), (12, hap1), (12, hap2), (12, hap3) => _selectedHaplotypes = [ref]
+    // (15, hap1), (12, hap2), (12, hap2) => _selectedHaplotypes = [hap1]
+    vector<string> haplotypesWithSameCount;
     for (unsigned i(0); i<haplotypeAndCounts.size(); ++i)
     {
         const unsigned count(haplotypeAndCounts[i].first);
@@ -453,23 +449,8 @@ void ActiveRegionProcessor::selectHaplotypes(const HaplotypeToAlignIdSet &haplot
 
         if (count < prevCount)
         {
-            // add haplotypes in haplotypeBuffer to _selectedHaplotypes
-            const unsigned haplotypeBufferSize(haplotypeBuffer.size());
-            if (haplotypeBufferSize > 0)
-            {
-                unsigned sum = (_selectedHaplotypes.size() + haplotypeBufferSize);
-                // allow selecting up to _ploidy haplotypes
-                // or _ploidy+1 haplotypes in case of tying count and reference is selected
-                if ((sum <= _ploidy)
-                        || ((sum == _ploidy+1) && isReferenceSelected))
-                {
-                    for (const string& haplotypeInBuffer : haplotypeBuffer)
-                    {
-                        addSelectedHaplotype(haplotypeInBuffer, haplotypeToAlignIdSet);
-                    }
-                    haplotypeBuffer.clear();
-                }
-            }
+            selectOrDropHaplotypesWithSameCount(
+                haplotypesWithSameCount, haplotypeToAlignIdSet, isReferenceSelected);
         }
 
         if (_selectedHaplotypes.size() >= _ploidy) break;
@@ -478,25 +459,49 @@ void ActiveRegionProcessor::selectHaplotypes(const HaplotypeToAlignIdSet &haplot
         if (!isFilterSecondHaplotypeAsSequencerPhasingNoise(
                 _readBuffer, haplotypeToAlignIdSet, topHaplotype, haplotype))
         {
-            haplotypeBuffer.push_back(haplotype);
+            haplotypesWithSameCount.push_back(haplotype);
             if (haplotype == _refSegment) isReferenceSelected = true;
         }
 
         prevCount = count;
     }
 
-    // add remaining haplotypes in haplotypeBuffer to _selectedHaplotypes
-    const unsigned haplotypeBufferSize(haplotypeBuffer.size());
-    if (haplotypeBufferSize > 0)
+    // add remaining haplotypes in haplotypesWithSameCount to _selectedHaplotypes
+    if (!haplotypesWithSameCount.empty())
     {
-        unsigned sum = (_selectedHaplotypes.size() + haplotypeBufferSize);
-        if ((sum <= _ploidy)
-            || ((sum == _ploidy+1) && isReferenceSelected))
+        selectOrDropHaplotypesWithSameCount(
+            haplotypesWithSameCount, haplotypeToAlignIdSet, isReferenceSelected);
+    }
+}
+
+void ActiveRegionProcessor::selectOrDropHaplotypesWithSameCount(
+        std::vector<std::string> &haplotypesWithSameCount,
+        const HaplotypeToAlignIdSet &haplotypeToAlignIdSet,
+        const bool isReferenceSelected)
+{
+    using namespace std;
+
+    // add haplotypes in haplotypesWithSameCount to _selectedHaplotypes
+    const unsigned numHapsWithTheSameCount(haplotypesWithSameCount.size());
+    if (numHapsWithTheSameCount > 0)
+    {
+        // rename
+        unsigned numHapsAfterAddingAll = (_selectedHaplotypes.size() + numHapsWithTheSameCount);
+        // allow selecting up to _ploidy haplotypes
+        // or _ploidy+1 haplotypes in case of tying count and reference is selected
+        if ((numHapsAfterAddingAll <= _ploidy)
+            || ((numHapsAfterAddingAll == _ploidy+1) && isReferenceSelected))
         {
-            for (const string& haplotypeInBuffer : haplotypeBuffer)
+            for (const string& haplotypeInBuffer : haplotypesWithSameCount)
             {
-                addSelectedHaplotype(haplotypeInBuffer, haplotypeToAlignIdSet);
+#ifdef DEBUG_ACTIVE_REGION
+                std::cerr << haplotype << '\t' << haplotypeToAlignIdSet.at(haplotype).size() << std::endl;
+#endif
+                _selectedHaplotypes.push_back(haplotypeInBuffer);
+                const std::vector<align_id_t>& alignIdList(haplotypeToAlignIdSet.at(haplotypeInBuffer));
+                _selectedAlignIdLists.push_back(alignIdList);
             }
+            haplotypesWithSameCount.clear();
         }
     }
 }

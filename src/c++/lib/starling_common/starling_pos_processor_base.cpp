@@ -288,7 +288,7 @@ resetActiveRegionDetector()
     _activeRegionDetector.reset(
         new ActiveRegionDetector(
             _ref, _indelBuffer, _candidateSnvBuffer,
-            _opt.maxIndelSize, getSampleCount(), _opt.isSomatic));
+            _opt.maxIndelSize, getSampleCount(), _opt.isSomaticCallingMode));
 }
 
 
@@ -811,12 +811,6 @@ process_pos(const int stage_no,
         initializeSplicedReadSegmentsAtPos(pos);
         if (is_active_region_detector_enabled())
         {
-            for (unsigned sampleIndex(0); sampleIndex<getSampleCount(); ++sampleIndex)
-            {
-                const unsigned ploidy(get_ploidy(pos, sampleIndex));
-                if ((ploidy == 0) || (ploidy == 1))
-                    _getActiveRegionDetector().updateSamplePloidy(sampleIndex, pos, ploidy);
-            }
             _getActiveRegionDetector().updateEndPosition(pos);
         }
     }

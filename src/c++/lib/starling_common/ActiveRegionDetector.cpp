@@ -165,7 +165,7 @@ ActiveRegionDetector::closeActiveRegion()
 
     for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
     {
-        unsigned ploidy(getPloidy(sampleIndex, _synchronizedActiveRegion));
+        const unsigned ploidy(getPloidy(sampleIndex, _synchronizedActiveRegion));
         if (!_isSomatic)
         {
             ActiveRegionProcessor activeRegionProcessor(_synchronizedActiveRegion,
@@ -236,7 +236,7 @@ SampleActiveRegionDetector::getPloidy(const pos_t pos)
 }
 
 unsigned
-SampleActiveRegionDetector::getPloidy(const ActiveRegion activeRegion)
+SampleActiveRegionDetector::getPloidy(const ActiveRegion& activeRegion)
 {
     const auto leftPloidy(getPloidy(activeRegion.begin_pos()));
     const auto rightPloidy(getPloidy(activeRegion.end_pos()-1));
