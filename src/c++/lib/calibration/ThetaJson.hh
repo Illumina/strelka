@@ -28,21 +28,21 @@
 class ThetaJson
 {
 public:
-    ThetaJson(){}
+    ThetaJson() {}
     ThetaJson(size_t repeatPatternSize, const std::vector<double> theta);
 private:
     size_t _repeatPatternSize;
     std::vector<double> _theta;
 
 public:
-    static ThetaJson Deserialize(const rapidjson::Value& root);
+    static ThetaJson deserialize(const rapidjson::Value& root);
 
-    const std::vector<double> &Theta() const
+    const std::vector<double>& getTheta() const
     {
         return _theta;
     }
 
-    size_t RepeatPatternSize() const
+    size_t getRepeatPatternSize() const
     {
         return _repeatPatternSize;
     }
@@ -52,12 +52,12 @@ public:
 class ThetasJson
 {
 public:
-    ThetasJson(){}
+    ThetasJson() {}
     ThetasJson(std::map<unsigned, std::vector<double>> thetasMap);
 private:
     std::map<unsigned, std::vector<double>> _thetasMap;
 
 public:
-    static ThetasJson Deserialize(const rapidjson::Value& root);
-    const std::map<unsigned, std::vector<double>> &ThetasMap() const;
+    static ThetasJson deserialize(const rapidjson::Value& root);
+    const std::map<unsigned, std::vector<double>>& getThetasMap() const;
 };

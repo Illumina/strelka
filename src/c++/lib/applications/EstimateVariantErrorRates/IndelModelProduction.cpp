@@ -23,7 +23,7 @@
 #include "blt_util/prob_util.hh"
 
 #include "IndelModelProduction.hh"
-
+#include "calibration/ThetaJson.hh"
 #include "rapidjson/document.h"
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/prettywriter.h"
@@ -450,7 +450,7 @@ IndelModelProduction(
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 
-    _thetas = IndelErrorModelJson::deserializeTheta(thetaFilename);
+    IndelErrorModelParser::importThetaJsonFile(thetaFilename, _thetas);
 }
 
 

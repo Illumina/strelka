@@ -21,13 +21,12 @@
 #include <iostream>
 #include <fstream>
 
-#include "rapidjson/document.h"
 #include "rapidjson/filereadstream.h"
 #include "common/Exceptions.hh"
 #include "blt_util/log.hh"
 #include "IndelErrorModelJson.hh"
 #include "ThetaJson.hh"
-
+#include "common/RapidJsonHelper.hh"
 
 IndelErrorModelJson::
 IndelErrorModelJson(const std::string& sampleName, const IndelErrorModelBinomialMixture& model, const bool isStatic)
@@ -36,39 +35,47 @@ IndelErrorModelJson(const std::string& sampleName, const IndelErrorModelBinomial
     , _isStatic(isStatic)
 {}
 
-
-
-static
-void
-missingNodeError(
-    const std::string& fileName,
-    const char* key)
+IndelErrorModelJson IndelErrorModelJson::deserialize(const rapidjson::Value& root)
 {
-    std::ostringstream oss;
-    oss << "ERROR: Can't find expected node '" << key << "' in json indel parameter file '" << fileName << "'.";
-    BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+    using namespace illumina::common;
+
+    static const char* sampleNameLabel = "sampleName";
+    const rapidjson::Value& sampleNameValue(RapidJsonHelper::getNodeMember(root, sampleNameLabel));
+
+    const std::string sampleName(sampleNameValue.GetString());
+
+    static const char* motifLabel = "motif";
+    const rapidjson::Value& motifArray(RapidJsonHelper::getNodeMember(root, motifLabel));
+
+    IndelErrorModelBinomialMixture model(IndelErrorModelBinomialMixture::deserialize(motifArray));
+
+    static const char* isStaticLabel = "isStatic";
+    const rapidjson::Value& isStaticValue(RapidJsonHelper::getNodeMember(root, isStaticLabel));
+
+    const bool isStatic(isStaticValue.GetBool());
+
+    return IndelErrorModelJson(sampleName, model, isStatic);
 }
 
-
-
-static
-void
-wrongValueTypeError(
-    const std::string& fileName,
-    const char* key,
-    const char* keyType)
+IndelErrorModelsJson IndelErrorModelsJson::deserialize(const rapidjson::Value& root)
 {
-    std::ostringstream oss;
-    oss << "ERROR: Node '" << key << "' does not have expected type '" << keyType
-        << "' in json indel parameter file '" << fileName << "'.";
-    BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+    using namespace illumina::common;
+
+    IndelErrorModelsJson indelErrorModelsJson;
+    static const char* sampleLabel = "sample";
+    const rapidjson::Value& sampleArray(RapidJsonHelper::getNodeMember(root, sampleLabel));
+
+    // one json file could potentially have multiple samples
+    for (const auto& sampleValue : sampleArray.GetArray())
+    {
+        indelErrorModelsJson.addModel(IndelErrorModelJson::deserialize(sampleValue));
+    }
+
+    return indelErrorModelsJson;
 }
 
-
-
-static
 void
-deserializeIndelErrorRateSet(
+IndelErrorModelParser::importIndelErrorModelJsonFile(
     const std::string& modelFilename,
     std::map<std::string, IndelErrorRateSet>& modelMap)
 {
@@ -93,97 +100,39 @@ deserializeIndelErrorRateSet(
         BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
     }
 
-    auto getNodeMember = [&](
-                             const rapidjson::Value& node,
-                             const char* label) -> const rapidjson::Value&
+    IndelErrorModelsJson indelErrorModelsJson(IndelErrorModelsJson::deserialize(document));
+
+    const auto indelErrorModels(indelErrorModelsJson.getIndelErrorModels());
+
+    for (const auto& sampleIndelErrorModel : indelErrorModels)
     {
-        const rapidjson::Value::ConstMemberIterator iter(node.FindMember(label));
-        if (iter == node.MemberEnd()) missingNodeError(modelFilename, label);
-        return iter->value;
-    };
+        IndelErrorRateSet& modelSample(modelMap[sampleIndelErrorModel.getSampleName()]);
+        const auto binomialMixtureModelMotifs(sampleIndelErrorModel.getBinomialMixtureModel().getMotifs());
 
-    static const char* sampleLabel = "sample";
-    const rapidjson::Value& sampleArray(getNodeMember(document, sampleLabel));
-    if (!sampleArray.IsArray()) wrongValueTypeError(modelFilename, sampleLabel, "array");
-
-    if (sampleArray.Empty())
-    {
-        using namespace illumina::common;
-        std::ostringstream oss;
-        oss << "ERROR: No samples in json indel parameter file '" << modelFilename << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-    }
-
-    // one json file could potentially have multiple samples
-    for (const auto& sampleValue : sampleArray.GetArray())
-    {
-        static const char* sampleNameLabel = "sampleName";
-        const rapidjson::Value& sampleNameValue(getNodeMember(sampleValue, sampleNameLabel));
-        if (!sampleNameValue.IsString()) wrongValueTypeError(modelFilename, sampleNameLabel, "string");
-
-        const std::string sampleName(sampleNameValue.GetString());
-
-        static const char* motifLabel = "motif";
-        const rapidjson::Value& motifArray(getNodeMember(sampleValue, motifLabel));
-        if (!motifArray.IsArray()) wrongValueTypeError(modelFilename, motifLabel, "array");
-
-        if (motifArray.Empty())
+        for (const auto& motif : binomialMixtureModelMotifs)
         {
-            std::ostringstream oss;
-            oss << "ERROR: No indel error rate parameters for sample '" << sampleName
-                << "' in indel parameter file '" << modelFilename << "'\n";
-            BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
-        }
-
-        IndelErrorRateSet& modelSample(modelMap[sampleName]);
-        for (const auto& motifValue : motifArray.GetArray())
-        {
-            static const char* indelRateLabel = "indelRate";
-            const rapidjson::Value& indelRateValue(getNodeMember(motifValue, indelRateLabel));
-            if (!indelRateValue.IsNumber()) wrongValueTypeError(modelFilename, indelRateLabel, "number");
-            const double indelRate(indelRateValue.GetDouble());
-
-            static const char* noisyLocusRateLabel = "noisyLocusRate";
-            const rapidjson::Value& noisyLocusRateValue(getNodeMember(motifValue, noisyLocusRateLabel));
-            if (!noisyLocusRateValue.IsNumber()) wrongValueTypeError(modelFilename, noisyLocusRateLabel, "number");
-            const double noisyLocusRate(noisyLocusRateValue.GetDouble());
-
-            static const char* repeatCountLabel = "repeatCount";
-            const rapidjson::Value& repeatCountValue(getNodeMember(motifValue, repeatCountLabel));
-            if (!repeatCountValue.IsUint()) wrongValueTypeError(modelFilename, repeatCountLabel, "unsigned");
-            const unsigned repeatCount(repeatCountValue.GetUint());
-
-            static const char* repeatPatternSizeLabel = "repeatPatternSize";
-            const rapidjson::Value& repeatPatternSizeValue(getNodeMember(motifValue, repeatPatternSizeLabel));
-            if (!repeatPatternSizeValue.IsUint())
-                wrongValueTypeError(modelFilename, repeatPatternSizeLabel, "unsigned");
-            const unsigned repeatPatternSize(repeatPatternSizeValue.GetUint());
-
-            modelSample.addRate(repeatPatternSize, repeatCount, indelRate, indelRate, noisyLocusRate);
+            modelSample.addRate(motif.getRepeatPatternSize(), motif.getRepeatCount(), motif.getIndelRate(), motif.getIndelRate(), motif.getNoisyLocusRate());
         }
     }
 }
 
-
-
 std::map<std::string, IndelErrorRateSet>
-IndelErrorModelJson::
+IndelErrorModelParser::
 generateIndelErrorRateSetMap(const std::vector<std::string>& modelFilenames)
 {
     std::map<std::string, IndelErrorRateSet> modelMap;
     for (const auto& modelFilename : modelFilenames)
     {
-        deserializeIndelErrorRateSet(modelFilename, modelMap);
+        importIndelErrorModelJsonFile(modelFilename, modelMap);
     }
     return modelMap;
 }
 
-
-
-std::map<unsigned, std::vector<double> >
-IndelErrorModelJson::
-deserializeTheta(
-    const std::string& thetaFilename)
+void
+IndelErrorModelParser::
+importThetaJsonFile(
+    const std::string& thetaFilename,
+    std::map<unsigned, std::vector<double>>& thetasMap)
 {
     rapidjson::Document document;
     {
@@ -206,8 +155,6 @@ deserializeTheta(
         BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
     }
 
-
-
-    ThetasJson thetasJson(ThetasJson::Deserialize(document));
-    return thetasJson.ThetasMap();
+    thetasMap = ThetasJson::deserialize(document).getThetasMap();
 }
+

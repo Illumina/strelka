@@ -17,8 +17,11 @@
 //
 //
 
-#include "IndelErrorRateSet.hh"
+#pragma once
 
+#include "IndelErrorRateSet.hh"
+#include "rapidjson/document.h"
+#include "common/RapidJsonHelper.hh"
 #include <map>
 
 
@@ -40,6 +43,22 @@ private:
     double _indelRate = 0;
     double _noisyLocusRate = 0;
 public:
+    unsigned getRepeatPatternSize() const
+    {
+        return _repeatPatternSize;
+    }
+    unsigned getRepeatCount() const
+    {
+        return _repeatCount;
+    }
+    double getIndelRate() const
+    {
+        return _indelRate;
+    }
+    double getNoisyLocusRate() const
+    {
+        return _noisyLocusRate;
+    }
     template <typename Writer>
     void serialize(Writer& writer) const
     {
@@ -52,6 +71,29 @@ public:
         writer.String("noisyLocusRate");
         writer.Double(_noisyLocusRate);
     }
+    static
+    IndelMotifBinomialMixture deserialize(const rapidjson::Value& root)
+    {
+        using namespace illumina::common;
+
+        static const char* indelRateLabel = "indelRate";
+        const rapidjson::Value& indelRateValue(RapidJsonHelper::getNodeMember(root, indelRateLabel));
+        const double indelRate(indelRateValue.GetDouble());
+
+        static const char* noisyLocusRateLabel = "noisyLocusRate";
+        const rapidjson::Value& noisyLocusRateValue(RapidJsonHelper::getNodeMember(root, noisyLocusRateLabel));
+        const double noisyLocusRate(noisyLocusRateValue.GetDouble());
+
+        static const char* repeatCountLabel = "repeatCount";
+        const rapidjson::Value& repeatCountValue(RapidJsonHelper::getNodeMember(root, repeatCountLabel));
+        const unsigned repeatCount(repeatCountValue.GetUint());
+
+        static const char* repeatPatternSizeLabel = "repeatPatternSize";
+        const rapidjson::Value& repeatPatternSizeValue(RapidJsonHelper::getNodeMember(root, repeatPatternSizeLabel));
+        const unsigned repeatPatternSize(repeatPatternSizeValue.GetUint());
+
+        return IndelMotifBinomialMixture(repeatPatternSize, repeatCount, indelRate, noisyLocusRate);
+    }
 };
 
 class IndelErrorModelBinomialMixture
@@ -60,6 +102,11 @@ public:
     void addMotif(const IndelMotifBinomialMixture& motif)
     {
         _motifs.push_back(motif);
+    }
+    const std::vector<IndelMotifBinomialMixture>&
+    getMotifs() const
+    {
+        return _motifs;
     }
 private:
     std::vector<IndelMotifBinomialMixture> _motifs;
@@ -77,11 +124,26 @@ public:
         }
         writer.EndArray();
     }
+    static
+    IndelErrorModelBinomialMixture deserialize(const rapidjson::Value& root)
+    {
+        using namespace illumina::common;
+
+        //static const char* motifLabel = "motif";
+        const rapidjson::Value& motifArray(root);
+
+        IndelErrorModelBinomialMixture indelErrorModelBinomialMixture;
+        for (const auto& motifValue : motifArray.GetArray())
+        {
+            indelErrorModelBinomialMixture.addMotif(IndelMotifBinomialMixture::deserialize(motifValue));
+        }
+
+        return indelErrorModelBinomialMixture;
+    }
+
 };
 
 
-/// \brief Handles all serialization/deserialization to/from json files for the IndelErrorModel
-///
 class IndelErrorModelJson
 {
 
@@ -110,6 +172,66 @@ public:
         writer.EndObject();
     }
 
+    static IndelErrorModelJson deserialize(const rapidjson::Value& root);
+
+    const std::string&
+    getSampleName() const
+    {
+        return _sampleName;
+    }
+
+    const IndelErrorModelBinomialMixture&
+    getBinomialMixtureModel() const
+    {
+        return _model;
+    }
+
+private:
+    std::string _sampleName;
+    IndelErrorModelBinomialMixture _model;
+    bool _isStatic;
+};
+
+class IndelErrorModelsJson
+{
+public:
+    IndelErrorModelsJson() {}
+    static IndelErrorModelsJson deserialize(const rapidjson::Value& root);
+    void addModel(const IndelErrorModelJson& model)
+    {
+        _models.push_back(model);
+    }
+    const std::vector<IndelErrorModelJson>& getIndelErrorModels() const
+    {
+        return _models;
+    }
+private:
+    std::vector<IndelErrorModelJson> _models;
+};
+
+/// \brief Handles all serialization/deserialization to/from json files for the IndelErrorModel
+///
+class IndelErrorModelParser
+{
+public:
+    /// \brief Deserializes the indel error rate values for each sample
+    ///
+    /// \param[in] modelFilename The json filename to deserialize
+    /// \param[in] modelMap The map to import into
+    ///
+    static void
+    importIndelErrorModelJsonFile(
+        const std::string& modelFilename,
+        std::map<std::string, IndelErrorRateSet>& modelMap);
+    /// \brief Deserializes the theta values for each repeat pattern size
+    ///
+    /// \param[in] thetaFilename The json filename to deserialize
+    /// \param[in] thetasMap The map to import into
+    ///
+    static void
+    importThetaJsonFile(
+        const std::string& thetaFilename,
+        std::map<unsigned, std::vector<double>>& thetasMap);
 
     /// \brief Deserializes multiple json files and populates the IndelErrorRateSet object for each sample
     ///
@@ -118,23 +240,4 @@ public:
     static std::map<std::string, IndelErrorRateSet>
     generateIndelErrorRateSetMap(
         const std::vector<std::string>& modelFilenames);
-
-    /// \brief Deserializes the theta values for each repeat pattern size
-    ///
-    /// \param[in] thetaFilename The json filename to deserialize
-    ///
-    static std::map<unsigned, std::vector<double> >
-    deserializeTheta(
-        const std::string& thetaFilename);
-
-    std::string
-    getSampleName() const
-    {
-        return _sampleName;
-    }
-
-private:
-    std::string _sampleName;
-    IndelErrorModelBinomialMixture _model;
-    bool _isStatic;
 };

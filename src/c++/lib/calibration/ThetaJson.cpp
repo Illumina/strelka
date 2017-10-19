@@ -17,30 +17,26 @@
 //
 //
 
+#include "common/RapidJsonHelper.hh"
 #include "ThetaJson.hh"
 
-
-static const rapidjson::Value &getNodeMember(const rapidjson::Value& node, const char* label)
-{
-    const rapidjson::Value::ConstMemberIterator iter(node.FindMember(label));
-    return iter->value;
-}
-
 ThetaJson::ThetaJson(size_t repeatPatternSize, const std::vector<double> theta):
-_repeatPatternSize(repeatPatternSize),
-_theta(theta)
+    _repeatPatternSize(repeatPatternSize),
+    _theta(theta)
 {
 }
 
-ThetaJson ThetaJson::Deserialize(const rapidjson::Value &root)
+ThetaJson ThetaJson::deserialize(const rapidjson::Value& root)
 {
+    using namespace illumina::common;
+
     static const char* repeatPatternSizeLabel = "repeatPatternSize";
-    const rapidjson::Value& repeatPatternSizeValue(getNodeMember(root, repeatPatternSizeLabel));
+    const rapidjson::Value& repeatPatternSizeValue(RapidJsonHelper::getNodeMember(root, repeatPatternSizeLabel));
     size_t repeatPatternSize(repeatPatternSizeValue.GetUint());
 
     std::vector<double> theta;
     static const char* thetaLabel = "theta";
-    const rapidjson::Value& thetaArray(getNodeMember(root, thetaLabel));
+    const rapidjson::Value& thetaArray(RapidJsonHelper::getNodeMember(root, thetaLabel));
 
     for (const auto& thetaValue : thetaArray.GetArray())
     {
@@ -51,25 +47,26 @@ ThetaJson ThetaJson::Deserialize(const rapidjson::Value &root)
 }
 
 ThetasJson::ThetasJson(std::map<unsigned, std::vector<double>> thetasMap)
-: _thetasMap(thetasMap)
+    : _thetasMap(thetasMap)
 {
 }
 
-ThetasJson ThetasJson::Deserialize(const rapidjson::Value &root)
+ThetasJson ThetasJson::deserialize(const rapidjson::Value& root)
 {
+    using namespace illumina::common;
     static const char* thetasLabel = "thetas";
     std::map<unsigned, std::vector<double>> thetasMap;
-    const rapidjson::Value& thetasArray(getNodeMember(root, thetasLabel));
+    const rapidjson::Value& thetasArray(RapidJsonHelper::getNodeMember(root, thetasLabel));
     for (const auto& thetasByPatternSize : thetasArray.GetArray())
     {
-        const ThetaJson theta(ThetaJson::Deserialize(thetasByPatternSize));
-        thetasMap[theta.RepeatPatternSize()] = theta.Theta();
+        const ThetaJson theta(ThetaJson::deserialize(thetasByPatternSize));
+        thetasMap[theta.getRepeatPatternSize()] = theta.getTheta();
     }
 
     return ThetasJson(thetasMap);
 }
 
-const std::map<unsigned, std::vector<double>> &ThetasJson::ThetasMap() const
+const std::map<unsigned, std::vector<double>>& ThetasJson::getThetasMap() const
 {
     return _thetasMap;
 }

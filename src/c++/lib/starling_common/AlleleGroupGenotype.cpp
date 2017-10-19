@@ -21,13 +21,12 @@
 #include "OrthogonalVariantAlleleCandidateGroupUtil.hh"
 
 #include "common/Exceptions.hh"
-#include "calibration/IndelErrorModelJson.hh"
 #include "starling_indel_call_pprob_digt.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
 #include "blt_util/qscore.hh"
 #include "blt_util/log.hh"
-
+#include "calibration/IndelErrorModelJson.hh"
 
 static
 double
@@ -280,7 +279,7 @@ GenotypePriorSet(
     }
     else
     {
-        thetas = IndelErrorModelJson::deserializeTheta(thetaFilename);
+        IndelErrorModelParser::importThetaJsonFile(thetaFilename, thetas);
     }
     initializePriors(thetas);
 }

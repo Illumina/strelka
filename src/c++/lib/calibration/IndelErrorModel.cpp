@@ -173,7 +173,7 @@ IndelErrorModel(
     }
     else
     {
-        const auto modelsMap = IndelErrorModelJson::generateIndelErrorRateSetMap(modelFilenames);
+        const auto modelsMap = IndelErrorModelParser::generateIndelErrorRateSetMap(modelFilenames);
         const auto defaultModelIter = modelsMap.find("default");
 
         if ((modelsMap.size() == 1) && (defaultModelIter != modelsMap.end()))
