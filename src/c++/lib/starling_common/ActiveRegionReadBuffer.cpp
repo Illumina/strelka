@@ -261,7 +261,7 @@ bool ActiveRegionReadBuffer::isCandidateVariant(const pos_t pos) const
         return false;
 
     const auto count = getVariantCount(pos);
-    if ((count >= MinNumVariantsPerPosition and count >= (MinAlternativeAlleleFraction*getDepth(pos)))
+    if ((count >= MinNumVariantsPerPosition and count >= (_minAlternativeAlleleFraction*getDepth(pos)))
         or count >= (MinAlternativeAlleleFractionLowDepth*getDepth(pos)))
         return true;
 

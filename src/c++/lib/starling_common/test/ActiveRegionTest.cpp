@@ -21,47 +21,10 @@
 /// \author Sangtae Kim
 ///
 
-#include "starling_base_options_test.hh"
-#include "starling_common/ActiveRegionDetector.hh"
-#include "starling_common/IndelBuffer.hh"
 
-
+#include "TestIndelBuffer.hh"
 #include "boost/test/unit_test.hpp"
 
-
-
-typedef std::unique_ptr<IndelBuffer> IndelBufferPtr;
-
-struct TestIndelBuffer
-{
-    explicit
-    TestIndelBuffer(
-        const reference_contig_segment& ref)
-    {
-        // fake starling options
-        _opt.is_user_genome_size = true;
-        _opt.user_genome_size = ref.seq().size();
-
-        const double maxDepth = 100.0;
-        _doptPtr.reset(new starling_base_deriv_options(_opt));
-
-        _IndelBufferPtr.reset(new IndelBuffer(_opt, *_doptPtr, ref));
-        _IndelBufferPtr->registerSample(depth_buffer(), depth_buffer(), maxDepth);
-        _IndelBufferPtr->finalizeSamples();
-
-    }
-
-    IndelBuffer&
-    getIndelBuffer()
-    {
-        return *_IndelBufferPtr;
-    }
-
-private:
-    starling_base_options_test _opt;
-    std::unique_ptr<starling_base_deriv_options> _doptPtr;
-    std::unique_ptr<IndelBuffer> _IndelBufferPtr;
-};
 
 
 BOOST_AUTO_TEST_SUITE( test_activeRegion )
@@ -78,7 +41,8 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
     TestIndelBuffer testBuffer(ref);
     CandidateSnvBuffer testSnvBuffer(sampleCount);
 
-    ActiveRegionDetector activeRegionDetector(ref, testBuffer.getIndelBuffer(), testSnvBuffer, maxIndelSize, sampleCount);
+    ActiveRegionDetector activeRegionDetector(ref, testBuffer.getIndelBuffer(),
+                                              testSnvBuffer, maxIndelSize, sampleCount, false);
 
     const auto snvPos = std::set<pos_t>({2, 4, 5});
 
@@ -117,7 +81,7 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
         activeRegionDetector.clear();
     }
 
-    // check if polySites are correctly set
+    // check if isCandidateSnv are correctly set
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         for (pos_t pos(0); pos<refLength; ++pos)
@@ -149,7 +113,8 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
     TestIndelBuffer testBuffer(ref);
     CandidateSnvBuffer testSnvBuffer(sampleCount);
 
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), testSnvBuffer, maxIndelSize, sampleCount);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(),
+                                  testSnvBuffer, maxIndelSize, sampleCount, false);
 
     const int depth = 50;
 
@@ -219,7 +184,8 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
     TestIndelBuffer testBuffer(ref);
     CandidateSnvBuffer testSnvBuffer(sampleCount);
 
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), testSnvBuffer, maxIndelSize, sampleCount);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(),
+                                  testSnvBuffer, maxIndelSize, sampleCount, false);
 
     // fake reading reads
     const int depth = 50;
@@ -254,7 +220,7 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
         }
         detector.clear();
 
-        // check if polySites are correctly set
+        // check if isCandidateSnv are correctly set
         BOOST_REQUIRE_EQUAL(testSnvBuffer.isCandidateSnv(sampleIndex, startPosition + snvOffsets[0], 'G'), true);
         BOOST_REQUIRE_EQUAL(testSnvBuffer.isCandidateSnv(sampleIndex, startPosition + snvOffsets[1], 'G'), true);
     }
@@ -273,7 +239,8 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
     TestIndelBuffer testBuffer(ref);
     CandidateSnvBuffer testSnvBuffer(sampleCount);
 
-    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(), testSnvBuffer, maxIndelSize, sampleCount);
+    ActiveRegionDetector detector(ref, testBuffer.getIndelBuffer(),
+                                  testSnvBuffer, maxIndelSize, sampleCount, false);
 
     const int depth = 50;
 
@@ -317,5 +284,8 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
     const auto itr(testBuffer.getIndelBuffer().getIndelIter(leftShiftedIndelKey));
     BOOST_REQUIRE_EQUAL(itr->second.isConfirmedInActiveRegion, true);
 }
+
+
+
 
 BOOST_AUTO_TEST_SUITE_END()

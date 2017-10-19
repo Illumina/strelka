@@ -286,11 +286,10 @@ starling_pos_processor_base::
 resetActiveRegionDetector()
 {
     _activeRegionDetector.reset(
-        new ActiveRegionDetector(_ref, _indelBuffer, _candidateSnvBuffer, _opt.maxIndelSize, getSampleCount())
-    );
+        new ActiveRegionDetector(
+            _ref, _indelBuffer, _candidateSnvBuffer,
+            _opt.maxIndelSize, getSampleCount(), _opt.isSomaticCallingMode));
 }
-
-
 
 
 
@@ -886,9 +885,9 @@ process_pos(const int stage_no,
 
         if (is_active_region_detector_enabled())
         {
+            _getActiveRegionDetector().clearPosToActiveRegionIdMapUpToPos(pos);
             for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
             {
-                _getActiveRegionDetector().clearPosToActiveRegionIdMapUpToPos(pos);
                 _candidateSnvBuffer.clearUpToPos(sampleIndex, pos);
             }
         }

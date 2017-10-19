@@ -72,18 +72,21 @@ public:
     /// \param indelBuffer indel buffer
     /// \param candidateSnvBuffer candidate SNV buffer
     /// \return active region object
-    ActiveRegionProcessor(
-        const known_pos_range2& posRange,
-        const reference_contig_segment& ref,
-        const unsigned maxIndelSize,
-        const unsigned sampleIndex,
-        const GlobalAligner<int>& aligner,
-        const ActiveRegionReadBuffer& readBuffer,
-        IndelBuffer& indelBuffer,
-        CandidateSnvBuffer& candidateSnvBuffer):
-        _posRange(posRange), _ref(ref), _maxIndelSize(maxIndelSize), _sampleIndex(sampleIndex),
-        _aligner(aligner), _readBuffer(readBuffer), _indelBuffer(indelBuffer), _candidateSnvBuffer(candidateSnvBuffer)
+    ActiveRegionProcessor(const known_pos_range2& posRange,
+         const reference_contig_segment& ref,
+         const unsigned maxIndelSize,
+         const unsigned sampleIndex,
+         const unsigned ploidy,
+         const GlobalAligner<int>& aligner,
+         const ActiveRegionReadBuffer& readBuffer,
+         IndelBuffer& indelBuffer,
+         CandidateSnvBuffer& candidateSnvBuffer):
+        _posRange(posRange), _ref(ref), _maxIndelSize(maxIndelSize),
+        _sampleIndex(sampleIndex), _ploidy(ploidy),
+        _aligner(aligner), _readBuffer(readBuffer),
+        _indelBuffer(indelBuffer), _candidateSnvBuffer(candidateSnvBuffer)
     {
+        _ref.get_substring(_posRange.begin_pos(), _posRange.size(), _refSegment);
     }
 
     /// \param pos reference position
@@ -93,6 +96,12 @@ public:
         return _posRange.is_pos_intersect(pos);
     }
 
+    /// Experimental
+    void addHaplotypesToExclude(const std::vector<std::string>& haplotypeToExclude);
+
+    /// Gets selected haplotypes
+    const std::vector<std::string>& getSelectedHaplotypes() const;
+
     /// Decompose haplotypes into primitive alleles.
     /// Determine indel candidacy and register polymorphic sites to relax MMDF.
     void processHaplotypes();
@@ -100,40 +109,50 @@ public:
 private:
     const known_pos_range2 _posRange;
     const reference_contig_segment& _ref;
+    std::string _refSegment;
     const unsigned _maxIndelSize;
     const unsigned _sampleIndex;
+    const unsigned _ploidy;
     const GlobalAligner<int> _aligner;
 
     const ActiveRegionReadBuffer& _readBuffer;
+
+    // experimental
+    std::vector<std::string> _haplotypesToExclude;
+
+    std::vector<std::string> _selectedHaplotypes;
+    std::vector<std::vector<align_id_t>> _selectedAlignIdLists;
+
+    /// Total number of reads eligible for the haplotype generation process
+    unsigned _numReadsUsedToGenerateHaplotypes;
+
     IndelBuffer& _indelBuffer;
     CandidateSnvBuffer& _candidateSnvBuffer;
 
-    /// Select the top haplotypes and convert these into primitive alleles
-    ///
-    /// \param[in] totalNumHaplotypingReads Total number of reads eligible for the haplotype generation process
-    void
-    processSelectedHaplotypes(
-        HaplotypeToAlignIdSet& haplotypeToAlignIdSet,
-        const unsigned totalNumHaplotypingReads);
-
-    /// Create haplotypes using counting and process variants
+    /// Generate haplotypes using counting and process variants
     /// \return true if haplotype generation succeeds, false otherwise
-    bool processHaplotypesWithCounting();
+    bool generateHaplotypesWithCounting();
 
     /// Create haplotypes using assembly and process variants
     /// \return true if haplotype generation succeeds, false otherwise
-    bool processHaplotypesWithAssembly();
+    bool generateHaplotypesWithAssembly();
+
+    /// Select the top haplotypes
+    void selectHaplotypes(const HaplotypeToAlignIdSet& haplotypeToAlignIdSet);
+
+    void selectOrDropHaplotypesWithSameCount(
+        std::vector<std::string> &haplotypesWithSameCount,
+        const HaplotypeToAlignIdSet &haplotypeToAlignIdSet,
+        const bool isReferenceSelected);
 
     /// Do not use haplotyping to determine indel candidacy and MMDF relax positions
     void doNotUseHaplotyping();
 
+    /// Align each selected haplotype to the reference and convert them to primitive alleles
+    void processSelectedHaplotypes();
+
     /// Convert the haplotype into primitive alleles and update _indelBuffer and _candidateSnvBuffer
-    ///
-    /// \param[in] totalNumHaplotypingReads Total number of reads eligible for the haplotype generation process, such
-    ///               that alignIdList.size()/totalNumHaplotypingReads gives a meaning read count support ratio
     void convertToPrimitiveAlleles(
-        const std::string& haploptypeSeq,
-        const std::vector<align_id_t>& alignIdList,
-        const unsigned totalNumHaplotypingReads,
-        const uint8_t haplotypeId);
+        const unsigned selectedHaplotypeIndex,
+        const HaplotypeId haplotypeId);
 };

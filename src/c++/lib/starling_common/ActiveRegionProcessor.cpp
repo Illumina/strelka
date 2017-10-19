@@ -32,6 +32,16 @@
 // compile with this macro to get verbose output:
 //#define DEBUG_ACTIVE_REGION
 
+void ActiveRegionProcessor::addHaplotypesToExclude(const std::vector<std::string>& haplotypeToExclude)
+{
+    _haplotypesToExclude = haplotypeToExclude;
+}
+
+const std::vector<std::string>& ActiveRegionProcessor::getSelectedHaplotypes() const
+{
+    return _selectedHaplotypes;
+}
+
 void ActiveRegionProcessor::processHaplotypes()
 {
     // Check whether the active region is included in the read buffer
@@ -46,14 +56,18 @@ void ActiveRegionProcessor::processHaplotypes()
     }
     else
     {
-        bool isHaplotypingSuccess = processHaplotypesWithCounting();
+        bool isHaplotypingSuccess = generateHaplotypesWithCounting();
         if (not isHaplotypingSuccess)
         {
             // counting failed. Try assembly.
-            isHaplotypingSuccess = processHaplotypesWithAssembly();
+            isHaplotypingSuccess = generateHaplotypesWithAssembly();
         }
 
-        if (not isHaplotypingSuccess)
+        if (isHaplotypingSuccess)
+        {
+            processSelectedHaplotypes();
+        }
+        else
         {
             // both counting and assembly failed
             // do not use haplotyping to determine indel candidacy
@@ -62,7 +76,7 @@ void ActiveRegionProcessor::processHaplotypes()
     }
 }
 
-bool ActiveRegionProcessor::processHaplotypesWithCounting()
+bool ActiveRegionProcessor::generateHaplotypesWithCounting()
 {
     static const bool includePartialReads(false);
     ActiveRegionReadInfo readInfo;
@@ -77,6 +91,7 @@ bool ActiveRegionProcessor::processHaplotypesWithCounting()
     if (numReadsCoveringFullRegion < (MinFracReadsCoveringRegion*readInfo.numReadsAlignedToActiveRegion))
         return false;
 
+    _numReadsUsedToGenerateHaplotypes = readInfo.numReadsAlignedToActiveRegion;
     HaplotypeToAlignIdSet haplotypeToAlignIdSet;
     for (const auto& entry : readInfo.readSegmentsForHaplotypeGeneration)
     {
@@ -90,21 +105,16 @@ bool ActiveRegionProcessor::processHaplotypesWithCounting()
     }
 
 #ifdef DEBUG_ACTIVE_REGION
-    std::string refStr;
-    _ref.get_substring(_posRange.begin_pos(), _posRange.size(), refStr);
-    std::cerr << _sampleIndex << "\t" << _posRange.begin_pos()+1 << '\t' << _posRange.end_pos() << '\t' << refStr << "\tCounting"<< std::endl;
+    std::cerr << _sampleIndex << "\t" << _posRange.begin_pos()+1 << '\t' << _posRange.end_pos() << '\t' << _refSegment << "\tCounting"<< std::endl;
 #endif
 
-    /// \TODO Consider whether we should pass in the total reads touching the active region (readInfo.numReadsAlignedToActiveRegion)
-    ///       instead of the total count of reads eligible as haplotype generation input (numReadsCoveringFullRegion), which seems
-    ///       closer to the input parameter's intention, and makes ratios more consistent with assembly-generated haplotypes.
-    processSelectedHaplotypes(haplotypeToAlignIdSet, readInfo.numReadsAlignedToActiveRegion);
+    selectHaplotypes(haplotypeToAlignIdSet);
 
     return true;
 }
 
 
-bool ActiveRegionProcessor::processHaplotypesWithAssembly()
+bool ActiveRegionProcessor::generateHaplotypesWithAssembly()
 {
     // Expand the region to include left/right anchors.
     // TODO: anchors may be too short if there are SNVs close to anchors
@@ -192,15 +202,13 @@ bool ActiveRegionProcessor::processHaplotypesWithAssembly()
         if (assemblyReadInfo.isUsed and (not assemblyReadInfo.isPseudo))
             ++totalNumReadsUsedInAssembly;
     }
+    _numReadsUsedToGenerateHaplotypes = totalNumReadsUsedInAssembly;
 
     HaplotypeToAlignIdSet haplotypeToAlignIdSet;
     bool isNonRefHaplotypeFound(false);
 
-    std::string refStr;
-    _ref.get_substring(_posRange.begin_pos(), _posRange.size(), refStr);
-
 #ifdef DEBUG_ACTIVE_REGION
-    std::cerr << _sampleIndex << "\t" << _posRange.begin_pos()+1 << '\t' << _posRange.end_pos() << '\t' << refStr << "\tAssembly"<< std::endl;
+    std::cerr << _sampleIndex << "\t" << _posRange.begin_pos()+1 << '\t' << _posRange.end_pos() << '\t' << _refSegment << "\tAssembly"<< std::endl;
 #endif
 
     for (unsigned contigIndex(0); contigIndex<contigs.size(); ++contigIndex)
@@ -240,7 +248,7 @@ bool ActiveRegionProcessor::processHaplotypesWithAssembly()
         // ignore if there's no read uniquely supporting the contig
         if (not containsUniqueRead) continue;
 
-        if (haplotype != refStr)
+        if (haplotype != _refSegment)
             isNonRefHaplotypeFound = true;
         haplotypeToAlignIdSet[haplotype] = alignIds;
     }
@@ -249,7 +257,7 @@ bool ActiveRegionProcessor::processHaplotypesWithAssembly()
     if (not isNonRefHaplotypeFound)
         return false;
 
-    processSelectedHaplotypes(haplotypeToAlignIdSet, totalNumReadsUsedInAssembly);
+    selectHaplotypes(haplotypeToAlignIdSet);
 
     return true;
 }
@@ -397,130 +405,131 @@ isFilterSecondHaplotypeAsSequencerPhasingNoise(
     }
 }
 
-
-
-void ActiveRegionProcessor::processSelectedHaplotypes(
-    HaplotypeToAlignIdSet& haplotypeToAlignIdSet,
-    const unsigned totalNumHaplotypingReads)
+void ActiveRegionProcessor::selectHaplotypes(const HaplotypeToAlignIdSet &haplotypeToAlignIdSet)
 {
-    // determine threshold to select 2 haplotypes with the largest counts
-    unsigned largestCount(0);
-    unsigned secondLargestCount(0);
-
-    // haplotype with the most count
-    std::unique_ptr<std::string> bestHaplotypePtr;
-
-    // haplotype with the second most count (size >1 if there are ties)
-    std::vector<std::unique_ptr<std::string>> secondBestHaplotypePtrList;
-
-    std::string refStr;
-    _ref.get_substring(_posRange.begin_pos(), _posRange.size(), refStr);
-
+    using namespace std;
+    vector<pair<unsigned,string>> haplotypeAndCounts;
     for (const auto& entry : haplotypeToAlignIdSet)
     {
-        const std::string& haplotype(entry.first);
-        const bool isReference = (haplotype == refStr);
-        unsigned count = (unsigned)entry.second.size();
+        const string& haplotype(entry.first);
+        const unsigned count(entry.second.size());
 
-        // count should be no less than MinHaplotypeCount
         if (count < MinHaplotypeCount) continue;
-        if (count < secondLargestCount) continue;
 
-        if (count > largestCount)
-        {
-            secondLargestCount = largestCount;
-            largestCount = count;
-
-            secondBestHaplotypePtrList.clear();
-            if (bestHaplotypePtr)
-                secondBestHaplotypePtrList.push_back(std::move(bestHaplotypePtr));
-
-            if (not isReference)
-            {
-                bestHaplotypePtr.reset(new std::string(haplotype));
-            }
-        }
-        else if (count > secondLargestCount)
-        {
-            secondLargestCount = count;
-            secondBestHaplotypePtrList.clear();
-            if (not isReference)
-            {
-                secondBestHaplotypePtrList.push_back(boost::make_unique<std::string>(haplotype));
-            }
-        }
-        else
-        {
-            // tie at secondLargestCount
-            if (not isReference)
-            {
-                secondBestHaplotypePtrList.push_back(boost::make_unique<std::string>(haplotype));
-            }
-        }
+        haplotypeAndCounts.push_back(make_pair(count, haplotype));
     }
 
-    // now that top haplotypes are selected we can run haplotype noise filtration routines:
-    //
-    if ((largestCount>0) and (secondLargestCount>0) and (not secondBestHaplotypePtrList.empty()))
+    if (haplotypeAndCounts.empty()) return;
+
+    // sort in reverse order of counts
+    sort(haplotypeAndCounts.begin(), haplotypeAndCounts.end(),
+         [] (const pair<unsigned,string> &left, const pair<unsigned,string> &right) {
+        return left.first > right.first;
+    });
+
+    const string& topHaplotype(haplotypeAndCounts[0].second);
+
+    unsigned prevCount(std::numeric_limits<unsigned>::max());
+    bool isReferenceSelected(false);
+
+    // scan haplotypes and in reverse order of counts
+    // and put up to (_ploidy+1) haplotypes into _selectedHaplotypes
+    // haplotypes with the same count are stored in haplotypesWithSameCount
+    // and added or dropped together
+    // _selectedHaplotypes cannot store more than 2 alt haplotypes
+    // e.g if _ploidy == 2
+    // (15, ref), (12, hap1), (12, hap2) => _selectedHaplotypes = [ref, hap1, hap2]
+    // (15, ref), (12, hap1), (12, hap2), (12, hap3) => _selectedHaplotypes = [ref]
+    // (15, hap1), (12, hap2), (12, hap2) => _selectedHaplotypes = [hap1]
+    vector<string> haplotypesWithSameCount;
+    for (unsigned i(0); i<haplotypeAndCounts.size(); ++i)
     {
-        //
-        // get haplotype 1 and 2 strings:
-        //
-        const std::string& hap1(bestHaplotypePtr ? *bestHaplotypePtr : refStr);
+        const unsigned count(haplotypeAndCounts[i].first);
+        const string &haplotype(haplotypeAndCounts[i].second);
 
-        std::string* hap2Ptr(nullptr);
-        if (not secondBestHaplotypePtrList.empty())
+        if (count < prevCount)
         {
-            hap2Ptr = secondBestHaplotypePtrList.front().get();
+            selectOrDropHaplotypesWithSameCount(
+                haplotypesWithSameCount, haplotypeToAlignIdSet, isReferenceSelected);
         }
-        const std::string& hap2(hap2Ptr != nullptr ? *hap2Ptr : refStr);
 
-        if (isFilterSecondHaplotypeAsSequencerPhasingNoise(_readBuffer, haplotypeToAlignIdSet, hap1, hap2))
+        if (_selectedHaplotypes.size() >= _ploidy) break;
+
+        // apply sequencer phasing noise filter
+        if (!isFilterSecondHaplotypeAsSequencerPhasingNoise(
+                _readBuffer, haplotypeToAlignIdSet, topHaplotype, haplotype))
         {
-            secondBestHaplotypePtrList.clear();
+            haplotypesWithSameCount.push_back(haplotype);
+            if (haplotype == _refSegment) isReferenceSelected = true;
         }
+
+        prevCount = count;
     }
 
-    // top haplotypes are selected. Now process them.
-    //
-    uint8_t haplotypeId(1);
-    if (bestHaplotypePtr)
+    // add remaining haplotypes in haplotypesWithSameCount to _selectedHaplotypes
+    if (!haplotypesWithSameCount.empty())
     {
-        const auto& haplotype(*bestHaplotypePtr);
-        const auto& alignIdList(haplotypeToAlignIdSet[haplotype]);
-        convertToPrimitiveAlleles(haplotype, alignIdList, totalNumHaplotypingReads, haplotypeId);
-        ++haplotypeId;
+        selectOrDropHaplotypesWithSameCount(
+            haplotypesWithSameCount, haplotypeToAlignIdSet, isReferenceSelected);
+    }
+}
+
+void ActiveRegionProcessor::selectOrDropHaplotypesWithSameCount(
+        std::vector<std::string> &haplotypesWithSameCount,
+        const HaplotypeToAlignIdSet &haplotypeToAlignIdSet,
+        const bool isReferenceSelected)
+{
+    using namespace std;
+
+    // add haplotypes in haplotypesWithSameCount to _selectedHaplotypes
+    const unsigned numHapsWithTheSameCount(haplotypesWithSameCount.size());
+    if (numHapsWithTheSameCount > 0)
+    {
+        // rename
+        unsigned numHapsAfterAddingAll = (_selectedHaplotypes.size() + numHapsWithTheSameCount);
+        // allow selecting up to _ploidy haplotypes
+        // or _ploidy+1 haplotypes in case of tying count and reference is selected
+        if ((numHapsAfterAddingAll <= _ploidy)
+            || ((numHapsAfterAddingAll == _ploidy+1) && isReferenceSelected))
+        {
+            for (const string& haplotypeInBuffer : haplotypesWithSameCount)
+            {
 #ifdef DEBUG_ACTIVE_REGION
-        std::cerr << haplotype << '\t' << alignIdList.size() << std::endl;
+                std::cerr << haplotype << '\t' << haplotypeToAlignIdSet.at(haplotype).size() << std::endl;
 #endif
-    }
-
-    if ((not secondBestHaplotypePtrList.empty()) and ((haplotypeId+secondBestHaplotypePtrList.size()-1) <= 2))
-    {
-        // including second best haplotypes doesn't exceed 2 alt haplotypes
-        for (const auto& haplotypePtr : secondBestHaplotypePtrList)
-        {
-            const auto& haplotype(*haplotypePtr);
-            const auto& alignIdList(haplotypeToAlignIdSet[haplotype]);
-            convertToPrimitiveAlleles(haplotype, alignIdList, totalNumHaplotypingReads, haplotypeId);
-            ++haplotypeId;
-#ifdef DEBUG_ACTIVE_REGION
-            std::cerr << haplotype << '\t' << alignIdList.size() << std::endl;
-#endif
+                _selectedHaplotypes.push_back(haplotypeInBuffer);
+                const std::vector<align_id_t>& alignIdList(haplotypeToAlignIdSet.at(haplotypeInBuffer));
+                _selectedAlignIdLists.push_back(alignIdList);
+            }
+            haplotypesWithSameCount.clear();
         }
     }
 }
 
-void ActiveRegionProcessor::convertToPrimitiveAlleles(
-    const std::string& haploptypeSeq,
-    const std::vector<align_id_t>& alignIdList,
-    const unsigned totalNumHaplotypingReads,
-    const uint8_t haplotypeId)
+void ActiveRegionProcessor::processSelectedHaplotypes()
 {
-    std::string reference;
-    _ref.get_substring(_posRange.begin_pos(), _posRange.size(), reference);
-    if (reference == haploptypeSeq)
-        return;
+    HaplotypeId haplotypeId(0);
+    unsigned selectedHaplotypeIndex(0);
+    for (const std::string& haplotype : _selectedHaplotypes)
+    {
+        if (haplotype != _refSegment)
+        {
+            // alt haplotype gets non-zero haplotypeId
+            ++haplotypeId;
+            convertToPrimitiveAlleles(selectedHaplotypeIndex, haplotypeId);
+        }
+        ++selectedHaplotypeIndex;
+    }
+}
+
+void ActiveRegionProcessor::convertToPrimitiveAlleles(
+        const unsigned selectedHaplotypeIndex,
+        const HaplotypeId haplotypeId)
+{
+    const std::string& haplotypeSeq(_selectedHaplotypes[selectedHaplotypeIndex]);
+    assert (haplotypeSeq != _refSegment);
+
+    const std::vector<align_id_t>& alignIdList(_selectedAlignIdLists[selectedHaplotypeIndex]);
 
     pos_t referencePos;
     AlignmentResult<int> result;
@@ -532,7 +541,7 @@ void ActiveRegionProcessor::convertToPrimitiveAlleles(
     // There are cases that the active region was not triggered at the right position.
     // E.g. ref: GTCGAT, AR: TCGAT, Hap: T[ATAT]CGAT. In this case, T->TATAT should be left-shifted.
     //
-    _aligner.align(haploptypeSeq.cbegin(),haploptypeSeq.cend(),reference.cbegin(),reference.cend(),result);
+    _aligner.align(haplotypeSeq.cbegin(),haplotypeSeq.cend(),_refSegment.cbegin(),_refSegment.cend(),result);
 
     const ALIGNPATH::path_t& alignPath = result.align.apath;
 
@@ -542,7 +551,8 @@ void ActiveRegionProcessor::convertToPrimitiveAlleles(
         assert(false && "Unexpected alignment segment");
     }
 
-    const float altHaplotypeCountRatio(alignIdList.size()/static_cast<float>(totalNumHaplotypingReads));
+    // alignIdList.size()/_numReadsUsedToGenerateHaplotypes gives a meaning read count support ratio
+    const float altHaplotypeCountRatio(alignIdList.size()/static_cast<float>(_numReadsUsedToGenerateHaplotypes));
 
     unsigned numVariants(0);
     for (const auto& pathSegment : alignPath)
@@ -559,7 +569,7 @@ void ActiveRegionProcessor::convertToPrimitiveAlleles(
         case ALIGNPATH::SEQ_MISMATCH:
             for (unsigned i(0); i<segmentLength; ++i)
             {
-                _candidateSnvBuffer.addCandidateSnv(_sampleIndex, referencePos, haploptypeSeq[haplotypePosOffset], haplotypeId, altHaplotypeCountRatio);
+                _candidateSnvBuffer.addCandidateSnv(_sampleIndex, referencePos, haplotypeSeq[haplotypePosOffset], haplotypeId, altHaplotypeCountRatio);
 
                 ++referencePos;
                 ++haplotypePosOffset;
@@ -575,7 +585,7 @@ void ActiveRegionProcessor::convertToPrimitiveAlleles(
                 // if the last base of insertSeq equals to prevBase
                 // E.g. GT -> GT(ATAT) vs GT -> G(TATA)T
                 pos_t insertPos(referencePos);
-                auto insertSeq(haploptypeSeq.substr((unsigned long) haplotypePosOffset, segmentLength));
+                auto insertSeq(haplotypeSeq.substr((unsigned long) haplotypePosOffset, segmentLength));
                 char prevBase = _ref.get_base(insertPos-1);
                 while (insertSeq.back() == prevBase)
                 {

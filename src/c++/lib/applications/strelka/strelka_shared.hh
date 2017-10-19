@@ -68,6 +68,11 @@ struct strelka_options : public starling_base_options
     {
         // turn on empirical scoring for strelka only:
         is_compute_somatic_scoring_metrics = true;
+
+        // Set this true to use haplotyping in somatic calling
+        is_short_haplotyping_enabled = false;
+
+        isSomaticCallingMode = true;
     }
 
     bool is_somatic_snv() const
