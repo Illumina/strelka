@@ -38,7 +38,6 @@ ActiveRegionDetector::ActiveRegionDetector(
     _candidateSnvBuffer(candidateSnvBuffer),
     _maxIndelSize(maxIndelSize),
     _isSomatic(isSomatic),
-    _defaultPloidy(defaultPloidy),
     _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
 
 {
