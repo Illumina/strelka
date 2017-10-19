@@ -26,7 +26,7 @@
 #include "common/Exceptions.hh"
 #include "blt_util/log.hh"
 #include "IndelErrorModelJson.hh"
-
+#include "ThetaJson.hh"
 
 
 IndelErrorModelJson::
@@ -206,44 +206,8 @@ deserializeTheta(
         BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
     }
 
-    auto getNodeMember = [&](
-                             const rapidjson::Value& node,
-                             const char* label) -> const rapidjson::Value&
-    {
-        const rapidjson::Value::ConstMemberIterator iter(node.FindMember(label));
-        if (iter == node.MemberEnd()) missingNodeError(thetaFilename, label);
-        return iter->value;
-    };
 
-    static const char* thetasLabel = "thetas";
-    const rapidjson::Value& thetasArray(getNodeMember(document, thetasLabel));
-    if (!thetasArray.IsArray()) wrongValueTypeError(thetaFilename, thetasLabel, "array");
 
-    if (thetasArray.Empty())
-    {
-        std::ostringstream oss;
-        oss << "ERROR: No theta values in json indel parameter file '" << thetaFilename << "'\n";
-        BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
-    }
-
-    std::map<unsigned, std::vector<double>> thetasMap;
-    for (const auto& thetasByPatternSize : thetasArray.GetArray())
-    {
-        static const char* repeatPatternSizeLabel = "repeatPatternSize";
-        const rapidjson::Value& repeatPatternSizeValue(getNodeMember(thetasByPatternSize, repeatPatternSizeLabel));
-        if (!repeatPatternSizeValue.IsUint()) wrongValueTypeError(thetaFilename, repeatPatternSizeLabel, "unsigned");
-        const unsigned repeatPatternSize(repeatPatternSizeValue.GetUint());
-
-        static const char* thetaLabel = "theta";
-        const rapidjson::Value& thetaArray(getNodeMember(thetasByPatternSize, thetaLabel));
-        if (!thetaArray.IsArray()) wrongValueTypeError(thetaFilename, thetaLabel, "array");
-
-        std::vector<double> theta;
-        for (const auto& thetaValue : thetaArray.GetArray())
-        {
-            theta.push_back(thetaValue.GetDouble());
-        }
-        thetasMap[repeatPatternSize] = theta;
-    }
-    return thetasMap;
+    ThetasJson thetasJson(ThetasJson::Deserialize(document));
+    return thetasJson.ThetasMap();
 }
