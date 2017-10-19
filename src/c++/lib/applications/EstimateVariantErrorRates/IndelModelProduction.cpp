@@ -539,79 +539,41 @@ void
 IndelModelProduction::
 exportIndelErrorModelJson() const
 {
-    const auto modelJson = generateIndelErrorModelJson();
+    IndelErrorModelsJson indelErrorModelsJson;
+    indelErrorModelsJson.addModel(generateIndelErrorModelJson());
+
+    writeIndelErrorModelJson(indelErrorModelsJson, _outputFilename);
+}
+
+void
+IndelModelProduction::
+exportModelUsingInputJson(
+    const std::string& modelFilename) const
+{
+    IndelErrorModelsJson indelErrorModelsJson;
+    IndelErrorModelParser::importIndelErrorModelJsonFile(modelFilename, indelErrorModelsJson);
+
+    auto indelErrorModel(indelErrorModelsJson.getIndelErrorModels());
+
+    indelErrorModel[0].setSampleName(_counts.getSampleName().c_str());
+
+    writeIndelErrorModelJson(indelErrorModelsJson, _outputFilename);
+}
+
+void
+IndelModelProduction::
+writeIndelErrorModelJson(
+    const IndelErrorModelsJson& indelErrorModelsJson,
+    const std::string& outputFileName)
+{
     rapidjson::StringBuffer stringBuffer;
     rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(stringBuffer);
-    writer.StartObject();
-    writer.String("sample");
-    writer.StartArray();
-
-    modelJson.serialize(writer);
-
-    writer.EndArray();
-    writer.EndObject();
-
-    std::ofstream ofs(_outputFilename);
+    indelErrorModelsJson.serialize(writer);
+    std::ofstream ofs(outputFileName);
     ofs << stringBuffer.GetString();
     if (!ofs.good())
         throw std::runtime_error("Can't write the JSON string to file!");
 }
-
-
-
-void
-IndelModelProduction::
-exportModelUsingInputJson(const std::string& modelFilename) const
-{
-    rapidjson::Document document;
-    {
-        FILE* tmpFilePtr = fopen(modelFilename.c_str(), "rb");
-        char readBuffer[65536];
-        rapidjson::FileReadStream inputFileStream(tmpFilePtr, readBuffer, sizeof(readBuffer));
-        if (document.ParseStream(inputFileStream).HasParseError())
-        {
-            std::ostringstream oss;
-            oss << "ERROR: Failed to parse json theta file: '" << modelFilename << "'";
-            BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
-        }
-        fclose(tmpFilePtr);
-    }
-
-    if (!document.IsObject())
-    {
-        std::ostringstream oss;
-        oss << "ERROR: Unexpected root data type in json indel parameter file: '" << modelFilename << "'";
-        BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
-    }
-
-    auto samples(document["sample"].GetArray());
-    if (samples.Empty())
-    {
-        using namespace illumina::common;
-        std::ostringstream oss;
-        oss << "ERROR: No samples in json indel parameter file '" << modelFilename << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-    }
-    else if (samples.Size() > 1)
-    {
-        using namespace illumina::common;
-        std::ostringstream oss;
-        oss << "ERROR: Multiple samples in json indel parameter file '" << modelFilename << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-    }
-
-    samples[0]["sampleName"].SetString(_counts.getSampleName().c_str(), document.GetAllocator());
-
-    std::ofstream ofs(_outputFilename);
-    rapidjson::OStreamWrapper osw(ofs);
-    rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(osw);
-    document.Accept(writer);
-
-    if (!ofs.good())
-        throw std::runtime_error("Can't write the JSON string to file!");
-}
-
-
 
 bool
 IndelModelProduction::

@@ -180,6 +180,12 @@ public:
         return _sampleName;
     }
 
+    void
+    setSampleName(const std::string& sampleName)
+    {
+        _sampleName = sampleName;
+    }
+
     const IndelErrorModelBinomialMixture&
     getBinomialMixtureModel() const
     {
@@ -197,6 +203,21 @@ class IndelErrorModelsJson
 public:
     IndelErrorModelsJson() {}
     static IndelErrorModelsJson deserialize(const rapidjson::Value& root);
+
+    template <typename Writer>
+    void serialize(Writer& writer) const
+    {
+        writer.StartObject();
+        writer.String("sample");
+        writer.StartArray();
+        for (const auto& model:_models)
+        {
+            model.serialize(writer);
+        }
+        writer.EndArray();
+        writer.EndObject();
+    }
+
     void addModel(const IndelErrorModelJson& model)
     {
         _models.push_back(model);
@@ -223,6 +244,15 @@ public:
     importIndelErrorModelJsonFile(
         const std::string& modelFilename,
         std::map<std::string, IndelErrorRateSet>& modelMap);
+    /// \brief Deserializes the indel error rate values for each sample
+    ///
+    /// \param[in] modelFilename The json filename to deserialize
+    /// \param[in] indelErrorModelsJson The object to import into
+    ///
+    static void
+    importIndelErrorModelJsonFile(
+        const std::string& modelFilename,
+        IndelErrorModelsJson& indelErrorModelsJson);
     /// \brief Deserializes the theta values for each repeat pattern size
     ///
     /// \param[in] thetaFilename The json filename to deserialize

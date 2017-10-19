@@ -79,6 +79,29 @@ IndelErrorModelParser::importIndelErrorModelJsonFile(
     const std::string& modelFilename,
     std::map<std::string, IndelErrorRateSet>& modelMap)
 {
+
+    IndelErrorModelsJson indelErrorModelsJson;
+    importIndelErrorModelJsonFile(modelFilename, indelErrorModelsJson);
+
+    const auto indelErrorModels(indelErrorModelsJson.getIndelErrorModels());
+
+    for (const auto& sampleIndelErrorModel : indelErrorModels)
+    {
+        IndelErrorRateSet& modelSample(modelMap[sampleIndelErrorModel.getSampleName()]);
+        const auto binomialMixtureModelMotifs(sampleIndelErrorModel.getBinomialMixtureModel().getMotifs());
+
+        for (const auto& motif : binomialMixtureModelMotifs)
+        {
+            modelSample.addRate(motif.getRepeatPatternSize(), motif.getRepeatCount(), motif.getIndelRate(), motif.getIndelRate(), motif.getNoisyLocusRate());
+        }
+    }
+}
+
+void
+IndelErrorModelParser::importIndelErrorModelJsonFile(
+    const std::string& modelFilename,
+    IndelErrorModelsJson& indelErrorModelsJson)
+{
     rapidjson::Document document;
     {
         FILE* tmpFilePtr = fopen(modelFilename.c_str(), "rb");
@@ -100,20 +123,7 @@ IndelErrorModelParser::importIndelErrorModelJsonFile(
         BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
     }
 
-    IndelErrorModelsJson indelErrorModelsJson(IndelErrorModelsJson::deserialize(document));
-
-    const auto indelErrorModels(indelErrorModelsJson.getIndelErrorModels());
-
-    for (const auto& sampleIndelErrorModel : indelErrorModels)
-    {
-        IndelErrorRateSet& modelSample(modelMap[sampleIndelErrorModel.getSampleName()]);
-        const auto binomialMixtureModelMotifs(sampleIndelErrorModel.getBinomialMixtureModel().getMotifs());
-
-        for (const auto& motif : binomialMixtureModelMotifs)
-        {
-            modelSample.addRate(motif.getRepeatPatternSize(), motif.getRepeatCount(), motif.getIndelRate(), motif.getIndelRate(), motif.getNoisyLocusRate());
-        }
-    }
+    indelErrorModelsJson = IndelErrorModelsJson::deserialize(document);
 }
 
 std::map<std::string, IndelErrorRateSet>
