@@ -20,13 +20,17 @@
 #include "common/RapidJsonHelper.hh"
 #include "ThetaJson.hh"
 
-ThetaJson::ThetaJson(size_t repeatPatternSize, const std::vector<double> theta):
+ThetaJson::ThetaJson(
+        size_t repeatPatternSize,
+        const std::vector<double>& theta):
     _repeatPatternSize(repeatPatternSize),
     _theta(theta)
 {
 }
 
-ThetaJson ThetaJson::deserialize(const rapidjson::Value& root)
+ThetaJson
+ThetaJson::deserialize(
+        const rapidjson::Value& root)
 {
     using namespace illumina::common;
 
@@ -46,12 +50,14 @@ ThetaJson ThetaJson::deserialize(const rapidjson::Value& root)
     return ThetaJson(repeatPatternSize, theta);
 }
 
-ThetasJson::ThetasJson(std::map<unsigned, std::vector<double>> thetasMap)
+ThetasJson::ThetasJson(std::map<unsigned, std::vector<double>>& thetasMap)
     : _thetasMap(thetasMap)
 {
 }
 
-ThetasJson ThetasJson::deserialize(const rapidjson::Value& root)
+ThetasJson
+ThetasJson::deserialize(
+        const rapidjson::Value& root)
 {
     using namespace illumina::common;
     static const char* thetasLabel = "thetas";
@@ -66,7 +72,8 @@ ThetasJson ThetasJson::deserialize(const rapidjson::Value& root)
     return ThetasJson(thetasMap);
 }
 
-const std::map<unsigned, std::vector<double>>& ThetasJson::getThetasMap() const
+const std::map<unsigned, std::vector<double>>&
+ThetasJson::getThetasMap() const
 {
     return _thetasMap;
 }

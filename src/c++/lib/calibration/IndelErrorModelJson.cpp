@@ -29,13 +29,18 @@
 #include "common/RapidJsonHelper.hh"
 
 IndelErrorModelJson::
-IndelErrorModelJson(const std::string& sampleName, const IndelErrorModelBinomialMixture& model, const bool isStatic)
+IndelErrorModelJson(
+        const std::string& sampleName,
+        const IndelErrorModelBinomialMixture& model,
+        const bool isStatic)
     : _sampleName(sampleName)
     , _model(model)
     , _isStatic(isStatic)
 {}
 
-IndelErrorModelJson IndelErrorModelJson::deserialize(const rapidjson::Value& root)
+IndelErrorModelJson
+IndelErrorModelJson::deserialize(
+        const rapidjson::Value& root)
 {
     using namespace illumina::common;
 
@@ -57,7 +62,9 @@ IndelErrorModelJson IndelErrorModelJson::deserialize(const rapidjson::Value& roo
     return IndelErrorModelJson(sampleName, model, isStatic);
 }
 
-IndelErrorModelsJson IndelErrorModelsJson::deserialize(const rapidjson::Value& root)
+IndelErrorModelsJson
+IndelErrorModelsJson::deserialize(
+        const rapidjson::Value& root)
 {
     using namespace illumina::common;
 
@@ -128,7 +135,8 @@ IndelErrorModelParser::importIndelErrorModelJsonFile(
 
 std::map<std::string, IndelErrorRateSet>
 IndelErrorModelParser::
-generateIndelErrorRateSetMap(const std::vector<std::string>& modelFilenames)
+generateIndelErrorRateSetMap(
+        const std::vector<std::string>& modelFilenames)
 {
     std::map<std::string, IndelErrorRateSet> modelMap;
     for (const auto& modelFilename : modelFilenames)

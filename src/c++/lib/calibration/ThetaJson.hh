@@ -29,7 +29,9 @@ class ThetaJson
 {
 public:
     ThetaJson() {}
-    ThetaJson(size_t repeatPatternSize, const std::vector<double> theta);
+    ThetaJson(
+            size_t repeatPatternSize,
+            const std::vector<double>& theta);
 private:
     size_t _repeatPatternSize;
     std::vector<double> _theta;
@@ -53,7 +55,9 @@ class ThetasJson
 {
 public:
     ThetasJson() {}
-    ThetasJson(std::map<unsigned, std::vector<double>> thetasMap);
+    explicit
+    ThetasJson(
+            std::map<unsigned, std::vector<double>>& thetasMap);
 private:
     std::map<unsigned, std::vector<double>> _thetasMap;
 
