@@ -134,7 +134,7 @@ def main() :
     # manipulate the warning messages so that they look like gcc errors -- this enables IDE parsing of error location:
     checkCmd.append("--template={file}:{line}:1: error: {severity}:{message}")
 
-    suppressList=["unusedFunction", "missingInclude", "purgedConfiguration"]
+    suppressList=["unusedFunction", "unmatchedSuppression", "missingInclude", "purgedConfiguration"]
 
     # extra suppressions only used in strelka
     extraSuppressList=["uninitMemberVar"]
@@ -147,7 +147,7 @@ def main() :
         maxBoostFormatBugVersion = "1.69"
         isBoostFormatBugVersion = (compareVersions(cppcheckVersion, maxBoostFormatBugVersion) <= 0)
         if isBoostFormatBugVersion :
-            suppressList.append("zerodiv")
+            suppressList.append("zerodivcond")
 
     # cppcheck v1.72 the will identify lots of FP unused private method errors
     #
