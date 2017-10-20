@@ -123,7 +123,7 @@ private:
     SampleActiveRegionDetector& getSampleActiveRegionDetector(unsigned sampleIndex);
     unsigned getPloidy(const unsigned sampleIndex, const ActiveRegion activeRegion) const;
     void setPosToActiveRegionIdMap(const ActiveRegion& activeRegionRange);
-    void updateActiveRegionRange(std::unique_ptr<ActiveRegion> activeRegion);
+    void updateActiveRegionRange(const ActiveRegion& sampleActiveRegion);
     void processExistingActiveRegion(const pos_t pos);
     void closeActiveRegion();
 };

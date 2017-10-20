@@ -80,10 +80,10 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
     processExistingActiveRegion(pos);
     for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
     {
-        auto activeRegion = _sampleActiveRegionDetector[sampleIndex]->updateEndPosition(pos);
-        if (activeRegion)
+        const auto activeRegionPtr = _sampleActiveRegionDetector[sampleIndex]->updateEndPosition(pos);
+        if (activeRegionPtr)
         {
-            updateActiveRegionRange(std::move(activeRegion));
+            updateActiveRegionRange(*activeRegionPtr);
         }
     }
 }
@@ -100,10 +100,10 @@ ActiveRegionDetector::clear()
 {
     for (unsigned sampleIndex(0); sampleIndex<_sampleCount; ++sampleIndex)
     {
-        auto activeRegion = _sampleActiveRegionDetector[sampleIndex]->closeActiveRegionDetector();
-        if (activeRegion)
+        const auto activeRegionPtr = _sampleActiveRegionDetector[sampleIndex]->closeActiveRegionDetector();
+        if (activeRegionPtr)
         {
-            updateActiveRegionRange(std::move(activeRegion));
+            updateActiveRegionRange(*activeRegionPtr);
         }
     }
     if (_synchronizedActiveRegion.end_pos())
@@ -117,10 +117,8 @@ ActiveRegionDetector::clearPosToActiveRegionIdMapUpToPos(const pos_t pos)
 }
 
 void
-ActiveRegionDetector::updateActiveRegionRange(std::unique_ptr<ActiveRegion> activeRegion)
+ActiveRegionDetector::updateActiveRegionRange(const ActiveRegion& sampleActiveRegion)
 {
-    const ActiveRegion& sampleActiveRegion(*activeRegion);
-
     if (_synchronizedActiveRegion.end_pos())
     {
         // _activeRegionRange is valid

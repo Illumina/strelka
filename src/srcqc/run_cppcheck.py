@@ -122,17 +122,22 @@ def main() :
     checkCmd.append("--enable=all")
     checkCmd.append("--std=c++11")
     checkCmd.append("--force")
-    checkCmd.append("--verbose")
+
+    # quiet and verbose together mean:
+    # only print error messages, but add more detail to each error message printed
     checkCmd.append("--quiet")
-    checkCmd.append("--inline-suppr")
+    checkCmd.append("--verbose")
+
+    # add this if any inline suppresssion is going to be used in the code:
+    #checkCmd.append("--inline-suppr")
 
     # manipulate the warning messages so that they look like gcc errors -- this enables IDE parsing of error location:
     checkCmd.append("--template={file}:{line}:1: error: {severity}:{message}")
 
-    suppressList=["unusedFunction", "unmatchedSuppression", "missingInclude", "purgedConfiguration"]
+    suppressList=["unusedFunction", "missingInclude", "purgedConfiguration"]
 
-    # extra suppressions only used in strelka, these are likely removable:
-    extraSuppressList=["uninitMemberVar","unsignedLessThanZero","obsoleteFunctionsasctime"]
+    # extra suppressions only used in strelka
+    extraSuppressList=["uninitMemberVar"]
     suppressList.extend(extraSuppressList)
 
     # In cppcheck versions 1.69 and lower (TODO how low?), there is a bug parsing the use of the '%' character
@@ -142,7 +147,7 @@ def main() :
         maxBoostFormatBugVersion = "1.69"
         isBoostFormatBugVersion = (compareVersions(cppcheckVersion, maxBoostFormatBugVersion) <= 0)
         if isBoostFormatBugVersion :
-            suppressList.append("zerodivcond")
+            suppressList.append("zerodiv")
 
     # cppcheck v1.72 the will identify lots of FP unused private method errors
     #
