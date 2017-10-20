@@ -163,9 +163,9 @@ def main() :
     # generate runscript:
     #
     ensureDir(options.runDir)
-    scriptFile=os.path.join(options.runDir,"runWorkflow.py")
+    workflowScriptPath = os.path.join(options.runDir, options.workflowScriptName)
 
-    makeRunScript(scriptFile,os.path.join(workflowDir,"strelkaGermlineWorkflow.py"),"StrelkaGermlineWorkflow",primarySectionName,iniSections)
+    makeRunScript(workflowScriptPath,os.path.join(workflowDir,"strelkaGermlineWorkflow.py"),"StrelkaGermlineWorkflow",primarySectionName,iniSections)
 
     notefp=sys.stdout
     notefp.write("""
@@ -173,7 +173,7 @@ Successfully created workflow run script.
 To execute the workflow, run the following script and set appropriate options:
 
 %s
-""" % (scriptFile))
+""" % (workflowScriptPath))
 
 
 if __name__ == "__main__" :

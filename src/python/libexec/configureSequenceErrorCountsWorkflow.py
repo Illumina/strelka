@@ -80,6 +80,7 @@ This script configures the Strelka sequence error counts workflow.
 
         defaults.update({
             'runDir' : 'SequenceErrorCountsWorkflow',
+            'workflowScriptName' : 'runWorkflow.py',
             'getCountsBin' : joinFile(libexecDir,exeFile("GetSequenceErrorCounts")),
             'mergeCountsBin' : joinFile(libexecDir,exeFile("MergeSequenceErrorCounts")),
             'extraCountsArguments' : None
@@ -127,9 +128,9 @@ def main() :
     # generate runscript:
     #
     ensureDir(options.runDir)
-    scriptFile=os.path.join(options.runDir,"runWorkflow.py")
+    workflowScriptPath = os.path.join(options.runDir, options.workflowScriptName)
 
-    makeRunScript(scriptFile,os.path.join(workflowDir,"sequenceErrorCountsWorkflow.py"),"SequenceErrorCountsWorkflow",primarySectionName,iniSections)
+    makeRunScript(workflowScriptPath,os.path.join(workflowDir,"sequenceErrorCountsWorkflow.py"),"SequenceErrorCountsWorkflow",primarySectionName,iniSections)
 
     notefp=sys.stdout
     notefp.write("""
@@ -137,9 +138,8 @@ Successfully created workflow run script.
 To execute the workflow, run the following script and set appropriate options:
 
 %s
-""" % (scriptFile))
+""" % (workflowScriptPath))
 
 
 if __name__ == "__main__" :
     main()
-
