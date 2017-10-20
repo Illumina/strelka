@@ -94,8 +94,9 @@ deserializeIndelErrorRateSet(
     }
 
     auto getNodeMember = [&](
-        const rapidjson::Value& node,
-        const char* label) -> const rapidjson::Value& {
+                             const rapidjson::Value& node,
+                             const char* label) -> const rapidjson::Value&
+    {
         const rapidjson::Value::ConstMemberIterator iter(node.FindMember(label));
         if (iter == node.MemberEnd()) missingNodeError(modelFilename, label);
         return iter->value;
@@ -179,7 +180,7 @@ generateIndelErrorRateSetMap(const std::vector<std::string>& modelFilenames)
 
 
 
-std::map<unsigned, std::vector<double>>
+std::map<unsigned, std::vector<double> >
 IndelErrorModelJson::
 deserializeTheta(
     const std::string& thetaFilename)
@@ -206,8 +207,9 @@ deserializeTheta(
     }
 
     auto getNodeMember = [&](
-        const rapidjson::Value& node,
-        const char* label) -> const rapidjson::Value& {
+                             const rapidjson::Value& node,
+                             const char* label) -> const rapidjson::Value&
+    {
         const rapidjson::Value::ConstMemberIterator iter(node.FindMember(label));
         if (iter == node.MemberEnd()) missingNodeError(thetaFilename, label);
         return iter->value;

@@ -405,7 +405,7 @@ isFilterSecondHaplotypeAsSequencerPhasingNoise(
     }
 }
 
-void ActiveRegionProcessor::selectHaplotypes(const HaplotypeToAlignIdSet &haplotypeToAlignIdSet)
+void ActiveRegionProcessor::selectHaplotypes(const HaplotypeToAlignIdSet& haplotypeToAlignIdSet)
 {
     using namespace std;
     vector<pair<unsigned,string>> haplotypeAndCounts;
@@ -423,7 +423,8 @@ void ActiveRegionProcessor::selectHaplotypes(const HaplotypeToAlignIdSet &haplot
 
     // sort in reverse order of counts
     sort(haplotypeAndCounts.begin(), haplotypeAndCounts.end(),
-         [] (const pair<unsigned,string> &left, const pair<unsigned,string> &right) {
+         [] (const pair<unsigned,string>& left, const pair<unsigned,string>& right)
+    {
         return left.first > right.first;
     });
 
@@ -445,7 +446,7 @@ void ActiveRegionProcessor::selectHaplotypes(const HaplotypeToAlignIdSet &haplot
     for (unsigned i(0); i<haplotypeAndCounts.size(); ++i)
     {
         const unsigned count(haplotypeAndCounts[i].first);
-        const string &haplotype(haplotypeAndCounts[i].second);
+        const string& haplotype(haplotypeAndCounts[i].second);
 
         if (count < prevCount)
         {
@@ -475,9 +476,9 @@ void ActiveRegionProcessor::selectHaplotypes(const HaplotypeToAlignIdSet &haplot
 }
 
 void ActiveRegionProcessor::selectOrDropHaplotypesWithSameCount(
-        std::vector<std::string> &haplotypesWithSameCount,
-        const HaplotypeToAlignIdSet &haplotypeToAlignIdSet,
-        const bool isReferenceSelected)
+    std::vector<std::string>& haplotypesWithSameCount,
+    const HaplotypeToAlignIdSet& haplotypeToAlignIdSet,
+    const bool isReferenceSelected)
 {
     using namespace std;
 
@@ -523,8 +524,8 @@ void ActiveRegionProcessor::processSelectedHaplotypes()
 }
 
 void ActiveRegionProcessor::convertToPrimitiveAlleles(
-        const unsigned selectedHaplotypeIndex,
-        const HaplotypeId haplotypeId)
+    const unsigned selectedHaplotypeIndex,
+    const HaplotypeId haplotypeId)
 {
     const std::string& haplotypeSeq(_selectedHaplotypes[selectedHaplotypeIndex]);
     assert (haplotypeSeq != _refSegment);

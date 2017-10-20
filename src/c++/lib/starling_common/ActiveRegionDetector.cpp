@@ -90,7 +90,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
 
 void
 ActiveRegionDetector::updateSamplePloidy(
-        const unsigned sampleIndex, const pos_t pos, const unsigned ploidy)
+    const unsigned sampleIndex, const pos_t pos, const unsigned ploidy)
 {
     _sampleActiveRegionDetector[sampleIndex]->updatePloidy(pos, ploidy);
 }

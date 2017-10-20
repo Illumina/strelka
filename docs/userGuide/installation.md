@@ -17,7 +17,7 @@ Strelka User Guide - Installation
     * [Ubuntu 14.04 and 16.04](#ubuntu-1404-and-1604)
     * [Ubuntu 12.04](#ubuntu-1204)
     * [CentOS 7](#centos-7)
-    * [CentOS 5 and 6](#centos-5-and-6)
+    * [CentOS 6](#centos-6)
 * [Build procedure](#build-procedure)
     * [Workflow relocation](#workflow-relocation)
 * [Demo](#demo)

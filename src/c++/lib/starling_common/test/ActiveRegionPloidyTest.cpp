@@ -56,7 +56,7 @@ static int ploidyTest(const unsigned ploidy)
     {
         bool isForwardStrand = ((alignId % 2) == 0);
         activeRegionDetector.getReadBuffer(sampleIndex).setAlignInfo(
-                alignId, sampleIndex, INDEL_ALIGN_TYPE::GENOME_TIER1_READ, isForwardStrand);
+            alignId, sampleIndex, INDEL_ALIGN_TYPE::GENOME_TIER1_READ, isForwardStrand);
 
         bool isSnvAtPos2(false);
         bool isSnvAtPos4(false);

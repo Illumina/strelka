@@ -73,14 +73,14 @@ public:
     /// \param candidateSnvBuffer candidate SNV buffer
     /// \return active region object
     ActiveRegionProcessor(const known_pos_range2& posRange,
-         const reference_contig_segment& ref,
-         const unsigned maxIndelSize,
-         const unsigned sampleIndex,
-         const unsigned ploidy,
-         const GlobalAligner<int>& aligner,
-         const ActiveRegionReadBuffer& readBuffer,
-         IndelBuffer& indelBuffer,
-         CandidateSnvBuffer& candidateSnvBuffer):
+                          const reference_contig_segment& ref,
+                          const unsigned maxIndelSize,
+                          const unsigned sampleIndex,
+                          const unsigned ploidy,
+                          const GlobalAligner<int>& aligner,
+                          const ActiveRegionReadBuffer& readBuffer,
+                          IndelBuffer& indelBuffer,
+                          CandidateSnvBuffer& candidateSnvBuffer):
         _posRange(posRange), _ref(ref), _maxIndelSize(maxIndelSize),
         _sampleIndex(sampleIndex), _ploidy(ploidy),
         _aligner(aligner), _readBuffer(readBuffer),
@@ -141,8 +141,8 @@ private:
     void selectHaplotypes(const HaplotypeToAlignIdSet& haplotypeToAlignIdSet);
 
     void selectOrDropHaplotypesWithSameCount(
-        std::vector<std::string> &haplotypesWithSameCount,
-        const HaplotypeToAlignIdSet &haplotypeToAlignIdSet,
+        std::vector<std::string>& haplotypesWithSameCount,
+        const HaplotypeToAlignIdSet& haplotypeToAlignIdSet,
         const bool isReferenceSelected);
 
     /// Do not use haplotyping to determine indel candidacy and MMDF relax positions
