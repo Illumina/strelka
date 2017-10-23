@@ -1,4 +1,8 @@
-## Unreleased
+## v2.8.4 - 2017-10-23
+
+This is a major bugfix update from v2.8.3. The two most notable changes are (1) a nearly 10-fold 
+reduction in memory usage during germline analysis and (2) fixing the default variant recall level
+for male non-PAR chrX, or any region given a ploidy of 1 in the ploidy VCF file.
 
 ### Changed
 - Switch to RapidJSON library for all json parsing (STREL-696)
@@ -14,7 +18,7 @@
 ### Fixed
 - Fix germline empirical variant scoring (EVS) for haploid regions (STREL-678)
   - Previously, EVS resulted in reduced recall for haploid regions such as non-PAR regions of chrX in male samples.
-    After adding haploid training examples from NA12877 chrX, EVS preformance for haploid regions is compariable to diploid.
+    After adding haploid training examples from NA12877 chrX, EVS performance for haploid regions is comparable to diploid.
 - Fix debug option to provide realigned reads in bam output (STREL-721/[#15])
 
 ## v2.8.3 - 2017-09-22
