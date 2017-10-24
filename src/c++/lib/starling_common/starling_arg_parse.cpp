@@ -46,10 +46,6 @@ legacy_starling_arg_parse(
     bool is_bsnp_ssd_no_mismatch(false);
     bool is_bsnp_ssd_one_mismatch(false);
 
-    bool is_max_can_indel_density_set(false);
-
-    bool is_max_vexp_iterations(false);
-
     bool is_max_indel_size(false);
 
     bool is_inmp(false);
@@ -61,14 +57,8 @@ legacy_starling_arg_parse(
     {
         if (ad.argmark[i]) continue;
 
-        if (ad.argstr[i]=="-lsnp-alpha")
+        if (ad.argstr[i]=="-bsnp-ssd-no-mismatch")
         {
-            set_xrange_arg(i,ad,opt.is_lsnp,opt.lsnp_alpha);
-        }
-        else if (ad.argstr[i]=="-bsnp-ssd-no-mismatch")
-        {
-//            log_os << "testing -bsnp-ssd-no-mismatch \n";
-//            log_os << "i ad,is_bsnp_ssd_no_mismatch :"<< i << " " << ad << "\n "; //<< ad << " " << is_bsnp_ssd_no_mismatch << "\n";
             set_xrange_arg(i,ad,is_bsnp_ssd_no_mismatch,opt.bsnp_ssd_no_mismatch,true);
         }
         else if (ad.argstr[i]=="-bsnp-ssd-one-mismatch")
@@ -78,18 +68,6 @@ legacy_starling_arg_parse(
         else if (ad.argstr[i]=="-bsnp-diploid-het-bias")
         {
             set_xrange_arg(i,ad,opt.is_bsnp_diploid_het_bias,opt.bsnp_diploid_het_bias,true);
-        }
-        else if (ad.argstr[i]=="-bsnp-nploid")
-        {
-            set_nploid_arg(i,ad,opt.is_bsnp_nploid,opt.bsnp_nploid_ploidy,opt.bsnp_nploid_snp_prob);
-        }
-        else if (ad.argstr[i]=="-print-evidence")
-        {
-            opt.is_print_evidence=true;
-        }
-        else if (ad.argstr[i]=="-print-all-site-evidence")
-        {
-            opt.is_print_all_site_evidence=true;
         }
         else if (ad.argstr[i]=="-min-qscore")
         {
@@ -117,42 +95,14 @@ legacy_starling_arg_parse(
         {
             set_arg(i,ad,opt.is_user_genome_size,opt.user_genome_size);
         }
-        else if (ad.argstr[i]=="-max-candidate-indel-density")
-        {
-            set_xrange_arg(i,ad,is_max_can_indel_density_set,opt.max_candidate_indel_density,false,true);
-        }
-        else if (ad.argstr[i]=="-realign-submapped-reads")
-        {
-            opt.is_realign_submapped_reads=true;
-        }
-        else if (ad.argstr[i]=="-max-vexp-iterations")
-        {
-            set_arg(i,ad,is_max_vexp_iterations,opt.max_vexp_iterations);
-        }
         else if (ad.argstr[i]=="-min-vexp")
         {
             set_xrange_arg(i,ad,local_is_min_vexp,opt.min_vexp,true);
             opt.is_min_vexp=local_is_min_vexp;
         }
-        else if (ad.argstr[i]=="-no-ambiguous-path-clip")
-        {
-            opt.is_clip_ambiguous_path=false;
-        }
         else if (ad.argstr[i]=="-max-indel-size")
         {
             set_arg(i,ad,is_max_indel_size,opt.maxIndelSize);
-        }
-        else if (ad.argstr[i]=="-all-warnings")
-        {
-            opt.verbosity=LOG_LEVEL::ALLWARN;
-        }
-        else if (ad.argstr[i]=="-include-singleton")
-        {
-            opt.is_include_singleton = true;
-        }
-        else if (ad.argstr[i]=="-include-anomalous")
-        {
-            opt.is_include_anomalous = true;
         }
         else if (ad.argstr[i]=="-h")
         {

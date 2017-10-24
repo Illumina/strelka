@@ -1088,13 +1088,11 @@ is_cal_pool_contains_candidate(const starling_base_options& client_opt,
 static
 void
 finishRealignment(
-    const starling_base_options& opt,
     const cal_pool_t& topAlignmentPtrs,
     const CandidateAlignment* bestAlignmentPtr,
     alignment& realignment)
 {
-    if (opt.is_clip_ambiguous_path &&
-        (topAlignmentPtrs.size() > 1))
+    if (topAlignmentPtrs.size() > 1)
     {
         // soft-clip off any ambiguous regions from the alignment:
         // NOTE this can result in an empty alignment!!!
@@ -1417,9 +1415,8 @@ scoreCandidateAlignments(
         }
     }
 
-
     readSegment.is_realigned = true;
-    finishRealignment(opt, smooth_cal_pool, smooth_cal_ptr, readSegment.realignment);
+    finishRealignment(smooth_cal_pool, smooth_cal_ptr, readSegment.realignment);
 }
 
 

@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "strelka_info.hh"
 #include "strelka_option_parser.hh"
 #include "strelka_run.hh"
@@ -70,7 +66,7 @@ runInternal(int argc,char* argv[]) const
         po::store(parsed,vm);
         po::notify(vm);
 
-        // allow remaining options to be parsed using starling command-line parser:
+        // allow remaining options to be parsed using legacy starling command-line parser:
         legacy_starling_args = po::collect_unrecognized(parsed.options,po::include_positional);
 
     }
@@ -94,4 +90,3 @@ runInternal(int argc,char* argv[]) const
 
     strelka_run(pinfo,opt);
 }
-

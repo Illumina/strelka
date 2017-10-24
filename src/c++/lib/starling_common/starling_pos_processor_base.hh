@@ -50,7 +50,6 @@
 #include <string>
 
 struct diploid_genotype;
-struct nploid_info;
 
 
 /// \brief accumulate sequential position specific information and
@@ -649,7 +648,6 @@ protected:
     std::vector<std::unique_ptr<sample_info>> _sample;
 
     std::unique_ptr<diploid_genotype> _empty_dgt[N_BASE];
-    std::unique_ptr<nploid_info> _ninfo;
 
     std::set<pos_t> _forced_output_pos;
 

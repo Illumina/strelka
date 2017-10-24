@@ -64,9 +64,6 @@ finalize_args()
     {
         if (! argmark[i]) pinfo.usage((std::string("Invalid argument: ")+argstr[i]).c_str());
     }
-
-
-
 }
 
 
@@ -138,37 +135,6 @@ set_xrange_arg(unsigned& argi,
 
 
 void
-set_filename_arg(unsigned& argi,
-                 arg_data& ad,
-                 bool& is_val_set,
-                 std::string& file)
-{
-
-    const char* arg_label(ad.argstr[argi].c_str());
-
-    ad.argmark[argi] = true;
-    if (++argi>=ad.argstr.size())
-    {
-        ad.pinfo.usage((std::string("no value following: ")+arg_label).c_str());
-    }
-    if (is_val_set)
-    {
-        ad.pinfo.usage((std::string("multiple ")+arg_label+" arguments").c_str());
-    }
-
-    file=ad.argstr[argi];
-
-    if (file.empty())
-    {
-        ad.pinfo.usage((std::string("empty filename following: ")+arg_label).c_str());
-    }
-
-    is_val_set=true;
-}
-
-
-
-void
 set_win_arg(unsigned& argi,
             arg_data& ad,
             bool& is_val_set,
@@ -189,84 +155,6 @@ set_win_arg(unsigned& argi,
     }
 
     set_val(ad.pinfo,arg_label,ad.argstr[argi].c_str(),val1);
-    ad.argmark[argi] = true;
-    if (++argi>=ad.argstr.size())
-    {
-        ad.pinfo.usage((std::string("two arguments must follow ")+arg_label).c_str());
-    }
-
-    int val2_tmp;
-    set_val(ad.pinfo,arg_label,ad.argstr[argi].c_str(),val2_tmp);
-    if (val2_tmp<0)
-    {
-        ad.pinfo.usage((std::string("second argument following: ")+arg_label+" must be non-negative\n").c_str());
-    }
-    val2=val2_tmp;
-
-    is_val_set=true;
-}
-
-
-
-void
-set_nploid_arg(unsigned& argi,
-               arg_data& ad,
-               bool& is_val_set,
-               int& val1,
-               double& val2)
-{
-
-    const char* arg_label(ad.argstr[argi].c_str());
-
-    ad.argmark[argi] = true;
-    if (++argi>=ad.argstr.size())
-    {
-        ad.pinfo.usage((std::string("two arguments must follow ")+arg_label).c_str());
-    }
-    if (is_val_set)
-    {
-        ad.pinfo.usage((std::string("multiple ")+arg_label+" arguments").c_str());
-    }
-
-    set_val(ad.pinfo,arg_label,ad.argstr[argi].c_str(),val1);
-    ad.argmark[argi] = true;
-    if (++argi>=ad.argstr.size())
-    {
-        ad.pinfo.usage((std::string("two arguments must follow ")+arg_label).c_str());
-    }
-
-    const bool is_allow_zero(false);
-    const bool is_no_max_check(false);
-    set_xrange_val(ad.pinfo,arg_label,ad.argstr[argi].c_str(),val2,is_allow_zero,is_no_max_check);
-    is_val_set=true;
-}
-
-
-
-void
-set_xrange_win_arg(unsigned& argi,
-                   arg_data& ad,
-                   bool& is_val_set,
-                   double& val1,
-                   unsigned& val2)
-{
-
-    const char* arg_label(ad.argstr[argi].c_str());
-
-    ad.argmark[argi] = true;
-    if (++argi>=ad.argstr.size())
-    {
-        ad.pinfo.usage((std::string("two arguments must follow ")+arg_label).c_str());
-    }
-    if (is_val_set)
-    {
-        ad.pinfo.usage((std::string("multiple ")+arg_label+" arguments").c_str());
-    }
-
-    const bool is_allow_zero(false);
-    const bool is_no_max_check(false);
-    set_xrange_val(ad.pinfo,arg_label,ad.argstr[argi].c_str(),val1,is_allow_zero,is_no_max_check);
-
     ad.argmark[argi] = true;
     if (++argi>=ad.argstr.size())
     {

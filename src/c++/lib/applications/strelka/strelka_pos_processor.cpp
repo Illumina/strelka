@@ -226,8 +226,6 @@ process_pos_snp_somatic(const pos_t pos)
 
     // report events:
     //
-    bool is_reported_event(false);
-
     if (sgtg.is_output())
     {
         {
@@ -258,18 +256,9 @@ process_pos_snp_somatic(const pos_t pos)
                                                    *(tumor_cpi_ptr[0]), *(normal_cpi_ptr[1]), *(tumor_cpi_ptr[1]),
                                                    _normChromDepth, _maxChromDepth, bos);
         bos << "\n";
-
-        is_reported_event = true;
-    }
-
-    if (_opt.is_print_all_site_evidence || (_opt.is_print_evidence && is_reported_event))
-    {
-        log_os << "TUMOR/NORMAL EVIDENCE pos: " << output_pos << "\n"
-               << "is_snv: " << sgtg.is_snv() << "\n"
-               << "normal-data:\n" << static_cast<const CleanedPileup&>(*normal_cpi_ptr[0]).cleanedPileup() << "\n"
-               << "tumor-data:\n" << static_cast<const CleanedPileup&>(*tumor_cpi_ptr[0]).cleanedPileup() << "\n";
     }
 }
+
 
 
 void

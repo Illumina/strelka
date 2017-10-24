@@ -18,11 +18,10 @@
 //
 
 /// \file
-
 /// \author Chris Saunders
 ///
-#ifndef __POSITION_SNP_CALL_PPROB_NPLOID_HH
-#define __POSITION_SNP_CALL_PPROB_NPLOID_HH
+
+#pragma once
 
 #include "blt_common/snp_pos_info.hh"
 
@@ -67,5 +66,3 @@ position_snp_call_pprob_nploid(const double snp_prob,
                                const snp_pos_info& pi,
                                const nploid_info& ninfo,
                                nploid_genotype& ngt);
-
-#endif

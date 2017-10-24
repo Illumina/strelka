@@ -116,28 +116,8 @@ set_xrange_arg(unsigned& argi,
                bool is_no_max_check=false);
 
 void
-set_filename_arg(unsigned& argi,
-                 arg_data& ad,
-                 bool& is_val_set,
-                 std::string& file);
-
-void
 set_win_arg(unsigned& argi,
             arg_data& ad,
             bool& is_val_set,
             int& val1,
             unsigned& val2);
-
-void
-set_nploid_arg(unsigned& argi,
-               arg_data& ad,
-               bool& is_val_set,
-               int& val1,
-               double& val2);
-
-void
-set_xrange_win_arg(unsigned& argi,
-                   arg_data& ad,
-                   bool& is_val_set,
-                   double& val1,
-                   unsigned& val2);

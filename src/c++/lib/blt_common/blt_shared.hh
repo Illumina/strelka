@@ -77,16 +77,11 @@ struct blt_options : public PolymorphicObject
                 (bsnp_ssd_no_mismatch>0. || bsnp_ssd_one_mismatch>0));
     }
 
-    double lsnp_alpha = 0;
     double bsnp_diploid_theta = 0.001;
-    int bsnp_nploid_ploidy = 0;
-    double bsnp_nploid_snp_prob = 0;
     double bsnp_ssd_no_mismatch = 0;
     double bsnp_ssd_one_mismatch = 0;
     double bsnp_diploid_het_bias = 0;
 
-    bool is_lsnp = false;
-    bool is_bsnp_nploid = false;
     bool is_bsnp_diploid_het_bias = false;
 
     int min_qscore = 17;
@@ -95,8 +90,6 @@ struct blt_options : public PolymorphicObject
     bool is_max_win_mismatch = false;
     unsigned max_win_mismatch = 0;
     unsigned max_win_mismatch_flank_size = 0;
-    bool is_print_evidence = false;
-    bool is_print_all_site_evidence = false;
 
     /// If true, use reads with unmapped mates for variant calling
     bool is_include_singleton = false;
@@ -104,10 +97,10 @@ struct blt_options : public PolymorphicObject
     /// If true, use non proper-pair reads for variant calling
     bool is_include_anomalous = false;
 
-    int max_vexp_iterations = 0;
     bool is_min_vexp = false;
     double min_vexp = 0;
 
+    /// Setting to change warning sensitivity
     LOG_LEVEL::index_t verbosity = LOG_LEVEL::DEFAULT;
 
     std::string cmdline;

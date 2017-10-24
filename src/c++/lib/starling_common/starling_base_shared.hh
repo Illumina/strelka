@@ -103,9 +103,8 @@ struct starling_base_options : public blt_options
     // starling parameters:
     //
 
-    // should reads falling below the snp-caller's mapping criteria be
-    // realigned? (note this only makes sense if writing out realigned
-    // reads
+    /// If true, reads which fail the variant calling mapping thresholds are realigned using
+    /// the same procedure as the variant calling reads
     bool is_realign_submapped_reads = false;
 
     // maximum indel size which can be represented by starling
@@ -126,7 +125,12 @@ struct starling_base_options : public blt_options
     const double indel_candidate_signal_test_alpha = 1e-9;
 
     int max_read_indel_toggle = 5; // if a read samples more than max indel changes, we skip realignment
-    double max_candidate_indel_density = 0.15; // max number of candidate indels per read base, if exceeded search is curtailed to toggle depth=1
+
+    /// If there are more than this many candidate indels per base intersecting a read, then realignment
+    /// is truncated to only allow individual indel toggles of the starting alignments for that read.
+    ///
+    /// Value must be greater than 0
+    double max_candidate_indel_density = 0.15;
 
     // max estimated read depth for indels to reach candidacy for realignment and indel calling. If estimated
     // depth summed over all (non-tumor) samples exceeds this value in any sample, candidacy is disabled.
@@ -142,10 +146,6 @@ struct starling_base_options : public blt_options
 
     // the maximum number of candidate re-alignments for each read:
     unsigned max_realignment_candidates = 5000;
-
-    // clip the section of a read which aligns equally well to two or
-    // more paths before pileup or realigned read output
-    bool is_clip_ambiguous_path = true;
 
     // this option imposes a consistency criteria on alignments with
     // nearly equal score to favor certain alignments even if they do

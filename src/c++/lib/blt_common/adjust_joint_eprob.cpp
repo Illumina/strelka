@@ -136,9 +136,6 @@ adjust_icalls_eprob(const blt_options& opt,
         vexp_frac=opt.bsnp_ssd_no_mismatch;
     }
 
-    const bool is_limit_vexp_iterations(opt.max_vexp_iterations>0);
-    const int max_vexp_iterations(opt.max_vexp_iterations);
-
     const bool is_limit_vexp(opt.is_min_vexp);
     const blt_float_t min_vexp(opt.min_vexp);
 
@@ -153,8 +150,6 @@ adjust_icalls_eprob(const blt_options& opt,
         if (! is_min_vexp)
         {
             dependent_eprob[ic[i]] = static_cast<float>(get_dependent_eprob(bi.get_qscore(),vexp));
-
-            if (is_limit_vexp_iterations && (static_cast<int>(i)>=max_vexp_iterations)) continue;
 
             blt_float_t next_vexp(vexp);
             if (is_use_vexp_frac)

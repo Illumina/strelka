@@ -18,9 +18,9 @@
 //
 
 /// \file
-
 /// \author Chris Saunders
 ///
+
 #include "blt_common/position_snp_call_pprob_nploid.hh"
 
 #include "blt_util/log.hh"
@@ -39,7 +39,6 @@ nploid_write(const nploid_info& ninfo,
              const nploid_genotype& ngt,
              std::ostream& os)
 {
-
     os << std::setprecision(10) << std::fixed;
 
     os << "P(snp): " << (1.-ngt.pprob[ngt.ref_gt])
@@ -87,7 +86,6 @@ position_snp_call_pprob_nploid(const double snp_prob,
                                const nploid_info& ninfo,
                                nploid_genotype& ngt)
 {
-
     if (pi.get_ref_base()=='N') return;
 
     const unsigned n_calls(pi.calls.size());

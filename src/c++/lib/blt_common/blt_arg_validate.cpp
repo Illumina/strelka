@@ -88,11 +88,6 @@ validate_blt_opt(
         pinfo.usage(oss.str().c_str());
     }
 
-    if (opt.is_bsnp_nploid && opt.bsnp_nploid_ploidy <= 0)
-    {
-        pinfo.usage("ERROR:: ploidy argument to -bsnp-nploid must be greater than 0\n");
-    }
-
     if (opt.is_bsnp_diploid_het_bias)
     {
         if (! opt.is_bsnp_diploid())

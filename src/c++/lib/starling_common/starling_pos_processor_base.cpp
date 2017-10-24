@@ -30,7 +30,6 @@
 #include "starling_read_util.hh"
 
 #include "blt_common/position_snp_call_pprob_digt.hh"
-#include "blt_common/position_snp_call_pprob_nploid.hh"
 #include "blt_util/depth_buffer_util.hh"
 #include "blt_util/io_util.hh"
 #include "blt_util/log.hh"
@@ -256,11 +255,6 @@ starling_pos_processor_base(
 
     // this can safely be called after initializing _sample above
     resetActiveRegionDetector();
-
-    if (_opt.is_bsnp_nploid)
-    {
-        _ninfo.reset(new nploid_info(_opt.bsnp_nploid_ploidy));
-    }
 
     if (_opt.is_all_sites())
     {
