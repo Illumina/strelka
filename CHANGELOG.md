@@ -1,6 +1,12 @@
+## Unreleased
+
+### Fixed
+- Fix default sample name used in the VCF output for germline analysis (STREL-737)
+  -  Default is used when sample name cannot be parsed from the BAM header. Now fixed to insert SAMPLE1, SAMPLE2, etc. as documented.
+
 ## v2.8.4 - 2017-10-23
 
-This is a major bugfix update from v2.8.3. The two most notable changes are (1) a nearly 10-fold 
+This is a major bugfix update from v2.8.3. The two most notable changes are (1) a nearly 10-fold
 reduction in memory usage during germline analysis and (2) fixing the default variant recall level
 for male non-PAR chrX, or any region given a ploidy of 1 in the ploidy VCF file.
 

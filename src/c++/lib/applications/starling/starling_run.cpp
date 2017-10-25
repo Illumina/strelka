@@ -293,9 +293,16 @@ starling_run(
                         noRequireNormalized);
         registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
 
-        for (const bam_hdr_t& bamHeader : bamHeaders)
+        // initialize sampleNames from all bam headers (assuming 1 sample per bam for now)
+        assert(bamHeaders.size() == sampleCount);
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
-            sampleNames.push_back(get_bam_header_sample_name(bamHeader));
+            std::ostringstream defaultName;
+            defaultName << "SAMPLE" << (sampleIndex+1);
+            std::string sampleName(get_bam_header_sample_name(bamHeaders[sampleIndex], defaultName.str().c_str()));
+            // remove spaces from sample name
+            std::replace(sampleName.begin(), sampleName.end(), ' ', '_');
+            sampleNames.push_back(sampleName);
         }
 
         if (!opt.ploidy_region_vcf.empty())
