@@ -17,27 +17,11 @@
 //
 //
 
-/**
- ** \file
- ** \brief Declaration of the common exception mechanism.
- **
- ** All exceptions must carry the same data (independently of the
- ** exception type) to homogenize the reporting and processing of
- ** errors.
- **
- ** \author Come Raczy
- **/
-
 #pragma once
 
 #include <iostream>
 #include "common/Exceptions.hh"
 #include "rapidjson/document.h"
-
-namespace illumina
-{
-namespace common
-{
 
 class RapidJsonHelper
 {
@@ -74,5 +58,3 @@ public:
 
 };
 
-}
-}
