@@ -24,7 +24,11 @@
 #include "common/RapidJsonHelper.hh"
 #include <map>
 
-
+/// \brief Stores the parameters of the IndelMotifBinomialMixture for a given STR size and repeat length
+///
+/// Part of the indelErrorModel.json definition
+/// Whenever a member variable is added or type is modified, the serialize and deserialize methods must be updated
+///
 class IndelMotifBinomialMixture
 {
 public:
@@ -59,6 +63,11 @@ public:
     {
         return _noisyLocusRate;
     }
+    
+    // |brief Serialize object into jsonWriter via rapidJson
+    ///
+    /// \param[in] writer The writer to serilize into (https://github.com/Tencent/rapidjson/blob/master/example/serialize/serialize.cpp)
+    ///
     template <typename Writer>
     void serialize(Writer& writer) const
     {
@@ -71,6 +80,11 @@ public:
         writer.String("noisyLocusRate");
         writer.Double(_noisyLocusRate);
     }
+
+    // |brief Deserialize json document to object
+    ///
+    /// \param[in] root The json document to deserialize
+    ///
     static
     IndelMotifBinomialMixture deserialize(const rapidjson::Value& root)
     {
@@ -96,6 +110,11 @@ public:
     }
 };
 
+/// \brief Stores the list of IndelMotifBinomialMixture objects
+///
+/// Part of the indelErrorModel.json definition
+/// Whenever a member variable is added or type is modified, the serialize and deserialize methods must be updated
+///
 class IndelErrorModelBinomialMixture
 {
 public:
@@ -111,6 +130,10 @@ public:
 private:
     std::vector<IndelMotifBinomialMixture> _motifs;
 public:
+    // |brief Serialize object into jsonWriter via rapidJson
+    ///
+    /// \param[in] writer The writer to serilize into (https://github.com/Tencent/rapidjson/blob/master/example/serialize/serialize.cpp)
+    ///
     template <typename Writer>
     void serialize(Writer& writer) const
     {
@@ -124,12 +147,16 @@ public:
         }
         writer.EndArray();
     }
+    
+    // |brief Deserialize json document to object
+    ///
+    /// \param[in] root The json document to deserialize
+    ///
     static
     IndelErrorModelBinomialMixture deserialize(const rapidjson::Value& root)
     {
         using namespace illumina::common;
-
-        //static const char* motifLabel = "motif";
+        
         const rapidjson::Value& motifArray(root);
 
         IndelErrorModelBinomialMixture indelErrorModelBinomialMixture;
@@ -143,7 +170,11 @@ public:
 
 };
 
-
+/// \brief Stores the contents from a single sample in the indelErrorModel.json in memory
+///
+/// Part of the indelErrorModel.json definition
+/// Whenever a member variable is added or type is modified, the serialize and deserialize methods must be updated
+///
 class IndelErrorModelJson
 {
 
@@ -159,6 +190,10 @@ public:
     explicit
     IndelErrorModelJson(const std::string& sampleName, const IndelErrorModelBinomialMixture& model, const bool isStatic);
 
+    // |brief Serialize object into jsonWriter via rapidJson
+    ///
+    /// \param[in] writer The writer to serilize into (https://github.com/Tencent/rapidjson/blob/master/example/serialize/serialize.cpp)
+    ///
     template <typename Writer>
     void serialize(Writer& writer) const
     {
@@ -172,7 +207,32 @@ public:
         writer.EndObject();
     }
 
-    static IndelErrorModelJson deserialize(const rapidjson::Value& root);
+    // |brief Deserialize json document to object
+    ///
+    /// \param[in] root The json document to deserialize
+    ///
+    static 
+    IndelErrorModelJson deserialize(const rapidjson::Value& root)
+    {
+        using namespace illumina::common;
+
+        static const char* sampleNameLabel = "sampleName";
+        const rapidjson::Value& sampleNameValue(RapidJsonHelper::getNodeMember(root, sampleNameLabel));
+
+        const std::string sampleName(sampleNameValue.GetString());
+
+        static const char* motifLabel = "motif";
+        const rapidjson::Value& motifArray(RapidJsonHelper::getNodeMember(root, motifLabel));
+
+        IndelErrorModelBinomialMixture model(IndelErrorModelBinomialMixture::deserialize(motifArray));
+
+        static const char* isStaticLabel = "isStatic";
+        const rapidjson::Value& isStaticValue(RapidJsonHelper::getNodeMember(root, isStaticLabel));
+
+        const bool isStatic(isStaticValue.GetBool());
+
+        return IndelErrorModelJson(sampleName, model, isStatic);
+    }
 
     const std::string&
     getSampleName() const
@@ -198,12 +258,21 @@ private:
     bool _isStatic;
 };
 
+
+/// \brief Stores the contents from the indelErrorModel.json in memory
+///
+/// Part of the indelErrorModel.json definition
+/// Whenever a member variable is added or type is modified, the serialize and deserialize methods must be updated
+///
 class IndelErrorModelsJson
 {
 public:
     IndelErrorModelsJson() {}
-    static IndelErrorModelsJson deserialize(const rapidjson::Value& root);
 
+    // |brief Serialize object into jsonWriter via rapidJson
+    ///
+    /// \param[in] writer The writer to serilize into (https://github.com/Tencent/rapidjson/blob/master/example/serialize/serialize.cpp)
+    ///
     template <typename Writer>
     void serialize(Writer& writer) const
     {
@@ -216,6 +285,28 @@ public:
         }
         writer.EndArray();
         writer.EndObject();
+    }
+
+    // |brief Deserialize json document to object
+    ///
+    /// \param[in] root The json document to deserialize
+    ///
+    static 
+    IndelErrorModelsJson deserialize(const rapidjson::Value& root)
+    {
+        using namespace illumina::common;
+
+        IndelErrorModelsJson indelErrorModelsJson;
+        static const char* sampleLabel = "sample";
+        const rapidjson::Value& sampleArray(RapidJsonHelper::getNodeMember(root, sampleLabel));
+
+        // one json file could potentially have multiple samples
+        for (const auto& sampleValue : sampleArray.GetArray())
+        {
+            indelErrorModelsJson.addModel(IndelErrorModelJson::deserialize(sampleValue));
+        }
+
+        return indelErrorModelsJson;
     }
 
     void addModel(const IndelErrorModelJson& model)

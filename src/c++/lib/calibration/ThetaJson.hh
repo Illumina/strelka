@@ -25,6 +25,9 @@
 
 /// \brief Data structure to store theta.json
 ///
+/// Whenever a member variable is added or type is modified, the deserialize method must be updated
+/// This class never gets serialized so serialize methods has not yet been implemented
+///
 class ThetaJson
 {
 public:
@@ -37,6 +40,10 @@ private:
     std::vector<double> _theta;
 
 public:
+    // |brief Deserialize json document to object
+    ///
+    /// \param[in] root The json document to deserialize
+    ///
     static ThetaJson deserialize(const rapidjson::Value& root);
 
     const std::vector<double>& getTheta() const

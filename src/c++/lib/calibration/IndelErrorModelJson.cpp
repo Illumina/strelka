@@ -38,48 +38,6 @@ IndelErrorModelJson(
     , _isStatic(isStatic)
 {}
 
-IndelErrorModelJson
-IndelErrorModelJson::deserialize(
-        const rapidjson::Value& root)
-{
-    using namespace illumina::common;
-
-    static const char* sampleNameLabel = "sampleName";
-    const rapidjson::Value& sampleNameValue(RapidJsonHelper::getNodeMember(root, sampleNameLabel));
-
-    const std::string sampleName(sampleNameValue.GetString());
-
-    static const char* motifLabel = "motif";
-    const rapidjson::Value& motifArray(RapidJsonHelper::getNodeMember(root, motifLabel));
-
-    IndelErrorModelBinomialMixture model(IndelErrorModelBinomialMixture::deserialize(motifArray));
-
-    static const char* isStaticLabel = "isStatic";
-    const rapidjson::Value& isStaticValue(RapidJsonHelper::getNodeMember(root, isStaticLabel));
-
-    const bool isStatic(isStaticValue.GetBool());
-
-    return IndelErrorModelJson(sampleName, model, isStatic);
-}
-
-IndelErrorModelsJson
-IndelErrorModelsJson::deserialize(
-        const rapidjson::Value& root)
-{
-    using namespace illumina::common;
-
-    IndelErrorModelsJson indelErrorModelsJson;
-    static const char* sampleLabel = "sample";
-    const rapidjson::Value& sampleArray(RapidJsonHelper::getNodeMember(root, sampleLabel));
-
-    // one json file could potentially have multiple samples
-    for (const auto& sampleValue : sampleArray.GetArray())
-    {
-        indelErrorModelsJson.addModel(IndelErrorModelJson::deserialize(sampleValue));
-    }
-
-    return indelErrorModelsJson;
-}
 
 void
 IndelErrorModelParser::importIndelErrorModelJsonFile(
