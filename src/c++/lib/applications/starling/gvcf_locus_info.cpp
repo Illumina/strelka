@@ -29,6 +29,7 @@
 #include "boost/math/distributions/binomial.hpp"
 #include "boost/math/distributions.hpp"
 #include "rnaVariantEmpiricalScoringFeatures.hh"
+#include "starling_continuous_variant_caller.hh"
 
 #include <iostream>
 #include <map>
@@ -516,9 +517,20 @@ computeEmpiricalScoringFeatures(
     const unsigned confidentRefCount(
         sampleInfo.supportCounts.getCounts(true).confidentRefAlleleCount() +
         sampleInfo.supportCounts.getCounts(false).confidentRefAlleleCount());
-    const unsigned confidentPrimaryAltCount(
-        sampleInfo.supportCounts.getCounts(true).confidentAltAlleleCount(primaryAltAlleleIndex) +
-        sampleInfo.supportCounts.getCounts(false).confidentAltAlleleCount(primaryAltAlleleIndex));
+    const unsigned confidentPrimaryAltFwdCount(
+	sampleInfo.supportCounts.fwdCounts.confidentAltAlleleCount(primaryAltAlleleIndex));
+    const unsigned confidentPrimaryAltRevCount(
+	sampleInfo.supportCounts.revCounts.confidentAltAlleleCount(primaryAltAlleleIndex));
+    const unsigned confidentPrimaryAltCount(confidentPrimaryAltFwdCount + confidentPrimaryAltRevCount);
+
+    // strand bias
+    unsigned totalConfidentFwdCount(sampleInfo.supportCounts.fwdCounts.totalConfidentCounts());
+    unsigned totalConfidentRevCount(sampleInfo.supportCounts.revCounts.totalConfidentCounts());
+    double strandBias(starling_continuous_variant_caller::strandBias(
+	confidentPrimaryAltFwdCount,
+	confidentPrimaryAltRevCount,
+	totalConfidentFwdCount - confidentPrimaryAltFwdCount,
+	totalConfidentRevCount - confidentPrimaryAltRevCount));
 
     // allele bias metrics
     double SampleIndelAlleleBiasLower, SampleIndelAlleleBias;
@@ -598,6 +610,7 @@ computeEmpiricalScoringFeatures(
         features.set(GERMLINE_INDEL_SCORING_FEATURES::InterruptedHomopolymerLength, (primaryAltAllele.indelReportInfo.interruptedHomopolymerLength));
         features.set(GERMLINE_INDEL_SCORING_FEATURES::ContextCompressability, (primaryAltAllele.indelReportInfo.contextCompressability));
         features.set(GERMLINE_INDEL_SCORING_FEATURES::IndelCategory, (primaryAltAllele.indelKey.isPrimitiveDeletionAllele()));
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::SampleStrandBias, (strandBias));
 
         // how confident are we in the haplotyping step?
         float normalizedAltHaplotypeCountRatio;

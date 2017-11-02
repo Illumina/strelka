@@ -219,6 +219,7 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
         ContextCompressability,
         IndelCategory,
         NormalizedAltHaplotypeCountRatio,
+	SampleStrandBias,
         SIZE
     };
 
@@ -259,6 +260,8 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
             return "IndelCategory";
         case NormalizedAltHaplotypeCountRatio:
             return "NormalizedAltHaplotypeCountRatio";
+	case SampleStrandBias:
+  	    return "SampleStrandBias";
         default:
             assert(false && "Unknown feature");
             return nullptr;

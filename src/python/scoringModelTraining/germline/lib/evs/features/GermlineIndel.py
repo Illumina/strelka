@@ -51,4 +51,5 @@ class GermlineSNVFeatures(VcfFeatureSet):
             "InterruptedHomopolymerLength",
             "ContextCompressability",
             "IndelCategory",
-            "NormalizedAltHaplotypeCountRatio"]
+            "NormalizedAltHaplotypeCountRatio",
+            "SampleStrandBias"]
