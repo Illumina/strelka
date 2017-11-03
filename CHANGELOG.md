@@ -1,5 +1,8 @@
 ## Unreleased
 
+### Changed
+- Add strand bias feature for germline indel EVS (STREL-676)
+
 ### Fixed
 - Fix default sample name used in the VCF output for germline analysis (STREL-737)
   -  Default is used when sample name cannot be parsed from the BAM header. Now fixed to insert SAMPLE1, SAMPLE2, etc. as documented.
