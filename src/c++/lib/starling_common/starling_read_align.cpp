@@ -642,7 +642,100 @@ addKeysToCandidateAlignment(
     cal.setIndels(calIndels);
 }
 
+//static
+//bool
+//checkPhasing(
+//    const starling_align_indel_status& indel_status_map,
+//    const std::vector<IndelKey> indel_order,
+//    const IndelBuffer& indelBuffer,
+//    const ActiveRegionDetector& activeRegionDetector,
+//    const unsigned sampleId,
+//    const unsigned depth)
+//{
+//    // Check phasing
+//    const IndelKey &curIndelKey(indel_order[depth]);
+//    const auto curActiveRegionId(activeRegionDetector.getActiveRegionId(curIndelKey.pos));
+//    if (curActiveRegionId < 0) return true;    // current indel is not in AR
+//
+//    const IndelData& curIndelData(*indelBuffer.getIndelDataPtr(curIndelKey));
+//    const uint8_t curHaplotypeId(curIndelData.getSampleData(sampleId).haplotypeId);
+//
+//    for (unsigned i(depth-1); i>=0; --i)
+//    {
+//        const IndelKey &prevIndelKey(indel_order[i]);
+//        const auto prevActiveRegionId(activeRegionDetector.getActiveRegionId(prevIndelKey.pos));
+//        if (prevActiveRegionId >= 0 && prevActiveRegionId != )
+//        const IndelData& indelData(*indelBuffer.getIndelDataPtr(indelKey));
+//        if (indelData.isForcedOutput)
+//        {
+//            // allow at most one forced indel
+//            if (isForcedIndel) return false;
+//            isForcedIndel = true;
+//        }
+//
+//        if (indelData.isConfirmedInActiveRegion)
+//        {
+//            // Haplotyping was successful
+//            const auto haplotypeId(indelData.getSampleData(sampleId).haplotypeId);
+//            if (activeRegionId == prevActiveRegionId)
+//            {
+//                if (validHaplotypeId == 0)
+//                    validHaplotypeId = haplotypeId;
+//                else if (validHaplotypeId == 3)
+//                    validHaplotypeId = haplotypeId;
+//                else if (validHaplotypeId != haplotypeId)
+//                    return false;
+//            }
+//            else
+//            {
+//                // new active region
+//                validHaplotypeId = haplotypeId;
+//            }
+//        }
+//
+//        prevActiveRegionId = activeRegionId;
+//    }
+//    return true;
+//}
+static
+int
+getHaplotypeId(
+    const ActiveRegionId prevActiveRegionId,
+    const int prevHaplotypeId,
+    const ActiveRegionId curActiveRegionId,
+    const int curIndelHaplotypeId,
+    const bool isCurIndelOn)
+{
+    int curHaplotypeId = isCurIndelOn ? curIndelHaplotypeId : (3-curIndelHaplotypeId);
+    if (prevActiveRegionId == -1 || (prevActiveRegionId != curActiveRegionId)) return curHaplotypeId;
 
+    assert (prevHaplotypeId >= 0);
+    switch (curIndelHaplotypeId)
+    {
+        case 0:
+        {
+            return 0;
+        }
+        case 1:
+        case 2:
+        {
+            if ((prevHaplotypeId == 0) || (prevHaplotypeId == 3) ||
+                (prevHaplotypeId == curHaplotypeId))
+            {
+                return curHaplotypeId;
+            }
+            return -1;
+        }
+        case 3:
+        {
+            if (!isCurIndelOn) return -1;
+            if (prevHaplotypeId == 1 || prevHaplotypeId == 2) return prevHaplotypeId;
+            return 3;
+        }
+        default:
+            assert(false);
+    }
+}
 
 /// Recursively build potential alignment paths and push them into the
 /// candidate alignment set:
@@ -655,8 +748,11 @@ candidate_alignment_search(
     const align_id_t read_id,
     const unsigned read_length,
     const IndelBuffer& indelBuffer,
+    const ActiveRegionDetector& activeRegionDetector,
     const unsigned sampleId,
     const known_pos_range& realign_buffer_range,
+    const ActiveRegionId activeRegionId,
+    const int haplotypeId,
     std::set<CandidateAlignment>& cal_set,
     mca_warnings& warn,
     starling_align_indel_status indel_status_map,
@@ -781,14 +877,22 @@ candidate_alignment_search(
     //
     const IndelKey& cindel(indel_order[depth]);
     const bool is_cindel_on(indel_status_map[cindel].is_present);
+    const IndelData& cindelData(*indelBuffer.getIndelDataPtr(cindel));
+    const ActiveRegionId cActiveRegionId(activeRegionDetector.getActiveRegionId(cindel.pos));
+    uint8_t cHaplotypeId(cindelData.getSampleData(sampleId).haplotypeId);
 
     // alignment 1) --> unchanged case:
     try
     {
-        candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer, sampleId, realign_buffer_range,
-                                   cal_set,
-                                   warn, indel_status_map,
-                                   indel_order, depth + 1, toggle_depth, read_range, max_read_indel_toggle, cal);
+        int newHaplotypeIdUnchanged(getHaplotypeId(activeRegionId, haplotypeId, cActiveRegionId, cHaplotypeId, is_cindel_on));
+        if (newHaplotypeIdUnchanged >= 0)
+        {
+            candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer, activeRegionDetector,
+                                       sampleId, realign_buffer_range, cActiveRegionId, newHaplotypeIdUnchanged,
+                                       cal_set,
+                                       warn, indel_status_map,
+                                       indel_order, depth + 1, toggle_depth, read_range, max_read_indel_toggle, cal);
+        }
     }
     catch (...)
     {
@@ -798,6 +902,10 @@ candidate_alignment_search(
         throw;
     }
 
+    int newHaplotypeIdToggled(getHaplotypeId(activeRegionId, haplotypeId, cActiveRegionId, cHaplotypeId, !is_cindel_on));
+
+    if (newHaplotypeIdToggled < 0) return;
+
     if (! is_cindel_on)
     {
         // check whether this is a remove only indel:
@@ -806,10 +914,12 @@ candidate_alignment_search(
         // check whether this indel would interfere with an indel that's
         // already been toggled on:
         //
-        for (unsigned i(0); i<depth; ++i)
-        {
-            const IndelKey& indelKey(indel_order[i]);
-            if (indel_status_map[indelKey].is_present && is_indel_conflict(indelKey,cindel)) return;
+
+        for (unsigned i(0); i<depth; ++i) {
+            const IndelKey &indelKey(indel_order[i]);
+
+            if (!(indel_status_map[indelKey].is_present)) continue;
+            if (is_indel_conflict(indelKey, cindel)) return;
         }
     }
 
@@ -871,8 +981,10 @@ candidate_alignment_search(
                                                      read_length,
                                                      current_indels);
 
-                candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer, sampleId,
-                                           realign_buffer_range, cal_set,
+
+                candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer, activeRegionDetector,
+                                           sampleId,
+                                           realign_buffer_range, cActiveRegionId, newHaplotypeIdToggled, cal_set,
                                            warn, indel_status_map,
                                            indel_order, depth + 1, toggle_depth + 1, read_range, max_read_indel_toggle,
                                            start_cal);
@@ -937,8 +1049,8 @@ candidate_alignment_search(
                                                          read_length,
                                                          current_indels);
 
-                    candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer, sampleId,
-                                               realign_buffer_range, cal_set,
+                    candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer, activeRegionDetector, sampleId,
+                                               realign_buffer_range, cActiveRegionId, newHaplotypeIdToggled, cal_set,
                                                warn, indel_status_map,
                                                indel_order, depth + 1, toggle_depth + 1, read_range,
                                                max_read_indel_toggle, start_cal);
@@ -1503,6 +1615,7 @@ getCandidateAlignments(
     const unsigned sampleId,
     const alignment& inputAlignment,
     const known_pos_range realign_buffer_range,
+    const ActiveRegionDetector& activeRegionDetector,
     mca_warnings& warn,
     std::set<CandidateAlignment>& cal_set)
 {
@@ -1611,7 +1724,10 @@ getCandidateAlignments(
     // launch recursive re-alignment routine starting from the current exemplar alignment:
     static const unsigned start_depth(0);
     static const unsigned start_toggle_depth(0);
-    candidate_alignment_search(opt, dopt, rseg.getReadIndex(), cal_read_length, indelBuffer, sampleId, realign_buffer_range, cal_set,
+    static const int defaultHaplotypeId(0);
+    static const ActiveRegionId defaultActiveRegionId(-1);
+    candidate_alignment_search(opt, dopt, rseg.getReadIndex(), cal_read_length, indelBuffer, activeRegionDetector,
+                               sampleId, realign_buffer_range, defaultActiveRegionId, defaultHaplotypeId, cal_set,
                                warn, indel_status_map,
                                indel_order, start_depth, start_toggle_depth, exemplar_pr, opt.max_read_indel_toggle,
                                cal);
@@ -1685,6 +1801,7 @@ realignAndScoreRead(
     const known_pos_range& realign_buffer_range,
     const unsigned sampleId,
     const CandidateSnvBuffer& candidateSnvBuffer,
+    const ActiveRegionDetector& activeRegionDetector,
     read_segment& rseg,
     IndelBuffer& indelBuffer)
 {
@@ -1743,13 +1860,14 @@ realignAndScoreRead(
     mca_warnings warn;
 
     getCandidateAlignments(opt, dopt, rseg, indelBuffer, sampleId, normalizedInputAlignment,
-                           realign_buffer_range, warn, cal_set);
+                           realign_buffer_range, activeRegionDetector, warn, cal_set);
 
     if ( cal_set.empty() )
     {
-        std::ostringstream oss;
-        oss << "Empty candidate alignment set while realigning normed input alignment: " << normalizedInputAlignment << "\n";
-        throw blt_exception(oss.str().c_str());
+        return;
+//        std::ostringstream oss;
+//        oss << "Empty candidate alignment set while realigning normed input alignment: " << normalizedInputAlignment << "\n";
+//        throw blt_exception(oss.str().c_str());
     }
 
     const bool is_incomplete_search(warn.origin_skip || warn.max_toggle_depth);

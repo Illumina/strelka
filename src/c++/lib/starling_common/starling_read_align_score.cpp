@@ -141,15 +141,15 @@ scoreInsertSegment(const starling_base_options& /*opt*/,
 /// \brief Score a match segment.
 static
 void
-scoreMatchSegment(const starling_base_options& opt,
+scoreMatchSegment(const starling_base_options& /*opt*/,
                   const unsigned seg_length,
                   const bam_seq_base& seq,
                   const uint8_t* qual,
                   const unsigned read_offset,
                   const bam_seq_base& ref,
                   const pos_t ref_head_pos,
-                  const unsigned sampleIndex,
-                  const CandidateSnvBuffer& candidateSnvBuffer,
+                  const unsigned /*sampleIndex*/,
+                  const CandidateSnvBuffer& /*candidateSnvBuffer*/,
                   double& lnp)
 {
     static const double lnthird(-std::log(3.));
@@ -166,11 +166,11 @@ scoreMatchSegment(const starling_base_options& opt,
             const pos_t refPos(ref_head_pos+static_cast<pos_t>(i));
             is_ref=(sbase == ref.get_code(refPos));
 
-            if (opt.is_short_haplotyping_enabled and (not is_ref))
-            {
-                // Don't penalize for the mismatch if it is a SNV found in an active region
-                is_ref = candidateSnvBuffer.isCandidateSnv(sampleIndex, refPos, seq.get_char(readPos));
-            }
+//            if (opt.is_short_haplotyping_enabled and (not is_ref))
+//            {
+//                // Don't penalize for the mismatch if it is a SNV found in an active region
+//                is_ref = candidateSnvBuffer.isCandidateSnv(sampleIndex, refPos, seq.get_char(readPos));
+//            }
         }
         lnp += ( is_ref ?
                  qphred_to_ln_comp_error_prob(qscore) :

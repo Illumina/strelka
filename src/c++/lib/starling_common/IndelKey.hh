@@ -29,6 +29,7 @@
 
 #include <iosfwd>
 #include <string>
+#include <set>
 
 
 /// key used to uniquely describe each alternate allele
@@ -174,7 +175,7 @@ struct IndelKey
     unsigned deletionLength;
     std::string insertSequence; ///< insert sequence used for complete types only, not for breakends
 
-//    unsigned activeRegionId;
+    bool isMismatch = false;
 };
 
 

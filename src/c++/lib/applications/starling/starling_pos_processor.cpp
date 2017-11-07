@@ -1842,6 +1842,7 @@ process_pos_indel_digt(const pos_t pos)
             {
                 const IndelKey& indelKey(it->first);
                 if (indelKey.is_breakpoint()) continue;
+                if (indelKey.isMismatch) continue;
 
                 const IndelData& indelData(getIndelData(it));
                 if (! indelData.isForcedOutput) continue;

@@ -33,7 +33,6 @@ is_indel_conflict(
     const IndelKey& indelKey1,
     const IndelKey& indelKey2);
 
-
 /// check if a range (representing an alignment, etc) intersects the breakends of a
 /// candidate indel.
 ///

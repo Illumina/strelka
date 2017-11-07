@@ -28,6 +28,7 @@
 #include "starling_common/starling_read.hh"
 #include "starling_common/starling_base_shared.hh"
 #include "CandidateSnvBuffer.hh"
+#include "ActiveRegionDetector.hh"
 
 
 /// \brief Search for a set of alternate alignments for each read, score them, and
@@ -54,5 +55,6 @@ realignAndScoreRead(
     const known_pos_range& realign_buffer_range,
     const unsigned sampleId,
     const CandidateSnvBuffer& candidateSnvBuffer,
+    const ActiveRegionDetector& activeRegionDetector,
     read_segment& rseg,
     IndelBuffer& indelBuffer);

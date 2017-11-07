@@ -750,7 +750,7 @@ align_pos(const pos_t pos)
             try
             {
                 realignAndScoreRead(_opt, _dopt, sif.sampleOptions, _ref, realign_buffer_range, sampleIndex,
-                                    _candidateSnvBuffer, rseg,
+                                    _candidateSnvBuffer, getActiveRegionDetector(), rseg,
                                     getIndelBuffer());
             }
             catch (...)
@@ -1273,6 +1273,7 @@ pileup_read_segment(
     // used to phase from the pileup:
     using namespace ALIGNPATH;
     const unsigned as(best_al.path.size());
+    bool isNextPathSegmentMismatch(false);
     for (unsigned i(0); i<as; ++i)
     {
         const path_segment& ps(best_al.path[i]);
@@ -1281,7 +1282,12 @@ pileup_read_segment(
         log_os << "seg,ref,read: " << i << " " << ref_head_pos << " " << read_head_pos << "\n";
 #endif
 
-        if (is_segment_align_match(ps.type))
+        if ((i+1 < as) && (ps.type == DELETE) && (best_al.path[i+1].type == INSERT)
+                && (ps.length == best_al.path[i+1].length))
+        {
+            isNextPathSegmentMismatch = false;
+        }
+        else if (isNextPathSegmentMismatch || is_segment_align_match(ps.type))
         {
             for (unsigned j(0); j<ps.length; ++j)
             {
@@ -1414,8 +1420,23 @@ pileup_read_segment(
             }
         }
 
-        if (is_segment_type_read_length(ps.type)) read_head_pos += ps.length;
-        if (is_segment_type_ref_length(ps.type)) ref_head_pos += ps.length;
+        if (is_segment_type_read_length(ps.type))
+        {
+            if (!isNextPathSegmentMismatch)
+            {
+                read_head_pos += ps.length;
+            }
+            else
+            {
+                read_head_pos += ps.length;
+                ref_head_pos += ps.length;
+                isNextPathSegmentMismatch = false;
+            }
+        }
+        if (is_segment_type_ref_length(ps.type))
+        {
+            if (!isNextPathSegmentMismatch) ref_head_pos += ps.length;
+        }
     }
 
     //    return READ_FATE::USED;
@@ -1459,7 +1480,7 @@ process_pos_stats(
             const IndelKey& indelKey(it->first);
             const IndelData& indelData(getIndelData(it));
 
-            const bool isCandidate(getIndelBuffer().isCandidateIndel(indelKey, indelData));
+            const bool isCandidate(getIndelBuffer().isCandidateIndel(indelKey, indelData) && !indelKey.isMismatch);
             _statsManager.addCallRegionIndel(isCandidate);
         }
     }

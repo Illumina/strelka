@@ -40,8 +40,6 @@ is_indel_conflict(
     return pr1.is_range_intersect(pr2);
 }
 
-
-
 /// return true if the range intersects the left or the right indel position
 bool
 is_range_intersect_indel_breakpoints(
