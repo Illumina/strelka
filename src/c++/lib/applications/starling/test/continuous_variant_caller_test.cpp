@@ -44,16 +44,16 @@ BOOST_AUTO_TEST_CASE( qscore_calculation )
     }
 }
 
-BOOST_AUTO_TEST_CASE( compute_sb )
+BOOST_AUTO_TEST_CASE( testPooledSNVStrandBias )
 {
     static const double epsilon(0.0001);
 
     // TODO: diploid one returns -11776.1. chrM 14213
-    BOOST_REQUIRE_CLOSE_FRACTION(-100.0, starling_continuous_variant_caller::strandBias(4769, 4058, 2, 4), epsilon);
+    BOOST_REQUIRE(starling_continuous_variant_caller::strandBias(4769, 4058, 2, 4) < -100);
     BOOST_REQUIRE_CLOSE_FRACTION(116.9888344, starling_continuous_variant_caller::strandBias(0, 62, 190, 8), epsilon);
 
     BOOST_REQUIRE_CLOSE_FRACTION(251.724361, starling_continuous_variant_caller::strandBias(379, 0, 4940, 5601), epsilon);
-    BOOST_REQUIRE_CLOSE_FRACTION(-100.0, starling_continuous_variant_caller::strandBias(379, 400, 4940, 5601), epsilon);
+    BOOST_REQUIRE(starling_continuous_variant_caller::strandBias(379, 400, 4940, 5601) < -100);
 }
 
 

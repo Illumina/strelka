@@ -856,7 +856,7 @@ struct GermlineSiteSampleInfo
     double avgBaseQ = 0;
     double rawPos = 0;
 
-    // per sample SNV bias metric:
+    /// Sample-specific SNV bias metric:
     double strandBias = 0;
 };
 

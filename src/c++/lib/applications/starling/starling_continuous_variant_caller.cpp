@@ -122,5 +122,7 @@ strandBias(
     const double fwdLnp(binomialLogDensity( fwdTotal, fwdAlt, fwdAltFreq) + binomialLogDensity( revTotal, revAlt, errorRate));
     const double revLnp(binomialLogDensity( fwdTotal, fwdAlt, errorRate) + binomialLogDensity( revTotal, revAlt, revAltFreq));
     const double lnp(binomialLogDensity( fwdTotal, fwdAlt, altFreq) + binomialLogDensity( revTotal, revAlt, altFreq));
-    return std::max(-100., std::max(fwdLnp, revLnp) - lnp);
+
+
+    return std::max(fwdLnp, revLnp) - lnp;
 }

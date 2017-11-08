@@ -197,11 +197,11 @@ process_pos_snp(const pos_t pos)
 
 
 
-/// setup siteSampleInfo assuming that corresponding sampleInfo has already been initialized
+/// Setup siteSampleInfo assuming that corresponding sampleInfo has already been initialized
 static
 void
 updateSiteSampleInfo(
-    const starling_base_options& opt,
+    const starling_options& opt,
     const unsigned sampleIndex,
     const CleanedPileup& cpi,
     const bool isOverlappingHomAltDeletion,
@@ -225,7 +225,9 @@ updateSiteSampleInfo(
     const auto& pi(cpi.rawPileup());
     siteSampleInfo.mapqTracker = pi.mapqTracker;
 
-    siteSampleInfo.strandBias = strandBias;
+    // Bound 'raw' strand-bias input to be less than the specified absolute value
+    assert(opt.maxAbsSampleVariantStrandBias >= 0.);
+    siteSampleInfo.strandBias = std::min(opt.maxAbsSampleVariantStrandBias, std::max(-opt.maxAbsSampleVariantStrandBias, strandBias));
 
     // add EVS feature info
     const auto& sampleInfo(locus.getSample(sampleIndex));
@@ -266,7 +268,7 @@ computeSampleDiploidSiteGenotype(
 
 
 
-/// translate a base index into the an allele index for the locus
+/// Translate a base index into the an allele index for the locus
 ///
 /// site loci contain alleles in vcf print order of REF, ALT0, ALT1, etc...
 /// this translates the base into the loci's allele index order
@@ -303,7 +305,7 @@ translateBaseIndexToAlleleIndex(
 
 
 
-/// translate older starling "4-allele" genotype index to current VcfGenotype associated
+/// Translate older starling "4-allele" genotype index to current VcfGenotype associated
 /// with the specified site locus
 static
 void
@@ -335,7 +337,7 @@ translateDigtToVcfGenotype(
 static
 void
 updateSnvLocusWithSampleInfo(
-    const starling_base_options& opt,
+    const starling_options& opt,
     const starling_pos_processor::sample_info& sif,
     const unsigned callerPloidy,
     const unsigned groupLocusPloidy,
@@ -747,7 +749,7 @@ struct StrandBiasCounts
 static
 void
 updateContinuousSnvLocusWithSampleInfo(
-    const starling_base_options& opt,
+    const starling_options& opt,
     starling_pos_processor::sample_info& sif,
     const unsigned sampleIndex,
     std::vector<StrandBiasCounts>& strandBiasCounts,

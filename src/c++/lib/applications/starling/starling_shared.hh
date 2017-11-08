@@ -90,6 +90,9 @@ struct starling_options : public starling_base_options
     /// \brief Apply special behaviors for RNA-Seq analysis if true
     bool isRNA = false;
 
+    /// This is the absolute value limit of the likelihood-based strand bias score range. It must be a positive value.
+    const double maxAbsSampleVariantStrandBias = 99;
+
     gvcf_options gvcf;
 };
 
