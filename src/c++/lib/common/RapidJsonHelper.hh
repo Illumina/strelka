@@ -35,13 +35,11 @@ public:
     static
     void
     wrongValueTypeError(
-        const std::string& fileName,
-        const char* key,
-        const char* keyType)
+            const char* key,
+            const char* keyType)
     {
         std::ostringstream oss;
-        oss << "ERROR: Node '" << key << "' does not have expected type '" << keyType
-            << "' in json file '" << fileName << "'.";
+        oss << "ERROR: Node '" << key << "' does not have expected type '" << keyType << "'.";
         BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
     }
 

@@ -88,7 +88,14 @@ IndelErrorModelParser::importIndelErrorModelJsonFile(
         BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
     }
 
-    indelErrorModelsJson = IndelErrorModelsJson::deserialize(document);
+    try {
+        indelErrorModelsJson = IndelErrorModelsJson::deserialize(document);
+    }
+    catch(...)
+    {
+        log_os << "Exception caught while deserializing json file '" << modelFilename << "'\n";
+        throw;
+    }
 }
 
 std::map<std::string, IndelErrorRateSet>
@@ -131,6 +138,13 @@ importThetaJsonFile(
         BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
     }
 
-    thetasMap = ThetasJson::deserialize(document).getThetasMap();
+    try {
+        thetasMap = ThetasJson::deserialize(document).getThetasMap();
+    }
+    catch(...)
+    {
+        log_os << "Exception caught while deserializing json file '" << thetaFilename << "'\n";
+        throw;
+    }
 }
 

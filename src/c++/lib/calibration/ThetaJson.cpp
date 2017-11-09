@@ -36,14 +36,16 @@ ThetaJson::deserialize(
 
     static const char* repeatPatternSizeLabel = "repeatPatternSize";
     const rapidjson::Value& repeatPatternSizeValue(RapidJsonHelper::getNodeMember(root, repeatPatternSizeLabel));
+    if (!repeatPatternSizeValue.IsUint()) RapidJsonHelper::wrongValueTypeError(repeatPatternSizeLabel, "unsigned");
     size_t repeatPatternSize(repeatPatternSizeValue.GetUint());
 
     std::vector<double> theta;
     static const char* thetaLabel = "theta";
     const rapidjson::Value& thetaArray(RapidJsonHelper::getNodeMember(root, thetaLabel));
-
+    if (!thetaArray.IsArray()) RapidJsonHelper::wrongValueTypeError(thetaLabel, "array");
     for (const auto& thetaValue : thetaArray.GetArray())
     {
+        if (!thetaValue.IsDouble()) RapidJsonHelper::wrongValueTypeError(thetaLabel, "double");
         theta.push_back(thetaValue.GetDouble());
     }
 
@@ -63,6 +65,7 @@ ThetasJson::deserialize(
     static const char* thetasLabel = "thetas";
     std::map<unsigned, std::vector<double>> thetasMap;
     const rapidjson::Value& thetasArray(RapidJsonHelper::getNodeMember(root, thetasLabel));
+    if (!thetasArray.IsArray()) RapidJsonHelper::wrongValueTypeError(thetasLabel, "array");
     for (const auto& thetasByPatternSize : thetasArray.GetArray())
     {
         const ThetaJson theta(ThetaJson::deserialize(thetasByPatternSize));

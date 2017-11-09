@@ -92,18 +92,22 @@ public:
 
         static const char* indelRateLabel = "indelRate";
         const rapidjson::Value& indelRateValue(RapidJsonHelper::getNodeMember(root, indelRateLabel));
+        if (!indelRateValue.IsDouble()) RapidJsonHelper::wrongValueTypeError(indelRateLabel, "double");
         const double indelRate(indelRateValue.GetDouble());
 
         static const char* noisyLocusRateLabel = "noisyLocusRate";
         const rapidjson::Value& noisyLocusRateValue(RapidJsonHelper::getNodeMember(root, noisyLocusRateLabel));
+        if (!noisyLocusRateValue.IsDouble()) RapidJsonHelper::wrongValueTypeError(noisyLocusRateLabel, "double");
         const double noisyLocusRate(noisyLocusRateValue.GetDouble());
 
         static const char* repeatCountLabel = "repeatCount";
         const rapidjson::Value& repeatCountValue(RapidJsonHelper::getNodeMember(root, repeatCountLabel));
+        if (!repeatCountValue.IsUint()) RapidJsonHelper::wrongValueTypeError(repeatCountLabel, "unsigned");
         const unsigned repeatCount(repeatCountValue.GetUint());
 
         static const char* repeatPatternSizeLabel = "repeatPatternSize";
         const rapidjson::Value& repeatPatternSizeValue(RapidJsonHelper::getNodeMember(root, repeatPatternSizeLabel));
+        if (!repeatPatternSizeValue.IsUint()) RapidJsonHelper::wrongValueTypeError(repeatPatternSizeLabel, "unsigned");
         const unsigned repeatPatternSize(repeatPatternSizeValue.GetUint());
 
         return IndelMotifBinomialMixture(repeatPatternSize, repeatCount, indelRate, noisyLocusRate);
@@ -160,6 +164,7 @@ public:
         const rapidjson::Value& motifArray(root);
 
         IndelErrorModelBinomialMixture indelErrorModelBinomialMixture;
+        if (!motifArray.IsArray()) RapidJsonHelper::wrongValueTypeError("motif", "array");
         for (const auto& motifValue : motifArray.GetArray())
         {
             indelErrorModelBinomialMixture.addMotif(IndelMotifBinomialMixture::deserialize(motifValue));
@@ -218,17 +223,16 @@ public:
 
         static const char* sampleNameLabel = "sampleName";
         const rapidjson::Value& sampleNameValue(RapidJsonHelper::getNodeMember(root, sampleNameLabel));
-
+        if (!sampleNameValue.IsString()) RapidJsonHelper::wrongValueTypeError(sampleNameLabel, "string");
         const std::string sampleName(sampleNameValue.GetString());
 
         static const char* motifLabel = "motif";
         const rapidjson::Value& motifArray(RapidJsonHelper::getNodeMember(root, motifLabel));
-
         IndelErrorModelBinomialMixture model(IndelErrorModelBinomialMixture::deserialize(motifArray));
 
         static const char* isStaticLabel = "isStatic";
         const rapidjson::Value& isStaticValue(RapidJsonHelper::getNodeMember(root, isStaticLabel));
-
+        if (!isStaticValue.IsBool()) RapidJsonHelper::wrongValueTypeError(isStaticLabel, "bool");
         const bool isStatic(isStaticValue.GetBool());
 
         return IndelErrorModelJson(sampleName, model, isStatic);
