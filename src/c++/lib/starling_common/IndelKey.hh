@@ -155,6 +155,12 @@ struct IndelKey
         return ((type == INDEL::INDEL) and (not insertSequence.empty()) and (deletionLength==0));
     }
 
+    bool
+    isMismatch() const
+    {
+        return (type == INDEL::MISMATCH);
+    }
+
     void
     validate() const;
 
@@ -174,8 +180,6 @@ struct IndelKey
     INDEL::index_t type;
     unsigned deletionLength;
     std::string insertSequence; ///< insert sequence used for complete types only, not for breakends
-
-    bool isMismatch = false;
 };
 
 

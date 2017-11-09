@@ -750,7 +750,7 @@ align_pos(const pos_t pos)
             try
             {
                 realignAndScoreRead(_opt, _dopt, sif.sampleOptions, _ref, realign_buffer_range, sampleIndex,
-                                    _candidateSnvBuffer, getActiveRegionDetector(), rseg,
+                                    getActiveRegionDetector(), rseg,
                                     getIndelBuffer());
             }
             catch (...)
@@ -1480,7 +1480,7 @@ process_pos_stats(
             const IndelKey& indelKey(it->first);
             const IndelData& indelData(getIndelData(it));
 
-            const bool isCandidate(getIndelBuffer().isCandidateIndel(indelKey, indelData) && !indelKey.isMismatch);
+            const bool isCandidate(getIndelBuffer().isCandidateIndel(indelKey, indelData) && !indelKey.isMismatch());
             _statsManager.addCallRegionIndel(isCandidate);
         }
     }

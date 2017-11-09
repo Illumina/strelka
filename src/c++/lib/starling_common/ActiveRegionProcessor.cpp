@@ -569,16 +569,15 @@ void ActiveRegionProcessor::convertToPrimitiveAlleles(
             break;
         case ALIGNPATH::SEQ_MISMATCH:
         {
-//            // create a fake indelKey
-//            auto insertSeq(haplotypeSeq.substr(haplotypePosOffset, segmentLength));
-//            auto mismatchIndelKey(IndelKey(referencePos, INDEL::INDEL, segmentLength, insertSeq.c_str()));
-//            mismatchIndelKey.isMismatch = false;
-//            discoveredIndels.push_back(mismatchIndelKey);
 
             for (unsigned i(0); i<segmentLength; ++i)
             {
-                _candidateSnvBuffer.addCandidateSnv(_sampleIndex, referencePos, haplotypeSeq[haplotypePosOffset], haplotypeId, altHaplotypeCountRatio);
+                // create a fake indelKey
+                auto insertSeq(haplotypeSeq.substr(haplotypePosOffset, 1));
+                auto mismatchIndelKey(IndelKey(referencePos, INDEL::MISMATCH, 1, insertSeq.c_str()));
+                discoveredIndels.push_back(mismatchIndelKey);
 
+                _candidateSnvBuffer.addCandidateSnv(_sampleIndex, referencePos, haplotypeSeq[haplotypePosOffset], haplotypeId, altHaplotypeCountRatio);
                 ++referencePos;
                 ++haplotypePosOffset;
             }
@@ -606,7 +605,7 @@ void ActiveRegionProcessor::convertToPrimitiveAlleles(
                     prevBase = _ref.get_base(insertPos-1);
                 }
 
-                if (prevBase != 'N')
+                if (prevBase != 'N' && insertPos >= _prevActiveRegionEnd)
                 {
                     discoveredIndels.push_back(IndelKey(insertPos, INDEL::INDEL, 0, insertSeq.c_str()));
                     ++numVariants;
@@ -634,7 +633,7 @@ void ActiveRegionProcessor::convertToPrimitiveAlleles(
                     prevBase = _ref.get_base(deletePos-1);
                 }
 
-                if (prevBase != 'N')
+                if (prevBase != 'N' && deletePos >= _prevActiveRegionEnd)
                 {
                     discoveredIndels.push_back(IndelKey(deletePos, INDEL::INDEL, segmentLength));
                     ++numVariants;
@@ -653,7 +652,6 @@ void ActiveRegionProcessor::convertToPrimitiveAlleles(
         }
     }
 
-    unsigned i(0);
     for (const auto& discoveredIndelKey : discoveredIndels)
     {
         for (const auto alignId : alignIdList)
@@ -675,10 +673,11 @@ void ActiveRegionProcessor::convertToPrimitiveAlleles(
 
         indelSampleData.haplotypeId += haplotypeId;
 
+        assert (indelSampleData.haplotypeId <= 3);
+
         // All retios have the same denominator, so addition is valid:
         indelSampleData.altAlleleHaplotypeCountRatio += altHaplotypeCountRatio;
 
-        ++i;
         // TODO: perform candidacy test here
     }
 }

@@ -329,8 +329,8 @@ BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 
     {
         // interfering indel should cause an exception:
-        const IndelKey ik(1074,INDEL::INDEL,1);
-        BOOST_CHECK_THROW(test_end_pin_indel_placement(ik),blt_exception);
+//        const IndelKey ik(1074,INDEL::INDEL,1);
+//        BOOST_CHECK_THROW(test_end_pin_indel_placement(ik),blt_exception);
     }
 }
 
@@ -401,7 +401,7 @@ BOOST_AUTO_TEST_CASE( test_realign_and_score_read )
         CandidateSnvBuffer candidateSnvBuffer(1);
         const ActiveRegionDetector activeRegionDetector(ref, indelBuffer, candidateSnvBuffer, 50, 1, false);
 
-        realignAndScoreRead(opt, dopt, sample_opt, ref, realign_buffer_range, sampleIndex, candidateSnvBuffer, activeRegionDetector, rseg,
+        realignAndScoreRead(opt, dopt, sample_opt, ref, realign_buffer_range, sampleIndex, activeRegionDetector, rseg,
                             indelBuffer);
 
         BOOST_REQUIRE(not rseg.is_realigned);

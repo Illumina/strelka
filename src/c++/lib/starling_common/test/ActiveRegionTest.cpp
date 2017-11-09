@@ -56,9 +56,9 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
         activeRegionDetector.getReadBuffer(sampleIndex).setAlignInfo(alignId, sampleIndex, INDEL_ALIGN_TYPE::GENOME_TIER1_READ, isForwardStrand);
         for (pos_t pos(0); pos<refLength; ++pos)
         {
-            // only sample 1 has mismatches
+            // only sample 0 has mismatches
             // alternative allele frequency 0.5
-            if (sampleIndex != 1 or ((alignId/sampleCount) % 2)
+            if (sampleIndex != 0 or ((alignId/sampleCount) % 2)
                 or (snvPos.find(pos) == snvPos.end()))
             {
                 // No SNV
@@ -221,8 +221,8 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
         detector.clear();
 
         // check if isCandidateSnv are correctly set
-        BOOST_REQUIRE_EQUAL(testSnvBuffer.isCandidateSnv(sampleIndex, startPosition + snvOffsets[0], 'G'), true);
-        BOOST_REQUIRE_EQUAL(testSnvBuffer.isCandidateSnv(sampleIndex, startPosition + snvOffsets[1], 'G'), true);
+        BOOST_REQUIRE_EQUAL(testSnvBuffer.isCandidateSnv(sampleIndex, 1, startPosition + snvOffsets[0], 'G'), true);
+        BOOST_REQUIRE_EQUAL(testSnvBuffer.isCandidateSnv(sampleIndex, 1, startPosition + snvOffsets[1], 'G'), true);
     }
 }
 

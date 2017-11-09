@@ -63,16 +63,9 @@ public:
     static const unsigned MinHaplotypeCount = 3u;
 
     /// Creates an object for processing an active region
-    /// \param posRange position range of the active region
-    /// \param ref reference
-    /// \param maxIndelSize max indel size
-    /// \param sampleIndex sample index
-    /// \param aligner aligner for aligning haplotypes to the reference
-    /// \param readBuffer read buffer
-    /// \param indelBuffer indel buffer
-    /// \param candidateSnvBuffer candidate SNV buffer
     /// \return active region object
     ActiveRegionProcessor(const known_pos_range2& posRange,
+                          const pos_t prevActiveRegionEnd,
                           const reference_contig_segment& ref,
                           const unsigned maxIndelSize,
                           const unsigned sampleIndex,
@@ -81,8 +74,8 @@ public:
                           const ActiveRegionReadBuffer& readBuffer,
                           IndelBuffer& indelBuffer,
                           CandidateSnvBuffer& candidateSnvBuffer):
-        _posRange(posRange), _ref(ref), _maxIndelSize(maxIndelSize),
-        _sampleIndex(sampleIndex), _ploidy(ploidy),
+        _posRange(posRange), _prevActiveRegionEnd(prevActiveRegionEnd), _ref(ref),
+        _maxIndelSize(maxIndelSize), _sampleIndex(sampleIndex), _ploidy(ploidy),
         _aligner(aligner), _readBuffer(readBuffer),
         _indelBuffer(indelBuffer), _candidateSnvBuffer(candidateSnvBuffer)
     {
@@ -108,6 +101,7 @@ public:
 
 private:
     const known_pos_range2 _posRange;
+    const pos_t _prevActiveRegionEnd;
     const reference_contig_segment& _ref;
     std::string _refSegment;
     const unsigned _maxIndelSize;

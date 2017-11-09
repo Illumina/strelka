@@ -141,15 +141,12 @@ scoreInsertSegment(const starling_base_options& /*opt*/,
 /// \brief Score a match segment.
 static
 void
-scoreMatchSegment(const starling_base_options& /*opt*/,
-                  const unsigned seg_length,
+scoreMatchSegment(const unsigned seg_length,
                   const bam_seq_base& seq,
                   const uint8_t* qual,
                   const unsigned read_offset,
                   const bam_seq_base& ref,
                   const pos_t ref_head_pos,
-                  const unsigned /*sampleIndex*/,
-                  const CandidateSnvBuffer& /*candidateSnvBuffer*/,
                   double& lnp)
 {
     static const double lnthird(-std::log(3.));
@@ -169,7 +166,7 @@ scoreMatchSegment(const starling_base_options& /*opt*/,
 //            if (opt.is_short_haplotyping_enabled and (not is_ref))
 //            {
 //                // Don't penalize for the mismatch if it is a SNV found in an active region
-//                is_ref = candidateSnvBuffer.isCandidateSnv(sampleIndex, refPos, seq.get_char(readPos));
+//                is_ref = candidateSnvBuffer.isCandidateSnv(sampleIndex, haplotypeId, refPos, seq.get_char(readPos));
 //            }
         }
         lnp += ( is_ref ?
@@ -216,7 +213,7 @@ getMatchingIndelKey(
         for (const IndelKey& calIndel : calIndels)
         {
             if ((calIndel.pos == ref_head_pos) and
-                (calIndel.type == INDEL::INDEL) and
+                ((calIndel.type == INDEL::INDEL) || calIndel.type == INDEL::MISMATCH) and
                 (calIndel.delete_length() == delete_length) and
                 (calIndel.insert_length() == insert_length))
             {
@@ -270,8 +267,6 @@ double
 scoreCandidateAlignment(
     const starling_base_options& opt,
     const IndelBuffer& indelBuffer,
-    const unsigned sampleIndex,
-    const CandidateSnvBuffer& candidateSnvBuffer,
     const read_segment& readSegment,
     const CandidateAlignment& cal,
     const reference_contig_segment& ref)
@@ -314,13 +309,25 @@ scoreCandidateAlignment(
 
         IndelKey indelKey(IndelKey::noIndel());
 
-        if       (is_swap_start)
+        if       (is_swap_start || (ps.type == SEQ_MISMATCH))
         {
-            const swap_info sinfo(path,path_index);
-            n_seg=sinfo.n_seg;
+            unsigned deleteLength, insertLength;
 
-            indelKey = getMatchingIndelKey(cal,ref_head_pos,sinfo.delete_length,sinfo.insert_length,
-                                           ends,path_index);
+            if (ps.type == SEQ_MISMATCH)
+            {
+                deleteLength = ps.length;
+                insertLength = ps.length;
+            }
+            else
+            {
+                const swap_info sinfo(path,path_index);
+                deleteLength = sinfo.delete_length;
+                insertLength = sinfo.insert_length;
+                n_seg=sinfo.n_seg;
+            }
+
+            indelKey = getMatchingIndelKey(cal,ref_head_pos,deleteLength,insertLength,
+                                                        ends,path_index);
 
             // a combined insert/delete event should not produce a breakpoint:
             assert(not indelKey.is_breakpoint());
@@ -337,7 +344,7 @@ scoreCandidateAlignment(
             }
 
             scoreInsertSegment(opt,
-                               sinfo.insert_length,
+                               insertLength,
                                read_bseq,
                                qual,
                                read_offset,
@@ -363,15 +370,12 @@ scoreCandidateAlignment(
         }
         else if (is_segment_align_match(ps.type))
         {
-            scoreMatchSegment(opt,
-                              ps.length,
+            scoreMatchSegment(ps.length,
                               read_bseq,
                               qual,
                               read_offset,
                               ref_bseq,
                               ref_head_pos,
-                              sampleIndex,
-                              candidateSnvBuffer,
                               alignmentLogProb);
 #ifdef DEBUG_SCORE
             for (unsigned ii(0); ii<ps.length; ++ii)

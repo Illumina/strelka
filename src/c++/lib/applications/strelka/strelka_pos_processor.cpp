@@ -312,7 +312,7 @@ process_pos_indel_somatic(const pos_t pos)
         // don't write breakpoint output:
         if (indelKey.is_breakpoint()) continue;
 
-        if (indelKey.isMismatch) continue;
+        if (indelKey.isMismatch()) continue;
 
         const IndelData& indelData(getIndelData(indelIter));
 

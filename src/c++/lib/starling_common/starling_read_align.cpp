@@ -290,10 +290,14 @@ make_start_pos_alignment(
 
     path_t& apath(cal.al.path);
 
+    bool isPrevMismatch(false);
     for (const IndelKey& indelKey : indels)
     {
+        bool isMismatch(indelKey.isMismatch());
+
         // don't consider indels which can't intersect the read:
         if (indelKey.right_pos() < ref_start_pos) continue;
+        if (isMismatch && indelKey.right_pos() == ref_start_pos) continue;
         if ((indelKey.right_pos() == ref_start_pos) && (! is_leading_read)) continue;
 
         // deal with leading indel, swap or right breakpoint:
@@ -338,6 +342,7 @@ make_start_pos_alignment(
                 add_path_segment(apath,DELETE,ref_head_pos,indelKey.delete_length());
             }
             cal.leading_indel_key=indelKey;
+            isPrevMismatch = isMismatch;
             continue;
         }
 
@@ -347,7 +352,7 @@ make_start_pos_alignment(
         // note this relies on the single extra base of separation
         // required between indels during indel conflict detection:
         const bool is_edge_delete((indelKey.isPrimitiveDeletionAllele()) && (indelKey.pos == ref_start_pos));
-        if ((indelKey.pos <= ref_head_pos) && (!is_edge_delete))
+        if ((indelKey.pos < ref_head_pos) && (!is_edge_delete) && !isMismatch)
         {
             std::ostringstream oss;
             oss << "ERROR: indel candidate: " << indelKey << " is not greater than ref_head_pos: " << ref_head_pos
@@ -358,7 +363,7 @@ make_start_pos_alignment(
         assert(indelKey.pos >= ref_head_pos);
         const unsigned match_segment(indelKey.pos-ref_head_pos);
 
-        assert(is_first_intersecting_indel || (match_segment>0));
+        assert(is_first_intersecting_indel || (match_segment>0) || isMismatch || isPrevMismatch);
 
         // remaining read segment match segment added after indel loop:
         if (((read_head_pos+match_segment) > read_length) ||
@@ -374,7 +379,19 @@ make_start_pos_alignment(
             read_head_pos += match_segment;
         }
 
-        if (indelKey.type == INDEL::INDEL)
+        if (isMismatch)
+        {
+            apath.push_back(path_segment(SEQ_MISMATCH, indelKey.deletionLength));
+            ref_head_pos += indelKey.deletionLength;
+            read_head_pos += indelKey.deletionLength;
+
+            if (read_head_pos >= static_cast<pos_t>(read_length))
+            {
+                break;
+            }
+
+        }
+        else if (indelKey.type == INDEL::INDEL)
         {
             if (indelKey.delete_length() > 0)
             {
@@ -423,6 +440,7 @@ make_start_pos_alignment(
             oss << "Unexpected indel state: " << INDEL::get_index_label(indelKey.type) << " at: " << __FILE__  << ":" << __LINE__ ;
             throw blt_exception(oss.str().c_str());
         }
+        isPrevMismatch = isMismatch;
     }
 
     assert(read_head_pos<=static_cast<pos_t>(read_length));
@@ -461,7 +479,7 @@ get_end_pin_start_pos(
     const bool is_trailing_read(read_end_pos != static_cast<pos_t>(read_length));
 
     bool is_first(true);
-
+    bool isPrevMismatch(false);
     // having trouble with normal reverse_iterator for this data
     // structure, so reversal is done by hand:
     indel_set_t::const_iterator i(indels.end()),i_begin(indels.begin());
@@ -470,16 +488,18 @@ get_end_pin_start_pos(
         --i;
         const IndelKey& indelKey(*i);
 
+        const bool isMismatch(indelKey.isMismatch());
         // check that indel actually intersects the read:
         if (indelKey.pos > ref_end_pos) continue;
+        if (isMismatch && indelKey.pos == ref_end_pos) continue;
         if ((indelKey.pos == ref_end_pos) && (! is_trailing_read)) continue;
 
-        const bool is_trailing_indel(indelKey.right_pos() == ref_end_pos);
+        const bool is_trailing_indel((!isMismatch) && (indelKey.right_pos() == ref_end_pos));
 
         if (is_trailing_indel)   // deal with trailing-edge insert/breakpoint case first
         {
             assert((is_first) && (ref_start_pos==ref_end_pos));
-            assert((indelKey.type == INDEL::INDEL) ||
+            assert((indelKey.type == INDEL::INDEL) || isMismatch ||
                    (indelKey.type == INDEL::BP_LEFT));
 
             if (indelKey.type == INDEL::INDEL)
@@ -510,7 +530,7 @@ get_end_pin_start_pos(
             // new indel must end at least one base below the current ref head (otherwise it would be
             // an interfering indel):
             //
-            if ((indelKey.right_pos() >= ref_start_pos))   //&& (! is_edge_delete)) {
+            if (indelKey.right_pos() > (ref_start_pos+(isPrevMismatch ? 1 : 0)))  //&& (! is_edge_delete)) {
             {
                 std::ostringstream oss;
                 oss << "Unexpected indel position: indel: " << indelKey;
@@ -530,9 +550,19 @@ get_end_pin_start_pos(
                 ref_start_pos -= indelKey.delete_length();
                 if (indelKey.insert_length() > 0)
                 {
-                    if (static_cast<pos_t>(indelKey.insert_length()) >= read_start_pos) return;
+                    if (static_cast<pos_t>(indelKey.insert_length()) >= read_start_pos)
+                    {
+                        return;
+                    }
                     read_start_pos -= indelKey.insert_length();
                 }
+            }
+            else if (isMismatch)
+            {
+                ref_start_pos -= indelKey.delete_length();
+                read_start_pos -= indelKey.delete_length();
+
+                if (read_start_pos==0) return;
             }
             else if (indelKey.type==INDEL::BP_RIGHT)
             {
@@ -546,6 +576,7 @@ get_end_pin_start_pos(
             }
         }
         is_first=false;
+        isPrevMismatch = isMismatch;
     }
 
     assert(read_start_pos >= 0);
@@ -642,99 +673,89 @@ addKeysToCandidateAlignment(
     cal.setIndels(calIndels);
 }
 
-//static
-//bool
-//checkPhasing(
-//    const starling_align_indel_status& indel_status_map,
-//    const std::vector<IndelKey> indel_order,
-//    const IndelBuffer& indelBuffer,
-//    const ActiveRegionDetector& activeRegionDetector,
-//    const unsigned sampleId,
-//    const unsigned depth)
-//{
-//    // Check phasing
-//    const IndelKey &curIndelKey(indel_order[depth]);
-//    const auto curActiveRegionId(activeRegionDetector.getActiveRegionId(curIndelKey.pos));
-//    if (curActiveRegionId < 0) return true;    // current indel is not in AR
-//
-//    const IndelData& curIndelData(*indelBuffer.getIndelDataPtr(curIndelKey));
-//    const uint8_t curHaplotypeId(curIndelData.getSampleData(sampleId).haplotypeId);
-//
-//    for (unsigned i(depth-1); i>=0; --i)
-//    {
-//        const IndelKey &prevIndelKey(indel_order[i]);
-//        const auto prevActiveRegionId(activeRegionDetector.getActiveRegionId(prevIndelKey.pos));
-//        if (prevActiveRegionId >= 0 && prevActiveRegionId != )
-//        const IndelData& indelData(*indelBuffer.getIndelDataPtr(indelKey));
-//        if (indelData.isForcedOutput)
-//        {
-//            // allow at most one forced indel
-//            if (isForcedIndel) return false;
-//            isForcedIndel = true;
-//        }
-//
-//        if (indelData.isConfirmedInActiveRegion)
-//        {
-//            // Haplotyping was successful
-//            const auto haplotypeId(indelData.getSampleData(sampleId).haplotypeId);
-//            if (activeRegionId == prevActiveRegionId)
-//            {
-//                if (validHaplotypeId == 0)
-//                    validHaplotypeId = haplotypeId;
-//                else if (validHaplotypeId == 3)
-//                    validHaplotypeId = haplotypeId;
-//                else if (validHaplotypeId != haplotypeId)
-//                    return false;
-//            }
-//            else
-//            {
-//                // new active region
-//                validHaplotypeId = haplotypeId;
-//            }
-//        }
-//
-//        prevActiveRegionId = activeRegionId;
-//    }
-//    return true;
-//}
 static
 int
-getHaplotypeId(
-    const ActiveRegionId prevActiveRegionId,
-    const int prevHaplotypeId,
-    const ActiveRegionId curActiveRegionId,
+getNewSampleHaplotypeId(
+    const bool isNewActiveRegion,
+    const int haplotypeId,
     const int curIndelHaplotypeId,
-    const bool isCurIndelOn)
+    const bool isCurIndelOn,
+    const bool isAnyIndelOn)
 {
-    int curHaplotypeId = isCurIndelOn ? curIndelHaplotypeId : (3-curIndelHaplotypeId);
-    if (prevActiveRegionId == -1 || (prevActiveRegionId != curActiveRegionId)) return curHaplotypeId;
+    if (curIndelHaplotypeId == 0) return haplotypeId;
 
-    assert (prevHaplotypeId >= 0);
+    int curHaplotypeId = isCurIndelOn ? curIndelHaplotypeId : (3-curIndelHaplotypeId);
+    if (isNewActiveRegion) return curHaplotypeId;
+
+    if (haplotypeId < 0) return haplotypeId;
+
     switch (curIndelHaplotypeId)
     {
-        case 0:
-        {
-            return 0;
-        }
         case 1:
         case 2:
         {
-            if ((prevHaplotypeId == 0) || (prevHaplotypeId == 3) ||
-                (prevHaplotypeId == curHaplotypeId))
+            if ((haplotypeId == 3) || (haplotypeId == curHaplotypeId))
             {
                 return curHaplotypeId;
             }
-            return -1;
+            // haplotype id mismatch
+            if (isCurIndelOn || isAnyIndelOn)
+                return -1;  // prevent adding this indel
+            else
+                return 0;
         }
         case 3:
         {
-            if (!isCurIndelOn) return -1;
-            if (prevHaplotypeId == 1 || prevHaplotypeId == 2) return prevHaplotypeId;
-            return 3;
+            if (!isCurIndelOn)
+            {
+                if (isAnyIndelOn)
+                    return -1;
+                else
+                    return 0;
+            }
+            if (haplotypeId > 0) return haplotypeId;
+            // prevHaplotypeId == 0 (don't allow adding indel), current indel is on
+            return -1;
         }
         default:
             assert(false);
     }
+}
+
+static
+bool
+updateHaplotypeIds(
+    const unsigned curSampleIndex,
+    const bool isNewActiveRegion,
+    const std::vector<int>& haplotypeIds,
+    const std::vector<int>& curIndelHaplotypeIds,
+    const bool isCurIndelOn,
+    const bool isAnyIndelOn,
+    std::vector<int>& newHaplotypeIds)
+{
+    const unsigned sampleCount(haplotypeIds.size());
+
+    bool isValid(false);
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    {
+        const int sampleCurIndelHaplotypeId(curIndelHaplotypeIds[sampleIndex]);
+        const int sampleHaplotypeId(haplotypeIds[sampleIndex]);
+        int newSampleHaplotypeId;
+        if ((sampleIndex != curSampleIndex) && (sampleCurIndelHaplotypeId == 0) && isCurIndelOn)
+        {
+            newSampleHaplotypeId = -1;
+        }
+        else
+        {
+            newSampleHaplotypeId = getNewSampleHaplotypeId(
+                    isNewActiveRegion, sampleHaplotypeId, sampleCurIndelHaplotypeId,
+                    isCurIndelOn, isAnyIndelOn);
+            if (newSampleHaplotypeId >= 0) isValid = true;
+        }
+        newHaplotypeIds[sampleIndex] = newSampleHaplotypeId;
+    }
+
+    return isValid;
 }
 
 /// Recursively build potential alignment paths and push them into the
@@ -752,11 +773,12 @@ candidate_alignment_search(
     const unsigned sampleId,
     const known_pos_range& realign_buffer_range,
     const ActiveRegionId activeRegionId,
-    const int haplotypeId,
+    std::vector<int> haplotypeIds,
     std::set<CandidateAlignment>& cal_set,
     mca_warnings& warn,
     starling_align_indel_status indel_status_map,
     std::vector<IndelKey> indel_order,
+    const bool isAnyIndelOn,
     const unsigned depth,
     const unsigned toggle_depth,
     known_pos_range read_range,
@@ -879,19 +901,45 @@ candidate_alignment_search(
     const bool is_cindel_on(indel_status_map[cindel].is_present);
     const IndelData& cindelData(*indelBuffer.getIndelDataPtr(cindel));
     const ActiveRegionId cActiveRegionId(activeRegionDetector.getActiveRegionId(cindel.pos));
-    uint8_t cHaplotypeId(cindelData.getSampleData(sampleId).haplotypeId);
+    const bool isNewActiveRegion((activeRegionId == -1) || (activeRegionId != cActiveRegionId));
+    bool isConflict(false);
+    for (unsigned i(0); i<depth; ++i)
+    {
+        const IndelKey &indelKey(indel_order[i]);
+
+        if (!(indel_status_map[indelKey].is_present)) continue;
+        if (is_indel_conflict(indelKey, cindel)) isConflict = true;
+    }
+
+    const unsigned sampleCount(opt.getSampleCount());
+    std::vector<int> curIndelHaplotypeIds(sampleCount);
+
+    for (unsigned i(0); i<sampleCount; ++i)
+    {
+        curIndelHaplotypeIds[i] = cindelData.getSampleData(i).haplotypeId;
+    }
 
     // alignment 1) --> unchanged case:
     try
     {
-        int newHaplotypeIdUnchanged(getHaplotypeId(activeRegionId, haplotypeId, cActiveRegionId, cHaplotypeId, is_cindel_on));
-        if (newHaplotypeIdUnchanged >= 0)
+        const bool isAnyIndelOnNoToggle(isAnyIndelOn || is_cindel_on);
+        bool isValid(true);
+        std::vector<int> newHaplotypeIds(sampleCount);
+        if (!isConflict)
+        {
+            isValid = updateHaplotypeIds(sampleId, isNewActiveRegion, haplotypeIds, curIndelHaplotypeIds, is_cindel_on, isAnyIndelOnNoToggle, newHaplotypeIds);
+        }
+        else
+        {
+            newHaplotypeIds = haplotypeIds;
+        }
+
+        if (isValid)
         {
             candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer, activeRegionDetector,
-                                       sampleId, realign_buffer_range, cActiveRegionId, newHaplotypeIdUnchanged,
-                                       cal_set,
-                                       warn, indel_status_map,
-                                       indel_order, depth + 1, toggle_depth, read_range, max_read_indel_toggle, cal);
+                                       sampleId, realign_buffer_range, cActiveRegionId, newHaplotypeIds,
+                                       cal_set, warn, indel_status_map,
+                                       indel_order, isAnyIndelOnNoToggle, depth + 1, toggle_depth, read_range, max_read_indel_toggle, cal);
         }
     }
     catch (...)
@@ -902,9 +950,19 @@ candidate_alignment_search(
         throw;
     }
 
-    int newHaplotypeIdToggled(getHaplotypeId(activeRegionId, haplotypeId, cActiveRegionId, cHaplotypeId, !is_cindel_on));
+    const bool isAnyIndelOnToggled(isAnyIndelOn || !is_cindel_on);
+    bool isValid(true);
+    std::vector<int> newHaplotypeIds(sampleCount);
+    if (!isConflict)
+    {
+        isValid = updateHaplotypeIds(sampleId, isNewActiveRegion, haplotypeIds, curIndelHaplotypeIds, !is_cindel_on, isAnyIndelOnToggled, newHaplotypeIds);
+    }
+    else
+    {
+        newHaplotypeIds = haplotypeIds;
+    }
 
-    if (newHaplotypeIdToggled < 0) return;
+    if (!isValid) return;
 
     if (! is_cindel_on)
     {
@@ -914,20 +972,18 @@ candidate_alignment_search(
         // check whether this indel would interfere with an indel that's
         // already been toggled on:
         //
-
-        for (unsigned i(0); i<depth; ++i) {
-            const IndelKey &indelKey(indel_order[i]);
-
-            if (!(indel_status_map[indelKey].is_present)) continue;
-            if (is_indel_conflict(indelKey, cindel)) return;
-        }
+        if (isConflict) return;
     }
+
+    // Mismatches discovered in AR doesn't increase toggle depth,
+    // because #alignments is constraied by phasing info
+    unsigned toggleIncrement = cindel.isMismatch() ? 0 : 1;
 
     // check whether toggling this indel would exceed the maximum
     // number of toggles made to the exemplar alignment (this is
     // here to prevent a combinatorial blowup)
     //
-    if (static_cast<int>(toggle_depth+1)>max_read_indel_toggle)
+    if (static_cast<int>(toggle_depth+toggleIncrement)>max_read_indel_toggle)
     {
         warn.max_toggle_depth=true;
         return;
@@ -981,12 +1037,11 @@ candidate_alignment_search(
                                                      read_length,
                                                      current_indels);
 
-
                 candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer, activeRegionDetector,
                                            sampleId,
-                                           realign_buffer_range, cActiveRegionId, newHaplotypeIdToggled, cal_set,
+                                           realign_buffer_range, cActiveRegionId, newHaplotypeIds, cal_set,
                                            warn, indel_status_map,
-                                           indel_order, depth + 1, toggle_depth + 1, read_range, max_read_indel_toggle,
+                                           indel_order, isAnyIndelOnToggled, depth + 1, toggle_depth + toggleIncrement, read_range, max_read_indel_toggle,
                                            start_cal);
             }
             catch (...)
@@ -998,6 +1053,7 @@ candidate_alignment_search(
     }
 
     // check whether this is an equal-length swap, in which case alignment 3 is unnecessary:
+    if (cindel.type == INDEL::MISMATCH) return;
     if ((cindel.type==INDEL::INDEL) && (cindel.delete_length()==cindel.insert_length())) return;
 
     // alignment 3) -- insert or delete indel and pin the end position
@@ -1050,9 +1106,9 @@ candidate_alignment_search(
                                                          current_indels);
 
                     candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer, activeRegionDetector, sampleId,
-                                               realign_buffer_range, cActiveRegionId, newHaplotypeIdToggled, cal_set,
+                                               realign_buffer_range, cActiveRegionId, newHaplotypeIds, cal_set,
                                                warn, indel_status_map,
-                                               indel_order, depth + 1, toggle_depth + 1, read_range,
+                                               indel_order, isAnyIndelOnToggled, depth + 1, toggle_depth + toggleIncrement, read_range,
                                                max_read_indel_toggle, start_cal);
                 }
                 catch (...)
@@ -1329,8 +1385,6 @@ scoreCandidateAlignments(
     const reference_contig_segment& ref,
     read_segment& readSegment,
     IndelBuffer& indelBuffer,
-    const unsigned sampleIndex,
-    const CandidateSnvBuffer& candidateSnvBuffer,
     const std::set<CandidateAlignment>& candAlignments,
     std::vector<double>& candAlignmentScores,
     double& maxCandAlignmentScore,
@@ -1359,7 +1413,7 @@ scoreCandidateAlignments(
     {
         const CandidateAlignment& ical(*cal_iter);
         const double path_lnp(
-            scoreCandidateAlignment(opt, indelBuffer, sampleIndex, candidateSnvBuffer, readSegment, ical, ref));
+            scoreCandidateAlignment(opt, indelBuffer, readSegment, ical, ref));
 
         candAlignmentScores.push_back(path_lnp);
 
@@ -1513,7 +1567,7 @@ scoreCandidateAlignments(
         }
 
         // score candidate alignment:
-        const double path_lnp(scoreCandidateAlignment(opt, indelBuffer, sampleIndex, candidateSnvBuffer, readSegment,
+        const double path_lnp(scoreCandidateAlignment(opt, indelBuffer, readSegment,
                                                       softClippedCandidateAlignment, ref));
 
         if (path_lnp >= smooth_path_lnp)
@@ -1546,7 +1600,6 @@ scoreCandidateAlignmentsAndIndels(
     read_segment& rseg,
     IndelBuffer& indelBuffer,
     const unsigned sampleId,
-    const CandidateSnvBuffer& candidateSnvBuffer,
     std::set<CandidateAlignment>& candAlignments,
     const bool is_incomplete_search,
     const bool isTestSoftClippedInputAligned,
@@ -1570,7 +1623,7 @@ scoreCandidateAlignmentsAndIndels(
 
     try
     {
-        scoreCandidateAlignments(opt, ref, rseg, indelBuffer, sampleId, candidateSnvBuffer, candAlignments,
+        scoreCandidateAlignments(opt, ref, rseg, indelBuffer, candAlignments,
                                  candAlignmentScores, maxCandAlignmentScore, maxCandAlignmentPtr,
                                  isTestSoftClippedInputAligned, softClippedInputAlignment);
     }
@@ -1724,12 +1777,18 @@ getCandidateAlignments(
     // launch recursive re-alignment routine starting from the current exemplar alignment:
     static const unsigned start_depth(0);
     static const unsigned start_toggle_depth(0);
-    static const int defaultHaplotypeId(0);
     static const ActiveRegionId defaultActiveRegionId(-1);
+    static const bool isAnyIndelOn(false);
+    std::vector<int> sampleHaplotypeId(opt.getSampleCount());
+    for (unsigned i(0); i<opt.getSampleCount(); ++i)
+    {
+        sampleHaplotypeId[i] = 3;
+    }
+
     candidate_alignment_search(opt, dopt, rseg.getReadIndex(), cal_read_length, indelBuffer, activeRegionDetector,
-                               sampleId, realign_buffer_range, defaultActiveRegionId, defaultHaplotypeId, cal_set,
+                               sampleId, realign_buffer_range, defaultActiveRegionId, sampleHaplotypeId, cal_set,
                                warn, indel_status_map,
-                               indel_order, start_depth, start_toggle_depth, exemplar_pr, opt.max_read_indel_toggle,
+                               indel_order, isAnyIndelOn, start_depth, start_toggle_depth, exemplar_pr, opt.max_read_indel_toggle,
                                cal);
 
     if (is_input_alignment_clipped)
@@ -1800,7 +1859,6 @@ realignAndScoreRead(
     const reference_contig_segment& ref,
     const known_pos_range& realign_buffer_range,
     const unsigned sampleId,
-    const CandidateSnvBuffer& candidateSnvBuffer,
     const ActiveRegionDetector& activeRegionDetector,
     read_segment& rseg,
     IndelBuffer& indelBuffer)
@@ -1894,6 +1952,6 @@ realignAndScoreRead(
 
     const bool isTestSoftClippedInputAligned(opt.isRetainOptimalSoftClipping && isSoftClippedInputAlignment);
     scoreCandidateAlignmentsAndIndels(opt, dopt, sample_opt, ref,
-                                      rseg, indelBuffer, sampleId, candidateSnvBuffer, cal_set, is_incomplete_search,
+                                      rseg, indelBuffer, sampleId, cal_set, is_incomplete_search,
                                       isTestSoftClippedInputAligned, softClippedInputAlignment);
 }

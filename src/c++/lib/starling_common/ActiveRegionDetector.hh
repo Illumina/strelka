@@ -119,6 +119,7 @@ private:
 
     ActiveRegion _synchronizedActiveRegion;
     RangeMap<pos_t, ActiveRegionId> _posToActiveRegionIdMap;
+    pos_t _prevActiveRegionEnd = -1;
 
     SampleActiveRegionDetector& getSampleActiveRegionDetector(unsigned sampleIndex);
     unsigned getPloidy(const unsigned sampleIndex, const ActiveRegion activeRegion) const;
