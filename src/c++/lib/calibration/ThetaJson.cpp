@@ -45,7 +45,7 @@ ThetaJson::deserialize(
     if (!thetaArray.IsArray()) RapidJsonHelper::wrongValueTypeError(thetaLabel, "array");
     for (const auto& thetaValue : thetaArray.GetArray())
     {
-        if (!thetaValue.IsDouble()) RapidJsonHelper::wrongValueTypeError(thetaLabel, "double");
+        if (!thetaValue.IsNumber()) RapidJsonHelper::wrongValueTypeError(thetaLabel, "number");
         theta.push_back(thetaValue.GetDouble());
     }
 

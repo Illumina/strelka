@@ -92,12 +92,12 @@ public:
 
         static const char* indelRateLabel = "indelRate";
         const rapidjson::Value& indelRateValue(RapidJsonHelper::getNodeMember(root, indelRateLabel));
-        if (!indelRateValue.IsDouble()) RapidJsonHelper::wrongValueTypeError(indelRateLabel, "double");
+        if (!indelRateValue.IsNumber()) RapidJsonHelper::wrongValueTypeError(indelRateLabel, "number");
         const double indelRate(indelRateValue.GetDouble());
 
         static const char* noisyLocusRateLabel = "noisyLocusRate";
         const rapidjson::Value& noisyLocusRateValue(RapidJsonHelper::getNodeMember(root, noisyLocusRateLabel));
-        if (!noisyLocusRateValue.IsDouble()) RapidJsonHelper::wrongValueTypeError(noisyLocusRateLabel, "double");
+        if (!noisyLocusRateValue.IsNumber()) RapidJsonHelper::wrongValueTypeError(noisyLocusRateLabel, "number");
         const double noisyLocusRate(noisyLocusRateValue.GetDouble());
 
         static const char* repeatCountLabel = "repeatCount";
