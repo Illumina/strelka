@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 #
 # Strelka - Small Variant Caller
 # Copyright (c) 2009-2017 Illumina, Inc.

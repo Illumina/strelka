@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 #
 # Strelka - Small Variant Caller
 # Copyright (c) 2009-2017 Illumina, Inc.
@@ -117,6 +117,10 @@ This script configures the Strelka sequence error counts workflow.
 
 def main() :
 
+    if (sys.version_info[0] != 2):
+        notefp=sys.stdout
+        notefp.write("""Failed to create workflow run script.\nPyflow only supports python2. Detected python %s on the system.\n""" % sys.version_info[0])
+        return
     primarySectionName="counts"
     options,iniSections=SequenceErrorCountsWorkflowOptions().getRunOptions(primarySectionName, version=workflowVersion)
 

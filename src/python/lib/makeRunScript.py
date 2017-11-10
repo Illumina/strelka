@@ -60,7 +60,7 @@ def makeRunScript(scriptFile, workflowModulePath, workflowClassName, primaryConf
     sfp=open(scriptFile,"w")
 
     if pythonBin is None :
-        pythonBin="/usr/bin/env python"
+        pythonBin="/usr/bin/env python2"
 
     sfp.write(runScript1 % (pythonBin, " ".join(sys.argv),workflowModuleDir,workflowModuleName,workflowClassName))
 
@@ -246,6 +246,10 @@ results -- in this case the dry run will not cover the full 'live' run task set.
 
 runScript3="""
 def main(pickleConfigFile, primaryConfigSection, workflowClassName) :
+    if (sys.version_info[0] != 2):
+        notefp=sys.stdout
+        notefp.write("Failed to create workflow run script.\nPyflow only supports python2. Detected python %s on the system.\n" % sys.version_info[0])
+        return
 
     from configureUtil import getConfigWithPrimaryOptions
 
