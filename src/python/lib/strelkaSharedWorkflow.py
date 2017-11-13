@@ -204,7 +204,6 @@ class StrelkaSharedCallWorkflow(WorkflowRunner) :
 
         segCmd.extend(["--ref", self.params.referenceFasta ])
         segCmd.extend(["-genome-size", str(self.params.totalKnownReferenceSize)] )
-        segCmd.extend(["-max-indel-size", "50"] )
 
         if self.params.indelErrorModelName is not None :
             segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
