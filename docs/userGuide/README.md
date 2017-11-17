@@ -345,17 +345,17 @@ information for all input samples in VCF format using the `FORMAT/CN` tag to rec
     ##fileformat=VCFv4.1
     ##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the variant described in this record">
     ##FORMAT=<ID=CN,Number=1,Type=Integer,Description="Copy number genotype for imprecise events">
-    #CHROM  POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  NA12882 NA12878 NA12877
-    chrX    0   .   N   <CNV>   .   PASS    END=10000   CN  1   2   1
-    chrX    2781479 .   N   <CNV>   .   PASS    END=155701382   CN  1   2   1
-    chrX    156030895   .   N   <CNV>   .   PASS    END=156040895   CN  1   2   1
-    chrY    0   .   N   <CNV>   .   PASS    END=57227415    CN  1   0   1
+    #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12882	NA12878	NA12877
+    chrX	0	.	N	<CNV>	.	PASS	END=10000	CN	1	2	1
+    chrX	2781479	.	N	<CNV>	.	PASS	END=155701382	CN	1	2	1
+    chrX	156030895	.	N	<CNV>	.	PASS	END=156040895	CN	1 	2	1
+    chrY	0	.	N	<CNV>	.	PASS	END=57227415	CN	1	0	1
 
 The span over which the copy number from each VCF record is applied is:  `[POS+1, INFO/END]`.
 
 Strelka does not require any fields besides `CHROM`, `POS`, `ALT`, `INFO/END` and `FORMAT/CN`, so a ploidy specific record could be further simplified if desired, e.g:
 
-    chrY    0   .   .   <CNV>   .   .    END=57227415    CN  1   0   1
+    chrY	0	.	.	<CNV>	.	.	END=57227415	CN	1	0	1
 
 ...would be a valid input record for this option.
 
