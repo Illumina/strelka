@@ -84,7 +84,6 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
 
     self.appendCommonGenomeSegmentCommandOptions(gsegGroup, genomeSegmentLabel, segCmd)
 
-    segCmd.extend(["-max-indel-size", self.params.maxIndelSize])
     segCmd.extend(["-min-mapping-quality",str(self.params.minTier1Mapq)])
     segCmd.extend(["-min-qscore","0"])
     segCmd.extend(["-max-window-mismatch", "3", "20" ])
