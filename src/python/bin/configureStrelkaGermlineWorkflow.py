@@ -24,6 +24,15 @@ This script configures the strelka germline small variant calling workflow
 
 import os,sys
 
+if sys.version_info >= (3,0):
+    import platform
+    raise Exception("Strelka does not currently support python3 (version %s detected)" % (platform.python_version()))
+
+if sys.version_info < (2,6):
+    import platform
+    raise Exception("Strelka requires python2 version 2.6+ (version %s detected)" % (platform.python_version()))
+
+
 scriptDir=os.path.abspath(os.path.dirname(__file__))
 scriptName=os.path.basename(__file__)
 workflowDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_PYTHON_LIBDIR@"))
@@ -151,10 +160,6 @@ You must specify an alignment file (BAM or CRAM) for at least one sample.
 
 
 def main() :
-    if (sys.version_info[0] != 2):
-        notefp=sys.stdout
-        notefp.write("""Failed to create workflow run script.\nPyflow only supports python2. Detected python %s on the system.\n""" % sys.version_info[0])
-        return
 
     primarySectionName="StrelkaGermline"
     options,iniSections=StrelkaGermlineWorkflowOptions().getRunOptions(primarySectionName, version=workflowVersion)
