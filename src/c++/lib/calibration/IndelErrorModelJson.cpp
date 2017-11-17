@@ -30,9 +30,9 @@
 
 IndelErrorModelJson::
 IndelErrorModelJson(
-        const std::string& sampleName,
-        const IndelErrorModelBinomialMixture& model,
-        const bool isStatic)
+    const std::string& sampleName,
+    const IndelErrorModelBinomialMixture& model,
+    const bool isStatic)
     : _sampleName(sampleName)
     , _model(model)
     , _isStatic(isStatic)
@@ -88,10 +88,11 @@ IndelErrorModelParser::importIndelErrorModelJsonFile(
         BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
     }
 
-    try {
+    try
+    {
         indelErrorModelsJson = IndelErrorModelsJson::deserialize(document);
     }
-    catch(...)
+    catch (...)
     {
         log_os << "Exception caught while deserializing json file '" << modelFilename << "'\n";
         throw;
@@ -101,7 +102,7 @@ IndelErrorModelParser::importIndelErrorModelJsonFile(
 std::map<std::string, IndelErrorRateSet>
 IndelErrorModelParser::
 generateIndelErrorRateSetMap(
-        const std::vector<std::string>& modelFilenames)
+    const std::vector<std::string>& modelFilenames)
 {
     std::map<std::string, IndelErrorRateSet> modelMap;
     for (const auto& modelFilename : modelFilenames)
@@ -138,10 +139,11 @@ importThetaJsonFile(
         BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
     }
 
-    try {
+    try
+    {
         thetasMap = ThetasJson::deserialize(document).getThetasMap();
     }
-    catch(...)
+    catch (...)
     {
         log_os << "Exception caught while deserializing json file '" << thetaFilename << "'\n";
         throw;

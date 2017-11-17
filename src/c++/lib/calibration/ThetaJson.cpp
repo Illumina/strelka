@@ -21,8 +21,8 @@
 #include "ThetaJson.hh"
 
 ThetaJson::ThetaJson(
-        size_t repeatPatternSize,
-        const std::vector<double>& theta):
+    size_t repeatPatternSize,
+    const std::vector<double>& theta):
     _repeatPatternSize(repeatPatternSize),
     _theta(theta)
 {
@@ -30,7 +30,7 @@ ThetaJson::ThetaJson(
 
 ThetaJson
 ThetaJson::deserialize(
-        const rapidjson::Value& root)
+    const rapidjson::Value& root)
 {
     using namespace illumina::common;
 
@@ -59,7 +59,7 @@ ThetasJson::ThetasJson(std::map<unsigned, std::vector<double>>& thetasMap)
 
 ThetasJson
 ThetasJson::deserialize(
-        const rapidjson::Value& root)
+    const rapidjson::Value& root)
 {
     using namespace illumina::common;
     static const char* thetasLabel = "thetas";
@@ -76,7 +76,7 @@ ThetasJson::deserialize(
 }
 
 const std::map<unsigned, std::vector<double>>&
-ThetasJson::getThetasMap() const
+                                           ThetasJson::getThetasMap() const
 {
     return _thetasMap;
 }

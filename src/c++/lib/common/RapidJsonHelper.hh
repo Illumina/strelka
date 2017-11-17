@@ -35,8 +35,8 @@ public:
     static
     void
     wrongValueTypeError(
-            const char* key,
-            const char* keyType)
+        const char* key,
+        const char* keyType)
     {
         std::ostringstream oss;
         oss << "ERROR: Node '" << key << "' does not have expected type '" << keyType << "'.";

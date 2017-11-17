@@ -63,7 +63,7 @@ public:
     {
         return _noisyLocusRate;
     }
-    
+
     // |brief Serialize object into jsonWriter via rapidJson
     ///
     /// \param[in] writer The writer to serilize into (https://github.com/Tencent/rapidjson/blob/master/example/serialize/serialize.cpp)
@@ -151,7 +151,7 @@ public:
         }
         writer.EndArray();
     }
-    
+
     // |brief Deserialize json document to object
     ///
     /// \param[in] root The json document to deserialize
@@ -160,7 +160,7 @@ public:
     IndelErrorModelBinomialMixture deserialize(const rapidjson::Value& root)
     {
         using namespace illumina::common;
-        
+
         const rapidjson::Value& motifArray(root);
 
         IndelErrorModelBinomialMixture indelErrorModelBinomialMixture;
@@ -216,7 +216,7 @@ public:
     ///
     /// \param[in] root The json document to deserialize
     ///
-    static 
+    static
     IndelErrorModelJson deserialize(const rapidjson::Value& root)
     {
         using namespace illumina::common;
@@ -295,7 +295,7 @@ public:
     ///
     /// \param[in] root The json document to deserialize
     ///
-    static 
+    static
     IndelErrorModelsJson deserialize(const rapidjson::Value& root)
     {
         using namespace illumina::common;
