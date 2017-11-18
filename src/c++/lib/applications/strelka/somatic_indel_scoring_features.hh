@@ -52,6 +52,15 @@ double
 getSampleOtherAlleleFrequency(
     const AlleleSampleReportInfo& indelSampleReportInfo);
 
+/// Transform input N to (N+1/N)
+inline
+double
+makeSymmetric(const double inputRatio)
+{
+    assert(inputRatio > 0);
+    return inputRatio + 1.0/inputRatio;
+}
+
 /// \brief Compute the allele strand odds ratio feature for the given sample.
 ///
 /// This feature is similar to the GATK StrandOddsRatio:
@@ -65,7 +74,27 @@ getSampleOtherAlleleFrequency(
 ///
 double
 getSampleStrandOddsRatio(
-    const AlleleSampleReportInfo& indelSampleReportInfo);
+    unsigned fwdAltAlleleCount,
+    unsigned revAltAlleleCount,
+    unsigned fwdOtherCount,
+    unsigned revOtherCount);
+
+/// Overload to conveniently access the StrandOddsRatio directly from an AlleleSampleReportInfo object
+///
+/// Note this should still work for het alt cases because "ref_reads" in the AlleleSampleReportInfo typically includes
+/// all alleles besides the indel in question.
+///
+inline
+double
+getSampleStrandOddsRatio(
+    const AlleleSampleReportInfo& alleleSampleReportInfo)
+{
+    return getSampleStrandOddsRatio(
+        alleleSampleReportInfo.n_confident_indel_reads_fwd,
+        alleleSampleReportInfo.n_confident_indel_reads_rev,
+        alleleSampleReportInfo.n_confident_ref_reads_fwd,
+        alleleSampleReportInfo.n_confident_ref_reads_rev);
+}
 
 /// Calculate phred-scaled Fisher strand bias (p-value for the null hypothesis that
 /// either REF or ALT counts are biased towards one particular strand)

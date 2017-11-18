@@ -66,15 +66,18 @@ getSampleOtherAlleleFrequency(
 
 double
 getSampleStrandOddsRatio(
-    const AlleleSampleReportInfo& indelSampleReportInfo)
+    unsigned fwdAltAlleleCount,
+    unsigned revAltAlleleCount,
+    unsigned fwdOtherCount,
+    unsigned revOtherCount)
 {
     static const double pseudocount(0.5);
 
     // Eq 1.1 in http://www.people.fas.harvard.edu/~mparzen/published/parzen17.pdf
-    const double Y1  = indelSampleReportInfo.n_confident_ref_reads_fwd + pseudocount;
-    const double n1_minus_Y1 = indelSampleReportInfo.n_confident_indel_reads_fwd + pseudocount;
-    const double Y2  = indelSampleReportInfo.n_confident_ref_reads_rev + pseudocount;
-    const double n2_minus_Y2 = indelSampleReportInfo.n_confident_indel_reads_rev + pseudocount;
+    const double Y1  = fwdOtherCount + pseudocount;
+    const double n1_minus_Y1 = fwdAltAlleleCount + pseudocount;
+    const double Y2  = revOtherCount + pseudocount;
+    const double n2_minus_Y2 = revAltAlleleCount + pseudocount;
 
     return (Y1*n2_minus_Y2)/(Y2*n1_minus_Y1);
 }
@@ -158,16 +161,6 @@ getIndelAlleleCountLogOddsRatio(
     const double tumorAltCount = tumorIndelSampleReportInfo.n_confident_indel_reads + pseudoCount;
 
     return std::log((tumorRefCount*normalAltCount) / (tumorAltCount*normalRefCount));
-}
-
-
-
-static inline
-double
-makeSymmetric(const double inputRatio)
-{
-    assert(inputRatio > 0);
-    return inputRatio + 1.0/inputRatio;
 }
 
 
