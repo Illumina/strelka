@@ -335,6 +335,7 @@ There are two sources of advanced configuration options:
 ##### Advanced configuration options for germline calling
 
 ###### Ploidy
+
 Strelka includes an option to specify regions of a diploid genome which should be treated as
 haploid (given ploidy of 1) or are expected to be absent (given ploidy of 0). In any region specified
 as absent -- all variants will be called under the default (diploid) model, but filtered with the `PloidyConflict` label.
@@ -360,6 +361,17 @@ Strelka does not require any fields besides `CHROM`, `POS`, `ALT`, `INFO/END` an
 ...would be a valid input record for this option.
 
 Note this feature is primarily intended to delineate the sex chromosome copy number but can be used to call small variants in the context of CNV calls as well.
+
+###### Controlling gVCF homozygous reference block compression
+
+The germline configuration option `--noCompress` can be used to specify a BED file listing sites/regions which will
+be excluded from gVCF homozygous reference block compression. This can be used for various use cases such as excluding
+an entire chromosome or all known polymorphic sites from homozygous reference block compression.
+
+Only one BED file can be submitted to the `--noCompress` option. The BED file must be bgzip compressed and tabix-indexed.
+
+Note that even if such an option was not selected, a tool such as gvcftools `break_blocks` can be used to uncompress
+all gVCF regions specified in a BED file after germline calling has already been run.
 
 ###### Adaptive sequence error estimation
 
