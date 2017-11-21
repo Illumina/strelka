@@ -518,19 +518,19 @@ computeEmpiricalScoringFeatures(
         sampleInfo.supportCounts.getCounts(true).confidentRefAlleleCount() +
         sampleInfo.supportCounts.getCounts(false).confidentRefAlleleCount());
     const unsigned confidentPrimaryAltFwdCount(
-	sampleInfo.supportCounts.fwdCounts.confidentAltAlleleCount(primaryAltAlleleIndex));
+        sampleInfo.supportCounts.fwdCounts.confidentAltAlleleCount(primaryAltAlleleIndex));
     const unsigned confidentPrimaryAltRevCount(
-	sampleInfo.supportCounts.revCounts.confidentAltAlleleCount(primaryAltAlleleIndex));
+        sampleInfo.supportCounts.revCounts.confidentAltAlleleCount(primaryAltAlleleIndex));
     const unsigned confidentPrimaryAltCount(confidentPrimaryAltFwdCount + confidentPrimaryAltRevCount);
 
     // strand bias
     unsigned totalConfidentFwdCount(sampleInfo.supportCounts.fwdCounts.totalConfidentCounts());
     unsigned totalConfidentRevCount(sampleInfo.supportCounts.revCounts.totalConfidentCounts());
     double strandBias(starling_continuous_variant_caller::strandBias(
-	confidentPrimaryAltFwdCount,
-	confidentPrimaryAltRevCount,
-	totalConfidentFwdCount - confidentPrimaryAltFwdCount,
-	totalConfidentRevCount - confidentPrimaryAltRevCount));
+                          confidentPrimaryAltFwdCount,
+                          confidentPrimaryAltRevCount,
+                          totalConfidentFwdCount - confidentPrimaryAltFwdCount,
+                          totalConfidentRevCount - confidentPrimaryAltRevCount));
 
     // allele bias metrics
     double SampleIndelAlleleBiasLower, SampleIndelAlleleBias;

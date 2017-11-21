@@ -90,10 +90,10 @@ getSampleStrandOddsRatio(
     const AlleleSampleReportInfo& alleleSampleReportInfo)
 {
     return getSampleStrandOddsRatio(
-        alleleSampleReportInfo.n_confident_indel_reads_fwd,
-        alleleSampleReportInfo.n_confident_indel_reads_rev,
-        alleleSampleReportInfo.n_confident_ref_reads_fwd,
-        alleleSampleReportInfo.n_confident_ref_reads_rev);
+               alleleSampleReportInfo.n_confident_indel_reads_fwd,
+               alleleSampleReportInfo.n_confident_indel_reads_rev,
+               alleleSampleReportInfo.n_confident_ref_reads_fwd,
+               alleleSampleReportInfo.n_confident_ref_reads_rev);
 }
 
 /// Calculate phred-scaled Fisher strand bias (p-value for the null hypothesis that
