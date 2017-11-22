@@ -52,4 +52,4 @@ class GermlineSNVFeatures(VcfFeatureSet):
             "ContextCompressability",
             "IndelCategory",
             "NormalizedAltHaplotypeCountRatio",
-            "SampleStrandBias"]
+            "SampleAlleleCountStrandBias"]

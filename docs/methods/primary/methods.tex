@@ -1053,6 +1053,7 @@ Features used in each model are listed here and definitions are provided further
         \item \texttt{ContextCompressability}
         \item \texttt{IndelCategory}
         \item \texttt{NormalizedAltHaplotypeCountRatio}
+        \item \texttt{SampleAlleleCountStrandBias}
     \end{itemize}
 
     \item RNA-seq SNV features:
@@ -1167,7 +1168,9 @@ The LowDepth filter mentioned above is applied to all germline and somatic calls
 
     \item \texttt{SiteHomopolymerLength} ~ Length of the longest homopolymer containing the current position if this position can be treated as any base.
 
-    \item \texttt{SampleStrandBias} ~ Log ratio of the sample's genotype likelihood computed assuming the alternate allele occurs on only one strand vs both strands (thus positive values indicate bias). % Note this metric doesn't allow for any strand bias at all in the null, which could be problematic at high depth. High values don't indicate high bias, but high confidence in any level of bias, no matter how small. This may not be exactly what we want: this feature might have an optimal threshold which changes as a function of depth:
+    \item \texttt{SampleStrandBias} ~ Log ratio of the sample's genotype likelihood computed assuming the alternate allele occurs on only one strand vs both strands (thus positive values indicate bias). % Note this metric doesn't allow for any strand bias at all in the null, which could be problematic at high depth. High values don't indicate high bias, but high confidence in any level of bias, no matter how small (ie. it is a "weight of evidence" feature). This may not be exactly what we want: this feature might have an optimal threshold which changes as a function of depth. These comments also apply to the similar 'SampleAlleleCountStrandBias'.
+
+    \item \texttt{SampleAlleleCountStrandBias} ~ Log likelihood ratio of observed counts assuming the alternate allele occurs on only one strand vs both strands (thus greater bias leads to higher feature values). Given alternative allele counts ($a_{fwd}$,$a_{rev}$) and counts for all other alleles ($o_{fwd}$,$o_{rev}$), take $f_{fwd}$, $f_{rev}$, $f_{both}$ as the observed alternate allele frequency as on forward, reverse and both strands, respectively, and set $f_{error}$ to 0.005. The likelihood of no bias is $L_{nb} = logBinom(a_{fwd}; a_{fwd}+o_{fwd}, f_{both}) + logBinom(a_{rev}; a_{rev}+o{rev}, f_{both})$, and likelihood of bias on the forward strand is $L_{fwd} = logBinom(a_{fwd}; a_{fwd}+o_{fwd}, f_{fwd}) + logBinom(a_{rev}; a_{rev}+o{rev}, f_{error})$ ($L_{rev}$ is the corresponding reverse strand value). The stand bias feature is then $max(L_{fwd},L_{rev}) - L_{nb}$.
 
     \item \texttt{SampleRMSMappingQualityRankSum} ~ Z-score of Mann-Whitney U test for reference vs alternate allele mapping quality values in one sample.
 

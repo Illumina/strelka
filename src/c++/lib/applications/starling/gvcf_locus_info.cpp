@@ -523,10 +523,10 @@ computeEmpiricalScoringFeatures(
         sampleInfo.supportCounts.revCounts.confidentAltAlleleCount(primaryAltAlleleIndex));
     const unsigned confidentPrimaryAltCount(confidentPrimaryAltFwdCount + confidentPrimaryAltRevCount);
 
-    // strand bias
-    unsigned totalConfidentFwdCount(sampleInfo.supportCounts.fwdCounts.totalConfidentCounts());
-    unsigned totalConfidentRevCount(sampleInfo.supportCounts.revCounts.totalConfidentCounts());
-    double strandBias(starling_continuous_variant_caller::strandBias(
+    // strand bias from allele counts
+    const unsigned totalConfidentFwdCount(sampleInfo.supportCounts.fwdCounts.totalConfidentCounts());
+    const unsigned totalConfidentRevCount(sampleInfo.supportCounts.revCounts.totalConfidentCounts());
+    const double alleleCountStrandBias(starling_continuous_variant_caller::strandBias(
                           confidentPrimaryAltFwdCount,
                           confidentPrimaryAltRevCount,
                           totalConfidentFwdCount - confidentPrimaryAltFwdCount,
@@ -610,7 +610,7 @@ computeEmpiricalScoringFeatures(
         features.set(GERMLINE_INDEL_SCORING_FEATURES::InterruptedHomopolymerLength, (primaryAltAllele.indelReportInfo.interruptedHomopolymerLength));
         features.set(GERMLINE_INDEL_SCORING_FEATURES::ContextCompressability, (primaryAltAllele.indelReportInfo.contextCompressability));
         features.set(GERMLINE_INDEL_SCORING_FEATURES::IndelCategory, (primaryAltAllele.indelKey.isPrimitiveDeletionAllele()));
-        features.set(GERMLINE_INDEL_SCORING_FEATURES::SampleStrandBias, (strandBias));
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::SampleAlleleCountStrandBias, (alleleCountStrandBias));
 
         // how confident are we in the haplotyping step?
         float normalizedAltHaplotypeCountRatio;
