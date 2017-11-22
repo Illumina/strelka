@@ -168,8 +168,6 @@ write_starling_legacy_options(
        " -indel-nonsite-match-prob x\n"
        "                    - The probability of a base matching the reference in an 'average' mismapped read. This\n"
        "                      value is used by the indel-caller only. (default: " << default_opt.indel_nonsite_match_prob << ")\n"
-       " -genome-size n     - Specify the total number of non-ambiguous bases in the genome to which the input reads\n"
-       "                      have been aligned for use in indel calling.\n"
        " -max-indel-size    - Sets the maximum size for indels processed for indel genotype calling and realignment.\n"
        "                      Increasing this value should lead to an approx linear increase in memory consumption.\n"
        "                      (default: " << default_opt.maxIndelSize << ")\n"
@@ -185,19 +183,6 @@ finalize_legacy_starling_options(
     const prog_info& pinfo,
     starling_base_options& opt)
 {
-    if (! opt.is_user_genome_size)
-    {
-        // this requirement is not what we want, but it's the only way to make things reliable for now:
-        pinfo.usage("must specify genome-size");
-    }
-    else
-    {
-        if (opt.user_genome_size<1)
-        {
-            pinfo.usage("genome-size must be greater than 0");
-        }
-    }
-
     validate_blt_opt(pinfo,opt);
 }
 

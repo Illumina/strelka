@@ -36,19 +36,6 @@
 
 
 
-static
-double
-integrate_out_sites(const starling_base_deriv_options& dopt,
-                    const uint16_t nsite,
-                    const double p_on_site,
-                    const bool is_tier2_pass)
-{
-    return log_sum((p_on_site + dopt.site_lnprior),
-                   (dopt.get_nonsite_path_lnp(is_tier2_pass,nsite) + dopt.nonsite_lnprior));
-}
-
-
-
 void
 get_het_observed_allele_ratio(
     const unsigned read_length,
@@ -149,7 +136,7 @@ get_high_low_het_ratio_lhood(
             }
             const double het_lnp(log_sum(noindel_lnp+log_ref_prob,hom_lnp+log_indel_prob));
 
-            het_lhood_low += integrate_out_sites(dopt,path_lnp.nsite,het_lnp,is_tier2_pass);
+            het_lhood_low += dopt.integrate_out_sites(path_lnp.nsite,het_lnp,is_tier2_pass);
         }
 
         {
@@ -162,7 +149,7 @@ get_high_low_het_ratio_lhood(
             }
             const double het_lnp(log_sum(noindel_lnp+log_ref_prob,hom_lnp+log_indel_prob));
 
-            het_lhood_high += integrate_out_sites(dopt,path_lnp.nsite,het_lnp,is_tier2_pass);
+            het_lhood_high += dopt.integrate_out_sites(path_lnp.nsite,het_lnp,is_tier2_pass);
         }
     }
 }
@@ -309,9 +296,9 @@ get_indel_digt_lhood(
         }
         const double het_lnp(log_sum(noindel_lnp+log_ref_prob,hom_lnp+log_indel_prob));
 
-        lhood[STAR_DIINDEL::NOINDEL] += integrate_out_sites(dopt,path_lnp.nsite,noindel_lnp,is_tier2_pass);
-        lhood[STAR_DIINDEL::HOM]     += integrate_out_sites(dopt,path_lnp.nsite,hom_lnp,is_tier2_pass);
-        lhood[STAR_DIINDEL::HET]     += integrate_out_sites(dopt,path_lnp.nsite,het_lnp,is_tier2_pass);
+        lhood[STAR_DIINDEL::NOINDEL] += dopt.integrate_out_sites(path_lnp.nsite,noindel_lnp,is_tier2_pass);
+        lhood[STAR_DIINDEL::HOM]     += dopt.integrate_out_sites(path_lnp.nsite,hom_lnp,is_tier2_pass);
+        lhood[STAR_DIINDEL::HET]     += dopt.integrate_out_sites(path_lnp.nsite,het_lnp,is_tier2_pass);
 
 #ifdef DEBUG_INDEL_CALL
         //log_os << std::setprecision(8);

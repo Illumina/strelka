@@ -38,7 +38,7 @@ from configBuildTimeInfo import workflowVersion
 from configureUtil import safeSetBool
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, getDepthFromAlignments
 from strelkaSequenceErrorEstimation import EstimateSequenceErrorWorkflow
-from strelkaSharedWorkflow import getTotalKnownReferenceSize, runCount, SharedPathInfo, \
+from strelkaSharedWorkflow import SharedPathInfo, \
                            StrelkaSharedCallWorkflow, StrelkaSharedWorkflow
 from workflowUtil import ensureDir, preJoin, bamListCatCmd
 
@@ -334,7 +334,6 @@ class CallWorkflow(StrelkaSharedCallWorkflow) :
         self.paths = paths
 
     def workflow(self) :
-        self.params.totalKnownReferenceSize = getTotalKnownReferenceSize(self.paths.getReferenceSizePath())
         callGenome(self)
 
 
@@ -432,7 +431,6 @@ class StrelkaGermlineWorkflow(StrelkaSharedWorkflow) :
 
         callPreReqs = set()
         estimatePreReqs = set()
-        estimatePreReqs.add(runCount(self))
         if self.params.isHighDepthFilter :
             estimatePreReqs |= strelkaGermlineGetDepthFromAlignments(self)
 

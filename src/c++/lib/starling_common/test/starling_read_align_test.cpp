@@ -348,8 +348,6 @@ BOOST_AUTO_TEST_CASE( test_realign_and_score_read )
     {
         starling_base_options_test opt;
         opt.isRetainOptimalSoftClipping = true;
-        opt.is_user_genome_size = true;
-        opt.user_genome_size = 1000000;
 
         starling_base_deriv_options dopt(opt);
         starling_sample_options sample_opt(opt);

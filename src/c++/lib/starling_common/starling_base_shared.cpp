@@ -52,22 +52,16 @@ starling_base_deriv_options(const starling_base_options& opt)
     }
 
     {
-        // set genome_size for indel model:
-        uint32_t genome_size;
-        if (opt.is_user_genome_size)
-        {
-            genome_size = opt.user_genome_size;
-        }
-        else
-        {
-            assert(0);
-            //            genome_size = get_ref_seq_known_size(ref.seq());
-        }
-
-        // get read path posterior probs:
-        const double site_prior(1./(2.*static_cast<double>(genome_size)));
-        site_lnprior=std::log(site_prior);
-        nonsite_lnprior=log1p_switch(-site_prior);
+        // Used to evaluate the chance that a read is mismapped, independent of any read mapper assertions
+        // - thus accounting for things like population specific sequence, etc. which may not be part of
+        // the mapper's MAPQ model
+        //
+        // The correct mapping prior was originally the chance that a read will be correctly mapped at random, so
+        // was set to 1/(2*genome_size). The usage/concept has evolved to the point where this is now an arbitrary
+        // constant rather than something based on the real genome size
+        //
+        // TODO Note this is legacy logic that is targeted for replacement
+        correctMappingLogPrior=std::log(1.7e-10);
     }
 
     // register post-call stages:

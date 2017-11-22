@@ -36,7 +36,7 @@ sys.path.append(os.path.abspath(pyflowDir))
 from configBuildTimeInfo import workflowVersion
 from pyflow import WorkflowRunner
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, getDepthFromAlignments
-from strelkaSharedWorkflow import getTotalKnownReferenceSize, runCount, SharedPathInfo, \
+from strelkaSharedWorkflow import SharedPathInfo, \
                            StrelkaSharedCallWorkflow, StrelkaSharedWorkflow
 from workflowUtil import ensureDir, preJoin, getNextGenomeSegment
 
@@ -72,7 +72,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segCmd.extend(["--region", gseg.chromLabel + ":" + str(gseg.beginPos) + "-" + str(gseg.endPos)])
     segCmd.extend(["--ref", self.params.referenceFasta ])
-    segCmd.extend(["-genome-size", str(self.params.totalKnownReferenceSize)] )
     segCmd.extend(["-max-indel-size", self.params.maxIndelSize])
 
     segFiles.counts.append(self.paths.getTmpSegmentErrorCountsPath(segStr))
@@ -182,7 +181,6 @@ class CallWorkflow(StrelkaSharedCallWorkflow) :
         self.paths = paths
 
     def workflow(self) :
-        self.params.totalKnownReferenceSize = getTotalKnownReferenceSize(self.paths.getReferenceSizePath())
         callGenome(self)
 
 
@@ -240,7 +238,6 @@ class SequenceErrorCountsWorkflow(StrelkaSharedWorkflow) :
         self.setCallMemMb()
 
         callPreReqs = set()
-        callPreReqs.add(runCount(self))
         if self.params.isHighDepthFilter :
             callPreReqs |= strelkaGermlineRunDepthFromAlignments(self)
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)

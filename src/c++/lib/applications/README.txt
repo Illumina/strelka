@@ -1,6 +1,3 @@
-countFastaBases:
-common tool to several workflows
-
 DumpSequenceErrorCounts:
 provide debugging summary output for binary error counts files from GetSequenceErrorCounts
 

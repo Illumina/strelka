@@ -36,7 +36,7 @@ sys.path.append(os.path.abspath(pyflowDir))
 
 from configBuildTimeInfo import workflowVersion
 from pyflow import WorkflowRunner
-from strelkaSharedWorkflow import getTotalKnownReferenceSize, runCount, SharedPathInfo, StrelkaSharedWorkflow
+from strelkaSharedWorkflow import SharedPathInfo, StrelkaSharedWorkflow
 from workflowUtil import preJoin, getNextGenomeSegment
 
 
@@ -64,7 +64,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["-min-mapping-quality",self.params.minMapq])
     segCmd.extend(["--ref", self.params.referenceFasta ])
     segCmd.extend(["-max-window-mismatch", "2", "20" ])
-    segCmd.extend(["-genome-size", str(self.params.totalKnownReferenceSize)] )
     segCmd.extend(["-max-indel-size", self.params.maxIndelSize])
 
     segCmd.extend(['-min-qscore','17'])
@@ -151,7 +150,6 @@ class CallWorkflow(WorkflowRunner) :
         self.paths = paths
 
     def workflow(self) :
-        self.params.totalKnownReferenceSize = getTotalKnownReferenceSize(self.paths.getReferenceSizePath())
         callGenome(self)
 
 
@@ -172,9 +170,6 @@ class PathInfo(SharedPathInfo):
 
     def getGvcfOutputPath(self) :
         return os.path.join( self.params.variantsDir, "noise.vcf.gz")
-
-    def getReferenceSizePath(self) :
-        return os.path.join( self.params.workDir, "refCount.txt")
 
 
 
@@ -207,7 +202,4 @@ class snoiseWorkflow(StrelkaSharedWorkflow) :
     def workflow(self) :
         self.flowLog("Initiating Strelka noise estimation workflow version: %s" % (__version__))
 
-        callPreReqs = set()
-        callPreReqs.add(runCount(self))
-
-        self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)
+        self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths))

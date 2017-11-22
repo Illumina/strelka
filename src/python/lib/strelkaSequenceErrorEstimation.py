@@ -35,7 +35,6 @@ sys.path.append(os.path.abspath(pyflowDir))
 
 from pyflow import WorkflowRunner
 from sharedWorkflow import getMkdirCmd, getRmdirCmd
-from strelkaSharedWorkflow import getTotalKnownReferenceSize
 from workflowUtil import preJoin, GenomeSegment, getChromIntervals
 
 
@@ -51,7 +50,6 @@ def countGenomeSegment(self, sampleIndex, gseg, segFiles, taskPrefix="", depende
 
     segCmd.extend(["--region", gseg.bamRegion])
     segCmd.extend(["--ref", self.params.referenceFasta ])
-    segCmd.extend(["-genome-size", str(self.params.totalKnownReferenceSize)] )
     segCmd.extend(["-max-indel-size", self.params.maxIndelSize])
 
     segFiles.counts.append(self.paths.getTmpSegmentErrorCountsPath(sampleIndex, genomeSegmentLabel))
@@ -503,5 +501,4 @@ class EstimateSequenceErrorWorkflow(WorkflowRunner) :
         self.paths = paths
 
     def workflow(self) :
-        self.params.totalKnownReferenceSize = getTotalKnownReferenceSize(self.paths.getReferenceSizePath())
         getSequenceErrorEstimates(self)

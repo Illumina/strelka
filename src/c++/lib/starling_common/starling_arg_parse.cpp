@@ -91,10 +91,6 @@ legacy_starling_arg_parse(
         {
             set_xrange_arg(i,ad,is_inmp,opt.indel_nonsite_match_prob,true);
         }
-        else if (ad.argstr[i]=="-genome-size")
-        {
-            set_arg(i,ad,opt.is_user_genome_size,opt.user_genome_size);
-        }
         else if (ad.argstr[i]=="-min-vexp")
         {
             set_xrange_arg(i,ad,local_is_min_vexp,opt.min_vexp,true);

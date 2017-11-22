@@ -145,11 +145,9 @@ getSnvLocusInfo(
 
 static
 starling_options
-getMockOptions(const char* refSeq)
+getMockOptions()
 {
     starling_options opt;
-    opt.is_user_genome_size = true;
-    opt.user_genome_size = strlen(refSeq);
     opt.alignFileOpt.alignmentFilenames.push_back("sample.bam");
     opt.isUseVariantPhaser = true;
     return opt;
@@ -160,7 +158,7 @@ BOOST_AUTO_TEST_SUITE( variantPhaserTest )
 
 BOOST_AUTO_TEST_CASE( multiSamplePhasingTest )
 {
-    const starling_options opt = getMockOptions("CAAACAAAAAAACAAAAAAAAACAAAAAATC");
+    const starling_options opt = getMockOptions();
     const starling_deriv_options dopt(opt);
 
     std::shared_ptr<DummyVariantSink> next(new DummyVariantSink);
@@ -231,7 +229,7 @@ BOOST_AUTO_TEST_CASE( multiSamplePhasingTest )
 
 BOOST_AUTO_TEST_CASE( phasingConflictTest )
 {
-    const starling_options opt = getMockOptions("CAAACAT");
+    const starling_options opt = getMockOptions();
     const starling_deriv_options dopt(opt);
 
 //        std::shared_ptr<variant_pipe_stage_base> next(new DummyVariantSink);

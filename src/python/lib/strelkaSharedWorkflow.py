@@ -38,36 +38,6 @@ from sharedWorkflow import getMvCmd
 from workflowUtil import checkFile, cleanPyEnv, ensureDir, getFastaChromOrderSize, \
                   getGenomeSegmentGroups, getNextGenomeSegment, preJoin
 
-def getTotalKnownReferenceSize(referenceSizeFilePath) :
-    """
-    Return the total known reference size given the output file from countFastaBin
-    """
-
-    class ReferenceCountColumns :
-        FASTA_PATH = 0
-        CHROM = 1
-        KNOWN_SIZE = 2
-        TOTAL_SIZE = 3
-        SIZE = 4
-
-    knownSize = 0
-    for line in open(referenceSizeFilePath) :
-        word = line.strip().split('\t')
-        if len(word) != ReferenceCountColumns.SIZE :
-            raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getReferenceSizePath()))
-        knownSize += int(word[ReferenceCountColumns.KNOWN_SIZE])
-
-    return knownSize
-
-
-def runCount(self, taskPrefix="", dependencies=None) :
-    """
-    Count size of fasta chromosomes, and write the result to a file
-    """
-
-    refCountCmd  = "\"%s\" \"%s\" > \"%s\""  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getReferenceSizePath())
-    return self.addTask(preJoin(taskPrefix,"RefCount"), refCountCmd, dependencies=dependencies)
-
 
 
 def getChromIsSkipped(self) :
@@ -203,7 +173,6 @@ class StrelkaSharedCallWorkflow(WorkflowRunner) :
             segCmd.extend(["--region", gseg.bamRegion])
 
         segCmd.extend(["--ref", self.params.referenceFasta ])
-        segCmd.extend(["-genome-size", str(self.params.totalKnownReferenceSize)] )
         segCmd.extend(["-max-indel-size", self.params.maxIndelSize] )
 
         if self.params.indelErrorModelName is not None :
@@ -282,9 +251,6 @@ class SharedPathInfo(object):
 
     def getRunStatsReportPath(self) :
         return os.path.join(self.params.statsDir,"runStats.tsv")
-
-    def getReferenceSizePath(self) :
-        return os.path.join( self.params.workDir, "referenceSize.tsv")
 
     def getTmpUnsortRealignBamPrefix(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "segment.%s.unsorted.realigned." % (segStr))

@@ -28,10 +28,6 @@ struct TestIndelBuffer
     TestIndelBuffer(
         const reference_contig_segment& ref)
     {
-        // fake starling options
-        _opt.is_user_genome_size = true;
-        _opt.user_genome_size = ref.seq().size();
-
         const double maxDepth = 100.0;
         _doptPtr.reset(new starling_base_deriv_options(_opt));
 

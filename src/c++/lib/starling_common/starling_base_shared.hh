@@ -84,8 +84,7 @@ struct starling_base_options : public blt_options
     //
     double bindel_diploid_theta = 0.0001;
 
-    uint32_t user_genome_size = 0; // genome size specified by user for the indel calling model -- actual value used is in deriv_options.
-    bool is_user_genome_size = false;
+    uint32_t user_genome_size = 2940668973; // genome size specified by user for the indel calling model -- actual value used is in deriv_options.
 
     // parameter to enable/disable short haplotype calling
     bool is_short_haplotyping_enabled = false;
@@ -161,6 +160,7 @@ struct starling_base_options : public blt_options
     /// Path prefix for all realigned bam output files
     std::string realignedReadFilenamePrefix;
 
+    /// Probability of a random base match in a mismapped read
     double indel_nonsite_match_prob = 0.25;
 
     //------------------------------------------------------
@@ -266,6 +266,8 @@ struct starling_sample_options
 struct IndelErrorModel;
 struct GenotypePriorSet;
 
+#include "blt_util/math_util.hh"
+
 
 /// \brief Parameters deterministically derived from the input options
 ///
@@ -279,14 +281,30 @@ struct starling_base_deriv_options : public blt_deriv_options, private boost::no
 
     ~starling_base_deriv_options();
 
+    /// Return the log expectation of the read matching the reference given that it is incorrectly mapped in the genome
+    ///
+    /// TODO: better way to express this concept:
+    /// Likelihood of the read being produced from a random location in the genome?
     double
-    get_nonsite_path_lnp(const bool is_tier2_pass,
-                         const uint16_t nsite) const
+    getIncorrectMappingLikelihood(
+        const bool is_tier2_pass,
+        const uint16_t nsite) const
     {
         const double nonsite_match_lnp(is_tier2_pass ?
                                        tier2_indel_nonsite_match_lnp :
                                        indel_nonsite_match_lnp );
         return nonsite_match_lnp*nsite;
+    }
+
+    double
+    integrate_out_sites(const uint16_t nsite,
+                        const double p_on_site,
+                        const bool is_tier2_pass) const
+    {
+        // the second term formally has an incorrect mapping prior (prior of incorrectly mapping a read at random),
+        // but this is effectively 1 so it is approximated out
+        return log_sum((p_on_site + correctMappingLogPrior),
+                       getIncorrectMappingLikelihood(is_tier2_pass, nsite));
     }
 
     const std::vector<unsigned>&
@@ -320,8 +338,7 @@ public:
     double indel_nonsite_match_lnp;
     double tier2_indel_nonsite_match_lnp;
 
-    double site_lnprior;
-    double nonsite_lnprior;
+    double correctMappingLogPrior;
 
     starling_align_limit sal;
 

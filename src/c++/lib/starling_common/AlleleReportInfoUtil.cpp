@@ -232,19 +232,24 @@ indel_lnp_to_pprob(
     const double allele_lnprior(std::log(allele_prior));
 
     ReadPathScores pprob;
-    ReadPathScores::score_t pprob_nonsite = dopt.get_nonsite_path_lnp(is_tier2_pass,path_lnp.nsite) + dopt.nonsite_lnprior;
-    pprob.ref     = path_lnp.ref     + dopt.site_lnprior + allele_lnprior;
-    pprob.indel   = path_lnp.indel   + dopt.site_lnprior + allele_lnprior;
+
+    // This term formally had a prior on incorrect mapping (meaning the prior of incorrectly mapping a read when the
+    // read is randomly positioned on the genome). This term is effectively 1 so it is approximated out in the current
+    // version.
+    ReadPathScores::score_t pprob_readIncorrectlyMapped = dopt.getIncorrectMappingLikelihood(is_tier2_pass,
+                                                                                             path_lnp.nsite);
+    pprob.ref     = path_lnp.ref     + dopt.correctMappingLogPrior + allele_lnprior;
+    pprob.indel   = path_lnp.indel   + dopt.correctMappingLogPrior + allele_lnprior;
 
     if (is_use_alt_indel)
     {
         for (const auto& val : path_lnp.alt_indel)
         {
-            pprob.alt_indel.push_back(std::make_pair(val.first,(val.second + dopt.site_lnprior + allele_lnprior)));
+            pprob.alt_indel.push_back(std::make_pair(val.first,(val.second + dopt.correctMappingLogPrior + allele_lnprior)));
         }
     }
 
-    double scale(std::max(pprob_nonsite,std::max(pprob.ref,pprob.indel)));
+    double scale(std::max(pprob_readIncorrectlyMapped,std::max(pprob.ref,pprob.indel)));
 
     if (is_use_alt_indel)
     {
@@ -254,7 +259,7 @@ indel_lnp_to_pprob(
         }
     }
 
-    pprob_nonsite = std::exp(pprob_nonsite-scale);
+    pprob_readIncorrectlyMapped = std::exp(pprob_readIncorrectlyMapped-scale);
     pprob.ref = std::exp(pprob.ref-scale);
     pprob.indel = std::exp(pprob.indel-scale);
     if (is_use_alt_indel)
@@ -266,7 +271,7 @@ indel_lnp_to_pprob(
     }
 
 
-    double sum(pprob_nonsite+pprob.ref+pprob.indel);
+    double sum(pprob_readIncorrectlyMapped+pprob.ref+pprob.indel);
     if (is_use_alt_indel)
     {
         for (const auto& val : pprob.alt_indel)
@@ -275,7 +280,7 @@ indel_lnp_to_pprob(
         }
     }
 
-    // pprob_nonsite /= sum; /// no point in normalizing this if we aren't adding it back into pprob
+    // pprob_readIncorrectlyMapped /= sum; /// no point in normalizing this if we aren't adding it back into pprob
     pprob.ref /= sum;
     pprob.indel /= sum;
     if (is_use_alt_indel)

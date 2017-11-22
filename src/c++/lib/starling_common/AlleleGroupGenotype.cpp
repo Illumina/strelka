@@ -28,18 +28,6 @@
 #include "blt_util/log.hh"
 #include "calibration/IndelErrorModelJson.hh"
 
-static
-double
-integrate_out_sites(
-    const starling_base_deriv_options& dopt,
-    const uint16_t nsite,
-    const double p_on_site,
-    const bool is_tier2_pass)
-{
-    return log_sum((p_on_site + dopt.site_lnprior),
-                   (dopt.get_nonsite_path_lnp(is_tier2_pass,nsite) + dopt.nonsite_lnprior));
-}
-
 
 
 static
@@ -63,7 +51,7 @@ updateGenotypeLogLhoodFromAlleleLogLhood(
         for (unsigned allele0Index(0); allele0Index < fullAlleleCount; ++allele0Index)
         {
             const unsigned genotypeIndex(VcfGenotypeUtil::getGenotypeIndex(allele0Index));
-            genotypeLogLhood[genotypeIndex] += integrate_out_sites(dopt, readScore.nsite, alleleLogLhood[allele0Index],
+            genotypeLogLhood[genotypeIndex] += dopt.integrate_out_sites(readScore.nsite, alleleLogLhood[allele0Index],
                                                                    isTier2Pass);
         }
     }
@@ -112,7 +100,7 @@ updateGenotypeLogLhoodFromAlleleLogLhood(
                     rawLogLhood = alleleLogLhood[allele0Index];
                 }
 
-                genotypeLogLhood[genotypeIndex] += integrate_out_sites(dopt, readScore.nsite, rawLogLhood,
+                genotypeLogLhood[genotypeIndex] += dopt.integrate_out_sites(readScore.nsite, rawLogLhood,
                                                                        isTier2Pass);
             }
         }
@@ -143,7 +131,7 @@ updateSupportingReadStats(
     static const bool isTier2Pass(false);
     for (auto& alleleHood : alleleLoglhoods)
     {
-        alleleHood = integrate_out_sites(dopt, nsite, alleleHood, isTier2Pass);
+        alleleHood = dopt.integrate_out_sites(nsite, alleleHood, isTier2Pass);
     }
     unsigned maxIndex(0);
     normalizeLogDistro(alleleLoglhoods.begin(), alleleLoglhoods.end(), maxIndex);

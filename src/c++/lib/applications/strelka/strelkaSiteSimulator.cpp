@@ -51,11 +51,6 @@ runInternal(int argc,char* argv[]) const
         opt.cmdline += argv[i];
     }
 
-    // mandatory setting:
-    opt.is_user_genome_size=true;
-    opt.user_genome_size=1;
-
-
     namespace po = boost::program_options;
     po::options_description req("configuration");
     req.add_options()
