@@ -1,6 +1,8 @@
 ## Unreleased
 
 ### Fixed
+- Fix EVS features for complex somatic indels (STREL-774)
+  - When no repeat unit is found, some features that previously defaulted to 0 now default to 1. This makes it harder for EVS to discriminate against complex indels.
 - Fix default sample name used in the VCF output for germline analysis (STREL-737)
   -  Default is used when sample name cannot be parsed from the BAM header. Now fixed to insert SAMPLE1, SAMPLE2, etc. as documented.
 - Fix rare instance where strand bias (SAMPLE/SB) is 'inf' (STREL-741)
