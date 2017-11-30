@@ -2,6 +2,8 @@
 
 ### Changed
 - Add strand bias feature for germline indel EVS (STREL-676)
+- Remove preliminary step which counts the 'mappable' (non-N) size of the genome (STREL-772)
+  - This has a legacy use in identifying noisy alignments. Now replaced with a simplified scheme.
 
 ### Fixed
 - Fix default sample name used in the VCF output for germline analysis (STREL-737)

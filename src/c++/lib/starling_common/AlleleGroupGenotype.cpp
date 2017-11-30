@@ -52,7 +52,7 @@ updateGenotypeLogLhoodFromAlleleLogLhood(
         {
             const unsigned genotypeIndex(VcfGenotypeUtil::getGenotypeIndex(allele0Index));
             genotypeLogLhood[genotypeIndex] += dopt.integrate_out_sites(readScore.nsite, alleleLogLhood[allele0Index],
-                                                                   isTier2Pass);
+                                                                        isTier2Pass);
         }
     }
     else if (callerPloidy == 2)
@@ -101,7 +101,7 @@ updateGenotypeLogLhoodFromAlleleLogLhood(
                 }
 
                 genotypeLogLhood[genotypeIndex] += dopt.integrate_out_sites(readScore.nsite, rawLogLhood,
-                                                                       isTier2Pass);
+                                                                            isTier2Pass);
             }
         }
     }
