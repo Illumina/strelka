@@ -263,8 +263,9 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
 class CallWorkflow(StrelkaSharedCallWorkflow) :
     """
-    A separate workflow is setup around callGenome() so that the workflow execution can be
-    delayed until the ref count exists
+    TODO:
+    callGenome() is wrapped by a workflow for legacy reasons, this could be reduced to a standard task tree in the
+    parent workflow when there is time to impl/test.
     """
 
     def __init__(self, params, paths) :
