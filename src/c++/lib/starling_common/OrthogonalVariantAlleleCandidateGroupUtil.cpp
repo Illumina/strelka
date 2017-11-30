@@ -34,7 +34,7 @@
 
 // turn this on to use reads which support some, but not all, of an
 // overlapping allele group;
-// #define USE_GERMLINE_SUPPORTING_READ_UNION
+#define USE_GERMLINE_SUPPORTING_READ_UNION
 
 
 
@@ -120,7 +120,7 @@ getAlleleGroupSupportingReadIds(
     const bool isTier1Only)
 {
 #ifdef USE_GERMLINE_SUPPORTING_READ_UNION
-    getAlleleGroupUnionReadIds(sampleId, alleleGroup, readIds, isTier1Only);
+    getAlleleGroupUnionReadIds(sampleIndex, alleleGroup, readIds, isTier1Only);
 #else
     getAlleleGroupIntersectionReadIds(sampleIndex, alleleGroup, readIds, isTier1Only);
 #endif
@@ -182,7 +182,8 @@ getAlleleLogLhoodFromRead(
             const auto iditer(indelSampleData.read_path_lnp.find(readId));
             if (iditer != indelSampleData.read_path_lnp.end()) continue;
 
-            alleleLogLhood[nonrefAlleleIndex+1] = alleleLogLhood[refAlleleIndex];
+//            alleleLogLhood[nonrefAlleleIndex+1] = alleleLogLhood[refAlleleIndex];
+            alleleLogLhood[nonrefAlleleIndex+1] = -1000000.;
         }
     }
 }
@@ -501,6 +502,8 @@ addAllelesAtOtherPositions(
 
             // no breakpoints:
             if (altAlleleKey.is_breakpoint()) continue;
+
+            if (altAlleleKey.isMismatch()) continue;
 
             // must be a candidate allele:
             const IndelData& altAlleleData(getIndelData(altAlleleIter));

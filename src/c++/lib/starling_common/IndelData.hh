@@ -268,6 +268,7 @@ struct IndelSampleData
     evidence_t suboverlap_tier2_read_ids;
 
     uint8_t haplotypeId;    // 0: reference; 1: haplotype 1; 2: haplotype 2; 3: haplotype 1 and 2
+    uint8_t isHaplotypingBypassed = false;
     float altAlleleHaplotypeCountRatio;
 
 private:

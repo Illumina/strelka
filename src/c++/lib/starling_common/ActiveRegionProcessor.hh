@@ -145,8 +145,14 @@ private:
     /// Align each selected haplotype to the reference and convert them to primitive alleles
     void processSelectedHaplotypes();
 
-    /// Convert the haplotype into primitive alleles and update _indelBuffer and _candidateSnvBuffer
-    void convertToPrimitiveAlleles(
-        const unsigned selectedHaplotypeIndex,
-        const HaplotypeId haplotypeId);
+    /// Decompose haplotype into primitive alleles
+    bool discoverIndels(
+            const unsigned selectedHaplotypeIndex,
+            std::vector<IndelKey> &discoveredIndels);
+
+    void processDiscoveredIndels(
+            const unsigned selectedHaplotypeIndex,
+            const HaplotypeId haplotypeId,
+            const std::vector<IndelKey> &discoveredIndels,
+            const bool isIndel);
 };

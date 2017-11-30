@@ -49,6 +49,7 @@ struct starling_align_indel_info
 {
     bool is_present = false; ///< candidate indel is present in the alignment already
     bool is_remove_only = false; ///< candidate indel can be toggled off during search but not added
+    bool isInOriginalAlignment = false; ///< candidate indel is present in the original alignment
 };
 
 
@@ -682,7 +683,7 @@ getNewSampleHaplotypeId(
     const bool isCurIndelOn,
     const bool isAnyIndelOn)
 {
-    if (curIndelHaplotypeId == 0) return haplotypeId;
+    if (curIndelHaplotypeId <= 0) return haplotypeId;
 
     int curHaplotypeId = isCurIndelOn ? curIndelHaplotypeId : (3-curIndelHaplotypeId);
     if (isNewActiveRegion) return curHaplotypeId;
@@ -725,7 +726,6 @@ getNewSampleHaplotypeId(
 static
 bool
 updateHaplotypeIds(
-    const unsigned curSampleIndex,
     const bool isNewActiveRegion,
     const std::vector<int>& haplotypeIds,
     const std::vector<int>& curIndelHaplotypeIds,
@@ -741,7 +741,7 @@ updateHaplotypeIds(
         const int sampleCurIndelHaplotypeId(curIndelHaplotypeIds[sampleIndex]);
         const int sampleHaplotypeId(haplotypeIds[sampleIndex]);
         int newSampleHaplotypeId;
-        if ((sampleIndex != curSampleIndex) && (sampleCurIndelHaplotypeId == 0) && isCurIndelOn)
+        if ((sampleCurIndelHaplotypeId < 0) && isCurIndelOn)
         {
             newSampleHaplotypeId = -1;
         }
@@ -877,7 +877,7 @@ candidate_alignment_search(
     //
     if (static_cast<int>(toggle_depth)>max_read_indel_toggle)
     {
-        warn.max_toggle_depth=true;
+        warn.max_toggle_depth = true;
         return;
     }
 
@@ -900,6 +900,7 @@ candidate_alignment_search(
     const IndelKey& cindel(indel_order[depth]);
     const bool is_cindel_on(indel_status_map[cindel].is_present);
     const IndelData& cindelData(*indelBuffer.getIndelDataPtr(cindel));
+    const auto& cindelSampleData(cindelData.getSampleData(sampleId));
     const ActiveRegionId cActiveRegionId(activeRegionDetector.getActiveRegionId(cindel.pos));
     const bool isNewActiveRegion((activeRegionId == -1) || (activeRegionId != cActiveRegionId));
     bool isConflict(false);
@@ -916,7 +917,23 @@ candidate_alignment_search(
 
     for (unsigned i(0); i<sampleCount; ++i)
     {
-        curIndelHaplotypeIds[i] = cindelData.getSampleData(i).haplotypeId;
+        const auto& indelSampleData(cindelData.getSampleData(i));
+        int curIndelHaplotypeId(indelSampleData.haplotypeId);
+        if (curIndelHaplotypeId == 0)
+        {
+            bool isCurIndelValidInThisSample(
+                    (cindelSampleData.isHaplotypingBypassed)
+                    || (cindelData.isForcedOutput) || (! opt.is_short_haplotyping_enabled));
+            if (!isCurIndelValidInThisSample && (i == sampleId)
+                && (indel_status_map[cindel].isInOriginalAlignment))
+                isCurIndelValidInThisSample = true;
+
+            if (isCurIndelValidInThisSample)
+                curIndelHaplotypeId = 0;
+            else
+                curIndelHaplotypeId = -1;
+        }
+        curIndelHaplotypeIds[i] = curIndelHaplotypeId;
     }
 
     // alignment 1) --> unchanged case:
@@ -927,7 +944,7 @@ candidate_alignment_search(
         std::vector<int> newHaplotypeIds(sampleCount);
         if (!isConflict)
         {
-            isValid = updateHaplotypeIds(sampleId, isNewActiveRegion, haplotypeIds, curIndelHaplotypeIds, is_cindel_on, isAnyIndelOnNoToggle, newHaplotypeIds);
+            isValid = updateHaplotypeIds(isNewActiveRegion, haplotypeIds, curIndelHaplotypeIds, is_cindel_on, isAnyIndelOnNoToggle, newHaplotypeIds);
         }
         else
         {
@@ -955,7 +972,7 @@ candidate_alignment_search(
     std::vector<int> newHaplotypeIds(sampleCount);
     if (!isConflict)
     {
-        isValid = updateHaplotypeIds(sampleId, isNewActiveRegion, haplotypeIds, curIndelHaplotypeIds, !is_cindel_on, isAnyIndelOnToggled, newHaplotypeIds);
+        isValid = updateHaplotypeIds(isNewActiveRegion, haplotypeIds, curIndelHaplotypeIds, !is_cindel_on, isAnyIndelOnToggled, newHaplotypeIds);
     }
     else
     {
@@ -977,7 +994,7 @@ candidate_alignment_search(
 
     // Mismatches discovered in AR doesn't increase toggle depth,
     // because #alignments is constraied by phasing info
-    unsigned toggleIncrement = cindel.isMismatch() ? 0 : 1;
+    unsigned toggleIncrement(cindel.isMismatch() ? 0 : 1);
 
     // check whether toggling this indel would exceed the maximum
     // number of toggles made to the exemplar alignment (this is
@@ -1562,7 +1579,7 @@ scoreCandidateAlignments(
         {
             getCandidateAlignment(softClippedInputAlignment, readSegment, softClippedCandidateAlignment);
             indel_set_t candidateAlignmentIndels;
-            getAlignmentIndels(softClippedCandidateAlignment, readSegment, opt.maxIndelSize, candidateAlignmentIndels);
+            getAlignmentIndels(softClippedCandidateAlignment, ref, readSegment, opt.maxIndelSize, candidateAlignmentIndels);
             softClippedCandidateAlignment.setIndels(candidateAlignmentIndels);
         }
 
@@ -1663,6 +1680,7 @@ void
 getCandidateAlignments(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
+    const reference_contig_segment& ref,
     const read_segment& rseg,
     const IndelBuffer& indelBuffer,
     const unsigned sampleId,
@@ -1697,12 +1715,16 @@ getCandidateAlignments(
     //
     {
         indel_set_t candidateAlignmentIndels;
-        getAlignmentIndels(cal, rseg, opt.maxIndelSize, candidateAlignmentIndels);
+        getAlignmentIndels(cal, ref, rseg, opt.maxIndelSize, candidateAlignmentIndels);
 
+        indel_set_t validIndels;
+        bool realignmentRequired(false);
         for (const IndelKey& indelKey : candidateAlignmentIndels)
         {
             if (indel_status_map.find(indelKey)==indel_status_map.end())
             {
+                if (indelKey.isMismatch()) continue;
+
                 std::ostringstream oss;
                 oss << "ERROR: Exemplar alignment contains indel not found in the overlap indel set\n"
                     << "\tIndel: " << indelKey
@@ -1710,7 +1732,17 @@ getCandidateAlignments(
                 dump_indel_status(indel_status_map,oss);
                 throw blt_exception(oss.str().c_str());
             }
+            if (indelKey.isMismatch())
+            {
+                realignmentRequired = true;
+            }
             indel_status_map[indelKey].is_present = true;
+            indel_status_map[indelKey].isInOriginalAlignment = true;
+            validIndels.insert(indelKey);
+        }
+        if (realignmentRequired)
+        {
+            cal = make_start_pos_alignment(cal.al.pos, 0, cal.al.is_fwd_strand, rseg.read_size(), validIndels);
         }
     }
 
@@ -1917,7 +1949,7 @@ realignAndScoreRead(
     std::set<CandidateAlignment> cal_set;
     mca_warnings warn;
 
-    getCandidateAlignments(opt, dopt, rseg, indelBuffer, sampleId, normalizedInputAlignment,
+    getCandidateAlignments(opt, dopt, ref, rseg, indelBuffer, sampleId, normalizedInputAlignment,
                            realign_buffer_range, activeRegionDetector, warn, cal_set);
 
     if ( cal_set.empty() )
