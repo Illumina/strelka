@@ -84,8 +84,6 @@ struct starling_base_options : public blt_options
     //
     double bindel_diploid_theta = 0.0001;
 
-    uint32_t user_genome_size = 2940668973; // genome size specified by user for the indel calling model -- actual value used is in deriv_options.
-
     // parameter to enable/disable short haplotype calling
     bool is_short_haplotyping_enabled = false;
 
