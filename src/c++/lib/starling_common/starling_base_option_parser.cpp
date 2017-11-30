@@ -167,7 +167,7 @@ write_starling_legacy_options(
        "                      Filtered reads may also still be used to compute locus quality metrics (default score: " << default_opt.min_mapping_quality << ")\n"
        " -indel-nonsite-match-prob x\n"
        "                    - The probability of a base matching the reference in an 'average' mismapped read. This\n"
-       "                      value is used by the indel-caller only. (default: " << default_opt.indel_nonsite_match_prob << ")\n"
+       "                      value is used by the indel-caller only. (default: " << default_opt.randomBaseMatchProb << ")\n"
        " -max-indel-size    - Sets the maximum size for indels processed for indel genotype calling and realignment.\n"
        "                      Increasing this value should lead to an approx linear increase in memory consumption.\n"
        "                      (default: " << default_opt.maxIndelSize << ")\n"

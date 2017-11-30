@@ -68,7 +68,7 @@ struct ReadPathScores
     ReadPathScores(
         const score_t r=0,
         const score_t i=0,
-        const uint16_t ns=0,
+        const uint16_t initNonAmbiguousBasesInRead=0,
         const uint16_t rlen=0,
         const bool is_t1=true,
         const bool is_fwd=true,
@@ -76,7 +76,7 @@ struct ReadPathScores
         const int16_t initDistanceFromClosestReadEdge=0)
         : ref(r)
         , indel(i)
-        , nsite(ns)
+        , nonAmbiguousBasesInRead(initNonAmbiguousBasesInRead)
         , read_length(rlen)
         , is_tier1_read(is_t1)
         , is_fwd_strand(is_fwd)
@@ -91,7 +91,7 @@ struct ReadPathScores
 
     score_t ref;
     score_t indel;
-    uint16_t nsite;
+    uint16_t nonAmbiguousBasesInRead;
 
 //    score_t alt;
 

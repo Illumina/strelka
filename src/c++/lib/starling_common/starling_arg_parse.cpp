@@ -89,7 +89,7 @@ legacy_starling_arg_parse(
         }
         else if (ad.argstr[i]=="-indel-nonsite-match-prob")
         {
-            set_xrange_arg(i,ad,is_inmp,opt.indel_nonsite_match_prob,true);
+            set_xrange_arg(i,ad,is_inmp,opt.randomBaseMatchProb,true);
         }
         else if (ad.argstr[i]=="-min-vexp")
         {

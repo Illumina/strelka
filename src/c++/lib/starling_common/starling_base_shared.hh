@@ -22,6 +22,7 @@
 #include "starling_pos_processor_base_stages.hh"
 
 #include "blt_common/blt_shared.hh"
+#include "blt_util/math_util.hh"
 #include "blt_util/PrettyFloat.hh"
 #include "blt_util/reference_contig_segment.hh"
 #include "options/AlignmentFileOptions.hh"
@@ -158,8 +159,8 @@ struct starling_base_options : public blt_options
     /// Path prefix for all realigned bam output files
     std::string realignedReadFilenamePrefix;
 
-    /// Probability of a random base match in a mismapped read
-    double indel_nonsite_match_prob = 0.25;
+    /// Probability of a base matching the reference in a randomly mapped read
+    double randomBaseMatchProb = 0.25;
 
     //------------------------------------------------------
     // continuous allele frequency caller options:
@@ -264,8 +265,6 @@ struct starling_sample_options
 struct IndelErrorModel;
 struct GenotypePriorSet;
 
-#include "blt_util/math_util.hh"
-
 
 /// \brief Parameters deterministically derived from the input options
 ///
@@ -279,30 +278,31 @@ struct starling_base_deriv_options : public blt_deriv_options, private boost::no
 
     ~starling_base_deriv_options();
 
-    /// Return the log expectation of the read matching the reference given that it is incorrectly mapped in the genome
-    ///
-    /// TODO: better way to express this concept:
-    /// Likelihood of the read being produced from a random location in the genome?
+    /// Return the approximate log likelihood of the read being produced from a random location in the genome
     double
-    getIncorrectMappingLikelihood(
-        const bool is_tier2_pass,
-        const uint16_t nsite) const
+    getIncorrectMappingLogLikelihood(
+        const bool isTier2,
+        const uint16_t nonAmbiguousBasesInRead) const
     {
-        const double nonsite_match_lnp(is_tier2_pass ?
-                                       tier2_indel_nonsite_match_lnp :
-                                       indel_nonsite_match_lnp );
-        return nonsite_match_lnp*nsite;
+        const double thisRandomBaseMatchLogLikelihood(isTier2 ?
+                                       tier2RandomBaseMatchLogProb :
+                                       randomBaseMatchLogProb );
+        return thisRandomBaseMatchLogLikelihood*nonAmbiguousBasesInRead;
     }
 
+    /// Given the log-likelihood of the read conditioned on correct mapping as input, sum over the
+    /// correct and incorrect mapping states to approximately integrate out the mapping status condition.
+    ///
     double
-    integrate_out_sites(const uint16_t nsite,
-                        const double p_on_site,
-                        const bool is_tier2_pass) const
+    integrateOutMappingStatus(
+        const uint16_t nonAmbiguousBasesInRead,
+        const double correctMappingLogLikelihood,
+        const bool isTier2) const
     {
         // the second term formally has an incorrect mapping prior (prior of incorrectly mapping a read at random),
         // but this is effectively 1 so it is approximated out
-        return log_sum((p_on_site + correctMappingLogPrior),
-                       getIncorrectMappingLikelihood(is_tier2_pass, nsite));
+        return log_sum((correctMappingLogLikelihood + correctMappingLogPrior),
+                       getIncorrectMappingLogLikelihood(isTier2, nonAmbiguousBasesInRead) /* + incorrectMappingLogPrior ~= 0 */);
     }
 
     const std::vector<unsigned>&
@@ -333,8 +333,8 @@ protected:
     }
 
 public:
-    double indel_nonsite_match_lnp;
-    double tier2_indel_nonsite_match_lnp;
+    double randomBaseMatchLogProb;
+    double tier2RandomBaseMatchLogProb;
 
     double correctMappingLogPrior;
 

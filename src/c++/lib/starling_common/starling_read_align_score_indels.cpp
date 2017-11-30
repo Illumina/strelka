@@ -848,13 +848,13 @@ score_indels(
 
     // for indel caller calculation we always need the "rest-of-genome"
     // alignment score, which is calculated from the number of non-ambiguous sites:
-    uint16_t nsite(0);
+    uint16_t nonAmbiguousBasesInRead(0);
     {
         const bam_seq bseq(rseg.get_bam_read());
         for (unsigned i(0); i<read_length; ++i)
         {
             if (bseq.get_code(i) == BAM_BASE::ANY) continue;
-            nsite++;
+            nonAmbiguousBasesInRead++;
         }
     }
 
@@ -1009,7 +1009,7 @@ score_indels(
                 }
             }
 
-            ReadPathScores rps(referenceScore,evaluationIndelScore,nsite,read_length,is_tier1_read,maxCandAlignment.al.is_fwd_strand,
+            ReadPathScores rps(referenceScore,evaluationIndelScore,nonAmbiguousBasesInRead,read_length,is_tier1_read,maxCandAlignment.al.is_fwd_strand,
                                (int16_t) readPos, (int16_t) distanceFromClosestReadEdge);
 
             // start adding alternate indel alleles, if present:

@@ -258,7 +258,7 @@ operator<<(
 {
     os << "ref: " << rps.ref
        << " indel: " << rps.indel
-       << " nsite: " << rps.nsite;
+       << " nonAmbiguousBasesInRead: " << rps.nonAmbiguousBasesInRead;
 
     for (const auto& indel : rps.alt_indel)
     {

@@ -136,7 +136,7 @@ get_high_low_het_ratio_lhood(
             }
             const double het_lnp(log_sum(noindel_lnp+log_ref_prob,hom_lnp+log_indel_prob));
 
-            het_lhood_low += dopt.integrate_out_sites(path_lnp.nsite,het_lnp,is_tier2_pass);
+            het_lhood_low += dopt.integrateOutMappingStatus(path_lnp.nonAmbiguousBasesInRead, het_lnp, is_tier2_pass);
         }
 
         {
@@ -149,7 +149,7 @@ get_high_low_het_ratio_lhood(
             }
             const double het_lnp(log_sum(noindel_lnp+log_ref_prob,hom_lnp+log_indel_prob));
 
-            het_lhood_high += dopt.integrate_out_sites(path_lnp.nsite,het_lnp,is_tier2_pass);
+            het_lhood_high += dopt.integrateOutMappingStatus(path_lnp.nonAmbiguousBasesInRead, het_lnp, is_tier2_pass);
         }
     }
 }
@@ -199,7 +199,7 @@ get_sum_path_pprob(
     {
         total_pprob.ref=initval;
         total_pprob.indel=initval;
-        total_pprob.nsite=0;
+        total_pprob.nonAmbiguousBasesInRead=0;
     }
 
     typedef std::map<IndelKey,unsigned> aimap_t;
@@ -296,9 +296,12 @@ get_indel_digt_lhood(
         }
         const double het_lnp(log_sum(noindel_lnp+log_ref_prob,hom_lnp+log_indel_prob));
 
-        lhood[STAR_DIINDEL::NOINDEL] += dopt.integrate_out_sites(path_lnp.nsite,noindel_lnp,is_tier2_pass);
-        lhood[STAR_DIINDEL::HOM]     += dopt.integrate_out_sites(path_lnp.nsite,hom_lnp,is_tier2_pass);
-        lhood[STAR_DIINDEL::HET]     += dopt.integrate_out_sites(path_lnp.nsite,het_lnp,is_tier2_pass);
+        lhood[STAR_DIINDEL::NOINDEL] += dopt.integrateOutMappingStatus(path_lnp.nonAmbiguousBasesInRead, noindel_lnp,
+                                                                       is_tier2_pass);
+        lhood[STAR_DIINDEL::HOM]     += dopt.integrateOutMappingStatus(path_lnp.nonAmbiguousBasesInRead, hom_lnp,
+                                                                       is_tier2_pass);
+        lhood[STAR_DIINDEL::HET]     += dopt.integrateOutMappingStatus(path_lnp.nonAmbiguousBasesInRead, het_lnp,
+                                                                       is_tier2_pass);
 
 #ifdef DEBUG_INDEL_CALL
         //log_os << std::setprecision(8);

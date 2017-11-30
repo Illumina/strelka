@@ -49,7 +49,7 @@ getTier2OptionsDescription(
      po::value(&opt.is_tier2_include_anomalous)->zero_tokens(),
      "Don't filter anomalous read pairs from tier2 data (will probably have no effect without rescue mode).")
     ("tier2-indel-nonsite-match-prob",
-     po::value(&opt.tier2_indel_nonsite_match_prob),
+     po::value(&opt.randomBaseMatchProb),
      "Reset indel-nonsite-match-prob for tier2 analysis.")
     ;
     return desc;
@@ -67,7 +67,7 @@ parseTier2Options(
 
     if (vm.count("tier2-indel-nonsite-match-prob"))
     {
-        opt.is_tier2_indel_nonsite_match_prob=true;
+        opt.isRandomBaseMatchProb=true;
     }
 
     if (vm.count("tier2-min-mapping-quality"))
@@ -80,6 +80,6 @@ parseTier2Options(
         opt.is_tier2_mismatch_density_filter_count=true;
     }
 
-    check_option_arg_range(opt.tier2_indel_nonsite_match_prob,"tier2-indel-nonsite-match-prob",0.,1.,errorMsg);
+    check_option_arg_range(opt.randomBaseMatchProb,"tier2-indel-nonsite-match-prob",0.,1.,errorMsg);
     return (! errorMsg.empty());
 }

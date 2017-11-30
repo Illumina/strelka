@@ -51,8 +51,9 @@ updateGenotypeLogLhoodFromAlleleLogLhood(
         for (unsigned allele0Index(0); allele0Index < fullAlleleCount; ++allele0Index)
         {
             const unsigned genotypeIndex(VcfGenotypeUtil::getGenotypeIndex(allele0Index));
-            genotypeLogLhood[genotypeIndex] += dopt.integrate_out_sites(readScore.nsite, alleleLogLhood[allele0Index],
-                                                                        isTier2Pass);
+            genotypeLogLhood[genotypeIndex] += dopt.integrateOutMappingStatus(readScore.nonAmbiguousBasesInRead,
+                                                                              alleleLogLhood[allele0Index],
+                                                                              isTier2Pass);
         }
     }
     else if (callerPloidy == 2)
@@ -100,8 +101,9 @@ updateGenotypeLogLhoodFromAlleleLogLhood(
                     rawLogLhood = alleleLogLhood[allele0Index];
                 }
 
-                genotypeLogLhood[genotypeIndex] += dopt.integrate_out_sites(readScore.nsite, rawLogLhood,
-                                                                            isTier2Pass);
+                genotypeLogLhood[genotypeIndex] += dopt.integrateOutMappingStatus(readScore.nonAmbiguousBasesInRead,
+                                                                                  rawLogLhood,
+                                                                                  isTier2Pass);
             }
         }
     }
@@ -114,7 +116,7 @@ updateGenotypeLogLhoodFromAlleleLogLhood(
 
 
 ///
-/// \param[in,out] alleleLhood allele likelihoods, note that these are altered to include nsite and
+/// \param[in,out] alleleLhood allele likelihoods, note that these are altered to integrate out mapping status and
 ///                            be normalized in this func, 0 index is reference
 /// \param locusReadStats
 ///
@@ -123,7 +125,7 @@ void
 updateSupportingReadStats(
     const starling_base_deriv_options& dopt,
     const double readSupportThreshold,
-    const uint16_t nsite,
+    const uint16_t nonAmbiguousBasesInRead,
     const bool isFwdStrand,
     std::vector<double>& alleleLoglhoods,
     LocusSupportingReadStats& locusReadStats)
@@ -131,7 +133,7 @@ updateSupportingReadStats(
     static const bool isTier2Pass(false);
     for (auto& alleleHood : alleleLoglhoods)
     {
-        alleleHood = dopt.integrate_out_sites(nsite, alleleHood, isTier2Pass);
+        alleleHood = dopt.integrateOutMappingStatus(nonAmbiguousBasesInRead, alleleHood, isTier2Pass);
     }
     unsigned maxIndex(0);
     normalizeLogDistro(alleleLoglhoods.begin(), alleleLoglhoods.end(), maxIndex);
@@ -250,7 +252,7 @@ getVariantAlleleGroupGenotypeLhoodsForSample(
                                                      readScore, genotypeLogLhood);
 
             updateSupportingReadStats(
-                dopt, readSupportTheshold, readScore.nsite, readScore.is_fwd_strand, alleleLogLhood, locusReadStats);
+                dopt, readSupportTheshold, readScore.nonAmbiguousBasesInRead, readScore.is_fwd_strand, alleleLogLhood, locusReadStats);
         }
     }
 }

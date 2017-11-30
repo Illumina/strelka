@@ -236,8 +236,8 @@ indel_lnp_to_pprob(
     // This term formally had a prior on incorrect mapping (meaning the prior of incorrectly mapping a read when the
     // read is randomly positioned on the genome). This term is effectively 1 so it is approximated out in the current
     // version.
-    ReadPathScores::score_t pprob_readIncorrectlyMapped = dopt.getIncorrectMappingLikelihood(is_tier2_pass,
-                                                          path_lnp.nsite);
+    ReadPathScores::score_t pprob_readIncorrectlyMapped = dopt.getIncorrectMappingLogLikelihood(is_tier2_pass,
+                                                                                                path_lnp.nonAmbiguousBasesInRead);
     pprob.ref     = path_lnp.ref     + dopt.correctMappingLogPrior + allele_lnprior;
     pprob.indel   = path_lnp.indel   + dopt.correctMappingLogPrior + allele_lnprior;
 

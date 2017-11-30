@@ -41,14 +41,14 @@ starling_base_deriv_options(const starling_base_options& opt)
     , _indelErrorModel(new IndelErrorModel(opt.getAlignmentFileOptions().alignmentFilenames, opt.indel_error_model_name,opt.indelErrorModelFilenames))
     , _indelGenotypePriors(new GenotypePriorSet(opt.thetaFilename))
 {
-    indel_nonsite_match_lnp=std::log(opt.indel_nonsite_match_prob);
-    if (opt.tier2.is_tier2_indel_nonsite_match_prob)
+    randomBaseMatchLogProb=std::log(opt.randomBaseMatchProb);
+    if (opt.tier2.isRandomBaseMatchProb)
     {
-        tier2_indel_nonsite_match_lnp=std::log(opt.tier2.tier2_indel_nonsite_match_prob);
+        tier2RandomBaseMatchLogProb=std::log(opt.tier2.randomBaseMatchProb);
     }
     else
     {
-        tier2_indel_nonsite_match_lnp=indel_nonsite_match_lnp;
+        tier2RandomBaseMatchLogProb=randomBaseMatchLogProb;
     }
 
     {

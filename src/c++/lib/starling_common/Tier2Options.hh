@@ -31,7 +31,7 @@ struct Tier2Options
              is_tier2_no_mismatch_density_filter ||
              is_tier2_include_singleton ||
              is_tier2_include_anomalous ||
-             is_tier2_indel_nonsite_match_prob);
+             isRandomBaseMatchProb);
     }
 
     int tier2_min_mapping_quality = 0;
@@ -44,6 +44,9 @@ struct Tier2Options
     bool is_tier2_include_singleton = false;
     bool is_tier2_include_anomalous = false;
 
-    bool is_tier2_indel_nonsite_match_prob = false;
-    double tier2_indel_nonsite_match_prob = 0.25;
+    /// True if randomBaseMatchProb is defined
+    bool isRandomBaseMatchProb = false;
+
+    /// tier2 version of the value in starling_base_options
+    double randomBaseMatchProb = 0.25;
 };
