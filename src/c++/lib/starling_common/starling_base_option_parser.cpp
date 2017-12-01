@@ -155,9 +155,6 @@ write_starling_legacy_options(
     std::ostream& os)
 {
     os <<
-       " -bsnp-diploid-het-bias x\n"
-       "                    - Set bias term for the heterozygous state in the bsnp model, such that\n"
-       "                      hets are expected at allele ratios in the range [0.5-x,0.5+x] (default: 0)\n"
        " -min-qscore n      - Don't use base if qscore<n (default: " << default_opt.min_qscore << ")\n"
        " -min-mapping-quality n\n"
        "                    - Reads with mapping quality<n are marked as tier1 filtered. Such reads are not\n"

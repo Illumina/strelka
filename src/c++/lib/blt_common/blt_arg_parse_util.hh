@@ -105,12 +105,3 @@ set_arg(unsigned& argi,
     set_val(ad.pinfo,arg_label,ad.argstr[argi].c_str(),val);
     is_val_set=true;
 }
-
-
-void
-set_xrange_arg(unsigned& argi,
-               arg_data& ad,
-               bool& is_val_set,
-               double& val,
-               bool is_allow_zero=false,
-               bool is_no_max_check=false);

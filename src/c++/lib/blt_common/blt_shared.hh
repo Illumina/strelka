@@ -54,6 +54,8 @@ struct blt_options : public PolymorphicObject
     {
         // this should never be true once the object is fully constructed, TODO: can we move this into a state enum so it *can't* be true?:
         assert(! (is_compute_germline_scoring_metrics() && is_compute_somatic_scoring_metrics));
+
+        assert((hetVariantFrequencyExtension >= 0.) && (hetVariantFrequencyExtension < 0.5));
     }
 
     virtual
@@ -80,9 +82,19 @@ struct blt_options : public PolymorphicObject
     double bsnp_diploid_theta = 0.001;
     double bsnp_ssd_no_mismatch = 0;
     double bsnp_ssd_one_mismatch = 0;
-    double bsnp_diploid_het_bias = 0;
 
-    bool is_bsnp_diploid_het_bias = false;
+    /// Expand the variant frequency range over which heterozygous variants are modeled. When this is 0 the standard
+    /// DNA-seq caller behavior of modeling hets as a point process at 0.5 is used. This can be useful for representing
+    /// RNA-seq ASE and other factors.
+    ///
+    /// This argument must be in range [0,0.5)
+    double hetVariantFrequencyExtension = 0;
+
+    bool
+    isHetVariantFrequencyExtension() const
+    {
+        return (hetVariantFrequencyExtension>0);
+    }
 
     int min_qscore = 17;
     int min_mapping_quality = 20;

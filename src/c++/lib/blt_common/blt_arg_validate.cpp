@@ -80,16 +80,4 @@ validate_blt_opt(
         oss << "diploid heterozygosity exceeds maximum value of: " << MAX_DIPLOID_THETA;
         pinfo.usage(oss.str().c_str());
     }
-
-    if (opt.is_bsnp_diploid_het_bias)
-    {
-        if (! opt.is_bsnp_diploid())
-        {
-            pinfo.usage("-bsnp-diploid-het-bias does not make sense when bsnp-diploid model is not in use\n");
-        }
-        if ((opt.bsnp_diploid_het_bias < 0.) || (opt.bsnp_diploid_het_bias >= 0.5))
-        {
-            pinfo.usage("-bsnp-diploid-het-bias argument must be in range [0,0.5)\n");
-        }
-    }
 }

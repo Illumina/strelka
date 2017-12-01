@@ -50,11 +50,7 @@ legacy_starling_arg_parse(
     {
         if (ad.argmark[i]) continue;
 
-        if (ad.argstr[i]=="-bsnp-diploid-het-bias")
-        {
-            set_xrange_arg(i,ad,opt.is_bsnp_diploid_het_bias,opt.bsnp_diploid_het_bias,true);
-        }
-        else if (ad.argstr[i]=="-min-qscore")
+        if (ad.argstr[i]=="-min-qscore")
         {
             set_arg(i,ad,is_min_qscore_set,opt.min_qscore);
         }

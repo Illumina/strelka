@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -97,8 +97,14 @@ get_starling_option_parser(
      "Change to RNA-Seq analysis settings")
     ;
 
+    po::options_description other_opt("other-options");
+    other_opt.add_options()
+    ("het-variant-frequency-extension", po::value(&opt.hetVariantFrequencyExtension)->default_value(opt.hetVariantFrequencyExtension),
+     "Heterozygous variant allele frequency will be modeled as a range around 0.5 +/- this value. Value must be in [0,0.5)")
+    ;
+
     po::options_description starling_parse_opt("Germline calling options");
-    starling_parse_opt.add(aligndesc).add(gvcf_opt).add(phase_opt).add(score_opt);
+    starling_parse_opt.add(aligndesc).add(gvcf_opt).add(phase_opt).add(score_opt).add(other_opt);
 
     // final assembly
     po::options_description visible("Options");
@@ -147,6 +153,11 @@ finalize_starling_options(
         {
             pinfo.usage("min-het-vf must be in range (0, 0.5)");
         }
+    }
+
+    if ((opt.hetVariantFrequencyExtension < 0.) || (opt.hetVariantFrequencyExtension >= 0.5))
+    {
+        pinfo.usage("het-variant-frequency-extension must be in range [0,0.5)\n");
     }
 
     if (opt.isReportEVSFeatures)

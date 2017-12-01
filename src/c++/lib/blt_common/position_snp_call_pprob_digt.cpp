@@ -490,11 +490,11 @@ position_snp_call_pprob_digt(
     }
 
     // don't spend time on the het bias model for haploid sites:
-    const bool is_het_bias((! dgt.is_haploid()) && opt.is_bsnp_diploid_het_bias);
+    const bool is_het_bias((! dgt.is_haploid()) && opt.isHetVariantFrequencyExtension());
 
     // get likelihood of each genotype
     blt_float_t lhood[DIGT::SIZE];
-    get_diploid_gt_lhood(opt,epi,is_het_bias,opt.bsnp_diploid_het_bias,lhood);
+    get_diploid_gt_lhood(opt,epi,is_het_bias,opt.hetVariantFrequencyExtension,lhood);
 
     // set phredLoghood:
     {
@@ -523,9 +523,9 @@ position_snp_call_pprob_digt(
     if (is_compute_sb && dgt.is_snp())
     {
         blt_float_t lhood_fwd[DIGT::SIZE];
-        get_diploid_gt_lhood(opt,epi,is_het_bias,opt.bsnp_diploid_het_bias,lhood_fwd,true,true);
+        get_diploid_gt_lhood(opt,epi,is_het_bias,opt.hetVariantFrequencyExtension,lhood_fwd,true,true);
         blt_float_t lhood_rev[DIGT::SIZE];
-        get_diploid_gt_lhood(opt,epi,is_het_bias,opt.bsnp_diploid_het_bias,lhood_rev,true,false);
+        get_diploid_gt_lhood(opt,epi,is_het_bias,opt.hetVariantFrequencyExtension,lhood_rev,true,false);
 
         // If max_gt is equal to reference, then go ahead and use it
         // for consistency, even though this makes the SB value
