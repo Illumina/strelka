@@ -63,7 +63,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["--region", gseg.chromLabel + ":" + str(gseg.beginPos) + "-" + str(gseg.endPos)])
     segCmd.extend(["-min-mapping-quality",self.params.minMapq])
     segCmd.extend(["--ref", self.params.referenceFasta ])
-    segCmd.extend(["-max-window-mismatch", "2", "20" ])
     segCmd.extend(["-max-indel-size", self.params.maxIndelSize])
 
     segCmd.extend(['-min-qscore','17'])

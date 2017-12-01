@@ -42,7 +42,7 @@ struct SequenceErrorCountsOptions : public starling_base_options
         min_qscore = 17;
         isBasecallQualAdjustedForMapq = false;
 
-        is_max_win_mismatch = true;
+        // custom mmdf for sequence error counting
         max_win_mismatch = 1;
         max_win_mismatch_flank_size = 100;
 

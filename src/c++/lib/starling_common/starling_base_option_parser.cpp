@@ -159,8 +159,6 @@ write_starling_legacy_options(
        "                    - Set bias term for the heterozygous state in the bsnp model, such that\n"
        "                      hets are expected at allele ratios in the range [0.5-x,0.5+x] (default: 0)\n"
        " -min-qscore n      - Don't use base if qscore<n (default: " << default_opt.min_qscore << ")\n"
-       " -max-window-mismatch n m\n"
-       "                    - Don't use base if mismatch count>n within a window of m flanking bases\n"
        " -min-mapping-quality n\n"
        "                    - Reads with mapping quality<n are marked as tier1 filtered. Such reads are not\n"
        "                      directly used for variant calling unless a tier2 value is defined in certain applications.\n"

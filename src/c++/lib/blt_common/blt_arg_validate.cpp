@@ -74,13 +74,6 @@ validate_blt_opt(
     const prog_info& pinfo,
     const blt_options& opt)
 {
-    if (opt.is_max_win_mismatch && opt.max_win_mismatch_flank_size > MAX_FLANK_SIZE)
-    {
-        std::ostringstream oss;
-        oss << "max-window-mismatch flank size exceeds max value of: " << MAX_FLANK_SIZE;
-        pinfo.usage(oss.str().c_str());
-    }
-
     if (opt.bsnp_diploid_theta>MAX_DIPLOID_THETA)
     {
         std::ostringstream oss;

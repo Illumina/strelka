@@ -60,16 +60,6 @@ legacy_starling_arg_parse(
         {
             set_arg(i,ad,is_min_qscore_set,opt.min_qscore);
         }
-        else if (ad.argstr[i]=="-max-window-mismatch")
-        {
-            int max_win_mismatch_tmp;
-            set_win_arg(i,ad,opt.is_max_win_mismatch,max_win_mismatch_tmp,opt.max_win_mismatch_flank_size);
-            if (max_win_mismatch_tmp<0)
-            {
-                pinfo.usage("first argument following -max-window-mismatch must be a non-negative integer\n");
-            }
-            opt.max_win_mismatch=max_win_mismatch_tmp;
-        }
         else if (ad.argstr[i]=="-min-mapping-quality")
         {
             set_arg(i,ad,is_min_pascore_set,opt.min_mapping_quality);

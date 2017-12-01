@@ -87,9 +87,15 @@ struct blt_options : public PolymorphicObject
     int min_qscore = 17;
     int min_mapping_quality = 20;
 
-    bool is_max_win_mismatch = false;
+    /// Don't use base in SNV calling if mismatch count>max_win_mismatch within a window of max_win_mismatch_flank_size flanking bases
     unsigned max_win_mismatch = 0;
     unsigned max_win_mismatch_flank_size = 0;
+
+    bool
+    is_max_win_mismatch() const
+    {
+        return (max_win_mismatch_flank_size > 0);
+    }
 
     /// If true, use reads with unmapped mates for variant calling
     bool is_include_singleton = false;

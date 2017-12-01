@@ -114,10 +114,3 @@ set_xrange_arg(unsigned& argi,
                double& val,
                bool is_allow_zero=false,
                bool is_no_max_check=false);
-
-void
-set_win_arg(unsigned& argi,
-            arg_data& ad,
-            bool& is_val_set,
-            int& val1,
-            unsigned& val2);
