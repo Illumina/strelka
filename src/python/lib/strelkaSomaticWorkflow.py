@@ -86,7 +86,6 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
 
     segCmd.extend(["-min-mapping-quality",str(self.params.minTier1Mapq)])
     segCmd.extend(["-min-qscore","0"])
-    segCmd.extend(["-indel-nonsite-match-prob", "0.5"] )
     segCmd.extend(["--somatic-snv-rate", str(self.params.ssnvPrior) ] )
     segCmd.extend(["--shared-site-error-rate", str(self.params.ssnvNoise) ] )
     segCmd.extend(["--shared-site-error-strand-bias-fraction", str(self.params.ssnvNoiseStrandBiasFrac) ] )

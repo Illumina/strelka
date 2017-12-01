@@ -70,6 +70,9 @@ struct strelka_options : public starling_base_options
         max_win_mismatch = 3;
         max_win_mismatch_flank_size = 20;
 
+        // custom noisy read handling for somatic calling
+        randomBaseMatchProb = 0.5;
+
         // turn on empirical scoring for strelka only:
         is_compute_somatic_scoring_metrics = true;
 
