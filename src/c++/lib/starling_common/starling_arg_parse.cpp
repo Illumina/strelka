@@ -40,7 +40,6 @@ legacy_starling_arg_parse(
 
     opt.cmdline = ad.cmdline;
 
-    bool is_min_qscore_set(false);
     bool is_min_pascore_set(false);
 
     bool is_max_indel_size(false);
@@ -50,11 +49,7 @@ legacy_starling_arg_parse(
     {
         if (ad.argmark[i]) continue;
 
-        if (ad.argstr[i]=="-min-qscore")
-        {
-            set_arg(i,ad,is_min_qscore_set,opt.min_qscore);
-        }
-        else if (ad.argstr[i]=="-min-mapping-quality")
+        if (ad.argstr[i]=="-min-mapping-quality")
         {
             set_arg(i,ad,is_min_pascore_set,opt.min_mapping_quality);
         }
