@@ -49,14 +49,6 @@ runInternal(int argc, char* argv[]) const
 {
     snoise_options opt;
 
-    // set command-line defaults for starling only:
-    opt.bsnp_ssd_no_mismatch = 0.35;
-    opt.bsnp_ssd_one_mismatch = 0.6;
-    opt.max_win_mismatch = 2;
-    opt.max_win_mismatch_flank_size = 20;
-    opt.is_min_vexp = true;
-    opt.min_vexp = 0.25;
-
     for (int i(0); i<argc; ++i)
     {
         if (i) opt.cmdline += ' ';

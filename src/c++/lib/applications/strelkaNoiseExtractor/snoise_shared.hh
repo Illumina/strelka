@@ -21,9 +21,20 @@
 
 #include "starling_common/starling_base_shared.hh"
 
-
 struct snoise_options : public starling_base_options
 {
+    snoise_options()
+    {
+        // parameter defaults are similar to the germline caller
+        // TODO: should this be updated with all of the latest germline caller settings for haplotyping, etc?
+        bsnp_ssd_no_mismatch = 0.35;
+        bsnp_ssd_one_mismatch = 0.6;
+        max_win_mismatch = 2;
+        max_win_mismatch_flank_size = 20;
+        is_min_vexp = true;
+        min_vexp = 0.25;
+    }
+
     const AlignmentFileOptions&
     getAlignmentFileOptions() const override
     {

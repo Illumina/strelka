@@ -99,9 +99,6 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     segCmd.extend(['--gvcf-min-homref-gqx','15'])
     segCmd.extend(['--gvcf-max-snv-strand-bias','10'])
     segCmd.extend(['-min-qscore','17'])
-    segCmd.extend(['-bsnp-ssd-no-mismatch', '0.35'])
-    segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
-    segCmd.extend(['-min-vexp', '0.25'])
     segCmd.extend(['--enable-read-backed-phasing'])
 
     segFiles.stats.append(self.paths.getTmpRunStatsPath(genomeSegmentLabel))

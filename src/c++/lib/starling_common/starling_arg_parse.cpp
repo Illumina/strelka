@@ -43,29 +43,16 @@ legacy_starling_arg_parse(
     bool is_min_qscore_set(false);
     bool is_min_pascore_set(false);
 
-    bool is_bsnp_ssd_no_mismatch(false);
-    bool is_bsnp_ssd_one_mismatch(false);
-
     bool is_max_indel_size(false);
 
     bool is_inmp(false);
-
-    bool local_is_min_vexp(false);
 
     const unsigned as(ad.size());
     for (unsigned i(0); i<as; ++i)
     {
         if (ad.argmark[i]) continue;
 
-        if (ad.argstr[i]=="-bsnp-ssd-no-mismatch")
-        {
-            set_xrange_arg(i,ad,is_bsnp_ssd_no_mismatch,opt.bsnp_ssd_no_mismatch,true);
-        }
-        else if (ad.argstr[i]=="-bsnp-ssd-one-mismatch")
-        {
-            set_xrange_arg(i,ad,is_bsnp_ssd_one_mismatch,opt.bsnp_ssd_one_mismatch,true);
-        }
-        else if (ad.argstr[i]=="-bsnp-diploid-het-bias")
+        if (ad.argstr[i]=="-bsnp-diploid-het-bias")
         {
             set_xrange_arg(i,ad,opt.is_bsnp_diploid_het_bias,opt.bsnp_diploid_het_bias,true);
         }
@@ -90,11 +77,6 @@ legacy_starling_arg_parse(
         else if (ad.argstr[i]=="-indel-nonsite-match-prob")
         {
             set_xrange_arg(i,ad,is_inmp,opt.randomBaseMatchProb,true);
-        }
-        else if (ad.argstr[i]=="-min-vexp")
-        {
-            set_xrange_arg(i,ad,local_is_min_vexp,opt.min_vexp,true);
-            opt.is_min_vexp=local_is_min_vexp;
         }
         else if (ad.argstr[i]=="-max-indel-size")
         {

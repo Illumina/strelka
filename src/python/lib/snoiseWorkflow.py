@@ -67,9 +67,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["-max-indel-size", self.params.maxIndelSize])
 
     segCmd.extend(['-min-qscore','17'])
-    segCmd.extend(['-bsnp-ssd-no-mismatch', '0.35'])
-    segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
-    segCmd.extend(['-min-vexp', '0.25'])
 
     for bamPath in self.params.bamList :
         segCmd.extend(["--align-file",bamPath])
