@@ -73,8 +73,6 @@ get_starling_option_parser(
      "Bed file with sites that should not be block-compressed in gVCF (must be bgzip compressed and tabix indexed).")
     ("call-continuous-vf",  po::value(&opt.is_ploidy_prior)->zero_tokens()->implicit_value(false),
      "Instead of a haploid/diploid prior assumption, output a continuous VF")
-    ("min-het-vf",  po::value(&opt.min_het_vf)->default_value(opt.min_het_vf),
-     "The minimum allele frequency to call a heterozygous genotype when calling continuous variant frequencies")
     ("gvcf-skip-header", po::value(&opt.gvcf.is_skip_header)->zero_tokens(),
      "Skip writing header info for the gvcf file (usually used to simplify segment concatenation)")
     ("gvcf-include-header", po::value(&opt.gvcf.include_headers)->multitoken(),
@@ -140,13 +138,6 @@ finalize_starling_options(
     if (opt.gvcf.block_percent_tol > 100)
     {
         pinfo.usage("block-percent-tol must be in range [0-100].");
-    }
-    if (!opt.is_ploidy_prior)
-    {
-        if (opt.min_het_vf <= 0.0 || opt.min_het_vf >= 0.5)
-        {
-            pinfo.usage("min-het-vf must be in range (0, 0.5)");
-        }
     }
 
     if ((opt.hetVariantFrequencyExtension < 0.) || (opt.hetVariantFrequencyExtension >= 0.5))

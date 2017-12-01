@@ -99,17 +99,6 @@ finalizeSequenceErrorCountsOptions(
     // knownVariantsFile and excludedRegionsFileList are both checked in the Python config code,
     // so we're not duplicating the effort here
 
-    // not using any of these below options, not worth cleaning this up right now...
-
-    if (!opt.is_ploidy_prior)
-    {
-        if (opt.min_het_vf <= 0.0 || opt.min_het_vf >= 0.5)
-        {
-            pinfo.usage("min-het-vf must be in range (0, 0.5)");
-        }
-
-    }
-
     finalize_starling_base_options(pinfo,vm,opt);
 }
 

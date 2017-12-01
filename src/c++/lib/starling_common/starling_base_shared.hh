@@ -47,6 +47,14 @@ struct starling_base_options : public blt_options
     starling_base_options()
     {}
 
+    void
+    validate() const
+    {
+        base_t::validate();
+
+        assert((min_het_vf > 0.) && (min_het_vf < 0.5));
+    }
+
     virtual
     bool
     is_all_sites() const
@@ -169,7 +177,8 @@ struct starling_base_options : public blt_options
     // If false, a continuous model is used
     bool is_ploidy_prior = true;
 
-    /// the minimum allele frequency to call a heterozygous genotype when not assuming ploidy
+    /// The minimum allele frequency to call a heterozygous genotype when not assuming ploidy
+    /// Must be in (0,0.5)
     double min_het_vf = 0.01;
 
     /// Expected allele observation quality used for the purpose of computing
