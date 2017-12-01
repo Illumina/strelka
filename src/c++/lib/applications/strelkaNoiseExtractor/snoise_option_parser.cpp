@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "snoise_option_parser.hh"
 
 #include "options/AlignmentFileOptionsParser.hh"
@@ -42,6 +38,10 @@ get_snoise_option_parser(
 
     po::options_description visible("Options");
     visible.add(aligndesc).add(snoise_opt);
+
+    // add starling base options:
+    po::options_description visible2(get_starling_base_option_parser(opt));
+    visible.add(visible2);
 
     return visible;
 }

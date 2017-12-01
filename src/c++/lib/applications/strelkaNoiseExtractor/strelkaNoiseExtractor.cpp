@@ -17,23 +17,11 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "strelkaNoiseExtractor.hh"
 #include "snoise_info.hh"
 #include "snoise_run.hh"
 #include "snoise_option_parser.hh"
 
-#include "blt_common/blt_arg_parse_util.hh"
-#include "blt_util/blt_exception.hh"
-#include "blt_util/log.hh"
-#include "common/Exceptions.hh"
-#include "starling_common/starling_arg_parse.hh"
-#include <cassert>
-#include <cstdlib>
-#include "../../starling_common/starling_base_option_parser.hh"
 
 
 namespace
@@ -55,19 +43,13 @@ runInternal(int argc, char* argv[]) const
         opt.cmdline += argv[i];
     }
 
-    std::vector<std::string> legacy_starling_args;
     po::variables_map vm;
     try
     {
         po::options_description visible(get_snoise_option_parser(opt));
-        po::options_description visible2(get_starling_base_option_parser(opt));
-        visible.add(visible2);
-        po::parsed_options parsed(po::command_line_parser(argc,argv).options(visible).allow_unregistered().run());
+        po::parsed_options parsed(po::command_line_parser(argc,argv).options(visible).run());
         po::store(parsed,vm);
         po::notify(vm);
-
-        // allow remaining options to be parsed using old starling command-line parser:
-        legacy_starling_args = po::collect_unrecognized(parsed.options,po::include_positional);
     }
     catch (const boost::program_options::error& e)
     {
@@ -79,13 +61,7 @@ runInternal(int argc, char* argv[]) const
         pinfo.usage();
     }
 
-    // temp workaround for blt/starling options which are not (yet)
-    // under program_options control:
-    //
-    arg_data ad(legacy_starling_args,pinfo,opt.cmdline);
-    legacy_starling_arg_parse(ad,opt);
-
-    finalize_starling_base_options(pinfo,vm,opt);
+    finalize_snoise_options(pinfo,vm,opt);
 
     snoise_run(pinfo,opt);
 }

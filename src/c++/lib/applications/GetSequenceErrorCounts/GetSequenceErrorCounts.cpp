@@ -21,13 +21,6 @@
 #include "GetSequenceErrorCountsInfo.hh"
 #include "GetSequenceErrorCountsRun.hh"
 #include "SequenceErrorCountsOptionsParser.hh"
-#include "blt_util/blt_exception.hh"
-#include "blt_util/log.hh"
-#include "common/Exceptions.hh"
-#include "starling_common/starling_arg_parse.hh"
-
-#include <cassert>
-#include <cstdlib>
 
 
 
@@ -50,17 +43,13 @@ runInternal(int argc, char* argv[]) const
         opt.cmdline += argv[i];
     }
 
-    std::vector<std::string> legacy_starling_args;
     po::variables_map vm;
     try
     {
         po::options_description visible(getSequenceErrorCountsOptionsParser(opt));
-        po::parsed_options parsed(po::command_line_parser(argc,argv).options(visible).allow_unregistered().run());
+        po::parsed_options parsed(po::command_line_parser(argc,argv).options(visible).run());
         po::store(parsed,vm);
         po::notify(vm);
-
-        // allow remaining options to be parsed using old starling command-line parser:
-        legacy_starling_args = po::collect_unrecognized(parsed.options,po::include_positional);
     }
     catch (const boost::program_options::error& e)
     {
@@ -71,12 +60,6 @@ runInternal(int argc, char* argv[]) const
     {
         pinfo.usage();
     }
-
-    // temp workaround for blt/starling options which are not (yet)
-    // under program_options control:
-    //
-    arg_data ad(legacy_starling_args,pinfo,opt.cmdline);
-    legacy_starling_arg_parse(ad,opt);
 
     finalizeSequenceErrorCountsOptions(pinfo,vm,opt);
 

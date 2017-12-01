@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "strelka_option_parser.hh"
 
 #include "blt_common/blt_arg_validate.hh"
@@ -48,14 +44,6 @@ get_strelka_option_parser(
     ("somatic-indel-file",
      po::value(&opt.somatic_indel_filename),
      "Output file for somatic indel (note this uses settings from the bindel diploid caller for the normal sample)")
-#if 0
-    ("somatic-indel-depth-window-file",
-     po::value(&opt.somatic_indel_depth_window_filename),
-     "Output file for depth window averages corresponding to each somatic indel call.")
-    ("somatic-indel-depth-window-flank",
-     po::value(&opt.depth_window_flank),
-     "Somatic indel depth window flank-size (must be >1)")
-#endif
     ("somatic-indel-rate",
      po::value(&opt.somatic_indel_rate)->default_value(opt.somatic_indel_rate),
      "Expected rate of somatic indels (allowed range: [0-1])")
@@ -124,12 +112,6 @@ get_strelka_option_parser(
     // add starling base options:
     po::options_description visible2(get_starling_base_option_parser(opt));
     visible.add(visible2);
-
-    po::options_description help_parse_opt("Help");
-    help_parse_opt.add_options()
-    ("help,h","print this message");
-
-    visible.add(help_parse_opt);
 
     return visible;
 }

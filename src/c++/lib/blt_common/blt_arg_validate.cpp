@@ -17,14 +17,7 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "blt_common/blt_arg_validate.hh"
-#include "blt_util/log.hh"
-
-#include <cstdlib>
 
 #include <iostream>
 #include <iomanip>
@@ -65,19 +58,4 @@ check_option_arg_range(const prog_info& pinfo,
     check_option_arg_range(val,label,min,max,errorMsg);
     if (errorMsg.empty()) return;
     pinfo.usage(errorMsg.c_str());
-}
-
-
-
-void
-validate_blt_opt(
-    const prog_info& pinfo,
-    const blt_options& opt)
-{
-    if (opt.bsnp_diploid_theta>MAX_DIPLOID_THETA)
-    {
-        std::ostringstream oss;
-        oss << "diploid heterozygosity exceeds maximum value of: " << MAX_DIPLOID_THETA;
-        pinfo.usage(oss.str().c_str());
-    }
 }

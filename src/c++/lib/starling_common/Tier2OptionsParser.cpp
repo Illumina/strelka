@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "Tier2OptionsParser.hh"
 #include "blt_common/blt_arg_validate.hh"
 

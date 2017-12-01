@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "starling_base_option_parser.hh"
 
 #include "blt_common/blt_arg_validate.hh"
@@ -150,18 +146,13 @@ get_starling_base_option_parser(
     new_opt.add(realign_opt).add(indel_opt).add(ploidy_opt);
     new_opt.add(input_opt).add(other_opt);
 
+    po::options_description help_parse_opt("Help");
+    help_parse_opt.add_options()
+        ("help,h","print this message");
+
+    new_opt.add(help_parse_opt);
+
     return new_opt;
-}
-
-
-
-static
-void
-finalize_legacy_starling_options(
-    const prog_info& pinfo,
-    starling_base_options& opt)
-{
-    validate_blt_opt(pinfo,opt);
 }
 
 
@@ -208,6 +199,13 @@ finalize_starling_base_options(
         }
     }
 
+    if (opt.bsnp_diploid_theta>MAX_DIPLOID_THETA)
+    {
+        std::ostringstream oss;
+        oss << "diploid heterozygosity exceeds maximum value of: " << MAX_DIPLOID_THETA;
+        pinfo.usage(oss.str().c_str());
+    }
+
     // max_theta for indels is actually 2./3., but because we don't
     // allow non-reference hets, we stick with the lower value
     // used for snps:
@@ -245,6 +243,4 @@ finalize_starling_base_options(
             pinfo.usage(oss.str().c_str());
         }
     }
-
-    finalize_legacy_starling_options(pinfo,opt);
 }

@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #pragma once
 
 
@@ -44,9 +40,3 @@ check_option_arg_range(const prog_info& pinfo,
                        const char* label,
                        const double min,
                        const double max);
-
-
-void
-validate_blt_opt(
-    const prog_info& pinfo,
-    const blt_options& client_opt);

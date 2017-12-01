@@ -113,12 +113,6 @@ get_starling_option_parser(
     po::options_description visible2(get_starling_base_option_parser(opt));
     visible.add(visible2);
 
-    po::options_description help_parse_opt("Help");
-    help_parse_opt.add_options()
-    ("help,h","print this message");
-
-    visible.add(help_parse_opt);
-
     return visible;
 }
 
