@@ -44,8 +44,8 @@ struct Tier2Options
     bool is_tier2_include_singleton = false;
     bool is_tier2_include_anomalous = false;
 
-    /// True if randomBaseMatchProb is defined
-    bool isRandomBaseMatchProb = false;
+    /// If true, use tier2 randomBaseMatchProb value
+    bool isRandomBaseMatchProb = true;
 
     /// tier2 version of the value in starling_base_options
     double randomBaseMatchProb = 0.25;

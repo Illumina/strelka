@@ -44,9 +44,6 @@ getTier2OptionsDescription(
     ("tier2-include-anomalous",
      po::value(&opt.is_tier2_include_anomalous)->zero_tokens(),
      "Don't filter anomalous read pairs from tier2 data (will probably have no effect without rescue mode).")
-    ("tier2-indel-nonsite-match-prob",
-     po::value(&opt.randomBaseMatchProb),
-     "Reset indel-nonsite-match-prob for tier2 analysis.")
     ;
     return desc;
 }
