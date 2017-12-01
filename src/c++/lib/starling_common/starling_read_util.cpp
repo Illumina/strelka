@@ -131,7 +131,7 @@ create_mismatch_filter_map(const blt_options& client_opt,
     assert(read_begin<=read_end);
     const unsigned read_size(read_seq.size());
     assert(read_end<=read_size);
-    const unsigned fs(client_opt.max_win_mismatch_flank_size);
+    const unsigned fs(client_opt.mismatchDensityFilterFlankSize);
     ddata dd(read_size,fs,rmi);
 
     for (unsigned i(0); i<read_size; ++i) rmi[i].is_mismatch=false;
@@ -203,7 +203,7 @@ create_mismatch_filter_map(const blt_options& client_opt,
     }
 
     // set mismatch filter value:
-    const int max_pass(static_cast<int>(client_opt.max_win_mismatch));
+    const int max_pass(static_cast<int>(client_opt.mismatchDensityFilterMaxMismatchCount));
     for (unsigned i(0); i<read_size; ++i)
     {
         const int del(dd.get(i));

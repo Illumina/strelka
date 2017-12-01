@@ -29,8 +29,8 @@ struct snoise_options : public starling_base_options
         // TODO: should this be updated with all of the latest germline caller settings for haplotyping, etc?
         bsnp_ssd_no_mismatch = 0.35;
         bsnp_ssd_one_mismatch = 0.6;
-        max_win_mismatch = 2;
-        max_win_mismatch_flank_size = 20;
+        mismatchDensityFilterMaxMismatchCount = 2;
+        mismatchDensityFilterFlankSize = 20;
         is_min_vexp = true;
         min_vexp = 0.25;
     }

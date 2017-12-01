@@ -67,13 +67,15 @@ struct strelka_options : public starling_base_options
     strelka_options()
     {
         // custom mmdf defaults for somatic calling
-        max_win_mismatch = 3;
-        max_win_mismatch_flank_size = 20;
+        mismatchDensityFilterMaxMismatchCount = 3;
+        mismatchDensityFilterFlankSize = 20;
 
         // custom noisy read handling for somatic calling
         randomBaseMatchProb = 0.5;
 
         min_qscore = 0;
+
+        useTier2Evidence = true;
 
         // turn on empirical scoring for strelka only:
         is_compute_somatic_scoring_metrics = true;

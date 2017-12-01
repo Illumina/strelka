@@ -1247,13 +1247,13 @@ pileup_read_segment(
     const bool is_tier1(rseg.is_tier1_mapping());
 
     // precompute mismatch density info for this read:
-    if ((! is_submapped) && _opt.is_max_win_mismatch())
+    if ((! is_submapped) && _opt.isMismatchDensityFilter())
     {
         const rc_segment_bam_seq ref_bseq(_ref);
         create_mismatch_filter_map(_opt,best_al,ref_bseq,bseq,read_begin,read_end, _candidateSnvBuffer, _rmi);
-        if (_opt.tier2.is_tier2_mismatch_density_filter_count)
+        if (_opt.useTier2Evidence)
         {
-            const int max_pass(_opt.tier2.tier2_mismatch_density_filter_count);
+            const int max_pass(_opt.tier2.mismatchDensityFilterMaxMismatchCount);
             for (unsigned i(0); i<read_size; ++i)
             {
                 _rmi[i].tier2_mismatch_filter_map = (max_pass < _rmi[i].mismatch_count);
@@ -1322,25 +1322,22 @@ pileup_read_segment(
                                         (qscore < _opt.min_qscore));
 
                     bool is_tier2_call_filter(is_call_filter);
-                    if ((! is_call_filter) && _opt.is_max_win_mismatch())
+                    if ((! is_call_filter) && _opt.isMismatchDensityFilter())
                     {
                         is_call_filter = _rmi[read_pos].mismatch_filter_map;
-                        if (! _opt.tier2.is_tier2_no_mismatch_density_filter)
+                        if (_opt.useTier2Evidence)
                         {
-                            if (_opt.tier2.is_tier2_mismatch_density_filter_count)
-                            {
-                                is_tier2_call_filter = _rmi[read_pos].tier2_mismatch_filter_map;
-                            }
-                            else
-                            {
-                                is_tier2_call_filter = is_call_filter;
-                            }
+                            is_tier2_call_filter = _rmi[read_pos].tier2_mismatch_filter_map;
+                        }
+                        else
+                        {
+                            is_tier2_call_filter = is_call_filter;
                         }
                     }
                     current_call_filter = ( is_tier1 ? is_call_filter : is_tier2_call_filter );
                     is_tier_specific_filter = ( is_tier1 && is_call_filter && (! is_tier2_call_filter) );
 
-                    if (_opt.is_max_win_mismatch())
+                    if (_opt.isMismatchDensityFilter())
                     {
                         is_neighbor_mismatch=(_rmi[read_pos].mismatch_count_ns>0);
                     }

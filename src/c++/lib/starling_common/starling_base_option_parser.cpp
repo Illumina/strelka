@@ -234,9 +234,9 @@ finalize_starling_base_options(
         pinfo.usage(errorMsg.c_str());
     }
 
-    if (opt.tier2.is_tier2_min_mapping_quality)
+    if (opt.useTier2Evidence)
     {
-        if (opt.tier2.tier2_min_mapping_quality >= opt.min_mapping_quality)
+        if (opt.tier2.min_mapping_quality >= opt.min_mapping_quality)
         {
             std::ostringstream oss;
             oss << "Invalid tier2 min mapping quality. Value must be lower than tier1 min mapping quality: '" << opt.min_mapping_quality << "'";

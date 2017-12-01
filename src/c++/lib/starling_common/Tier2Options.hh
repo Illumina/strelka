@@ -19,30 +19,28 @@
 
 #pragma once
 
+#include <cassert>
+
 
 struct Tier2Options
 {
-    bool
-    is_tier2() const
+    void
+    validate() const
     {
-        return
-            (is_tier2_min_mapping_quality ||
-             is_tier2_mismatch_density_filter_count ||
-             is_tier2_no_mismatch_density_filter ||
-             is_tier2_include_singleton ||
-             is_tier2_include_anomalous ||
-             isRandomBaseMatchProb);
+        assert((randomBaseMatchProb >= 0.) && (randomBaseMatchProb <= 1.));
     }
 
-    int tier2_min_mapping_quality = 0;
-    bool is_tier2_min_mapping_quality = false;
+    /// min mapping quality used for tier2 calling
+    int min_mapping_quality = 0;
 
-    int tier2_mismatch_density_filter_count = 0;
-    bool is_tier2_mismatch_density_filter_count = false;
+    /// number of mismatches allowed in the mismatch density filter window at tier2
+    int mismatchDensityFilterMaxMismatchCount = 10;
 
-    bool is_tier2_no_mismatch_density_filter = false;
-    bool is_tier2_include_singleton = false;
-    bool is_tier2_include_anomalous = false;
+    /// If true, use reads with unmapped mates for tier2 calling
+    bool is_include_singleton = true;
+
+    /// If true, use non proper-pair reads for tier2 calling
+    bool is_include_anomalous = true;
 
     /// If true, use tier2 randomBaseMatchProb value
     bool isRandomBaseMatchProb = true;

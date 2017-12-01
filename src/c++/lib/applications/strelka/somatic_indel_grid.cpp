@@ -208,7 +208,7 @@ get_somatic_indel(
         const bool is_include_tier2(i==1);
         if (is_include_tier2)
         {
-            if (! opt.tier2.is_tier2()) continue;
+            if (! opt.useTier2Evidence) continue;
             if (tier_rs[0].qphred==0)
             {
                 if (! sindel.is_forced_output)   // if forced output then there's still a point to computing tier2
@@ -300,7 +300,7 @@ get_somatic_indel(
     }
 
     sindel.sindel_tier=0;
-    if (opt.tier2.is_tier2())
+    if (opt.useTier2Evidence)
     {
         if (tier_rs[0].qphred > tier_rs[1].qphred)
         {
@@ -309,7 +309,7 @@ get_somatic_indel(
     }
 
     sindel.sindel_from_ntype_tier=0;
-    if (opt.tier2.is_tier2())
+    if (opt.useTier2Evidence)
     {
         if (tier_rs[0].from_ntype_qphred > tier_rs[1].from_ntype_qphred)
         {

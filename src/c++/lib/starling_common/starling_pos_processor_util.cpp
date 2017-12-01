@@ -249,15 +249,12 @@ is_usable_read_mapping(const starling_base_options& opt,
     bool is_include_anomalous(opt.is_include_anomalous);
     if (is_tier2)
     {
-        if (opt.tier2.is_tier2_min_mapping_quality)
-        {
-            current_min_mapping_quality=opt.tier2.tier2_min_mapping_quality;
-        }
-        if (opt.tier2.is_tier2_include_singleton)
+        current_min_mapping_quality=opt.tier2.min_mapping_quality;
+        if (opt.tier2.is_include_singleton)
         {
             is_include_singleton=true;
         }
-        if (opt.tier2.is_tier2_include_anomalous)
+        if (opt.tier2.is_include_anomalous)
         {
             is_include_anomalous=true;
         }
@@ -299,7 +296,7 @@ get_map_level(const starling_base_options& opt,
     if (read.is_unmapped()) return UNMAPPED;
 
     if (is_usable_read_mapping(opt,read)) return TIER1_MAPPED;
-    if (opt.tier2.is_tier2())
+    if (opt.useTier2Evidence)
     {
         if (is_usable_read_mapping(opt,read,true)) return TIER2_MAPPED;
     }

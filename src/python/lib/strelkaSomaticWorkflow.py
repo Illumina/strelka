@@ -91,10 +91,6 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
     segCmd.extend(["--somatic-indel-rate", str(self.params.sindelPrior) ] )
     segCmd.extend(["--shared-indel-error-factor", str(self.params.sindelNoiseFactor)])
     segCmd.extend(["--tier2-min-mapping-quality", str(self.params.minTier2Mapq) ] )
-    segCmd.extend(["--tier2-mismatch-density-filter-count", "10"] )
-    segCmd.extend(["--tier2-indel-nonsite-match-prob", "0.25"] )
-    segCmd.append("--tier2-include-singleton")
-    segCmd.append("--tier2-include-anomalous")
 
     segCmd.extend(["--strelka-snv-max-filtered-basecall-frac", str(self.params.snvMaxFilteredBasecallFrac)])
     segCmd.extend(["--strelka-snv-max-spanning-deletion-frac", str(self.params.snvMaxSpanningDeletionFrac)])

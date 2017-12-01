@@ -43,11 +43,15 @@ struct SequenceErrorCountsOptions : public starling_base_options
         isBasecallQualAdjustedForMapq = false;
 
         // custom mmdf for sequence error counting
-        max_win_mismatch = 1;
-        max_win_mismatch_flank_size = 100;
+        mismatchDensityFilterMaxMismatchCount = 1;
+        mismatchDensityFilterFlankSize = 100;
 
-        tier2.is_tier2_min_mapping_quality = true;
-        tier2.tier2_min_mapping_quality = 0;
+        // use tier2 but disable everything besides the lower MAPQ value
+        useTier2Evidence = true;
+        tier2.mismatchDensityFilterMaxMismatchCount = 2;
+        tier2.is_include_anomalous = false;
+        tier2.is_include_singleton = false;
+        tier2.isRandomBaseMatchProb = false;
 
         minDistanceFromReadEdge = 10;
     }

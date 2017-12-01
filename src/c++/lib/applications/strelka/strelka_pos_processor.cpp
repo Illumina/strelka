@@ -180,7 +180,7 @@ process_pos_snp_somatic(const pos_t pos)
     for (unsigned t(0); t<n_tier; ++t)
     {
         const bool is_include_tier2(t!=0);
-        if (is_include_tier2 && (! _opt.tier2.is_tier2())) continue;
+        if (is_include_tier2 && (! _opt.useTier2Evidence)) continue;
         _pileupCleaner.CleanPileup(normal_sif.basecallBuffer.get_pos(pos),is_include_tier2,*(normal_cpi_ptr[t]));
         _pileupCleaner.CleanPileup(tumor_sif.basecallBuffer.get_pos(pos),is_include_tier2,*(tumor_cpi_ptr[t]));
     }
@@ -202,7 +202,7 @@ process_pos_snp_somatic(const pos_t pos)
 
         const extended_pos_info* normal_epi_t2_ptr(nullptr);
         const extended_pos_info* tumor_epi_t2_ptr(nullptr);
-        if (_opt.tier2.is_tier2())
+        if (_opt.useTier2Evidence)
         {
             normal_epi_t2_ptr=&(normal_cpi_ptr[1]->getExtendedPosInfo());
             tumor_epi_t2_ptr=&(tumor_cpi_ptr[1]->getExtendedPosInfo());

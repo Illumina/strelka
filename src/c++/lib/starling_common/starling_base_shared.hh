@@ -53,6 +53,7 @@ struct starling_base_options : public blt_options
         base_t::validate();
 
         assert((min_het_vf > 0.) && (min_het_vf < 0.5));
+        tier2.validate();
     }
 
     virtual
@@ -218,6 +219,7 @@ struct starling_base_options : public blt_options
 
     bool isBasecallQualAdjustedForMapq = true;
 
+    bool useTier2Evidence = false;
     Tier2Options tier2;
 
     // indel error options
