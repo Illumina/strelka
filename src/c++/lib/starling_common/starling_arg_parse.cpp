@@ -40,8 +40,6 @@ legacy_starling_arg_parse(
 
     opt.cmdline = ad.cmdline;
 
-    bool is_min_pascore_set(false);
-
     bool is_max_indel_size(false);
 
     const unsigned as(ad.size());
@@ -49,11 +47,7 @@ legacy_starling_arg_parse(
     {
         if (ad.argmark[i]) continue;
 
-        if (ad.argstr[i]=="-min-mapping-quality")
-        {
-            set_arg(i,ad,is_min_pascore_set,opt.min_mapping_quality);
-        }
-        else if (ad.argstr[i]=="-max-indel-size")
+        if (ad.argstr[i]=="-max-indel-size")
         {
             set_arg(i,ad,is_max_indel_size,opt.maxIndelSize);
         }

@@ -122,6 +122,8 @@ get_starling_base_option_parser(
      "Maximum reads buffered for each sample")
     ("min-qscore", po::value(&opt.min_qscore)->default_value(opt.min_qscore),
      "Don't use a basecall for SNV calling if qscore is below this value.")
+    ("min-mapping-quality", po::value(&opt.min_mapping_quality)->default_value(opt.min_mapping_quality),
+     "Reads with mapping quality<n are marked as tier1 filtered. Such reads are not directly used for variant calling unless a tier2 value is defined in certain applications. Filtered reads may also still be used to compute locus quality metrics.")
     ;
 
     po::options_description other_opt("other-options");
@@ -157,10 +159,6 @@ write_starling_legacy_options(
     std::ostream& os)
 {
     os <<
-       " -min-mapping-quality n\n"
-       "                    - Reads with mapping quality<n are marked as tier1 filtered. Such reads are not\n"
-       "                      directly used for variant calling unless a tier2 value is defined in certain applications.\n"
-       "                      Filtered reads may also still be used to compute locus quality metrics (default score: " << default_opt.min_mapping_quality << ")\n"
        " -max-indel-size    - Sets the maximum size for indels processed for indel genotype calling and realignment.\n"
        "                      Increasing this value should lead to an approx linear increase in memory consumption.\n"
        "                      (default: " << default_opt.maxIndelSize << ")\n"

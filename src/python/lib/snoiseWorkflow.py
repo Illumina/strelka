@@ -61,7 +61,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd = [ self.params.snoiseBin ]
 
     segCmd.extend(["--region", gseg.chromLabel + ":" + str(gseg.beginPos) + "-" + str(gseg.endPos)])
-    segCmd.extend(["-min-mapping-quality",self.params.minMapq])
+    segCmd.extend(["--min-mapping-quality",self.params.minMapq])
     segCmd.extend(["--ref", self.params.referenceFasta ])
     segCmd.extend(["-max-indel-size", self.params.maxIndelSize])
 

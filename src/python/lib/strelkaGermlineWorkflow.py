@@ -91,7 +91,7 @@ def callGenomeSegment(self, gsegGroup, segFiles, taskPrefix="", dependencies=Non
 
     self.appendCommonGenomeSegmentCommandOptions(gsegGroup, genomeSegmentLabel, segCmd)
 
-    segCmd.extend(["-min-mapping-quality",self.params.minMapq])
+    segCmd.extend(["--min-mapping-quality",self.params.minMapq])
 
     segCmd.extend(["--gvcf-output-prefix", self.paths.getTmpSegmentGvcfPrefix(genomeSegmentLabel)])
     segCmd.extend(['--gvcf-min-gqx','15'])
