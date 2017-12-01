@@ -88,11 +88,7 @@ usage(const char* xmessage) const
 
     static starling_options default_opt;
     static const po::options_description visible(get_starling_option_parser(default_opt));
-    os << "\n\n[ ***** new options ***** ]\n\n";
-    os << visible
-       << "\n\n\n[ ***** legacy options ***** ]\n\n";
-    write_starling_legacy_options(default_opt,os);
-    os << "\n";
+    os << visible << "\n";
 
     if (xmessage)
     {

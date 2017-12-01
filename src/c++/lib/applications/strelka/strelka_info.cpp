@@ -20,7 +20,6 @@
 #include "strelka_info.hh"
 #include "strelka_option_parser.hh"
 #include "strelka_shared.hh"
-#include "starling_common/starling_base_option_parser.hh"
 
 #include "blt_util/log.hh"
 
@@ -43,10 +42,7 @@ usage(const char* xmessage) const
        "\n" << name() << " - joint tumor/normal small-variant caller\n"
        "\tversion: " << version() << "\n"
        "\n"
-       "usage: " << name() << " [options]\n\n" << visible
-       << "\n\n\n[ ***** legacy single-sample options ***** ]\n\n";
-    write_starling_legacy_options(default_opt, os);
-    os << "\n";
+       "usage: " << name() << " [options]\n\n" << visible << "\n";
 
     if (xmessage)
     {

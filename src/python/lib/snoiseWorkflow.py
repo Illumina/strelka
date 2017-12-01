@@ -63,7 +63,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["--region", gseg.chromLabel + ":" + str(gseg.beginPos) + "-" + str(gseg.endPos)])
     segCmd.extend(["--min-mapping-quality",self.params.minMapq])
     segCmd.extend(["--ref", self.params.referenceFasta ])
-    segCmd.extend(["-max-indel-size", self.params.maxIndelSize])
+    segCmd.extend(["--max-indel-size", self.params.maxIndelSize])
 
     for bamPath in self.params.bamList :
         segCmd.extend(["--align-file",bamPath])

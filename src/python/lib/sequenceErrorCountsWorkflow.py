@@ -72,7 +72,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segCmd.extend(["--region", gseg.chromLabel + ":" + str(gseg.beginPos) + "-" + str(gseg.endPos)])
     segCmd.extend(["--ref", self.params.referenceFasta ])
-    segCmd.extend(["-max-indel-size", self.params.maxIndelSize])
+    segCmd.extend(["--max-indel-size", self.params.maxIndelSize])
 
     segFiles.counts.append(self.paths.getTmpSegmentErrorCountsPath(segStr))
     segCmd.extend(["--counts-file", segFiles.counts[-1]])

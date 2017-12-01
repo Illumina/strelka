@@ -40,18 +40,12 @@ legacy_starling_arg_parse(
 
     opt.cmdline = ad.cmdline;
 
-    bool is_max_indel_size(false);
-
     const unsigned as(ad.size());
     for (unsigned i(0); i<as; ++i)
     {
         if (ad.argmark[i]) continue;
 
-        if (ad.argstr[i]=="-max-indel-size")
-        {
-            set_arg(i,ad,is_max_indel_size,opt.maxIndelSize);
-        }
-        else if (ad.argstr[i]=="-h")
+        if (ad.argstr[i]=="-h")
         {
             pinfo.usage();
         }

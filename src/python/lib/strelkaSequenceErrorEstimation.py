@@ -50,7 +50,7 @@ def countGenomeSegment(self, sampleIndex, gseg, segFiles, taskPrefix="", depende
 
     segCmd.extend(["--region", gseg.bamRegion])
     segCmd.extend(["--ref", self.params.referenceFasta ])
-    segCmd.extend(["-max-indel-size", self.params.maxIndelSize])
+    segCmd.extend(["--max-indel-size", self.params.maxIndelSize])
 
     segFiles.counts.append(self.paths.getTmpSegmentErrorCountsPath(sampleIndex, genomeSegmentLabel))
     segCmd.extend(["--counts-file", segFiles.counts[-1]])

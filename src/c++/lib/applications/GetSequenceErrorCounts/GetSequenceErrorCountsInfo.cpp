@@ -43,11 +43,7 @@ usage(const char* xmessage) const
 
     static SequenceErrorCountsOptions default_opt;
     static const po::options_description visible(getSequenceErrorCountsOptionsParser(default_opt));
-    os << "\n\n[ ***** new options ***** ]\n\n";
-    os << visible
-       << "\n\n\n[ ***** legacy options ***** ]\n\n";
-    write_starling_legacy_options(default_opt,os);
-    os << "\n";
+    os << visible << "\n";
 
     if (xmessage)
     {

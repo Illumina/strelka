@@ -53,12 +53,6 @@ po::options_description
 get_starling_base_option_parser(
     starling_base_options& opt);
 
-void
-write_starling_legacy_options(
-    const starling_base_options& default_opt,
-    std::ostream& os);
-
-
 /// validate options and process any required quick consistency
 /// adjustments
 ///

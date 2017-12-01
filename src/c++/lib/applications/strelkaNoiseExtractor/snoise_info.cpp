@@ -21,7 +21,6 @@
 #include "snoise_option_parser.hh"
 #include "snoise_shared.hh"
 #include "blt_util/log.hh"
-#include "starling_common/starling_base_option_parser.hh"
 
 #include <cstdlib>
 
@@ -93,10 +92,7 @@ usage(
        "\n" << name() << " - strelka noise extractor\n"
        "\tversion: " << version() << "\n"
        "\n"
-       "usage: " << name() << " [options]\n\n" << visible
-       << "\n\n\n[ ***** legacy single-sample options ***** ]\n\n";
-    write_starling_legacy_options(default_opt,os);
-    os << "\n";
+       "usage: " << name() << " [options]\n\n" << visible << "\n";
 
     if (xmessage)
     {

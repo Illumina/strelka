@@ -173,7 +173,7 @@ class StrelkaSharedCallWorkflow(WorkflowRunner) :
             segCmd.extend(["--region", gseg.bamRegion])
 
         segCmd.extend(["--ref", self.params.referenceFasta ])
-        segCmd.extend(["-max-indel-size", self.params.maxIndelSize] )
+        segCmd.extend(["--max-indel-size", self.params.maxIndelSize] )
 
         if self.params.indelErrorModelName is not None :
             segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])

@@ -106,6 +106,8 @@ get_starling_base_option_parser(
      "Force each site or indel in the vcf file to be written to the snv or indel output, even if no variant is found. Any indels submitted will also be treated as candidate indels. Option can be provided multiple times to combine multiple vcf files. Unnormalized variants will trigger a runtime error. (must be bgzip compressed and tabix indexed)")
     ("upstream-oligo-size", po::value(&opt.upstream_oligo_size),
      "Treat reads as if they have an upstream oligo anchor for purposes of meeting minimum breakpoint overlap in support of an indel.")
+    ("max-indel-size", po::value(&opt.maxIndelSize)->default_value(opt.maxIndelSize),
+     "Maximum size of indels processed for realignment and calling.")
     ;
 
     po::options_description ploidy_opt("ploidy-options");
@@ -149,21 +151,6 @@ get_starling_base_option_parser(
     new_opt.add(input_opt).add(other_opt);
 
     return new_opt;
-}
-
-
-
-void
-write_starling_legacy_options(
-    const starling_base_options& default_opt,
-    std::ostream& os)
-{
-    os <<
-       " -max-indel-size    - Sets the maximum size for indels processed for indel genotype calling and realignment.\n"
-       "                      Increasing this value should lead to an approx linear increase in memory consumption.\n"
-       "                      (default: " << default_opt.maxIndelSize << ")\n"
-       "\n"
-       " -h                 - Display usage (this page)\n";
 }
 
 
