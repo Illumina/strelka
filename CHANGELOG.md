@@ -6,6 +6,8 @@
   - This has a legacy use in identifying noisy alignments. Now replaced with a simplified scheme.
 
 ### Fixed
+- Fix empirical variant scoring (EVS) of complex somatic indels (STREL-774)
+  - Previously the EVS model was overly pessimistic against complex somatic indels. This is now fixed by changing how EVS input features are computed for complex indels.
 - Fix default sample name used in the VCF output for germline analysis (STREL-737)
   -  Default is used when sample name cannot be parsed from the BAM header. Now fixed to insert SAMPLE1, SAMPLE2, etc. as documented.
 - Fix rare instance where strand bias (SAMPLE/SB) is 'inf' (STREL-741)

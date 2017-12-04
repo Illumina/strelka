@@ -192,9 +192,13 @@ calculateScoringFeatures(
     }
     else
     {
-        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::IndelRepeatCount, 0);
-        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RefRepeatCount, 0);
-        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RepeatUnitLength, 0);
+        // For complex ("SWAP") indels there will typically not be a repeat unit.
+        // By making the following features default to 1 rather than 0 it becomes
+        // harder for EVS to separate out and discriminate against complex indels,
+        // which may be labelled incorrectly in the training data.
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::IndelRepeatCount, 1);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RefRepeatCount, 1);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RepeatUnitLength, 1);
     }
     smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::InterruptedHomopolymerLength, siInfo.indelReportInfo.interruptedHomopolymerLength);
     smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::TumorSampleIndelNoiseLogOdds, getSampleIndelNoiseLogOdds(siInfo.tisri[0]));
