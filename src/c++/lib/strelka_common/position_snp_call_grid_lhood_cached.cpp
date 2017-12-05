@@ -130,8 +130,8 @@ void
 get_diploid_gt_lhood_cached(
     const blt_options& opt,
     const snp_pos_info& pi,
-    const bool is_het_bias,
-    const blt_float_t het_bias,
+    const bool useHetVariantFrequencyExtension,
+    const blt_float_t hetVariantFrequencyExtension,
     blt_float_t* const lhood)
 {
     // ! not thread-safe !
@@ -169,14 +169,14 @@ get_diploid_gt_lhood_cached(
     // single-sample analysis and not currently used for somatic
     // calls (as of strelka proto3/4)
     //
-    if (is_het_bias)
+    if (useHetVariantFrequencyExtension)
     {
         // ! not thread-safe !
         static het_ratio_cache<3> hrcache_bias;
 
         // loop is currently setup to assume a uniform het ratio subgenotype prior
-        const unsigned n_bias_steps(1+static_cast<unsigned>(het_bias/opt.het_bias_max_ratio_inc));
-        const blt_float_t ratio_increment(het_bias/static_cast<blt_float_t>(n_bias_steps));
+        const unsigned n_bias_steps(1+static_cast<unsigned>(hetVariantFrequencyExtension/opt.maxHetVariantFrequencyIncrement));
+        const blt_float_t ratio_increment(hetVariantFrequencyExtension/static_cast<blt_float_t>(n_bias_steps));
         for (unsigned i(0); i<n_bias_steps; ++i)
         {
             const blt_float_t het_ratio(0.5+(i+1)*ratio_increment);

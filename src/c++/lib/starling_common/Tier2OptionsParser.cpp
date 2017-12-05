@@ -30,7 +30,7 @@ getTier2OptionsDescription(
     po::options_description desc("Tier2 data thresholds");
     desc.add_options()
     ("tier2-min-mapping-quality",
-     po::value(&opt.min_mapping_quality),
+     po::value(&opt.minMappingErrorPhredProb),
      "Min mapping quality used for tier2 calling")
     ;
     return desc;

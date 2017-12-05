@@ -31,16 +31,16 @@ struct Tier2Options
     }
 
     /// min mapping quality used for tier2 calling
-    int min_mapping_quality = 0;
+    int minMappingErrorPhredProb = 0;
 
     /// number of mismatches allowed in the mismatch density filter window at tier2
     int mismatchDensityFilterMaxMismatchCount = 10;
 
     /// If true, use reads with unmapped mates for tier2 calling
-    bool is_include_singleton = true;
+    bool includeSingletonReads = true;
 
     /// If true, use non proper-pair reads for tier2 calling
-    bool is_include_anomalous = true;
+    bool includeAnomalousReads = true;
 
     /// If true, use tier2 randomBaseMatchProb value
     bool isRandomBaseMatchProb = true;

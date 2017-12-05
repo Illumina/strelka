@@ -73,7 +73,7 @@ struct strelka_options : public starling_base_options
         // custom noisy read handling for somatic calling
         randomBaseMatchProb = 0.5;
 
-        min_qscore = 0;
+        minBasecallErrorPhredProb = 0;
 
         useTier2Evidence = true;
 

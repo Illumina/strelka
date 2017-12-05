@@ -1319,7 +1319,7 @@ pileup_read_segment(
                 if (! is_submapped)
                 {
                     bool is_call_filter((call_code == BAM_BASE::ANY) ||
-                                        (qscore < _opt.min_qscore));
+                                        (qscore < _opt.minBasecallErrorPhredProb));
 
                     bool is_tier2_call_filter(is_call_filter);
                     if ((! is_call_filter) && _opt.isMismatchDensityFilter())

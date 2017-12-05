@@ -244,17 +244,17 @@ is_usable_read_mapping(const starling_base_options& opt,
                        const bam_record& read,
                        const bool is_tier2 =false)
 {
-    int current_min_mapping_quality(opt.min_mapping_quality);
-    bool is_include_singleton(opt.is_include_singleton);
-    bool is_include_anomalous(opt.is_include_anomalous);
+    int current_min_mapping_quality(opt.minMappingErrorPhredProb);
+    bool is_include_singleton(opt.includeSingletonReads);
+    bool is_include_anomalous(opt.includeAnomalousReads);
     if (is_tier2)
     {
-        current_min_mapping_quality=opt.tier2.min_mapping_quality;
-        if (opt.tier2.is_include_singleton)
+        current_min_mapping_quality=opt.tier2.minMappingErrorPhredProb;
+        if (opt.tier2.includeSingletonReads)
         {
             is_include_singleton=true;
         }
-        if (opt.tier2.is_include_anomalous)
+        if (opt.tier2.includeAnomalousReads)
         {
             is_include_anomalous=true;
         }

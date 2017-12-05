@@ -164,8 +164,8 @@ struct pprob_digt_caller : private boost::noncopyable
     get_diploid_gt_lhood(
         const blt_options& opt,
         const extended_pos_info& epi,
-        const bool is_het_bias,
-        const blt_float_t het_bias,
+        const bool useHetVariantFrequencyExtension,
+        const blt_float_t hetVariantFrequencyExtension,
         blt_float_t* const lhood,
         const bool is_strand_specific = false,
         const bool is_ss_fwd = false);

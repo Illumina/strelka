@@ -91,15 +91,24 @@ struct blt_options : public PolymorphicObject
     double hetVariantFrequencyExtension = 0;
 
     bool
-    isHetVariantFrequencyExtension() const
+    isHetVariantFrequencyExtensionDefined() const
     {
         return (hetVariantFrequencyExtension>0);
     }
 
-    int min_qscore = 17;
-    int min_mapping_quality = 20;
+    /// When hetVariantFrequencyExtension is defined, the continuous frequency range for heterozygous variants is
+    /// represented by a frequency grid with a grid increment distance less than this value
+    ///
+    /// The additional "fudge factor" added to 0.05 is used because the requested hetVariantFrequencyExtension is
+    /// often a multiple of 0.05, which would force us the use the finest grid spacing (0.025) in nearly all
+    /// normal cases otherwise.
+    const double maxHetVariantFrequencyIncrement = 0.0501;
 
-    /// Don't use base in SNV calling if mismatch count>max_win_mismatch within a window of max_win_mismatch_flank_size flanking bases
+    int minBasecallErrorPhredProb = 17;
+    int minMappingErrorPhredProb = 20;
+
+    /// Don't use a basecall during SNV calling if mismatch count>max_win_mismatch
+    /// within a window of max_win_mismatch_flank_size flanking bases
     unsigned mismatchDensityFilterMaxMismatchCount = 0;
     unsigned mismatchDensityFilterFlankSize = 0;
 
@@ -110,10 +119,10 @@ struct blt_options : public PolymorphicObject
     }
 
     /// If true, use reads with unmapped mates for variant calling
-    bool is_include_singleton = false;
+    bool includeSingletonReads = false;
 
     /// If true, use non proper-pair reads for variant calling
-    bool is_include_anomalous = false;
+    bool includeAnomalousReads = false;
 
     bool is_min_vexp = false;
     double min_vexp = 0;
@@ -122,15 +131,6 @@ struct blt_options : public PolymorphicObject
     LOG_LEVEL::index_t verbosity = LOG_LEVEL::DEFAULT;
 
     std::string cmdline;
-
-    // constants for het-bias model:
-    //
-    // Humans will often pick exact multples of the max_ratio increment,
-    // which are also the least efficient points in terms of increment
-    // size -- fudge removes this trend from the computation:
-    //
-    const double het_bias_inc_fudge = 0.0001;
-    const double het_bias_max_ratio_inc = 0.05 + het_bias_inc_fudge;
 
     /// If true, then reads above max_input_depth are filtered out (option used mostly for amplicon calling)
     bool is_max_input_depth = false;

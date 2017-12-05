@@ -41,8 +41,8 @@ void
 get_diploid_gt_lhood_cached(
     const blt_options& opt,
     const snp_pos_info& pi,
-    const bool is_het_bias,
-    const blt_float_t het_bias,
+    const bool useHetVariantFrequencyExtension,
+    const blt_float_t hetVariantFrequencyExtension,
     blt_float_t* const lhood);
 
 

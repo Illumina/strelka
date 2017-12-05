@@ -328,8 +328,8 @@ void
 pprob_digt_caller::
 get_diploid_gt_lhood(const blt_options& opt,
                      const extended_pos_info& epi,
-                     const bool is_het_bias,
-                     const blt_float_t het_bias,
+                     const bool useHetVariantFrequencyExtension,
+                     const blt_float_t hetVariantFrequencyExtension,
                      blt_float_t* const lhood,
                      const bool is_strand_specific,
                      const bool is_ss_fwd)
@@ -363,11 +363,11 @@ get_diploid_gt_lhood(const blt_options& opt,
         }
     }
 
-    if (is_het_bias)
+    if (useHetVariantFrequencyExtension)
     {
         // loop is currently setup to assume a uniform het ratio subgenotype prior
-        const unsigned n_bias_steps(1+static_cast<unsigned>(het_bias/opt.het_bias_max_ratio_inc));
-        const blt_float_t ratio_increment(het_bias/static_cast<blt_float_t>(n_bias_steps));
+        const unsigned n_bias_steps(1+static_cast<unsigned>(hetVariantFrequencyExtension/opt.maxHetVariantFrequencyIncrement));
+        const blt_float_t ratio_increment(hetVariantFrequencyExtension/static_cast<blt_float_t>(n_bias_steps));
         for (unsigned i(0); i<n_bias_steps; ++i)
         {
             const blt_float_t het_ratio(0.5+(i+1)*ratio_increment);
@@ -490,11 +490,11 @@ position_snp_call_pprob_digt(
     }
 
     // don't spend time on the het bias model for haploid sites:
-    const bool is_het_bias((! dgt.is_haploid()) && opt.isHetVariantFrequencyExtension());
+    const bool useHetVariantFrequencyExtension((! dgt.is_haploid()) && opt.isHetVariantFrequencyExtensionDefined());
 
     // get likelihood of each genotype
     blt_float_t lhood[DIGT::SIZE];
-    get_diploid_gt_lhood(opt,epi,is_het_bias,opt.hetVariantFrequencyExtension,lhood);
+    get_diploid_gt_lhood(opt,epi,useHetVariantFrequencyExtension,opt.hetVariantFrequencyExtension,lhood);
 
     // set phredLoghood:
     {
@@ -523,9 +523,9 @@ position_snp_call_pprob_digt(
     if (is_compute_sb && dgt.is_snp())
     {
         blt_float_t lhood_fwd[DIGT::SIZE];
-        get_diploid_gt_lhood(opt,epi,is_het_bias,opt.hetVariantFrequencyExtension,lhood_fwd,true,true);
+        get_diploid_gt_lhood(opt,epi,useHetVariantFrequencyExtension,opt.hetVariantFrequencyExtension,lhood_fwd,true,true);
         blt_float_t lhood_rev[DIGT::SIZE];
-        get_diploid_gt_lhood(opt,epi,is_het_bias,opt.hetVariantFrequencyExtension,lhood_rev,true,false);
+        get_diploid_gt_lhood(opt,epi,useHetVariantFrequencyExtension,opt.hetVariantFrequencyExtension,lhood_rev,true,false);
 
         // If max_gt is equal to reference, then go ahead and use it
         // for consistency, even though this makes the SB value

@@ -118,9 +118,9 @@ get_starling_base_option_parser(
      "Maximum allowed read depth per sample (prior to realignment). Input reads which would exceed this depth are filtered out.  (default: no limit)")
     ("max-sample-read-buffer", po::value(&opt.maxBufferedReads)->default_value(opt.maxBufferedReads),
      "Maximum reads buffered for each sample")
-    ("min-qscore", po::value(&opt.min_qscore)->default_value(opt.min_qscore),
+    ("min-qscore", po::value(&opt.minBasecallErrorPhredProb)->default_value(opt.minBasecallErrorPhredProb),
      "Don't use a basecall for SNV calling if qscore is below this value.")
-    ("min-mapping-quality", po::value(&opt.min_mapping_quality)->default_value(opt.min_mapping_quality),
+    ("min-mapping-quality", po::value(&opt.minMappingErrorPhredProb)->default_value(opt.minMappingErrorPhredProb),
      "Reads with mapping quality<n are marked as tier1 filtered. Such reads are not directly used for variant calling unless a tier2 value is defined in certain applications. Filtered reads may also still be used to compute locus quality metrics.")
     ;
 
@@ -236,10 +236,10 @@ finalize_starling_base_options(
 
     if (opt.useTier2Evidence)
     {
-        if (opt.tier2.min_mapping_quality >= opt.min_mapping_quality)
+        if (opt.tier2.minMappingErrorPhredProb >= opt.minMappingErrorPhredProb)
         {
             std::ostringstream oss;
-            oss << "Invalid tier2 min mapping quality. Value must be lower than tier1 min mapping quality: '" << opt.min_mapping_quality << "'";
+            oss << "Invalid tier2 min mapping quality. Value must be lower than tier1 min mapping quality: '" << opt.minMappingErrorPhredProb << "'";
             pinfo.usage(oss.str().c_str());
         }
     }

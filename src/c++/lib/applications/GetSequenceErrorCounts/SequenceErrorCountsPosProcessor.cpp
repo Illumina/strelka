@@ -517,7 +517,7 @@ process_pos_error_counts(
                 if (bc.is_call_filter) continue;
 
                 const uint16_t qual(bc.get_qscore());
-                if (qual<_opt.min_qscore) continue;
+                if (qual<_opt.minBasecallErrorPhredProb) continue;
 
                 static const uint16_t min_count_qscore(25);
                 if (qual<min_count_qscore) continue;

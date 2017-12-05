@@ -38,8 +38,8 @@ struct SequenceErrorCountsOptions : public starling_base_options
         max_candidate_indel_depth_factor = 1;
 
         // set command-line defaults for error counting only:
-        min_mapping_quality = 60;
-        min_qscore = 17;
+        minMappingErrorPhredProb = 60;
+        minBasecallErrorPhredProb = 17;
         isBasecallQualAdjustedForMapq = false;
 
         // custom mmdf for sequence error counting
@@ -49,8 +49,8 @@ struct SequenceErrorCountsOptions : public starling_base_options
         // use tier2 but disable everything besides the lower MAPQ value
         useTier2Evidence = true;
         tier2.mismatchDensityFilterMaxMismatchCount = 2;
-        tier2.is_include_anomalous = false;
-        tier2.is_include_singleton = false;
+        tier2.includeAnomalousReads = false;
+        tier2.includeSingletonReads = false;
         tier2.isRandomBaseMatchProb = false;
 
         minDistanceFromReadEdge = 10;

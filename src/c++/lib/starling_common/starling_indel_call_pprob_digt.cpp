@@ -316,13 +316,13 @@ get_indel_digt_lhood(
     //
     // "                    - Set bias term for the heterozygous state in the bindel model, such that\n"
     // "                      hets are expected at allele ratios in the range [0.5-x,0.5+x] (default: 0)\n"
-    static const bool is_het_bias(false);
-    static const double het_bias(0.);
-    if (is_het_bias)
+    static const bool useHetVariantFrequencyExtension(false);
+    static const double hetVariantFrequencyExtension(0.);
+    if (useHetVariantFrequencyExtension)
     {
         // loop is currently setup to assume a uniform het ratio subgenotype prior
-        const unsigned n_bias_steps(1+static_cast<unsigned>(het_bias/opt.het_bias_max_ratio_inc));
-        const double ratio_increment(het_bias/static_cast<double>(n_bias_steps));
+        const unsigned n_bias_steps(1+static_cast<unsigned>(hetVariantFrequencyExtension/opt.maxHetVariantFrequencyIncrement));
+        const double ratio_increment(hetVariantFrequencyExtension/static_cast<double>(n_bias_steps));
         for (unsigned step(0); step<n_bias_steps; ++step)
         {
             const double het_ratio(0.5+(step+1)*ratio_increment);
