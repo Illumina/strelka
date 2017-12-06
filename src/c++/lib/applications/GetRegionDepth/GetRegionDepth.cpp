@@ -17,9 +17,9 @@
 //
 //
 
-#include "GetChromDepth.hh"
-#include "ChromDepthOptions.hh"
-#include "ReadChromDepthUtil.hh"
+#include "GetRegionDepth.hh"
+#include "RegionDepthOptions.hh"
+#include "ReadRegionDepthUtil.hh"
 
 #include "blt_util/log.hh"
 #include "common/OutStream.hh"
@@ -33,36 +33,36 @@
 
 static
 void
-getChromDepth(const ChromDepthOptions& opt)
+getRegionDepth(const RegionDepthOptions& opt)
 {
     // check that we have write permission on the output file early:
     {
         OutStream outs(opt.outputFilename);
     }
 
-    std::vector<double> chromDepth;
-    for (const std::string& chromName : opt.chromNames)
+    std::vector<double> regionDepth;
+    for (const std::string& region : opt.regions)
     {
-        chromDepth.push_back(readChromDepthFromAlignment(opt.referenceFilename, opt.alignmentFilename, chromName));
+        regionDepth.push_back(readRegionDepthFromAlignment(opt.referenceFilename, opt.alignmentFilename, region));
     }
 
     OutStream outs(opt.outputFilename);
     std::ostream& os(outs.getStream());
 
-    const unsigned chromCount(opt.chromNames.size());
-    for (unsigned chromIndex(0); chromIndex<chromCount; ++chromIndex)
+    const unsigned regionCount(opt.regions.size());
+    for (unsigned regionIndex(0); regionIndex<regionCount; ++regionIndex)
     {
-        os << opt.chromNames[chromIndex] << "\t" << std::fixed << std::setprecision(2) << chromDepth[chromIndex] << "\n";
+        os << opt.regions[regionIndex] << "\t" << std::fixed << std::setprecision(2) << regionDepth[regionIndex] << "\n";
     }
 }
 
 
 void
-GetChromDepth::
+GetRegionDepth::
 runInternal(int argc, char* argv[]) const
 {
-    ChromDepthOptions opt;
+    RegionDepthOptions opt;
 
-    parseChromDepthOptions(*this,argc,argv,opt);
-    getChromDepth(opt);
+    parseRegionDepthOptions(*this,argc,argv,opt);
+    getRegionDepth(opt);
 }

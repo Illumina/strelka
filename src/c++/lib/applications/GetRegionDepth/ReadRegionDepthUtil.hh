@@ -19,19 +19,14 @@
 
 #pragma once
 
-#include "common/Program.hh"
+#include <string>
+#include "RegionDepthOptions.hh"
 
-
-/// estimate per-library information from alignment file(s)
+/// Fast region depth estimator for BAM/CRAM files
 ///
-struct GetChromDepth : public illumina::Program
-{
-    const char*
-    name() const
-    {
-        return "GetChromDepth";
-    }
-
-    void
-    runInternal(int argc, char* argv[]) const;
-};
+/// return average region depth
+double
+readRegionDepthFromAlignment(
+        const std::string& referenceFile,
+        const std::string& alignmentFile,
+        const std::string& region);

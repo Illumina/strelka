@@ -17,27 +17,11 @@
 //
 //
 
-
-#pragma once
-
-#include "common/Program.hh"
-
-#include <string>
-#include <vector>
+#include "applications/GetRegionDepth/GetRegionDepth.hh"
 
 
-struct ChromDepthOptions
+int
+main(int argc, char* argv[])
 {
-    std::string alignmentFilename;
-    std::vector<std::string> chromNames;
-
-    std::string referenceFilename;
-    std::string outputFilename;
-};
-
-
-void
-parseChromDepthOptions(
-    const illumina::Program& prog,
-    int argc, char* argv[],
-    ChromDepthOptions& opt);
+    return GetRegionDepth().run(argc,argv);
+}

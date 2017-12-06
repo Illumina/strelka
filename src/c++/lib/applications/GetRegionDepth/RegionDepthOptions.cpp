@@ -19,7 +19,7 @@
 
 /// \file
 
-#include "ChromDepthOptions.hh"
+#include "RegionDepthOptions.hh"
 
 #include "blt_util/log.hh"
 #include "common/ProgramUtil.hh"
@@ -29,23 +29,23 @@
 
 #include <iostream>
 
-typedef std::vector<std::string> chroms_t;
+typedef std::vector<std::string> regions_t;
 
 
 static
 void
 usage(
-    std::ostream& os,
-    const illumina::Program& prog,
-    const boost::program_options::options_description& visible,
-    const char* msg = nullptr)
+        std::ostream& os,
+        const illumina::Program& prog,
+        const boost::program_options::options_description& visible,
+        const char* msg = nullptr)
 {
-    usage(os, prog, visible, "get chromosome depth information from alignment files", " [ > output ]", msg);
+    usage(os, prog, visible, "get region depth information from alignment files", " [ > output ]", msg);
 }
 
 
 
-/// \brief Parse ChromDepthOptions
+/// \brief Parse RegionDepthOptions
 ///
 /// \param[out] errorMsg If an error occurs this is set to an end-user targeted error message. Any string content on
 ///                 input is cleared
@@ -54,28 +54,28 @@ usage(
 static
 bool
 parseOptions(
-    const boost::program_options::variables_map& vm,
-    ChromDepthOptions& opt,
-    std::string& errorMsg)
+        const boost::program_options::variables_map& vm,
+        RegionDepthOptions& opt,
+        std::string& errorMsg)
 {
     if (checkStandardizeInputFile(opt.alignmentFilename, "alignment", errorMsg)) return true;
     if (checkStandardizeInputFile(opt.referenceFilename, "reference fasta", errorMsg)) return true;
 
-    if (vm.count("chrom"))
+    if (vm.count("region"))
     {
-        opt.chromNames=(boost::any_cast<chroms_t>(vm["chrom"].value()));
+        opt.regions=(boost::any_cast<regions_t>(vm["region"].value()));
     }
 
-    if (opt.chromNames.empty())
+    if (opt.regions.empty())
     {
-        errorMsg = "Need at least one chromosome name";
+        errorMsg = "Need at least one region";
         return true;
     }
 
-    for (const std::string& chromName : opt.chromNames)
+    for (const std::string& region : opt.regions)
     {
-        if (! chromName.empty()) continue;
-        errorMsg = "At least one chromosome name is empty";
+        if (! region.empty()) continue;
+        errorMsg = "At least one region entry is empty";
         return true;
     }
 
@@ -85,27 +85,27 @@ parseOptions(
 
 
 void
-parseChromDepthOptions(
-    const illumina::Program& prog,
-    int argc, char* argv[],
-    ChromDepthOptions& opt)
+parseRegionDepthOptions(
+        const illumina::Program& prog,
+        int argc, char* argv[],
+        RegionDepthOptions& opt)
 {
     namespace po = boost::program_options;
     po::options_description req("configuration");
     req.add_options()
-    ("align-file", po::value(&opt.alignmentFilename),
-     "alignment file in BAM or CRAM format")
-    ("chrom", po::value<chroms_t>(),
-     "chromosome name. May be supplied more than once. At least one entry required.")
-    ("output-file", po::value(&opt.outputFilename),
-     "write stats to filename (default: stdout)")
-    ("ref", po::value(&opt.referenceFilename),
-     "fasta reference sequence (required)")
-    ;
+            ("align-file", po::value(&opt.alignmentFilename),
+             "alignment file in BAM or CRAM format")
+            ("region", po::value<regions_t>(),
+             "samtools formatted region, eg. 'chr1:20-30'. May be supplied more than once. At least one entry required.")
+            ("output-file", po::value(&opt.outputFilename),
+             "write stats to filename (default: stdout)")
+            ("ref", po::value(&opt.referenceFilename),
+             "fasta reference sequence (required)")
+            ;
 
     po::options_description help("help");
     help.add_options()
-    ("help,h","print this message");
+            ("help,h","print this message");
 
     po::options_description visible("options");
     visible.add(req).add(help);
@@ -127,7 +127,7 @@ parseChromDepthOptions(
     if ((argc<=1) || (vm.count("help")) || po_parse_fail)
     {
         usage(log_os,prog,visible);
-        log_os << "\n" << prog.name() << ": get chromosome depth from alignment file\n\n";
+        log_os << "\n" << prog.name() << ": get region depth from alignment file\n\n";
         log_os << "version: " << prog.version() << "\n\n";
         log_os << "usage: " << prog.name() << " [options] > stats\n\n";
         log_os << visible << "\n";

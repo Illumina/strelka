@@ -17,20 +17,21 @@
 //
 //
 
-/// \file
-/// \author Chris Saunders
-///
-
 #pragma once
 
-#include <string>
+#include "common/Program.hh"
 
 
-/// Fast chrom depth estimator for BAM/CRAM files
+/// estimate per-library information from alignment file(s)
 ///
-/// return average chromosome depth
-double
-readChromDepthFromAlignment(
-    const std::string& referenceFile,
-    const std::string& alignmentFile,
-    const std::string& chromName);
+class GetRegionDepth : public illumina::Program
+{
+    const char*
+    name() const
+    {
+        return "GetRegionDepth";
+    }
+
+    void
+    runInternal(int argc, char* argv[]) const;
+};
