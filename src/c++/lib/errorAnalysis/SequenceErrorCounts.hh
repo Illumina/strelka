@@ -17,13 +17,13 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
 #pragma once
 
-#include "BaseErrorCounts.hh"
+#include "BasecallErrorCounts.hh"
 #include "IndelErrorCounts.hh"
 
 
@@ -36,13 +36,13 @@
 ///
 struct SequenceErrorCounts
 {
-    BaseErrorCounts&
+    BasecallErrorCounts&
     getBaseCounts()
     {
         return _bases;
     }
 
-    const BaseErrorCounts&
+    const BasecallErrorCounts&
     getBaseCounts() const
     {
         return _bases;
@@ -82,6 +82,7 @@ struct SequenceErrorCounts
     {
         _sampleName = sampleName;
     }
+
     void
     save(const char* filename) const;
 
@@ -94,6 +95,6 @@ struct SequenceErrorCounts
 
 private:
     std::string _sampleName;
-    BaseErrorCounts _bases;
+    BasecallErrorCounts _bases;
     IndelErrorCounts _indels;
 };

@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -25,6 +25,7 @@
 
 #include "blt_util/math_util.hh"
 #include "blt_util/qscore.hh"
+#include "errorAnalysis/errorAnalysisUtils.hh"
 
 #include "boost/math/distributions/binomial.hpp"
 
@@ -48,41 +49,17 @@ struct ContextTotal
 
 
 
-template <typename K, typename V>
-static
-void
-mergeMapKeys(
-    const std::map<K,V>& m1,
-    std::map<K,V>& m2,
-    const unsigned scale = 1)
-{
-    for (const auto& mv1 : m1)
-    {
-        const auto iter(m2.find(mv1.first));
-        if (iter == m2.end())
-        {
-            m2.insert(mv1);
-        }
-        else
-        {
-            iter->second += (mv1.second * scale);
-        }
-    }
-}
-
-
-
 /// print results for each context
 ///
 static
 void
 printExtendedContext(
-    const BaseErrorContext& context,
-    const BaseErrorData& data,
+    const BasecallErrorContext& context,
+    const BasecallErrorData& data,
     const ContextTotal& cTotal,
     const double refReadTotal,
     const double noiseLocusRefReadTotal,
-    const StrandBaseCounts::qual_count_t& noiseLocusAltQualCounts,
+    const StrandBasecallCounts::qual_count_t& noiseLocusAltQualCounts,
     std::ostream& os)
 {
     static const std::string sep(", ");
@@ -95,9 +72,9 @@ printExtendedContext(
     const double refReadNoiseScaleFactor(noiseLocusRefReadTotal/refReadTotal);
 
     // get the set of qvals considered for this context:
-    const auto& refQuals(data.error.getRefQuals());
+    const auto& refQuals(data.counts.getRefQuals());
     std::set<uint16_t> quals;
-    for (const auto& value : data.error.getRefQuals())
+    for (const auto& value : data.counts.getRefQuals())
     {
         quals.insert(value.first);
     }
@@ -139,8 +116,8 @@ void
 reportExtendedContext(
     const double maxAltFrac,
     const unsigned minDepth,
-    const BaseErrorContext& context,
-    const BaseErrorData& data,
+    const BasecallErrorContext& context,
+    const BasecallErrorData& data,
     std::ostream& os)
 {
     //
@@ -154,26 +131,26 @@ reportExtendedContext(
     //
     double refReadTotal(0);
     double noiseLocusRefReadTotal(0);
-    StrandBaseCounts::qual_count_t noiseLocusAltQualCounts;
+    StrandBasecallCounts::qual_count_t noiseLocusAltQualCounts;
 
     ContextTotal cTotal;
-    for (const auto& value : data.error)
+    for (const auto& value : data.counts)
     {
         const auto& key(value.first);
         const unsigned obsCount(value.second);
 
-        const StrandBaseCounts& s0(key.getStrand0Counts());
-        const StrandBaseCounts& s1(key.getStrand1Counts());
+        const StrandBasecallCounts& s0(key.getStrand0Counts());
+        const StrandBasecallCounts& s1(key.getStrand1Counts());
 
-        const unsigned refQualTotal(s0.refCount+s1.refCount);
+        const unsigned refQualTotal(s0.refAlleleCount+s1.refAlleleCount);
 
         cTotal.locus += obsCount;
         refReadTotal += refQualTotal*obsCount;
 
         unsigned altQualTotal(0);
-        auto altSum = [&](const StrandBaseCounts& sb)
+        auto altSum = [&](const StrandBasecallCounts& sb)
         {
-            for (const auto& val : sb.alt)
+            for (const auto& val : sb.altAlleleCount)
             {
                 altQualTotal += val.second;
             }
@@ -188,8 +165,8 @@ reportExtendedContext(
 
         cTotal.noiseLocus += obsCount;
         noiseLocusRefReadTotal += refQualTotal*obsCount;
-        mergeMapKeys(s0.alt,noiseLocusAltQualCounts,obsCount);
-        mergeMapKeys(s1.alt,noiseLocusAltQualCounts,obsCount);
+        mergeMapKeys(s0.altAlleleCount,noiseLocusAltQualCounts,obsCount);
+        mergeMapKeys(s1.altAlleleCount,noiseLocusAltQualCounts,obsCount);
     }
 
     printExtendedContext(context, data, cTotal, refReadTotal,

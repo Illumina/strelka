@@ -17,18 +17,18 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
 #pragma once
 
+#include "blt_util/RecordTracker.hh"
+
 #include "boost/array.hpp"
 #include "boost/serialization/array.hpp"
 #include "boost/serialization/level.hpp"
 #include "boost/serialization/map.hpp"
-
-#include "blt_util/RecordTracker.hh"
 
 #include <iosfwd>
 #include <map>
@@ -177,6 +177,7 @@ operator<<(
     const IndelErrorContext& context);
 
 
+/// Stores details of a single instance of a non-variant context
 struct IndelBackgroundObservation
 {
     void
@@ -215,6 +216,7 @@ BOOST_CLASS_IMPLEMENTATION(IndelBackgroundObservation, boost::serialization::obj
 struct IndelBackgroundObservationData
 {
 private:
+    // map value is the number of identical non-variant context instances:
     typedef std::map<IndelBackgroundObservation,unsigned> data_t;
 public:
     typedef data_t::const_iterator const_iterator;
@@ -248,14 +250,13 @@ public:
     }
 
 private:
-    // value is number of observations:
-    std::map<IndelBackgroundObservation,unsigned> data;
+    data_t data;
 };
 
 BOOST_CLASS_IMPLEMENTATION(IndelBackgroundObservationData, boost::serialization::object_serializable)
 
 
-/// this object is used to construct a single support/depth ratio for each context type
+/// Used to construct a single support/depth ratio for each context type
 struct IndelDepthSupportTotal
 {
     IndelDepthSupportTotal(
@@ -284,10 +285,12 @@ struct IndelDepthSupportTotal
 BOOST_CLASS_IMPLEMENTATION(IndelDepthSupportTotal, boost::serialization::object_serializable)
 
 
+/// Stores allele observation counts for a single instance of a context
 struct IndelErrorContextObservation
 {
     IndelErrorContextObservation()
         : refCount(0)
+        , variantStatus(GENOTYPE_STATUS::UNKNOWN)
     {
         std::fill(signalCounts.begin(), signalCounts.end(), 0);
     }
@@ -330,9 +333,15 @@ struct IndelErrorContextObservation
         ar& variantStatus& refCount& signalCounts;
     }
 
+    /// Number of reads supporting the reference allele
     unsigned refCount;
+
+    /// Optional true genotype label for this locus
     GENOTYPE_STATUS::genotype_t variantStatus;
-    /// note: can't get std::array to serialize correctly on clang, so using boost::array instead
+
+    /// Number of reads supporting various categories of indel alleles.
+    /// The indel allele categories are pre-defined and static.
+    // note: can't get std::array to serialize correctly on clang, so using boost::array instead
     boost::array<unsigned,INDEL_SIGNAL_TYPE::SIZE> signalCounts;
 };
 
@@ -344,9 +353,11 @@ operator<<(
 BOOST_CLASS_IMPLEMENTATION(IndelErrorContextObservation, boost::serialization::object_serializable)
 
 
+/// Indel allele counts associated with a specific context
 struct IndelErrorContextObservationData
 {
 private:
+    // map value is the number of identical variant context instances:
     typedef std::map<IndelErrorContextObservation,unsigned> data_t;
 public:
     typedef data_t::const_iterator const_iterator;
@@ -380,28 +391,27 @@ public:
     }
 
 private:
-    // value is number of observations:
-    std::map<IndelErrorContextObservation,unsigned> data;
+    data_t data;
 };
 
 BOOST_CLASS_IMPLEMENTATION(IndelErrorContextObservationData, boost::serialization::object_serializable)
 
 
 
-/// this struct is used for output to downstream models only
+/// This is used for output to downstream models only
 ///
 struct ExportedIndelObservations
 {
-    /// the number of times we observe the observation pattern
+    /// Number of times we observe the observation pattern
     unsigned observationCount;
 
-    /// number of supporting observations of the non-alt* allele (*exact definition in flux...)
+    /// Number of supporting observations of the non-alt* allele (*exact definition in flux...)
     double refObservations;
 
-    /// number of supporting observations of the alt allele
+    /// Number of supporting observations of the alt allele
     boost::array<unsigned,INDEL_SIGNAL_TYPE::SIZE> altObservations;
 
-    /// status of indel -- has it been supplied previously as a known variant
+    /// Status of indel -- has it been supplied previously as a known variant
     GENOTYPE_STATUS::genotype_t variantStatus = GENOTYPE_STATUS::UNKNOWN;
 };
 
@@ -411,13 +421,15 @@ operator<<(
     const ExportedIndelObservations& obs);
 
 
+/// All indel error data associated with a specific context
 struct IndelErrorData
 {
-    /// processes current data into a format that is more easily
+    /// Processes current data into a format that is more easily
     /// manipulated in a downstream model
     void
     exportObservations(
         std::vector<ExportedIndelObservations>& counts) const;
+
     void
     merge(const IndelErrorData& in);
 
@@ -445,7 +457,7 @@ struct IndelErrorData
 BOOST_CLASS_IMPLEMENTATION(IndelErrorData, boost::serialization::object_serializable)
 
 
-
+/// Store all data used for indel error estimation
 struct IndelErrorCounts
 {
 private:
@@ -453,12 +465,16 @@ private:
 public:
     typedef data_t::const_iterator const_iterator;
 
+    /// Submit data for an instance of an indel variant context
+    ///
+    /// \param depth This is used to estimate read support of the reference allele at non-variant context instances
     void
     addError(
         const IndelErrorContext& context,
         const IndelErrorContextObservation& errorObservation,
         const unsigned depth);
 
+    /// Submit data for an instance of a non-variant context
     void
     addBackground(
         const IndelErrorContext& context,

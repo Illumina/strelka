@@ -17,11 +17,12 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
 #include "IndelErrorCounts.hh"
+#include "errorAnalysisUtils.hh"
 #include "blt_util/IntegerLogCompressor.hh"
 #include "blt_util/math_util.hh"
 
@@ -29,50 +30,6 @@
 #include <cmath>
 
 #include <iostream>
-
-
-
-/// assuming V is an integer count type, iterate or initialize
-/// new key
-template <typename K, typename V>
-static
-void
-iterMap(
-    std::map<K,V>& m,
-    const K& key)
-{
-    const auto iter(m.find(key));
-    if (iter == m.end())
-    {
-        m[key] = 1;
-    }
-    else
-    {
-        iter->second += 1;
-    }
-}
-
-
-template <typename K, typename V>
-static
-void
-mergeMapKeys(
-    const std::map<K,V>& m1,
-    std::map<K,V>& m2)
-{
-    for (const auto& mv1 : m1)
-    {
-        const auto iter(m2.find(mv1.first));
-        if (iter == m2.end())
-        {
-            m2.insert(mv1);
-        }
-        else
-        {
-            iter->second += mv1.second;
-        }
-    }
-}
 
 
 
@@ -121,13 +78,14 @@ IndelBackgroundObservationData::
 addObservation(
     const IndelBackgroundObservation& obs)
 {
-    // 1D key doesn't need to be compressed as much:
+    // one dimensional key doesn't need to be compressed as much (compared to the compression applied to the
+    // more complex key used for variant counts)
     static const unsigned depthBitCount(6);
 
     IndelBackgroundObservation compObs = obs;
     compObs.depth = compressInt(compObs.depth,depthBitCount);
 
-    iterMap(data,compObs);
+    iterateMapValue(data,compObs);
 }
 
 
@@ -184,7 +142,7 @@ addObservation(
     {
         signalCount = compressInt(signalCount,bitCount);
     }
-    iterMap(data,compObs);
+    iterateMapValue(data,compObs);
 }
 
 

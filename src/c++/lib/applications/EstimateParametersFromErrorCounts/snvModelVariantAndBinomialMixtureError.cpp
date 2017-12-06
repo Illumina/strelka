@@ -67,7 +67,7 @@ getObsLogLhood(
     const double logNoisyLocusRate,
     const double logCleanLocusRate,
     const unsigned qualCount,
-    const BaseErrorContextObservationExportObservation& key)
+    const BasecallErrorContextObservationExportObservation& key)
 {
     static const double homAltRate(0.99);
     static const double hetAltRate(0.5);
@@ -79,21 +79,21 @@ getObsLogLhood(
     const auto& s0(key.strand0);
     const auto& s1(key.strand1);
 
-    const unsigned refQualTotal(s0.refCount+s1.refCount);
+    const unsigned refQualTotal(s0.refAlleleCount+s1.refAlleleCount);
 
     // get lhood of homref GT:
-    double noVariant_noise_s0(logNoVariantRefRate*s0.refCount);
-    double noVariant_noise_s1(logNoVariantRefRate*s1.refCount);
-    double noVariant_clean_s0(logNoVariantCleanRefRate*s0.refCount);
-    double noVariant_clean_s1(logNoVariantCleanRefRate*s1.refCount);
+    double noVariant_noise_s0(logNoVariantRefRate*s0.refAlleleCount);
+    double noVariant_noise_s1(logNoVariantRefRate*s1.refAlleleCount);
+    double noVariant_clean_s0(logNoVariantCleanRefRate*s0.refAlleleCount);
+    double noVariant_clean_s1(logNoVariantCleanRefRate*s1.refAlleleCount);
     for (unsigned qualIndex(0); qualIndex<qualCount; ++qualIndex)
     {
         const double logCleanLocusBaseErrorRate(logCleanBaseErrorRateByQual[qualIndex]);
 
-        noVariant_noise_s0 += logBaseErrorRate[qualIndex] * s0.altCount[qualIndex];
-        noVariant_noise_s1 += logBaseErrorRate[qualIndex] * s1.altCount[qualIndex];
-        noVariant_clean_s0 += logCleanLocusBaseErrorRate * s0.altCount[qualIndex];
-        noVariant_clean_s1 += logCleanLocusBaseErrorRate * s1.altCount[qualIndex];
+        noVariant_noise_s0 += logBaseErrorRate[qualIndex] * s0.altAlleleCount[qualIndex];
+        noVariant_noise_s1 += logBaseErrorRate[qualIndex] * s1.altAlleleCount[qualIndex];
+        noVariant_clean_s0 += logCleanLocusBaseErrorRate * s0.altAlleleCount[qualIndex];
+        noVariant_clean_s1 += logCleanLocusBaseErrorRate * s1.altAlleleCount[qualIndex];
     }
 
     // first version treats the noisy locus as each strand, second version ignores strand and treats noisy locus by site:
@@ -139,7 +139,7 @@ getObsLogLhood(
     unsigned altQualTotal(0);
     for (unsigned qualIndex(0); qualIndex<qualCount; ++qualIndex)
     {
-        altQualTotal += (s0.altCount[qualIndex] + s1.altCount[qualIndex]);
+        altQualTotal += (s0.altAlleleCount[qualIndex] + s1.altAlleleCount[qualIndex]);
     }
 
     const double het(logHetRate*(refQualTotal+altQualTotal));
@@ -157,13 +157,13 @@ getObsLogLhood(
 static
 double
 contextLogLhood(
-    const BaseErrorContextObservationExportData& data,
+    const BasecallErrorContextObservationExportData& data,
     const double* const logBaseErrorRate,
     const double* const logCleanBaseErrorRateByQual,
     const double logNoisyLocusRate,
     const double logTheta)
 {
-    const unsigned qualCount(data.qualLevels.size());
+    const unsigned qualCount(data.altAlleleBasecallErrorPhredProbLevels.size());
 
 #ifdef DEBUG_SNVMODEL3
     log_os << "START loghood\n";
@@ -210,7 +210,7 @@ contextLogLhood(
     double logLhood(0.);
     for (const auto& value : data.observations)
     {
-        const BaseErrorContextObservationExportObservation& key(value.first);
+        const BasecallErrorContextObservationExportObservation& key(value.first);
         const unsigned repeatCount(value.second);
 
         const double mix(getObsLogLhood(
@@ -240,13 +240,13 @@ struct error_minfunc : public codemin::minfunc_interface<double>
 {
     explicit
     error_minfunc(
-        const BaseErrorContextObservationExportData& data,
+        const BasecallErrorContextObservationExportData& data,
         const bool isFreeCleanLocusError,
         const bool isLockTheta)
         : _data(data),
           _isFreeCleanLocusError(isFreeCleanLocusError),
           _isLockTheta(isLockTheta),
-          _qualParamSize(_data.qualLevels.size()),
+          _qualParamSize(_data.altAlleleBasecallErrorPhredProbLevels.size()),
           _args(new double[getArgCount()])
     {}
 
@@ -397,7 +397,7 @@ struct error_minfunc : public codemin::minfunc_interface<double>
     static const double defaultLogTheta;
 
 private:
-    const BaseErrorContextObservationExportData& _data;
+    const BasecallErrorContextObservationExportData& _data;
     bool _isFreeCleanLocusError;
     bool _isLockTheta;
     unsigned _qualParamSize;
@@ -422,8 +422,8 @@ struct SignalGroupTotal
 static
 void
 reportQualErrorRateSet(
-    const BaseErrorContext& context,
-    const BaseErrorData& data,
+    const BasecallErrorContext& context,
+    const BasecallErrorData& data,
     const uint16_t qual,
     const SignalGroupTotal& sigTotal,
     unsigned iter,
@@ -477,15 +477,15 @@ void
 reportExtendedContext(
     const bool isFreeCleanLocusError,
     const bool isLockTheta,
-    const BaseErrorContext& context,
-    const BaseErrorData& data,
+    const BasecallErrorContext& context,
+    const BasecallErrorData& data,
     std::ostream& os)
 {
-    BaseErrorContextObservationExportData exportData;
-    data.error.getExportData(exportData);
+    BasecallErrorContextObservationExportData exportData;
+    data.counts.getExportData(exportData);
     error_minfunc errFunc(exportData,isFreeCleanLocusError,isLockTheta);
 
-    const unsigned qualCount(exportData.qualLevels.size());
+    const unsigned qualCount(exportData.altAlleleBasecallErrorPhredProbLevels.size());
     const unsigned paramCount(errFunc.getParamCount());
     const unsigned argCount(errFunc.getArgCount());
 
@@ -570,7 +570,7 @@ reportExtendedContext(
             {
                 const auto& key(value.first);
                 const unsigned repeatCount(value.second);
-                const unsigned altCount(key.strand0.altCount[qualIndex]+key.strand1.altCount[qualIndex]);
+                const unsigned altCount(key.strand0.altAlleleCount[qualIndex]+key.strand1.altAlleleCount[qualIndex]);
                 sigTotal.alt += (altCount*repeatCount);
             }
 
@@ -588,7 +588,7 @@ reportExtendedContext(
                 cleanErrorFactor = minParams[qualCount];
                 cleanErrorRate = std::exp(getLogCleanLocusBaseErrorRate(minArgs[qualIndex],cleanErrorFactor));
             }
-            reportQualErrorRateSet(context, data, exportData.qualLevels[qualIndex], sigTotal, iter, -x_all_loghood,
+            reportQualErrorRateSet(context, data, exportData.altAlleleBasecallErrorPhredProbLevels[qualIndex], sigTotal, iter, -x_all_loghood,
                                    noisyErrorRate, cleanErrorRate, noisyLocusRate, theta, isFreeCleanLocusError, cleanErrorFactor, os);
         }
     }

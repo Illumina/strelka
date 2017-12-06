@@ -17,11 +17,12 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
-#include "BaseErrorCounts.hh"
+#include "BasecallErrorCounts.hh"
+#include "errorAnalysisUtils.hh"
 #include "blt_util/IntegerLogCompressor.hh"
 #include "blt_util/math_util.hh"
 
@@ -54,57 +55,10 @@ mapFindDefault(
 
 
 
-/// assuming V is an integer count type, iterate or initialize
-/// new key
-template <typename K, typename V>
-static
-void
-iterMap(
-    std::map<K,V>& m,
-    const K& key,
-    const unsigned iterValue = 1)
-{
-    const auto iter(m.find(key));
-    if (iter == m.end())
-    {
-        m[key] = iterValue;
-    }
-    else
-    {
-        iter->second += iterValue;
-    }
-}
-
-
-
-template <typename K, typename V1, typename V2>
-static
-void
-mergeMapKeys(
-    const std::map<K,V1>& m1,
-    std::map<K,V2>& m2,
-    const unsigned scale = 1)
-{
-    for (const auto& mv1 : m1)
-    {
-        const auto iter(m2.find(mv1.first));
-        if (iter == m2.end())
-        {
-            m2.insert(mv1);
-        }
-        else
-        {
-            iter->second += (mv1.second * scale);
-        }
-    }
-}
-
-
-
 std::ostream&
 operator<<(
     std::ostream& os,
-    const BaseErrorContext& context)
+    const BasecallErrorContext& context)
 {
     os << context.repeatCount;
     return os;
@@ -113,28 +67,28 @@ operator<<(
 
 
 void
-StrandBaseCounts::
+StrandBasecallCounts::
 compressCounts()
 {
     static const unsigned bitCount(4);
 
-    refCount = compressInt(refCount, bitCount);
-    for (auto& val : alt)
+    refAlleleCount = compressInt(refAlleleCount, bitCount);
+    for (auto& keyVal : altAlleleCount)
     {
-        val.second = compressInt(val.second, bitCount);
+        keyVal.second = compressInt(keyVal.second, bitCount);
     }
 }
 
 
 
 std::ostream&
-operator<<(std::ostream& os, const StrandBaseCounts& sbc)
+operator<<(std::ostream& os, const StrandBasecallCounts& sbc)
 {
-    os << "REF:\t" << sbc.refCount;
+    os << "REF:\t" << sbc.refAlleleCount;
 
     bool isFirst=true;
     os << "\tALT:\t";
-    for (const auto& val : sbc.alt)
+    for (const auto& val : sbc.altAlleleCount)
     {
         if (isFirst)
         {
@@ -152,38 +106,39 @@ operator<<(std::ostream& os, const StrandBaseCounts& sbc)
 
 
 void
-BaseErrorContextInputObservation::
+BasecallErrorContextInputObservation::
 addRefCount(
     const bool isFwdStrand,
-    const uint16_t qual)
+    const uint16_t basecallErrorPhredProb)
 {
-    StrandBaseCounts::qual_count_t& target(isFwdStrand ? ref[0] : ref[1]);
-    iterMap(target,qual);
+    StrandBasecallCounts::qual_count_t& target(isFwdStrand ? ref[0] : ref[1]);
+    iterateMapValue(target, basecallErrorPhredProb);
 }
 
 
 
 void
-BaseErrorContextInputObservation::
+BasecallErrorContextInputObservation::
 addAltCount(
     const bool isFwdStrand,
-    const uint16_t qual)
+    const uint16_t basecallErrorPhredProb)
 {
-    StrandBaseCounts::qual_count_t& target(isFwdStrand ? alt[0] : alt[1]);
-    iterMap(target,qual);
+    StrandBasecallCounts::qual_count_t& target(isFwdStrand ? alt[0] : alt[1]);
+    iterateMapValue(target, basecallErrorPhredProb);
 }
 
 
 
 void
-BaseErrorContextObservation::
+BasecallErrorContextObservation::
 compressCounts()
 {
-    // if no alts exist, we can safely erase strand information by summing everything to strand1:
-    if (strand0.alt.empty() && strand1.alt.empty())
+    // if no alts exist, we can safely erase strand information by summing everything to strand0
+    // TODO: elaborate on why this is 'safe'
+    if (strand0.altAlleleCount.empty() && strand1.altAlleleCount.empty())
     {
-        strand0.refCount += strand1.refCount;
-        strand1.refCount=0;
+        strand0.refAlleleCount += strand1.refAlleleCount;
+        strand1.refAlleleCount = 0;
     }
 
     strand0.compressCounts();
@@ -197,71 +152,75 @@ compressCounts()
 
 
 void
-BaseErrorContextObservationData::
+BasecallErrorContextObservationData::
 addObservation(
-    const BaseErrorContextInputObservation& obs)
+    const BasecallErrorContextInputObservation& obs)
 {
-    BaseErrorContextObservation compObs;
-    for (unsigned strandId(0); strandId<2; ++strandId)
+    static const unsigned strandCount(2);
+
+    BasecallErrorContextObservation compressedObs;
+    for (unsigned strandIndex(0); strandIndex<strandCount; ++strandIndex)
     {
-        mergeMapKeys(obs.ref[strandId], refQuals);
-        auto& target(strandId==0 ? compObs.strand0 : compObs.strand1);
-        for (const auto& val : obs.ref[strandId])
+        mergeMapKeys(obs.ref[strandIndex], refAlleleBasecallErrorPhredProbs);
+        auto& targetStrand(strandIndex==0 ? compressedObs.strand0 : compressedObs.strand1);
+        for (const auto& val : obs.ref[strandIndex])
         {
-            target.refCount += val.second;
+            // quality of reference allele observations are removed in the compressed observations
+            targetStrand.refAlleleCount += val.second;
         }
-        target.alt = obs.alt[strandId];
+        targetStrand.altAlleleCount = obs.alt[strandIndex];
     }
 
-    compObs.compressCounts();
-    iterMap(data,compObs);
+    compressedObs.compressCounts();
+    iterateMapValue(data, compressedObs);
 }
 
 
 
 void
-BaseErrorContextObservationData::
-merge(const BaseErrorContextObservationData& in)
+BasecallErrorContextObservationData::
+merge(const BasecallErrorContextObservationData& in)
 {
     mergeMapKeys(in.data,data);
-    mergeMapKeys(in.refQuals,refQuals);
+    mergeMapKeys(in.refAlleleBasecallErrorPhredProbs,refAlleleBasecallErrorPhredProbs);
 }
 
 
 
 void
-BaseErrorContextObservationData::
-getExportData(BaseErrorContextObservationExportData& exportData) const
+BasecallErrorContextObservationData::
+getExportData(BasecallErrorContextObservationExportData& exportData) const
 {
     exportData.clear();
 
     //
-    // find and set the final qual level list:
+    // find and the final set of basecall error levels:
     //
-    std::set<uint16_t> quals;
+    std::set<uint16_t> basecallErrorPhredProbs;
 
-    // add qual levels from ref:
-    for (const auto& val : refQuals)
+    // add basecall error levels from reference allele observations:
+    for (const auto& keyVal : refAlleleBasecallErrorPhredProbs)
     {
-        quals.insert(val.first);
+        basecallErrorPhredProbs.insert(keyVal.first);
     }
-    // ...don't even bother adding qual levels from alt, if there's an alt only level -- skip it, or assert.
+    // ...don't even bother adding basecall error levels from the alt alleles, it should be incredibly rare that a
+    // level would be exclusive to the alt alleles. If this does occur, skip or assert.
 
-    // tmp data structure for this function only:
+    // tmp data structure used in this function only to map quality values to the corresponding quality array index
     std::map<uint16_t,unsigned> qualIndex;
 
-    for (const uint16_t qual : quals)
+    for (const uint16_t qual : basecallErrorPhredProbs)
     {
-        qualIndex[qual] = exportData.qualLevels.size();
-        exportData.qualLevels.push_back(qual);
+        qualIndex[qual] = exportData.altAlleleBasecallErrorPhredProbLevels.size();
+        exportData.altAlleleBasecallErrorPhredProbLevels.push_back(qual);
     }
 
     // set refCount wrt the full qual list:
-    for (const uint16_t qual : exportData.qualLevels)
+    for (const uint16_t qual : exportData.altAlleleBasecallErrorPhredProbLevels)
     {
         uint64_t refCount(0);
-        const auto iter(refQuals.find(qual));
-        if (iter != refQuals.end())
+        const auto iter(refAlleleBasecallErrorPhredProbs.find(qual));
+        if (iter != refAlleleBasecallErrorPhredProbs.end())
         {
             refCount = iter->second;
         }
@@ -269,39 +228,39 @@ getExportData(BaseErrorContextObservationExportData& exportData) const
     }
 
     // convert observations to export observations:
-    for (const auto& value : data)
+    for (const auto& keyVal : data)
     {
-        const BaseErrorContextObservation& key(value.first);
-        const auto& obsCount(value.second);
+        const BasecallErrorContextObservation& observationPattern(keyVal.first);
+        const auto& instanceCount(keyVal.second);
 
-        BaseErrorContextObservationExportObservation exportKey;
+        BasecallErrorContextObservationExportObservation exportObservationPattern;
 
-        auto strand2Strand = [&](
-                                 const StrandBaseCounts& si,
-                                 BaseErrorContextObservationExportStrandObservation& se)
+        /// Convert single strand observation counts from compressed storage format to exported format
+        /// intended for use by an inference method
+        auto strand2ExportStrand = [&](
+                                 const StrandBasecallCounts& si,
+                                 BasecallErrorContextObservationExportStrandObservation& se)
         {
-            se.refCount = si.refCount;
-            se.altCount.resize(quals.size(),0);
-            for (const auto& altValue : si.alt)
+            se.refAlleleCount = si.refAlleleCount;
+            se.altAlleleCount.resize(basecallErrorPhredProbs.size(),0);
+            for (const auto& qualCount : si.altAlleleCount)
             {
-                const uint16_t qual(altValue.first);
-                const unsigned count(altValue.second);
-                se.altCount[qualIndex.find(qual)->second] = count;
+                se.altAlleleCount[qualIndex.find(qualCount.first)->second] = qualCount.second;
             }
         };
 
-        strand2Strand(key.getStrand0Counts(), exportKey.strand0);
-        strand2Strand(key.getStrand1Counts(), exportKey.strand1);
+        strand2ExportStrand(observationPattern.getStrand0Counts(), exportObservationPattern.strand0);
+        strand2ExportStrand(observationPattern.getStrand1Counts(), exportObservationPattern.strand1);
 
-        assert(exportData.observations.find(exportKey) == exportData.observations.end());
-        exportData.observations[exportKey] = obsCount;
+        assert(exportData.observations.find(exportObservationPattern) == exportData.observations.end());
+        exportData.observations[exportObservationPattern] = instanceCount;
     }
 }
 
 
 
 void
-BaseErrorContextObservationData::
+BasecallErrorContextObservationData::
 dump(
     std::ostream& os) const
 {
@@ -313,42 +272,42 @@ dump(
     unsigned refOnlyKeyCount(0);
     unsigned altOnlyKeyCount(0);
     uint64_t totalObservations(0.);
-    refQual_t totalRef(refQuals);
+    refQual_t totalRef(refAlleleBasecallErrorPhredProbs);
     refQual_t totalAlt;
 
     std::map<unsigned,uint64_t> totalByDepth;
 
     for (const auto& value : data)
     {
-        const BaseErrorContextObservation& key(value.first);
+        const BasecallErrorContextObservation& key(value.first);
         const auto& obsCount(value.second);
         totalObservations += obsCount;
 
         const auto& s0(key.getStrand0Counts());
         const auto& s1(key.getStrand1Counts());
-        mergeMapKeys(s0.alt,totalAlt,obsCount);
-        mergeMapKeys(s1.alt,totalAlt,obsCount);
+        mergeMapKeys(s0.altAlleleCount,totalAlt,obsCount);
+        mergeMapKeys(s1.altAlleleCount,totalAlt,obsCount);
 
         // update depth map:
         {
             unsigned depth(0);
-            depth += (s0.refCount + s1.refCount);
-            for (const auto& altVal : s0.alt)
+            depth += (s0.refAlleleCount + s1.refAlleleCount);
+            for (const auto& altVal : s0.altAlleleCount)
             {
                 depth += altVal.second;
             }
-            for (const auto& altVal : s1.alt)
+            for (const auto& altVal : s1.altAlleleCount)
             {
                 depth += altVal.second;
             }
-            iterMap(totalByDepth,depth,obsCount);
+            iterateMapValue(totalByDepth, depth, obsCount);
         }
 
-        if (key.getStrand0Counts().alt.empty() && key.getStrand1Counts().alt.empty())
+        if (key.getStrand0Counts().altAlleleCount.empty() && key.getStrand1Counts().altAlleleCount.empty())
         {
             refOnlyKeyCount++;
         }
-        if (key.getStrand0Counts().refCount==0 && key.getStrand1Counts().refCount==0)
+        if (key.getStrand0Counts().refAlleleCount==0 && key.getStrand1Counts().refAlleleCount==0)
         {
             altOnlyKeyCount++;
         }
@@ -391,7 +350,7 @@ dump(
 #if 0
     for (const auto& value : data)
     {
-        const BaseErrorContextObservation& key(value.first);
+        const BasecallErrorContextObservation& key(value.first);
         const auto& obsCount(value.second);
         os << "KEYcount: " << obsCount << "\n";
         os << "KEYS1:\t" << key.getStrand0Counts() << "\n";
@@ -403,11 +362,11 @@ dump(
 
 
 void
-BaseErrorData::
+BasecallErrorData::
 merge(
-    const BaseErrorData& in)
+    const BasecallErrorData& in)
 {
-    error.merge(in.error);
+    counts.merge(in.counts);
     excludedRegionSkipped += in.excludedRegionSkipped;
     depthSkipped += in.depthSkipped;
     emptySkipped += in.emptySkipped;
@@ -417,7 +376,7 @@ merge(
 
 
 void
-BaseErrorData::
+BasecallErrorData::
 dump(
     std::ostream& os) const
 {
@@ -426,27 +385,27 @@ dump(
     os << "emptySkippedCount: " << emptySkipped << "\n";
     os << "noiseSkippedCount: " << noiseSkipped << "\n";
 
-    error.dump(os);
+    counts.dump(os);
 }
 
 
 
 void
-BaseErrorCounts::
+BasecallErrorCounts::
 addSiteObservation(
-    const BaseErrorContext& context,
-    const BaseErrorContextInputObservation& siteObservation)
+    const BasecallErrorContext& context,
+    const BasecallErrorContextInputObservation& siteObservation)
 {
     const auto iter(getContextIterator(context));
-    iter->second.error.addObservation(siteObservation);
+    iter->second.counts.addObservation(siteObservation);
 }
 
 
 
 void
-BaseErrorCounts::
+BasecallErrorCounts::
 addExcludedRegionSkip(
-    const BaseErrorContext& context)
+    const BasecallErrorContext& context)
 {
     const auto iter(getContextIterator(context));
     iter->second.excludedRegionSkipped++;
@@ -455,9 +414,9 @@ addExcludedRegionSkip(
 
 
 void
-BaseErrorCounts::
+BasecallErrorCounts::
 addDepthSkip(
-    const BaseErrorContext& context)
+    const BasecallErrorContext& context)
 {
     const auto iter(getContextIterator(context));
     iter->second.depthSkipped++;
@@ -466,9 +425,9 @@ addDepthSkip(
 
 
 void
-BaseErrorCounts::
+BasecallErrorCounts::
 addEmptySkip(
-    const BaseErrorContext& context)
+    const BasecallErrorContext& context)
 {
     const auto iter(getContextIterator(context));
     iter->second.emptySkipped++;
@@ -477,9 +436,9 @@ addEmptySkip(
 
 
 void
-BaseErrorCounts::
+BasecallErrorCounts::
 addNoiseSkip(
-    const BaseErrorContext& context)
+    const BasecallErrorContext& context)
 {
     const auto iter(getContextIterator(context));
     iter->second.noiseSkipped++;
@@ -488,9 +447,9 @@ addNoiseSkip(
 
 
 void
-BaseErrorCounts::
+BasecallErrorCounts::
 merge(
-    const BaseErrorCounts& in)
+    const BasecallErrorCounts& in)
 {
     for (const auto& idata : in._data)
     {
@@ -510,26 +469,26 @@ merge(
 
 
 void
-BaseErrorCounts::
+BasecallErrorCounts::
 dump(
     std::ostream& os) const
 {
-    os << "BaseErrorCounts DUMP_ON\n";
-    os << "Total Base Contexts: " << _data.size() << "\n";
+    os << "BasecallErrorCounts DUMP_ON\n";
+    os << "Total Basecall Contexts: " << _data.size() << "\n";
     for (const auto& value : _data)
     {
-        os << "Base Context: " << value.first << "\n";
+        os << "Basecall Context: " << value.first << "\n";
         value.second.dump(os);
     }
-    os << "BaseErrorCounts DUMP_OFF\n";
+    os << "BasecallErrorCounts DUMP_OFF\n";
 }
 
 
 
-BaseErrorCounts::data_t::iterator
-BaseErrorCounts::
+BasecallErrorCounts::data_t::iterator
+BasecallErrorCounts::
 getContextIterator(
-    const BaseErrorContext& context)
+    const BasecallErrorContext& context)
 {
     const auto insert = _data.insert(std::make_pair(context,data_t::mapped_type()));
     return insert.first;

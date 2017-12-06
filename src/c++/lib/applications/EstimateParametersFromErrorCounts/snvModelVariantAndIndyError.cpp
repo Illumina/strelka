@@ -39,7 +39,7 @@
 static
 double
 contextLogLhood(
-    const BaseErrorContextObservationExportData& data,
+    const BasecallErrorContextObservationExportData& data,
     const double* logBaseErrorRate,
     const double logTheta)
 {
@@ -56,7 +56,7 @@ contextLogLhood(
     const double theta(std::exp(logTheta));
     const double logNoVariantPrior(std::log(1-(theta*3./2.)));
 
-    const unsigned qualCount(data.qualLevels.size());
+    const unsigned qualCount(data.altAlleleBasecallErrorPhredProbLevels.size());
 
     uint64_t refTotal(0);
     double refErrorRateFactor(0);
@@ -77,20 +77,20 @@ contextLogLhood(
         const auto& s0(key.strand0);
         const auto& s1(key.strand1);
 
-        const unsigned refQualTotal(s0.refCount+s1.refCount);
+        const unsigned refQualTotal(s0.refAlleleCount+s1.refAlleleCount);
 
         // get lhood of homref GT:
         double noVariant(logNoVariantRefRate*refQualTotal);
         for (unsigned qualIndex(0); qualIndex<qualCount; ++qualIndex)
         {
-            noVariant += logBaseErrorRate[qualIndex] * (s0.altCount[qualIndex] + s1.altCount[qualIndex]);
+            noVariant += logBaseErrorRate[qualIndex] * (s0.altAlleleCount[qualIndex] + s1.altAlleleCount[qualIndex]);
         }
 
         // get lhood of het GT:
         unsigned altQualTotal(0);
         for (unsigned qualIndex(0); qualIndex<qualCount; ++qualIndex)
         {
-            altQualTotal += (s0.altCount[qualIndex] + s1.altCount[qualIndex]);
+            altQualTotal += (s0.altAlleleCount[qualIndex] + s1.altAlleleCount[qualIndex]);
         }
 
         const double het(logHetRate*(refQualTotal+altQualTotal));
@@ -116,11 +116,11 @@ struct error_minfunc : public codemin::minfunc_interface<double>
 {
     explicit
     error_minfunc(
-        const BaseErrorContextObservationExportData& data,
+        const BasecallErrorContextObservationExportData& data,
         const bool isLockTheta = false)
         : _data(data),
           _isLockTheta(isLockTheta),
-          _qualParamSize(_data.qualLevels.size()),
+          _qualParamSize(_data.altAlleleBasecallErrorPhredProbLevels.size()),
           _params(new double[_qualParamSize+1])
     {}
 
@@ -190,7 +190,7 @@ struct error_minfunc : public codemin::minfunc_interface<double>
     static const double defaultLogTheta;
 
 private:
-    const BaseErrorContextObservationExportData& _data;
+    const BasecallErrorContextObservationExportData& _data;
     bool _isLockTheta;
     unsigned _qualParamSize;
     std::unique_ptr<double[]> _params;
@@ -214,8 +214,8 @@ struct SignalGroupTotal
 static
 void
 reportQualErrorRateSet(
-    const BaseErrorContext& context,
-    const BaseErrorData& data,
+    const BasecallErrorContext& context,
+    const BasecallErrorData& data,
     const uint16_t qual,
     const SignalGroupTotal& sigTotal,
     unsigned iter,
@@ -250,14 +250,14 @@ static
 void
 reportExtendedContext(
     const bool isLockTheta,
-    const BaseErrorContext& context,
-    const BaseErrorData& data,
+    const BasecallErrorContext& context,
+    const BasecallErrorData& data,
     std::ostream& os)
 {
-    BaseErrorContextObservationExportData exportData;
-    data.error.getExportData(exportData);
+    BasecallErrorContextObservationExportData exportData;
+    data.counts.getExportData(exportData);
 
-    const unsigned qualCount(exportData.qualLevels.size());
+    const unsigned qualCount(exportData.altAlleleBasecallErrorPhredProbLevels.size());
     const unsigned paramCount(qualCount+1);
 
     // initialize conjugate direction minimizer settings and minimize lhood...
@@ -326,12 +326,12 @@ reportExtendedContext(
             {
                 const auto& key(value.first);
                 const unsigned repeatCount(value.second);
-                const unsigned altCount(key.strand0.altCount[qualIndex]+key.strand1.altCount[qualIndex]);
+                const unsigned altCount(key.strand0.altAlleleCount[qualIndex]+key.strand1.altAlleleCount[qualIndex]);
                 sigTotal.alt += (altCount*repeatCount);
             }
 
             const double qualErrorRate(std::exp(normParams[qualIndex]));
-            reportQualErrorRateSet(context, data, exportData.qualLevels[qualIndex], sigTotal, iter, -x_all_loghood, qualErrorRate, theta, os);
+            reportQualErrorRateSet(context, data, exportData.altAlleleBasecallErrorPhredProbLevels[qualIndex], sigTotal, iter, -x_all_loghood, qualErrorRate, theta, os);
         }
     }
 }

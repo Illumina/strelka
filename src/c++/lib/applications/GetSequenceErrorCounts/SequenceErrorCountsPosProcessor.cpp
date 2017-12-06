@@ -407,14 +407,14 @@ process_pos_error_counts(
 
     if (refBase=='N') return;
 
-    BaseErrorCounts& baseCounts(_counts.getBaseCounts());
+    BasecallErrorCounts& baseCounts(_counts.getBaseCounts());
     IndelErrorCounts& indelCounts(_counts.getIndelCounts());
 
     // right now there's only one baseContext (ie. only one context used for SNVs and basecalls), this
     // is why we set it as const here
     //
     // this contrasts with the indel counting logic below which is using several contexts
-    const BaseErrorContext baseContext;
+    const BasecallErrorContext baseContext;
 
     bool isSkipSNV(false);
     bool isSkipIndel(false);
@@ -511,7 +511,7 @@ process_pos_error_counts(
         {
             bool isEmpty(true);
             const uint8_t ref_id(base_to_id(refBase));
-            BaseErrorContextInputObservation obs;
+            BasecallErrorContextInputObservation obs;
             for (const base_call& bc : sinfo.calls)
             {
                 if (bc.is_call_filter) continue;
