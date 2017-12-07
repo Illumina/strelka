@@ -360,136 +360,139 @@ double
 readRegionDepthFromAlignment(
     const std::string& referenceFile,
     const std::string& alignmentFile,
-    const std::string& region)
-{
+    const std::vector<std::string>& regions) {
     bam_streamer read_stream(alignmentFile.c_str(), referenceFile.c_str());
 
-    const bam_hdr_t& header(read_stream.get_header());
+    const bam_hdr_t &header(read_stream.get_header());
     const bam_header_info bamHeader(header);
 
     int32_t regionBeginPos;
     int32_t regionEndPos;
     int32_t regionIndex;
 
-    parse_bam_region_from_hdr(&header, region.c_str(), regionIndex, regionBeginPos, regionEndPos);
-
-    const unsigned regionSize(regionEndPos - regionBeginPos);
-
-    unsigned segmentSize(2000000);
-    std::vector<unsigned> segmentStartPos;
-
-    static const unsigned maxSSLoop(1000);
-    for (unsigned i=0; i<=maxSSLoop; ++i)
+    size_t regionCount = 0;
+    double sumOfDepths = 0;
+    // calculate the median depth seperately for each region
+    for (const auto &region:regions)
     {
-        assert(i < maxSSLoop);
-        getRegionSegments(regionSize, segmentSize, segmentStartPos);
-        if (segmentStartPos.size() <= 20) break;
+        parse_bam_region_from_hdr(&header, region.c_str(), regionIndex, regionBeginPos, regionEndPos);
 
-        const unsigned lastSegmentSize(segmentSize);
-        segmentSize *= 2;
-        assert(segmentSize > lastSegmentSize); //overflow gaurd
-    }
+        const unsigned regionSize(regionEndPos - regionBeginPos);
 
-    const unsigned totalSegments(segmentStartPos.size());
+        unsigned segmentSize(2000000);
+        std::vector<unsigned> segmentStartPos;
 
-    std::vector<unsigned> segmentHeadPos = segmentStartPos;
-    std::vector<bool> segmentIsEmpty(totalSegments,false);
+        static const unsigned maxSSLoop(1000);
+        for (unsigned i = 0; i <= maxSSLoop; ++i) {
+            assert(i < maxSSLoop);
+            getRegionSegments(regionSize, segmentSize, segmentStartPos);
+            if (segmentStartPos.size() <= 20) break;
 
-    RegionDepthTracker cdTracker;
-
-#ifdef DEBUG_DPS
-    log_os << "INFO: Region depth requesting bam region starting from: chrid: " << regionIndex << "\n";
-    for (const auto startPos : segmentStartPos)
-    {
-        log_os << "\tstartPos: " << startPos << "\n";
-    }
-#endif
-
-    // loop through segments until convergence criteria are met, or we run out of data:
-    static const unsigned maxCycle(10);
-    bool isFinished(false);
-    for (unsigned cycleIndex(0); cycleIndex<maxCycle; cycleIndex++)
-    {
-#ifdef DEBUG_DPS
-        log_os << "starting cycle: " << cycleIndex << "\n";
-#endif
-        bool isEmpty(true);
-        for (unsigned segmentIndex(0); segmentIndex<totalSegments; segmentIndex++)
-        {
-#ifdef DEBUG_DPS
-            log_os << "starting segment: " << segmentIndex << "\n";
-#endif
-            if (segmentIsEmpty[segmentIndex]) continue;
-
-            const int32_t startPos(segmentHeadPos[segmentIndex]);
-            const int32_t endPos(((segmentIndex+1)<totalSegments) ? segmentStartPos[segmentIndex+1]: regionSize);
-#ifdef DEBUG_DPS
-            log_os << "scanning region: " << startPos << "," << endPos << "\n";
-#endif
-            read_stream.resetRegion(regionIndex, startPos, endPos);
-
-            cdTracker.setNewRegion();
-
-            static const unsigned targetSegmentReadCount=40000;
-            static const int32_t minSpan(10000);
-            unsigned segmentReadCount(0);
-            while (read_stream.next())
-            {
-                // not allowed to test convergence until we've cycled through all segments once
-                if ((cycleIndex>0) && cdTracker.isDepthConverged())
-                {
-                    isFinished=true;
-                    break;
-                }
-
-                const bam_record& bamRead(*(read_stream.get_record_ptr()));
-                const int32_t readPos(bamRead.pos()-1);
-                if (readPos<startPos) continue;
-
-                segmentReadCount++;
-
-                if (readPos >= static_cast<int32_t>(segmentHeadPos[segmentIndex]))
-                {
-                    // cycle through to next segment:
-                    // doing this here ensures that we only cycle-out at the end of a position so that
-                    // no data is skipped if we come back to this segment again:
-                    if ((segmentReadCount > targetSegmentReadCount) && ((readPos-startPos) >= minSpan))
-                    {
-                        segmentHeadPos[segmentIndex] = readPos;
-                        break;
-                    }
-                    else
-                    {
-                        segmentHeadPos[segmentIndex] = readPos+1;
-                    }
-                }
-
-                // apply all filters:
-                const READ_FILTER_TYPE::index_t filterId(starling_read_filter_shared(bamRead));
-                if (filterId != READ_FILTER_TYPE::NONE) continue;
-
-                cdTracker.addRead(bamRead);
-
-                if (! cdTracker.isDepthCountCheck()) continue;
-
-                // check convergence
-                cdTracker.updateDepthConvergenceTest();
-            }
-
-            if (segmentReadCount>0)
-            {
-                isEmpty=false;
-            }
-            else
-            {
-                segmentIsEmpty[segmentIndex] = true;
-            }
+            const unsigned lastSegmentSize(segmentSize);
+            segmentSize *= 2;
+            assert(segmentSize > lastSegmentSize); //overflow gaurd
         }
 
-        if (isFinished || isEmpty) break;
+        const unsigned totalSegments(segmentStartPos.size());
+
+        std::vector<unsigned> segmentHeadPos = segmentStartPos;
+        std::vector<bool> segmentIsEmpty(totalSegments, false);
+
+        RegionDepthTracker cdTracker;
+
+#ifdef DEBUG_DPS
+        log_os << "INFO: Region depth requesting bam region starting from: chrid: " << regionIndex << "\n";
+        for (const auto startPos : segmentStartPos)
+        {
+            log_os << "\tstartPos: " << startPos << "\n";
+        }
+#endif
+
+        // loop through segments until convergence criteria are met, or we run out of data:
+        static const unsigned maxCycle(10);
+        bool isFinished(false);
+        for (unsigned cycleIndex(0); cycleIndex < maxCycle; cycleIndex++)
+        {
+#ifdef DEBUG_DPS
+            log_os << "starting cycle: " << cycleIndex << "\n";
+#endif
+            bool isEmpty(true);
+            for (unsigned segmentIndex(0); segmentIndex < totalSegments; segmentIndex++)
+            {
+#ifdef DEBUG_DPS
+                log_os << "starting segment: " << segmentIndex << "\n";
+#endif
+                if (segmentIsEmpty[segmentIndex]) continue;
+
+                const int32_t startPos(segmentHeadPos[segmentIndex]);
+                const int32_t endPos(
+                        ((segmentIndex + 1) < totalSegments) ? segmentStartPos[segmentIndex + 1] : regionSize);
+#ifdef DEBUG_DPS
+                log_os << "scanning region: " << startPos << "," << endPos << "\n";
+#endif
+                read_stream.resetRegion(regionIndex, startPos, endPos);
+
+                cdTracker.setNewRegion();
+
+                static const unsigned targetSegmentReadCount = 40000;
+                static const int32_t minSpan(10000);
+                unsigned segmentReadCount(0);
+                while (read_stream.next())
+                {
+                    // not allowed to test convergence until we've cycled through all segments once
+                    if ((cycleIndex > 0) && cdTracker.isDepthConverged()) {
+                        isFinished = true;
+                        break;
+                    }
+
+                    const bam_record &bamRead(*(read_stream.get_record_ptr()));
+                    const int32_t readPos(bamRead.pos() - 1);
+                    if (readPos < startPos) continue;
+
+                    segmentReadCount++;
+
+                    if (readPos >= static_cast<int32_t>(segmentHeadPos[segmentIndex])) {
+                        // cycle through to next segment:
+                        // doing this here ensures that we only cycle-out at the end of a position so that
+                        // no data is skipped if we come back to this segment again:
+                        if ((segmentReadCount > targetSegmentReadCount) && ((readPos - startPos) >= minSpan)) {
+                            segmentHeadPos[segmentIndex] = readPos;
+                            break;
+                        } else {
+                            segmentHeadPos[segmentIndex] = readPos + 1;
+                        }
+                    }
+
+                    // apply all filters:
+                    const READ_FILTER_TYPE::index_t filterId(starling_read_filter_shared(bamRead));
+                    if (filterId != READ_FILTER_TYPE::NONE) continue;
+
+                    cdTracker.addRead(bamRead);
+
+                    if (!cdTracker.isDepthCountCheck()) continue;
+
+                    // check convergence
+                    cdTracker.updateDepthConvergenceTest();
+                }
+
+                if (segmentReadCount > 0) {
+                    isEmpty = false;
+                }
+                else
+                {
+                    segmentIsEmpty[segmentIndex] = true;
+                }
+            }
+
+            if (isFinished || isEmpty) break;
+        }
+
+        cdTracker.finalize();
+        if(cdTracker.getDepth() > 0)
+        {
+            regionCount++;
+            sumOfDepths += cdTracker.getDepth();
+        }
     }
-
-    cdTracker.finalize();
-
-    return cdTracker.getDepth();
+    return sumOfDepths/regionCount;
 }

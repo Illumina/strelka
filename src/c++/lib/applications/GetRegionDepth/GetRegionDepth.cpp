@@ -40,20 +40,13 @@ getRegionDepth(const RegionDepthOptions& opt)
         OutStream outs(opt.outputFilename);
     }
 
-    std::vector<double> regionDepth;
-    for (const std::string& region : opt.regions)
-    {
-        regionDepth.push_back(readRegionDepthFromAlignment(opt.referenceFilename, opt.alignmentFilename, region));
-    }
+    double regionDepth(readRegionDepthFromAlignment(opt.referenceFilename, opt.alignmentFilename, opt.regions));
 
     OutStream outs(opt.outputFilename);
     std::ostream& os(outs.getStream());
 
-    const unsigned regionCount(opt.regions.size());
-    for (unsigned regionIndex(0); regionIndex<regionCount; ++regionIndex)
-    {
-        os << opt.regions[regionIndex] << "\t" << std::fixed << std::setprecision(2) << regionDepth[regionIndex] << "\n";
-    }
+    os << opt.alignmentFilename << "\t" << std::fixed << std::setprecision(4) << regionDepth << "\n";
+
 }
 
 
