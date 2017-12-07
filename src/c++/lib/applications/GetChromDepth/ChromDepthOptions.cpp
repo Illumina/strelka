@@ -19,7 +19,7 @@
 
 /// \file
 
-#include "RegionDepthOptions.hh"
+#include "ChromDepthOptions.hh"
 
 #include "blt_util/log.hh"
 #include "common/ProgramUtil.hh"
@@ -29,7 +29,7 @@
 
 #include <iostream>
 
-typedef std::vector<std::string> regions_t;
+typedef std::vector<std::string> chroms_t;
 
 
 static
@@ -40,12 +40,12 @@ usage(
     const boost::program_options::options_description& visible,
     const char* msg = nullptr)
 {
-    usage(os, prog, visible, "get region depth information from alignment files", " [ > output ]", msg);
+    usage(os, prog, visible, "get chromosome depth information from alignment files", " [ > output ]", msg);
 }
 
 
 
-/// \brief Parse RegionDepthOptions
+/// \brief Parse ChromDepthOptions
 ///
 /// \param[out] errorMsg If an error occurs this is set to an end-user targeted error message. Any string content on
 ///                 input is cleared
@@ -55,27 +55,27 @@ static
 bool
 parseOptions(
     const boost::program_options::variables_map& vm,
-    RegionDepthOptions& opt,
+    ChromDepthOptions& opt,
     std::string& errorMsg)
 {
     if (checkStandardizeInputFile(opt.alignmentFilename, "alignment", errorMsg)) return true;
     if (checkStandardizeInputFile(opt.referenceFilename, "reference fasta", errorMsg)) return true;
 
-    if (vm.count("region"))
+    if (vm.count("chrom"))
     {
-        opt.regions=(boost::any_cast<regions_t>(vm["region"].value()));
+        opt.chromNames=(boost::any_cast<chroms_t>(vm["chrom"].value()));
     }
 
-    if (opt.regions.empty())
+    if (opt.chromNames.empty())
     {
-        errorMsg = "Need at least one region";
+        errorMsg = "Need at least one chromosome name";
         return true;
     }
 
-    for (const std::string& region : opt.regions)
+    for (const std::string& chromName : opt.chromNames)
     {
-        if (! region.empty()) continue;
-        errorMsg = "At least one region entry is empty";
+        if (! chromName.empty()) continue;
+        errorMsg = "At least one chromosome name is empty";
         return true;
     }
 
@@ -85,18 +85,18 @@ parseOptions(
 
 
 void
-parseRegionDepthOptions(
+parseChromDepthOptions(
     const illumina::Program& prog,
     int argc, char* argv[],
-    RegionDepthOptions& opt)
+    ChromDepthOptions& opt)
 {
     namespace po = boost::program_options;
     po::options_description req("configuration");
     req.add_options()
     ("align-file", po::value(&opt.alignmentFilename),
      "alignment file in BAM or CRAM format")
-    ("region", po::value<regions_t>(),
-     "samtools formatted region, eg. 'chr1:20-30'. May be supplied more than once. At least one entry required.")
+    ("chrom", po::value<chroms_t>(),
+     "chromosome name. May be supplied more than once. At least one entry required.")
     ("output-file", po::value(&opt.outputFilename),
      "write stats to filename (default: stdout)")
     ("ref", po::value(&opt.referenceFilename),
@@ -127,7 +127,7 @@ parseRegionDepthOptions(
     if ((argc<=1) || (vm.count("help")) || po_parse_fail)
     {
         usage(log_os,prog,visible);
-        log_os << "\n" << prog.name() << ": get region depth from alignment file\n\n";
+        log_os << "\n" << prog.name() << ": get chromosome depth from alignment file\n\n";
         log_os << "version: " << prog.version() << "\n\n";
         log_os << "usage: " << prog.name() << " [options] > stats\n\n";
         log_os << visible << "\n";

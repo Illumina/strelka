@@ -130,7 +130,7 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
         tabixBin=joinFile(libexecDir,exeFile("tabix"))
         bgcatBin=joinFile(libexecDir,exeFile("bgzf_cat"))
 
-        getRegionDepthBin=joinFile(libexecDir,exeFile("GetRegionDepth"))
+        getChromDepthBin=joinFile(libexecDir,exeFile("GetChromDepth"))
 
         mergeChromDepth=joinFile(libexecDir,"mergeChromDepth.py")
         catScript=joinFile(libexecDir,"cat.py")

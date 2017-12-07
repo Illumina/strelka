@@ -296,8 +296,8 @@ struct starling_base_deriv_options : public blt_deriv_options, private boost::no
         const uint16_t nonAmbiguousBasesInRead) const
     {
         const double thisRandomBaseMatchLogLikelihood(isTier2 ?
-                                       tier2RandomBaseMatchLogProb :
-                                       randomBaseMatchLogProb );
+                                                      tier2RandomBaseMatchLogProb :
+                                                      randomBaseMatchLogProb );
         return thisRandomBaseMatchLogLikelihood*nonAmbiguousBasesInRead;
     }
 

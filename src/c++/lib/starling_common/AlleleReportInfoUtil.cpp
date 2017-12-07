@@ -237,7 +237,7 @@ indel_lnp_to_pprob(
     // read is randomly positioned on the genome). This term is effectively 1 so it is approximated out in the current
     // version.
     ReadPathScores::score_t pprob_readIncorrectlyMapped = dopt.getIncorrectMappingLogLikelihood(is_tier2_pass,
-                                                                                                path_lnp.nonAmbiguousBasesInRead);
+                                                          path_lnp.nonAmbiguousBasesInRead);
     pprob.ref     = path_lnp.ref     + dopt.correctMappingLogPrior + allele_lnprior;
     pprob.indel   = path_lnp.indel   + dopt.correctMappingLogPrior + allele_lnprior;
 

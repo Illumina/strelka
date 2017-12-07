@@ -527,10 +527,10 @@ computeEmpiricalScoringFeatures(
     const unsigned totalConfidentFwdCount(sampleInfo.supportCounts.fwdCounts.totalConfidentCounts());
     const unsigned totalConfidentRevCount(sampleInfo.supportCounts.revCounts.totalConfidentCounts());
     const double alleleCountStrandBias(starling_continuous_variant_caller::strandBias(
-                          confidentPrimaryAltFwdCount,
-                          confidentPrimaryAltRevCount,
-                          totalConfidentFwdCount - confidentPrimaryAltFwdCount,
-                          totalConfidentRevCount - confidentPrimaryAltRevCount));
+                                           confidentPrimaryAltFwdCount,
+                                           confidentPrimaryAltRevCount,
+                                           totalConfidentFwdCount - confidentPrimaryAltFwdCount,
+                                           totalConfidentRevCount - confidentPrimaryAltRevCount));
 
     // allele bias metrics
     double SampleIndelAlleleBiasLower, SampleIndelAlleleBias;

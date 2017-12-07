@@ -27,6 +27,6 @@
 /// return average region depth
 double
 readRegionDepthFromAlignment(
-        const std::string& referenceFile,
-        const std::string& alignmentFile,
-        const std::string& region);
+    const std::string& referenceFile,
+    const std::string& alignmentFile,
+    const std::string& region);

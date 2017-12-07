@@ -26,10 +26,10 @@
 #include <vector>
 
 
-struct RegionDepthOptions
+struct ChromDepthOptions
 {
     std::string alignmentFilename;
-    std::vector<std::string> regions;
+    std::vector<std::string> chromNames;
 
     std::string referenceFilename;
     std::string outputFilename;
@@ -37,7 +37,7 @@ struct RegionDepthOptions
 
 
 void
-parseRegionDepthOptions(
+parseChromDepthOptions(
     const illumina::Program& prog,
     int argc, char* argv[],
-    RegionDepthOptions& opt);
+    ChromDepthOptions& opt);

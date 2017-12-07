@@ -17,27 +17,21 @@
 //
 //
 
-
 #pragma once
 
 #include "common/Program.hh"
 
-#include <string>
-#include <vector>
 
-
-struct RegionDepthOptions
+/// estimate per-library information from alignment file(s)
+///
+struct GetChromDepth : public illumina::Program
 {
-    std::string alignmentFilename;
-    std::vector<std::string> regions;
+    const char*
+    name() const
+    {
+        return "GetChromDepth";
+    }
 
-    std::string referenceFilename;
-    std::string outputFilename;
+    void
+    runInternal(int argc, char* argv[]) const;
 };
-
-
-void
-parseRegionDepthOptions(
-    const illumina::Program& prog,
-    int argc, char* argv[],
-    RegionDepthOptions& opt);

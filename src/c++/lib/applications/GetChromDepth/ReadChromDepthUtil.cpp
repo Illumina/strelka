@@ -17,14 +17,17 @@
 //
 //
 
+/// \file
+/// \author Chris Saunders
+///
 
-#include "ReadRegionDepthUtil.hh"
+
+#include "ReadChromDepthUtil.hh"
 
 #include "blt_util/log.hh"
 #include "blt_util/MedianDepthTracker.hh"
 #include "blt_util/depth_buffer.hh"
 #include "common/Exceptions.hh"
-#include "htsapi/bam_header_util.hh"
 #include "htsapi/bam_header_info.hh"
 #include "htsapi/bam_streamer.hh"
 #include "starling_common/starling_read_filter_shared.hh"
@@ -196,12 +199,12 @@ private:
 
 
 
-/// all data required to build RegionDepth during estimation from the bam file
+/// all data required to build ChromDepth during estimation from the bam file
 ///
-struct RegionDepthTracker
+struct ChromDepthTracker
 {
     explicit
-    RegionDepthTracker() :
+    ChromDepthTracker() :
         _isFinalized(false),
         _isChecked(false),
         _isDepthConverged(false),
@@ -280,7 +283,7 @@ struct RegionDepthTracker
 
     void
     finalize(
-        const bool isCompleteRegion = true)
+        const bool isCompleteChrom = true)
     {
         if (_isFinalized) return;
 
@@ -292,9 +295,9 @@ struct RegionDepthTracker
                 updateDepthConvergenceTest();
             }
 
-            if (! (isCompleteRegion || isDepthConverged()))
+            if (! (isCompleteChrom || isDepthConverged()))
             {
-                log_os << "WARNING: region mean depth did not converge\n";
+                log_os << "WARNING: chrom mean depth did not converge\n";
             }
         }
 
@@ -324,57 +327,63 @@ private:
 
 
 
-/// get the start positions of region segments
+/// get the start positions of chromosome segments
 /// ensure that all segments are no longer than segmentSize
 ///
 /// all are zero-indexed
 static
 void
-getRegionSegments(
-    const unsigned regionSize,
+getChromSegments(
+    const unsigned chromSize,
     const unsigned segmentSize,
     std::vector<unsigned>& startPos)
 {
-    assert(regionSize>0);
+    assert(chromSize>0);
     assert(segmentSize>0);
 
     startPos.clear();
 
-    const unsigned regionSegments(1+((regionSize-1)/segmentSize));
-    const unsigned segmentBaseSize(regionSize/regionSegments);
-    const unsigned nPlusOne(regionSize%regionSegments);
+    const unsigned chromSegments(1+((chromSize-1)/segmentSize));
+    const unsigned segmentBaseSize(chromSize/chromSegments);
+    const unsigned nPlusOne(chromSize%chromSegments);
     unsigned start(0);
 
-    for (unsigned segmentIndex(0); segmentIndex<regionSegments; ++segmentIndex)
+    for (unsigned segmentIndex(0); segmentIndex<chromSegments; ++segmentIndex)
     {
-        assert(start < regionSize);
+        assert(start < chromSize);
         startPos.push_back(start);
         const unsigned segSize(segmentBaseSize + ((segmentIndex<nPlusOne) ? 1 : 0));
-        start=std::min(start+segSize,regionSize);
+        start=std::min(start+segSize,chromSize);
     }
 }
 
 
 
 double
-readRegionDepthFromAlignment(
+readChromDepthFromAlignment(
     const std::string& referenceFile,
     const std::string& alignmentFile,
-    const std::string& region)
+    const std::string& chromName)
 {
     bam_streamer read_stream(alignmentFile.c_str(), referenceFile.c_str());
 
     const bam_hdr_t& header(read_stream.get_header());
     const bam_header_info bamHeader(header);
 
-    int32_t regionBeginPos;
-    int32_t regionEndPos;
-    int32_t regionIndex;
+    const auto& chromToIndex(bamHeader.chrom_to_index);
+    const auto chromIter(chromToIndex.find(chromName));
+    if (chromIter == chromToIndex.end())
+    {
+        using namespace illumina::common;
 
-    parse_bam_region_from_hdr(&header, region.c_str(), regionIndex, regionBeginPos, regionEndPos);
+        std::ostringstream oss;
+        oss << "ERROR: Can't find chromosome name '" << chromName << "' in BAM/CRAM file: '" << alignmentFile << "\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
 
-    const unsigned regionSize(regionEndPos - regionBeginPos);
+    const int32_t chromIndex(chromIter->second);
 
+    const unsigned chromSize(bamHeader.chrom_data[chromIndex].length);
     unsigned segmentSize(2000000);
     std::vector<unsigned> segmentStartPos;
 
@@ -382,7 +391,7 @@ readRegionDepthFromAlignment(
     for (unsigned i=0; i<=maxSSLoop; ++i)
     {
         assert(i < maxSSLoop);
-        getRegionSegments(regionSize, segmentSize, segmentStartPos);
+        getChromSegments(chromSize, segmentSize, segmentStartPos);
         if (segmentStartPos.size() <= 20) break;
 
         const unsigned lastSegmentSize(segmentSize);
@@ -395,10 +404,11 @@ readRegionDepthFromAlignment(
     std::vector<unsigned> segmentHeadPos = segmentStartPos;
     std::vector<bool> segmentIsEmpty(totalSegments,false);
 
-    RegionDepthTracker cdTracker;
+    ChromDepthTracker cdTracker;
 
 #ifdef DEBUG_DPS
-    log_os << "INFO: Region depth requesting bam region starting from: chrid: " << regionIndex << "\n";
+    log_os << "INFO: Chrom depth requesting bam region starting from: chrid: " << chromIndex << "\n";
+    log_os << "\tchromSize: " << chromSize << "\n";
     for (const auto startPos : segmentStartPos)
     {
         log_os << "\tstartPos: " << startPos << "\n";
@@ -422,11 +432,11 @@ readRegionDepthFromAlignment(
             if (segmentIsEmpty[segmentIndex]) continue;
 
             const int32_t startPos(segmentHeadPos[segmentIndex]);
-            const int32_t endPos(((segmentIndex+1)<totalSegments) ? segmentStartPos[segmentIndex+1]: regionSize);
+            const int32_t endPos(((segmentIndex+1)<totalSegments) ? segmentStartPos[segmentIndex+1]: chromSize);
 #ifdef DEBUG_DPS
             log_os << "scanning region: " << startPos << "," << endPos << "\n";
 #endif
-            read_stream.resetRegion(regionIndex, startPos, endPos);
+            read_stream.resetRegion(chromIndex, startPos, endPos);
 
             cdTracker.setNewRegion();
 

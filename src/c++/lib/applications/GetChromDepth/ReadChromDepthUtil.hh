@@ -17,27 +17,20 @@
 //
 //
 
+/// \file
+/// \author Chris Saunders
+///
 
 #pragma once
 
-#include "common/Program.hh"
-
 #include <string>
-#include <vector>
 
 
-struct RegionDepthOptions
-{
-    std::string alignmentFilename;
-    std::vector<std::string> regions;
-
-    std::string referenceFilename;
-    std::string outputFilename;
-};
-
-
-void
-parseRegionDepthOptions(
-    const illumina::Program& prog,
-    int argc, char* argv[],
-    RegionDepthOptions& opt);
+/// Fast chrom depth estimator for BAM/CRAM files
+///
+/// return average chromosome depth
+double
+readChromDepthFromAlignment(
+    const std::string& referenceFile,
+    const std::string& alignmentFile,
+    const std::string& chromName);
