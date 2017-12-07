@@ -34,7 +34,7 @@
 
 // turn this on to use reads which support some, but not all, of an
 // overlapping allele group;
-#define USE_GERMLINE_SUPPORTING_READ_UNION
+//#define USE_GERMLINE_SUPPORTING_READ_UNION
 
 
 
@@ -182,8 +182,7 @@ getAlleleLogLhoodFromRead(
             const auto iditer(indelSampleData.read_path_lnp.find(readId));
             if (iditer != indelSampleData.read_path_lnp.end()) continue;
 
-//            alleleLogLhood[nonrefAlleleIndex+1] = alleleLogLhood[refAlleleIndex];
-            alleleLogLhood[nonrefAlleleIndex+1] = -1000000.;
+            alleleLogLhood[nonrefAlleleIndex+1] = alleleLogLhood[refAlleleIndex];
         }
     }
 }

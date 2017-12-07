@@ -52,6 +52,111 @@ struct starling_align_indel_info
     bool isInOriginalAlignment = false; ///< candidate indel is present in the original alignment
 };
 
+//enum HaplotypeInfo
+//{
+//    ReferenceOnly,
+//    Haplotype1OrReference,
+//    Haplotype2OrReference,
+//    Any
+//};
+
+static
+int
+getNewSampleHaplotypeId(
+        const int haplotypeId,
+        const int curIndelHaplotypeId,
+        const bool isCurIndelOn,
+        const bool isAnyIndelOn)
+{
+    if (curIndelHaplotypeId <= 0) return haplotypeId;
+
+    int curHaplotypeId = isCurIndelOn ? curIndelHaplotypeId : (3-curIndelHaplotypeId);
+
+    if (haplotypeId < 0) return haplotypeId;
+
+    switch (curIndelHaplotypeId)
+    {
+        case 1:
+        case 2:
+        {
+            if ((haplotypeId == 3) || (haplotypeId == curHaplotypeId))
+            {
+                return curHaplotypeId;
+            }
+            // haplotype id mismatch
+            if (isCurIndelOn || isAnyIndelOn)
+                return -1;  // prevent adding this indel
+            else
+                return 0;
+        }
+        case 3:
+        {
+            if (!isCurIndelOn)
+            {
+                if (isAnyIndelOn)
+                    return -1;
+                else
+                    return 0;
+            }
+            if (haplotypeId > 0) return haplotypeId;
+            // prevHaplotypeId == 0 (don't allow adding indel), current indel is on
+            return -1;
+        }
+        default:
+            assert(false);
+    }
+}
+
+class HaplotypeStatus
+{
+public:
+    HaplotypeStatus()
+    {
+        assert(false);
+    }
+
+    explicit HaplotypeStatus(unsigned numSamples)
+    : _haplotypeInfo(numSamples)
+    {
+        for (unsigned sampleIndex(0); sampleIndex<_haplotypeInfo.size(); ++sampleIndex)
+        {
+            _haplotypeInfo[sampleIndex] = 3;
+        }
+    }
+
+    bool updateHaplotypeStatus(
+        const std::vector<int>& curIndelHaplotypeIds,
+        const bool isCurIndelOn,
+        const bool isAnyIndelOn)
+    {
+        const unsigned sampleCount(_haplotypeInfo.size());
+
+        bool isValid(false);
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        {
+            const int sampleCurIndelHaplotypeId(curIndelHaplotypeIds[sampleIndex]);
+            const int sampleHaplotypeId(_haplotypeInfo[sampleIndex]);
+            int newSampleHaplotypeId;
+            if ((sampleCurIndelHaplotypeId < 0) && isCurIndelOn)
+            {
+                newSampleHaplotypeId = -1;
+            }
+            else
+            {
+                newSampleHaplotypeId = getNewSampleHaplotypeId(sampleHaplotypeId, sampleCurIndelHaplotypeId,
+                                                               isCurIndelOn, isAnyIndelOn);
+                if (newSampleHaplotypeId >= 0) isValid = true;
+            }
+            _haplotypeInfo[sampleIndex] = newSampleHaplotypeId;
+        }
+
+        return isValid;
+    }
+
+private:
+    std::vector<int> _haplotypeInfo;
+
+};
 
 static
 std::ostream&
@@ -64,6 +169,7 @@ operator<<(std::ostream& os, const starling_align_indel_info& ii)
 
 typedef std::map<IndelKey,starling_align_indel_info> starling_align_indel_status;
 
+typedef std::map<ActiveRegionId,HaplotypeStatus> HaplotypeStatusMap;
 
 
 static
@@ -674,89 +780,6 @@ addKeysToCandidateAlignment(
     cal.setIndels(calIndels);
 }
 
-static
-int
-getNewSampleHaplotypeId(
-    const bool isNewActiveRegion,
-    const int haplotypeId,
-    const int curIndelHaplotypeId,
-    const bool isCurIndelOn,
-    const bool isAnyIndelOn)
-{
-    if (curIndelHaplotypeId <= 0) return haplotypeId;
-
-    int curHaplotypeId = isCurIndelOn ? curIndelHaplotypeId : (3-curIndelHaplotypeId);
-    if (isNewActiveRegion) return curHaplotypeId;
-
-    if (haplotypeId < 0) return haplotypeId;
-
-    switch (curIndelHaplotypeId)
-    {
-        case 1:
-        case 2:
-        {
-            if ((haplotypeId == 3) || (haplotypeId == curHaplotypeId))
-            {
-                return curHaplotypeId;
-            }
-            // haplotype id mismatch
-            if (isCurIndelOn || isAnyIndelOn)
-                return -1;  // prevent adding this indel
-            else
-                return 0;
-        }
-        case 3:
-        {
-            if (!isCurIndelOn)
-            {
-                if (isAnyIndelOn)
-                    return -1;
-                else
-                    return 0;
-            }
-            if (haplotypeId > 0) return haplotypeId;
-            // prevHaplotypeId == 0 (don't allow adding indel), current indel is on
-            return -1;
-        }
-        default:
-            assert(false);
-    }
-}
-
-static
-bool
-updateHaplotypeIds(
-    const bool isNewActiveRegion,
-    const std::vector<int>& haplotypeIds,
-    const std::vector<int>& curIndelHaplotypeIds,
-    const bool isCurIndelOn,
-    const bool isAnyIndelOn,
-    std::vector<int>& newHaplotypeIds)
-{
-    const unsigned sampleCount(haplotypeIds.size());
-
-    bool isValid(false);
-    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-    {
-        const int sampleCurIndelHaplotypeId(curIndelHaplotypeIds[sampleIndex]);
-        const int sampleHaplotypeId(haplotypeIds[sampleIndex]);
-        int newSampleHaplotypeId;
-        if ((sampleCurIndelHaplotypeId < 0) && isCurIndelOn)
-        {
-            newSampleHaplotypeId = -1;
-        }
-        else
-        {
-            newSampleHaplotypeId = getNewSampleHaplotypeId(
-                    isNewActiveRegion, sampleHaplotypeId, sampleCurIndelHaplotypeId,
-                    isCurIndelOn, isAnyIndelOn);
-            if (newSampleHaplotypeId >= 0) isValid = true;
-        }
-        newHaplotypeIds[sampleIndex] = newSampleHaplotypeId;
-    }
-
-    return isValid;
-}
 
 /// Recursively build potential alignment paths and push them into the
 /// candidate alignment set:
@@ -772,11 +795,10 @@ candidate_alignment_search(
     const ActiveRegionDetector& activeRegionDetector,
     const unsigned sampleId,
     const known_pos_range& realign_buffer_range,
-    const ActiveRegionId activeRegionId,
-    std::vector<int> haplotypeIds,
     std::set<CandidateAlignment>& cal_set,
     mca_warnings& warn,
     starling_align_indel_status indel_status_map,
+    HaplotypeStatusMap haplotypeStatusMap,
     std::vector<IndelKey> indel_order,
     const bool isAnyIndelOn,
     const unsigned depth,
@@ -897,12 +919,13 @@ candidate_alignment_search(
     //
     // edge-indels can only be pinned on one side
     //
+    const unsigned sampleCount(opt.getSampleCount());
+
     const IndelKey& cindel(indel_order[depth]);
     const bool is_cindel_on(indel_status_map[cindel].is_present);
     const IndelData& cindelData(*indelBuffer.getIndelDataPtr(cindel));
-    const auto& cindelSampleData(cindelData.getSampleData(sampleId));
-    const ActiveRegionId cActiveRegionId(activeRegionDetector.getActiveRegionId(cindel.pos));
-    const bool isNewActiveRegion((activeRegionId == -1) || (activeRegionId != cActiveRegionId));
+//    const auto& cindelSampleData(cindelData.getSampleData(sampleId));
+
     bool isConflict(false);
     for (unsigned i(0); i<depth; ++i)
     {
@@ -912,50 +935,64 @@ candidate_alignment_search(
         if (is_indel_conflict(indelKey, cindel)) isConflict = true;
     }
 
-    const unsigned sampleCount(opt.getSampleCount());
+    ActiveRegionId cActiveRegionId(activeRegionDetector.getActiveRegionId(cindel.pos));
+
     std::vector<int> curIndelHaplotypeIds(sampleCount);
 
-    for (unsigned i(0); i<sampleCount; ++i)
+    if (cActiveRegionId >= 0)
     {
-        const auto& indelSampleData(cindelData.getSampleData(i));
-        int curIndelHaplotypeId(indelSampleData.haplotypeId);
-        if (curIndelHaplotypeId == 0)
+        auto it = haplotypeStatusMap.find(cActiveRegionId);
+        if (it == haplotypeStatusMap.end())
         {
-            bool isCurIndelValidInThisSample(
-                    (cindelSampleData.isHaplotypingBypassed)
-                    || (cindelData.isForcedOutput) || (! opt.is_short_haplotyping_enabled));
-            if (!isCurIndelValidInThisSample && (i == sampleId)
-                && (indel_status_map[cindel].isInOriginalAlignment))
-                isCurIndelValidInThisSample = true;
-
-            if (isCurIndelValidInThisSample)
-                curIndelHaplotypeId = 0;
-            else
-                curIndelHaplotypeId = -1;
+            haplotypeStatusMap.insert(std::make_pair(cActiveRegionId, HaplotypeStatus(sampleCount)));
         }
-        curIndelHaplotypeIds[i] = curIndelHaplotypeId;
+
+        for (unsigned i(0); i<sampleCount; ++i)
+        {
+            const auto& indelSampleData(cindelData.getSampleData(i));
+            int curIndelHaplotypeId(indelSampleData.haplotypeId);
+            if (curIndelHaplotypeId == 0)
+            {
+                bool isCurIndelValidInThisSample(
+                        (indelSampleData.isHaplotypingBypassed)
+                        || (cindelData.isForcedOutput) || (! opt.is_short_haplotyping_enabled));
+                if (!isCurIndelValidInThisSample && (i == sampleId)
+                    && (indel_status_map[cindel].isInOriginalAlignment))
+                    isCurIndelValidInThisSample = true;
+
+                if (cindel.isMismatch() && (i != sampleId))
+                    isCurIndelValidInThisSample = false;
+
+                if (isCurIndelValidInThisSample)
+                    curIndelHaplotypeId = 0;
+                else
+                    curIndelHaplotypeId = -1;
+            }
+            curIndelHaplotypeIds[i] = curIndelHaplotypeId;
+        }
     }
+
 
     // alignment 1) --> unchanged case:
     try
     {
         const bool isAnyIndelOnNoToggle(isAnyIndelOn || is_cindel_on);
         bool isValid(true);
-        std::vector<int> newHaplotypeIds(sampleCount);
-        if (!isConflict)
+        HaplotypeStatusMap newHaplotypeStatusMap(haplotypeStatusMap);
+        if (!isConflict && (cActiveRegionId >= 0))
         {
-            isValid = updateHaplotypeIds(isNewActiveRegion, haplotypeIds, curIndelHaplotypeIds, is_cindel_on, isAnyIndelOnNoToggle, newHaplotypeIds);
+            isValid = newHaplotypeStatusMap[cActiveRegionId].updateHaplotypeStatus(curIndelHaplotypeIds, is_cindel_on, isAnyIndelOnNoToggle);
         }
         else
         {
-            newHaplotypeIds = haplotypeIds;
+            isValid = !cindel.isMismatch() || (! is_cindel_on);
         }
 
         if (isValid)
         {
             candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer, activeRegionDetector,
-                                       sampleId, realign_buffer_range, cActiveRegionId, newHaplotypeIds,
-                                       cal_set, warn, indel_status_map,
+                                       sampleId, realign_buffer_range,
+                                       cal_set, warn, indel_status_map, newHaplotypeStatusMap,
                                        indel_order, isAnyIndelOnNoToggle, depth + 1, toggle_depth, read_range, max_read_indel_toggle, cal);
         }
     }
@@ -969,14 +1006,14 @@ candidate_alignment_search(
 
     const bool isAnyIndelOnToggled(isAnyIndelOn || !is_cindel_on);
     bool isValid(true);
-    std::vector<int> newHaplotypeIds(sampleCount);
-    if (!isConflict)
+    HaplotypeStatusMap newHaplotypeStatusMap(haplotypeStatusMap);
+    if (!isConflict && (cActiveRegionId >= 0))
     {
-        isValid = updateHaplotypeIds(isNewActiveRegion, haplotypeIds, curIndelHaplotypeIds, !is_cindel_on, isAnyIndelOnToggled, newHaplotypeIds);
+        isValid = newHaplotypeStatusMap[cActiveRegionId].updateHaplotypeStatus(curIndelHaplotypeIds, !is_cindel_on, isAnyIndelOnToggled);
     }
     else
     {
-        newHaplotypeIds = haplotypeIds;
+        isValid = !cindel.isMismatch() || is_cindel_on;
     }
 
     if (!isValid) return;
@@ -1056,8 +1093,8 @@ candidate_alignment_search(
 
                 candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer, activeRegionDetector,
                                            sampleId,
-                                           realign_buffer_range, cActiveRegionId, newHaplotypeIds, cal_set,
-                                           warn, indel_status_map,
+                                           realign_buffer_range, cal_set,
+                                           warn, indel_status_map, newHaplotypeStatusMap,
                                            indel_order, isAnyIndelOnToggled, depth + 1, toggle_depth + toggleIncrement, read_range, max_read_indel_toggle,
                                            start_cal);
             }
@@ -1123,8 +1160,8 @@ candidate_alignment_search(
                                                          current_indels);
 
                     candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer, activeRegionDetector, sampleId,
-                                               realign_buffer_range, cActiveRegionId, newHaplotypeIds, cal_set,
-                                               warn, indel_status_map,
+                                               realign_buffer_range, cal_set,
+                                               warn, indel_status_map, newHaplotypeStatusMap,
                                                indel_order, isAnyIndelOnToggled, depth + 1, toggle_depth + toggleIncrement, read_range,
                                                max_read_indel_toggle, start_cal);
                 }
@@ -1693,6 +1730,7 @@ getCandidateAlignments(
     const unsigned read_length(rseg.read_size());
 
     starling_align_indel_status indel_status_map;
+    HaplotypeStatusMap haplotypeStatusMap;
     std::vector<IndelKey> indel_order;
 
     CandidateAlignment cal;
@@ -1809,17 +1847,11 @@ getCandidateAlignments(
     // launch recursive re-alignment routine starting from the current exemplar alignment:
     static const unsigned start_depth(0);
     static const unsigned start_toggle_depth(0);
-    static const ActiveRegionId defaultActiveRegionId(-1);
     static const bool isAnyIndelOn(false);
-    std::vector<int> sampleHaplotypeId(opt.getSampleCount());
-    for (unsigned i(0); i<opt.getSampleCount(); ++i)
-    {
-        sampleHaplotypeId[i] = 3;
-    }
 
     candidate_alignment_search(opt, dopt, rseg.getReadIndex(), cal_read_length, indelBuffer, activeRegionDetector,
-                               sampleId, realign_buffer_range, defaultActiveRegionId, sampleHaplotypeId, cal_set,
-                               warn, indel_status_map,
+                               sampleId, realign_buffer_range, cal_set,
+                               warn, indel_status_map, haplotypeStatusMap,
                                indel_order, isAnyIndelOn, start_depth, start_toggle_depth, exemplar_pr, opt.max_read_indel_toggle,
                                cal);
 
