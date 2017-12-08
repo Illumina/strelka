@@ -34,7 +34,7 @@
 
 // turn this on to use reads which support some, but not all, of an
 // overlapping allele group;
-//#define USE_GERMLINE_SUPPORTING_READ_UNION
+// #define USE_GERMLINE_SUPPORTING_READ_UNION
 
 
 

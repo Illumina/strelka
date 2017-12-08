@@ -53,13 +53,16 @@ void CandidateSnvBuffer::addCandidateSnv(
     haplotypeIdForBase.altHaplotypeCountRatio += altHaplotypeCountRatio;
 }
 
-bool CandidateSnvBuffer::isCandidateSnv(const unsigned sampleIndex, const int haplotypeId, const pos_t pos, const char baseChar) const
+bool CandidateSnvBuffer::isCandidateSnvAnySample(const pos_t pos, const char baseChar) const
 {
-    if (haplotypeId == 0) return false;
-
     const auto baseIndex(static_cast<BASE_ID::index_t>(base_to_id(baseChar)));
     if (baseIndex == BASE_ID::ANY) return false;
-    return (getHaplotypeId(sampleIndex, pos, baseIndex) == haplotypeId);
+    for (unsigned sampleIndex=0u; sampleIndex<_sampleCount; ++sampleIndex)
+        if (getHaplotypeId(sampleIndex, pos, baseIndex) != 0)
+        {
+            return true;
+        }
+    return false;
 }
 
 HaplotypeId CandidateSnvBuffer::getHaplotypeId(const unsigned sampleIndex, const pos_t pos, const BASE_ID::index_t baseIndex) const

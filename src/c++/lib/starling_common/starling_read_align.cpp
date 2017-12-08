@@ -637,7 +637,9 @@ get_end_pin_start_pos(
             // new indel must end at least one base below the current ref head (otherwise it would be
             // an interfering indel):
             //
-            if (indelKey.right_pos() > (ref_start_pos+(isPrevMismatch ? 1 : 0)))  //&& (! is_edge_delete)) {
+            const int matchSegmentSize(static_cast<int>(ref_start_pos - indelKey.right_pos()));
+            const int minMatchSegmentSize(isPrevMismatch ? 0 : 1);
+            if (matchSegmentSize < minMatchSegmentSize)  //&& (! is_edge_delete)) {
             {
                 std::ostringstream oss;
                 oss << "Unexpected indel position: indel: " << indelKey;
@@ -645,7 +647,7 @@ get_end_pin_start_pos(
                 throw blt_exception(oss.str().c_str());
             }
 
-            const unsigned match_segment(std::min((ref_start_pos - indelKey.right_pos()),read_start_pos));
+            const unsigned match_segment(std::min(matchSegmentSize,read_start_pos));
 
             ref_start_pos -= match_segment;
             read_start_pos -= match_segment;
@@ -1615,8 +1617,10 @@ scoreCandidateAlignments(
         CandidateAlignment softClippedCandidateAlignment;
         {
             getCandidateAlignment(softClippedInputAlignment, readSegment, softClippedCandidateAlignment);
+            const bool includeMismatches(false);
             indel_set_t candidateAlignmentIndels;
-            getAlignmentIndels(softClippedCandidateAlignment, ref, readSegment, opt.maxIndelSize, candidateAlignmentIndels);
+            getAlignmentIndels(softClippedCandidateAlignment, ref, readSegment,
+                               opt.maxIndelSize, includeMismatches, candidateAlignmentIndels);
             softClippedCandidateAlignment.setIndels(candidateAlignmentIndels);
         }
 
@@ -1753,7 +1757,8 @@ getCandidateAlignments(
     //
     {
         indel_set_t candidateAlignmentIndels;
-        getAlignmentIndels(cal, ref, rseg, opt.maxIndelSize, candidateAlignmentIndels);
+        const bool includeMismatches(true);
+        getAlignmentIndels(cal, ref, rseg, opt.maxIndelSize, includeMismatches, candidateAlignmentIndels);
 
         indel_set_t validIndels;
         bool realignmentRequired(false);

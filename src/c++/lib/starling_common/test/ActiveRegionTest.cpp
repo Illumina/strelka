@@ -221,8 +221,8 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
         detector.clear();
 
         // check if isCandidateSnv are correctly set
-        BOOST_REQUIRE_EQUAL(testSnvBuffer.isCandidateSnv(sampleIndex, 1, startPosition + snvOffsets[0], 'G'), true);
-        BOOST_REQUIRE_EQUAL(testSnvBuffer.isCandidateSnv(sampleIndex, 1, startPosition + snvOffsets[1], 'G'), true);
+        BOOST_REQUIRE_EQUAL(testSnvBuffer.isCandidateSnvAnySample(startPosition + snvOffsets[0], 'G'), true);
+        BOOST_REQUIRE_EQUAL(testSnvBuffer.isCandidateSnvAnySample(startPosition + snvOffsets[1], 'G'), true);
     }
 }
 

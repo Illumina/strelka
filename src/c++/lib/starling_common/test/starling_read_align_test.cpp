@@ -329,8 +329,8 @@ BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 
     {
         // interfering indel should cause an exception:
-//        const IndelKey ik(1074,INDEL::INDEL,1);
-//        BOOST_CHECK_THROW(test_end_pin_indel_placement(ik),blt_exception);
+        const IndelKey ik(1074,INDEL::INDEL,1);
+        BOOST_CHECK_THROW(test_end_pin_indel_placement(ik),blt_exception);
     }
 }
 

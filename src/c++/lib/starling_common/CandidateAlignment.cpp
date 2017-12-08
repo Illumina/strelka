@@ -61,6 +61,7 @@ getAlignmentIndels(
     const reference_contig_segment& ref,
     const read_segment& rseg,
     const unsigned max_indel_size,
+    const bool includeMismatches,
     indel_set_t& indels)
 {
     using namespace ALIGNPATH;
@@ -153,7 +154,7 @@ getAlignmentIndels(
             }
 
         }
-        else if (is_segment_align_match(path[path_index].type))
+        else if (includeMismatches && (is_segment_align_match(path[path_index].type)))
         {
             // match or mismatch
             for (unsigned i(0); i<ps.length; ++i)

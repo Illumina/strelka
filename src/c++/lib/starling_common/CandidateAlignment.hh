@@ -89,4 +89,5 @@ getAlignmentIndels(
     const reference_contig_segment& ref,
     const read_segment& rseg,
     const unsigned max_indel_size,
+    const bool includeMismatches,
     indel_set_t& indels);

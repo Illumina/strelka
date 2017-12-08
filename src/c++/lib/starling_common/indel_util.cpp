@@ -30,6 +30,7 @@ is_indel_conflict(
     const IndelKey& indelKey1,
     const IndelKey& indelKey2)
 {
+    // if both indels are not mismatches
     // add one to the end_pos of all indels to prevent immediately
     // adjacent indels in the final alignments:
 

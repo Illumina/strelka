@@ -73,23 +73,9 @@ public:
         const HaplotypeId haplotypeId,
         const float altHaplotypeCountRatio);
 
-    /// Checks if baseChar is a candidate SNV allele at this position in the specified sample
-    /// \return true if the base matches a candidate SNV allele at this position
-    bool isCandidateSnv(const unsigned sampleIndex, const int haplotypeId, const pos_t pos, const char baseChar) const;
-
     /// Checks if baseChar is a candidate SNV allele at this position in any sample
     /// \return true if the base matches a candidate SNV allele at this position in any sample
-    bool isCandidateSnvAnySample(const pos_t pos, const char baseChar) const
-    {
-        const auto baseIndex(static_cast<BASE_ID::index_t>(base_to_id(baseChar)));
-        if (baseIndex == BASE_ID::ANY) return false;
-        for (unsigned sampleIndex=0u; sampleIndex<_sampleCount; ++sampleIndex)
-            if (getHaplotypeId(sampleIndex, pos, baseIndex) != 0)
-            {
-                return true;
-            }
-        return false;
-    }
+    bool isCandidateSnvAnySample(const pos_t pos, const char baseChar) const;
 
     /// Gets the haplotype ID for the input single base allele
     /// \param sampleIndex sample index

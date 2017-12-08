@@ -276,12 +276,16 @@ void ActiveRegionProcessor::doNotUseHaplotyping()
     for (; it!=it_end; ++it)
     {
         const IndelKey& indelKey(it->first);
-        IndelData& indelData(getIndelData(it));
 
         if (indelKey.is_breakpoint()) continue;
+
+        // do not endorse mismatches if haplotyping fails
         if (indelKey.isMismatch()) continue;
+
+        IndelData& indelData(getIndelData(it));
         indelData.isConfirmedInActiveRegion = true;
 
+        // indicate that this indel was not discovered through haplotyping in this sample
         IndelSampleData& indelSampleData(indelData.getSampleData(_sampleIndex));
         indelSampleData.isHaplotypingBypassed = true;
     }
@@ -516,6 +520,7 @@ void ActiveRegionProcessor::processSelectedHaplotypes()
     unsigned selectedHaplotypeIndex(0);
     std::vector<std::vector<IndelKey>> discoveredIndels;
     std::vector<unsigned> selectedAltHaplotypeIndices;
+
     bool isIndel(false);
     for (const std::string& haplotype : _selectedHaplotypes)
     {
@@ -530,6 +535,7 @@ void ActiveRegionProcessor::processSelectedHaplotypes()
         ++selectedHaplotypeIndex;
     }
 
+    // isIndel == false means that no "real" indel is found.
     HaplotypeId haplotypeId(0);
     for (unsigned selectedAltHaplotypeIndex : selectedAltHaplotypeIndices)
     {
@@ -584,6 +590,7 @@ bool ActiveRegionProcessor::discoverIndels(
             for (unsigned i(0); i<segmentLength; ++i)
             {
                 // create a fake indelKey
+                // these are used in read realignment but not scored
                 auto insertSeq(haplotypeSeq.substr(haplotypePosOffset, 1));
                 auto mismatchIndelKey(IndelKey(referencePos, INDEL::MISMATCH, 1, insertSeq.c_str()));
                 discoveredIndels.push_back(mismatchIndelKey);
@@ -688,7 +695,7 @@ ActiveRegionProcessor::processDiscoveredIndels(
                     haplotypeId, altHaplotypeCountRatio);
         }
 
-        // if there exists no indel in this AR, add nothing to indelBuffer
+        // for efficiency, discoveredIndels contains only mismatches, add nothing to indelBuffer
         if (! isIndel) continue;
 
         for (const auto alignId : alignIdList)

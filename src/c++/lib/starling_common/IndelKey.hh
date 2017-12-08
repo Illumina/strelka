@@ -29,7 +29,6 @@
 
 #include <iosfwd>
 #include <string>
-#include <set>
 
 
 /// key used to uniquely describe each alternate allele
@@ -172,9 +171,6 @@ struct IndelKey
         static const IndelKey _noIndel;
         return _noIndel;
     }
-
-//    bool
-//    isOrthogonal(IndelKey other) const;
 
     pos_t pos;
     INDEL::index_t type;

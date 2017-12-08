@@ -162,12 +162,6 @@ scoreMatchSegment(const unsigned seg_length,
         {
             const pos_t refPos(ref_head_pos+static_cast<pos_t>(i));
             is_ref=(sbase == ref.get_code(refPos));
-
-//            if (opt.is_short_haplotyping_enabled and (not is_ref))
-//            {
-//                // Don't penalize for the mismatch if it is a SNV found in an active region
-//                is_ref = candidateSnvBuffer.isCandidateSnv(sampleIndex, haplotypeId, refPos, seq.get_char(readPos));
-//            }
         }
         lnp += ( is_ref ?
                  qphred_to_ln_comp_error_prob(qscore) :
@@ -213,7 +207,7 @@ getMatchingIndelKey(
         for (const IndelKey& calIndel : calIndels)
         {
             if ((calIndel.pos == ref_head_pos) and
-                ((calIndel.type == INDEL::INDEL) || calIndel.type == INDEL::MISMATCH) and
+                ((calIndel.type == INDEL::INDEL) || calIndel.isMismatch()) and
                 (calIndel.delete_length() == delete_length) and
                 (calIndel.insert_length() == insert_length))
             {

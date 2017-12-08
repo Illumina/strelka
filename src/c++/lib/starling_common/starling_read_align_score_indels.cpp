@@ -550,6 +550,7 @@ score_indels(
         {
             const IndelKey& evaluationIndel(indelIter->first);
 
+            // mismatches are not scored
             if (evaluationIndel.isMismatch()) continue;
 
             const IndelData& indelData(getIndelData(indelIter));
