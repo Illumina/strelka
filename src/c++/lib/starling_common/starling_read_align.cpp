@@ -638,7 +638,7 @@ get_end_pin_start_pos(
             // an interfering indel):
             //
             const int matchSegmentSize(static_cast<int>(ref_start_pos - indelKey.right_pos()));
-            const int minMatchSegmentSize(isPrevMismatch ? 0 : 1);
+            const int minMatchSegmentSize((isPrevMismatch || isMismatch) ? 0 : 1);
             if (matchSegmentSize < minMatchSegmentSize)  //&& (! is_edge_delete)) {
             {
                 std::ostringstream oss;
