@@ -81,7 +81,7 @@ struct strelka_options : public starling_base_options
         is_compute_somatic_scoring_metrics = true;
 
         // Set this true to use haplotyping in somatic calling
-        is_short_haplotyping_enabled = false;
+        isHaplotypingEnabled = false;
 
         isSomaticCallingMode = true;
     }

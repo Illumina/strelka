@@ -283,7 +283,7 @@ void ActiveRegionProcessor::doNotUseHaplotyping()
         if (indelKey.isMismatch()) continue;
 
         IndelData& indelData(getIndelData(it));
-        indelData.isConfirmedInActiveRegion = true;
+        indelData.activeRegionId = _posRange.begin_pos();
 
         // indicate that this indel was not discovered through haplotyping in this sample
         IndelSampleData& indelSampleData(indelData.getSampleData(_sampleIndex));
@@ -709,8 +709,8 @@ ActiveRegionProcessor::processDiscoveredIndels(
         IndelData* indelDataPtr(_indelBuffer.getIndelDataPtr(discoveredIndelKey));
         assert((indelDataPtr != nullptr) && "Missing indelData");
 
-        // Allow this indel to become a candidate (subject to other tests):
-        indelDataPtr->isConfirmedInActiveRegion = true;
+        // Record active region ID in indel data
+        indelDataPtr->activeRegionId = _posRange.begin_pos();
 
         // Update sample-specific indel details:
         IndelSampleData& indelSampleData(indelDataPtr->getSampleData(_sampleIndex));

@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
     detector.clear();
 
     const auto itr(testBuffer.getIndelBuffer().getIndelIter(indelKey));
-    BOOST_REQUIRE_EQUAL(itr->second.isConfirmedInActiveRegion, true);
+    BOOST_REQUIRE_EQUAL(itr->second.isConfirmedInActiveRegion(), true);
 }
 
 
@@ -282,7 +282,7 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
     // check if the indel is shifted 1 base to the left
     auto leftShiftedIndelKey = IndelKey(indelPos-1, INDEL::INDEL, 0, "TATA");
     const auto itr(testBuffer.getIndelBuffer().getIndelIter(leftShiftedIndelKey));
-    BOOST_REQUIRE_EQUAL(itr->second.isConfirmedInActiveRegion, true);
+    BOOST_REQUIRE_EQUAL(itr->second.isConfirmedInActiveRegion(), true);
 }
 
 

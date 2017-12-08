@@ -750,8 +750,7 @@ align_pos(const pos_t pos)
             try
             {
                 realignAndScoreRead(_opt, _dopt, sif.sampleOptions, _ref, realign_buffer_range, sampleIndex,
-                                    getActiveRegionDetector(), rseg,
-                                    getIndelBuffer());
+                                    rseg, getIndelBuffer());
             }
             catch (...)
             {
