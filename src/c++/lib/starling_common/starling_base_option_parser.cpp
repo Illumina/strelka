@@ -148,7 +148,7 @@ get_starling_base_option_parser(
 
     po::options_description help_parse_opt("Help");
     help_parse_opt.add_options()
-        ("help,h","print this message");
+    ("help,h","print this message");
 
     new_opt.add(help_parse_opt);
 
