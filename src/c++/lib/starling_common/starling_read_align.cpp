@@ -825,7 +825,8 @@ candidate_alignment_search(
     HaplotypeStatusMap haplotypeStatusMap,
     std::vector<IndelKey> indel_order,
     const unsigned depth,
-    const unsigned toggle_depth,
+    const unsigned indelToggleDepth,
+    const unsigned totalToggleDepth,
     known_pos_range read_range,
     int max_read_indel_toggle,
     const CandidateAlignment& cal)
@@ -843,7 +844,7 @@ candidate_alignment_search(
     // previous range so that we correctly overlap all potential new
     // indels.
     //
-    bool is_new_indels(toggle_depth==0);
+    bool is_new_indels(indelToggleDepth==0);
     {
         const unsigned start_ism_size(indel_status_map.size());
         const known_pos_range pr(get_soft_clip_alignment_range(cal.al));
@@ -920,7 +921,7 @@ candidate_alignment_search(
     // number of toggles made to the exemplar alignment (this is
     // here to prevent a combinatorial blowup)
     //
-    if (static_cast<int>(toggle_depth)>max_read_indel_toggle)
+    if (static_cast<int>(indelToggleDepth)>max_read_indel_toggle)
     {
         warn.max_toggle_depth=true;
         return;
@@ -1013,12 +1014,16 @@ candidate_alignment_search(
             isValid = (! curIndel.isMismatch()) || (! isCurIndelOn);
         }
 
-        if (isValid)
+        // even if the haplotype constraints are not met,
+        // if there was no indel toggle,
+        // allow the alignment search to proceed
+        if (isValid || (totalToggleDepth == 0))
         {
             candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer,
                                        sampleId, realign_buffer_range,
                                        cal_set, warn, indel_status_map, newHaplotypeStatusMap,
-                                       indel_order, depth + 1, toggle_depth, read_range, max_read_indel_toggle, cal);
+                                       indel_order, depth + 1, indelToggleDepth, totalToggleDepth,
+                                       read_range, max_read_indel_toggle, cal);
         }
     }
     catch (...)
@@ -1055,13 +1060,13 @@ candidate_alignment_search(
 
     // Mismatches discovered in AR doesn't increase toggle depth,
     // because #alignments is constrained by phasing info
-    unsigned toggleIncrement(curIndel.isMismatch() ? 0 : 1);
+    unsigned indelToggleIncrement(curIndel.isMismatch() ? 0 : 1);
 
     // check whether toggling this indel would exceed the maximum
     // number of toggles made to the exemplar alignment (this is
     // here to prevent a combinatorial blowup)
     //
-    if (static_cast<int>(toggle_depth+toggleIncrement)>max_read_indel_toggle)
+    if (static_cast<int>(indelToggleDepth+indelToggleIncrement)>max_read_indel_toggle)
     {
         warn.max_toggle_depth=true;
         return;
@@ -1123,7 +1128,8 @@ candidate_alignment_search(
                                            sampleId,
                                            realign_buffer_range, cal_set,
                                            warn, indel_status_map, newHaplotypeStatusMap,
-                                           indel_order, depth + 1, toggle_depth + toggleIncrement, read_range, max_read_indel_toggle,
+                                           indel_order, depth + 1, indelToggleDepth + indelToggleIncrement, totalToggleDepth + 1,
+                                           read_range, max_read_indel_toggle,
                                            start_cal);
             }
             catch (...)
@@ -1190,8 +1196,8 @@ candidate_alignment_search(
                     candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer, sampleId,
                                                realign_buffer_range, cal_set,
                                                warn, indel_status_map, newHaplotypeStatusMap,
-                                               indel_order, depth + 1, toggle_depth + toggleIncrement, read_range,
-                                               max_read_indel_toggle, start_cal);
+                                               indel_order, depth + 1, indelToggleDepth + indelToggleIncrement, totalToggleDepth + 1,
+                                               read_range, max_read_indel_toggle, start_cal);
                 }
                 catch (...)
                 {
@@ -1878,14 +1884,15 @@ getCandidateAlignments(
     }
 
     // launch recursive re-alignment routine starting from the current exemplar alignment:
-    static const unsigned start_depth(0);
-    static const unsigned start_toggle_depth(0);
+    static const unsigned startDepth(0);
+    static const unsigned startIndelToggleDepth(0);
+    static const unsigned startTotalToggleDepth(0);
 
     candidate_alignment_search(opt, dopt, rseg.getReadIndex(), cal_read_length, indelBuffer,
                                sampleId, realign_buffer_range, cal_set,
                                warn, indel_status_map, haplotypeStatusMap,
-                               indel_order, start_depth, start_toggle_depth, exemplar_pr, opt.max_read_indel_toggle,
-                               cal);
+                               indel_order, startDepth, startIndelToggleDepth, startTotalToggleDepth,
+                               exemplar_pr, opt.max_read_indel_toggle, cal);
 
     if (is_input_alignment_clipped)
     {
