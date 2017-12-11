@@ -56,7 +56,11 @@ enum index_t
     HighSNVHPOL,
     HighRefRep,
     LowDepth,
+<<<<<<< HEAD
     NoPassedVariantGTs,
+=======
+    NotGenotyped,
+>>>>>>> STREL-607 Identify conflicting forced variant
     SIZE
 };
 
@@ -90,6 +94,8 @@ get_label(const unsigned idx)
         return "LowDepth";
     case NoPassedVariantGTs:
         return "NoPassedVariantGTs";
+    case NotGenotyped:
+        return "NotGenotyped";
     default:
         assert(false && "Unknown VCF filter value");
         return nullptr;
@@ -572,7 +578,7 @@ struct GermlineIndelLocusInfo : public LocusInfo
     GermlineIndelLocusInfo(
         const unsigned sampleCount)
         : LocusInfo(sampleCount),
-          _indelSampleInfo(sampleCount), _commonPrefixLength(0)
+          _indelSampleInfo(sampleCount), _commonPrefixLength(0), _doNotGenotype(false)
     {}
 
     virtual ~GermlineIndelLocusInfo() {}
@@ -697,6 +703,18 @@ struct GermlineIndelLocusInfo : public LocusInfo
         assert (sampleCount == _indelSampleInfo.size());
     }
 
+    void
+    doNotGenotype()
+    {
+        _doNotGenotype = true;
+    }
+
+    bool
+    isNotGenotyped() const
+    {
+        return _doNotGenotype;
+    }
+
 private:
     std::vector<GermlineIndelAlleleInfo> _indelAlleleInfo;
     std::vector<GermlineIndelSampleInfo> _indelSampleInfo;
@@ -705,6 +723,9 @@ private:
     known_pos_range2 _range;
 
     unsigned _commonPrefixLength;
+
+    /// if true genotyping is not conduced
+    bool _doNotGenotype;
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineIndelLocusInfo& ii);

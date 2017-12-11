@@ -105,6 +105,13 @@ addFiltersToGermlineVCFHeader(
         write_vcf_filter(os,get_label(LowDepth),oss.str().c_str());
     }
 
+    // Add NotGenotyped filter
+    {
+        std::ostringstream oss;
+        oss << "Locus is not genotyped";
+        write_vcf_filter(os,get_label(NotGenotyped),oss.str().c_str());
+    }
+
     // even if no ploidy bed file is provided, this filter should still exist, so I don't
     // see any reason to leave it in the header for all cases:
     write_vcf_filter(os,get_label(PloidyConflict),"Genotype call from variant caller not consistent with chromosome ploidy");

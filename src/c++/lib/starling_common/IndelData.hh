@@ -378,6 +378,9 @@ public:
     /// the final call output, even if there is no support for the allele in any input sample
     bool isForcedOutput = false;
 
+    /// Do not genotype this indel if below is true
+    bool doNotGenotype = false;
+
     ActiveRegionId activeRegionId = -1;
 
     /// status is used to facilitate efficient computation of candidate status by caching the result

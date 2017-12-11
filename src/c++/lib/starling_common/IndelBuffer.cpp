@@ -203,10 +203,18 @@ isCandidateIndelImplTest(
     const IndelKey& indelKey,
     const IndelData& indelData) const
 {
-    // check whether the candidate has been externally specified:
-    if (indelData.is_external_candidate) return true;
+    if (indelData.doNotGenotype) return false;
 
-    // if short haplotyping is enabled, any indels not confirmed in active region are not candidate
+    // check whether the candidate has been externally specified:
+    if (indelData.is_external_candidate)
+    {
+        if (indelKey.isPrimitiveDeletionAllele() || indelKey.isPrimitiveInsertionAllele())
+        {
+            return true;
+        }
+    }
+
+    // if haplotyping is enabled, indels not confirmed in active region are not candidate
     if (_opt.isHaplotypingEnabled && (! indelData.isConfirmedInActiveRegion())) return false;
 
     if (_opt.is_candidate_indel_signal_test)

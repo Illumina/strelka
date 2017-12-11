@@ -903,113 +903,154 @@ write_indel_record_instance(
     }
 
     // compute global MQ over all samples
-    MapqTracker mapqTracker;
-    {
-        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
-        {
-            const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
-            mapqTracker.merge(indelSampleInfo.mapqTracker);
-        }
-    }
     os << ';';
-    os << "MQ=" << std::lround(mapqTracker.getRMS());
+    if (! locus.isNotGenotyped())
+    {
+        MapqTracker mapqTracker;
+        {
+            for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+            {
+                const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
+                mapqTracker.merge(indelSampleInfo.mapqTracker);
+            }
+        }
+        os << "MQ=" << std::lround(mapqTracker.getRMS());
+    }
+    else
+    {
+        os << "MQ=.";
+    }
+
 
     const GermlineDiploidIndelLocusInfo* diploidLocusPtr(dynamic_cast<const GermlineDiploidIndelLocusInfo*>(&locus));
     if (diploidLocusPtr != nullptr)
     {
-        const GermlineDiploidIndelLocusInfo& diploidLocus(*diploidLocusPtr);
-
-        //FORMAT
-        if (_opt.isReportEVSFeatures)
+        if (!diploidLocusPtr->isNotGenotyped())
         {
-            // EVS features may not be computed for certain records, so check first:
-            if (! diploidLocus.evsFeatures.empty())
+            const GermlineDiploidIndelLocusInfo& diploidLocus(*diploidLocusPtr);
+
+            //FORMAT
+            if (_opt.isReportEVSFeatures)
             {
-                const StreamScoper ss(os);
-                os << std::setprecision(5);
-                os << ";EVSF=";
-                diploidLocus.evsFeatures.writeValues(os);
-                os << ",";
-                diploidLocus.evsDevelopmentFeatures.writeValues(os);
+                // EVS features may not be computed for certain records, so check first:
+                if (! diploidLocus.evsFeatures.empty())
+                {
+                    const StreamScoper ss(os);
+                    os << std::setprecision(5);
+                    os << ";EVSF=";
+                    diploidLocus.evsFeatures.writeValues(os);
+                    os << ",";
+                    diploidLocus.evsDevelopmentFeatures.writeValues(os);
+                }
             }
-        }
-
-        os << '\t';
-
-        //FORMAT
-        os << "GT:GQ:GQX:DPI:AD:ADF:ADR:FT:PL";
-
-        bool isAnyPhased(false);
-        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
-        {
-            const auto& sampleInfo(locus.getSample(sampleIndex));
-            if (sampleInfo.phaseSetId >= 0)
-            {
-                isAnyPhased = true;
-                break;
-            }
-        }
-
-        if (isAnyPhased)
-        {
-            os << ":PS";
-        }
-
-        //SAMPLE
-        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-        {
-            if (targetSampleIndex >= 0)
-            {
-                if (static_cast<int>(sampleIndex) != targetSampleIndex) continue;
-            }
-
-            const auto& sampleInfo(locus.getSample(sampleIndex));
-            const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
 
             os << '\t';
 
-            os << sampleInfo.max_gt();
-            os << ':' << sampleInfo.genotypeQualityPolymorphic;
+            //FORMAT
+            os << "GT:GQ:GQX:DPI:AD:ADF:ADR:FT:PL";
 
-            os << ':' << ((sampleInfo.empiricalVariantScore >= 0) ? sampleInfo.empiricalVariantScore : sampleInfo.gqx);
-
-            os << ':' << indelSampleInfo.tier1Depth;
-
-            printSampleAD(sampleInfo.supportCounts, altAlleleCount, os);
-
-            // FT
-            os << ':';
-            sampleInfo.filters.write(os);
-
-            // PL
-            os << ":";
-            bool isFirst(true);
-            for (const auto pls : sampleInfo.genotypePhredLoghood)
+            bool isAnyPhased(false);
+            for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
             {
-                if (isFirst)
+                const auto& sampleInfo(locus.getSample(sampleIndex));
+                if (sampleInfo.phaseSetId >= 0)
                 {
-                    isFirst = false;
+                    isAnyPhased = true;
+                    break;
                 }
-                else
-                {
-                    os << ',';
-                }
-                os << std::min(pls, maxPL);
             }
 
-            // PS
             if (isAnyPhased)
             {
-                os << ':';
-                if (sampleInfo.phaseSetId < 0)
+                os << ":PS";
+            }
+
+            //SAMPLE
+            for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+            {
+                if (targetSampleIndex >= 0)
                 {
-                    os << '.';
+                    if (static_cast<int>(sampleIndex) != targetSampleIndex) continue;
                 }
-                else
+
+                const auto& sampleInfo(locus.getSample(sampleIndex));
+                const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
+
+                os << '\t';
+
+                os << sampleInfo.max_gt();
+                os << ':' << sampleInfo.genotypeQualityPolymorphic;
+
+                os << ':' << ((sampleInfo.empiricalVariantScore >= 0) ? sampleInfo.empiricalVariantScore : sampleInfo.gqx);
+
+                os << ':' << indelSampleInfo.tier1Depth;
+
+                printSampleAD(sampleInfo.supportCounts, altAlleleCount, os);
+
+                // FT
+                os << ':';
+                sampleInfo.filters.write(os);
+
+                // PL
+                os << ":";
+                bool isFirst(true);
+                for (const auto pls : sampleInfo.genotypePhredLoghood)
                 {
-                    os << sampleInfo.phaseSetId;
+                    if (isFirst)
+                    {
+                        isFirst = false;
+                    }
+                    else
+                    {
+                        os << ',';
+                    }
+                    os << std::min(pls, maxPL);
+                }
+
+                // PS
+                if (isAnyPhased)
+                {
+                    os << ':';
+                    if (sampleInfo.phaseSetId < 0)
+                    {
+                        os << '.';
+                    }
+                    else
+                    {
+                        os << sampleInfo.phaseSetId;
+                    }
                 }
             }
+        }
+        else
+        {
+            // not genotyped
+            os << '\t';
+
+            //FORMAT
+            os << "GT:GQ:GQX:DPI:AD:ADF:ADR:FT:PL";
+
+            //SAMPLE
+            for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+            {
+                if (targetSampleIndex >= 0)
+                {
+                    if (static_cast<int>(sampleIndex) != targetSampleIndex) continue;
+                }
+
+                const auto& sampleInfo(locus.getSample(sampleIndex));
+
+                os << '\t';
+                os << "./.:.:.:.:.:.:.";
+
+                // FT
+                os << ':';
+                sampleInfo.filters.write(os);
+
+                // PL
+                os << ":.";
+            }
+
         }
     }
     else

@@ -152,6 +152,12 @@ private:
     /// Align each selected haplotype to the reference and convert them to primitive alleles
     void processSelectedHaplotypes();
 
+    /// Run candidate test
+    bool runIndelCandidacyTest();
+
+    /// Process forced variants
+    void processForcedVariants();
+
     /// Decompose haplotype into primitive alleles
     void discoverIndelsAndMismatches(
         const unsigned selectedHaplotypeIndex,

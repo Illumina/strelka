@@ -272,6 +272,8 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
             }
         }
     }
+    // check if the indel is shifted 1 base to the left
+    auto leftShiftedIndelKey = IndelKey(indelPos-1, INDEL::INDEL, 0, "TATA");
 
     for (pos_t pos(0); pos<refLength; ++pos)
     {
@@ -279,8 +281,6 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
     }
     detector.clear();
 
-    // check if the indel is shifted 1 base to the left
-    auto leftShiftedIndelKey = IndelKey(indelPos-1, INDEL::INDEL, 0, "TATA");
     const auto itr(testBuffer.getIndelBuffer().getIndelIter(leftShiftedIndelKey));
     BOOST_REQUIRE_EQUAL(itr->second.isConfirmedInActiveRegion(), true);
 }

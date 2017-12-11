@@ -1358,6 +1358,19 @@ updateIndelLocusWithSampleInfo(
 
     sampleInfo.setActiveRegionId(activeRegionId);
 
+    bool doNotGenotype(true);
+    for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<alleleGroup.size(); ++nonrefAlleleIndex)
+    {
+        const auto& indelData(alleleGroup.data(nonrefAlleleIndex));
+        if (!indelData.doNotGenotype) doNotGenotype = false;
+    }
+
+    if (doNotGenotype)
+    {
+        locus.doNotGenotype();
+        return;
+    }
+
     // score all possible genotypes from topVariantAlleleGroup for this sample
     std::vector<double> genotypeLogLhood;
     getVariantAlleleGroupGenotypeLhoodsForSample(
