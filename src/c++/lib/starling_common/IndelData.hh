@@ -368,10 +368,14 @@ public:
     {
         bool is_candidate_indel_cached = false;
         bool is_candidate_indel = false;
+
+        /// If true, allele is promoted to candidate status without enough read support
+        /// (e.g. forced indel)
+        bool noReadSupport = false;
+
     };
 
-    /// If true, allele is suggested from a source other than the aligned sequencing data, and
-    /// automatically promoted to candidate status
+    /// If true, allele is suggested from a source other than the aligned sequencing data
     bool is_external_candidate = false;
 
     /// If true, allele is automatically promoted to candidate status and must be scored in

@@ -205,15 +205,6 @@ isCandidateIndelImplTest(
 {
     if (indelData.doNotGenotype) return false;
 
-    // check whether the candidate has been externally specified:
-    if (indelData.is_external_candidate)
-    {
-        if (indelKey.isPrimitiveDeletionAllele() || indelKey.isPrimitiveInsertionAllele())
-        {
-            return true;
-        }
-    }
-
     // if haplotyping is enabled, indels not confirmed in active region are not candidate
     if (_opt.isHaplotypingEnabled && (! indelData.isConfirmedInActiveRegion())) return false;
 
@@ -255,6 +246,7 @@ isCandidateIndelImplTest(
         }
         if (estimatedLocusDepth > _maxCandidateDepth) return false;
     }
+
     return true;
 }
 
@@ -266,8 +258,28 @@ isCandidateIndelImpl(
     const IndelKey& indelKey,
     const IndelData& indelData) const
 {
-    const bool is_candidate(isCandidateIndelImplTest(indelKey, indelData));
-    indelData.status.is_candidate_indel = is_candidate;
+    bool isCandidate(isCandidateIndelImplTest(indelKey, indelData));
+
+    // check whether the candidate has been externally specified:
+    if (! isCandidate)
+    {
+        // mark that this indel doesn't have enough read support
+        indelData.status.noReadSupport = true;
+
+        if ((! indelData.doNotGenotype) && indelData.is_external_candidate)
+        {
+            bool isPrimitiveIndel(
+                indelKey.isPrimitiveDeletionAllele() ||
+                indelKey.isPrimitiveInsertionAllele());
+            if (isPrimitiveIndel)
+            {
+                // if this is primitive indel, promote to candidate status
+                isCandidate = true;
+            }
+        }
+    }
+
+    indelData.status.is_candidate_indel = isCandidate;
     indelData.status.is_candidate_indel_cached = true;
 }
 

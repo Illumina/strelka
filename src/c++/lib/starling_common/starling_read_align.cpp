@@ -869,6 +869,7 @@ candidate_alignment_search(
     mca_warnings& warn,
     starling_align_indel_status indel_status_map,
     HaplotypeStatusMap haplotypeStatusMap,
+    const bool containsIndelWithNoReadSupport,
     std::vector<IndelKey> indel_order,
     const unsigned depth,
     const unsigned indelToggleDepth,
@@ -1016,6 +1017,10 @@ candidate_alignment_search(
             haplotypeStatusMap.insert(std::make_pair(curIndelActiveRegionId, HaplotypeStatus(sampleCount)));
         }
     }
+
+    // true if current indel is an external indel with not enough read support
+    const bool isCurIndelNoReadSupport(curIndelData.status.noReadSupport);
+
     // Get haplotype IDs of current indel in all samples
     std::vector<int> curIndelHaplotypeIds(sampleCount);
     getCurIndelHaplotypeIds(
@@ -1030,8 +1035,10 @@ candidate_alignment_search(
     try
     {
         bool isValid(true);
+
+        // Check haplotype constraints
         HaplotypeStatusMap newHaplotypeStatusMap(haplotypeStatusMap);
-        if (!isCurIndelConflicting && isCurIndelInActiveRegion)
+        if ((! isCurIndelConflicting) && isCurIndelInActiveRegion)
         {
             isValid = newHaplotypeStatusMap.at(curIndelActiveRegionId).updateHaplotypeStatus(curIndelHaplotypeIds, isCurIndelOn);
         }
@@ -1041,14 +1048,33 @@ candidate_alignment_search(
             isValid = (! curIndel.isMismatch()) || (! isCurIndelOn);
         }
 
-        // even if the haplotype constraints are not met,
-        // if there was no indel toggle,
-        // allow the alignment search to proceed
-        if (isValid || (totalToggleDepth == 0))
+        // Check whether we will be including
+        // more than one indels with no read support
+        bool newContainsIndelWithNoReadSupport(containsIndelWithNoReadSupport);
+        if (isCurIndelOn && isCurIndelNoReadSupport)
+        {
+            if (containsIndelWithNoReadSupport)
+            {
+                // it's prohibited to include more than one indels with no read support
+                isValid = false;
+            }
+            newContainsIndelWithNoReadSupport = true;
+        }
+
+        if ((! isValid) && (totalToggleDepth == 0))
+        {
+            // even if the above constraints are not met,
+            // if there was no indel toggle,
+            // allow the alignment search to proceed
+            isValid = true;
+        }
+
+        if (isValid)
         {
             candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer,
                                        sampleId, realign_buffer_range,
-                                       cal_set, warn, indel_status_map, newHaplotypeStatusMap,
+                                       cal_set, warn,
+                                       indel_status_map, newHaplotypeStatusMap, newContainsIndelWithNoReadSupport,
                                        indel_order, depth + 1, indelToggleDepth, totalToggleDepth,
                                        read_range, max_read_indel_toggle, cal);
         }
@@ -1070,6 +1096,19 @@ candidate_alignment_search(
     else
     {
         isValid = !curIndel.isMismatch() || isCurIndelOn;
+    }
+
+    // Check whether we will be including
+    // more than one indels with no read support
+    bool newContainsIndelWithNoReadSupport(containsIndelWithNoReadSupport);
+    if (!isCurIndelOn && isCurIndelNoReadSupport)
+    {
+        if (containsIndelWithNoReadSupport)
+        {
+            // it's prohibited to include more than one indels with no read support
+            isValid = false;
+        }
+        newContainsIndelWithNoReadSupport = true;
     }
 
     if (! isValid) return;
@@ -1154,7 +1193,7 @@ candidate_alignment_search(
                 candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer,
                                            sampleId,
                                            realign_buffer_range, cal_set,
-                                           warn, indel_status_map, newHaplotypeStatusMap,
+                                           warn, indel_status_map, newHaplotypeStatusMap, newContainsIndelWithNoReadSupport,
                                            indel_order, depth + 1, indelToggleDepth + indelToggleIncrement, totalToggleDepth + 1,
                                            read_range, max_read_indel_toggle,
                                            start_cal);
@@ -1223,7 +1262,7 @@ candidate_alignment_search(
 
                     candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer, sampleId,
                                                realign_buffer_range, cal_set,
-                                               warn, indel_status_map, newHaplotypeStatusMap,
+                                               warn, indel_status_map, newHaplotypeStatusMap, newContainsIndelWithNoReadSupport,
                                                indel_order, depth + 1, indelToggleDepth + indelToggleIncrement, totalToggleDepth + 1,
                                                read_range, max_read_indel_toggle, start_cal);
                 }
@@ -1915,10 +1954,11 @@ getCandidateAlignments(
     static const unsigned startDepth(0);
     static const unsigned startIndelToggleDepth(0);
     static const unsigned startTotalToggleDepth(0);
+    static const bool startContainsIndelWithNoReadSupport(false);
 
     candidate_alignment_search(opt, dopt, rseg.getReadIndex(), cal_read_length, indelBuffer,
                                sampleId, realign_buffer_range, cal_set,
-                               warn, indel_status_map, haplotypeStatusMap,
+                               warn, indel_status_map, haplotypeStatusMap, startContainsIndelWithNoReadSupport,
                                indel_order, startDepth, startIndelToggleDepth, startTotalToggleDepth,
                                exemplar_pr, opt.max_read_indel_toggle, cal);
 
