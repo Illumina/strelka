@@ -9,6 +9,9 @@
 - Add new filter to make multi-sample germline variant output easier to interpret (STREL-819)
   - Locus filter 'NoPassedVariantGTs' added when no sample has a passing variant genotype.
   - This allows passing variants to be easily extracted with the FILTER field, without querying FORMAT/GT and FORMAT/FT.
+- Add new filter to prevent interference between forced indels and other indels (STREL-607)
+  - Locus filter 'NotGenotyped' added to ForcedGT indels if they can possibly interfere with indels discovered by Strelka.
+  - All complex alleles are also not genotyped and appear in the VCF output with this NotGenotyped filter.
 
 ### Changed
 - Remove preliminary step which counts the 'mappable' (non-N) size of the genome (STREL-772)

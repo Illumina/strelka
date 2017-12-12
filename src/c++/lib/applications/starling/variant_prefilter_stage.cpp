@@ -74,39 +74,27 @@ void
 variant_prefilter_stage::
 process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr)
 {
-    if (locusPtr->isNotGenotyped())
+    // we can't handle breakends at all right now:
+    for (const auto& altAllele : locusPtr->getIndelAlleles())
     {
-<<<<<<< HEAD
         if (altAllele.indelKey.is_breakpoint()) return;
     }
 
-    applySharedLocusFilters(*locusPtr);
-
-    // apply depth filter
-    _model.applyDepthFilter(*locusPtr);
-
-    // apply filtration/EVS model:
-    if (dynamic_cast<GermlineContinuousIndelLocusInfo*>(locusPtr.get()) != nullptr)
+    if (locusPtr->isNotGenotyped())
     {
-        _model.default_classify_indel_locus(*locusPtr);
-=======
         const unsigned sampleCount(locusPtr->getSampleCount());
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
             auto &sampleInfo(locusPtr->getSample(sampleIndex));
             sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::NotGenotyped);
         }
->>>>>>> STREL-607 Identify conflicting forced variant
     }
     else
     {
-        // we can't handle breakends at all right now:
-        for (const auto& altAllele : locusPtr->getIndelAlleles())
-        {
-            if (altAllele.indelKey.is_breakpoint()) return;
-        }
-
         applySharedLocusFilters(*locusPtr);
+
+        // apply depth filter
+        _model.applyDepthFilter(*locusPtr);
 
         // apply filtration/EVS model:
         if (dynamic_cast<GermlineContinuousIndelLocusInfo*>(locusPtr.get()) != nullptr)

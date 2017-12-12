@@ -108,7 +108,7 @@ addFiltersToGermlineVCFHeader(
     // Add NotGenotyped filter
     {
         std::ostringstream oss;
-        oss << "Locus is not genotyped";
+        oss << "Locus contains forcedGT input alleles which could not be genotyped";
         write_vcf_filter(os,get_label(NotGenotyped),oss.str().c_str());
     }
 

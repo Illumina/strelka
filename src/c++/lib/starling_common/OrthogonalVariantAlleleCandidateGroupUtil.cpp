@@ -73,7 +73,7 @@ getAlleleGroupIntersectionReadIds(
     for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<alleleGroup.size(); nonrefAlleleIndex++)
     {
         const auto& indelData(alleleGroup.data(nonrefAlleleIndex));
-        if (indelData.doNotGenotype) continue;
+        if (indelData.status.doNotGenotype) continue;
 
         ++validNonrefAlleleCount;
         const IndelSampleData& isd(indelData.getSampleData(sampleIndex));
@@ -152,7 +152,7 @@ getAlleleLogLhoodFromRead(
     for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<nonrefAlleleCount; nonrefAlleleIndex++)
     {
         const auto& indelData(alleleGroup.data(nonrefAlleleIndex));
-        if (indelData.doNotGenotype) continue;
+        if (indelData.status.doNotGenotype) continue;
         const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
 
         const auto iditer(indelSampleData.read_path_lnp.find(readId));
@@ -184,7 +184,7 @@ getAlleleLogLhoodFromRead(
         for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex < nonrefAlleleCount; nonrefAlleleIndex++)
         {
             const auto& indelData(alleleGroup.data(nonrefAlleleIndex));
-            if (indelData.doNotGenotype) continue;
+            if (indelData.status.doNotGenotype) continue;
             const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
 
             const auto iditer(indelSampleData.read_path_lnp.find(readId));
@@ -254,9 +254,9 @@ rankOrthogonalAllelesInSample(
         assert(fullAlleleIndex>0);
         const auto& alleleIter(alleleGroup.iter(fullAlleleIndex-1));
         const auto& indelData(alleleIter->second);
-        if (indelData.doNotGenotype) continue;
+        if (indelData.status.doNotGenotype) continue;
         if (not isReferenceRankFound) referenceRank++;
-        rankedAlleleGroup.addVariantAllele(alleleGroup.iter(fullAlleleIndex-1));
+        rankedAlleleGroup.addVariantAllele(alleleIter);
     }
 }
 

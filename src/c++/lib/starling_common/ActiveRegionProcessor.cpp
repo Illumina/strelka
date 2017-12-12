@@ -74,17 +74,6 @@ void ActiveRegionProcessor::processHaplotypes()
             doNotUseHaplotyping();
         }
     }
-
-    bool isRealCandidateIndel(runIndelCandidacyTest());
-
-    if (! isRealCandidateIndel)
-    {
-        // if no real candidate indel is found in this AR
-        // we do not need to worry about forced indel conflicts
-        return;
-    }
-
-    processForcedVariants();
 }
 
 bool ActiveRegionProcessor::generateHaplotypesWithCounting()
@@ -578,49 +567,6 @@ void ActiveRegionProcessor::processSelectedHaplotypes()
         const std::vector<IndelKey>& indelsAndMismatches(discoveredIndelsAndMismatches[haplotypeId-1]);
         processDiscoveredIndelsAndMismatches(
             selectedAltHaplotypeIndex, haplotypeId, indelsAndMismatches, doNotAddMismatchesToIndelBuffer);
-    }
-}
-
-bool ActiveRegionProcessor::runIndelCandidacyTest()
-{
-    auto it(_indelBuffer.positionIterator(_posRange.begin_pos()));
-    const auto it_end(_indelBuffer.positionIterator(_posRange.end_pos()));
-
-    bool isRealCandidateIndel(false);
-    for (; it!=it_end; ++it)
-    {
-        IndelData& indelData(getIndelData(it));
-        if (! indelData.isConfirmedInActiveRegion()) continue;
-
-        const IndelKey& indelKey(it->first);
-
-        bool isThisIndelCandidate = ((! indelKey.isMismatch() && _indelBuffer.isCandidateIndel(indelKey, indelData)));
-        if (isThisIndelCandidate) isRealCandidateIndel = true;
-
-        // indicate that this indel was not discovered through haplotyping in this sample
-        IndelSampleData& indelSampleData(indelData.getSampleData(_sampleIndex));
-        indelSampleData.isHaplotypingBypassed = true;
-    }
-
-    return isRealCandidateIndel;
-}
-
-void ActiveRegionProcessor::processForcedVariants()
-{
-    auto it(_indelBuffer.positionIterator(_posRange.begin_pos()));
-    const auto it_end(_indelBuffer.positionIterator(_posRange.end_pos()));
-
-    for (; it!=it_end; ++it)
-    {
-        IndelData& indelData(getIndelData(it));
-        if (! indelData.isForcedOutput) continue;
-
-        if (! indelData.isConfirmedInActiveRegion())
-        {
-            // this forced indel was not independently discovered in AR
-            // and may conflict with internal indels
-            indelData.doNotGenotype = true;
-        }
     }
 }
 

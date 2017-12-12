@@ -114,6 +114,18 @@ addIndelObservation(
     if (isNovel)
     {
         indelData.initializeAuxInfo(_opt,_dopt, _ref);
+
+        const auto& indelKey(indelIter->first);
+        const bool isPrimitive = (
+            indelKey.isMismatch() ||
+            indelKey.isPrimitiveInsertionAllele() ||
+            indelKey.isPrimitiveDeletionAllele());
+
+        if (! isPrimitive)
+        {
+            // complex alleles are not genotyped
+            indelData.status.doNotGenotype = true;
+        }
     }
     indelData.addIndelObservation(sampleIndex, obs.data);
 
@@ -203,10 +215,10 @@ isCandidateIndelImplTest(
     const IndelKey& indelKey,
     const IndelData& indelData) const
 {
-    if (indelData.doNotGenotype) return false;
+    if (indelData.status.doNotGenotype) return false;
 
     // if haplotyping is enabled, indels not confirmed in active region are not candidate
-    if (_opt.isHaplotypingEnabled && (! indelData.isConfirmedInActiveRegion())) return false;
+    if (_opt.isHaplotypingEnabled && (!indelData.isDiscoveredInActiveRegion())) return false;
 
     if (_opt.is_candidate_indel_signal_test)
     {
@@ -263,19 +275,17 @@ isCandidateIndelImpl(
     // check whether the candidate has been externally specified:
     if (! isCandidate)
     {
-        // mark that this indel doesn't have enough read support
-        indelData.status.noReadSupport = true;
-
-        if ((! indelData.doNotGenotype) && indelData.is_external_candidate)
+        if ((! indelData.status.doNotGenotype) && indelData.is_external_candidate)
         {
-            bool isPrimitiveIndel(
-                indelKey.isPrimitiveDeletionAllele() ||
-                indelKey.isPrimitiveInsertionAllele());
-            if (isPrimitiveIndel)
-            {
-                // if this is primitive indel, promote to candidate status
-                isCandidate = true;
-            }
+            assert(indelKey.isPrimitiveDeletionAllele() || indelKey.isPrimitiveInsertionAllele());
+
+            // primitive insertions and deletions are promoted to candidate status
+            // even if there is no read support
+            isCandidate = true;
+
+            // mark that this indel doesn't have enough read support
+            // even though it has the candidate status
+            indelData.status.notDiscoveredFromReads = true;
         }
     }
 

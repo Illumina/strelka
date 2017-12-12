@@ -1358,15 +1358,22 @@ updateIndelLocusWithSampleInfo(
 
     sampleInfo.setActiveRegionId(activeRegionId);
 
-    bool doNotGenotype(true);
+    // check if all nonRefAlleles are flagged as doNotGenotype
+    // in such cases, this locus is marked doNotGenotype
+    bool isGenotypeRequired(false);
     for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<alleleGroup.size(); ++nonrefAlleleIndex)
     {
         const auto& indelData(alleleGroup.data(nonrefAlleleIndex));
-        if (!indelData.doNotGenotype) doNotGenotype = false;
+        if (!indelData.status.doNotGenotype)
+        {
+            isGenotypeRequired = true;
+            break;
+        }
     }
 
-    if (doNotGenotype)
+    if (! isGenotypeRequired)
     {
+        // all alt alleles are flagged "doNotGenotype"
         locus.doNotGenotype();
         return;
     }

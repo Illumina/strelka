@@ -56,11 +56,8 @@ enum index_t
     HighSNVHPOL,
     HighRefRep,
     LowDepth,
-<<<<<<< HEAD
     NoPassedVariantGTs,
-=======
     NotGenotyped,
->>>>>>> STREL-607 Identify conflicting forced variant
     SIZE
 };
 
@@ -724,7 +721,7 @@ private:
 
     unsigned _commonPrefixLength;
 
-    /// if true genotyping is not conduced
+    /// if true genotyping is not conducted
     bool _doNotGenotype;
 };
 

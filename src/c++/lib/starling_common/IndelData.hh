@@ -355,7 +355,7 @@ struct IndelData
 
     /// If true, the allele intersects an active region and has not been filtered out as noise
     /// based on haplotype analysis
-    bool isConfirmedInActiveRegion() const
+    bool isDiscoveredInActiveRegion() const
     {
         return (activeRegionId >= 0);
     }
@@ -369,21 +369,21 @@ public:
         bool is_candidate_indel_cached = false;
         bool is_candidate_indel = false;
 
+        /// If true, do not genotype this indel
+        bool doNotGenotype = false;
+
         /// If true, allele is promoted to candidate status without enough read support
         /// (e.g. forced indel)
-        bool noReadSupport = false;
+        bool notDiscoveredFromReads = false;
 
     };
 
     /// If true, allele is suggested from a source other than the aligned sequencing data
     bool is_external_candidate = false;
 
-    /// If true, allele is automatically promoted to candidate status and must be scored in
-    /// the final call output, even if there is no support for the allele in any input sample
+    /// If true, allele must be in the final call output,
+    /// even if there is no support for the allele in any input sample
     bool isForcedOutput = false;
-
-    /// Do not genotype this indel if below is true
-    bool doNotGenotype = false;
 
     ActiveRegionId activeRegionId = -1;
 

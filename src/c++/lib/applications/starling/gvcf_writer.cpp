@@ -1041,7 +1041,7 @@ write_indel_record_instance(
                 const auto& sampleInfo(locus.getSample(sampleIndex));
 
                 os << '\t';
-                os << "./.:.:.:.:.:.:.";
+                os << ".:.:.:.:.:.:.";
 
                 // FT
                 os << ':';

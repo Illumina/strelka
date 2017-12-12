@@ -121,6 +121,11 @@ private:
     void setPosToActiveRegionIdMap(const ActiveRegion& activeRegionRange);
     void updateActiveRegionRange(const ActiveRegion& sampleActiveRegion);
     void processExistingActiveRegion(const pos_t pos);
+
+    /// If one or more candidate indel is discovered in the current active region
+    /// filter out forced indels that may interfere with the discovered indels
+    void filterOutConflictingForcedIndels();
+
     void closeActiveRegion();
 };
 
