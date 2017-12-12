@@ -4,6 +4,8 @@
 - Add strand bias feature for germline indel EVS (STREL-676)
 - Remove preliminary step which counts the 'mappable' (non-N) size of the genome (STREL-772)
   - This has a legacy use in identifying noisy alignments. Now replaced with a simplified scheme.
+- Lower default local task memory requirement from 2 to 1.5 Gb (STREL-802)
+  - This enables all cores on a c4.8xlarge with default configuration, use `--callMemMb` option to override for unusual cases.
 
 ### Fixed
 - Fix empirical variant scoring (EVS) of complex somatic indels (STREL-774)

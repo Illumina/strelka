@@ -151,7 +151,7 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
         #       a slow run due to swapping.
         #
         callSGEMemMb=4*1024
-        callLocalMemMb=2*1024
+        callLocalMemMb=1.5*1024
 
 
         runDir = "variantCallWorkflow"
