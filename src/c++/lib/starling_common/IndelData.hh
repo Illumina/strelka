@@ -270,7 +270,7 @@ struct IndelSampleData
     uint8_t haplotypeId;    // 0: reference; 1: haplotype 1; 2: haplotype 2; 3: haplotype 1 and 2
 
     /// true if haplotyping was bypassed in this sample
-    uint8_t isHaplotypingBypassed = false;
+    bool isHaplotypingBypassed = false;
 
     float altAlleleHaplotypeCountRatio;
 

@@ -134,9 +134,6 @@ getUpdatedSampleHaplotypeConstraints(
 class HaplotypeStatus
 {
 public:
-    HaplotypeStatus()
-    {}
-
     explicit HaplotypeStatus(unsigned numSamples)
     : _haplotypeConstraints(numSamples)
     {
@@ -1035,7 +1032,7 @@ candidate_alignment_search(
         HaplotypeStatusMap newHaplotypeStatusMap(haplotypeStatusMap);
         if (!isCurIndelConflicting && isCurIndelInActiveRegion)
         {
-            isValid = newHaplotypeStatusMap[curIndelActiveRegionId].updateHaplotypeStatus(curIndelHaplotypeIds, isCurIndelOn);
+            isValid = newHaplotypeStatusMap.at(curIndelActiveRegionId).updateHaplotypeStatus(curIndelHaplotypeIds, isCurIndelOn);
         }
         else
         {
@@ -1067,7 +1064,7 @@ candidate_alignment_search(
     HaplotypeStatusMap newHaplotypeStatusMap(haplotypeStatusMap);
     if (!isCurIndelConflicting && isCurIndelInActiveRegion)
     {
-        isValid = newHaplotypeStatusMap[curIndelActiveRegionId].updateHaplotypeStatus(curIndelHaplotypeIds, !isCurIndelOn);
+        isValid = newHaplotypeStatusMap.at(curIndelActiveRegionId).updateHaplotypeStatus(curIndelHaplotypeIds, !isCurIndelOn);
     }
     else
     {

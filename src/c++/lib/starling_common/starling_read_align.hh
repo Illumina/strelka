@@ -28,7 +28,6 @@
 #include "starling_common/starling_read.hh"
 #include "starling_common/starling_base_shared.hh"
 #include "CandidateSnvBuffer.hh"
-#include "ActiveRegionDetector.hh"
 
 
 /// \brief Search for a set of alternate alignments for each read, score them, and
