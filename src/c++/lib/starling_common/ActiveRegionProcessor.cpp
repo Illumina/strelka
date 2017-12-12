@@ -521,34 +521,37 @@ void ActiveRegionProcessor::processSelectedHaplotypes()
     std::vector<std::vector<IndelKey>> discoveredIndels;
     std::vector<unsigned> selectedAltHaplotypeIndices;
 
-    bool isIndel(false);
+    // indicates whether any indel is found
+    bool isAnyIndelFound(false);
     for (const std::string& haplotype : _selectedHaplotypes)
     {
         if (haplotype != _refSegment)
         {
-            std::vector<IndelKey> indels;
-            if(discoverIndels(selectedHaplotypeIndex, indels)) isIndel = true;
+            std::vector<IndelKey> indelsAndMismatches;
+            bool isIndelFound;
+            discoverIndelsAndMismatches(selectedHaplotypeIndex, indelsAndMismatches, isIndelFound);
+            if (isIndelFound) isAnyIndelFound = true;
 
-            discoveredIndels.push_back(indels);
+            discoveredIndels.push_back(indelsAndMismatches);
             selectedAltHaplotypeIndices.push_back(selectedHaplotypeIndex);
         }
         ++selectedHaplotypeIndex;
     }
 
-    // isIndel == false means that no "real" indel is found.
     HaplotypeId haplotypeId(0);
     for (unsigned selectedAltHaplotypeIndex : selectedAltHaplotypeIndices)
     {
         // alt haplotype gets non-zero haplotypeId
         ++haplotypeId;
         const std::vector<IndelKey>& indels(discoveredIndels[haplotypeId-1]);
-        processDiscoveredIndels(selectedAltHaplotypeIndex, haplotypeId, indels, isIndel);
+        processDiscoveredIndelsAndMismatches(selectedAltHaplotypeIndex, haplotypeId, indels, isAnyIndelFound);
     }
 }
 
-bool ActiveRegionProcessor::discoverIndels(
-        const unsigned selectedHaplotypeIndex,
-        std::vector<IndelKey> &discoveredIndels)
+void ActiveRegionProcessor::discoverIndelsAndMismatches(
+    const unsigned selectedHaplotypeIndex,
+    std::vector<IndelKey> &discoveredIndelsAndMismatches,
+    bool &isIndelFound)
 {
     const std::string& haplotypeSeq(_selectedHaplotypes[selectedHaplotypeIndex]);
     assert (haplotypeSeq != _refSegment);
@@ -573,7 +576,7 @@ bool ActiveRegionProcessor::discoverIndels(
         assert(false && "Unexpected alignment segment");
     }
 
-    bool isIndel(false);
+    isIndelFound = false;
     unsigned numVariants(0);
     for (const auto& pathSegment : alignPath)
     {
@@ -593,7 +596,7 @@ bool ActiveRegionProcessor::discoverIndels(
                 // these are used in read realignment but not scored
                 auto insertSeq(haplotypeSeq.substr(haplotypePosOffset, 1));
                 auto mismatchIndelKey(IndelKey(referencePos, INDEL::MISMATCH, 1, insertSeq.c_str()));
-                discoveredIndels.push_back(mismatchIndelKey);
+                discoveredIndelsAndMismatches.push_back(mismatchIndelKey);
 
                 ++referencePos;
                 ++haplotypePosOffset;
@@ -622,10 +625,12 @@ bool ActiveRegionProcessor::discoverIndels(
                     prevBase = _ref.get_base(insertPos-1);
                 }
 
+                // if left-shifting puts this insertion to the previous AR,
+                // ignore it
                 if (prevBase != 'N' && insertPos >= _prevActiveRegionEnd)
                 {
-                    discoveredIndels.push_back(IndelKey(insertPos, INDEL::INDEL, 0, insertSeq.c_str()));
-                    isIndel = true;
+                    discoveredIndelsAndMismatches.push_back(IndelKey(insertPos, INDEL::INDEL, 0, insertSeq.c_str()));
+                    isIndelFound = true;
                     ++numVariants;
                 }
             }
@@ -651,10 +656,12 @@ bool ActiveRegionProcessor::discoverIndels(
                     prevBase = _ref.get_base(deletePos-1);
                 }
 
+                // if left-shifting puts this deletion to the previous AR,
+                // ignore it
                 if (prevBase != 'N' && deletePos >= _prevActiveRegionEnd)
                 {
-                    discoveredIndels.push_back(IndelKey(deletePos, INDEL::INDEL, segmentLength));
-                    isIndel = true;
+                    discoveredIndelsAndMismatches.push_back(IndelKey(deletePos, INDEL::INDEL, segmentLength));
+                    isIndelFound = true;
                     ++numVariants;
                 }
             }
@@ -670,33 +677,33 @@ bool ActiveRegionProcessor::discoverIndels(
             assert(false && "Unexpected alignment segment");
         }
     }
-    return isIndel;
 }
 
 void
-ActiveRegionProcessor::processDiscoveredIndels(
+ActiveRegionProcessor::processDiscoveredIndelsAndMismatches(
         const unsigned selectedHaplotypeIndex,
         const HaplotypeId haplotypeId,
-        const std::vector<IndelKey> &discoveredIndels,
-        const bool isIndel)
+        const std::vector<IndelKey> &discoveredIndelsAndMismatches,
+        const bool isIndelFound)
 {
     const std::vector<align_id_t>& alignIdList(_selectedAlignIdLists[selectedHaplotypeIndex]);
 
     // alignIdList.size()/_numReadsUsedToGenerateHaplotypes gives a meaning read count support ratio
     const float altHaplotypeCountRatio(alignIdList.size()/static_cast<float>(_numReadsUsedToGenerateHaplotypes));
 
-    for (const auto& discoveredIndelKey : discoveredIndels)
+    for (const auto& discoveredVariantKey : discoveredIndelsAndMismatches)
     {
-        if (discoveredIndelKey.isMismatch())
+        if (discoveredVariantKey.isMismatch())
         {
             _candidateSnvBuffer.addCandidateSnv(
-                    _sampleIndex, discoveredIndelKey.pos,
-                    discoveredIndelKey.insertSequence[0],
+                    _sampleIndex, discoveredVariantKey.pos,
+                    discoveredVariantKey.insertSequence[0],
                     haplotypeId, altHaplotypeCountRatio);
         }
 
-        // for efficiency, discoveredIndels contains only mismatches, add nothing to indelBuffer
-        if (! isIndel) continue;
+        // for efficiency, discoveredIndelsAndMismatches contains no indel,
+        // add nothing to indelBuffer
+        if (! isIndelFound) continue;
 
         for (const auto alignId : alignIdList)
         {
@@ -704,9 +711,9 @@ ActiveRegionProcessor::processDiscoveredIndels(
             IndelObservationData indelObservationData;
             indelObservationData.iat = alignInfo.indelAlignType;
             indelObservationData.id = alignId;
-            _indelBuffer.addIndelObservation(alignInfo.sampleIndex, {discoveredIndelKey, indelObservationData});
+            _indelBuffer.addIndelObservation(alignInfo.sampleIndex, {discoveredVariantKey, indelObservationData});
         }
-        IndelData* indelDataPtr(_indelBuffer.getIndelDataPtr(discoveredIndelKey));
+        IndelData* indelDataPtr(_indelBuffer.getIndelDataPtr(discoveredVariantKey));
         assert((indelDataPtr != nullptr) && "Missing indelData");
 
         // Record active region ID in indel data

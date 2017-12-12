@@ -135,9 +135,7 @@ class HaplotypeStatus
 {
 public:
     HaplotypeStatus()
-    {
-        assert(false);
-    }
+    {}
 
     explicit HaplotypeStatus(unsigned numSamples)
     : _haplotypeConstraints(numSamples)
@@ -429,8 +427,11 @@ make_start_pos_alignment(
 
         // don't consider indels which can't intersect the read:
         if (indelKey.right_pos() < ref_start_pos) continue;
-        if (isMismatch && indelKey.right_pos() == ref_start_pos) continue;
-        if ((indelKey.right_pos() == ref_start_pos) && (! is_leading_read)) continue;
+        if (indelKey.right_pos() == ref_start_pos)
+        {
+            if (isMismatch) continue;
+            if (! is_leading_read) continue;
+        }
 
         // deal with leading indel, swap or right breakpoint:
         const bool is_first_intersecting_indel(apath.empty());
@@ -624,15 +625,19 @@ get_end_pin_start_pos(
         const bool isMismatch(indelKey.isMismatch());
         // check that indel actually intersects the read:
         if (indelKey.pos > ref_end_pos) continue;
-        if (isMismatch && (indelKey.pos == ref_end_pos)) continue;
-        if ((indelKey.pos == ref_end_pos) && (! is_trailing_read)) continue;
+
+        if (indelKey.pos == ref_end_pos)
+        {
+            if (isMismatch) continue;
+            if (! is_trailing_read) continue;
+        }
 
         const bool is_trailing_indel((!isMismatch) && (indelKey.right_pos() == ref_end_pos));
 
         if (is_trailing_indel)   // deal with trailing-edge insert/breakpoint case first
         {
             assert((is_first) && (ref_start_pos==ref_end_pos));
-            assert((indelKey.type == INDEL::INDEL) || isMismatch ||
+            assert((indelKey.type == INDEL::INDEL) ||
                    (indelKey.type == INDEL::BP_LEFT));
 
             if (indelKey.type == INDEL::INDEL)
@@ -805,10 +810,54 @@ addKeysToCandidateAlignment(
     cal.setIndels(calIndels);
 }
 
+/// Get haplotype IDs of current indel in all samples
+static
+void
+getCurIndelHaplotypeIds(
+    const bool isHaplotypingEnabled,
+    const unsigned curSampleId,
+    const IndelKey& curIndel,
+    const IndelData& curIndelData,
+    const bool isCurIndelInOriginalAlignment,
+    std::vector<int>& curIndelHaplotypeIds)
+{
+    const unsigned sampleCount(curIndelHaplotypeIds.size());
+
+    ActiveRegionId curIndelActiveRegionId(curIndelData.activeRegionId);
+    curIndelHaplotypeIds.clear();
+    if (curIndelActiveRegionId < 0) return;
+
+    // Get haplotype IDs of current indel in all samples
+    for (unsigned sampleId(0); sampleId<sampleCount; ++sampleId)
+    {
+        const auto& indelSampleData(curIndelData.getSampleData(sampleId));
+        int curIndelHaplotypeId(indelSampleData.haplotypeId);
+        if (curIndelHaplotypeId == 0)
+        {
+            // current indel is valid in this sample
+            bool isCurIndelValidInThisSample(
+                    (! isHaplotypingEnabled)
+                    || (indelSampleData.isHaplotypingBypassed)
+                    || (curIndelData.isForcedOutput));
+            if (!isCurIndelValidInThisSample && (sampleId == curSampleId)
+                && isCurIndelInOriginalAlignment)
+                isCurIndelValidInThisSample = true;
+
+            if (curIndel.isMismatch() && (sampleId != curSampleId))
+                isCurIndelValidInThisSample = false;
+
+            if (isCurIndelValidInThisSample)
+                curIndelHaplotypeId = 0;
+            else
+                curIndelHaplotypeId = -1;
+        }
+        curIndelHaplotypeIds[sampleId] = curIndelHaplotypeId;
+    }
+}
 
 /// Recursively build potential alignment paths and push them into the
 /// candidate alignment set:
-///
+/// \param haplotypeStatusMap map of intersecting active region and haplotyping constraints of phased variants
 static
 void
 candidate_alignment_search(
@@ -943,11 +992,8 @@ candidate_alignment_search(
     //
     // edge-indels can only be pinned on one side
     //
-    const unsigned sampleCount(opt.getSampleCount());
 
     const IndelKey& curIndel(indel_order[depth]);
-    const bool isCurIndelOn(indel_status_map[curIndel].is_present);
-    const IndelData& curIndelData(*indelBuffer.getIndelDataPtr(curIndel));
 
     bool isCurIndelConflicting(false);
     for (unsigned i(0); i<depth; ++i)
@@ -958,53 +1004,36 @@ candidate_alignment_search(
         if (is_indel_conflict(indelKey, curIndel)) isCurIndelConflicting = true;
     }
 
-    ActiveRegionId curIndelActiveRegionId(curIndelData.activeRegionId);
+    const unsigned sampleCount(opt.getSampleCount());
 
-    std::vector<int> curIndelHaplotypeIds(sampleCount);
+    const bool isCurIndelOn(indel_status_map[curIndel].is_present);
+    const IndelData& curIndelData(*indelBuffer.getIndelDataPtr(curIndel));
 
-    if (curIndelActiveRegionId >= 0)
+    const ActiveRegionId curIndelActiveRegionId(curIndelData.activeRegionId);
+    const bool isCurIndelInActiveRegion(curIndelActiveRegionId >= 0);
+    if (isCurIndelInActiveRegion)
     {
         auto it = haplotypeStatusMap.find(curIndelActiveRegionId);
-        if (it == haplotypeStatusMap.end())
-        {
+        if (it == haplotypeStatusMap.end()) {
             haplotypeStatusMap.insert(std::make_pair(curIndelActiveRegionId, HaplotypeStatus(sampleCount)));
         }
-
-        // Get haplotype IDs of current indel in all samples
-        for (unsigned i(0); i<sampleCount; ++i)
-        {
-            const auto& indelSampleData(curIndelData.getSampleData(i));
-            int curIndelHaplotypeId(indelSampleData.haplotypeId);
-            if (curIndelHaplotypeId == 0)
-            {
-                // current indel is valid in this sample
-                bool isCurIndelValidInThisSample(
-                        (! opt.isHaplotypingEnabled)
-                        || (indelSampleData.isHaplotypingBypassed)
-                        || (curIndelData.isForcedOutput));
-                if (!isCurIndelValidInThisSample && (i == sampleId)
-                    && (indel_status_map[curIndel].isInOriginalAlignment))
-                    isCurIndelValidInThisSample = true;
-
-                if (curIndel.isMismatch() && (i != sampleId))
-                    isCurIndelValidInThisSample = false;
-
-                if (isCurIndelValidInThisSample)
-                    curIndelHaplotypeId = 0;
-                else
-                    curIndelHaplotypeId = -1;
-            }
-            curIndelHaplotypeIds[i] = curIndelHaplotypeId;
-        }
     }
-
+    // Get haplotype IDs of current indel in all samples
+    std::vector<int> curIndelHaplotypeIds(sampleCount);
+    getCurIndelHaplotypeIds(
+            opt.isHaplotypingEnabled,
+            sampleId,
+            curIndel,
+            curIndelData,
+            indel_status_map[curIndel].isInOriginalAlignment,
+            curIndelHaplotypeIds);
 
     // alignment 1) --> unchanged case:
     try
     {
         bool isValid(true);
         HaplotypeStatusMap newHaplotypeStatusMap(haplotypeStatusMap);
-        if (!isCurIndelConflicting && (curIndelActiveRegionId >= 0))
+        if (!isCurIndelConflicting && isCurIndelInActiveRegion)
         {
             isValid = newHaplotypeStatusMap[curIndelActiveRegionId].updateHaplotypeStatus(curIndelHaplotypeIds, isCurIndelOn);
         }
@@ -1036,7 +1065,7 @@ candidate_alignment_search(
 
     bool isValid(true);
     HaplotypeStatusMap newHaplotypeStatusMap(haplotypeStatusMap);
-    if (!isCurIndelConflicting && (curIndelActiveRegionId >= 0))
+    if (!isCurIndelConflicting && isCurIndelInActiveRegion)
     {
         isValid = newHaplotypeStatusMap[curIndelActiveRegionId].updateHaplotypeStatus(curIndelHaplotypeIds, !isCurIndelOn);
     }
@@ -1140,7 +1169,8 @@ candidate_alignment_search(
         }
     }
 
-    // check whether this is an equal-length swap, in which case alignment 3 is unnecessary:
+    // check whether this is a mismatch or an equal-length swap,
+    // in which case alignment 3 is unnecessary:
     if (curIndel.isMismatch()) return;
     if ((curIndel.type==INDEL::INDEL) && (curIndel.delete_length()==curIndel.insert_length())) return;
 

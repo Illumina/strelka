@@ -102,7 +102,7 @@ public:
 private:
     const known_pos_range2 _posRange;
 
-    /// To avoid left-shifting puts indels to previous AR
+    /// record the end position of the previous AR
     const pos_t _prevActiveRegionEnd;
 
     const reference_contig_segment& _ref;
@@ -149,16 +149,17 @@ private:
     void processSelectedHaplotypes();
 
     /// Decompose haplotype into primitive alleles
-    /// \return true if one or more real indels are found
-    bool discoverIndels(
-            const unsigned selectedHaplotypeIndex,
-            std::vector<IndelKey> &discoveredIndels);
+    void discoverIndelsAndMismatches(
+        const unsigned selectedHaplotypeIndex,
+        std::vector<IndelKey> &discoveredIndelsAndMismatches,
+        bool &isIndelFound);
 
     /// Put discovered indels and mismatches
     /// into the indel buffer and candidate SNV buffer
-    void processDiscoveredIndels(
-            const unsigned selectedHaplotypeIndex,
-            const HaplotypeId haplotypeId,
-            const std::vector<IndelKey> &discoveredIndels,
-            const bool isIndel);
+    /// \param isIndelFound true if discoveredIndelsAndMismatches contains indel
+    void processDiscoveredIndelsAndMismatches(
+        const unsigned selectedHaplotypeIndex,
+        const HaplotypeId haplotypeId,
+        const std::vector<IndelKey> &discoveredIndelsAndMismatches,
+        const bool isIndelFound);
 };

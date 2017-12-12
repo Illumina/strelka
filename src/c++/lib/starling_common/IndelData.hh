@@ -269,7 +269,7 @@ struct IndelSampleData
 
     uint8_t haplotypeId;    // 0: reference; 1: haplotype 1; 2: haplotype 2; 3: haplotype 1 and 2
 
-    /// true if this indel was not discovered through haplotyping
+    /// true if haplotyping was bypassed in this sample
     uint8_t isHaplotypingBypassed = false;
 
     float altAlleleHaplotypeCountRatio;
@@ -353,7 +353,7 @@ struct IndelData
         return _reportInfo;
     }
 
-    /// If true, the allele intersects an active region and has not been filtered out as noise based
+    /// If true, the allele intersects an active region and has not been filtered out as noise
     /// based on haplotype analysis
     bool isConfirmedInActiveRegion() const
     {

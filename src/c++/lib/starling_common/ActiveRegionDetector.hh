@@ -68,11 +68,6 @@ public:
     const float MinAlternativeAlleleFraction = 0.2;
 
     /// Coordinates active region creation in all samples
-    /// \param ref reference
-    /// \param indelBuffer indel buffer
-    /// \param candidateSnvBuffer candidate SNV buffer
-    /// \param maxIndelSize maximum indel size
-    /// \param sampleCount total sample count
     ActiveRegionDetector(
         const reference_contig_segment& ref,
         IndelBuffer& indelBuffer,
