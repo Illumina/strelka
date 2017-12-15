@@ -30,17 +30,19 @@ is_indel_conflict(
     const IndelKey& indelKey1,
     const IndelKey& indelKey2)
 {
+    // if both indels are not mismatches
     // add one to the end_pos of all indels to prevent immediately
     // adjacent indels in the final alignments:
+
+    bool isEitherMismatch(indelKey1.isMismatch() || indelKey2.isMismatch());
     pos_range pr1(indelKey1.open_pos_range());
-    pr1.end_pos++;
+    if (!isEitherMismatch) pr1.end_pos++;
+
     pos_range pr2(indelKey2.open_pos_range());
-    pr2.end_pos++;
+    if (!isEitherMismatch) pr2.end_pos++;
 
     return pr1.is_range_intersect(pr2);
 }
-
-
 
 /// return true if the range intersects the left or the right indel position
 bool
@@ -48,6 +50,12 @@ is_range_intersect_indel_breakpoints(
     const known_pos_range read_pr,
     const IndelKey& indelKey)
 {
+    if (indelKey.isMismatch())
+    {
+        assert(indelKey.delete_length() == 1);
+        return read_pr.is_pos_intersect(indelKey.pos);
+    }
+
     if (read_pr.is_range_intersect(pos_range(indelKey.pos,indelKey.pos))) return true;
     const pos_t rpos(indelKey.right_pos());
     if (indelKey.pos==rpos) return false;

@@ -750,8 +750,7 @@ align_pos(const pos_t pos)
             try
             {
                 realignAndScoreRead(_opt, _dopt, sif.sampleOptions, _ref, realign_buffer_range, sampleIndex,
-                                    _candidateSnvBuffer, rseg,
-                                    getIndelBuffer());
+                                    rseg, getIndelBuffer());
             }
             catch (...)
             {
@@ -1458,6 +1457,8 @@ process_pos_stats(
         {
             const IndelKey& indelKey(it->first);
             const IndelData& indelData(getIndelData(it));
+
+            if (indelKey.isMismatch()) continue;
 
             const bool isCandidate(getIndelBuffer().isCandidateIndel(indelKey, indelData));
             _statsManager.addCallRegionIndel(isCandidate);

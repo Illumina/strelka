@@ -6,6 +6,8 @@
   - This has a legacy use in identifying noisy alignments. Now replaced with a simplified scheme.
 - Lower default local task memory requirement from 2 to 1.5 Gb (STREL-802)
   - This enables all cores on a c4.8xlarge with default configuration, use `--callMemMb` option to override for unusual cases.
+- Add haplotyping contraints to the read alignment (STREL-743)
+  - Phasing information from haplotyping is used to constrain combinations of variants within read alignments
 
 ### Fixed
 - Fix empirical variant scoring (EVS) of complex somatic indels (STREL-774)

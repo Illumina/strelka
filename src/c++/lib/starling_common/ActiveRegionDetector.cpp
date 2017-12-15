@@ -165,7 +165,7 @@ ActiveRegionDetector::closeActiveRegion()
         const unsigned ploidy(getPloidy(sampleIndex, _synchronizedActiveRegion));
         if (!_isSomatic)
         {
-            ActiveRegionProcessor activeRegionProcessor(_synchronizedActiveRegion,
+            ActiveRegionProcessor activeRegionProcessor(_synchronizedActiveRegion, _prevActiveRegionEnd,
                                                         _ref, _maxIndelSize, sampleIndex, ploidy,
                                                         _aligner, _sampleActiveRegionDetector[sampleIndex]->getReadBuffer(),
                                                         _indelBuffer, _candidateSnvBuffer);
@@ -176,7 +176,7 @@ ActiveRegionDetector::closeActiveRegion()
             // These are experimental and currently not enabled.
             if (sampleIndex == 0)
             {
-                ActiveRegionProcessor activeRegionProcessor(_synchronizedActiveRegion,
+                ActiveRegionProcessor activeRegionProcessor(_synchronizedActiveRegion, _prevActiveRegionEnd,
                                                             _ref, _maxIndelSize, sampleIndex, ploidy,
                                                             _aligner, _sampleActiveRegionDetector[sampleIndex]->getReadBuffer(),
                                                             _indelBuffer, _candidateSnvBuffer);
@@ -185,7 +185,7 @@ ActiveRegionDetector::closeActiveRegion()
             }
             else
             {
-                ActiveRegionProcessor activeRegionProcessor(_synchronizedActiveRegion,
+                ActiveRegionProcessor activeRegionProcessor(_synchronizedActiveRegion, _prevActiveRegionEnd,
                                                             _ref, _maxIndelSize, sampleIndex, 1u,
                                                             _aligner, _sampleActiveRegionDetector[sampleIndex]->getReadBuffer(),
                                                             _indelBuffer, _candidateSnvBuffer);
@@ -195,6 +195,7 @@ ActiveRegionDetector::closeActiveRegion()
         }
     }
     setPosToActiveRegionIdMap(_synchronizedActiveRegion);
+    _prevActiveRegionEnd = _synchronizedActiveRegion.end_pos();
     _synchronizedActiveRegion.clear();
 }
 

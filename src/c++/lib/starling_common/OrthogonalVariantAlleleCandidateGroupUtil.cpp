@@ -120,7 +120,7 @@ getAlleleGroupSupportingReadIds(
     const bool isTier1Only)
 {
 #ifdef USE_GERMLINE_SUPPORTING_READ_UNION
-    getAlleleGroupUnionReadIds(sampleId, alleleGroup, readIds, isTier1Only);
+    getAlleleGroupUnionReadIds(sampleIndex, alleleGroup, readIds, isTier1Only);
 #else
     getAlleleGroupIntersectionReadIds(sampleIndex, alleleGroup, readIds, isTier1Only);
 #endif
@@ -501,6 +501,8 @@ addAllelesAtOtherPositions(
 
             // no breakpoints:
             if (altAlleleKey.is_breakpoint()) continue;
+
+            if (altAlleleKey.isMismatch()) continue;
 
             // must be a candidate allele:
             const IndelData& altAlleleData(getIndelData(altAlleleIter));

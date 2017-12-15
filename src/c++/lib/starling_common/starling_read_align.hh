@@ -53,6 +53,5 @@ realignAndScoreRead(
     const reference_contig_segment& ref,
     const known_pos_range& realign_buffer_range,
     const unsigned sampleId,
-    const CandidateSnvBuffer& candidateSnvBuffer,
     read_segment& rseg,
     IndelBuffer& indelBuffer);

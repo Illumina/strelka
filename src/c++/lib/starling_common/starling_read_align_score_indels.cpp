@@ -112,6 +112,7 @@ which_interfering_indel(
     for (; iter != iter_end; ++iter)
     {
         const IndelKey& currentIndel(*iter);
+        if (currentIndel.isMismatch()) continue;
         if (is_indel_conflict(currentIndel, new_indel)) return iter;
     }
     return end;
@@ -548,6 +549,10 @@ score_indels(
         for (auto indelIter(indelIterPair.first); indelIter!=indelIterPair.second; ++indelIter)
         {
             const IndelKey& evaluationIndel(indelIter->first);
+
+            // mismatches are not scored
+            if (evaluationIndel.isMismatch()) continue;
+
             const IndelData& indelData(getIndelData(indelIter));
 
 #ifdef DEBUG_ALIGN

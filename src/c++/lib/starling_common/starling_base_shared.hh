@@ -94,10 +94,10 @@ struct starling_base_options : public blt_options
     //
     double bindel_diploid_theta = 0.0001;
 
-    // parameter to enable/disable short haplotype calling
-    bool is_short_haplotyping_enabled = false;
+    /// parameter to enable/disable short haplotype calling
+    bool isHaplotypingEnabled = false;
 
-    // true if we run somatic calling and false otherwise
+    /// true if we run somatic calling and false otherwise
     bool isSomaticCallingMode = false;
 
     // to contribute to a breakpoint likelihood, a read must have at least

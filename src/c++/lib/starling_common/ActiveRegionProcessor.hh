@@ -63,16 +63,9 @@ public:
     static const unsigned MinHaplotypeCount = 3u;
 
     /// Creates an object for processing an active region
-    /// \param posRange position range of the active region
-    /// \param ref reference
-    /// \param maxIndelSize max indel size
-    /// \param sampleIndex sample index
-    /// \param aligner aligner for aligning haplotypes to the reference
-    /// \param readBuffer read buffer
-    /// \param indelBuffer indel buffer
-    /// \param candidateSnvBuffer candidate SNV buffer
     /// \return active region object
     ActiveRegionProcessor(const known_pos_range2& posRange,
+                          const pos_t prevActiveRegionEnd,
                           const reference_contig_segment& ref,
                           const unsigned maxIndelSize,
                           const unsigned sampleIndex,
@@ -81,8 +74,8 @@ public:
                           const ActiveRegionReadBuffer& readBuffer,
                           IndelBuffer& indelBuffer,
                           CandidateSnvBuffer& candidateSnvBuffer):
-        _posRange(posRange), _ref(ref), _maxIndelSize(maxIndelSize),
-        _sampleIndex(sampleIndex), _ploidy(ploidy),
+        _posRange(posRange), _prevActiveRegionEnd(prevActiveRegionEnd), _ref(ref),
+        _maxIndelSize(maxIndelSize), _sampleIndex(sampleIndex), _ploidy(ploidy),
         _aligner(aligner), _readBuffer(readBuffer),
         _indelBuffer(indelBuffer), _candidateSnvBuffer(candidateSnvBuffer)
     {
@@ -108,6 +101,10 @@ public:
 
 private:
     const known_pos_range2 _posRange;
+
+    /// record the end position of the previous AR
+    const pos_t _prevActiveRegionEnd;
+
     const reference_contig_segment& _ref;
     std::string _refSegment;
     const unsigned _maxIndelSize;
@@ -151,8 +148,18 @@ private:
     /// Align each selected haplotype to the reference and convert them to primitive alleles
     void processSelectedHaplotypes();
 
-    /// Convert the haplotype into primitive alleles and update _indelBuffer and _candidateSnvBuffer
-    void convertToPrimitiveAlleles(
+    /// Decompose haplotype into primitive alleles
+    void discoverIndelsAndMismatches(
         const unsigned selectedHaplotypeIndex,
-        const HaplotypeId haplotypeId);
+        std::vector<IndelKey> &discoveredIndelsAndMismatches,
+        bool &isIndelFound);
+
+    /// Put discovered indels and mismatches
+    /// into the indel buffer and candidate SNV buffer
+    /// \param isIndelFound true if discoveredIndelsAndMismatches contains indel
+    void processDiscoveredIndelsAndMismatches(
+        const unsigned selectedHaplotypeIndex,
+        const HaplotypeId haplotypeId,
+        const std::vector<IndelKey> &discoveredIndelsAndMismatches,
+        const bool isIndelFound);
 };

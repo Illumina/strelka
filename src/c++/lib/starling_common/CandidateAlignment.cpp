@@ -58,8 +58,10 @@ bam_seq_to_str(
 void
 getAlignmentIndels(
     const CandidateAlignment& cal,
+    const reference_contig_segment& ref,
     const read_segment& rseg,
     const unsigned max_indel_size,
+    const bool includeMismatches,
     indel_set_t& indels)
 {
     using namespace ALIGNPATH;
@@ -70,6 +72,8 @@ getAlignmentIndels(
     unsigned path_index(0);
     unsigned read_offset(0);
     pos_t ref_head_pos(cal.al.pos);
+
+    const rc_segment_bam_seq refBamSeq(ref);
 
     const std::pair<unsigned,unsigned> ends(get_match_edge_segments(cal.al.path));
     const unsigned aps(path.size());
@@ -150,7 +154,21 @@ getAlignmentIndels(
             }
 
         }
+        else if (includeMismatches && (is_segment_align_match(path[path_index].type)))
+        {
+            // match or mismatch
+            for (unsigned i(0); i<ps.length; ++i)
+            {
+                const pos_t readPos(static_cast<pos_t>(read_offset + i));
+                const uint8_t sbase(rseg.get_bam_read().get_code(readPos));
+                if ((sbase == BAM_BASE::REF) || (sbase == BAM_BASE::ANY)) continue;
+                const pos_t refPos(static_cast<pos_t>(ref_head_pos + i));
+                bool isRef=(sbase == refBamSeq.get_code(refPos));
+                if (isRef) continue;
 
+                indels.insert(IndelKey(refPos, INDEL::MISMATCH, 1, std::string(1,get_bam_seq_char(sbase)).c_str()));
+            }
+        }
         for (unsigned i(0); i<n_seg; ++i)
         {
             increment_path(path,path_index,read_offset,ref_head_pos);

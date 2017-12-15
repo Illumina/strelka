@@ -268,6 +268,10 @@ struct IndelSampleData
     evidence_t suboverlap_tier2_read_ids;
 
     uint8_t haplotypeId;    // 0: reference; 1: haplotype 1; 2: haplotype 2; 3: haplotype 1 and 2
+
+    /// true if haplotyping was bypassed in this sample
+    bool isHaplotypingBypassed = false;
+
     float altAlleleHaplotypeCountRatio;
 
 private:
@@ -349,6 +353,13 @@ struct IndelData
         return _reportInfo;
     }
 
+    /// If true, the allele intersects an active region and has not been filtered out as noise
+    /// based on haplotype analysis
+    bool isConfirmedInActiveRegion() const
+    {
+        return (activeRegionId >= 0);
+    }
+
 private:
     friend std::ostream& operator<<(std::ostream& os, const IndelData& indelData);
 public:
@@ -367,9 +378,7 @@ public:
     /// the final call output, even if there is no support for the allele in any input sample
     bool isForcedOutput = false;
 
-    /// If true, the allele intersects an active region and has not been filtered out as noise based
-    /// based on haplotype analysis
-    bool isConfirmedInActiveRegion = false;
+    ActiveRegionId activeRegionId = -1;
 
     /// status is used to facilitate efficient computation of candidate status by caching the result
     /// after the first time candidate status is computed.

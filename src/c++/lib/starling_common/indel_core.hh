@@ -60,6 +60,7 @@ enum index_t
 {
     NONE,
     INDEL,
+    MISMATCH,
     BP_LEFT,
     BP_RIGHT,
 };
@@ -74,6 +75,8 @@ get_index_label(index_t id)
         return "NONE";
     case INDEL:
         return "INDEL";
+    case MISMATCH:
+        return "MISMATCH";
     case BP_LEFT:
         return "BP_LEFT";
     case BP_RIGHT:

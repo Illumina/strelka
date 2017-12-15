@@ -1551,9 +1551,11 @@ getIndelAllelesAtPosition(
     for (; it != it_end; ++it)
     {
         const IndelKey& indelKey(it->first);
-        const IndelData& indelData(getIndelData(it));
 
+        if (indelKey.isMismatch()) continue;
         if (indelKey.is_breakpoint()) continue;
+
+        const IndelData& indelData(getIndelData(it));
 
         const bool isForcedOutput(indelData.isForcedOutput);
         if (not isForcedOutput)
@@ -1842,6 +1844,7 @@ process_pos_indel_digt(const pos_t pos)
             {
                 const IndelKey& indelKey(it->first);
                 if (indelKey.is_breakpoint()) continue;
+                if (indelKey.isMismatch()) continue;
 
                 const IndelData& indelData(getIndelData(it));
                 if (! indelData.isForcedOutput) continue;

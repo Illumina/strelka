@@ -333,7 +333,7 @@ starling_run(
 
     // parse and sanity check regions
     unsigned supplementalRegionBorderSize(opt.maxIndelSize);
-    if (opt.is_short_haplotyping_enabled)
+    if (opt.isHaplotypingEnabled)
     {
         supplementalRegionBorderSize += ActiveRegionProcessor::MaxRefSpanToBypassAssembly;
     }

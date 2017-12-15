@@ -276,10 +276,18 @@ void ActiveRegionProcessor::doNotUseHaplotyping()
     for (; it!=it_end; ++it)
     {
         const IndelKey& indelKey(it->first);
-        IndelData& indelData(getIndelData(it));
 
         if (indelKey.is_breakpoint()) continue;
-        indelData.isConfirmedInActiveRegion = true;
+
+        // do not endorse mismatches if haplotyping fails
+        if (indelKey.isMismatch()) continue;
+
+        IndelData& indelData(getIndelData(it));
+        indelData.activeRegionId = _posRange.begin_pos();
+
+        // indicate that this indel was not discovered through haplotyping in this sample
+        IndelSampleData& indelSampleData(indelData.getSampleData(_sampleIndex));
+        indelSampleData.isHaplotypingBypassed = true;
     }
 }
 
@@ -496,7 +504,7 @@ void ActiveRegionProcessor::selectOrDropHaplotypesWithSameCount(
             for (const string& haplotypeInBuffer : haplotypesWithSameCount)
             {
 #ifdef DEBUG_ACTIVE_REGION
-                std::cerr << haplotype << '\t' << haplotypeToAlignIdSet.at(haplotype).size() << std::endl;
+                std::cerr << haplotypeInBuffer << '\t' << haplotypeToAlignIdSet.at(haplotypeInBuffer).size() << std::endl;
 #endif
                 _selectedHaplotypes.push_back(haplotypeInBuffer);
                 const std::vector<align_id_t>& alignIdList(haplotypeToAlignIdSet.at(haplotypeInBuffer));
@@ -509,28 +517,44 @@ void ActiveRegionProcessor::selectOrDropHaplotypesWithSameCount(
 
 void ActiveRegionProcessor::processSelectedHaplotypes()
 {
-    HaplotypeId haplotypeId(0);
     unsigned selectedHaplotypeIndex(0);
+    std::vector<std::vector<IndelKey>> discoveredIndels;
+    std::vector<unsigned> selectedAltHaplotypeIndices;
+
+    // indicates whether any indel is found
+    bool isAnyIndelFound(false);
     for (const std::string& haplotype : _selectedHaplotypes)
     {
         if (haplotype != _refSegment)
         {
-            // alt haplotype gets non-zero haplotypeId
-            ++haplotypeId;
-            convertToPrimitiveAlleles(selectedHaplotypeIndex, haplotypeId);
+            std::vector<IndelKey> indelsAndMismatches;
+            bool isIndelFound;
+            discoverIndelsAndMismatches(selectedHaplotypeIndex, indelsAndMismatches, isIndelFound);
+            if (isIndelFound) isAnyIndelFound = true;
+
+            discoveredIndels.push_back(indelsAndMismatches);
+            selectedAltHaplotypeIndices.push_back(selectedHaplotypeIndex);
         }
         ++selectedHaplotypeIndex;
     }
+
+    HaplotypeId haplotypeId(0);
+    for (unsigned selectedAltHaplotypeIndex : selectedAltHaplotypeIndices)
+    {
+        // alt haplotype gets non-zero haplotypeId
+        ++haplotypeId;
+        const std::vector<IndelKey>& indels(discoveredIndels[haplotypeId-1]);
+        processDiscoveredIndelsAndMismatches(selectedAltHaplotypeIndex, haplotypeId, indels, isAnyIndelFound);
+    }
 }
 
-void ActiveRegionProcessor::convertToPrimitiveAlleles(
+void ActiveRegionProcessor::discoverIndelsAndMismatches(
     const unsigned selectedHaplotypeIndex,
-    const HaplotypeId haplotypeId)
+    std::vector<IndelKey> &discoveredIndelsAndMismatches,
+    bool &isIndelFound)
 {
     const std::string& haplotypeSeq(_selectedHaplotypes[selectedHaplotypeIndex]);
     assert (haplotypeSeq != _refSegment);
-
-    const std::vector<align_id_t>& alignIdList(_selectedAlignIdLists[selectedHaplotypeIndex]);
 
     pos_t referencePos;
     AlignmentResult<int> result;
@@ -552,15 +576,12 @@ void ActiveRegionProcessor::convertToPrimitiveAlleles(
         assert(false && "Unexpected alignment segment");
     }
 
-    // alignIdList.size()/_numReadsUsedToGenerateHaplotypes gives a meaning read count support ratio
-    const float altHaplotypeCountRatio(alignIdList.size()/static_cast<float>(_numReadsUsedToGenerateHaplotypes));
-
+    isIndelFound = false;
     unsigned numVariants(0);
     for (const auto& pathSegment : alignPath)
     {
         const unsigned segmentLength = pathSegment.length;
 
-        std::unique_ptr<IndelKey> indelKeyPtr;
         switch (pathSegment.type)
         {
         case ALIGNPATH::SEQ_MATCH:
@@ -568,15 +589,21 @@ void ActiveRegionProcessor::convertToPrimitiveAlleles(
             haplotypePosOffset += segmentLength;
             break;
         case ALIGNPATH::SEQ_MISMATCH:
+        {
             for (unsigned i(0); i<segmentLength; ++i)
             {
-                _candidateSnvBuffer.addCandidateSnv(_sampleIndex, referencePos, haplotypeSeq[haplotypePosOffset], haplotypeId, altHaplotypeCountRatio);
+                // create a fake indelKey
+                // these are used in read realignment but not scored
+                auto insertSeq(haplotypeSeq.substr(haplotypePosOffset, 1));
+                auto mismatchIndelKey(IndelKey(referencePos, INDEL::MISMATCH, 1, insertSeq.c_str()));
+                discoveredIndelsAndMismatches.push_back(mismatchIndelKey);
 
                 ++referencePos;
                 ++haplotypePosOffset;
             }
             ++numVariants;
             break;
+        }
         case ALIGNPATH::INSERT:
         {
             if (segmentLength <= _maxIndelSize)
@@ -598,9 +625,12 @@ void ActiveRegionProcessor::convertToPrimitiveAlleles(
                     prevBase = _ref.get_base(insertPos-1);
                 }
 
-                if (prevBase != 'N')
+                // if left-shifting puts this insertion to the previous AR,
+                // ignore it
+                if (prevBase != 'N' && insertPos >= _prevActiveRegionEnd)
                 {
-                    indelKeyPtr.reset(new IndelKey(insertPos, INDEL::INDEL, 0, insertSeq.c_str()));
+                    discoveredIndelsAndMismatches.push_back(IndelKey(insertPos, INDEL::INDEL, 0, insertSeq.c_str()));
+                    isIndelFound = true;
                     ++numVariants;
                 }
             }
@@ -626,9 +656,12 @@ void ActiveRegionProcessor::convertToPrimitiveAlleles(
                     prevBase = _ref.get_base(deletePos-1);
                 }
 
-                if (prevBase != 'N')
+                // if left-shifting puts this deletion to the previous AR,
+                // ignore it
+                if (prevBase != 'N' && deletePos >= _prevActiveRegionEnd)
                 {
-                    indelKeyPtr.reset(new IndelKey(deletePos, INDEL::INDEL, segmentLength));
+                    discoveredIndelsAndMismatches.push_back(IndelKey(deletePos, INDEL::INDEL, segmentLength));
+                    isIndelFound = true;
                     ++numVariants;
                 }
             }
@@ -643,32 +676,57 @@ void ActiveRegionProcessor::convertToPrimitiveAlleles(
         default:
             assert(false && "Unexpected alignment segment");
         }
+    }
+}
 
-        if (indelKeyPtr)
+void
+ActiveRegionProcessor::processDiscoveredIndelsAndMismatches(
+        const unsigned selectedHaplotypeIndex,
+        const HaplotypeId haplotypeId,
+        const std::vector<IndelKey> &discoveredIndelsAndMismatches,
+        const bool isIndelFound)
+{
+    const std::vector<align_id_t>& alignIdList(_selectedAlignIdLists[selectedHaplotypeIndex]);
+
+    // alignIdList.size()/_numReadsUsedToGenerateHaplotypes gives a meaning read count support ratio
+    const float altHaplotypeCountRatio(alignIdList.size()/static_cast<float>(_numReadsUsedToGenerateHaplotypes));
+
+    for (const auto& discoveredVariantKey : discoveredIndelsAndMismatches)
+    {
+        if (discoveredVariantKey.isMismatch())
         {
-            for (const auto alignId : alignIdList)
-            {
-                const auto& alignInfo(_readBuffer.getAlignInfo(alignId));
-                IndelObservationData indelObservationData;
-                indelObservationData.iat = alignInfo.indelAlignType;
-                indelObservationData.id = alignId;
-                _indelBuffer.addIndelObservation(alignInfo.sampleIndex, {*indelKeyPtr, indelObservationData});
-            }
-            IndelData* indelDataPtr(_indelBuffer.getIndelDataPtr(*indelKeyPtr));
-            assert((indelDataPtr != nullptr) && "Missing indelData");
-
-            // Allow this indel to become a candidate (subject to other tests):
-            indelDataPtr->isConfirmedInActiveRegion = true;
-
-            // Update sample-specific indel details:
-            IndelSampleData& indelSampleData(indelDataPtr->getSampleData(_sampleIndex));
-
-            indelSampleData.haplotypeId += haplotypeId;
-
-            // All retios have the same denominator, so addition is valid:
-            indelSampleData.altAlleleHaplotypeCountRatio += altHaplotypeCountRatio;
-
-            // TODO: perform candidacy test here
+            _candidateSnvBuffer.addCandidateSnv(
+                    _sampleIndex, discoveredVariantKey.pos,
+                    discoveredVariantKey.insertSequence[0],
+                    haplotypeId, altHaplotypeCountRatio);
         }
+
+        // for efficiency, discoveredIndelsAndMismatches contains no indel,
+        // add nothing to indelBuffer
+        if (! isIndelFound) continue;
+
+        for (const auto alignId : alignIdList)
+        {
+            const auto& alignInfo(_readBuffer.getAlignInfo(alignId));
+            IndelObservationData indelObservationData;
+            indelObservationData.iat = alignInfo.indelAlignType;
+            indelObservationData.id = alignId;
+            _indelBuffer.addIndelObservation(alignInfo.sampleIndex, {discoveredVariantKey, indelObservationData});
+        }
+        IndelData* indelDataPtr(_indelBuffer.getIndelDataPtr(discoveredVariantKey));
+        assert((indelDataPtr != nullptr) && "Missing indelData");
+
+        // Record active region ID in indel data
+        indelDataPtr->activeRegionId = _posRange.begin_pos();
+
+        // Update sample-specific indel details:
+        IndelSampleData& indelSampleData(indelDataPtr->getSampleData(_sampleIndex));
+
+        indelSampleData.haplotypeId += haplotypeId;
+
+        assert (indelSampleData.haplotypeId <= 3);
+
+        // All retios have the same denominator, so addition is valid:
+        indelSampleData.altAlleleHaplotypeCountRatio += altHaplotypeCountRatio;
     }
 }

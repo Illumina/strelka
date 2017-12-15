@@ -32,9 +32,9 @@ struct TestIndelBuffer
         _doptPtr.reset(new starling_base_deriv_options(_opt));
 
         _IndelBufferPtr.reset(new IndelBuffer(_opt, *_doptPtr, ref));
+
         _IndelBufferPtr->registerSample(depth_buffer(), depth_buffer(), maxDepth);
         _IndelBufferPtr->finalizeSamples();
-
     }
 
     IndelBuffer&

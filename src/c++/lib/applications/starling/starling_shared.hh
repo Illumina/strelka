@@ -48,7 +48,7 @@ struct starling_options : public starling_base_options
         indelRefErrorFactor = 1.8;
 
         // turn on short haplotyping
-        is_short_haplotyping_enabled = true;
+        isHaplotypingEnabled = true;
 
         // the germline indel error model defaults to a static version of the adaptive indel error estimation values
         indel_error_model_name = "adaptiveDefault";
