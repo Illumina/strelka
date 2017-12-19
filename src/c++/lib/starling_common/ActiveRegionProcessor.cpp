@@ -592,11 +592,16 @@ void ActiveRegionProcessor::discoverIndelsAndMismatches(
         {
             for (unsigned i(0); i<segmentLength; ++i)
             {
-                // create a fake indelKey
-                // these are used in read realignment but not scored
-                auto insertSeq(haplotypeSeq.substr(haplotypePosOffset, 1));
-                auto mismatchIndelKey(IndelKey(referencePos, INDEL::MISMATCH, 1, insertSeq.c_str()));
-                discoveredIndelsAndMismatches.push_back(mismatchIndelKey);
+                // two ARs may share one base and the same SNV could be find in both ARs
+                // this if enables it to ignore the second discovery of the same SNV
+                if (referencePos >= _prevActiveRegionEnd)
+                {
+                    // create a fake indelKey
+                    // these are used in read realignment but not scored
+                    auto insertSeq(haplotypeSeq.substr(haplotypePosOffset, 1));
+                    auto mismatchIndelKey(IndelKey(referencePos, INDEL::MISMATCH, 1, insertSeq.c_str()));
+                    discoveredIndelsAndMismatches.push_back(mismatchIndelKey);
+                }
 
                 ++referencePos;
                 ++haplotypePosOffset;
@@ -626,8 +631,9 @@ void ActiveRegionProcessor::discoverIndelsAndMismatches(
                 }
 
                 // if left-shifting puts this insertion to the previous AR,
+                // or the insertion position is outside of this AR
                 // ignore it
-                if (prevBase != 'N' && insertPos >= _prevActiveRegionEnd)
+                if ((prevBase != 'N') && (insertPos >= _prevActiveRegionEnd) && (insertPos < _posRange.end_pos()))
                 {
                     discoveredIndelsAndMismatches.push_back(IndelKey(insertPos, INDEL::INDEL, 0, insertSeq.c_str()));
                     isIndelFound = true;
@@ -657,8 +663,9 @@ void ActiveRegionProcessor::discoverIndelsAndMismatches(
                 }
 
                 // if left-shifting puts this deletion to the previous AR,
+                // or the deletion position is outside of this AR
                 // ignore it
-                if (prevBase != 'N' && deletePos >= _prevActiveRegionEnd)
+                if ((prevBase != 'N') && (deletePos >= _prevActiveRegionEnd) && (deletePos < _posRange.end_pos()))
                 {
                     discoveredIndelsAndMismatches.push_back(IndelKey(deletePos, INDEL::INDEL, segmentLength));
                     isIndelFound = true;
