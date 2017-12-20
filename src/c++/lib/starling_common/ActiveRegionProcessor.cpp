@@ -518,24 +518,45 @@ void ActiveRegionProcessor::selectOrDropHaplotypesWithSameCount(
 void ActiveRegionProcessor::processSelectedHaplotypes()
 {
     unsigned selectedHaplotypeIndex(0);
-    std::vector<std::vector<IndelKey>> discoveredIndels;
+    std::vector<std::vector<IndelKey>> discoveredIndelsAndMismatches;
     std::vector<unsigned> selectedAltHaplotypeIndices;
 
-    // indicates whether any indel is found
-    bool isAnyIndelFound(false);
+    bool isAnyIndel(false);
+    std::set<IndelKey> mismatchSet;
+
     for (const std::string& haplotype : _selectedHaplotypes)
     {
         if (haplotype != _refSegment)
         {
+            int numIndels;
             std::vector<IndelKey> indelsAndMismatches;
-            bool isIndelFound;
-            discoverIndelsAndMismatches(selectedHaplotypeIndex, indelsAndMismatches, isIndelFound);
-            if (isIndelFound) isAnyIndelFound = true;
+            discoverIndelsAndMismatches(selectedHaplotypeIndex, indelsAndMismatches, numIndels);
 
-            discoveredIndels.push_back(indelsAndMismatches);
+            for (const auto& indelKey : indelsAndMismatches)
+            {
+                if (indelKey.isMismatch())
+                {
+                    mismatchSet.insert(indelKey);
+                }
+                else
+                {
+                    isAnyIndel = true;
+                }
+            }
+
+            discoveredIndelsAndMismatches.push_back(indelsAndMismatches);
             selectedAltHaplotypeIndices.push_back(selectedHaplotypeIndex);
         }
         ++selectedHaplotypeIndex;
+    }
+
+    bool doNotAddMismatchesToIndelBuffer(false);
+    const unsigned totalNumMismatches(mismatchSet.size());
+    if (!isAnyIndel || (totalNumMismatches > MaxNumMismatchesToAddToIndelBuffer))
+    {
+        // for efficiency, if there is no indel or if there are too many mismatches,
+        // don't add mismatches to the indel buffer
+        doNotAddMismatchesToIndelBuffer = true;
     }
 
     HaplotypeId haplotypeId(0);
@@ -543,15 +564,16 @@ void ActiveRegionProcessor::processSelectedHaplotypes()
     {
         // alt haplotype gets non-zero haplotypeId
         ++haplotypeId;
-        const std::vector<IndelKey>& indels(discoveredIndels[haplotypeId-1]);
-        processDiscoveredIndelsAndMismatches(selectedAltHaplotypeIndex, haplotypeId, indels, isAnyIndelFound);
+        const std::vector<IndelKey>& indelsAndMismatches(discoveredIndelsAndMismatches[haplotypeId-1]);
+        processDiscoveredIndelsAndMismatches(
+                selectedAltHaplotypeIndex, haplotypeId, indelsAndMismatches, doNotAddMismatchesToIndelBuffer);
     }
 }
 
 void ActiveRegionProcessor::discoverIndelsAndMismatches(
     const unsigned selectedHaplotypeIndex,
     std::vector<IndelKey> &discoveredIndelsAndMismatches,
-    bool &isIndelFound)
+    int &numIndels)
 {
     const std::string& haplotypeSeq(_selectedHaplotypes[selectedHaplotypeIndex]);
     assert (haplotypeSeq != _refSegment);
@@ -576,7 +598,7 @@ void ActiveRegionProcessor::discoverIndelsAndMismatches(
         assert(false && "Unexpected alignment segment");
     }
 
-    isIndelFound = false;
+    numIndels = 0;
     unsigned numVariants(0);
     for (const auto& pathSegment : alignPath)
     {
@@ -630,13 +652,12 @@ void ActiveRegionProcessor::discoverIndelsAndMismatches(
                     prevBase = _ref.get_base(insertPos-1);
                 }
 
-                // if left-shifting puts this insertion to the previous AR,
-                // or the insertion position is outside of this AR
-                // ignore it
+                // Ignore indel if (1) left-shifting causes it to overlap the previous AR
+                // or (2) it extends past the right edge of the AR
                 if ((prevBase != 'N') && (insertPos >= _prevActiveRegionEnd) && (insertPos < _posRange.end_pos()))
                 {
                     discoveredIndelsAndMismatches.push_back(IndelKey(insertPos, INDEL::INDEL, 0, insertSeq.c_str()));
-                    isIndelFound = true;
+                    ++numIndels;
                     ++numVariants;
                 }
             }
@@ -662,13 +683,12 @@ void ActiveRegionProcessor::discoverIndelsAndMismatches(
                     prevBase = _ref.get_base(deletePos-1);
                 }
 
-                // if left-shifting puts this deletion to the previous AR,
-                // or the deletion position is outside of this AR
-                // ignore it
+                // Ignore indel if (1) left-shifting causes it to overlap the previous AR
+                // or (2) it extends past the right edge of the AR
                 if ((prevBase != 'N') && (deletePos >= _prevActiveRegionEnd) && (deletePos < _posRange.end_pos()))
                 {
                     discoveredIndelsAndMismatches.push_back(IndelKey(deletePos, INDEL::INDEL, segmentLength));
-                    isIndelFound = true;
+                    ++numIndels;
                     ++numVariants;
                 }
             }
@@ -691,7 +711,7 @@ ActiveRegionProcessor::processDiscoveredIndelsAndMismatches(
         const unsigned selectedHaplotypeIndex,
         const HaplotypeId haplotypeId,
         const std::vector<IndelKey> &discoveredIndelsAndMismatches,
-        const bool isIndelFound)
+        const bool doNotAddMismatchesToIndelBuffer)
 {
     const std::vector<align_id_t>& alignIdList(_selectedAlignIdLists[selectedHaplotypeIndex]);
 
@@ -708,9 +728,7 @@ ActiveRegionProcessor::processDiscoveredIndelsAndMismatches(
                     haplotypeId, altHaplotypeCountRatio);
         }
 
-        // for efficiency, discoveredIndelsAndMismatches contains no indel,
-        // add nothing to indelBuffer
-        if (! isIndelFound) continue;
+        if (doNotAddMismatchesToIndelBuffer && discoveredVariantKey.isMismatch()) continue;
 
         for (const auto alignId : alignIdList)
         {

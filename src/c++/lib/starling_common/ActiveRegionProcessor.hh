@@ -46,21 +46,25 @@ typedef uint8_t HaplotypeId;
 class ActiveRegionProcessor
 {
 public:
-    // if the number of reads is larger than MinNumReadsToBypassAssembly, assembly is not conducted
+    /// if the number of reads is larger than MinNumReadsToBypassAssembly, assembly is not conducted
     static const unsigned MinNumReadsToBypassAssembly = 1000u;
 
-    // minimum fraction of reads covering the entire region to perform counting
+    /// minimum fraction of reads covering the entire region to perform counting
     float MinFracReadsCoveringRegion = 0.65f;
 
-    // if the region length is larger than MaxRefSpanToPerformAssembly, do not perform assembly
+    /// if the region length is larger than MaxRefSpanToPerformAssembly, do not perform assembly
     static const unsigned MaxRefSpanToBypassAssembly = 250u;
 
-    // assembly parameters
+    /// assembly parameters
     const unsigned MaxAssemblyWordSize = 76u;
     const unsigned MinAssemblyCoverage = 3u;
 
-    // Minimum supporting read count required to consider a haplotype for confirmation
+    /// Minimum supporting read count required to consider a haplotype for confirmation
     static const unsigned MinHaplotypeCount = 3u;
+
+    /// If number of discovered mismatches is larger than this value,
+    /// do not add mismatches into the indel buffer
+    static const unsigned MaxNumMismatchesToAddToIndelBuffer = 10u;
 
     /// Creates an object for processing an active region
     /// \return active region object
@@ -152,14 +156,13 @@ private:
     void discoverIndelsAndMismatches(
         const unsigned selectedHaplotypeIndex,
         std::vector<IndelKey> &discoveredIndelsAndMismatches,
-        bool &isIndelFound);
+        int &numIndels);
 
     /// Put discovered indels and mismatches
     /// into the indel buffer and candidate SNV buffer
-    /// \param isIndelFound true if discoveredIndelsAndMismatches contains indel
     void processDiscoveredIndelsAndMismatches(
         const unsigned selectedHaplotypeIndex,
         const HaplotypeId haplotypeId,
         const std::vector<IndelKey> &discoveredIndelsAndMismatches,
-        const bool isIndelFound);
+        const bool doNotAddMismatchesToIndelBuffer);
 };

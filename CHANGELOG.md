@@ -18,6 +18,7 @@
 - Provide clear error message when attempting to configure/run with python3 (STREL-762)
 - Fix python configure scripts to make maximum reported indel size configurable (STREL-763)
   - This can be done by configuring the maxIndelSize value inside the .ini file.
+- Fix realignment slow-down issue that occurs when reads overlap too many candidate SNVs (STREL-805)
 
 ## v2.8.4 - 2017-10-23
 
