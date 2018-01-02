@@ -366,12 +366,21 @@ def getGenomeSegmentGroups(genomeSegmentIterator, contigsExcludedFromGrouping = 
     if len(group) != 0 : yield(group)
 
 
-
 def cleanPyEnv() :
     """
     clear out some potentially destabilizing env variables:
     """
-    clearList = [ "PYTHONPATH", "PYTHONHOME"]
+
+    # Stopping default clearing of python env variables (MANTA-1316)
+    # There are cases where module'd-in pythons will not operate
+    # after this change. The motivation for clearing were cases where
+    # a user PYTHONPATH library interferes with a workflow function, but
+    # if these are encountered in the future, we should have a more
+    # specfic diagnostic/solution to the problem.
+    #
+    # Discussion in the context of manta here: https://github.com/Illumina/manta/issues/116
+    #
+    clearList = [] # [ "PYTHONPATH", "PYTHONHOME"]
     for key in clearList :
         if key in os.environ :
             del os.environ[key]

@@ -6,7 +6,7 @@
   - This has a legacy use in identifying noisy alignments. Now replaced with a simplified scheme.
 - Lower default local task memory requirement from 2 to 1.5 Gb (STREL-802)
   - This enables all cores on a c4.8xlarge with default configuration, use `--callMemMb` option to override for unusual cases.
-- Add haplotyping contraints to the read alignment (STREL-743)
+- Add haplotyping constraints to the read alignment (STREL-743)
   - Phasing information from haplotyping is used to constrain combinations of variants within read alignments
 
 ### Fixed
@@ -19,6 +19,8 @@
 - Fix python configure scripts to make maximum reported indel size configurable (STREL-763)
   - This can be done by configuring the maxIndelSize value inside the .ini file.
 - Fix realignment slow-down issue that occurs when reads overlap too many candidate SNVs (STREL-805)
+- Stop automatically clearing python environment variables (STREL-810)
+  - This should allow python from certain module systems to be used, but may (rarely) cause instability due to conflicting content in a user's PYTHONPATH.
 
 ## v2.8.4 - 2017-10-23
 
