@@ -155,14 +155,14 @@ private:
     /// Decompose haplotype into primitive alleles
     void discoverIndelsAndMismatches(
         const unsigned selectedHaplotypeIndex,
-        std::vector<IndelKey> &discoveredIndelsAndMismatches,
-        int &numIndels);
+        std::vector<IndelKey>& discoveredIndelsAndMismatches,
+        int& numIndels);
 
     /// Put discovered indels and mismatches
     /// into the indel buffer and candidate SNV buffer
     void processDiscoveredIndelsAndMismatches(
         const unsigned selectedHaplotypeIndex,
         const HaplotypeId haplotypeId,
-        const std::vector<IndelKey> &discoveredIndelsAndMismatches,
+        const std::vector<IndelKey>& discoveredIndelsAndMismatches,
         const bool doNotAddMismatchesToIndelBuffer);
 };

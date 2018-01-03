@@ -88,44 +88,44 @@ getUpdatedSampleHaplotypeConstraints(
     // 3: both haplotypes are valid)
     switch (hapConstraintsFromCurIndel)
     {
-        case 0:
+    case 0:
+    {
+        // only reference is valid
+        if (isAnyIndelOn)
+            return -1;
+        else
+            return 0;
+    }
+    case 1:
+    case 2:
+    {
+        // either haplotype 1 or 2 is valid
+        if ((haplotypeConstraints == 3) || (haplotypeConstraints == hapConstraintsFromCurIndel))
         {
-            // only reference is valid
-            if (isAnyIndelOn)
-                return -1;
-            else
-                return 0;
+            return hapConstraintsFromCurIndel;
         }
-        case 1:
-        case 2:
+        if (!isAnyIndelOn)
         {
-            // either haplotype 1 or 2 is valid
-            if ((haplotypeConstraints == 3) || (haplotypeConstraints == hapConstraintsFromCurIndel))
-            {
-                return hapConstraintsFromCurIndel;
-            }
-            if (!isAnyIndelOn)
-            {
-                // if no indel is on, return haplotypeConstraints=0
-                // (only reference is allowed)
-                return 0;
-            }
-            else
-            {
-                // this indel conflicts with the existing haplotype constraints
+            // if no indel is on, return haplotypeConstraints=0
+            // (only reference is allowed)
+            return 0;
+        }
+        else
+        {
+            // this indel conflicts with the existing haplotype constraints
 
-                return -1;
-            }
-        }
-        case 3:
-        {
-            if (haplotypeConstraints > 0) return haplotypeConstraints;
-            // current indel is always on here
-            // invalid haplotype constrains
             return -1;
         }
-        default:
-            assert(false);
+    }
+    case 3:
+    {
+        if (haplotypeConstraints > 0) return haplotypeConstraints;
+        // current indel is always on here
+        // invalid haplotype constrains
+        return -1;
+    }
+    default:
+        assert(false);
     }
 }
 
@@ -135,7 +135,7 @@ class HaplotypeStatus
 {
 public:
     explicit HaplotypeStatus(unsigned numSamples)
-    : _haplotypeConstraints(numSamples)
+        : _haplotypeConstraints(numSamples)
     {
         for (unsigned sampleIndex(0); sampleIndex<_haplotypeConstraints.size(); ++sampleIndex)
         {
@@ -833,9 +833,9 @@ getCurIndelHaplotypeIds(
         {
             // current indel is valid in this sample
             bool isCurIndelValidInThisSample(
-                    (! isHaplotypingEnabled)
-                    || (indelSampleData.isHaplotypingBypassed)
-                    || (curIndelData.isForcedOutput));
+                (! isHaplotypingEnabled)
+                || (indelSampleData.isHaplotypingBypassed)
+                || (curIndelData.isForcedOutput));
             if (!isCurIndelValidInThisSample && (sampleId == curSampleId)
                 && isCurIndelInOriginalAlignment)
                 isCurIndelValidInThisSample = true;
@@ -995,7 +995,7 @@ candidate_alignment_search(
     bool isCurIndelConflicting(false);
     for (unsigned i(0); i<depth; ++i)
     {
-        const IndelKey &indelKey(indel_order[i]);
+        const IndelKey& indelKey(indel_order[i]);
 
         if (!(indel_status_map[indelKey].is_present)) continue;
         if (is_indel_conflict(indelKey, curIndel)) isCurIndelConflicting = true;
@@ -1011,19 +1011,20 @@ candidate_alignment_search(
     if (isCurIndelInActiveRegion)
     {
         auto it = haplotypeStatusMap.find(curIndelActiveRegionId);
-        if (it == haplotypeStatusMap.end()) {
+        if (it == haplotypeStatusMap.end())
+        {
             haplotypeStatusMap.insert(std::make_pair(curIndelActiveRegionId, HaplotypeStatus(sampleCount)));
         }
     }
     // Get haplotype IDs of current indel in all samples
     std::vector<int> curIndelHaplotypeIds(sampleCount);
     getCurIndelHaplotypeIds(
-            opt.isHaplotypingEnabled,
-            sampleId,
-            curIndel,
-            curIndelData,
-            indel_status_map[curIndel].isInOriginalAlignment,
-            curIndelHaplotypeIds);
+        opt.isHaplotypingEnabled,
+        sampleId,
+        curIndel,
+        curIndelData,
+        indel_status_map[curIndel].isInOriginalAlignment,
+        curIndelHaplotypeIds);
 
     // alignment 1) --> unchanged case:
     try

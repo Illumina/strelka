@@ -360,10 +360,11 @@ double
 readRegionDepthFromAlignment(
     const std::string& referenceFile,
     const std::string& alignmentFile,
-    const std::vector<std::string>& regions) {
+    const std::vector<std::string>& regions)
+{
     bam_streamer read_stream(alignmentFile.c_str(), referenceFile.c_str());
 
-    const bam_hdr_t &header(read_stream.get_header());
+    const bam_hdr_t& header(read_stream.get_header());
     const bam_header_info bamHeader(header);
 
     int32_t regionBeginPos;
@@ -373,7 +374,7 @@ readRegionDepthFromAlignment(
     size_t regionCount = 0;
     double sumOfDepths = 0;
     // calculate the median depth seperately for each region
-    for (const auto &region:regions)
+    for (const auto& region:regions)
     {
         parse_bam_region_from_hdr(&header, region.c_str(), regionIndex, regionBeginPos, regionEndPos);
 
@@ -383,7 +384,8 @@ readRegionDepthFromAlignment(
         std::vector<unsigned> segmentStartPos;
 
         static const unsigned maxSSLoop(1000);
-        for (unsigned i = 0; i <= maxSSLoop; ++i) {
+        for (unsigned i = 0; i <= maxSSLoop; ++i)
+        {
             assert(i < maxSSLoop);
             getRegionSegments(regionSize, segmentSize, segmentStartPos);
             if (segmentStartPos.size() <= 20) break;
@@ -426,7 +428,7 @@ readRegionDepthFromAlignment(
 
                 const int32_t startPos(segmentHeadPos[segmentIndex]);
                 const int32_t endPos(
-                        ((segmentIndex + 1) < totalSegments) ? segmentStartPos[segmentIndex + 1] : regionSize);
+                    ((segmentIndex + 1) < totalSegments) ? segmentStartPos[segmentIndex + 1] : regionSize);
 #ifdef DEBUG_DPS
                 log_os << "scanning region: " << startPos << "," << endPos << "\n";
 #endif
@@ -440,25 +442,30 @@ readRegionDepthFromAlignment(
                 while (read_stream.next())
                 {
                     // not allowed to test convergence until we've cycled through all segments once
-                    if ((cycleIndex > 0) && cdTracker.isDepthConverged()) {
+                    if ((cycleIndex > 0) && cdTracker.isDepthConverged())
+                    {
                         isFinished = true;
                         break;
                     }
 
-                    const bam_record &bamRead(*(read_stream.get_record_ptr()));
+                    const bam_record& bamRead(*(read_stream.get_record_ptr()));
                     const int32_t readPos(bamRead.pos() - 1);
                     if (readPos < startPos) continue;
 
                     segmentReadCount++;
 
-                    if (readPos >= static_cast<int32_t>(segmentHeadPos[segmentIndex])) {
+                    if (readPos >= static_cast<int32_t>(segmentHeadPos[segmentIndex]))
+                    {
                         // cycle through to next segment:
                         // doing this here ensures that we only cycle-out at the end of a position so that
                         // no data is skipped if we come back to this segment again:
-                        if ((segmentReadCount > targetSegmentReadCount) && ((readPos - startPos) >= minSpan)) {
+                        if ((segmentReadCount > targetSegmentReadCount) && ((readPos - startPos) >= minSpan))
+                        {
                             segmentHeadPos[segmentIndex] = readPos;
                             break;
-                        } else {
+                        }
+                        else
+                        {
                             segmentHeadPos[segmentIndex] = readPos + 1;
                         }
                     }
@@ -475,7 +482,8 @@ readRegionDepthFromAlignment(
                     cdTracker.updateDepthConvergenceTest();
                 }
 
-                if (segmentReadCount > 0) {
+                if (segmentReadCount > 0)
+                {
                     isEmpty = false;
                 }
                 else
@@ -488,7 +496,7 @@ readRegionDepthFromAlignment(
         }
 
         cdTracker.finalize();
-        if(cdTracker.getDepth() > 0)
+        if (cdTracker.getDepth() > 0)
         {
             regionCount++;
             sumOfDepths += cdTracker.getDepth();

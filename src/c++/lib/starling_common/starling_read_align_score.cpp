@@ -321,7 +321,7 @@ scoreCandidateAlignment(
             }
 
             indelKey = getMatchingIndelKey(cal,ref_head_pos,deleteLength,insertLength,
-                                                        ends,path_index);
+                                           ends,path_index);
 
             // a combined insert/delete event should not produce a breakpoint:
             assert(not indelKey.is_breakpoint());

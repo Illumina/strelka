@@ -566,14 +566,14 @@ void ActiveRegionProcessor::processSelectedHaplotypes()
         ++haplotypeId;
         const std::vector<IndelKey>& indelsAndMismatches(discoveredIndelsAndMismatches[haplotypeId-1]);
         processDiscoveredIndelsAndMismatches(
-                selectedAltHaplotypeIndex, haplotypeId, indelsAndMismatches, doNotAddMismatchesToIndelBuffer);
+            selectedAltHaplotypeIndex, haplotypeId, indelsAndMismatches, doNotAddMismatchesToIndelBuffer);
     }
 }
 
 void ActiveRegionProcessor::discoverIndelsAndMismatches(
     const unsigned selectedHaplotypeIndex,
-    std::vector<IndelKey> &discoveredIndelsAndMismatches,
-    int &numIndels)
+    std::vector<IndelKey>& discoveredIndelsAndMismatches,
+    int& numIndels)
 {
     const std::string& haplotypeSeq(_selectedHaplotypes[selectedHaplotypeIndex]);
     assert (haplotypeSeq != _refSegment);
@@ -708,10 +708,10 @@ void ActiveRegionProcessor::discoverIndelsAndMismatches(
 
 void
 ActiveRegionProcessor::processDiscoveredIndelsAndMismatches(
-        const unsigned selectedHaplotypeIndex,
-        const HaplotypeId haplotypeId,
-        const std::vector<IndelKey> &discoveredIndelsAndMismatches,
-        const bool doNotAddMismatchesToIndelBuffer)
+    const unsigned selectedHaplotypeIndex,
+    const HaplotypeId haplotypeId,
+    const std::vector<IndelKey>& discoveredIndelsAndMismatches,
+    const bool doNotAddMismatchesToIndelBuffer)
 {
     const std::vector<align_id_t>& alignIdList(_selectedAlignIdLists[selectedHaplotypeIndex]);
 
@@ -723,9 +723,9 @@ ActiveRegionProcessor::processDiscoveredIndelsAndMismatches(
         if (discoveredVariantKey.isMismatch())
         {
             _candidateSnvBuffer.addCandidateSnv(
-                    _sampleIndex, discoveredVariantKey.pos,
-                    discoveredVariantKey.insertSequence[0],
-                    haplotypeId, altHaplotypeCountRatio);
+                _sampleIndex, discoveredVariantKey.pos,
+                discoveredVariantKey.insertSequence[0],
+                haplotypeId, altHaplotypeCountRatio);
         }
 
         if (doNotAddMismatchesToIndelBuffer && discoveredVariantKey.isMismatch()) continue;

@@ -527,10 +527,10 @@ computeEmpiricalScoringFeatures(
     const unsigned totalConfidentFwdCount(sampleInfo.supportCounts.fwdCounts.totalConfidentCounts());
     const unsigned totalConfidentRevCount(sampleInfo.supportCounts.revCounts.totalConfidentCounts());
     const double alleleCountRawStrandBias(starling_continuous_variant_caller::strandBias(
-                                           confidentPrimaryAltFwdCount,
-                                           confidentPrimaryAltRevCount,
-                                           totalConfidentFwdCount - confidentPrimaryAltFwdCount,
-                                           totalConfidentRevCount - confidentPrimaryAltRevCount));
+                                              confidentPrimaryAltFwdCount,
+                                              confidentPrimaryAltRevCount,
+                                              totalConfidentFwdCount - confidentPrimaryAltFwdCount,
+                                              totalConfidentRevCount - confidentPrimaryAltRevCount));
 
     // Bound 'raw' strand-bias input to be less than the specified absolute value
     static const double EVSMaxAbsSampleVariantStrandBias(99.);

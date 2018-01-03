@@ -163,8 +163,8 @@ struct strelka_shared_modifiers_snv : public strelka_shared_modifiers
 {
     strelka_shared_modifiers_snv()
         : strelka_shared_modifiers(
-            SOMATIC_SNV_SCORING_FEATURES::getInstance(),
-            SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::getInstance())
+              SOMATIC_SNV_SCORING_FEATURES::getInstance(),
+              SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::getInstance())
     {}
 };
 
@@ -173,7 +173,7 @@ struct strelka_shared_modifiers_indel : public strelka_shared_modifiers
 {
     strelka_shared_modifiers_indel()
         : strelka_shared_modifiers(
-            SOMATIC_INDEL_SCORING_FEATURES::getInstance(),
-            SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::getInstance())
+              SOMATIC_INDEL_SCORING_FEATURES::getInstance(),
+              SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::getInstance())
     {}
 };
