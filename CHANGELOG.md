@@ -14,6 +14,9 @@
   - All complex alleles are also not genotyped and appear in the VCF output with this NotGenotyped filter.
 
 ### Changed
+- Change default maxiumum indel size from 50 to 49 (STREL-811)
+  - This change is made as part of an effort to better align manta with GIAB SV size range conventions, such that strelka and manta together provide
+    complete, non-overlapping coverage over the full indel spectrum using default settings.
 - Remove preliminary step which counts the 'mappable' (non-N) size of the genome (STREL-772)
   - This has a legacy use in identifying noisy alignments. Now replaced with a simplified scheme.
 - Lower default local task memory requirement from 2 to 1.5 Gb (STREL-802)

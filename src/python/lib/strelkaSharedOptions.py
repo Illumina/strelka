@@ -157,7 +157,7 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
         runDir = "variantCallWorkflow"
 
         # extended options
-        maxIndelSize = 50
+        maxIndelSize = 49
         scanSizeMb = 12
         regionStrList = None
         callMemMbOverride = None

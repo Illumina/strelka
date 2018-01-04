@@ -23,13 +23,14 @@
 #include "TestIndelBuffer.hh"
 #include "boost/test/unit_test.hpp"
 
+
 /// Test whether ActiveRegionDetector correctly handles ploidy
 static int ploidyTest(const unsigned ploidy)
 {
     assert(ploidy <= 4);
     reference_contig_segment ref;
     ref.seq() = "GATCTGT";
-    const unsigned maxIndelSize(50);
+    const unsigned maxIndelSize(49);
     const unsigned sampleCount(1);
     const unsigned sampleIndex(0);
     const unsigned depth(50);

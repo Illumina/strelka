@@ -114,9 +114,14 @@ struct starling_base_options : public blt_options
     /// the same procedure as the variant calling reads
     bool is_realign_submapped_reads = false;
 
-    // maximum indel size which can be represented by starling
-    // (formerly a static value)
-    unsigned maxIndelSize = 150;
+    /// \brief Maximum indel size.
+    ///
+    /// This is the maxumum size of an indel for both internal representation and external reporting.
+    ///
+    /// Indels detected above this size may still be reflected within the variant analysis process via the caller's
+    /// open breakpoint mechanism.
+    ///
+    unsigned maxIndelSize = 49;
 
     // Do we test indel observation counts to determine if these are significant enough
     // to create an indel candidate? This should be true for any normal variant caller,

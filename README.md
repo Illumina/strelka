@@ -8,7 +8,7 @@ Compared with submissions to the recent PrecisonFDA Consistency and Truth challe
 Kim, S., Scheffler, K. *et al.* (2017) Strelka2: Fast and accurate variant calling for clinical sequencing applications. *bioRxiv* [doi: 10.1101/192872][preprint]
 
 Strelka accepts input read mappings from BAM or CRAM files, and optionally candidate and/or forced-call alleles from VCF. It reports all small variant predictions in VCF 4.1 format. Germline variant reporting uses the [gVCF conventions][gvcfPage] to represent both variant and reference
-call confidence. For best somatic indel performance, Strelka is designed to be run with the [Manta structural variant and indel caller][manta], which provides additional indel candidates up to a given maxiumum indel size (50 by default). By design, Manta and Strelka run together with default settings provide complete coverage over all indel sizes (in additional to SVs and SNVs). See the [user guide][UserGuide] for a full description of capabilities and limitations.
+call confidence. For best somatic indel performance, Strelka is designed to be run with the [Manta structural variant and indel caller][manta], which provides additional indel candidates up to a given maxiumum indel size (49 by default). By design, Manta and Strelka run together with default settings provide complete coverage over all indel sizes (in additional to SVs and SNVs). See the [user guide][UserGuide] for a full description of capabilities and limitations.
 
 [preprint]:http://dx.doi.org/10.1101/192872
 [gvcfPage]:https://sites.google.com/site/gvcftools/home/about-gvcf

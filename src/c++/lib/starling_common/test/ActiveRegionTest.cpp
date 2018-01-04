@@ -25,6 +25,7 @@
 #include "TestIndelBuffer.hh"
 #include "boost/test/unit_test.hpp"
 
+const unsigned maxIndelSize = 49;
 
 
 BOOST_AUTO_TEST_SUITE( test_activeRegion )
@@ -34,7 +35,6 @@ BOOST_AUTO_TEST_CASE( test_multiSampleMMDF )
 {
     reference_contig_segment ref;
     ref.seq() = "GATCTGT";
-    const unsigned maxIndelSize = 50;
     const int sampleCount = 3;
     const int depth = 50;
 
@@ -106,7 +106,6 @@ BOOST_AUTO_TEST_CASE( test_indelCandidacy )
     reference_contig_segment ref;
     ref.seq() = "TCTCT";
 
-    const unsigned maxIndelSize = 50;
     const int sampleCount = 1;
     const unsigned sampleIndex = 0;
 
@@ -177,7 +176,6 @@ BOOST_AUTO_TEST_CASE( test_jumpingPositions )
     reference_contig_segment ref;
     ref.seq() = refSeq;
 
-    const unsigned maxIndelSize = 50;
     const int sampleCount = 1;
     const unsigned sampleIndex = 0;
 
@@ -232,7 +230,6 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
     reference_contig_segment ref;
     ref.seq() = "GTCC";
 
-    const unsigned maxIndelSize = 50;
     const unsigned sampleCount = 1;
     const unsigned sampleIndex = 0;
 
@@ -285,8 +282,6 @@ BOOST_AUTO_TEST_CASE( test_leftShiftIndel )
     const auto itr(testBuffer.getIndelBuffer().getIndelIter(leftShiftedIndelKey));
     BOOST_REQUIRE_EQUAL(itr->second.isDiscoveredInActiveRegion(), true);
 }
-
-
 
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -42,7 +42,7 @@ Strelka User Guide
 Strelka calls germline and somatic small variants from mapped sequencing reads. It is optimized for rapid clinical analysis of germline variation in small cohorts and somatic variation in tumor/normal sample pairs. Strelka's germline caller employs a haplotype model to improve call quality and provide short-range read-backed phasing in addition to a probabilistic variant calling model using indel error rates adaptively estimated from each input sample's sequencing data. Both germline and somatic callers include a final empirical variant rescoring step using a random forest model to reflect numerous features indicative of call reliability which may not be represented in the core variant calling probability model.
 
 Strelka accepts input read mappings from BAM or CRAM files, and optionally candidate and/or forced-call alleles from VCF. It reports all small variant predictions in VCF 4.1 format. Germline variant reporting uses the [gVCF conventions][gvcfPage] to represent both variant and reference
-call confidence. For best somatic indel performance, Strelka is designed to be run with the [Manta structural variant and indel caller][manta], which provides additional indel candidates up to a given maxiumum indel size (by default this is 50). By design, Manta and Strelka run together with default settings provide complete coverage over all indel sizes (in additional to all SVs and SNVs) for clinical somatic and germline analysis scenarios.
+call confidence. For best somatic indel performance, Strelka is designed to be run with the [Manta structural variant and indel caller][manta], which provides additional indel candidates up to a given maxiumum indel size (by default this is 49). By design, Manta and Strelka run together with default settings provide complete coverage over all indel sizes (in additional to all SVs and SNVs) for clinical somatic and germline analysis scenarios.
 
 [manta]:https://github.com/Illumina/manta
 [gvcfPage]:https://sites.google.com/site/gvcftools/home/about-gvcf
@@ -75,7 +75,7 @@ a fast k-mer ranking approach for simple loci and local assembly for more comple
 ## Capabilities
 
 Strelka is capable of detecting SNVs and indels up to a predefined maximum size, currently
-defaulting to 50 bases or less. Indels are detected from several sources, including indels
+defaulting to 49 bases or less. Indels are detected from several sources, including indels
 present in the input read alignments, indels detected by Strelka from the assembly of an
 active region, and candidate indel VCFs provided as input from an external SV/indel caller or
 population database. For somatic variant calling, it is a recommended best practice
