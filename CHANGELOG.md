@@ -21,6 +21,7 @@
 - Fix realignment slow-down issue that occurs when reads overlap too many candidate SNVs (STREL-805)
 - Stop automatically clearing python environment variables (STREL-810)
   - This should allow python from certain module systems to be used, but may (rarely) cause instability due to conflicting content in a user's PYTHONPATH.
+- Standardize germline FORMAT/GQ VCF tag to Integer type (STREL-812)
 
 ## v2.8.4 - 2017-10-23
 
