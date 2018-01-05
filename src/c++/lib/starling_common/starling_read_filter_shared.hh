@@ -17,9 +17,7 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
+#pragma once
 
 #include "htsapi/bam_record.hh"
 
@@ -32,7 +30,7 @@ enum index_t
     DUPLICATE,
     UNMAPPED,
     SECONDARY,
-    SUPPLEMENT,
+    SUPPLEMENTARY,
     NONE
 };
 
@@ -50,8 +48,8 @@ label(const index_t id)
         return "Unmapped";
     case SECONDARY:
         return "Secondary";
-    case SUPPLEMENT:
-        return "Supplement";
+    case SUPPLEMENTARY:
+        return "Supplementary";
     default:
         return "None";
     }
@@ -73,7 +71,7 @@ starling_read_filter_shared(
     if (bamRead.is_dup()) return DUPLICATE;
     if (bamRead.is_unmapped()) return UNMAPPED;
     if (bamRead.is_secondary()) return SECONDARY;
-    if (bamRead.is_supplement()) return SUPPLEMENT;
+    if (bamRead.is_supplementary()) return SUPPLEMENTARY;
 
     return NONE;
 }

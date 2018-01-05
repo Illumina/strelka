@@ -57,13 +57,6 @@ align(
 
     static const ScoreType badVal(-10000);
 
-#if 0
-    auto safeScore = [&] (const int score) -> ScoreType
-    {
-        return std::max(score, static_cast<int>(badVal));
-    };
-#endif
-
     // global alignment of query
     //
     // disallow start from the delete state, control start from insert state with flag

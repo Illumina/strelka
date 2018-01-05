@@ -118,7 +118,7 @@ get_format_string_nocopy(const char* const* word,
 
 
 
-// returns -1 for '.' alleles
+/// returns -1 for '.' alleles
 void
 parse_gt(
     const char* gt,

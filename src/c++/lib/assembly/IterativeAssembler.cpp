@@ -37,7 +37,7 @@
 
 // compile with this macro to get verbose output:
 //#define DEBUG_ASBL
-// #define DEBUG_WALK
+//#define DEBUG_WALK
 
 
 // stream used by DEBUG_ASBL:
@@ -251,11 +251,11 @@ walk(const IterativeAssemblerOptions& opt,
 #endif
 
             unsigned maxBaseCount(0);
-            unsigned maxSharedReadCount(0);
+            unsigned maxContigWordReadCount(0);
             char maxBase(opt.alphabet[0]);
             std::string maxWord;
             std::set<unsigned> maxWordReads;
-            std::set<unsigned> maxSharedReads;
+            std::set<unsigned> maxContigWordReads;
             std::set<unsigned> previousWordReads;
             std::set<unsigned> supportReads2Remove;
             std::set<unsigned> rejectReads2Add;
@@ -275,26 +275,26 @@ walk(const IterativeAssemblerOptions& opt,
                 const std::set<unsigned>& currWordReads(wordReadsIter->second);
 
                 // get the shared supporting reads between the contig and the current word
-                std::set<unsigned> sharedReads;
+                std::set<unsigned> contigWordReads;
                 std::set_intersection(contig.supportReads.begin(), contig.supportReads.end(),
                                       currWordReads.begin(), currWordReads.end(),
-                                      std::inserter(sharedReads, sharedReads.begin()));
+                                      std::inserter(contigWordReads, contigWordReads.begin()));
 #ifdef DEBUG_WALK
                 log_os << "Word supporting reads : ";
                 print_unsignSet(currWordReads);
                 log_os << "Contig-word shared reads : ";
-                print_unsignSet(sharedReads);
+                print_unsignSet(contigWordReads);
 #endif
 
-                if (sharedReads.empty()) continue;
+                if (contigWordReads.empty()) continue;
 
-                const unsigned sharedReadCount(sharedReads.size());
-                if (sharedReadCount > maxSharedReadCount)
+                const unsigned contigWordReadCount(contigWordReads.size());
+                if (contigWordReadCount > maxContigWordReadCount)
                 {
                     // the old shared reads support an unselected allele
                     // remove them from the contig's supporting reads
-                    if (!maxSharedReads.empty())
-                        supportReads2Remove.insert(maxSharedReads.begin(), maxSharedReads.end());
+                    if (!maxContigWordReads.empty())
+                        supportReads2Remove.insert(maxContigWordReads.begin(), maxContigWordReads.end());
                     // the old supporting reads is for an unselected allele
                     // they become rejecting reads for the currently selected allele
                     if (!maxWordReads.empty())
@@ -302,15 +302,15 @@ walk(const IterativeAssemblerOptions& opt,
                     // new supporting reads for the currently selected allele
                     maxWordReads = currWordReads;
 
-                    maxSharedReadCount = sharedReadCount;
-                    maxSharedReads = sharedReads;
+                    maxContigWordReadCount = contigWordReadCount;
+                    maxContigWordReads = contigWordReads;
                     maxBaseCount = currWordCount;
                     maxBase = symbol;
                     maxWord = newKey;
                 }
                 else
                 {
-                    supportReads2Remove.insert(sharedReads.begin(), sharedReads.end());
+                    supportReads2Remove.insert(contigWordReads.begin(), contigWordReads.end());
                     rejectReads2Add.insert(currWordReads.begin(), currWordReads.end());
                 }
             }
@@ -318,7 +318,6 @@ walk(const IterativeAssemblerOptions& opt,
 #ifdef DEBUG_WALK
             log_os << "Winner is : " << maxBase << " with " << maxBaseCount << " occurrences." << "\n";
 #endif
-
 
             if (maxBaseCount < opt.minCoverage)
             {
@@ -335,7 +334,6 @@ walk(const IterativeAssemblerOptions& opt,
 #ifdef DEBUG_WALK
             log_os << "Adding base " << contig.seq << " " << maxBase << " " << mode << "\n";
 #endif
-
             contig.seq = addBase(contig.seq, maxBase, isEnd);
 #ifdef DEBUG_WALK
             log_os << "New contig : " << contig.seq << "\n";
@@ -522,7 +520,7 @@ getKmerCounts(
 }
 
 
-/// Identify repeatitive k-mers
+/// Identify repetitive k-mers
 /// i.e. k-mers that form a circular subgraph
 ///
 static

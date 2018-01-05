@@ -364,7 +364,7 @@ processInputReadAlignment(
         if (filterIndex == DUPLICATE) readCounts.duplicate++;
         if (filterIndex == UNMAPPED) readCounts.unmapped++;
         if (filterIndex == SECONDARY) readCounts.secondary++;
-        if (filterIndex == SUPPLEMENT) readCounts.supplement++;
+        if (filterIndex == SUPPLEMENTARY) readCounts.supplement++;
         return;
     }
 

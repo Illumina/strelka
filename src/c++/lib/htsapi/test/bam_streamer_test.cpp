@@ -35,7 +35,6 @@ checkStream(
     bam_streamer& stream,
     const unsigned expectedCount)
 {
-    // iterate through entire file:
     unsigned count(0);
     while (stream.next())
     {
@@ -54,11 +53,11 @@ BOOST_AUTO_TEST_CASE( test_bam_streamer_bam_read )
     bam_streamer stream(testBamPath.c_str(), nullptr);
 
     // iterate through entire file:
-    checkStream(stream, 4);
+    checkStream(stream, 4u);
 
     // iterate through region:
     stream.resetRegion("chrA");
-    checkStream(stream, 2);
+    checkStream(stream, 2u);
 }
 
 
@@ -70,11 +69,11 @@ BOOST_AUTO_TEST_CASE( test_bam_streamer_cram_read )
     bam_streamer stream(testCramPath.c_str(), testRefPath.c_str());
 
     // iterate through entire file:
-    checkStream(stream, 4);
+    checkStream(stream, 4u);
 
     // iterate through region:
     stream.resetRegion("chrA");
-    checkStream(stream, 2);
+    checkStream(stream, 2u);
 }
 
 BOOST_AUTO_TEST_CASE( test_bam_streamer_cram_read_fail )
