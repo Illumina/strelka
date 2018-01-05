@@ -8,6 +8,7 @@
   - This enables all cores on a c4.8xlarge with default configuration, use `--callMemMb` option to override for unusual cases.
 - Add haplotyping constraints to the read alignment (STREL-743)
   - Phasing information from haplotyping is used to constrain combinations of variants within read alignments
+- Update LowDepth filter for somatic calls to include cases where the normal sample depth is below 2 (STREL-745)
 
 ### Fixed
 - Fix empirical variant scoring (EVS) of complex somatic indels (STREL-774)

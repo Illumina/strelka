@@ -346,8 +346,9 @@ write_vcf_somatic_snv_genotype_strand_grid(
             }
         }
 
-        // set LowDepth filter if tier 1 tumor depth is below a threshold
-        if (t1_epd.n_calls() < opt.sfilter.minPassedCallDepth)
+        // set LowDepth filter if tier 1 tumor or normal depth is below a threshold
+        if ((t1_epd.n_calls() < opt.sfilter.minPassedCallDepth) ||
+                (n1_epd.n_calls() < opt.sfilter.minPassedCallDepth))
         {
             smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::LowDepth);
         }
