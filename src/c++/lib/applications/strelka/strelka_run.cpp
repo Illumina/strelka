@@ -118,9 +118,9 @@ callRegion(
                 else
                 {
                     std::ostringstream oss;
-                    oss << "ERROR: forcedGT vcf variant record cannot be categorized as SNV or indel:\n";
+                    oss << "forcedGT vcf variant record cannot be categorized as SNV or indel:\n";
                     streamData.getCurrentVcfStreamer().report_state(oss);
-                    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                    BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
                 }
             }
             else if (INPUT_TYPE::NOISE_VARIANTS == currentIndex)

@@ -88,7 +88,7 @@ calc_pos_nonref_freq_loghood(const snp_pos_info& pi,
 
     if ((nonref_freq < 0.) || (nonref_freq > 1.))
     {
-        log_os << "ERROR:: invalid probability value: " << nonref_freq << "\n";
+        log_os << "ERROR: Invalid probability value: " << nonref_freq << "\n";
         exit(EXIT_FAILURE);
     }
 
@@ -296,7 +296,7 @@ calc_pos_allele_distro_loghood(const snp_pos_info& pi,
     {
         if ((allele_distro[i] < 0.) || (allele_distro[i] > 1.))
         {
-            log_os << "ERROR:: invalid probability value: " << allele_distro[i] << "\n";
+            log_os << "ERROR: Invalid probability value: " << allele_distro[i] << "\n";
             exit(EXIT_FAILURE);
         }
     }

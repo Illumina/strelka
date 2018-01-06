@@ -49,122 +49,41 @@ namespace illumina
 namespace common
 {
 
-/**
- ** \brief Virtual base class to all the exception classes
- **
- ** Use BOOST_THROW_EXCEPTION to get the context info (file, function, line)
- ** at the throw site.
- **/
+/// \brief Virtual base class to all the exception classes
+///
+/// Use BOOST_THROW_EXCEPTION to get the context info (file, function, line)
+/// at the throw site.
+///
 class ExceptionData : public boost::exception
 {
 public:
-    ExceptionData(int errorNumber=0, const std::string& message="");
+    ExceptionData(const std::string& message, const int errorNumber=0)
+        : boost::exception(), message_(message), errorNumber_(errorNumber)
+    {}
+
     ExceptionData(const ExceptionData&) = default;
     ExceptionData& operator=(const ExceptionData&) = delete;
 
-    int getErrorNumber() const
-    {
-        return errorNumber_;
-    }
-    const std::string& getMessage() const
-    {
-        return message_;
-    }
     std::string getContext() const;
 private:
-    const int errorNumber_;
     const std::string message_;
+    const int errorNumber_;
 };
 
-class IlluminaException : public std::exception, public ExceptionData
-{
-public:
-    IlluminaException(int errorNumber, const std::string& message) : ExceptionData(errorNumber, message) {}
-    IlluminaException(const IlluminaException& e) : std::exception(e), ExceptionData(e) {}
-
-    IlluminaException& operator=(const IlluminaException&) = delete;
-};
-
-/**
- * \brief Exception thrown when there are problems with the IO operations
- */
-class IoException: public std::ios_base::failure, public ExceptionData
-{
-public:
-    IoException(int errorNumber, const std::string& message);
-};
-
-/**
- ** \brief Exception thrown when the client supplied and unsupported version number.
- **
- ** Particularly relevant to data format and software versions
- ** (Pipeline, IPAR, Phoenix, etc.). It should not be used in
- ** situations where the client didn't have the possibility to check
- ** the version (for instance when reading the version of a data
- ** format from the header of a file).
- **
- **/
-class UnsupportedVersionException: public std::logic_error, public ExceptionData
-{
-public:
-    explicit
-    UnsupportedVersionException(const std::string& message);
-};
-
-/**
- ** \brief Exception thrown when the client supplied an invalid parameter.
- **
- **/
-class InvalidParameterException: public std::logic_error, public ExceptionData
-{
-public:
-    explicit
-    InvalidParameterException(const std::string& message);
-};
-
-/**
- ** \brief Exception thrown when an invalid command line option was detected.
- **
- **/
-class InvalidOptionException: public std::logic_error, public ExceptionData
-{
-public:
-    explicit
-    InvalidOptionException(const std::string& message);
-};
-
-/**
- ** \brief Exception thrown when a method invocation violates the pre-conditions.
- **
- **/
-class PreConditionException: public std::logic_error, public ExceptionData
-{
-public:
-    explicit
-    PreConditionException(const std::string& message);
-};
-
-/**
- ** \brief Exception thrown when a method invocation violates the post-conditions.
- **
- **/
-class PostConditionException: public std::logic_error, public ExceptionData
-{
-public:
-    explicit
-    PostConditionException(const std::string& message);
-};
-
-/// General purpose exception for all other cases:
+/// A general purpose exception type
 ///
-struct LogicException: public std::logic_error, public ExceptionData
+/// Use BOOST_THROW_EXCEPTION to get the context info (file, function, line)
+/// at the throw site as follows:
+///
+///     BOOST_THROW_EXCEPTION(BasicException("Error message"));
+///
+class GeneralException : public std::logic_error, public ExceptionData
 {
+public:
     explicit
-    LogicException(const std::string& message) :
-        std::logic_error(message),
-        ExceptionData(EPERM, message)
-    {}
+    GeneralException(const std::string& message, const int errorNumber = 0) : std::logic_error(message), ExceptionData(message, errorNumber) {}
 };
+
 
 }
 }

@@ -131,9 +131,9 @@ checkSampleIndex(
     if (sampleIndex < _sampleCount) return;
     using namespace illumina::common;
     std::ostringstream oss;
-    oss << "ERROR: Requested indel error rates for sample index " << sampleIndex << " when only "
-        << _sampleCount << " samples are defined\n";
-    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    oss << "Requested indel error rates for sample index " << sampleIndex << " when only "
+        << _sampleCount << " samples are defined";
+    BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
 }
 
 
@@ -168,7 +168,7 @@ IndelErrorModel(
 
             std::ostringstream oss;
             oss << "ERROR: unrecognized indel error model name: '" << modelName << "'\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+            BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
         }
     }
     else
@@ -205,8 +205,8 @@ IndelErrorModel(
                     using namespace illumina::common;
 
                     std::ostringstream oss;
-                    oss << "ERROR: Failed to find indel error model for '" << alignmentFilename << "'\n";
-                    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                    oss << "Failed to find indel error model for '" << alignmentFilename << "'";
+                    BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
                 }
             }
         }

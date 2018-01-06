@@ -204,9 +204,9 @@ addIndelObservation(
             using namespace illumina::common;
 
             std::ostringstream oss;
-            oss << "ERROR: indel observation sets breakpoint insertion sequence for a non-breakpoint allele: " << _indelKey << "\n";
+            oss << "Indel observation sets breakpoint insertion sequence for a non-breakpoint allele: " << _indelKey << "\n";
             oss << "\tobservationData: " << observationData << "\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+            BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
         }
 
     }
@@ -280,7 +280,7 @@ _exception(const char* msg) const
     using namespace illumina::common;
     std::ostringstream oss;
     oss << "Exception in BreakpointInsertSequenceManager: " << msg;
-    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
 }
 
 

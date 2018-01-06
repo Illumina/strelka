@@ -44,8 +44,8 @@ modelParseError(
     const std::string& key)
 {
     std::ostringstream oss;
-    oss << "ERROR: Can't find node '" << key << "' in json scoring model file: '" << modelFile << "'";
-    BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+    oss << "Can't find node '" << key << "' in json scoring model file: '" << modelFile << "'";
+    BOOST_THROW_EXCEPTION(illumina::common::GeneralException(oss.str()));
 }
 
 
@@ -66,7 +66,7 @@ VariantScoringModelServer(
         {
             std::ostringstream oss;
             oss << "ERROR: Failed to parse json scoring model file: '" << modelFile << "'";
-            BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+            BOOST_THROW_EXCEPTION(illumina::common::GeneralException(oss.str()));
         }
         fclose(tmpFilePtr);
     }
@@ -74,8 +74,8 @@ VariantScoringModelServer(
     if (! document.IsObject())
     {
         std::ostringstream oss;
-        oss << "ERROR: Unexpected root data type in json scoring model file: '" << modelFile << "'";
-        BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+        oss << "Unexpected root data type in json scoring model file: '" << modelFile << "'";
+        BOOST_THROW_EXCEPTION(illumina::common::GeneralException(oss.str()));
     }
 
     auto getNodeMember = [&](const rapidjson::Value& node, const char* label) -> const rapidjson::Value&

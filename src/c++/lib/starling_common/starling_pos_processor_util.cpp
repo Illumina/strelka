@@ -68,10 +68,10 @@ registerAlignments(
             {
                 using namespace illumina::common;
                 std::ostringstream oss;
-                oss << "ERROR: input BAM/CRAM files have incompatible headers.\n";
+                oss << "Input BAM/CRAM files have incompatible headers.\n";
                 oss << "\tfile1:\t'" << alignmentFilename.front() << "'\n";
                 oss << "\tfile2:\t'" << alignFile << "'\n";
-                BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
             }
         }
     }
@@ -404,10 +404,10 @@ processInputReadAlignment(
             const unsigned as(ALIGNPATH::apath_read_length(readAlignment.path));
 
             std::ostringstream oss;
-            oss << "ERROR: Read length implied by mapped alignment (" << as << ") does not match read length ("
+            oss << "Read length implied by mapped alignment (" << as << ") does not match read length ("
                 << rs << ") in alignment record:\n";
             read_stream.report_state(oss);
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+            BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
         }
 
         // filter out reads with no match segments:
@@ -502,8 +502,8 @@ convert_vcfrecord_to_indel_allele(
     {
         using namespace illumina::common;
         std::ostringstream oss;
-        oss << "ERROR: Can't parse vcf indel: '" << vcf_indel << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        oss << "Can't parse vcf indel: '" << vcf_indel << "'";
+        BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
     }
 
     // starling indel pos is at the first changed base but zero-indexed:

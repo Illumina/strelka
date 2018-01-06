@@ -440,7 +440,7 @@ make_start_pos_alignment(
             if (indelKey.pos != ref_start_pos)
             {
                 std::ostringstream oss;
-                oss << "ERROR: anomalous condition for indel candidate: " << indelKey << "\n"
+                oss << "Anomalous condition for indel candidate: " << indelKey << "\n"
                     << "\tref_start_pos: " << ref_start_pos << "\n"
                     << "\tread_start_pos: " << read_start_pos << "\n"
                     << "\tref_head_pos: " << ref_head_pos << "\n"
@@ -487,7 +487,7 @@ make_start_pos_alignment(
         if ((matchSegmentSize < minMatchSegmentSize) && (!is_edge_delete))
         {
             std::ostringstream oss;
-            oss << "ERROR: indel candidate: " << indelKey << " is not greater than ref_head_pos: " << ref_head_pos
+            oss << "Indel candidate: " << indelKey << " is not greater than ref_head_pos: " << ref_head_pos
                 << ". ref_start_pos: " << ref_start_pos << ". Cannot resolve indel with candidate read alignment: " << cal << "\n";
             throw blt_exception(oss.str().c_str());
         }
@@ -652,9 +652,9 @@ get_end_pin_start_pos(
             if (is_first && (read_end_pos!=static_cast<pos_t>(read_length)))
             {
                 std::ostringstream oss;
-                oss << "ERROR: is_first: " << is_first
+                oss << "Unexpected realignment state. is_first: " << is_first
                     << " read_end_pos: " << read_end_pos
-                    << " read_length: " << read_length << "\n";
+                    << " read_length: " << read_length;
                 throw blt_exception(oss.str().c_str());
             }
 
@@ -1593,7 +1593,7 @@ scoreCandidateAlignments(
         if (nullptr == max_allowed_cal_ptr)
         {
             std::ostringstream oss;
-            oss << "ERROR: reached anomalous state during search for most likely exon alignment.\n";
+            oss << "Reached anomalous state during search for most likely exon alignment.\n";
             oss << "\tread_segment: " << readSegment << "\n";
             oss << "\tCandidate alignments:\n";
             for (auto cal_iter(cal_set_begin); cal_iter!=cal_set_end; ++cal_iter)
@@ -1747,7 +1747,7 @@ scoreCandidateAlignmentsAndIndels(
     }
     catch (...)
     {
-        log_os << "ERROR: exception caught while scoring candidate alignments for read segment: " << rseg;
+        log_os << "Exception caught while scoring candidate alignments for read segment: " << rseg;
         throw;
     }
 
@@ -1769,7 +1769,7 @@ scoreCandidateAlignmentsAndIndels(
     }
     catch (...)
     {
-        log_os << "ERROR: exception caught while scoring indels for read segment: " << rseg;
+        log_os << "Exception caught while scoring indels for read segment: " << rseg;
         throw;
     }
 }
@@ -1829,7 +1829,7 @@ getCandidateAlignments(
                 if (indelKey.isMismatch()) continue;
 
                 std::ostringstream oss;
-                oss << "ERROR: Exemplar alignment contains indel not found in the overlap indel set\n"
+                oss << "Exemplar alignment contains indel not found in the overlap indel set\n"
                     << "\tIndel: " << indelKey
                     << "Exemplar overlap set:\n";
                 dump_indel_status(indel_status_map,oss);

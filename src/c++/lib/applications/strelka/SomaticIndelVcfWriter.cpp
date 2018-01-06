@@ -249,7 +249,7 @@ cacheIndel(
     if (_data.count(pos) != 0)
     {
         std::ostringstream oss;
-        oss << "ERROR: Attempting to cache 2 indels at one site.\n";
+        oss << "Attempting to cache 2 indels at one site.\n";
         oss << "\texisting indel REF/ALT:\t" << siInfo.iri.ref_seq << " " << siInfo.iri.indel_seq << "\n";
         oss << "\tnew indel REF/ALT:\t" << _data[pos].iri.ref_seq << " " << _data[pos].iri.indel_seq << "\n";
         throw blt_exception(oss.str().c_str());

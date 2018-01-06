@@ -148,7 +148,7 @@ struct qval_distro
         std::ifstream ifs(distro_file);
         if (! ifs)
         {
-            std::cerr << "ERROR: can't open file '" << distro_file << "'\n";
+            std::cerr << "Can't open file '" << distro_file << "'";
             exit(EXIT_FAILURE);
         }
 

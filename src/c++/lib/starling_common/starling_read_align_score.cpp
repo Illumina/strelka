@@ -243,7 +243,7 @@ getInsertSeq(
         if (nullptr == indelDataPtr)
         {
             std::ostringstream oss;
-            oss << "ERROR: candidate alignment does not contain expected breakpoint insertion: " << indelKey << "\n"
+            oss << "Candidate alignment does not contain expected breakpoint insertion: " << indelKey << "\n"
                 << "\tcandidate alignment: " << cal << "\n";
             throw blt_exception(oss.str().c_str());
         }

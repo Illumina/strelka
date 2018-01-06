@@ -147,12 +147,12 @@ next()
             using namespace illumina::common;
             const auto htsType(getCurrentType());
             std::ostringstream oss;
-            oss << "ERROR: unexpected " << HTS_TYPE::label(htsType) << " order:\n"
+            oss << "Unexpected " << HTS_TYPE::label(htsType) << " order:\n"
                 << "\tInput-record with pos/type/index: "
                 << (getCurrentPos()+1) << "/" << HTS_TYPE::label(htsType) << "/" << getCurrentIndex()
                 << " follows pos/type/index: "
-                << (last.pos+1) << "/" << HTS_TYPE::label(getHtsType(last.order)) << "/" << getUserIndex(last.order) << "\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                << (last.pos+1) << "/" << HTS_TYPE::label(getHtsType(last.order)) << "/" << getUserIndex(last.order) << "";
+            BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
         }
     }
     else

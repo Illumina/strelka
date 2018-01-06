@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE( test_vcf_record_util )
         vptr = vcfs.get_record_ptr();
         BOOST_REQUIRE(vptr != nullptr);
         BOOST_REQUIRE(! isExpectedVcfReference(ref, *vptr));
-        BOOST_REQUIRE_THROW(assertExpectedVcfReference(ref, vcfs), illumina::common::LogicException);
+        BOOST_REQUIRE_THROW(assertExpectedVcfReference(ref, vcfs), illumina::common::GeneralException);
     }
 }
 

@@ -270,7 +270,7 @@ IndelBuffer::
 findDataException(const IndelKey& indelKey) const
 {
     std::ostringstream oss;
-    oss << "ERROR: could not find indel_data for indel: " << indelKey;
+    oss << "Could not find indel_data for indel: " << indelKey;
     throw blt_exception(oss.str().c_str());
 }
 

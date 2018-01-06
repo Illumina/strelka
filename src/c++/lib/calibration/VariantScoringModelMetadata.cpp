@@ -75,8 +75,8 @@ missingNodeError(
     const char* key)
 {
     std::ostringstream oss;
-    oss << "ERROR: Can't find expected node '" << key << "' in  json scoring model file.";
-    BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+    oss << "Can't find expected node '" << key << "' in  json scoring model file.";
+    BOOST_THROW_EXCEPTION(illumina::common::GeneralException(oss.str()));
 }
 
 
@@ -88,8 +88,8 @@ wrongValueTypeError(
     const char* keyType)
 {
     std::ostringstream oss;
-    oss << "ERROR: Node '" << key << "' in json scoring model file does not have expected type '" << keyType << "'.";
-    BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+    oss << "Node '" << key << "' in json scoring model file does not have expected type '" << keyType << "'.";
+    BOOST_THROW_EXCEPTION(illumina::common::GeneralException(oss.str()));
 }
 
 
@@ -134,7 +134,7 @@ featureMapError(
         oss << val.first << "\n";
     }
     oss << "\n";
-    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
 }
 
 
@@ -149,10 +149,10 @@ featureMapOrderError(
     using namespace illumina::common;
 
     std::ostringstream oss;
-    oss << "ERROR: Scoring model feature '" << fname << "' is at position " << foundIdx
+    oss << "Scoring model feature '" << fname << "' is at position " << foundIdx
         << " in {calltype}VariantEmpiricalScoringFeatures.hh but at position " << expectedIdx
-        << " in json model file. Check that feature order in the two sources correspond.\n";
-    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        << " in json model file. Check that feature order in the two sources correspond.";
+    BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
 }
 
 
@@ -258,7 +258,7 @@ Deserialize(
             oss << "}\n";
         }
         oss << "\n";
-        BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+        BOOST_THROW_EXCEPTION(illumina::common::GeneralException(oss.str()));
     }
 }
 

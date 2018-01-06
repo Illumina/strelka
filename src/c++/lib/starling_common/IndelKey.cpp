@@ -41,8 +41,8 @@ validate() const
         if ((delete_length() != 0) or (insert_length() != 0))
         {
             std::ostringstream oss;
-            oss << "ERROR: invalid allele type -- breakpoint also has insertion/deletion defined '" << (*this) << "'\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+            oss << "Invalid allele type -- breakpoint also has insertion/deletion defined '" << (*this) << "'";
+            BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
         }
     }
 
@@ -54,7 +54,7 @@ validate() const
         {
             std::ostringstream oss;
             oss << "ERROR: invalid allele type -- indel with no insertion/deletion variant defined '" << (*this) << "'\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+            BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
         }
     }
 #endif

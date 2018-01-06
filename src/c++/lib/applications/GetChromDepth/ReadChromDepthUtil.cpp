@@ -377,8 +377,8 @@ readChromDepthFromAlignment(
         using namespace illumina::common;
 
         std::ostringstream oss;
-        oss << "ERROR: Can't find chromosome name '" << chromName << "' in BAM/CRAM file: '" << alignmentFile << "\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        oss << "Can't find chromosome name '" << chromName << "' in BAM/CRAM file: '" << alignmentFile << "'";
+        BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
     }
 
     const int32_t chromIndex(chromIter->second);

@@ -35,8 +35,8 @@ repeatedFeatureLabelError(
     using namespace illumina::common;
 
     std::ostringstream oss;
-    oss << "ERROR: repeated " << label << " EVS training feature label '" << featureLabel << "'\n";
-    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    oss << "Repeated " << label << " EVS training feature label '" << featureLabel << "'";
+    BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
 }
 
 
@@ -94,5 +94,5 @@ featureError(
     oss << "ERROR: " << msg << "."
         << " Feature: '" << _featureSet.getFeatureLabel(featureIndex) << "'"
         << " from set: '" << _featureSet.getName() << "'\n";
-    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
 }

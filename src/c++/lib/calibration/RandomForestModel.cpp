@@ -66,8 +66,8 @@ missingNodeError(
     const char* key)
 {
     std::ostringstream oss;
-    oss << "ERROR: Can't find expected node '" << key << "' in  json scoring model file.";
-    BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+    oss << "Can't find expected node '" << key << "' in  json scoring model file.";
+    BOOST_THROW_EXCEPTION(illumina::common::GeneralException(oss.str()));
 }
 
 
@@ -79,8 +79,8 @@ wrongValueTypeError(
     const char* keyType)
 {
     std::ostringstream oss;
-    oss << "ERROR: Node '" << key << "' in json scoring model file does not have expected type '" << keyType << "'.";
-    BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+    oss << "Node '" << key << "' in json scoring model file does not have expected type '" << keyType << "'.";
+    BOOST_THROW_EXCEPTION(illumina::common::GeneralException(oss.str()));
 }
 
 
@@ -162,7 +162,7 @@ Deserialize(
                         std::ostringstream oss;
                         oss << "ERROR: scoring model max feature index: " << decisionTreeNode.decision.left
                             << " is inconsistent with expected feature count " << expectedFeatureCount;
-                        BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+                        BOOST_THROW_EXCEPTION(illumina::common::GeneralException(oss.str()));
                     }
                     break;
                 default:

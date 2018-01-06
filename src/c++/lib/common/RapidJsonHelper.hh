@@ -39,8 +39,8 @@ public:
         const char* keyType)
     {
         std::ostringstream oss;
-        oss << "ERROR: Node '" << key << "' does not have expected type '" << keyType << "'.";
-        BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+        oss << "Node '" << key << "' does not have expected type '" << keyType << "'.";
+        BOOST_THROW_EXCEPTION(illumina::common::GeneralException(oss.str()));
     }
 
     static
@@ -50,8 +50,8 @@ public:
         const char* key)
     {
         std::ostringstream oss;
-        oss << "ERROR: Can't find expected node '" << key << "' in json file '" << fileName << "'.";
-        BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+        oss << "Can't find expected node '" << key << "' in json file '" << fileName << "'.";
+        BOOST_THROW_EXCEPTION(illumina::common::GeneralException(oss.str()));
     }
 
 };

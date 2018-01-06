@@ -65,14 +65,14 @@ parsePloidyFromBedStrict(const char* line)
     if (! ploidy)
     {
         std::ostringstream oss;
-        oss << "ERROR: can't parse ploidy (column 5) from bed record: '" << line << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        oss << "Can't parse ploidy (column 5) from bed record: '" << line << "'";
+        BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
     }
     if (*ploidy > 2)
     {
         std::ostringstream oss;
-        oss << "ERROR: parsed unsupported ploidy value (" << *ploidy << ") from bed record: '" << line << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        oss << "Parsed unsupported ploidy value (" << *ploidy << ") from bed record: '" << line << "'";
+        BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
     }
     return *ploidy;
 }
@@ -95,14 +95,14 @@ parsePloidyFromVcf(
     const unsigned minFieldCount(VCFID::FORMAT+expectedSampleCount);
     if (fields.size() <= minFieldCount)
     {
-        oss << "ERROR: can't find expected number of fields (" << minFieldCount << ") in vcf ploidy record: '" << line << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        oss << "Can't find expected number of fields (" << minFieldCount << ") in vcf ploidy record: '" << line << "'";
+        BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
     }
 
     if (fields[VCFID::ALT] != "<CNV>")
     {
-        oss << "ERROR: expecting ALT value of '<CNV>' in vcf ploidy record: '" << line << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        oss << "Expecting ALT value of '<CNV>' in vcf ploidy record: '" << line << "'";
+        BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
     }
 
     // set range:
@@ -127,7 +127,7 @@ parsePloidyFromVcf(
         if (not isEndFound)
         {
             oss << "ERROR: can't find INFO/END value in vcf ploidy record: '" << line << "'\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+            BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
         }
     }
 
@@ -151,8 +151,8 @@ parsePloidyFromVcf(
 
             if (not isCNFound)
             {
-                oss << "ERROR: can't find FORMAT/CN entry in vcf ploidy record: '" << line << "'\n";
-                BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                oss << "Can't find FORMAT/CN entry in vcf ploidy record: '" << line << "'";
+                BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
             }
         }
 

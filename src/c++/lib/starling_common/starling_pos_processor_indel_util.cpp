@@ -316,14 +316,14 @@ addAlignmentIndelsToPosProcessor(
     if (is_apath_invalid(al.path,seq_len))
     {
         std::ostringstream oss;
-        oss << "ERROR: Can't handle alignment path '" << apath_to_cigar(al.path) << "' -- " << get_apath_invalid_reason(al.path,seq_len) << "\n";
+        oss << "Can't handle alignment path '" << apath_to_cigar(al.path) << "' -- " << get_apath_invalid_reason(al.path,seq_len);
         throw blt_exception(oss.str().c_str());
     }
 
     if (is_apath_starling_invalid(al.path))
     {
         std::ostringstream oss;
-        oss << "ERROR: can't handle alignment path '" << apath_to_cigar(al.path) << "'\n";
+        oss << "Can't handle alignment path '" << apath_to_cigar(al.path) << "'";
         throw blt_exception(oss.str().c_str());
     }
 

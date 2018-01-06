@@ -447,7 +447,7 @@ IndelModelProduction(
 
         std::ostringstream oss;
         oss << "Theta file name cannot be empty\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
     }
 
     IndelErrorModelParser::importThetaJsonFile(thetaFilename, _thetas);
@@ -582,8 +582,8 @@ checkEstimatedModel() const
     if (!_isEstimated)
     {
         std::ostringstream oss;
-        oss << "ERROR: indel error model has not been estimated '\n";
-        BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+        oss << "Indel error model has not been estimated";
+        BOOST_THROW_EXCEPTION(illumina::common::GeneralException(oss.str()));
     }
 
     // check estimated STR params

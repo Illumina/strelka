@@ -37,7 +37,7 @@ blt_exception(const char* s)
     : message(s)
 {
 #ifdef KILL_EXCEPTIONS
-    log_os << "ERROR:: " << s << std::endl;
+    log_os << "ERROR: " << s << std::endl;
     abort();
 #endif
 }

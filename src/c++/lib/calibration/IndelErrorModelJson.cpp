@@ -75,8 +75,8 @@ IndelErrorModelParser::importIndelErrorModelJsonFile(
         if (document.ParseStream(inputFileStream).HasParseError())
         {
             std::ostringstream oss;
-            oss << "ERROR: Failed to parse json indel parameter file: '" << modelFilename << "'";
-            BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+            oss << "Failed to parse json indel parameter file: '" << modelFilename << "'";
+            BOOST_THROW_EXCEPTION(illumina::common::GeneralException(oss.str()));
         }
         fclose(tmpFilePtr);
     }
@@ -85,7 +85,7 @@ IndelErrorModelParser::importIndelErrorModelJsonFile(
     {
         std::ostringstream oss;
         oss << "ERROR: Unexpected root data type in json indel parameter file: '" << modelFilename << "'";
-        BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+        BOOST_THROW_EXCEPTION(illumina::common::GeneralException(oss.str()));
     }
 
     try
@@ -126,8 +126,8 @@ importThetaJsonFile(
         if (document.ParseStream(inputFileStream).HasParseError())
         {
             std::ostringstream oss;
-            oss << "ERROR: Failed to parse json theta file: '" << thetaFilename << "'";
-            BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+            oss << "Failed to parse json theta file: '" << thetaFilename << "'";
+            BOOST_THROW_EXCEPTION(illumina::common::GeneralException(oss.str()));
         }
         fclose(tmpFilePtr);
     }
@@ -135,8 +135,8 @@ importThetaJsonFile(
     if (!document.IsObject())
     {
         std::ostringstream oss;
-        oss << "ERROR: Unexpected root data type in json theta file: '" << thetaFilename << "'";
-        BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+        oss << "Unexpected root data type in json theta file: '" << thetaFilename << "'";
+        BOOST_THROW_EXCEPTION(illumina::common::GeneralException(oss.str()));
     }
 
     try

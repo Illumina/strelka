@@ -63,5 +63,5 @@ assertExpectedVcfReference(
     oss << "Genome reference: '" << fastaReferenceSegment << "'\n";
     oss << "VCF record REF value:    '" << vcfRecord.ref << "'\n";
     oss << "Please ensure that the input VCF comes from the appropriate reference genome\n";
-    BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
+    BOOST_THROW_EXCEPTION(illumina::common::GeneralException(oss.str()));
 }

@@ -119,10 +119,10 @@ getStrelkaAnalysisRegions(
         {
             using namespace illumina::common;
             std::ostringstream oss;
-            oss << "ERROR: region contig name: '" << regionInfo.regionChrom
+            oss << "Region contig name: '" << regionInfo.regionChrom
                 << "' is not found in the header of BAM/CRAM file: '" << referenceAlignmentFilename
-                << "'\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                << "'";
+            BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
         }
     }
 }

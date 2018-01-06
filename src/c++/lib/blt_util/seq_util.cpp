@@ -36,7 +36,7 @@
 void
 base_error(const char* func, const char a)
 {
-    log_os << "ERROR:: Invalid base in " << func << ".\n"
+    log_os << "ERROR: Invalid base in " << func << ".\n"
            << "\t\tinvalid base (char): '" << a << "'\n"
            << "\t\tinvalid base (int): " << static_cast<int>(a) << "\n";
     exit(EXIT_FAILURE);
@@ -47,7 +47,7 @@ base_error(const char* func, const char a)
 void
 id_to_base_error(const uint8_t i)
 {
-    log_os << "ERROR:: Invalid id in id_to_base. id: " << i << "\n";
+    log_os << "ERROR: Invalid id in id_to_base. id: " << i << "\n";
     exit(EXIT_FAILURE);
 }
 

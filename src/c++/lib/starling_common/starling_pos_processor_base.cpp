@@ -572,7 +572,7 @@ insert_read(
         if (! update_largest_read_size(rs))
         {
             std::ostringstream oss;
-            oss << "ERROR: Input read size: " << br.read_size() << " exceeds maximum.";
+            oss << "Input read size: " << br.read_size() << " exceeds maximum.";
             throw blt_exception(oss.str().c_str());
         }
     }
@@ -754,7 +754,7 @@ align_pos(const pos_t pos)
             }
             catch (...)
             {
-                log_os << "ERROR: Exception caught in align_pos() while realigning segment: "
+                log_os << "Exception caught in align_pos() while realigning segment: "
                        << static_cast<int>(r.second) << " of read: " << (*r.first) << "\n";
                 throw;
             }

@@ -157,14 +157,14 @@ getLocusReportInfoFromAlleles(
                 using namespace illumina::common;
 
                 std::ostringstream oss;
-                oss << "ERROR: repeated VCF ALT value in indel record: '" << vcfAltSeq << "'\n";
+                oss << "Repeated VCF ALT value in indel record: '" << vcfAltSeq << "'\n";
                 oss << "\tIndel Alleles (" << indelAlleles.size() << "):\n";
                 for (const auto& indelAllele : indelAlleles)
                 {
                     oss << indelAllele << "\n";
                 }
                 oss << "\n";
-                BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
             }
         }
     }

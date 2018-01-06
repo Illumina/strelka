@@ -136,8 +136,8 @@ resetRegion(
             if (cdi == _dopt.chrom_depth.end())
             {
                 std::ostringstream oss;
-                oss << "ERROR: Can't find chromosome: '" << chromName << "' in chrom depth file: "
-                    << _opt.chrom_depth_file << "\n";
+                oss << "Can't find chromosome: '" << chromName << "' in chrom depth file: '"
+                    << _opt.chrom_depth_file << "'";
                 throw blt_exception(oss.str().c_str());
             }
             _normChromDepth = cdi->second;

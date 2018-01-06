@@ -296,8 +296,8 @@ translateBaseIndexToAlleleIndex(
     {
         using namespace illumina::common;
         std::ostringstream oss;
-        oss << "ERROR: Can't find allele " << id_to_base(baseIndex) << " expected to be present in site locus\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        oss << "Can't find allele " << id_to_base(baseIndex) << " expected to be present in site locus";
+        BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
     }
 
     return alleleIndex;

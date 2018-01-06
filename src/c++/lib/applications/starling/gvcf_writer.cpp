@@ -199,7 +199,7 @@ process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr)
     }
     catch (...)
     {
-        log_os << "ERROR: Exception caught in gvcf_writer while processing site:\n";
+        log_os << "Exception caught in gvcf_writer while processing site:\n";
         safeLocusDump(locusPtr);
         throw;
     }

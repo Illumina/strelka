@@ -73,8 +73,8 @@ mapVcfSampleIndices(
         if (vcfSampleSet.test_key(vcfSampleName))
         {
             std::ostringstream oss;
-            oss << "ERROR: repeated entry for sample name '" << vcfSampleName << "' in ploidy VCF file: '" << vcfStream.name() << "'\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+            oss << "Repeated entry for sample name '" << vcfSampleName << "' in ploidy VCF file: '" << vcfStream.name() << "'";
+            BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
         }
 
         vcfSampleSet.insert_key(vcfSampleName);
@@ -87,8 +87,8 @@ mapVcfSampleIndices(
         if (not maybeId)
         {
             std::ostringstream oss;
-            oss << "ERROR: no entry for sample name '" << sampleName << "' in ploidy VCF file: '" << vcfStream.name() << "'\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+            oss << "No entry for sample name '" << sampleName << "' in ploidy VCF file: '" << vcfStream.name() << "'";
+            BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
         }
         else
         {
@@ -177,9 +177,9 @@ callRegion(
                 else
                 {
                     std::ostringstream oss;
-                    oss << "ERROR: forcedGT vcf variant record cannot be categorized as SNV or indel:\n";
+                    oss << "forcedGT vcf variant record cannot be categorized as SNV or indel:\n";
                     streamData.getCurrentVcfStreamer().report_state(oss);
-                    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                    BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
                 }
             }
             else if (INPUT_TYPE::PLOIDY_REGION == currentIndex)
@@ -207,10 +207,10 @@ callRegion(
                         {
                             std::ostringstream oss;
                             const auto& sampleName(fileStreams.getSampleNames()[sampleIndex]);
-                            oss << "ERROR: ploidy vcf FORMAT/CN values conflict. Conflict detected in sample '"
+                            oss << "Ploidy vcf FORMAT/CN values conflict. Conflict detected in sample '"
                                 << sampleName << "' at:\n";
                             streamData.getCurrentVcfStreamer().report_state(oss);
-                            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                            BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
                         }
                     }
                 }
