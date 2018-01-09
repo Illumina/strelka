@@ -37,13 +37,13 @@ macro (initBoostParams)
     set (THIS_BOOST_VERSION 1.58.0)
     # note we default to alphabetical order here, except where boost libraries depend on
     # each other (timer->chrono)
-    set (THIS_BOOST_COMPONENTS filesystem program_options serialization
-                               system timer chrono unit_test_framework)
+    set (THIS_BOOST_COMPONENTS date_time filesystem program_options
+                               serialization system timer chrono unit_test_framework)
 
     # the name given to boost.build and the library name are the same for all libraries, except
     # for test, so we need two lists now:
-    set (THIS_BOOST_BUILD_COMPONENTS filesystem program_options serialization
-                                     system timer chrono test)
+    set (THIS_BOOST_BUILD_COMPONENTS date_time filesystem program_options
+                                     serialization system timer chrono test)
     set (Boost_USE_STATIC_LIBS ON)
     if (NOT WIN32)
         # bjam on windows ignores this setting so skip for win32:

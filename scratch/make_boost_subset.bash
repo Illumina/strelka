@@ -44,7 +44,7 @@ done
 # remove unused libs:
 (
 cd  $output_name/libs
-ls | grep -v -e "^\(config\|detail\|serialization\|timer\|chrono\|filesystem\|program_options\|system\|test\|wave\)$"  | xargs rm -rf
+ls | grep -v -e "^\(config\|date_time\|detail\|serialization\|timer\|chrono\|filesystem\|program_options\|system\|test\|wave\)$"  | xargs rm -rf
 )
 
 # remove unused tools:
