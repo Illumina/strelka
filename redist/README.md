@@ -14,17 +14,8 @@ full boost source distribution acccording to:
 ### htslib/samtools
 
 To reduce size, both packages have been modified to remove the test
-directories and test references in the makefiles
-
-A single patch has been applied to htslib to improve detection of CRAM
-reading errors. This patch is described in pull request:
-
-https://github.com/samtools/htslib/pull/575
-
-And ported back to a single commit on 1.5 here:
-
-https://github.com/ctsa/htslib/commit/03b35d2387f58ebc189b2b7b98b30e9e31b8e02b
-
+directories and test references in the makefiles. The copy of htslib
+in samtools has been removed.
 
 ### cmake-modules
 
