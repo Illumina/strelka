@@ -140,7 +140,7 @@ writeSomaticIndelVcfGrid(
 
     // set LowDepth filter if tier 1 tumor or normal depth is below a threshold
     if ((siInfo.tisri[0].tier1Depth < opt.sfilter.minPassedCallDepth) ||
-            (siInfo.nisri[0].tier1Depth < opt.sfilter.minPassedCallDepth))
+        (siInfo.nisri[0].tier1Depth < opt.sfilter.minPassedCallDepth))
     {
         smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::LowDepth);
     }

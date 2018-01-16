@@ -238,8 +238,8 @@ getExportData(BasecallErrorContextObservationExportData& exportData) const
         /// Convert single strand observation counts from compressed storage format to exported format
         /// intended for use by an inference method
         auto strand2ExportStrand = [&](
-                                 const StrandBasecallCounts& si,
-                                 BasecallErrorContextObservationExportStrandObservation& se)
+                                       const StrandBasecallCounts& si,
+                                       BasecallErrorContextObservationExportStrandObservation& se)
         {
             se.refAlleleCount = si.refAlleleCount;
             se.altAlleleCount.resize(basecallErrorPhredProbs.size(),0);
