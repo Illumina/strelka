@@ -124,7 +124,6 @@ add_custom_command(
 
 set (SAMTOOLS_FINAL_TASK ${SAMTOOLS_DIR})
 
-
 if (NOT WIN32)
     add_custom_command(
         OUTPUT ${SAMTOOLS_PROG}

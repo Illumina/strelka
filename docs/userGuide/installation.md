@@ -26,14 +26,14 @@ Strelka User Guide - Installation
 
 
 It is recommended to start from one of the [binary distributions on
-the Strelka releases page][releases] if a suitable version is available
-(note that the CentOS 6 binary distribution is expected to support a
-large variety of linux systems).  If building from source start from
+the releases page][releases] if a suitable binary is available
+(note that the CentOS 6 binary is expected to support a
+large variety of linux systems). If building from source, then start from
 the release distributions of the source code, also provided on the
-[Strelka releases page][releases]. Cloning/archiving the source
+[releases page][releases]. Cloning/archiving the source
 directly from git could result in missing version number entries,
 undesirably stringent build requirements or an unstable development
-version between releases. Additional build notes for Strelka developers can
+version between releases. Additional build notes for methods developers can
 be found in the [developer guide][developerGuide].
 
 [releases]:https://github.com/Illumina/strelka/releases
@@ -47,8 +47,8 @@ be found in the [developer guide][developerGuide].
 [tcistatus]:https://travis-ci.org/Illumina/strelka.svg?branch=master
 [tcihome]:https://travis-ci.org/Illumina/strelka
 
-Strelka requires a compiler supporting most of the C++11 standard. These
-are the current minimum versions enforced by the build system:
+A C++11 compiler is required. These are the current minimum compiler versions enforced
+by the build system:
 
 * python 2.6+
 * gcc 4.8+ OR clang 3.2+ (OR Visual Studio 2013+, see windows note below)
@@ -76,7 +76,7 @@ are not tested for this platform.
 ##### Windows
 
 Strelka does not build or run on windows. Library-level compilation is
-possible for Visual Studio users. See the the [strelka developer guide][DeveloperGuide] for details.
+possible for Visual Studio users. See the [developer guide][DeveloperGuide] for details.
 
 ### Linux Package Additions
 
@@ -135,7 +135,7 @@ Example (building on 4 cores):
     ../strelka-${STRELKA_VERSION}.release_src/configure --jobs=4 --prefix=/path/to/install
     make -j4 install
 
-Note that there are two other dependencies to cmake and boost. These are different than the requirements discussed
+Note that there are two other dependencies: cmake and boost. These are different than the requirements discussed
 above, in that they can optionally be provided by the user. They will automatically be built from source if not
 detected. The minimum required versions of these tools for users planning to provide them to the build process are
 
