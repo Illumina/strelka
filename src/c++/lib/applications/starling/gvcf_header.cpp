@@ -17,10 +17,6 @@
 //
 //
 
-/// \file
-/// \author Chris Saunders
-///
-
 #include "gvcf_header.hh"
 #include "gvcf_locus_info.hh"
 #include "blt_util/io_util.hh"
@@ -35,12 +31,14 @@
 #include <string>
 
 
-
+/// \param isGenomeVCF If true, the output is a single-sample gVCF file. Otherwise the output is a potentially
+///                    multi-sample variant VCF.
 static
 void
-add_gvcf_filters(
+addFiltersToGermlineVCFHeader(
     const starling_options& sopt,
     const cdmap_t& chrom_depth,
+    const bool isGenomeVCF,
     std::ostream& os)
 {
     const gvcf_options& opt(sopt.gvcf);
@@ -48,8 +46,6 @@ add_gvcf_filters(
     using namespace GERMLINE_VARIANT_VCF_FILTERS;
     write_vcf_filter(os,get_label(IndelConflict),"Indel genotypes from two or more loci conflict in at least one sample");
     write_vcf_filter(os,get_label(SiteConflict),"Site is filtered due to an overlapping indel call filter");
-
-//    write_vcf_filter(os,get_label(PhasingConflict),"Phasing conflict");
 
     if (opt.is_min_gqx)
     {
@@ -112,16 +108,22 @@ add_gvcf_filters(
     // even if no ploidy bed file is provided, this filter should still exist, so I don't
     // see any reason to leave it in the header for all cases:
     write_vcf_filter(os,get_label(PloidyConflict),"Genotype call from variant caller not consistent with chromosome ploidy");
+
+    if (! isGenomeVCF)
+    {
+        write_vcf_filter(os, get_label(NoPassedVariantGTs), "No samples at this locus pass all sample filters and have a variant genotype");
+    }
 }
 
 
 
 void
-finish_gvcf_header(
+finishGermlineVCFheader(
     const starling_options& opt,
     const gvcf_deriv_options& dopt,
     const cdmap_t& chrom_depth,
     const std::vector<std::string>& sampleNames,
+    const bool isGenomeVCF,
     std::ostream& os)
 {
     //INFO:
@@ -185,8 +187,7 @@ finish_gvcf_header(
     os << "##FORMAT=<ID=SB,Number=1,Type=Float,Description=\"Sample site strand bias\">\n";
 
     // FILTER:
-
-    add_gvcf_filters(opt, chrom_depth, os);
+    addFiltersToGermlineVCFHeader(opt, chrom_depth, isGenomeVCF, os);
 
 
     if (opt.isReportEVSFeatures)
@@ -204,6 +205,7 @@ finish_gvcf_header(
         os << "\n";
     }
 
+    // Write the column header line:
     os << vcf_col_label() << "\tFORMAT";
     for (const auto& sampleName : sampleNames)
     {

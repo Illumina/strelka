@@ -1,13 +1,20 @@
 ## Unreleased
 
+### Added
+- Add strand bias feature to germline indel scoring model (STREL-676)
+  - Improves filtration for a small number of false positive indels in typical WGS analysis.
+- Add haplotyping constraints to the read alignment (STREL-743)
+  - Phasing information from haplotyping is used to constrain combinations of variants within read alignments
+  - Removes rare artifact which could trigger false de-novo calls from multi-sample germline variant output, baseline false positive SNVs and indels reduced to approx half of previous count. 
+- Add new filter to make multi-sample germline variant output easier to interpret (STREL-819)
+  - Locus filter 'NoPassedVariantGTs' added when no sample has a passing variant genotype.
+  - This allows passing variants to be easily extracted with the FILTER field, without querying FORMAT/GT and FORMAT/FT.
+
 ### Changed
-- Add strand bias feature for germline indel EVS (STREL-676)
 - Remove preliminary step which counts the 'mappable' (non-N) size of the genome (STREL-772)
   - This has a legacy use in identifying noisy alignments. Now replaced with a simplified scheme.
 - Lower default local task memory requirement from 2 to 1.5 Gb (STREL-802)
   - This enables all cores on an AWS c4.8xlarge with default configuration, use `--callMemMb` option to override for unusual cases.
-- Add haplotyping constraints to the read alignment (STREL-743)
-  - Phasing information from haplotyping is used to constrain combinations of variants within read alignments
 - Update LowDepth filter for somatic calls to include cases where the normal sample depth is below 2 (STREL-745)
 - Update htslib/samtools to 1.6 (STREL-823)
 
@@ -15,7 +22,7 @@
 - Fix empirical variant scoring (EVS) of complex somatic indels (STREL-774)
   - Previously the EVS model was overly pessimistic against complex somatic indels. This is now fixed by changing how EVS input features are computed for complex indels.
 - Fix default sample name used in the VCF output for germline analysis (STREL-737)
-  -  Default is used when sample name cannot be parsed from the BAM header. Now fixed to insert SAMPLE1, SAMPLE2, etc. as documented.
+  - Default is used when sample name cannot be parsed from the BAM header. Now fixed to insert SAMPLE1, SAMPLE2, etc. as documented.
 - Fix rare instance where strand bias (SAMPLE/SB) is 'inf' (STREL-741)
 - Provide clear error message when attempting to configure/run with python3 (STREL-762)
 - Fix python configure scripts to make maximum reported indel size configurable (STREL-763)

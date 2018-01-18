@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -56,6 +56,7 @@ enum index_t
     HighSNVHPOL,
     HighRefRep,
     LowDepth,
+    NoPassedVariantGTs,
     SIZE
 };
 
@@ -87,6 +88,8 @@ get_label(const unsigned idx)
         return "PloidyConflict";
     case LowDepth:
         return "LowDepth";
+    case NoPassedVariantGTs:
+        return "NoPassedVariantGTs";
     default:
         assert(false && "Unknown VCF filter value");
         return nullptr;
@@ -146,7 +149,7 @@ struct GermlineFilterKeeper
 
     // bit-wise and over each flag
     void
-    unionMerge(const GermlineFilterKeeper& filterKeeper)
+    intersectWith(const GermlineFilterKeeper& filterKeeper)
     {
         filters &= filterKeeper.filters;
     }
@@ -337,8 +340,9 @@ struct LocusSampleInfo
         return maxGenotypeIndexPolymorphic;
     }
 
-    /// non-forced sample printing criteria
-    /// (for indels at least)
+    /// Return true if the MAP genotype includes a non-reference allele.
+    ///
+    /// This is currently the non-forced sample printing criteria (for indels at least)
     bool
     isVariant() const
     {

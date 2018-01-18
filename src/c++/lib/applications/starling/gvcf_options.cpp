@@ -17,15 +17,9 @@
 //
 //
 
-/// \author Chris Saunders
-///
-
 #include "gvcf_options.hh"
-#include "blt_util/blt_exception.hh"
 #include "germlineVariantEmpiricalScoringFeatures.hh"
 #include "rnaVariantEmpiricalScoringFeatures.hh"
-
-#include <cassert>
 
 #include <sstream>
 #include <iostream>

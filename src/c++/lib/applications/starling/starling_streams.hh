@@ -44,7 +44,7 @@ struct starling_streams : public starling_streams_base
     }
 
     std::ostream&
-    gvcfVariantsStream() const
+    variantVCFStream() const
     {
         return *(_gvcfVariantsStreamPtr);
     }

@@ -17,23 +17,24 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #pragma once
 
-#include "ScoringModelManager.hh"
 #include "starling_shared.hh"
 #include "blt_util/chrom_depth_map.hh"
 
 #include <iosfwd>
 
 
+/// Add additional content to the VCF header specific to germline analysis outputs
+///
+/// \param isGenomeVCF If true, the output is a single-sample gVCF file. Otherwise the output is a potentially
+///                    multi-sample variant VCF.
+///
 void
-finish_gvcf_header(
+finishGermlineVCFheader(
     const starling_options& opt,
     const gvcf_deriv_options& dopt,
     const cdmap_t& chrom_depth,
     const std::vector<std::string>& sampleNames,
+    const bool isGenomeVCF,
     std::ostream& os);

@@ -74,11 +74,16 @@ gvcf_writer(
 
     if (! _opt.gvcf.is_skip_header)
     {
-        finish_gvcf_header(_opt, _dopt, _dopt.chrom_depth, sampleNames, _streams.gvcfVariantsStream());
+        {
+            static const bool isGenomeVCF(false);
+            finishGermlineVCFheader(_opt, _dopt, _dopt.chrom_depth, sampleNames, isGenomeVCF, _streams.variantVCFStream());
+        }
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
+            static const bool isGenomeVCF(true);
             const std::string& sampleName(sampleNames[sampleIndex]);
-            finish_gvcf_header(_opt, _dopt, _dopt.chrom_depth, {sampleName}, _streams.gvcfSampleStream(sampleIndex));
+            finishGermlineVCFheader(_opt, _dopt, _dopt.chrom_depth, {sampleName}, isGenomeVCF,
+                                    _streams.gvcfSampleStream(sampleIndex));
         }
     }
 
@@ -300,37 +305,77 @@ queue_site_record(
 
 
 
-/// extend the locus filter set such that any sample filter applied to all samples is added to the locus filters
+/// \brief Apply final VCF record FILTER customizations based the type of output VCF
+///
+/// Currently the customizations are:
+/// - Extend the locus filter set to add those sample filters which are present in all samples of the VCF
+///   (Note that for single-sample gVCFs, this means that all sample filters will be copied to the locus filter field.)
+/// - Add a filter to the multi-sample variant VCF output whenever there are no samples with a variant
+///    genotype that pass filters, this makes it easy to naively interpret the variant variants.vcf file by just
+///    looking at whether FILTER is 'PASS'
+///
+/// \return Filters to be used for the input locus
+///
+/// TODO: default sampleIndex of 0 is confusing and needs cleanup or docs, why is there a default at all?
 static
 GermlineFilterKeeper
 getExtendedLocusFilters(
     const LocusInfo& locus,
     const int targetSampleIndex = 0)
 {
-    bool isFirstSample(true);
-    GermlineFilterKeeper sampleFilterUnion;
     const unsigned sampleCount(locus.getSampleCount());
-    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+
+    GermlineFilterKeeper locusFilters = locus.filters;
+
+    // 1. Extend locus filters with sample filters applied to every sample
     {
-        if (targetSampleIndex >= 0)
+        bool isFirstSample(true);
+        GermlineFilterKeeper sampleFilterIntersection;
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
-            if (static_cast<int>(sampleIndex) != targetSampleIndex) continue;
+            if (targetSampleIndex >= 0)
+            {
+                if (static_cast<int>(sampleIndex) != targetSampleIndex) continue;
+            }
+
+            const auto& sampleInfo(locus.getSample(sampleIndex));
+            if (isFirstSample)
+            {
+                sampleFilterIntersection = sampleInfo.filters;
+                isFirstSample = false;
+            }
+            else
+            {
+                sampleFilterIntersection.intersectWith(sampleInfo.filters);
+            }
         }
 
-        const auto& sampleInfo(locus.getSample(sampleIndex));
-        if (isFirstSample)
+        locusFilters.merge(sampleFilterIntersection);
+    }
+
+    // 2. Add a filter in the multi-sample variant VCF to flag records without any passing variant genotypes
+    if (targetSampleIndex < 0)
+    {
+        bool isFilter(true);
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
-            sampleFilterUnion = sampleInfo.filters;
-            isFirstSample = false;
+            const auto& sampleInfo(locus.getSample(sampleIndex));
+            if (sampleInfo.isVariant())
+            {
+                if (sampleInfo.filters.none())
+                {
+                    isFilter = false;
+                    break;
+                }
+            }
         }
-        else
+
+        if (isFilter)
         {
-            sampleFilterUnion.unionMerge(sampleInfo.filters);
+            locusFilters.set(GERMLINE_VARIANT_VCF_FILTERS::NoPassedVariantGTs);
         }
     }
 
-    GermlineFilterKeeper locusFilters = locus.filters;
-    locusFilters.merge(sampleFilterUnion);
     return locusFilters;
 }
 
@@ -693,7 +738,7 @@ write_site_record(
 {
     const unsigned sampleCount(locus.getSampleCount());
 
-    write_site_record_instance(locus, _streams.gvcfVariantsStream());
+    write_site_record_instance(locus, _streams.variantVCFStream());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         write_site_record_instance(locus, _streams.gvcfSampleStream(sampleIndex), sampleIndex);
@@ -1045,7 +1090,7 @@ write_indel_record(
 
     const unsigned sampleCount(locus.getSampleCount());
 
-    write_indel_record_instance(locus, _streams.gvcfVariantsStream());
+    write_indel_record_instance(locus, _streams.variantVCFStream());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         write_indel_record_instance(locus, _streams.gvcfSampleStream(sampleIndex), sampleIndex);
