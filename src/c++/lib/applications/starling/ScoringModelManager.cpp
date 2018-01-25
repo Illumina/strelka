@@ -154,14 +154,6 @@ classify_site(
             {
                 sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
             }
-
-            // set LowDepth filter if DP or AD sum is below a threshold
-            const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
-            if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minPassedCallDepth)
-                || (siteSampleInfo.n_used_calls < _opt.minPassedCallDepth))
-            {
-                sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowDepth);
-            }
         }
     }
     else
@@ -230,15 +222,6 @@ classify_indel(
             {
                 sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
             }
-
-            // set LowDepth filter if DPI or AD sum is below a threshold
-            const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
-            if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minPassedCallDepth)
-                || (indelSampleInfo.tier1Depth < _opt.minPassedCallDepth))
-            {
-                sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowDepth);
-            }
-
         }
     }
     else
@@ -247,6 +230,41 @@ classify_indel(
     }
 }
 
+void
+ScoringModelManager::applyDepthFilter(
+        GermlineSiteLocusInfo& locus) const
+{
+    // set LowDepth filter if DPI or AD sum is below a threshold
+    const unsigned sampleCount(locus.getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    {
+        auto& sampleInfo(locus.getSample(sampleIndex));
+        const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
+        if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minPassedCallDepth)
+            || (siteSampleInfo.n_used_calls < _opt.minPassedCallDepth))
+        {
+            sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowDepth);
+        }
+    }
+}
+
+void
+ScoringModelManager::applyDepthFilter(
+        GermlineIndelLocusInfo& locus) const
+{
+    // set LowDepth filter if DPI or AD sum is below a threshold
+    const unsigned sampleCount(locus.getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    {
+        auto& sampleInfo(locus.getSample(sampleIndex));
+        const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
+        if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minPassedCallDepth)
+            || (indelSampleInfo.tier1Depth < _opt.minPassedCallDepth))
+        {
+            sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowDepth);
+        }
+    }
+}
 
 
 void
@@ -307,14 +325,6 @@ default_classify_site(
             }
         }
     }
-
-    // apply low depth filter
-    const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
-    if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minPassedCallDepth)
-        || (siteSampleInfo.n_used_calls < _opt.minPassedCallDepth))
-    {
-        sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowDepth);
-    }
 }
 
 
@@ -374,14 +384,6 @@ default_classify_indel(
                 }
             }
         }
-    }
-
-    // set LowDepth filter if DPI or AD sum is below a threshold
-    const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
-    if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minPassedCallDepth)
-        || (indelSampleInfo.tier1Depth < _opt.minPassedCallDepth))
-    {
-        sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowDepth);
     }
 }
 

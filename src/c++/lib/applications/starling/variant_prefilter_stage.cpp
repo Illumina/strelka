@@ -52,6 +52,9 @@ process(std::unique_ptr<GermlineSiteLocusInfo> locusPtr)
 {
     applySharedLocusFilters(*locusPtr);
 
+    // apply depth filter
+    _model.applyDepthFilter(*locusPtr);
+
     // apply filtration/EVS model:
     if (dynamic_cast<GermlineContinuousSiteLocusInfo*>(locusPtr.get()) != nullptr)
     {
@@ -78,6 +81,9 @@ process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr)
     }
 
     applySharedLocusFilters(*locusPtr);
+
+    // apply depth filter
+    _model.applyDepthFilter(*locusPtr);
 
     // apply filtration/EVS model:
     if (dynamic_cast<GermlineContinuousIndelLocusInfo*>(locusPtr.get()) != nullptr)

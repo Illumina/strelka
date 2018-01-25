@@ -57,6 +57,14 @@ struct ScoringModelManager
     classify_indel(
         GermlineDiploidIndelLocusInfo& locus) const;
 
+    void
+    applyDepthFilter(
+            GermlineSiteLocusInfo& locus) const;
+
+    void
+    applyDepthFilter(
+        GermlineIndelLocusInfo& locus) const;
+
     /// simple hard-cutoff filtration rules applied to site locus in one sample
     void
     default_classify_site(
