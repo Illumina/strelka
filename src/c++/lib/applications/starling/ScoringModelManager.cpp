@@ -234,7 +234,7 @@ void
 ScoringModelManager::applyDepthFilter(
         GermlineSiteLocusInfo& locus) const
 {
-    // set LowDepth filter if DPI or AD sum is below a threshold
+    // set LowDepth filter if DP or AD sum is below a threshold
     const unsigned sampleCount(locus.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
