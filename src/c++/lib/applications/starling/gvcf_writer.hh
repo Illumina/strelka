@@ -17,10 +17,6 @@
 //
 //
 
-/// \file
-/// \author Chris Saunders
-///
-
 #pragma once
 
 #include "gvcf_block_site_record.hh"
@@ -112,7 +108,10 @@ private:
     queue_site_record(
         const GermlineSiteLocusInfo& locus);
 
-    /// write site record out to a single VCF stream
+    /// Write site record out to a single VCF stream
+    ///
+    /// \param targetSampleIndex The sample index. This indicates the index of the sample-specific gVCF to write to, or
+    ///                          if the value is less than 0, this signifies writing to the variants VCF.
     void
     write_site_record_instance(
         const GermlineSiteLocusInfo& locus,
@@ -133,7 +132,7 @@ private:
     /// \brief Write indel record out to a single VCF stream
     ///
     /// \param targetSampleIndex The sample index. This indicates the index of the sample-specific gVCF to write to, or
-    ///                          if the value is less than 0, this signifies writing to the multi-sample variants VCF.
+    ///                          if the value is less than 0, this signifies writing to the variants VCF.
     void
     write_indel_record_instance(
         const GermlineIndelLocusInfo& locus,

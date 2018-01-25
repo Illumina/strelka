@@ -17,9 +17,6 @@
 //
 //
 
-/// \author Chris Saunders
-///
-
 #pragma once
 
 #include "starling_shared.hh"
@@ -44,9 +41,9 @@ struct starling_streams : public starling_streams_base
     }
 
     std::ostream&
-    variantVCFStream() const
+    variantsVCFStream() const
     {
-        return *(_gvcfVariantsStreamPtr);
+        return *(_variantsVCFStreamPtr);
     }
 
     const std::vector<std::string>&
@@ -58,14 +55,14 @@ struct starling_streams : public starling_streams_base
 private:
     static
     std::unique_ptr<std::ostream>
-    initialize_gvcf_file(
+    initializeGermlineVCFStream(
         const starling_options& opt,
         const prog_info& pinfo,
         const std::string& filename,
         const char* label,
         const bam_hdr_t& header);
 
-    std::unique_ptr<std::ostream> _gvcfVariantsStreamPtr;
+    std::unique_ptr<std::ostream> _variantsVCFStreamPtr;
     std::vector<std::unique_ptr<std::ostream>> _gvcfSampleStreamPtr;
     std::vector<std::string> _sampleNames;
 };

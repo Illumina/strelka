@@ -27,8 +27,8 @@
 
 /// Add additional content to the VCF header specific to germline analysis outputs
 ///
-/// \param isGenomeVCF If true, the output is a single-sample gVCF file. Otherwise the output is a potentially
-///                    multi-sample variant VCF.
+/// \param isGenomeVCF If true, the header output is formatted for gVCF. Otherwise the header output is formatted
+///                    for a conventional variants VCF file.
 ///
 void
 finishGermlineVCFheader(

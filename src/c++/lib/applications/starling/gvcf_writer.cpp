@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "gvcf_writer.hh"
 
 #include "gvcf_header.hh"
@@ -74,13 +70,14 @@ gvcf_writer(
 
     if (! _opt.gvcf.is_skip_header)
     {
-        {
-            static const bool isGenomeVCF(false);
-            finishGermlineVCFheader(_opt, _dopt, _dopt.chrom_depth, sampleNames, isGenomeVCF, _streams.variantVCFStream());
-        }
+        // Create the header for the variants VCF
+        bool isGenomeVCF(false);
+        finishGermlineVCFheader(_opt, _dopt, _dopt.chrom_depth, sampleNames, isGenomeVCF, _streams.variantsVCFStream());
+
+        // Create the header for each sample's gVCF
+        isGenomeVCF = true;
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
-            static const bool isGenomeVCF(true);
             const std::string& sampleName(sampleNames[sampleIndex]);
             finishGermlineVCFheader(_opt, _dopt, _dopt.chrom_depth, {sampleName}, isGenomeVCF,
                                     _streams.gvcfSampleStream(sampleIndex));
@@ -314,6 +311,8 @@ queue_site_record(
 ///    genotype that pass filters, this makes it easy to naively interpret the variant variants.vcf file by just
 ///    looking at whether FILTER is 'PASS'
 ///
+/// \param targetSampleIndex The sample index. This indicates the index of the sample-specific gVCF to target, or
+///                          if the value is less than 0, this signifies processing for the variants VCF.
 /// \return Filters to be used for the input locus
 ///
 /// TODO: default sampleIndex of 0 is confusing and needs cleanup or docs, why is there a default at all?
@@ -738,7 +737,7 @@ write_site_record(
 {
     const unsigned sampleCount(locus.getSampleCount());
 
-    write_site_record_instance(locus, _streams.variantVCFStream());
+    write_site_record_instance(locus, _streams.variantsVCFStream());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         write_site_record_instance(locus, _streams.gvcfSampleStream(sampleIndex), sampleIndex);
@@ -1090,7 +1089,7 @@ write_indel_record(
 
     const unsigned sampleCount(locus.getSampleCount());
 
-    write_indel_record_instance(locus, _streams.variantVCFStream());
+    write_indel_record_instance(locus, _streams.variantsVCFStream());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         write_indel_record_instance(locus, _streams.gvcfSampleStream(sampleIndex), sampleIndex);
