@@ -161,19 +161,6 @@ classify_site(
         // don't know what to do with this site, throw it to the old default filters
         default_classify_site_locus(locus);
     }
-
-    // set LowDepth filter if DP or AD sum is below a threshold
-    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
-    {
-        const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
-        auto& sampleInfo(locus.getSample(sampleIndex));
-
-        if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minPassedCallDepth)
-            || (siteSampleInfo.n_used_calls < _opt.minPassedCallDepth))
-        {
-            sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowDepth);
-        }
-    }
 }
 
 
@@ -241,12 +228,36 @@ classify_indel(
     {
         default_classify_indel_locus(locus);
     }
+}
 
-    // set LowDepth filter if DPI or AD sum is below a threshold
-    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+void
+ScoringModelManager::applyDepthFilter(
+        GermlineSiteLocusInfo& locus) const
+{
+    // set LowDepth filter if DP or AD sum is below a threshold
+    const unsigned sampleCount(locus.getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
         auto& sampleInfo(locus.getSample(sampleIndex));
+        const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
+        if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minPassedCallDepth)
+            || (siteSampleInfo.n_used_calls < _opt.minPassedCallDepth))
+        {
+            sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowDepth);
+        }
+    }
+}
+
+void
+ScoringModelManager::applyDepthFilter(
+        GermlineIndelLocusInfo& locus) const
+{
+    // set LowDepth filter if DPI or AD sum is below a threshold
+    const unsigned sampleCount(locus.getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    {
+        auto& sampleInfo(locus.getSample(sampleIndex));
+        const auto& indelSampleInfo(locus.getIndelSample(sampleIndex));
         if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minPassedCallDepth)
             || (indelSampleInfo.tier1Depth < _opt.minPassedCallDepth))
         {
@@ -254,7 +265,6 @@ classify_indel(
         }
     }
 }
-
 
 
 void

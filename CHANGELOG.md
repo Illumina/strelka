@@ -31,6 +31,7 @@
 - Stop automatically clearing python environment variables (STREL-810)
   - This should allow python from certain module systems to be used, but may (rarely) cause instability due to conflicting content in a user's PYTHONPATH.
 - Standardize germline FORMAT/GQ VCF tag to Integer type (STREL-812)
+- Fix the issue that low depth filter is not applied to continuous variant frequency (e.g. Mitochondrial) calls (STREL-803)
 
 ## v2.8.4 - 2017-10-23
 
