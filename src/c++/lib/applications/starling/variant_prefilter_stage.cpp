@@ -80,19 +80,31 @@ process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr)
         if (altAllele.indelKey.is_breakpoint()) return;
     }
 
-    applySharedLocusFilters(*locusPtr);
-
-    // apply depth filter
-    _model.applyDepthFilter(*locusPtr);
-
-    // apply filtration/EVS model:
-    if (dynamic_cast<GermlineContinuousIndelLocusInfo*>(locusPtr.get()) != nullptr)
+    if (locusPtr->isNotGenotyped())
     {
-        _model.default_classify_indel_locus(*locusPtr);
+        const unsigned sampleCount(locusPtr->getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        {
+            auto &sampleInfo(locusPtr->getSample(sampleIndex));
+            sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::NotGenotyped);
+        }
     }
     else
     {
-        _model.classify_indel(dynamic_cast<GermlineDiploidIndelLocusInfo&>(*locusPtr));
+        applySharedLocusFilters(*locusPtr);
+
+        // apply depth filter
+        _model.applyDepthFilter(*locusPtr);
+
+        // apply filtration/EVS model:
+        if (dynamic_cast<GermlineContinuousIndelLocusInfo*>(locusPtr.get()) != nullptr)
+        {
+            _model.default_classify_indel_locus(*locusPtr);
+        }
+        else
+        {
+            _model.classify_indel(dynamic_cast<GermlineDiploidIndelLocusInfo&>(*locusPtr));
+        }
     }
 
     _sink->process(std::move(locusPtr));

@@ -93,15 +93,15 @@ public:
         return _posRange.is_pos_intersect(pos);
     }
 
+    /// Decompose haplotypes into primitive alleles and
+    /// put them into the indel buffer and candidate SNV buffer
+    void processHaplotypes();
+
     /// Experimental
     void addHaplotypesToExclude(const std::vector<std::string>& haplotypeToExclude);
 
     /// Gets selected haplotypes
     const std::vector<std::string>& getSelectedHaplotypes() const;
-
-    /// Decompose haplotypes into primitive alleles.
-    /// Determine indel candidacy and register polymorphic sites to relax MMDF.
-    void processHaplotypes();
 
 private:
     const known_pos_range2 _posRange;

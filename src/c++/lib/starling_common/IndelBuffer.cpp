@@ -114,6 +114,18 @@ addIndelObservation(
     if (isNovel)
     {
         indelData.initializeAuxInfo(_opt,_dopt, _ref);
+
+        const auto& indelKey(indelIter->first);
+        const bool isPrimitive = (
+            indelKey.isMismatch() ||
+            indelKey.isPrimitiveInsertionAllele() ||
+            indelKey.isPrimitiveDeletionAllele());
+
+        if (! isPrimitive)
+        {
+            // complex alleles are not genotyped
+            indelData.status.doNotGenotype = true;
+        }
     }
     indelData.addIndelObservation(sampleIndex, obs.data);
 
@@ -203,11 +215,10 @@ isCandidateIndelImplTest(
     const IndelKey& indelKey,
     const IndelData& indelData) const
 {
-    // check whether the candidate has been externally specified:
-    if (indelData.is_external_candidate) return true;
+    if (indelData.status.doNotGenotype) return false;
 
-    // if short haplotyping is enabled, any indels not confirmed in active region are not candidate
-    if (_opt.isHaplotypingEnabled && (! indelData.isConfirmedInActiveRegion())) return false;
+    // if haplotyping is enabled, indels not confirmed in active region are not candidate
+    if (_opt.isHaplotypingEnabled && (!indelData.isDiscoveredInActiveRegion())) return false;
 
     if (_opt.is_candidate_indel_signal_test)
     {
@@ -247,6 +258,7 @@ isCandidateIndelImplTest(
         }
         if (estimatedLocusDepth > _maxCandidateDepth) return false;
     }
+
     return true;
 }
 
@@ -258,8 +270,26 @@ isCandidateIndelImpl(
     const IndelKey& indelKey,
     const IndelData& indelData) const
 {
-    const bool is_candidate(isCandidateIndelImplTest(indelKey, indelData));
-    indelData.status.is_candidate_indel = is_candidate;
+    bool isCandidate(isCandidateIndelImplTest(indelKey, indelData));
+
+    // check whether the candidate has been externally specified:
+    if (! isCandidate)
+    {
+        if ((! indelData.status.doNotGenotype) && indelData.is_external_candidate)
+        {
+            assert(indelKey.isPrimitiveDeletionAllele() || indelKey.isPrimitiveInsertionAllele());
+
+            // primitive insertions and deletions are promoted to candidate status
+            // even if there is no read support
+            isCandidate = true;
+
+            // mark that this indel doesn't have enough read support
+            // even though it has the candidate status
+            indelData.status.notDiscoveredFromReads = true;
+        }
+    }
+
+    indelData.status.is_candidate_indel = isCandidate;
     indelData.status.is_candidate_indel_cached = true;
 }
 

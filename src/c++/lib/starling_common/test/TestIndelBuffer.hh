@@ -28,6 +28,8 @@ struct TestIndelBuffer
     TestIndelBuffer(
         const reference_contig_segment& ref)
     {
+        _opt.is_candidate_indel_signal_test = false;
+
         const double maxDepth = 100.0;
         _doptPtr.reset(new starling_base_deriv_options(_opt));
 

@@ -821,7 +821,6 @@ getCurIndelHaplotypeIds(
     const unsigned sampleCount(curIndelHaplotypeIds.size());
 
     ActiveRegionId curIndelActiveRegionId(curIndelData.activeRegionId);
-    curIndelHaplotypeIds.clear();
     if (curIndelActiveRegionId < 0) return;
 
     // Get haplotype IDs of current indel in all samples
@@ -993,12 +992,18 @@ candidate_alignment_search(
     const IndelKey& curIndel(indel_order[depth]);
 
     bool isCurIndelConflicting(false);
+    bool containsIndelNotDiscoveredFromReads(false);
     for (unsigned i(0); i<depth; ++i)
     {
         const IndelKey& indelKey(indel_order[i]);
 
         if (!(indel_status_map[indelKey].is_present)) continue;
         if (is_indel_conflict(indelKey, curIndel)) isCurIndelConflicting = true;
+        if ((! containsIndelNotDiscoveredFromReads) &&
+            (indelBuffer.getIndelDataPtr(indelKey)->status.notDiscoveredFromReads))
+        {
+            containsIndelNotDiscoveredFromReads = true;
+        }
     }
 
     const unsigned sampleCount(opt.getSampleCount());
@@ -1016,6 +1021,10 @@ candidate_alignment_search(
             haplotypeStatusMap.insert(std::make_pair(curIndelActiveRegionId, HaplotypeStatus(sampleCount)));
         }
     }
+
+    // true if current indel is an external indel not discovered from reads
+    const bool isCurIndelNotDiscoveredFromReads(curIndelData.status.notDiscoveredFromReads);
+
     // Get haplotype IDs of current indel in all samples
     std::vector<int> curIndelHaplotypeIds(sampleCount);
     getCurIndelHaplotypeIds(
@@ -1029,26 +1038,44 @@ candidate_alignment_search(
     // alignment 1) --> unchanged case:
     try
     {
-        bool isValid(true);
+        bool isNextCandidateAlignmentValid(true);
+
+        // 1. Check haplotype constraints
         HaplotypeStatusMap newHaplotypeStatusMap(haplotypeStatusMap);
-        if (!isCurIndelConflicting && isCurIndelInActiveRegion)
+        if ((! isCurIndelConflicting) && isCurIndelInActiveRegion)
         {
-            isValid = newHaplotypeStatusMap.at(curIndelActiveRegionId).updateHaplotypeStatus(curIndelHaplotypeIds, isCurIndelOn);
+            isNextCandidateAlignmentValid = newHaplotypeStatusMap.at(curIndelActiveRegionId)
+                .updateHaplotypeStatus(curIndelHaplotypeIds, isCurIndelOn);
         }
         else
         {
             // current indel is conflicting or there's no haplotype info
-            isValid = (! curIndel.isMismatch()) || (! isCurIndelOn);
+            isNextCandidateAlignmentValid = (! curIndel.isMismatch()) || (! isCurIndelOn);
         }
 
-        // even if the haplotype constraints are not met,
-        // if there was no indel toggle,
-        // allow the alignment search to proceed
-        if (isValid || (totalToggleDepth == 0))
+        // 2. Check whether we will be including
+        // more than one indels without enough read support
+        if (isCurIndelOn && containsIndelNotDiscoveredFromReads &&
+            isCurIndelNotDiscoveredFromReads)
+        {
+            // it's prohibited to include more than one indels without enough read support
+            isNextCandidateAlignmentValid = false;
+        }
+
+        if ((! isNextCandidateAlignmentValid) && (totalToggleDepth == 0))
+        {
+            // even if the above conditions are not met,
+            // if there was no indel toggle,
+            // allow the alignment search to proceed
+            isNextCandidateAlignmentValid = true;
+        }
+
+        if (isNextCandidateAlignmentValid)
         {
             candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer,
                                        sampleId, realign_buffer_range,
-                                       cal_set, warn, indel_status_map, newHaplotypeStatusMap,
+                                       cal_set, warn,
+                                       indel_status_map, newHaplotypeStatusMap,
                                        indel_order, depth + 1, indelToggleDepth, totalToggleDepth,
                                        read_range, max_read_indel_toggle, cal);
         }
@@ -1061,18 +1088,28 @@ candidate_alignment_search(
         throw;
     }
 
-    bool isValid(true);
+    bool isNextCandidateAlignmentValid(true);
     HaplotypeStatusMap newHaplotypeStatusMap(haplotypeStatusMap);
     if (!isCurIndelConflicting && isCurIndelInActiveRegion)
     {
-        isValid = newHaplotypeStatusMap.at(curIndelActiveRegionId).updateHaplotypeStatus(curIndelHaplotypeIds, !isCurIndelOn);
+        isNextCandidateAlignmentValid = newHaplotypeStatusMap.at(curIndelActiveRegionId).updateHaplotypeStatus(curIndelHaplotypeIds, !isCurIndelOn);
     }
     else
     {
-        isValid = !curIndel.isMismatch() || isCurIndelOn;
+        isNextCandidateAlignmentValid = !curIndel.isMismatch() || isCurIndelOn;
     }
 
-    if (! isValid) return;
+    // Check whether we will be including
+    // more than one indels not discovered from reads
+    if (!isCurIndelOn &&
+        containsIndelNotDiscoveredFromReads &&
+        isCurIndelNotDiscoveredFromReads)
+    {
+        // it's prohibited to include more than one indels without enough read support
+        isNextCandidateAlignmentValid = false;
+    }
+
+    if (! isNextCandidateAlignmentValid) return;
 
     if (! isCurIndelOn)
     {

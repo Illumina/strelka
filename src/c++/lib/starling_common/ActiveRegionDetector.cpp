@@ -154,6 +154,53 @@ ActiveRegionDetector::processExistingActiveRegion(const pos_t pos)
 }
 
 void
+ActiveRegionDetector::filterOutConflictingForcedIndels()
+{
+    // first check if one or more candidate indel is discovered
+    // in this active region
+    bool isCandidateIndel(false);
+
+    auto it(_indelBuffer.positionIterator(_synchronizedActiveRegion.begin_pos()));
+    auto it_end(_indelBuffer.positionIterator(_synchronizedActiveRegion.end_pos()));
+    for (; it!=it_end; ++it)
+    {
+        IndelData& indelData(getIndelData(it));
+        if (!indelData.isDiscoveredInActiveRegion()) continue;
+
+        const IndelKey& indelKey(it->first);
+
+        if (indelKey.isMismatch()) continue;
+
+        bool isThisIndelCandidate = _indelBuffer.isCandidateIndel(indelKey, indelData);
+        if (isThisIndelCandidate) isCandidateIndel = true;
+    }
+
+    if (! isCandidateIndel)
+    {
+        // if there exist no discovered candidate indel
+        // there's no need to worry about forced indel conflicts
+        return;
+    }
+
+    // find all the forced indels and set doNotGenotype=true
+    it = _indelBuffer.positionIterator(_synchronizedActiveRegion.begin_pos());
+    it_end = _indelBuffer.positionIterator(_synchronizedActiveRegion.end_pos());
+
+    for (; it!=it_end; ++it)
+    {
+        IndelData& indelData(getIndelData(it));
+        if (! indelData.isForcedOutput) continue;
+
+        if (!indelData.isDiscoveredInActiveRegion())
+        {
+            // this forced indel was not discovered in AR
+            // and may conflict with internal indels
+            indelData.status.doNotGenotype = true;
+        }
+    }
+}
+
+void
 ActiveRegionDetector::closeActiveRegion()
 {
     assert (_synchronizedActiveRegion.size() > 0);
@@ -194,6 +241,9 @@ ActiveRegionDetector::closeActiveRegion()
             }
         }
     }
+
+    filterOutConflictingForcedIndels();
+
     setPosToActiveRegionIdMap(_synchronizedActiveRegion);
     _prevActiveRegionEnd = _synchronizedActiveRegion.end_pos();
     _synchronizedActiveRegion.clear();
