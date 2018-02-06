@@ -154,8 +154,10 @@ Primary variant inferences are provided as a series of [VCF 4.1][1] files in
 Germline analysis is reported to the following variant files:
 
 * __variants.vcf.gz__
-    * This describes all potential variant loci across all samples. Note this file includes non-variant loci if they have a non-trivial level of variant evidence or contain
-      one or more alleles for which genotyping has been forced.
+    * This describes all potential variant loci across all samples. Note this file includes non-variant loci if they
+    have a non-trivial level of variant evidence or contain one or more alleles for which genotyping has been forced.
+    Please see the [multi-sample variants VCF](#interpreting-the-germline-multi-sample-variants-vcf) section
+    below for additional details on interpreting this file.
 * __genome.S${N}.vcf.gz__
     * This is the genome VCF output for sample ${N}, which includes both variant records and compressed non-variant blocks. The sample index, ${N} is 1-indexed and corresponds to the input order of alignment files on the configuration command-line.
 
@@ -167,6 +169,32 @@ header. Any spaces found in the name will be replaced with
 underscores. If no sample name is found a default SAMPLE1, SAMPLE2,
 etc.. label will be used instead.
 
+##### Interpreting the germline multi-sample variants VCF
+
+The germline multi-sample variants VCF, `variants.vcf.gz`,  describes all potential variant loci across all analyzed
+samples. This VCF includes both high-confidence variant loci and lower-confidence potential variant loci, where
+'high-confidence variant loci' refer to those that include a variant genotype passing all filters in at least one
+sample. To ease interpretation of this file, an additional filter `NoPassedVariantGTs` is appended to the VCF `FILTER`
+field at loci lacking any samples with a variant genotype passing all sample-level filters. This allows the
+high-confidence variant loci to be queried by simply requiring the VCF `FILTER` field is set to `PASS`. For instance,
+ts/tv for high-confidence loci could be computed as follows:
+
+```bash
+bcftools stats -f PASS variants.vcf.gz | grep TSTV
+```
+
+To ease further analysis, the `NoPassedVariantGTs` filter can be updated using the script
+`updateNoPassedVariantGTsFilter.py` provided in the strelka distribution. This can be useful to refresh the
+`NoPassedVariantGTs` filter when the sample composition of the original file has changed, such as when extracting a
+subset of samples. For instance updating the filter the loci to only include variants in NA12878 abd NA12877 from joint
+analysis of a larger pedigree could be accomplished as follows:
+
+```bash
+bcftools view -s NA12878,NA12877 variants.vcf.gz |\
+python ${STRELKA_INSTALL_PATH}/libexec/updateNoPassedVariantGTsFilter.py |\
+bgzip -c >|\
+sampleSubset.variants.vcf.gz
+```
 
 #### Somatic
 
