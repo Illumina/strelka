@@ -22,7 +22,8 @@
 - Lower default local task memory requirement from 2 to 1.5 Gb (STREL-802)
   - This enables all cores on an AWS c4.8xlarge with default configuration, use `--callMemMb` option to override for unusual cases.
 - Update LowDepth filter for somatic calls to include cases where the normal sample depth is below 2 (STREL-745)
-- Update htslib/samtools to 1.6 (STREL-823)
+- Update htslib to incorporate CRAM file query fix (STREL-839/MANTA-1336)
+  - This is expected to resolve possible issues with error parameter estimation from alignments in CRAM format.
 
 ### Fixed
 - Fix empirical variant scoring (EVS) of complex somatic indels (STREL-774)
