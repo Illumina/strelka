@@ -117,9 +117,9 @@ addIndelObservation(
 
         const auto& indelKey(indelIter->first);
         const bool isPrimitive = (
-            indelKey.isMismatch() ||
-            indelKey.isPrimitiveInsertionAllele() ||
-            indelKey.isPrimitiveDeletionAllele());
+                                     indelKey.isMismatch() ||
+                                     indelKey.isPrimitiveInsertionAllele() ||
+                                     indelKey.isPrimitiveDeletionAllele());
 
         if (! isPrimitive)
         {

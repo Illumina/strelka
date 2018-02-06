@@ -5,7 +5,7 @@
   - Improves filtration for a small number of false positive indels in typical WGS analysis.
 - Add haplotyping constraints to the read alignment (STREL-743)
   - Phasing information from haplotyping is used to constrain combinations of variants within read alignments
-  - Removes rare artifact which could trigger false de-novo calls from multi-sample germline variant output, baseline false positive SNVs and indels reduced to approx half of previous count. 
+  - Removes rare artifact which could trigger false de-novo calls from multi-sample germline variant output, baseline false positive SNVs and indels reduced to approx half of previous count.
 - Add new filter to make multi-sample germline variant output easier to interpret (STREL-819)
   - Locus filter 'NoPassedVariantGTs' added when no sample has a passing variant genotype.
   - This allows passing variants to be easily extracted with the FILTER field, without querying FORMAT/GT and FORMAT/FT.

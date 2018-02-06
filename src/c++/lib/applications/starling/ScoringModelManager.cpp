@@ -232,7 +232,7 @@ classify_indel(
 
 void
 ScoringModelManager::applyDepthFilter(
-        GermlineSiteLocusInfo& locus) const
+    GermlineSiteLocusInfo& locus) const
 {
     // set LowDepth filter if DP or AD sum is below a threshold
     const unsigned sampleCount(locus.getSampleCount());
@@ -250,7 +250,7 @@ ScoringModelManager::applyDepthFilter(
 
 void
 ScoringModelManager::applyDepthFilter(
-        GermlineIndelLocusInfo& locus) const
+    GermlineIndelLocusInfo& locus) const
 {
     // set LowDepth filter if DPI or AD sum is below a threshold
     const unsigned sampleCount(locus.getSampleCount());

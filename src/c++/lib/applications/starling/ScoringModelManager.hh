@@ -59,7 +59,7 @@ struct ScoringModelManager
 
     void
     applyDepthFilter(
-            GermlineSiteLocusInfo& locus) const;
+        GermlineSiteLocusInfo& locus) const;
 
     void
     applyDepthFilter(

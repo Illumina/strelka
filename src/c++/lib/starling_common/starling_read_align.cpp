@@ -1045,7 +1045,7 @@ candidate_alignment_search(
         if ((! isCurIndelConflicting) && isCurIndelInActiveRegion)
         {
             isNextCandidateAlignmentValid = newHaplotypeStatusMap.at(curIndelActiveRegionId)
-                .updateHaplotypeStatus(curIndelHaplotypeIds, isCurIndelOn);
+                                            .updateHaplotypeStatus(curIndelHaplotypeIds, isCurIndelOn);
         }
         else
         {

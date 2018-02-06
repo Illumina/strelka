@@ -85,7 +85,7 @@ process(std::unique_ptr<GermlineIndelLocusInfo> locusPtr)
         const unsigned sampleCount(locusPtr->getSampleCount());
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
-            auto &sampleInfo(locusPtr->getSample(sampleIndex));
+            auto& sampleInfo(locusPtr->getSample(sampleIndex));
             sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::NotGenotyped);
         }
     }
