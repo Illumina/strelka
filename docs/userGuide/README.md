@@ -28,6 +28,7 @@ Strelka User Guide
   * [Execution](#execution)
     * [Advanced execution options](#advanced-execution-options)
   * [Extended use cases](#extended-use-cases)
+    * [Improving runtime for references with many short contigs, such as GRCh38](#improving-runtime-for-references-with-many-short-contigs-such-as-grch38)
     * [Exome/Targeted](#exometargeted)
     * [RNA-Seq](#rna-seq)
     * [Heteroplasmic/pooled calling](#heteroplasmicpooled-calling)
@@ -415,6 +416,44 @@ These options are useful for workflow development and debugging:
   so there is no loss of log information.
 
 ### Extended use cases
+
+#### Improving runtime for references with many short contigs, such as GRCh38
+
+For both germline and somatic analysis, Strelka may have runtime issues while attempting to process the large number of
+small decoys and unplaced/unlocalized contigs found in GRCh38 and other reference genomes. This is due to a known issue
+with read realignment sporadically experiencing substantial slowdowns on very short, high-depth contigs. Until this
+issue can be resolved, runtime can be improved for such cases by excluding  smaller contigs from analysis. This can be
+done in Strelka by creating a bed file of all the chromosomes that should be included in the analysis, and providing it
+as an argument to the [call regions configuration option](#call-regions). For instance, the following bed file could be
+provided for GRCh38 to exclude all decoys and small contigs:
+
+```
+chr1	0	248956422
+chr2	0	242193529
+chr3	0	198295559
+chr4	0	190214555
+chr5	0	181538259
+chr6	0	170805979
+chr7	0	159345973
+chr8	0	145138636
+chr9	0	138394717
+chr10	0	133797422
+chr11	0	135086622
+chr12	0	133275309
+chr13	0	114364328
+chr14	0	107043718
+chr15	0	101991189
+chr16	0	90338345
+chr17	0	83257441
+chr18	0	80373285
+chr19	0	58617616
+chr20	0	64444167
+chr21	0	46709983
+chr22	0	50818468
+chrX	0	156040895
+chrY	0	57227415
+chrM	0	16569
+```
 
 #### Exome/Targeted
 
