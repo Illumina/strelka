@@ -176,8 +176,8 @@ samples. This VCF includes both high-confidence variant loci and lower-confidenc
 'high-confidence variant loci' refer to those that include a variant genotype passing all filters in at least one
 sample. To ease interpretation of this file, an additional filter `NoPassedVariantGTs` is appended to the VCF `FILTER`
 field at loci lacking any samples with a variant genotype passing all sample-level filters. This allows the
-high-confidence variant loci to be queried by simply requiring the VCF `FILTER` field is set to `PASS`. For instance,
-ts/tv for high-confidence loci could be computed as follows:
+high-confidence variant loci to be queried by simply requiring that the VCF `FILTER` field is set to `PASS`. For
+instance, ts/tv for high-confidence loci could be computed as follows:
 
 ```bash
 bcftools stats -f PASS variants.vcf.gz | grep TSTV
@@ -186,8 +186,8 @@ bcftools stats -f PASS variants.vcf.gz | grep TSTV
 To ease further analysis, the `NoPassedVariantGTs` filter can be updated using the script
 `updateNoPassedVariantGTsFilter.py` provided in the strelka distribution. This can be useful to refresh the
 `NoPassedVariantGTs` filter when the sample composition of the original file has changed, such as when extracting a
-subset of samples. For instance updating the filter the loci to only include variants in NA12878 abd NA12877 from joint
-analysis of a larger pedigree could be accomplished as follows:
+subset of samples. For example, updating this filter to apply only to samples NA12878 and NA12877 could be accomplished
+as shown below:
 
 ```bash
 bcftools view -s NA12878,NA12877 variants.vcf.gz |\

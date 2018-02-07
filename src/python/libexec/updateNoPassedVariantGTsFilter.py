@@ -43,7 +43,7 @@ def getOptions() :
 
     from optparse import OptionParser
 
-    usage = "usage: %prog < vcf > vcf_with_refreshed_filters"
+    usage = "usage: %prog < vcf > vcf_with_updated_filters"
     parser = OptionParser(usage=usage, description=__doc__)
 
     (options,args) = parser.parse_args()
@@ -65,6 +65,69 @@ class Constants :
 
 def checkforNonZeroAllele(gtString):
     return Constants.nonZeroAllele.search(gtString)
+
+
+
+def processVariantRecordLine(outfp, line) :
+    """
+    Process each VCF variant record and write results to outfp stream after potentially modifying the record's
+    FILTER value
+    """
+    w=line.strip().split('\t')
+    filters=w[VCFID.FILTER].split(';')
+
+    assert(len(filters))
+    if filters[0] == "." or filters[0] == "PASS" : filters = []
+
+    formatTags=w[VCFID.FORMAT].split(':')
+    assert(len(formatTags))
+    if formatTags[0] == "." : formatTags = []
+
+    def getFilterField() :
+        if len(filters) == 0 :
+            return "PASS"
+        else :
+            return ";".join(filters)
+
+    def outputModifiedRecord() :
+        w[VCFID.FILTER] = getFilterField()
+        outfp.write("\t".join(w) + "\n")
+
+    def addFilterAndOutput() :
+        if Constants.filterLabel in filters :
+            outfp.write(line)
+        else :
+            filters.append(Constants.filterLabel)
+            outputModifiedRecord()
+
+    def removeFilterAndOutput() :
+        if Constants.filterLabel not in filters :
+            outfp.write(line)
+        else :
+            filters.remove(Constants.filterLabel)
+            outputModifiedRecord()
+
+    try :
+        gtIndex = formatTags.index("GT")
+        ftIndex = formatTags.index("FT")
+    except ValueError:
+        addFilterAndOutput()
+        return
+
+    isPassed=False
+    for sampleIndex in range(VCFID.FORMAT+1, len(w)) :
+        sampleVals=w[sampleIndex].split(':')
+        gt=sampleVals[gtIndex]
+        ft=sampleVals[ftIndex]
+
+        if (ft == "PASS") and checkforNonZeroAllele(gt) :
+            isPassed=True
+            break
+
+    if isPassed:
+        removeFilterAndOutput()
+    else :
+        addFilterAndOutput()
 
 
 
@@ -92,59 +155,9 @@ def main() :
             outfp.write(line)
             continue
 
-        w=line.strip().split('\t')
-        filters=w[VCFID.FILTER].split(';')
+        # Handle all remaining (non-header) content:
+        processVariantRecordLine(outfp, line)
 
-        assert(len(filters))
-        if filters[0] == "." or filters[0] == "PASS" : filters = []
-
-        formatTags=w[VCFID.FORMAT].split(':')
-        assert(len(formatTags))
-        if formatTags[0] == "." : formatTags = []
-
-        def getFilterField() :
-            if len(filters) == 0 :
-                return "PASS"
-            else :
-                return ";".join(filters)
-
-        def outputModifiedRecord() :
-            w[VCFID.FILTER] = getFilterField()
-            outfp.write("\t".join(w) + "\n")
-
-        def addFilterAndOutput() :
-            filters.append(Constants.filterLabel)
-            outputModifiedRecord()
-
-        def removeFilterAndOutput() :
-            if Constants.filterLabel not in filters :
-                outfp.write(line)
-            else :
-                filters.remove(Constants.filterLabel)
-                outputModifiedRecord()
-
-        try :
-            gtIndex = formatTags.index("GT")
-            ftIndex = formatTags.index("FT")
-        except ValueError:
-            addFilterAndOutput()
-            continue
-
-        isPassed=False
-        for sampleIndex in range(VCFID.FORMAT+1, len(w)) :
-            sampleVals=w[sampleIndex].split(':')
-            gt=sampleVals[gtIndex]
-            ft=sampleVals[ftIndex]
-
-            if (ft == "PASS") and checkforNonZeroAllele(gt) :
-                isPassed=True
-                break
-
-        if isPassed:
-            removeFilterAndOutput()
-        else :
-            addFilterAndOutput()
 
 
 main()
-
