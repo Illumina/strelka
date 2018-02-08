@@ -1,11 +1,13 @@
-## Unreleased
+## v2.9.0 - 2018-2-8
+
+This is a major update from v2.8.4. The most important change in this release is indirect: haplotype modeling and realignment have been improved such that, given the strelka2 germline VCF output of a trio at typical cWGS depth, false-positive de novo variant calls have been roughly cut in half. This is due to fixes for realignment artifacts that were too rare to noticeably impact germline call quality, but frequent relative to de novo variant rates. These changes should also accelerate the future transition to haplotype modeling for somatic variants. Many additional improvements to stability, error diagnostics, ease of use and accuracy are also included in this release, as enumerated below.
 
 ### Added
 - Add strand bias feature to germline indel scoring model (STREL-676)
   - Improves filtration for a small number of false positive indels in typical WGS analysis.
 - Add haplotyping constraints to the read alignment (STREL-743)
   - Phasing information from haplotyping is used to constrain combinations of variants within read alignments
-  - Removes rare artifact which could trigger false de-novo calls from multi-sample germline variant output, baseline false positive SNVs and indels reduced to approx half of previous count.
+  - Removes rare artifact which could trigger false de novo calls from multi-sample germline variant output, baseline false positive SNVs and indels reduced to approx half of previous count.
 - Add new filter to make multi-sample germline variant output easier to interpret (STREL-819)
   - Locus filter 'NoPassedVariantGTs' added when no sample has a passing variant genotype.
   - This allows passing variants to be easily extracted with the FILTER field, without querying FORMAT/GT and FORMAT/FT.
@@ -14,9 +16,8 @@
   - All complex alleles are also not genotyped and appear in the VCF output with this NotGenotyped filter.
 
 ### Changed
-- Change default maxiumum indel size from 50 to 49 (STREL-811)
-  - This change is made as part of an effort to better align manta with GIAB SV size range conventions, such that strelka and manta together provide
-    complete, non-overlapping coverage over the full indel spectrum using default settings.
+- Change default maximum indel size from 50 to 49 (STREL-811)
+  - This change is made as part of an effort to better align manta with GIAB SV size range conventions, such that strelka and manta together provide complete, non-overlapping coverage over the full indel spectrum using default settings.
 - Remove preliminary step which counts the 'mappable' (non-N) size of the genome (STREL-772)
   - This has a legacy use in identifying noisy alignments. Now replaced with a simplified scheme.
 - Lower default local task memory requirement from 2 to 1.5 Gb (STREL-802)
@@ -30,7 +31,7 @@
   - Previously the EVS model was overly pessimistic against complex somatic indels. This is now fixed by changing how EVS input features are computed for complex indels.
 - Fix default sample name used in the VCF output for germline analysis (STREL-737)
   - Default is used when sample name cannot be parsed from the BAM header. Now fixed to insert SAMPLE1, SAMPLE2, etc. as documented.
-- Fix rare instance where strand bias (SAMPLE/SB) is 'inf' (STREL-741)
+- Fix rare instance where strand bias (FORMAT/SB) is 'inf' (STREL-741)
 - Provide clear error message when attempting to configure/run with python3 (STREL-762)
 - Fix python configure scripts to make maximum reported indel size configurable (STREL-763)
   - This can be done by configuring the maxIndelSize value inside the .ini file.
@@ -38,7 +39,7 @@
 - Stop automatically clearing python environment variables (STREL-810)
   - This should allow python from certain module systems to be used, but may (rarely) cause instability due to conflicting content in a user's PYTHONPATH.
 - Standardize germline FORMAT/GQ VCF tag to Integer type (STREL-812)
-- Fix the issue that low depth filter is not applied to continuous variant frequency (e.g. Mitochondrial) calls (STREL-803)
+- Fix the issue that low depth filter is not applied to continuous variant frequency (e.g. mitochondrial) calls (STREL-803)
 
 ## v2.8.4 - 2017-10-23
 
