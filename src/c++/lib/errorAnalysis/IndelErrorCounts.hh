@@ -25,11 +25,11 @@
 
 #include "blt_util/RecordTracker.hh"
 
-#include "boost/array.hpp"
 #include "boost/serialization/array.hpp"
 #include "boost/serialization/level.hpp"
 #include "boost/serialization/map.hpp"
 
+#include <array>
 #include <iosfwd>
 #include <map>
 #include <numeric>
@@ -341,8 +341,7 @@ struct IndelErrorContextObservation
 
     /// Number of reads supporting various categories of indel alleles.
     /// The indel allele categories are pre-defined and static.
-    // note: can't get std::array to serialize correctly on clang, so using boost::array instead
-    boost::array<unsigned,INDEL_SIGNAL_TYPE::SIZE> signalCounts;
+    std::array<unsigned,INDEL_SIGNAL_TYPE::SIZE> signalCounts;
 };
 
 std::ostream&
@@ -409,7 +408,7 @@ struct ExportedIndelObservations
     double refObservations;
 
     /// Number of supporting observations of the alt allele
-    boost::array<unsigned,INDEL_SIGNAL_TYPE::SIZE> altObservations;
+    std::array<unsigned,INDEL_SIGNAL_TYPE::SIZE> altObservations;
 
     /// Status of indel -- has it been supplied previously as a known variant
     GENOTYPE_STATUS::genotype_t variantStatus = GENOTYPE_STATUS::UNKNOWN;
