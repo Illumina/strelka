@@ -115,7 +115,15 @@ endif()
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
 function(get_compiler_name_version compiler_name compiler_version)
-    execute_process(COMMAND ${compiler_name} -dumpversion OUTPUT_VARIABLE this_version)
+    # behavior of dumpversion changed in gcc 7+, so try the newer "-dumpfullversion" command first, see if it fails,
+    # and if so, go back to the old "-dumpversion" method:
+    execute_process(COMMAND ${compiler_name} -dumpfullversion OUTPUT_VARIABLE this_version RESULT_VARIABLE exit_code ERROR_QUIET)
+    if (${exit_code})
+        execute_process(COMMAND ${compiler_name} -dumpversion OUTPUT_VARIABLE this_version RESULT_VARIABLE exit_code)
+        if (${exit_code})
+            message (FATAL_ERROR "Can't determine version of compiler ${compiler_name}.")
+        endif ()
+    endif ()
     STRING(REGEX REPLACE "(\r?\n)+$" "" this_version "${this_version}")
     set(${compiler_version} ${this_version} PARENT_SCOPE)
 endfunction()
@@ -299,6 +307,10 @@ if     (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     if (NOT (${COMPILER_VERSION} VERSION_LESS "6.1"))
         append_args(CXX_WARN_FLAGS "-Wshift-negative-value -Wshift-overflow=2 -Wduplicated-cond")
         #append_args(CXX_WARN_FLAGS "-Wnull-dereference")
+    endif ()
+
+    if (NOT (${COMPILER_VERSION} VERSION_LESS "7.1"))
+        append_args(CXX_WARN_FLAGS "-Wduplicated-branches")
     endif ()
 
 elseif (${IS_CLANGXX})

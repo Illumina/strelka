@@ -25,6 +25,7 @@
 #include <iostream>
 
 
+
 snoise_pos_processor::
 snoise_pos_processor(
     const snoise_options& opt,
@@ -92,22 +93,25 @@ process_pos_snp_snoise(
     const unsigned n_used_calls(good_pi.calls.size());
     if (n_used_calls < min_used_calls) return;
 
-    std::array<unsigned,N_BASE> base_count;
+    const auto ref_id(base_to_id(good_pi.get_ref_base()));
+
+    // don't process sites where the reference base is ambiguous
+    if (ref_id >= BASE_ID::ANY) return;
+
+    std::array<unsigned,BASE_ID::ANY> base_count;
     std::fill(base_count.begin(),base_count.end(),0);
 
     for (const auto& bc : good_pi.calls)
     {
-        assert(bc.base_id!=BASE_ID::ANY);
+        assert(bc.base_id<BASE_ID::ANY);
         base_count[bc.base_id]++;
     }
 
-    const auto ref_id(base_to_id(good_pi.get_ref_base()));
     const unsigned ref_count(base_count[ref_id]);
-
     if (ref_count == n_used_calls) return;
 
     unsigned alt_id( (ref_id==0) ? 1 : 0);
-    for (unsigned i(1); i<N_BASE; ++i)
+    for (unsigned i(1); i<BASE_ID::ANY; ++i)
     {
         if (i == ref_id) continue;
         if (i == alt_id) continue;
