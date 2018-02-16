@@ -1,3 +1,8 @@
+## Unreleased
+
+### Fixed
+- Fix build for gcc7+ and boost-1.64+ (STREL-824)
+
 ## v2.9.0 - 2018-2-8
 
 This is a major update from v2.8.4. The most important change in this release is indirect: haplotype modeling and realignment have been improved such that, given the strelka2 germline VCF output of a trio at typical cWGS depth, false-positive de novo variant calls have been roughly cut in half. This is due to fixes for realignment artifacts that were too rare to noticeably impact germline call quality, but frequent relative to de novo variant rates. These changes should also accelerate the future transition to haplotype modeling for somatic variants. Many additional improvements to stability, error diagnostics, ease of use and accuracy are also included in this release, as enumerated below.
