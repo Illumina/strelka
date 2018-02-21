@@ -1,6 +1,8 @@
 ## Unreleased
 
 ### Fixed
+- Standardize header description of somatic snv and indel LowDepth filters
+  - This allows merging of the snv and indel vcf files.
 - Fix build for gcc7+ and boost-1.64+ (STREL-824)
 
 ## v2.9.0 - 2018-2-8
