@@ -22,5 +22,3 @@ add_subdirectory (lib)
 add_subdirectory (libexec)
 
 add_subdirectory (scoringModelTraining)
-
-add_subdirectory (tests)

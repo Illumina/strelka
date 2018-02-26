@@ -2,8 +2,6 @@ import os,sys
 import unittest
 
 scriptDir=os.path.abspath(os.path.dirname(__file__))
-scriptName=os.path.basename(__file__)
-
 targetDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_PYTHON_LIBDIR@"))
 sys.path.append(targetDir)
 

@@ -17,10 +17,6 @@
 #
 #
 
-#
-# \author Chris Saunders
-#
-
 # final installation path:
 set(INSTALL_TO_DIR "${THIS_PYTHON_LIBDIR}")
 
@@ -39,7 +35,7 @@ endforeach()
 
 # build-time configuration:
 #
-# buildConfig.py needs to be configured at build time, this actually doubles
+# configBuildTimeInfo.py needs to be configured at build stage, instead of at cmake configuration stage
 #
 set (PY_BUILD_CONFIG_TARGET "${THIS_PROJECT_NAME}_python_buildtime_config")
 add_custom_target(
@@ -74,11 +70,10 @@ if (PYTHONINTERP_FOUND)
         DEPENDS ${PY_BUILD_CONFIG_TARGET})
 endif ()
 
+# run unit tests:
+add_subdirectory (tests)
 
 
-#
-# install
-#
+# install:
 include("${THIS_MACROS_CMAKE}")
 install_python_lib_dir("${PYSTAGE_DIR}" "${INSTALL_TO_DIR}")
-
