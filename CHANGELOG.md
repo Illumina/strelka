@@ -1,4 +1,6 @@
-## Unreleased
+## v2.9.1 - 2018-2-28
+
+This is a minor bugfix update from v2.8.1.
 
 ### Fixed
 - Standardize header description of somatic snv and indel LowDepth filters (STREL-849)
@@ -73,7 +75,7 @@ for male non-PAR chrX, or any region given a ploidy of 1 in the ploidy VCF file.
 
 ## v2.8.3 - 2017-09-22
 
-This is a bugfix update from v2.8.2
+This is a bugfix update from v2.8.2.
 
 ### Fixed
 - Make minor correction to the non-error term used during adaptive indel error estimation (STREL-705)
@@ -84,14 +86,14 @@ This is a bugfix update from v2.8.2
 
 ## v2.8.2 - 2017-08-03
 
-This is a minor bugfix update from v2.8.1
+This is a minor bugfix update from v2.8.1.
 
 ### Fixed
 - Fix haplotype model issue occurring when contigs have no sequence coverage (STREL-653)
 
 ## v2.8.1 - 2017-08-02
 
-This is minor bugfix update from v2.8.0
+This is minor bugfix update from v2.8.0.
 
 ### Fixed
 - Fix allele noise filtration to synchronize across multiple samples (STREL-650)
@@ -100,7 +102,7 @@ This is minor bugfix update from v2.8.0
 
 ## v2.8.0 - 2017-07-14
 
-This is a major feature update from v2.7.1
+This is a major feature update from v2.7.1.
 
 - STREL-608 Fix hang after error during adaptive estimation
 - STREL-610 Fix workflow resumption after interrupt
