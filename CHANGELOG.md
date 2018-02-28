@@ -1,6 +1,6 @@
 ## v2.9.1 - 2018-2-28
 
-This is a minor bugfix update from v2.8.1.
+This is a minor bugfix update from v2.9.0.
 
 ### Fixed
 - Standardize header description of somatic snv and indel LowDepth filters (STREL-849)
