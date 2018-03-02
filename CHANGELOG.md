@@ -5,7 +5,7 @@ This is a minor bugfix update from v2.9.1.
 ### Changed
 - Turn on automated task resubmission for all workflow run modes (STREL-852)
   - Failed tasks have always been automatically resubmitted in SGE mode, this is now extended to localhost mode as well.
-  - This change is intended to work around sporatic I/O issues on network filesystems.
+  - This change is intended to work around sporadic I/O issues on network filesystems.
 
 ### Fixed
 - Update to pyflow v1.1.20 to close infrequent race condition in task resolution (STREL-853)
