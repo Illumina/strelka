@@ -1,4 +1,6 @@
-## Unreleased
+## v2.9.2 - 2018-03-02
+
+This is a minor bugfix update from v2.9.1.
 
 ### Changed
 - Turn on automated task resubmission for all workflow run modes (STREL-852)
