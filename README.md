@@ -36,7 +36,7 @@ for full build and installation details.
 
 ### Run configuration and execution
 
-Strelka is run in wo steps: (1) configuration (specifying input data and options) and 
+Strelka is run in two steps: (1) configuration (specifying input data and options) and 
 (2) workflow execution (specifying parameters on how strelka is executed). The second execution step can also be interrupted and restarted without changing the final result of the workflow. 
 
 #### Configuration
@@ -57,11 +57,17 @@ Example configuration for somatic calling:
     --ref ${REFERENCE}.fa \
     --runDir ${STRELKA_ANALYSIS_PATH}
 
-For references with decoys, it is strongly recommended to provide callable regions by adding:
+[excludeContigs]:https://git.illumina.com/Bioinformatics/strelkadev/blob/develop/docs/userGuide/README.md#improving-runtime-for-references-with-many-short-contigs-such-as-grch38
+
+For references with many short contigs, it is strongly recommended to 
+[provide callable regions to avoid possible runtime issues][excludeContigs]:
 
     --callRegions ${CALLABLE_REGION_FILE}.bed.gz 
 
-For somatic calling, it is recommended to provide indel candidates from the [Manta SV and indel caller][manta]: 
+[mantaCandidates]: https://git.illumina.com/Bioinformatics/strelkadev/blob/develop/docs/userGuide/README.md#somatic-configuration-example
+
+For somatic calling, it is recommended to [provide indel candidates from the Manta SV and indel caller][mantaCandidates]
+to improve sensitivity to call indels of size larger than 20: 
 
     --indelCandidates ${MANTA_ANALYSIS_PATH}/results/variants/candidateSmallIndels.vcf.gz
 
@@ -79,12 +85,11 @@ Example execution on an SGE cluster:
 
     ${STRELKA_ANALYSIS_PATH}/runWorkflow.py -m sge -j $NUM_JOBS
 
-For a full list of execution options, see:
+[runWorkflowUserGuide]: https://git.illumina.com/Bioinformatics/strelkadev/blob/develop/docs/userGuide/README.md#execution
 
-    ${STRELKA_ANALYSIS_PATH}/runWorkflow.py -h
+For more details see [the Execution section in the user guide][runWorkflowUserGuide].
 
-
-See the [Strelka user guide][UserGuide] for full instructions on how to run Strelka, 
+Refer to the [Strelka user guide][UserGuide] for full instructions on how to run Strelka, 
 interpret results and estimate hardware requirements/compute cost, 
 in addition to a high-level methods overview.
 
