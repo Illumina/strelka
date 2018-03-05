@@ -13,85 +13,13 @@ call confidence. For best somatic indel performance, Strelka is designed to be r
 [preprint]:http://dx.doi.org/10.1101/192872
 [gvcfPage]:https://sites.google.com/site/gvcftools/home/about-gvcf
 [manta]:https://github.com/Illumina/manta
+[QuickStart]:docs/userGuide/quickStart.md
 [UserGuide]:docs/userGuide/README.md
 
-Quick Start
+Getting Started
 ---------------
+Getting started with a [quick start guide][QuickStart]. For full instructions, refer to the [Strelka user guide][UserGuide].
 
-### Installation
-For Linux users, it is recommended to start from the most recent
-[binary distribution on the Strelka releases page][releases] (replace x.y.z with a Strelka version):
-```bash
-wget https://github.com/Illumina/strelka/releases/download/v2.9.1/strelka-x.y.z.centos6_x86_64.tar.bz2
-tar xvjf strelka-x.y.z.centos6_x86_64.tar.bz2
-```
-This distribution can be unpacked, moved to any convenient directory and
-tested by [running a small demo](docs/userGuide/installation.md#demo)
-included with the release distribution. Strelka can also be installed
-from source code. Please see the [installation instructions](docs/userGuide/installation.md)
-for full build and installation details.
-
-[releases]:https://github.com/Illumina/strelka/releases
-
-
-### Run configuration and execution
-
-Strelka is run in two steps: (1) configuration (specifying input data and options) and 
-(2) workflow execution (specifying parameters on how strelka is executed). The second execution step can also be interrupted and restarted without changing the final result of the workflow. 
-
-#### Configuration
-Example configuration for germline calling:
-
-    ${STRELKA_INSTALL_PATH}/bin/configureStrelkaGermlineWorkflow.py \
-    --bam ${ALIGNMENT_FILE1}.bam \
-    --bam ${ALIGNMENT_FILE2}.bam \
-    --bam ${ALIGNMENT_FILE3}.bam \
-    --ref ${REFERENCE}.fa \
-    --runDir ${STRELKA_ANALYSIS_PATH}
-
-Example configuration for somatic calling:
-
-    ${STRELKA_INSTALL_PATH}/bin/configureStrelkaSomaticWorkflow.py \
-    --normalBam ${NORMAL}.bam \
-    --tumorBam ${TUMOR}.bam \
-    --ref ${REFERENCE}.fa \
-    --runDir ${STRELKA_ANALYSIS_PATH}
-
-[excludeContigs]:https://git.illumina.com/Bioinformatics/strelkadev/blob/develop/docs/userGuide/README.md#improving-runtime-for-references-with-many-short-contigs-such-as-grch38
-
-For references with many short contigs, it is strongly recommended to 
-[provide callable regions to avoid possible runtime issues][excludeContigs]:
-
-    --callRegions ${CALLABLE_REGION_FILE}.bed.gz 
-
-[mantaCandidates]: https://git.illumina.com/Bioinformatics/strelkadev/blob/develop/docs/userGuide/README.md#somatic-configuration-example
-
-For somatic calling, it is recommended to [provide indel candidates from the Manta SV and indel caller][mantaCandidates]
-to improve sensitivity to call indels of size larger than 20: 
-
-    --indelCandidates ${MANTA_ANALYSIS_PATH}/results/variants/candidateSmallIndels.vcf.gz
-
-For a full list of execution options, see:
-
-    ${STRELKA_INSTALL_PATH}/configureStrelkaGermlineWorkflow.py -h
-
-#### Workflow execution
-
-Example execution on a single node:
-
-    ${STRELKA_ANALYSIS_PATH}/runWorkflow.py -m local -j $NUM_JOBS
-
-Example execution on an SGE cluster:
-
-    ${STRELKA_ANALYSIS_PATH}/runWorkflow.py -m sge -j $NUM_JOBS
-
-[runWorkflowUserGuide]: https://git.illumina.com/Bioinformatics/strelkadev/blob/develop/docs/userGuide/README.md#execution
-
-For more details see [the Execution section in the user guide][runWorkflowUserGuide].
-
-Refer to the [Strelka user guide][UserGuide] for full instructions on how to run Strelka, 
-interpret results and estimate hardware requirements/compute cost, 
-in addition to a high-level methods overview.
 
 License
 -------
@@ -100,7 +28,6 @@ Strelka source code is provided under the [GPLv3 license](LICENSE.txt).
 Strelka includes several third party packages provided under other
 open source licenses, please see [COPYRIGHT.txt](COPYRIGHT.txt)
 for additional details.
-
 
 
 Strelka Code Development
