@@ -1,14 +1,14 @@
-Strelka2 Quick Start
+Strelka Quick Start
 ====================
 
 [releases]:https://github.com/Illumina/strelka/releases
 
 ### Installation
 For Linux users, it is recommended to start from the most recent
-[binary distribution on the Strelka releases page][releases] (replace x.y.z with a Strelka version):
+[binary distribution on the Strelka releases page][releases] (replace 2.9.2 with a Strelka version):
 ```bash
-wget https://github.com/Illumina/strelka/releases/download/v2.9.1/strelka-x.y.z.centos6_x86_64.tar.bz2
-tar xvjf strelka-x.y.z.centos6_x86_64.tar.bz2
+wget https://github.com/Illumina/strelka/releases/download/v2.9.2/strelka-2.9.2.centos6_x86_64.tar.bz2
+tar xvjf strelka-2.9.2.centos6_x86_64.tar.bz2
 ```
 Strelka can also be installed from source code. Please see the [installation instructions](docs/userGuide/installation.md)
 for full build and installation details.
@@ -20,21 +20,25 @@ Strelka is run in two steps: (1) configuration (specifying input data and option
 
 Example for germline calling:
 
-    strelka-x.y.z.centos6_x86_64/bin/configureStrelkaGermlineWorkflow.py \
-        --bam strelka-x.y.z.centos6_x86_64/share/demo/strelka/data/NA12891_demo20.bam \
-        --bam strelka-x.y.z.centos6_x86_64/share/demo/strelka/data/NA12892_demo20.bam \
-        --ref strelka-x.y.z.centos6_x86_64/share/demo/strelka/data/demo20.fa \
+    # configuration
+    ${STRELKA_INSTALL_PATH}/bin/configureStrelkaGermlineWorkflow.py \
+        --bam sample1.bam \
+        --bam sample2.bam \
+        --ref hg38.fa \
         --runDir demo_germline
-    demo_germline/runWorkflow.py -m local -j 1
+    # execution on a single local machine with 20 parallel jobs 
+    demo_germline/runWorkflow.py -m local -j 20
 
 Example for somatic calling:
 
-    strelka-x.y.z.centos6_x86_64/bin/configureStrelkaSomaticWorkflow.py \
-        --normalBam strelka-x.y.z.centos6_x86_64/share/demo/strelka/data/NA12891_demo20.bam \
-        --tumorBam strelka-x.y.z.centos6_x86_64/share/demo/strelka/data/NA12892_demo20.bam \
-        --ref strelka-x.y.z.centos6_x86_64/share/demo/strelka/data/demo20.fa \
+    # configuration
+    ${STRELKA_INSTALL_PATH}/bin/configureStrelkaSomaticWorkflow.py \
+        --normalBam normal.bam \
+        --tumorBam tumor.bam \
+        --ref hg38.fa \
         --runDir demo_somatic
-    demo_somatic/runWorkflow.py -m local -j 1
+    # execution on a single local machine with 20 parallel jobs 
+    demo_somatic/runWorkflow.py -m local -j 20
 
 [excludeContigs]:README.md#improving-runtime-for-references-with-many-short-contigs-such-as-grch38
 [mantaCandidates]: README.md#somatic-configuration-example
