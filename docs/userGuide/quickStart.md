@@ -7,8 +7,12 @@ Strelka Quick Start
 For Linux users, it is recommended to start from the most recent
 [binary distribution on the Strelka releases page][releases] (replace 2.9.2 with a Strelka version):
 ```bash
+# download strelka binary
 wget https://github.com/Illumina/strelka/releases/download/v2.9.2/strelka-2.9.2.centos6_x86_64.tar.bz2
+# decompress
 tar xvjf strelka-2.9.2.centos6_x86_64.tar.bz2
+# run demo to verify successful installation
+bash strelka-2.9.2.centos6_x86_64/bin/runStrelkaSomaticWorkflowDemo.bash
 ```
 Strelka can also be installed from source code. Please see the [installation instructions](docs/userGuide/installation.md)
 for full build and installation details.

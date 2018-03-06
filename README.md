@@ -18,8 +18,11 @@ call confidence. For best somatic indel performance, Strelka is designed to be r
 
 Getting Started
 ---------------
-Getting started with a [quick start guide][QuickStart]. For full instructions, refer to the [Strelka user guide][UserGuide].
+To get started installing and using Strelka, please consult the [quick start guide][QuickStart]. 
 
+Data Analysis and Interpretation
+---------------
+After completing installation and reviewing the quick start guide, see the [Strelka user guide][UserGuide] for full instructions on how to run Strelka, interpret results and estimate hardware requirements/compute cost, in addition to a high-level methods overview.
 
 License
 -------
