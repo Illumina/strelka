@@ -23,26 +23,28 @@ Strelka is run in two steps: (1) configuration (specifying input data and option
 (2) workflow execution (specifying parameters on how strelka is executed). The second execution step can also be interrupted and restarted without changing the final result of the workflow. 
 
 Example for germline calling:
-
-    # configuration
-    ${STRELKA_INSTALL_PATH}/bin/configureStrelkaGermlineWorkflow.py \
-        --bam sample1.bam \
-        --bam sample2.bam \
-        --ref hg38.fa \
-        --runDir demo_germline
-    # execution on a single local machine with 20 parallel jobs 
-    demo_germline/runWorkflow.py -m local -j 20
+```bash
+# configuration
+${STRELKA_INSTALL_PATH}/bin/configureStrelkaGermlineWorkflow.py \
+    --bam sample1.bam \
+    --bam sample2.bam \
+    --ref hg38.fa \
+    --runDir demo_germline
+# execution on a single local machine with 20 parallel jobs 
+demo_germline/runWorkflow.py -m local -j 20
+```
 
 Example for somatic calling:
-
-    # configuration
-    ${STRELKA_INSTALL_PATH}/bin/configureStrelkaSomaticWorkflow.py \
-        --normalBam normal.bam \
-        --tumorBam tumor.bam \
-        --ref hg38.fa \
-        --runDir demo_somatic
-    # execution on a single local machine with 20 parallel jobs 
-    demo_somatic/runWorkflow.py -m local -j 20
+```bash
+# configuration
+${STRELKA_INSTALL_PATH}/bin/configureStrelkaSomaticWorkflow.py \
+    --normalBam normal.bam \
+    --tumorBam tumor.bam \
+    --ref hg38.fa \
+    --runDir demo_somatic
+# execution on a single local machine with 20 parallel jobs 
+demo_somatic/runWorkflow.py -m local -j 20
+```
 
 [excludeContigs]:README.md#improving-runtime-for-references-with-many-short-contigs-such-as-grch38
 [mantaCandidates]: README.md#somatic-configuration-example
