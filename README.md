@@ -13,7 +13,16 @@ call confidence. For best somatic indel performance, Strelka is designed to be r
 [preprint]:http://dx.doi.org/10.1101/192872
 [gvcfPage]:https://sites.google.com/site/gvcftools/home/about-gvcf
 [manta]:https://github.com/Illumina/manta
+[QuickStart]:docs/userGuide/quickStart.md
 [UserGuide]:docs/userGuide/README.md
+
+Getting Started
+---------------
+To get started installing and using Strelka, please consult the [quick start guide][QuickStart]. 
+
+Data Analysis and Interpretation
+---------------
+After completing installation and reviewing the quick start guide, see the [Strelka user guide][UserGuide] for full instructions on how to run Strelka, interpret results and estimate hardware requirements/compute cost, in addition to a high-level methods overview.
 
 License
 -------
@@ -22,29 +31,6 @@ Strelka source code is provided under the [GPLv3 license](LICENSE.txt).
 Strelka includes several third party packages provided under other
 open source licenses, please see [COPYRIGHT.txt](COPYRIGHT.txt)
 for additional details.
-
-
-Getting Started
----------------
-
-For Linux users, it is recommended to start from the most recent
-[binary distribution on the Strelka releases page][releases], this
-distribution can be unpacked, moved to any convenient directory and
-tested by [running a small demo](docs/userGuide/installation.md#demo)
-included with the release distribution. Strelka can also be installed
-and run on OS X. Please see the [installation instructions](docs/userGuide/installation.md)
-for full build and installation details of all supported cases.
-
-[releases]:https://github.com/Illumina/strelka/releases
-
-
-Data Analysis and Interpretation
---------------------------------
-
-After completing installation, see the [Strelka user guide][UserGuide]
-for instructions on how to run Strelka, interpret results and estimate
-hardware requirements/compute cost, in addition to a high-level methods
-overview.
 
 
 Strelka Code Development
