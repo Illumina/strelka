@@ -101,9 +101,12 @@ getSubRegionsFromBedTrack(
     {
         bool isStartNewSubRegion(true);
         const bed_record& callRegion(*(callRegionStream.get_record_ptr()));
-        assert(callRegion.end > callRegion.begin);
 
-        if (not subRegionRanges.empty())
+        // Note that the bed streamer class should, depending on how it was parameterized, either throw an exception or
+        // filter invalid records already. Therefore, a simple assertion is sufficient here.
+        assert(callRegion.is_valid());
+
+        if (! subRegionRanges.empty())
         {
             {
                 // assert that the bed file is sorted (this is redundant with the tabix indexing requirement):

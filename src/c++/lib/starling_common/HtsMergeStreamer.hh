@@ -79,24 +79,34 @@ template <> inline index_t getStreamType<bed_streamer>()
 }
 
 template <typename T>
-T* htsTypeFactory(const char* htsFilename, const char* /*referenceFilename*/, const char* region, const bool /*isRequireNormalized*/)
+T* htsTypeFactory(
+    const char* htsFilename, const char* /*referenceFilename*/, const char* region, const bool /*requireNormalized*/)
 {
     return new T(htsFilename, region);
 }
 template <>
-inline bam_streamer* htsTypeFactory(const char* htsFilename, const char* referenceFilename, const char* region, const bool /*isRequireNormalized*/)
+inline bam_streamer* htsTypeFactory(
+    const char* htsFilename, const char* referenceFilename, const char* region, const bool /*requireNormalized*/)
 {
     return new bam_streamer(htsFilename, referenceFilename, region);
 }
 template <>
-inline vcf_streamer* htsTypeFactory(const char* htsFilename, const char* /*referenceFilename*/, const char* region, const bool isRequireNormalized)
+inline bed_streamer* htsTypeFactory(
+    const char* htsFilename, const char* /*referenceFilename*/, const char* region, const bool requireNonZeroRegionLength)
 {
-    return new vcf_streamer(htsFilename, region, isRequireNormalized);
+    return new bed_streamer(htsFilename, region, requireNonZeroRegionLength);
+}
+template <>
+inline vcf_streamer* htsTypeFactory(
+    const char* htsFilename, const char* /*referenceFilename*/, const char* region, const bool requireNormalized)
+{
+    return new vcf_streamer(htsFilename, region, requireNormalized);
 }
 }
 
 
-///
+/// An object which can register various htslib files and stream the merged output of all registered files for
+/// a specified genomic region.
 struct HtsMergeStreamer
 {
     explicit
@@ -122,21 +132,26 @@ struct HtsMergeStreamer
         return registerHtsType(bamFilename, index,_data._bam);
     }
 
+    /// \param[in] requireNonZeroRegionLength If true, an exception is thrown for any input bed record which with region
+    ///                                       size of 0 or less, otherwise such records are skipped without error.
     const bed_streamer&
     registerBed(
         const std::string& bedFilename,
-        const unsigned index = 0)
+        const unsigned index = 0,
+        const bool requireNonZeroRegionLength = true)
     {
-        return registerHtsType(bedFilename,index,_data._bed);
+        return registerHtsType(bedFilename,index,_data._bed, requireNonZeroRegionLength);
     }
 
+    /// \param[in] requireNormalized if true an exception is thrown for any input variant records which are not
+    ///                              normalized (see \ref vcf_streamer for definition)
     const vcf_streamer&
     registerVcf(
         const std::string& vcfFilename,
         const unsigned index = 0,
-        const bool isRequireNormalized = true)
+        const bool requireNormalized = true)
     {
-        return registerHtsType(vcfFilename,index,_data._vcf, isRequireNormalized);
+        return registerHtsType(vcfFilename,index,_data._vcf, requireNormalized);
     }
 
     /// Reset the region over which all files scanned
@@ -282,19 +297,21 @@ private:
         return _order[orderIndex].userIndex;
     }
 
+    /// \param[in] isHighStringencyMode If true an exception is thrown for any input records which do not meet a high
+    ///                                 stringency validation criteria. This criteria is different for each HTS record type.
     template <typename T>
     const T&
     registerHtsType(
         const std::string& htsFilename,
         const unsigned index,
         std::vector<std::unique_ptr<T>>& htsStreamerVec,
-        const bool isRequireNormalized = false)
+        const bool isHighStringencyMode = false)
     {
         static const HTS_TYPE::index_t htsType(HTS_TYPE::getStreamType<T>());
         assert(! _isStreamBegin);
         const unsigned htsTypeIndex(htsStreamerVec.size());
         const unsigned orderIndex(_order.size());
-        htsStreamerVec.emplace_back(HTS_TYPE::htsTypeFactory<T>(htsFilename.c_str(), _referenceFilename.c_str(), getRegionPtr(), isRequireNormalized));
+        htsStreamerVec.emplace_back(HTS_TYPE::htsTypeFactory<T>(htsFilename.c_str(), _referenceFilename.c_str(), getRegionPtr(), isHighStringencyMode));
         _order.emplace_back(htsType, index, htsTypeIndex);
         queueItem(orderIndex);
         return *(htsStreamerVec.back());

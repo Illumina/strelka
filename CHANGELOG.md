@@ -1,3 +1,9 @@
+## Unreleased
+
+### Changed
+
+- Add strict checks and improve error message for BED regions of size less than one (STREL-865/[#36])
+
 ## v2.9.2 - 2018-03-02
 
 This is a minor bugfix update from v2.9.1.
