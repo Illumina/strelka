@@ -26,8 +26,8 @@ for full build and installation details.
 
 ### Configuration and execution
 
-Strelka is run in two steps: (1) configuration (specifying input data and options) and 
-(2) workflow execution (specifying parameters on how strelka is executed). The second execution step can also be interrupted and restarted without changing the final result of the workflow. 
+Strelka is run in two steps: (1) configuration (specifying input data and options) and
+(2) workflow execution (specifying parameters on how strelka is executed). The second execution step can also be interrupted and restarted without changing the final result of the workflow.
 
 Example for germline calling:
 ```bash
@@ -37,7 +37,7 @@ ${STRELKA_INSTALL_PATH}/bin/configureStrelkaGermlineWorkflow.py \
     --bam sample2.bam \
     --ref hg38.fa \
     --runDir demo_germline
-# execution on a single local machine with 20 parallel jobs 
+# execution on a single local machine with 20 parallel jobs
 demo_germline/runWorkflow.py -m local -j 20
 ```
 
@@ -49,7 +49,7 @@ ${STRELKA_INSTALL_PATH}/bin/configureStrelkaSomaticWorkflow.py \
     --tumorBam tumor.bam \
     --ref hg38.fa \
     --runDir demo_somatic
-# execution on a single local machine with 20 parallel jobs 
+# execution on a single local machine with 20 parallel jobs
 demo_somatic/runWorkflow.py -m local -j 20
 ```
 
@@ -58,14 +58,14 @@ demo_somatic/runWorkflow.py -m local -j 20
 
 ### Tips
 
-For references with many short contigs, it is strongly recommended to 
+For references with many short contigs, it is strongly recommended to
 [provide callable regions to avoid possible runtime issues][excludeContigs]:
 
-    --callRegions callable.bed.gz 
+    --callRegions callable.bed.gz
 
 
 For somatic calling, it is recommended to [provide indel candidates from the Manta SV and indel caller][mantaCandidates]
-to improve sensitivity to call indels of size 20 or larger: 
+to improve sensitivity to call indels of size 20 or larger:
 
     --indelCandidates candidateSmallIndels.vcf.gz
 
@@ -76,6 +76,6 @@ For exome and amplicon inputs, add:
 ### User guide
 
 [UserGuide]: README.md
-Refer to the [Strelka user guide][UserGuide] for full instructions on how to run Strelka, 
-interpret results and estimate hardware requirements/compute cost, 
+Refer to the [Strelka user guide][UserGuide] for full instructions on how to run Strelka,
+interpret results and estimate hardware requirements/compute cost,
 in addition to a high-level methods overview.
