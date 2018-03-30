@@ -147,8 +147,11 @@ indicated by the environment variable `BOOST_ROOT`.
 
 If not detected, then versions of cmake and boost will be built from source and installed to temporary locations under
 the build directory automatically. This step can make installation more convenient, but does increase the time
-requiered for configuration. To accelerate this process the configuration step can be parallelized over multiple cores,
+required for configuration. To accelerate this process the configuration step can be parallelized over multiple cores,
 as demonstrated in the example above with the`--jobs=4` argument to configure.
+
+On a typical workstation using 4 cores, installation from source should take 5-10 minutes, depending on whether the
+cmake and boost dependencies discussed above need to be built from source.
 
 To see more configure options, run:
 
@@ -171,4 +174,5 @@ above, the somatic demo can be run as follows:
 This script creates a `StrelkaSomaticDemoAnalysis` directory under the current
 working directory, runs the Strelka somatic workflow on a small demo dataset,
 and compares the somatic small variant output to an expected result. A similar
-script is provided for the germline analysis workflow.
+script is provided for the germline analysis workflow. Both demos should complete
+in less than 1 minute on a typical workstation.
