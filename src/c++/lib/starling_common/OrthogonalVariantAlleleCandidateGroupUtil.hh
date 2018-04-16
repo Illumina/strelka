@@ -36,7 +36,7 @@ getAlleleGroupUnionReadIds(
     const bool isTier1Only);
 
 
-/// Find all readIds for which a likelihood has been computed for all alleles in this group
+/// Find all readIds for which a likelihood has been computed for all alleles in \p alleleGroup
 ///
 void
 getAlleleGroupIntersectionReadIds(
@@ -84,11 +84,12 @@ getAlleleNaivePosteriorFromRead(
 
 /// Rank the input allele set according to supporting read evidence in the indicated sample.
 ///
-/// \param[in] sampleIndex Index of the sample from which ranking evidence will be drawn
-/// \param[in] alleleGroup Unsorted list of input alleles
-/// \param[out] rankedAlleleGroup Ranked list of the input alleles
-/// \param[out] referenceRank Rank of the reference allele if it did exist in alleleGroup, for instance referenceRank
-/// of 0 indicates that reference is the most likely allele.
+/// \param[in] sampleIndex Zero-based index of the sample from which ranking evidence will be drawn
+/// \param[in] alleleGroup Unsorted list of alternate alleles, at least one alternate allele must be provided
+/// \param[out] rankedAlleleGroup Ranked list of the input alleles, this is object is cleared on input and has size equal to
+///                               alleleGroup on output
+/// \param[out] referenceRank Zero-based rank of the reference allele if it did exist in alleleGroup, for instance
+///                           \p referenceRank of 0 indicates that reference is the most likely allele.
 ///
 void
 rankOrthogonalAllelesInSample(
@@ -101,10 +102,11 @@ rankOrthogonalAllelesInSample(
 /// Rank alleles as describe in rankOrthogonalAllelesInSample, then select the top N (\p selectionSize) alleles
 /// (including the reference) and return the top N (or N-1) non-reference alleles
 ///
-/// \param[in] sampleIndex Index of the sample from which ranking evidence will be drawn
-/// \param[in] inputAlleleGroup Unsorted list of input alleles
+/// \param[in] sampleIndex Zero-based index of the sample from which ranking evidence will be drawn
+/// \param[in] inputAlleleGroup Unsorted list of input alleles, at least one alternate allele must be provided
 /// \param[in] selectionSize Number of top-ranking alleles to select in this sample
-/// \param[out] topAlleleGroup Ranked subset of the input alleles
+/// \param[out] topAlleleGroup Ranked subset of the input alleles. This is cleared on input. On output its size will be
+///                            \p selectionSize or less.
 void
 selectTopOrthogonalAllelesInSample(
     const unsigned sampleIndex,
@@ -116,15 +118,16 @@ selectTopOrthogonalAllelesInSample(
 /// Select the top N alleles in each sample, N = ploidy. Aggregate these top alleles over all samples, and use an
 /// approximate global ranking based on the within-sample rankings
 ///
-/// \param[in] inputAlleleGroup Unsorted input alleles over all samples
-/// \param[out] topAlleleGroup Top ranked allele output. This will be sorted subset of \p inputAlleleGroup
+/// \param[in] callerPloidyPerSample Array of size \p sampleCount, providing the ploidy to be used for calling each sample
+/// \param[in] inputAlleleGroup Unsorted alt alleles from all samples, at least one alt allele must be provided
+/// \param[out] topAlleleGroup Top ranked allele output. This will be a sorted subset of \p inputAlleleGroup
 /// \param[out] topVariantAlleleIndexPerSample Index of most likely alt per sample, where vector position reflects
 /// sample index and vector value references \p topAlleleGroup order index. Object oes not need to be initialized on
-/// input, it will be resized to sampleCount in this function.
+/// input, it will be resized to \p sampleCount in this function.
 void
 selectTopOrthogonalAllelesInAllSamples(
     const unsigned sampleCount,
-    const std::vector<unsigned>& callerPloidy,
+    const std::vector<unsigned>& callerPloidyPerSample,
     const OrthogonalVariantAlleleCandidateGroup& inputAlleleGroup,
     OrthogonalVariantAlleleCandidateGroup& topAlleleGroup,
     std::vector<unsigned>& topVariantAlleleIndexPerSample);
@@ -139,8 +142,8 @@ selectTopOrthogonalAllelesInAllSamples(
 /// sample index and vector value references \p topAlleleGroup order index. Object oes not need to be initialized on
 /// input, it will be resized to sampleCount in this function.
 ///
-/// \return True if every alt allele which otherwise qualifies was included based on forming an orthogonal clique with
-/// the full allele set
+/// \return False if any alt alleles were excluded because they did not form an orthogonal clique with
+///         the full allele set
 bool
 addAllelesAtOtherPositions(
     const reference_contig_segment& ref,

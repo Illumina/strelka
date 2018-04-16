@@ -1643,10 +1643,25 @@ process_pos_indel_digt(const pos_t pos)
     //
     const unsigned sampleCount(getSampleCount());
 
-    OrthogonalVariantAlleleCandidateGroup orthogonalVariantAlleles;
-    getIndelAllelesAtPosition(getIndelBuffer(), pos, orthogonalVariantAlleles);
+    // First get all variant alleles at this position (including do-not-genotype alleles)
+    OrthogonalVariantAlleleCandidateGroup positionVariantAlleles;
+    getIndelAllelesAtPosition(getIndelBuffer(), pos, positionVariantAlleles);
 
-    if (orthogonalVariantAlleles.empty()) return;
+    if (positionVariantAlleles.empty()) return;
+
+    // Next remove the do-not-genotype alleles prior to computing all likelihoods
+    // (these alleles will be added back in to the special forced allele pathway below)
+    OrthogonalVariantAlleleCandidateGroup orthogonalVariantAlleles;
+    {
+        const unsigned positionAlleleGroupSize(positionVariantAlleles.size());
+        for (unsigned alleleIndex(0); alleleIndex < positionAlleleGroupSize; ++alleleIndex)
+        {
+            const IndelData& indelData(positionVariantAlleles.data(alleleIndex));
+            if (indelData.status.doNotGenotype) continue;
+
+            orthogonalVariantAlleles.addVariantAllele(positionVariantAlleles.iter(alleleIndex));
+        }
+    }
 
 #ifdef DEBUG_INDEL_OVERLAP
     log_os << "ZEBRA pos/pos-alleles: " << pos << " " << orthogonalVariantAlleles << "\n";
@@ -1654,13 +1669,15 @@ process_pos_indel_digt(const pos_t pos)
 
     // Determine ploidy for this locus in each sample
     //
+
+    // Assume entire allele group is covered by one ploidy type per sample in nearly all cases,
+    // in case of a conflict use the highest ploidy overlapped by the group.
+    //
+    const known_pos_range alleleGroupRange(positionVariantAlleles.getReferenceRange());
+
     std::vector<unsigned> groupLocusPloidy(sampleCount);
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        // Assume entire allele group is covered by one ploidy type per sample in nearly all cases,
-        // in case of a conflict use the highest ploidy overlapped by the group.
-        //
-        const known_pos_range alleleGroupRange(orthogonalVariantAlleles.getReferenceRange());
         const unsigned groupLeftPloidy(get_ploidy(alleleGroupRange.begin_pos, sampleIndex));
         const unsigned groupRightPloidy(get_ploidy(alleleGroupRange.end_pos, sampleIndex));
 
@@ -1689,6 +1706,7 @@ process_pos_indel_digt(const pos_t pos)
 
     // The following subsection tracks data structures specific to variant allele calling phase of the process
     // which are not needed in the subsequent step where any remaining forcedOutput alleles are handled.
+    if (! orthogonalVariantAlleles.empty())
     {
         // Track the top alt allele within each sample -- this is used as a temporary crutch to transfer the previous prior
         // calculation from single to multi-sample, and should be removed when a mature prior scheme is put in place
@@ -1841,14 +1859,14 @@ process_pos_indel_digt(const pos_t pos)
         //
         OrthogonalVariantAlleleCandidateGroup forcedOutputAlleleGroup;
         {
-            const unsigned orthogonalVariantAlleleCount(orthogonalVariantAlleles.size());
-            for (unsigned alleleIndex(0); alleleIndex < orthogonalVariantAlleleCount; alleleIndex++)
+            const unsigned positionVariantAlleleCount(positionVariantAlleles.size());
+            for (unsigned alleleIndex(0); alleleIndex < positionVariantAlleleCount; alleleIndex++)
             {
-                const IndelKey& indelKey(orthogonalVariantAlleles.key(alleleIndex));
-                const IndelData& indelData(orthogonalVariantAlleles.data(alleleIndex));
+                const IndelKey& indelKey(positionVariantAlleles.key(alleleIndex));
+                const IndelData& indelData(positionVariantAlleles.data(alleleIndex));
                 if (indelData.isForcedOutput and (forcedAllelesAlreadyOutput.count(indelKey) == 0))
                 {
-                    forcedOutputAlleleGroup.addVariantAllele(orthogonalVariantAlleles.iter(alleleIndex));
+                    forcedOutputAlleleGroup.addVariantAllele(positionVariantAlleles.iter(alleleIndex));
                 }
             }
         }

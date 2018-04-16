@@ -1,8 +1,10 @@
 ## Unreleased
 
 ### Changed
-
 - Add strict checks and improve error message for BED regions of size less than one (STREL-865/[#36])
+
+### Fixed
+- Prevent an assertion for certain rarely encountered combinations of forced genotype alleles in the germline workflow (STREL-896)
 
 ## v2.9.2 - 2018-03-02
 

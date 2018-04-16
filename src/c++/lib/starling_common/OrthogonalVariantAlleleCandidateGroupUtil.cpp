@@ -68,15 +68,11 @@ getAlleleGroupIntersectionReadIds(
     const bool isTier1Only,
     const unsigned minDistanceFromReadEdge)
 {
-    unsigned validNonrefAlleleCount(0);
+    const unsigned nonrefAlleleCount(alleleGroup.size());
     std::map<unsigned,unsigned> countReadIds;
-    for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<alleleGroup.size(); nonrefAlleleIndex++)
+    for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<nonrefAlleleCount; nonrefAlleleIndex++)
     {
-        const auto& indelData(alleleGroup.data(nonrefAlleleIndex));
-        if (indelData.status.doNotGenotype) continue;
-
-        ++validNonrefAlleleCount;
-        const IndelSampleData& isd(indelData.getSampleData(sampleIndex));
+        const IndelSampleData& isd(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleIndex));
         for (const auto& score : isd.read_path_lnp)
         {
             if (isTier1Only && (! score.second.is_tier1_read)) continue;
@@ -107,7 +103,7 @@ getAlleleGroupIntersectionReadIds(
     // filter countReadIds down to only the reads found for all alleles:
     for (const auto& value : countReadIds)
     {
-        if (value.second >= validNonrefAlleleCount)
+        if (value.second >= nonrefAlleleCount)
         {
             readIds.insert(value.first);
         }
@@ -253,11 +249,11 @@ rankOrthogonalAllelesInSample(
         }
         assert(fullAlleleIndex>0);
         const auto& alleleIter(alleleGroup.iter(fullAlleleIndex-1));
-        const auto& indelData(alleleIter->second);
-        if (indelData.status.doNotGenotype) continue;
         if (not isReferenceRankFound) referenceRank++;
         rankedAlleleGroup.addVariantAllele(alleleIter);
     }
+
+    assert(rankedAlleleGroup.size() == nonrefAlleleCount);
 }
 
 
@@ -295,6 +291,7 @@ selectTopOrthogonalAllelesInAllSamples(
     std::vector<unsigned>& topVariantAlleleIndexPerSample)
 {
     assert(sampleCount == callerPloidyPerSample.size());
+    assert(! inputAlleleGroup.empty());
 
     topAlleleGroup.clear();
 
@@ -311,7 +308,7 @@ selectTopOrthogonalAllelesInAllSamples(
         //
         const unsigned sampleCallerPloidy(callerPloidyPerSample[sampleIndex]);
         OrthogonalVariantAlleleCandidateGroup topAlleleGroupInSample;
-        assert(callerPloidyPerSample[sampleIndex] > 0);
+        assert(sampleCallerPloidy > 0);
         selectTopOrthogonalAllelesInSample(sampleIndex, inputAlleleGroup, sampleCallerPloidy,
                                            topAlleleGroupInSample);
 
@@ -519,7 +516,12 @@ addAllelesAtOtherPositions(
             const IndelData& altAlleleData(getIndelData(altAlleleIter));
             if (not indelBuffer.isCandidateIndel(altAlleleKey, altAlleleData)) continue;
 
+            // Remove indels with do-not-genotype status, these will be written to the output via the forced
+            // indel output pathway instead
+            if (altAlleleData.status.doNotGenotype) continue;
+
             // must be orthogonal to all input alleles:
+            /// TODO: comment bug? it looks like this is not a 'must' criteria anymore.
             {
                 bool isOrthogonalToAllInputAlleles(true);
                 for (unsigned inputAlleleIndex(0); inputAlleleIndex < inputAlleleCount; inputAlleleIndex++)
