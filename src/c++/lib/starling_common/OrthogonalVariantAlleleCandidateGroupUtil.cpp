@@ -289,12 +289,12 @@ selectTopOrthogonalAllelesInSample(
 void
 selectTopOrthogonalAllelesInAllSamples(
     const unsigned sampleCount,
-    const std::vector<unsigned>& callerPloidy,
+    const std::vector<unsigned>& callerPloidyPerSample,
     const OrthogonalVariantAlleleCandidateGroup& inputAlleleGroup,
     OrthogonalVariantAlleleCandidateGroup& topAlleleGroup,
     std::vector<unsigned>& topVariantAlleleIndexPerSample)
 {
-    assert(sampleCount == callerPloidy.size());
+    assert(sampleCount == callerPloidyPerSample.size());
 
     topAlleleGroup.clear();
 
@@ -306,12 +306,12 @@ selectTopOrthogonalAllelesInAllSamples(
 
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
-        // In each sample, rank and select top N alleles, N=callerPloidy, and accumulate these top alleles
+        // In each sample, rank and select top N alleles, N=callerPloidyPerSample, and accumulate these top alleles
         // over all samples in topAlleleGroup
         //
-        const unsigned sampleCallerPloidy(callerPloidy[sampleIndex]);
+        const unsigned sampleCallerPloidy(callerPloidyPerSample[sampleIndex]);
         OrthogonalVariantAlleleCandidateGroup topAlleleGroupInSample;
-        assert(callerPloidy[sampleIndex] > 0);
+        assert(callerPloidyPerSample[sampleIndex] > 0);
         selectTopOrthogonalAllelesInSample(sampleIndex, inputAlleleGroup, sampleCallerPloidy,
                                            topAlleleGroupInSample);
 
@@ -496,7 +496,7 @@ addAllelesAtOtherPositions(
     {
         const known_pos_range inputAlleleGroupRange(alleleGroup.getReferenceRange());
 
-        // extend end_pos by one to ensure that we find indels adjacent to the right end of the range
+        // extend end_pos by one to ensure that we find indels adjacent to the right end of the inputAlleleGroupRange
         /// TODO add strict definition and unit tests to rangeIterator wrt adjacent indels
         const auto indelIterPair(indelBuffer.rangeIterator(inputAlleleGroupRange.begin_pos, inputAlleleGroupRange.end_pos+1));
         for (auto altAlleleIter(indelIterPair.first); altAlleleIter!=indelIterPair.second; ++altAlleleIter)
