@@ -43,7 +43,7 @@ struct DummyVariantSink : public variant_pipe_stage_base
 
 
 
-BOOST_AUTO_TEST_SUITE( indel_overlapper_test )
+BOOST_AUTO_TEST_SUITE( indel_overlapper_test_suite )
 
 /// add a single indel to the indel_overlapper, this is
 /// a simple demo to unit test the overlapper

@@ -17,9 +17,9 @@
 //
 //
 
-#include "test_config.h"
-
 #include "boost/test/unit_test.hpp"
+
+#include "testConfig.h"
 
 #include "starling_pos_processor_util.hh"
 
@@ -33,9 +33,9 @@ getTestpath()
 }
 
 
-BOOST_AUTO_TEST_SUITE( sppr_util_test )
+BOOST_AUTO_TEST_SUITE( sppr_util_test_suite )
 
-BOOST_AUTO_TEST_CASE( test_vcf_to_allele )
+BOOST_AUTO_TEST_CASE( vcf_to_allele_test )
 {
     static const unsigned max_indel_size(50);
     IndelObservation obs;
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE( test_vcf_to_allele )
 }
 
 
-BOOST_AUTO_TEST_CASE( test_subregions_from_bed )
+BOOST_AUTO_TEST_CASE( subregions_from_bed_test )
 {
     static const std::string regionChrom("chrTest");
     static const known_pos_range2 regionRange(10000,30000);

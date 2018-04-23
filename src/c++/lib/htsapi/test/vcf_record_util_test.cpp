@@ -17,7 +17,7 @@
 //
 //
 
-#include "test_config.h"
+#include "testConfig.h"
 
 #include "htsapi/samtools_fasta_util.hh"
 #include "htsapi/vcf_record_util.hh"

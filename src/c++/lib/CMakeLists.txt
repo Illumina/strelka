@@ -25,29 +25,35 @@
 ##
 ################################################################################
 
-##
-## List of libraries
-##
-## note that order approximates dependency chain, where libraries are listed
-## after libraries upon which they depend:
-set (THIS_ALL_LIBRARIES blt_util common htsapi appstats options errorAnalysis calibration blt_common assembly alignment starling_common strelka_common)
+# Library build helper macro
+macro(buildLibraries library_dirs library_targets)
+    # Set target names
+    set (${library_targets} "")
+    foreach (library_dir ${library_dirs})
+        get_library_target_name(${library_dir} LIBRARY_TARGET_NAME)
+        list (APPEND ${library_targets} ${LIBRARY_TARGET_NAME})
+    endforeach ()
+    set (${library_targets} ${${library_targets}} PARENT_SCOPE)
 
-##
-## Build all the libraries for the project
-## THIS_AVAILABLE_LIBRARIES is incrementally updated
-##
-set (THIS_AVAILABLE_LIBRARIES "")
-foreach (THIS_LIB_DIR ${THIS_ALL_LIBRARIES})
-    add_subdirectory(${THIS_LIB_DIR})
-
-    set(THIS_AVAILABLE_LIBRARIES ${THIS_PROJECT_NAME}_${THIS_LIB_DIR} ${THIS_AVAILABLE_LIBRARIES})
-endforeach ()
-
-set (THIS_AVAILABLE_LIBRARIES ${THIS_AVAILABLE_LIBRARIES} PARENT_SCOPE)
+    # Process library subdirectories
+    foreach (library_dir ${library_dirs})
+        add_subdirectory(${library_dir})
+    endforeach ()
+endmacro()
 
 
 #
-# handle applications separately
+# Build all primary libraries for the project
+#
+# These are libraries needed by most installed project applications.
+#
+# note that order of PROJECT_PRIMARY_LIBRARY_DIRS approximates dependency chain, where
+# libraries are listed before libraries upon which they depend:
+set (PROJECT_PRIMARY_LIBRARY_DIRS strelka_common starling_common alignment assembly blt_common calibration errorAnalysis options appstats htsapi common blt_util)
+buildLibraries("${PROJECT_PRIMARY_LIBRARY_DIRS}" PROJECT_PRIMARY_LIBRARY_TARGETS)
+
+
+#
+# handle applications directory separately
 #
 add_subdirectory(applications)
-

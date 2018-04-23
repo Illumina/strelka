@@ -137,3 +137,36 @@ function(install_python_lib_dir fromdir todir)
     install (DIRECTORY "${fromdir}/" DESTINATION "${todir}" FILE_PERMISSIONS ${THIS_LIBRARY_PERMISSIONS} FILES_MATCHING PATTERN "*.py")
     install (DIRECTORY "${fromdir}/" DESTINATION "${todir}" FILE_PERMISSIONS ${THIS_EXECUTABLE_PERMISSIONS} FILES_MATCHING PATTERN "*.pyc")
 endfunction()
+
+
+# Set symbol in both current and parent scope
+#
+# Example: superset(PATH "/usr/bin")
+#
+macro(superset symbol value)
+    set(${symbol} "${value}")
+    set(${symbol} "${value}" PARENT_SCOPE)
+endmacro()
+
+
+# Consolidate the library target naming scheme down logic to a single copy:
+macro(get_library_target_name library_dir library_target_name)
+    set(${library_target_name} "${THIS_PROJECT_NAME}_${library_dir}")
+endmacro()
+
+# Setup configuration required for some unit tests, to macro in values
+# to a testConfig.h.in -> testConfig.h
+#
+# This configuration file can be used for any unit testing configuration
+# needs, but is primarily used to locate static test data files.
+#
+macro(setup_testConfig)
+    set(TESTCONFIGNAME "testConfig.h")
+    set(TESTCONFIGSRC "${CMAKE_CURRENT_SOURCE_DIR}/${TESTCONFIGNAME}.in")
+    set(TESTCONFIGDEST "${CMAKE_CURRENT_BINARY_DIR}/${TESTCONFIGNAME}")
+
+    if (EXISTS "${TESTCONFIGSRC}")
+        configure_file("${TESTCONFIGSRC}" "${TESTCONFIGDEST}" @ONLY)
+        include_directories("${CMAKE_CURRENT_BINARY_DIR}")
+    endif ()
+endmacro()

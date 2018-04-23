@@ -18,12 +18,14 @@
 //
 
 #include "boost/test/unit_test.hpp"
+
 #include "starling_continuous_variant_caller.hh"
+
 #include <vector>
 
-BOOST_AUTO_TEST_SUITE( continuous_variant_caller )
+BOOST_AUTO_TEST_SUITE( continuous_variant_caller_test_suite )
 
-BOOST_AUTO_TEST_CASE( qscore_calculation )
+BOOST_AUTO_TEST_CASE( qscore_calculation_test )
 {
     std::vector<std::vector<unsigned>> SampleValues
     {
@@ -44,7 +46,7 @@ BOOST_AUTO_TEST_CASE( qscore_calculation )
     }
 }
 
-BOOST_AUTO_TEST_CASE( computeContinuousModelStrandBias )
+BOOST_AUTO_TEST_CASE( computeContinuousModelStrandBiasTest )
 {
     // several strand bias tests exercising cases from mitochondria
     static const double epsilon(0.0001);
@@ -58,7 +60,7 @@ BOOST_AUTO_TEST_CASE( computeContinuousModelStrandBias )
 }
 
 
-BOOST_AUTO_TEST_CASE( computeContinuousModelStrandBiasLowDepth )
+BOOST_AUTO_TEST_CASE( computeContinuousModelStrandBiasLowDepthTest )
 {
     // test the performance of the continuous model strand bias computation at lower depths typical of a standard
     // autosome call

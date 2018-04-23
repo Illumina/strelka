@@ -154,7 +154,7 @@ getMockOptions()
 }
 
 
-BOOST_AUTO_TEST_SUITE( variantPhaserTest )
+BOOST_AUTO_TEST_SUITE( variantPhaserTestSuite )
 
 BOOST_AUTO_TEST_CASE( multiSamplePhasingTest )
 {

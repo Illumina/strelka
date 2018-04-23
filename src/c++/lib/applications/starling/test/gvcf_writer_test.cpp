@@ -17,20 +17,15 @@
 //
 //
 
-#include <applications/starling/LocusReportInfoUtil.hh>
 #include "boost/test/unit_test.hpp"
-#include "boost/algorithm/string.hpp"
-
-#include "test_config.h"
 
 #include "gvcf_writer.hh"
-#include "ScoringModelManager.hh"
+#include "LocusReportInfoUtil.hh"
 
-#include "starling_common/pos_basecall_buffer.hh"
 
-BOOST_AUTO_TEST_SUITE( gvcf_writer_test )
+BOOST_AUTO_TEST_SUITE( gvcf_writer_test_suite )
 
-BOOST_AUTO_TEST_CASE( test_removeCommonPrefix )
+BOOST_AUTO_TEST_CASE( removeCommonPrefixTest )
 {
     reference_contig_segment ref;
     ref.seq() = "TAAGTGAAGTATTTTTTTTTTTTT";
