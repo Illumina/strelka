@@ -36,12 +36,7 @@ bed_streamer(
     const bool requireNonZeroRegionLength) :
     hts_streamer(filename,region),
     _requireNonZeroRegionLength(requireNonZeroRegionLength)
-{
-    if (! region)
-    {
-        BOOST_THROW_EXCEPTION(illumina::common::GeneralException("BED streamer region is nullptr"));
-    }
-}
+{}
 
 
 

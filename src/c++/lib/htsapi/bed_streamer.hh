@@ -40,7 +40,9 @@
 struct bed_streamer : public hts_streamer
 {
     /// \param[in] filename BED filename, must both be non-null & non-empty
-    /// \param[in] region Region string in samtools format (eg. "chr2:20-30"), must both be non-null & non-empty
+    /// \param[in] region Region string in samtools format (eg. "chr2:20-30"), this can be null, but no records will be
+    ///                   iterated by next() until a region is specified using resetRegion() (ie. there is no option
+    ///                   for iteration over the whole genome). If not-null the region string must be non-empty.
     /// \param[in] requireNonZeroRegionLength If true, an exception is thrown for any input bed record with region
     ///                                       size of 0 or less, otherwise such records are skipped without error.
     bed_streamer(
