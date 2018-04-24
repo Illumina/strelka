@@ -141,6 +141,8 @@ getAlleleLogLhoodFromRead(
     // reference allele is fixed at index 0 by convention
     static const unsigned refAlleleIndex(0);
 
+    // Note that alelleLogLhood values are never initialized - the loops below should be guaranteed
+    // to set every alleleLogLhood value, so this is not required.
     alleleLogLhood.resize(fullAlleleCount);
 
     bool isZeroAlleleCoverage(true);
@@ -148,7 +150,6 @@ getAlleleLogLhoodFromRead(
     for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<nonrefAlleleCount; nonrefAlleleIndex++)
     {
         const auto& indelData(alleleGroup.data(nonrefAlleleIndex));
-        if (indelData.doNotGenotype) continue;
         const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
 
         const auto iditer(indelSampleData.read_path_lnp.find(readId));
@@ -174,13 +175,12 @@ getAlleleLogLhoodFromRead(
 
     assert(not isZeroAlleleCoverage);
 
-    // handle read which only supports a subset of alleles
+    // Handle a read which only supports a subset of alleles
     if (isPartialAlleleCoverage)
     {
         for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex < nonrefAlleleCount; nonrefAlleleIndex++)
         {
             const auto& indelData(alleleGroup.data(nonrefAlleleIndex));
-            if (indelData.doNotGenotype) continue;
             const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
 
             const auto iditer(indelSampleData.read_path_lnp.find(readId));

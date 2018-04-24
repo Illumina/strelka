@@ -63,7 +63,8 @@ getAlleleGroupSupportingReadIds(
 /// In case of any allele for which P(read | allele) has not been computed, use P(read | ref) as an approximation.
 ///
 /// \param[out] alleleLogLhood Log likelihood for each allele, set to dimension "alleleGroup.alleles.size() + 1",
-/// with an extra reference allele state represented at the beginning of the array.
+///                            with an extra reference allele state represented at the beginning of the array. Input
+///                            value of array is ignored.
 void
 getAlleleLogLhoodFromRead(
     const unsigned sampleIndex,

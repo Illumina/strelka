@@ -1358,24 +1358,25 @@ updateIndelLocusWithSampleInfo(
 
     sampleInfo.setActiveRegionId(activeRegionId);
 
-    // check if all nonRefAlleles are flagged as doNotGenotype
+    // Check if all nonref alleles are flagged as doNotGenotype
     // in such cases, this locus is marked doNotGenotype
-    bool isGenotypeRequired(false);
-    for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<alleleGroup.size(); ++nonrefAlleleIndex)
+    //
+    // Note that do-not-genotype alleles should always appear on their own locus.
+    //
+    const unsigned nonrefAlleleGroupSize(alleleGroup.size());
+    if ((nonrefAlleleGroupSize == 1) && (alleleGroup.data(0).doNotGenotype))
     {
-        const auto& indelData(alleleGroup.data(nonrefAlleleIndex));
-        if (! indelData.doNotGenotype)
-        {
-            isGenotypeRequired = true;
-            break;
-        }
-    }
-
-    if (! isGenotypeRequired)
-    {
-        // all alt alleles are flagged "doNotGenotype"
         locus.doNotGenotype();
         return;
+    }
+
+    for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<nonrefAlleleGroupSize; ++nonrefAlleleIndex)
+    {
+        const auto& indelData(alleleGroup.data(nonrefAlleleIndex));
+        if (indelData.doNotGenotype)
+        {
+            assert(false && "Unexpected allele with doNotGenotype status");
+        }
     }
 
     // score all possible genotypes from topVariantAlleleGroup for this sample
