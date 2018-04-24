@@ -1864,7 +1864,20 @@ process_pos_indel_digt(const pos_t pos)
             {
                 const IndelKey& indelKey(positionVariantAlleles.key(alleleIndex));
                 const IndelData& indelData(positionVariantAlleles.data(alleleIndex));
-                if (indelData.isForcedOutput and (forcedAllelesAlreadyOutput.count(indelKey) == 0))
+
+                const bool isForcedAndNotAlreadyOutput(indelData.isForcedOutput &&
+                                                       (forcedAllelesAlreadyOutput.count(indelKey) == 0));
+
+#ifdef FIXED_DONOTGENOTYPE_STATUS
+                // All 'doNotGenotype' alleles should in theory have isForcedAndNotAlreadyOutput status, but this
+                // assertion won't hold right now because complex indels can also come in directly from read
+                // alignments. These will be marked as doNotGenotype even though they are not forced output
+                //
+                // TODO: fix doNotGenotype status such that this assertion can hold
+                assert(isForcedAndNotAlreadyOutput || (! indelData.doNotGenotype));
+#endif
+
+                if (isForcedAndNotAlreadyOutput)
                 {
                     forcedOutputAlleleGroup.addVariantAllele(positionVariantAlleles.iter(alleleIndex));
                 }
@@ -1885,11 +1898,20 @@ process_pos_indel_digt(const pos_t pos)
                 if (indelKey.isMismatch()) continue;
 
                 const IndelData& indelData(getIndelData(it));
-                if (! indelData.isForcedOutput) continue;
 
-                if (forcedAllelesAlreadyOutput.count(indelKey) != 0) continue;
+                const bool isForcedAndNotAlreadyOutput(indelData.isForcedOutput &&
+                                                       (forcedAllelesAlreadyOutput.count(indelKey) == 0));
 
-                forcedOutputAlleleGroup.addVariantAllele(it);
+#ifdef FIXED_DONOTGENOTYPE_STATUS
+                // All 'doNotGenotype' alleles should in theory have isForcedAndNotAlreadyOutput status, see
+                // comment in previous FIXED_DONOTGENOTYPE_STATUS block.
+                assert(isForcedAndNotAlreadyOutput || (! indelData.doNotGenotype));
+#endif
+
+                if (isForcedAndNotAlreadyOutput)
+                {
+                   forcedOutputAlleleGroup.addVariantAllele(it);
+                }
             }
         }
 
