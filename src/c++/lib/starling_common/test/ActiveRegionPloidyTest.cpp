@@ -20,8 +20,12 @@
 /// \file
 /// \author Sangtae Kim
 ///
-#include "TestIndelBuffer.hh"
+
 #include "boost/test/unit_test.hpp"
+
+#include "starling_common/ActiveRegionDetector.hh"
+#include "starling_common/CandidateSnvBuffer.hh"
+#include "test/testIndelBuffer.hh"
 
 
 /// Test whether ActiveRegionDetector correctly handles ploidy

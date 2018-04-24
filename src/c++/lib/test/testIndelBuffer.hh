@@ -20,24 +20,20 @@
 #pragma once
 
 #include "starling_base_options_test.hh"
-#include "starling_common/ActiveRegionDetector.hh"
+#include "blt_util/reference_contig_segment.hh"
+#include "starling_common/IndelBuffer.hh"
 
+#include <memory>
+
+
+/// Manages a mock indel buffer approriate for unit testing
+///
+// TODO Refactor this to a factory function returning a unique_ptr to an IndelBuffer instead
 struct TestIndelBuffer
 {
     explicit
     TestIndelBuffer(
-        const reference_contig_segment& ref)
-    {
-        _opt.is_candidate_indel_signal_test = false;
-
-        const double maxDepth = 100.0;
-        _doptPtr.reset(new starling_base_deriv_options(_opt));
-
-        _IndelBufferPtr.reset(new IndelBuffer(_opt, *_doptPtr, ref));
-
-        _IndelBufferPtr->registerSample(depth_buffer(), depth_buffer(), maxDepth);
-        _IndelBufferPtr->finalizeSamples();
-    }
+        const reference_contig_segment& ref);
 
     IndelBuffer&
     getIndelBuffer()

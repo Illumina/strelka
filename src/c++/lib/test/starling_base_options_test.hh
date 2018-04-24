@@ -19,7 +19,8 @@
 
 #pragma once
 
-#include "starling_base_shared.hh"
+#include "options/AlignmentFileOptions.hh"
+#include "starling_common/starling_base_shared.hh"
 
 
 /// \brief This version of starling_base_options provides null implementations of required virtuals

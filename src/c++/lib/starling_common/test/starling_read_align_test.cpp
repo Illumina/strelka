@@ -22,9 +22,9 @@
 #include "starling_read_align.cpp"
 
 // required to mock-up a read segment:
-#include "starling_base_options_test.hh"
 #include "htsapi/align_path_bam_util.hh"
-#include "starling_read.hh"
+#include "starling_common/starling_read.hh"
+#include "test/starling_base_options_test.hh"
 
 
 
