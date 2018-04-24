@@ -124,7 +124,7 @@ addIndelObservation(
         if (! isPrimitive)
         {
             // complex alleles are not genotyped
-            indelData.status.doNotGenotype = true;
+            indelData.doNotGenotype = true;
         }
     }
     indelData.addIndelObservation(sampleIndex, obs.data);
@@ -215,7 +215,7 @@ isCandidateIndelImplTest(
     const IndelKey& indelKey,
     const IndelData& indelData) const
 {
-    if (indelData.status.doNotGenotype) return false;
+    if (indelData.doNotGenotype) return false;
 
     // if haplotyping is enabled, indels not confirmed in active region are not candidate
     if (_opt.isHaplotypingEnabled && (!indelData.isDiscoveredInActiveRegion())) return false;
@@ -275,7 +275,7 @@ isCandidateIndelImpl(
     // check whether the candidate has been externally specified:
     if (! isCandidate)
     {
-        if ((! indelData.status.doNotGenotype) && indelData.is_external_candidate)
+        if ((! indelData.doNotGenotype) && indelData.is_external_candidate)
         {
             assert(indelKey.isPrimitiveDeletionAllele() || indelKey.isPrimitiveInsertionAllele());
 

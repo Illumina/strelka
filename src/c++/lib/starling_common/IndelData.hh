@@ -369,13 +369,9 @@ public:
         bool is_candidate_indel_cached = false;
         bool is_candidate_indel = false;
 
-        /// If true, do not genotype this indel
-        bool doNotGenotype = false;
-
         /// If true, allele is promoted to candidate status without enough read support
         /// (e.g. forced indel)
         bool notDiscoveredFromReads = false;
-
     };
 
     /// If true, allele is suggested from a source other than the aligned sequencing data
@@ -384,6 +380,9 @@ public:
     /// If true, allele must be in the final call output,
     /// even if there is no support for the allele in any input sample
     bool isForcedOutput = false;
+
+    /// If true, do not genotype this indel. This setting is only relevant when the indel also has isForcedOuput status.
+    bool doNotGenotype = false;
 
     ActiveRegionId activeRegionId = -1;
 

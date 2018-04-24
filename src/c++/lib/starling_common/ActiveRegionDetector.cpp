@@ -191,11 +191,11 @@ ActiveRegionDetector::filterOutConflictingForcedIndels()
         IndelData& indelData(getIndelData(it));
         if (! indelData.isForcedOutput) continue;
 
-        if (!indelData.isDiscoveredInActiveRegion())
+        if (! indelData.isDiscoveredInActiveRegion())
         {
             // this forced indel was not discovered in AR
             // and may conflict with internal indels
-            indelData.status.doNotGenotype = true;
+            indelData.doNotGenotype = true;
         }
     }
 }

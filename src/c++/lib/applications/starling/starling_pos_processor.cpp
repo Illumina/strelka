@@ -1364,7 +1364,7 @@ updateIndelLocusWithSampleInfo(
     for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<alleleGroup.size(); ++nonrefAlleleIndex)
     {
         const auto& indelData(alleleGroup.data(nonrefAlleleIndex));
-        if (!indelData.status.doNotGenotype)
+        if (! indelData.doNotGenotype)
         {
             isGenotypeRequired = true;
             break;
@@ -1657,7 +1657,7 @@ process_pos_indel_digt(const pos_t pos)
         for (unsigned alleleIndex(0); alleleIndex < positionAlleleGroupSize; ++alleleIndex)
         {
             const IndelData& indelData(positionVariantAlleles.data(alleleIndex));
-            if (indelData.status.doNotGenotype) continue;
+            if (indelData.doNotGenotype) continue;
 
             orthogonalVariantAlleles.addVariantAllele(positionVariantAlleles.iter(alleleIndex));
         }

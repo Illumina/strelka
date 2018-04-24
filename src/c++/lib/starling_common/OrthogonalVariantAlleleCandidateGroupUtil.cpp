@@ -148,7 +148,7 @@ getAlleleLogLhoodFromRead(
     for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<nonrefAlleleCount; nonrefAlleleIndex++)
     {
         const auto& indelData(alleleGroup.data(nonrefAlleleIndex));
-        if (indelData.status.doNotGenotype) continue;
+        if (indelData.doNotGenotype) continue;
         const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
 
         const auto iditer(indelSampleData.read_path_lnp.find(readId));
@@ -180,7 +180,7 @@ getAlleleLogLhoodFromRead(
         for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex < nonrefAlleleCount; nonrefAlleleIndex++)
         {
             const auto& indelData(alleleGroup.data(nonrefAlleleIndex));
-            if (indelData.status.doNotGenotype) continue;
+            if (indelData.doNotGenotype) continue;
             const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
 
             const auto iditer(indelSampleData.read_path_lnp.find(readId));
@@ -518,7 +518,7 @@ addAllelesAtOtherPositions(
 
             // Remove indels with do-not-genotype status, these will be written to the output via the forced
             // indel output pathway instead
-            if (altAlleleData.status.doNotGenotype) continue;
+            if (altAlleleData.doNotGenotype) continue;
 
             // must be orthogonal to all input alleles:
             /// TODO: comment bug? it looks like this is not a 'must' criteria anymore.
