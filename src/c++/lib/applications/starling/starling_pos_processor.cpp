@@ -1911,7 +1911,7 @@ process_pos_indel_digt(const pos_t pos)
 
                 if (isForcedAndNotAlreadyOutput)
                 {
-                   forcedOutputAlleleGroup.addVariantAllele(it);
+                    forcedOutputAlleleGroup.addVariantAllele(it);
                 }
             }
         }
