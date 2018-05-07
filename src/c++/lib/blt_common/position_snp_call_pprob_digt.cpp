@@ -24,7 +24,7 @@
 #include "blt_common/position_snp_call_pprob_digt.hh"
 #include "blt_common/snp_util.hh"
 #include "blt_util/log.hh"
-#include "blt_util/math_util.hh"
+#include "blt_util/logSumUtil.hh"
 #include "blt_util/prob_util.hh"
 #include "blt_util/seq_util.hh"
 
@@ -317,8 +317,7 @@ increment_het_ratio_lhood(const extended_pos_info& epi,
     for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
     {
         if (! DIGT::is_het(gt)) continue;
-        all_het_lhood[gt] = log_sum(all_het_lhood[gt],lhood_high[gt]);
-        all_het_lhood[gt] = log_sum(all_het_lhood[gt],lhood_low[gt]);
+        all_het_lhood[gt] = getLogSum(all_het_lhood[gt], lhood_high[gt], lhood_low[gt]);
     }
 }
 

@@ -23,7 +23,7 @@
 
 #include "indelModelVariantAndIndyError.hh"
 
-#include "blt_util/math_util.hh"
+#include "blt_util/logSumUtil.hh"
 #include "blt_util/prob_util.hh"
 
 #define CODEMIN_USE_BOOST
@@ -170,10 +170,7 @@ contextLogLhood(
                      logDeleteErrorRate*remainingDeleteObservations);
         }
 
-
-
-        /// TODO: generalize log_sum to N values...
-        const double mix(log_sum( log_sum(logHomPrior+hom,logHetPrior+het), log_sum(logNoIndelPrior+noindel,logAltHetPrior+althet) ));
+        const double mix(getLogSum(logHomPrior+hom, logHetPrior+het, logNoIndelPrior+noindel, logAltHetPrior+althet));
 
         logLhood += (mix*obs.observationCount);
     }

@@ -88,13 +88,13 @@ updateGenotypeLogLhoodFromAlleleLogLhood(
                         get_het_observed_allele_ratio(readScore.read_length, sampleOptions.min_read_bp_flank,
                                                       allele0Key, hetAlleleRatio, logRefPrior, logHetAllele0Prior);
 
-                        const double normalizeHetRatio(log_sum(logHetAllele0Prior, logHetAllele1Prior));
+                        const double normalizeHetRatio(getLogSum(logHetAllele0Prior, logHetAllele1Prior));
                         logHetAllele0Prior -= normalizeHetRatio;
                         logHetAllele1Prior -= normalizeHetRatio;
                     }
 
-                    rawLogLhood = log_sum(alleleLogLhood[allele0Index] + logHetAllele0Prior,
-                                          alleleLogLhood[allele1Index] + logHetAllele1Prior);
+                    rawLogLhood = getLogSum(alleleLogLhood[allele0Index] + logHetAllele0Prior,
+                                            alleleLogLhood[allele1Index] + logHetAllele1Prior);
                 }
                 else
                 {

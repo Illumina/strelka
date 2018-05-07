@@ -23,7 +23,7 @@
 
 #include "snvModelVariantAndIndyError.hh"
 
-#include "blt_util/math_util.hh"
+#include "blt_util/logSumUtil.hh"
 #include "blt_util/prob_util.hh"
 #include "blt_util/qscore.hh"
 
@@ -98,8 +98,7 @@ contextLogLhood(
         // get lhood of hom GT:
         const double hom(logHomAltRate*altQualTotal + logHomRefRate*refQualTotal);
 
-        /// TODO: generalize log_sum to N values...
-        const double mix(log_sum( log_sum(logHomPrior+hom,logHetPrior+het), logNoVariantPrior+noVariant ));
+        const double mix(getLogSum(logHomPrior+hom, logHetPrior+het, logNoVariantPrior+noVariant));
 
         logLhood += (mix*repeatCount);
     }

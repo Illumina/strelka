@@ -17,13 +17,14 @@
 //
 //
 
-#include "common/Exceptions.hh"
-#include "blt_util/log.hh"
-#include "blt_util/math_util.hh"
-#include "blt_util/prob_util.hh"
-
 #include "IndelModelProduction.hh"
+
+#include "blt_util/log.hh"
+#include "blt_util/logSumUtil.hh"
+#include "blt_util/prob_util.hh"
 #include "calibration/ThetaJson.hh"
+#include "common/Exceptions.hh"
+
 #include "rapidjson/document.h"
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/prettywriter.h"
@@ -163,7 +164,7 @@ getObsLogLhood(
                  logDeleteErrorRate*remainingDeleteObservations);
     }
 
-    return log_sum( log_sum(logHomPrior+hom,logHetPrior+het), log_sum(logNoIndelPrior+noindel,logAltHetPrior+althet) );
+    return getLogSum(logHomPrior+hom, logHetPrior+het, logNoIndelPrior+noindel,logAltHetPrior+althet);
 }
 
 
@@ -209,7 +210,7 @@ contextLogLhood(
         const double cleanMix(getObsLogLhood(logHomPrior, logHetPrior, logAltHetPrior, logNoIndelPrior,
                                              logCleanLocusIndelRate, logCleanLocusIndelRate, logCleanLocusRefRate, obs));
 
-        const double mix(log_sum(logCleanLocusRate+cleanMix,logNoisyLocusRate+noisyMix));
+        const double mix(getLogSum(logCleanLocusRate+cleanMix, logNoisyLocusRate+noisyMix));
 
 #ifdef DEBUG_MODEL3
         log_os << "MODEL3: loghood obs: noisy/clean/mix/delta: " << noisyMix << " " << cleanMix << " " << mix << " " << (mix*obs.repeatCount) << "\n";

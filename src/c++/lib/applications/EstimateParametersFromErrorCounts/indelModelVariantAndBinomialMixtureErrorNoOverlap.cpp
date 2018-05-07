@@ -24,7 +24,7 @@
 #include "indelModelVariantAndBinomialMixtureErrorNoOverlap.hh"
 
 #include "blt_util/log.hh"
-#include "blt_util/math_util.hh"
+#include "blt_util/logSumUtil.hh"
 #include "blt_util/prob_util.hh"
 
 //#define CODEMIN_DEBUG
@@ -98,7 +98,7 @@ getObsLogLhood(
 
     const double hom(logHomAltRate*totalIndelObservations + logHomRefRate*obs.refObservations);
 
-    return log_sum( log_sum(logHomPrior+hom,logHetPrior+het), logNoIndelPrior+noindel );
+    return getLogSum(logHomPrior+hom, logHetPrior+het, logNoIndelPrior+noindel);
 }
 
 
@@ -141,7 +141,7 @@ contextLogLhood(
         const double cleanMix(getObsLogLhood(logHomPrior, logHetPrior, logNoIndelPrior,
                                              logCleanLocusIndelRate, logCleanLocusRefRate, isInsert, obs));
 
-        const double mix(log_sum(logCleanLocusRate+cleanMix,logNoisyLocusRate+noisyMix));
+        const double mix(getLogSum(logCleanLocusRate+cleanMix, logNoisyLocusRate+noisyMix));
 
 #ifdef DEBUG_MODEL3
         log_os << "MODEL3: loghood obs: noisy/clean/mix/delta: " << noisyMix << " " << cleanMix << " " << mix << " " << (mix*obs.repeatCount) << "\n";

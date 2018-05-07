@@ -26,14 +26,16 @@
 #include "strelka_common/het_ratio_cache.hh"
 
 #include "blt_util/digt.hh"
-#include "blt_util/math_util.hh"
+#include "blt_util/logSumUtil.hh"
 
 #include <cmath>
+
 
 static const blt_float_t one_third(1./3.);
 static const blt_float_t ln_one_third(std::log(one_third));
 static const blt_float_t one_half(1./2.);
 static const blt_float_t ln_one_half(std::log(one_half));
+
 
 void
 get_diploid_gt_lhood_cached_simple(
@@ -227,6 +229,6 @@ get_strand_ratio_lhood_spi(
         }
     }
 
-    *lhood = log_sum(lhood_fwd,lhood_rev)+ln_one_half;
+    *lhood = getLogSum(lhood_fwd,lhood_rev)+ln_one_half;
 }
 

@@ -24,7 +24,7 @@
 #include "snvModelVariantAndBinomialMixtureError.hh"
 
 #include "blt_util/log.hh"
-#include "blt_util/math_util.hh"
+#include "blt_util/logSumUtil.hh"
 #include "blt_util/prob_util.hh"
 #include "blt_util/qscore.hh"
 
@@ -133,7 +133,7 @@ getObsLogLhood(
 #else
     const double noVariant_noise(noVariant_noise_s0 + noVariant_noise_s1);
     const double noVariant_clean(noVariant_clean_s0 + noVariant_clean_s1);
-    const double noVariant(log_sum(logNoisyLocusRate + noVariant_noise, logCleanLocusRate + noVariant_clean));
+    const double noVariant(getLogSum(logNoisyLocusRate + noVariant_noise, logCleanLocusRate + noVariant_clean));
 #endif
     // get lhood of het GT:
     unsigned altQualTotal(0);
@@ -147,8 +147,7 @@ getObsLogLhood(
     // get lhood of hom GT:
     const double hom(logHomAltRate*altQualTotal + logHomRefRate*refQualTotal);
 
-    /// TODO: generalize log_sum to N values...
-    return log_sum( log_sum(logHomPrior+hom,logHetPrior+het), logNoVariantPrior+noVariant );
+    return getLogSum(logHomPrior+hom, logHetPrior+het, logNoVariantPrior+noVariant);
 }
 
 

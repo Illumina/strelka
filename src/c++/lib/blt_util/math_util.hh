@@ -17,10 +17,6 @@
 //
 //
 
-/// \file
-/// \author Chris Saunders
-///
-
 #pragma once
 
 #include "boost/math/special_functions/log1p.hpp"
@@ -30,13 +26,15 @@
 #include <algorithm>
 
 
-/// returns log(1+x), switches to special libc function when abs(x) is small
+/// returns log(1+x), switches to log1p function when abs(x) is small
 ///
 template <typename FloatType>
 FloatType
 log1p_switch(const FloatType x)
 {
-    // better number??
+    static_assert(std::is_floating_point<FloatType>::value, "Requires floating point type.");
+
+    // TODO Justify this switch point. Related discussion: http://cran.r-project.org/web/packages/Rmpfr/vignettes/log1mexp-note.pdf
     static const FloatType smallx_thresh(0.01);
 
     if (std::abs(x)<smallx_thresh)
@@ -47,17 +45,6 @@ log1p_switch(const FloatType x)
     {
         return std::log(1+x);
     }
-}
-
-
-/// returns equiv of log(exp(x1)+exp(x2))
-///
-template <typename FloatType>
-FloatType
-log_sum(FloatType x1, FloatType x2)
-{
-    if (x1<x2) std::swap(x1,x2);
-    return x1 + log1p_switch(std::exp(x2-x1));
 }
 
 

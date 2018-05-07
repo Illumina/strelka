@@ -21,9 +21,10 @@
 /// \author Chris Saunders
 ///
 
-#include "blt_util/math_util.hh"
-#include "blt_util/prob_util.hh"
 #include "indelModelVariantAndIndyErrorNoOverlap.hh"
+
+#include "blt_util/logSumUtil.hh"
+#include "blt_util/prob_util.hh"
 
 #define CODEMIN_USE_BOOST
 #include "minimize_conj_direction.h"
@@ -98,8 +99,7 @@ contextLogLhood(
         const double hom(logHomAltRate* +totalIndelObservations +
                          logHomRefRate*obs.refObservations);
 
-        /// TODO: generalize log_sum to N values...
-        const double mix(log_sum( log_sum(logHomPrior+hom,logHetPrior+het), logNoIndelPrior+noindel ));
+        const double mix(getLogSum(logHomPrior+hom, logHetPrior+het, logNoIndelPrior+noindel));
 
         logLhood += (mix*obs.observationCount);
     }

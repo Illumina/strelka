@@ -23,7 +23,7 @@
 #include "position_snp_call_grid_lhood_cached.hh"
 
 #include "blt_util/digt.hh"
-#include "blt_util/math_util.hh"
+#include "blt_util/logSumUtil.hh"
 
 #include <cmath>
 
@@ -119,8 +119,7 @@ increment_het_ratio_lhood_cached(
     for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
     {
         if (! DIGT::is_het(gt)) continue;
-        all_het_lhood[gt] = log_sum(all_het_lhood[gt],lhood_high[gt]);
-        all_het_lhood[gt] = log_sum(all_het_lhood[gt],lhood_low[gt]);
+        all_het_lhood[gt] = getLogSum(all_het_lhood[gt], lhood_high[gt], lhood_low[gt]);
     }
 }
 

@@ -134,7 +134,7 @@ get_high_low_het_ratio_lhood(
                 get_het_observed_allele_ratio(path_lnp.read_length,sample_opt.min_read_bp_flank,
                                               indelKey,het_ratio,log_ref_prob,log_indel_prob);
             }
-            const double het_lnp(log_sum(noindel_lnp+log_ref_prob,hom_lnp+log_indel_prob));
+            const double het_lnp(getLogSum(noindel_lnp+log_ref_prob, hom_lnp+log_indel_prob));
 
             het_lhood_low += dopt.integrateOutMappingStatus(path_lnp.nonAmbiguousBasesInRead, het_lnp, is_tier2_pass);
         }
@@ -147,7 +147,7 @@ get_high_low_het_ratio_lhood(
                 get_het_observed_allele_ratio(path_lnp.read_length,sample_opt.min_read_bp_flank,
                                               indelKey,chet_ratio,log_ref_prob,log_indel_prob);
             }
-            const double het_lnp(log_sum(noindel_lnp+log_ref_prob,hom_lnp+log_indel_prob));
+            const double het_lnp(getLogSum(noindel_lnp+log_ref_prob, hom_lnp+log_indel_prob));
 
             het_lhood_high += dopt.integrateOutMappingStatus(path_lnp.nonAmbiguousBasesInRead, het_lnp, is_tier2_pass);
         }
@@ -178,8 +178,7 @@ increment_het_ratio_lhood(
                                  is_use_alt_indel,
                                  het_lhood_high,het_lhood_low);
 
-    lhood[STAR_DIINDEL::HET] = log_sum(lhood[STAR_DIINDEL::HET],het_lhood_low);
-    lhood[STAR_DIINDEL::HET] = log_sum(lhood[STAR_DIINDEL::HET],het_lhood_high);
+    lhood[STAR_DIINDEL::HET] = getLogSum(lhood[STAR_DIINDEL::HET], het_lhood_low, het_lhood_high);
 }
 
 
@@ -294,7 +293,7 @@ get_indel_digt_lhood(
             get_het_observed_allele_ratio(path_lnp.read_length,sample_opt.min_read_bp_flank,
                                           indelKey,het_allele_ratio,log_ref_prob,log_indel_prob);
         }
-        const double het_lnp(log_sum(noindel_lnp+log_ref_prob,hom_lnp+log_indel_prob));
+        const double het_lnp(getLogSum(noindel_lnp+log_ref_prob,hom_lnp+log_indel_prob));
 
         lhood[STAR_DIINDEL::NOINDEL] += dopt.integrateOutMappingStatus(path_lnp.nonAmbiguousBasesInRead, noindel_lnp,
                                                                        is_tier2_pass);
