@@ -22,6 +22,7 @@
 #include "common/OutStream.hh"
 #include "common/Exceptions.hh"
 #include "starling_common/OrthogonalVariantAlleleCandidateGroupUtil.hh"
+#include "strelka_common/StrelkaSampleSetSummary.hh"
 
 #include <algorithm>
 #include <fstream>
@@ -153,24 +154,24 @@ resetRegion(
         {
             if (_opt.max_candidate_indel_depth_factor > 0.)
             {
-                _max_candidate_normal_sample_depth = (_opt.max_candidate_indel_depth_factor * _maxChromDepth);
+                _maxNormalSampleDepthForCandidateVariants = (_opt.max_candidate_indel_depth_factor * _maxChromDepth);
             }
         }
 
         if (_opt.max_candidate_indel_depth > 0.)
         {
-            if (_max_candidate_normal_sample_depth > 0.)
+            if (_maxNormalSampleDepthForCandidateVariants > 0.)
             {
-                _max_candidate_normal_sample_depth = std::min(_max_candidate_normal_sample_depth,
+                _maxNormalSampleDepthForCandidateVariants = std::min(_maxNormalSampleDepthForCandidateVariants,
                                                               static_cast<double>(_opt.max_candidate_indel_depth));
             }
             else
             {
-                _max_candidate_normal_sample_depth = _opt.max_candidate_indel_depth;
+                _maxNormalSampleDepthForCandidateVariants = _opt.max_candidate_indel_depth;
             }
         }
 
-        getIndelBuffer().setMaxCandidateDepth(_max_candidate_normal_sample_depth);
+        getIndelBuffer().setMaxCandidateDepth(_maxNormalSampleDepthForCandidateVariants);
     }
 }
 
@@ -407,44 +408,44 @@ process_pos_error_counts(
 
     if (refBase=='N') return;
 
-    BasecallErrorCounts& baseCounts(_counts.getBaseCounts());
+    BasecallErrorCounts& basecallCounts(_counts.getBasecallCounts());
     IndelErrorCounts& indelCounts(_counts.getIndelCounts());
 
-    // right now there's only one baseContext (ie. only one context used for SNVs and basecalls), this
+    // right now there's only one basecallContext (ie. only one context used for SNVs and basecalls), this
     // is why we set it as const here
     //
     // this contrasts with the indel counting logic below which is using several contexts
-    const BasecallErrorContext baseContext;
+    const BasecallErrorContext basecallContext;
 
     bool isSkipSNV(false);
     bool isSkipIndel(false);
 
-    const ReferenceSTRContext refSTRContext(getReferenceSTRContext(_ref,pos));
+    const ReferenceSTRContext referenceSTRContext(getReferenceSTRContext(_ref,pos));
 
     // For consistency, we don't take any indel counts information from an STR track except for the left-most position
     //
     // Note that we may want to change this in the future because calls can occur within STRs which are not expansions
     // or contractions of the STR pattern, and thus will not be left-shifted, e.g. "AAAA -> AACAA"
     //
-    isSkipIndel = (refSTRContext.isBaseInSTR and (not refSTRContext.isBaseLeftEndOfSTR));
+    isSkipIndel = (referenceSTRContext.isBaseInSTR and (not referenceSTRContext.isBaseLeftEndOfSTR));
 
 
     if (_excludedRegions.isIntersectRegion(pos))
     {
         // The workflow has the option to exclude some regions, so count the number of excluded sites.
         // Excluded sites are recorded for QC purposes but don't impact rate estimates.
-        baseCounts.addExcludedRegionSkip(baseContext);
+        basecallCounts.addExcludedRegionSkip(basecallContext);
         isSkipSNV=true;
 
         // record the excluded region count only for positions where we would have counted indel evidence anyway:
         if (not isSkipIndel)
         {
-            IndelErrorContext indelContext(refSTRContext.patternSize, refSTRContext.STRRepeatCount);
+            IndelErrorContext indelContext(referenceSTRContext.patternSize, referenceSTRContext.STRRepeatCount);
             indelCounts.addExcludedRegionSkip(indelContext);
             isSkipIndel=true;
         }
     }
-    else if (_max_candidate_normal_sample_depth > 0.)
+    else if (_maxNormalSampleDepthForCandidateVariants > 0.)
     {
         // determine if SNV or indel output is going to be disabled because we're in a region of anomalously high depth
         //
@@ -455,9 +456,9 @@ process_pos_error_counts(
             // handle SNVs
             const unsigned estdepth(sif.estdepth_buff.val(pos));
             const unsigned estdepth2(sif.estdepth_buff_tier2.val(pos));
-            if ((estdepth+estdepth2) > _max_candidate_normal_sample_depth)
+            if ((estdepth+estdepth2) > _maxNormalSampleDepthForCandidateVariants)
             {
-                baseCounts.addDepthSkip(baseContext);
+                basecallCounts.addDepthSkip(basecallContext);
                 isSkipSNV=true;
             }
         }
@@ -465,12 +466,12 @@ process_pos_error_counts(
         {
             const unsigned estdepth(sif.estdepth_buff.val(pos-1));
             const unsigned estdepth2(sif.estdepth_buff_tier2.val(pos-1));
-            if ((estdepth+estdepth2) > _max_candidate_normal_sample_depth)
+            if ((estdepth+estdepth2) > _maxNormalSampleDepthForCandidateVariants)
             {
                 // record the high-depth bypass count only for positions where we would have counted indel evidence anyway:
                 if (not isSkipIndel)
                 {
-                    IndelErrorContext indelContext(refSTRContext.patternSize, refSTRContext.STRRepeatCount);
+                    IndelErrorContext indelContext(referenceSTRContext.patternSize, referenceSTRContext.STRRepeatCount);
                     indelCounts.addDepthSkip(indelContext);
                     isSkipIndel=true;
                 }
@@ -482,8 +483,8 @@ process_pos_error_counts(
     // handle basecall error signal
     if (! isSkipSNV)
     {
-        // even though this site may still be excluded from SNV counting because of noise, we use this countet to
-        // approximate how much of the genome has some level of detectible coverage that could possibly contribute to
+        // even though this site may still be excluded from SNV counting because of noise, we use this counter to
+        // approximate how much of the genome has some level of detectable coverage that could possibly contribute to
         // error estimation
         _nonEmptySiteCount += 1;
 
@@ -505,7 +506,7 @@ process_pos_error_counts(
             // skip basecall stats at this position because of a noisy local environment
             //
             // track count of how often this happens:
-            baseCounts.addNoiseSkip(baseContext);
+            basecallCounts.addNoiseSkip(basecallContext);
         }
         else
         {
@@ -535,11 +536,11 @@ process_pos_error_counts(
 
             if (isEmpty)
             {
-                baseCounts.addEmptySkip(baseContext);
+                basecallCounts.addEmptySkip(basecallContext);
             }
             else
             {
-                baseCounts.addSiteObservation(baseContext,obs);
+                basecallCounts.addSiteObservation(basecallContext,obs);
             }
         }
     }
@@ -662,12 +663,12 @@ process_pos_error_counts(
 
             IndelErrorContext context;
 
-            if ((indelReportInfo.repeatUnitLength == refSTRContext.patternSize) && (indelReportInfo.refRepeatCount > 1))
+            if ((indelReportInfo.repeatUnitLength == referenceSTRContext.patternSize) && (indelReportInfo.refRepeatCount > 1))
             {
                 // guard against the occasional non-normalized indel:
-                if (refSTRContext.STRRepeatCount == std::min(maxSTRRepeatCount, indelReportInfo.refRepeatCount))
+                if (referenceSTRContext.STRRepeatCount == std::min(maxSTRRepeatCount, indelReportInfo.refRepeatCount))
                 {
-                    context = IndelErrorContext(refSTRContext.patternSize, refSTRContext.STRRepeatCount);
+                    context = IndelErrorContext(referenceSTRContext.patternSize, referenceSTRContext.STRRepeatCount);
                 }
             }
 
@@ -733,9 +734,9 @@ process_pos_error_counts(
     {
         IndelErrorContext context;
 
-        if (refSTRContext.isBaseInSTR)
+        if (referenceSTRContext.isBaseInSTR)
         {
-            context = IndelErrorContext(refSTRContext.patternSize, refSTRContext.STRRepeatCount);
+            context = IndelErrorContext(referenceSTRContext.patternSize, referenceSTRContext.STRRepeatCount);
         }
 
         IndelBackgroundObservation obs;

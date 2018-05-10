@@ -17,10 +17,6 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
-
 #include "EstimateParametersFromErrorCounts.hh"
 #include "EPECOptions.hh"
 #include "errorAnalysis/SequenceErrorCounts.hh"
@@ -31,11 +27,11 @@
 #include "indelModelVariantAndIndyErrorNoOverlap.hh"
 #include "snvModel1.hh"
 #include "snvModelVariantAndIndyError.hh"
-#include <iostream>
 #include "indelModelVariantAndBinomialMixtureError.hh"
 #include "indelModelVariantAndBinomialMixtureErrorNoOverlap.hh"
 #include "snvModelVariantAndBinomialMixtureError.hh"
 
+#include <iostream>
 
 
 

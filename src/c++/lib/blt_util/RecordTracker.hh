@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Mitch Bekritsky
 ///
 

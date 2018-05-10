@@ -25,7 +25,7 @@
 #include "strelka_shared.hh"
 
 #include "starling_common/starling_streams_base.hh"
-#include "StrelkaSampleSetSummary.hh"
+#include "strelka_common/StrelkaSampleSetSummary.hh"
 
 
 

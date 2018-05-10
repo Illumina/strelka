@@ -40,7 +40,7 @@
 
 #include <iostream>
 
-#include "StrelkaSampleSetSummary.hh"
+#include "strelka_common/StrelkaSampleSetSummary.hh"
 
 
 

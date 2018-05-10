@@ -155,10 +155,15 @@ BOOST_CLASS_IMPLEMENTATION(BasecallErrorContextObservation, boost::serialization
 
 struct BasecallErrorContextObservationData;
 
-/// Basecall count data associated with a single context instance (ie. a single pileup column)
+/// \breif Basecall observations associated with a single site in the genome
 ///
-/// This is a special version of the data structure used as input into aggregated count structures, where
-/// more (sometimes lossy) data compression will be applied.
+/// A single site can be thought of as a single instance of a basecall context, and the input basecall observations
+/// at this site correspond to a single pileup column.
+///
+/// Basecall counts are simplified down to only 2 states: reference alleles and non-reference alleles.
+///
+/// This is a special version of the basecall count data structure used as input into the primary (aggregated) basecall
+/// count structures. In the primary structures, a greater level of data compression will be applied.
 struct BasecallErrorContextInputObservation
 {
     void
@@ -182,8 +187,9 @@ private:
 };
 
 
-/// Basecall error counts associated with a single strand of a single context instance, uncompressed for use by an
-/// external error estimation routine
+/// Basecall error counts associated with a single strand of a single context instance.
+///
+/// The errors in this structure are uncompressed for use by an external error estimation routine.
 struct BasecallErrorContextObservationExportStrandObservation
 {
     bool
@@ -211,8 +217,9 @@ struct BasecallErrorContextObservationExportStrandObservation
     std::vector<unsigned> altAlleleCount;
 };
 
-/// Basecall error counts associated with a single context instance, uncompressed for use by an
-/// external error estimation routine
+/// Basecall error counts associated with a single context instance.
+///
+/// The errors in this structure are uncompressed for use by an external error estimation routine.
 struct BasecallErrorContextObservationExportObservation
 {
     bool
@@ -228,8 +235,9 @@ struct BasecallErrorContextObservationExportObservation
     BasecallErrorContextObservationExportStrandObservation strand1;
 };
 
-/// Basecall error counts for all instances of a single sequence context, uncompressed for use by an
-/// external error estimation routine
+/// Basecall error counts associated with all instances of single context.
+///
+/// The errors in this structure are uncompressed for use by an external error estimation routine.
 struct BasecallErrorContextObservationExportData
 {
     void
@@ -240,9 +248,8 @@ struct BasecallErrorContextObservationExportData
         observations.clear();
     }
 
-    /// The basecall error levels used for the alternate allele observations
+    /// The basecall error rate levels used for the alternate allele observations
     std::vector<uint16_t> altAlleleBasecallErrorPhredProbLevels;
-    /// TODO:
     std::vector<uint64_t> refCount;
 
     // map value is the number of identical context instances:
@@ -357,18 +364,22 @@ public:
         const BasecallErrorContext& context,
         const BasecallErrorContextInputObservation& siteObservation);
 
+    /// Indicate that a site is skipped because it falls into a user-specified excluded region
     void
     addExcludedRegionSkip(
         const BasecallErrorContext& context);
 
+    /// Indicate that a site is skipped due to anomalous depth
     void
     addDepthSkip(
         const BasecallErrorContext& context);
 
+    /// Indicate that a site is skipped due to no coverage at the site (after quality filtration)
     void
     addEmptySkip(
         const BasecallErrorContext& context);
 
+    /// Indicate that a site is skipped due to excessive sequencing noise in the surrounding locus
     void
     addNoiseSkip(
         const BasecallErrorContext& context);

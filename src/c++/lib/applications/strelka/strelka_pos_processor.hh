@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -32,7 +32,7 @@
 #include "starling_common/PileupCleaner.hh"
 #include "starling_common/starling_pos_processor_base.hh"
 #include "SomaticCallableProcessor.hh"
-#include "StrelkaSampleSetSummary.hh"
+#include "strelka_common/StrelkaSampleSetSummary.hh"
 
 
 ///

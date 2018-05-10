@@ -45,7 +45,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "StrelkaSampleSetSummary.hh"
+#include "strelka_common/StrelkaSampleSetSummary.hh"
 
 
 typedef boost::mt19937 gen_t;

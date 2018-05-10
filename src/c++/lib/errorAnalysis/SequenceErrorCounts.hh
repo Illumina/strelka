@@ -37,7 +37,7 @@
 struct SequenceErrorCounts
 {
     BasecallErrorCounts&
-    getBaseCounts()
+    getBasecallCounts()
     {
         return _bases;
     }

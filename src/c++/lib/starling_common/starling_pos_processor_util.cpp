@@ -355,7 +355,7 @@ processInputReadAlignment(
     const unsigned sampleIndex)
 {
     // These read filters are always on, because we can't do anything sensible
-    // with these cases. This filtration is shared with the chromosome
+    // with these cases (except supplement). This filtration is shared with the chromosome
     // depth estimation routine, so the perceived depth of the two routines
     // will match for the purpose of high/low depth filtration.
     //

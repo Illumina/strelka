@@ -26,6 +26,7 @@
 ///
 /// \tparam V map value type, assumed to be integral
 template <typename K, typename V>
+static
 void
 iterateMapValue(
     std::map<K, V>& inputMap,
@@ -47,6 +48,7 @@ iterateMapValue(
 /// (1) map2' to will contain the union of map1 and map2 keys
 /// (2) for each shared key, map2'[key] = map1[key]*value + map2[key]
 template <typename K, typename V1, typename V2>
+static
 void
 mergeMapKeys(
     const std::map<K,V1>& map1,

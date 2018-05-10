@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -48,8 +48,8 @@ struct SequenceErrorCountsPosProcessor : public starling_pos_processor_base
 
     /// Notify this object that the process is completing (without error)
     ///
-    /// This is the point where all one-time statistical summaries which
-    /// may span multiple regions are completed.
+    /// This is the point where all one-time statistical summaries (which
+    /// may span multiple regions) are completed.
     void completeProcessing();
 
     void resetRegion(
@@ -95,7 +95,7 @@ private:
 
     SequenceErrorCounts _counts;
 
-    double _max_candidate_normal_sample_depth = -1;
+    double _maxNormalSampleDepthForCandidateVariants = -1;
 
     RegionTracker _excludedRegions;
     RecordTracker _knownVariants;

@@ -120,7 +120,7 @@ runDSEC(
     std::ostream& ros(std::cout);
     if (! opt.isExcludeBasecalls)
     {
-        counts.getBaseCounts().dump(ros);
+        counts.getBasecallCounts().dump(ros);
     }
     if (! opt.isExcludeIndels)
     {

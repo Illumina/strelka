@@ -34,6 +34,7 @@
 #include "starling_common/ploidy_util.hh"
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
+#include "strelka_common/StrelkaSampleSetSummary.hh"
 
 
 
@@ -97,7 +98,7 @@ getSequenceErrorCountsRun(
     const prog_info& pinfo,
     const SequenceErrorCountsOptions& opt)
 {
-    // ensure that this object is created first for runtime benchmark
+    // ensure that this object is created first to improve accuracy of runtime benchmarking
     RunStatsManager statsManager(opt.segmentStatsFilename);
 
     opt.validate();
@@ -124,13 +125,12 @@ getSequenceErrorCountsRun(
         std::vector<unsigned> registrationIndices(opt.alignFileOpt.alignmentFilenames.size(), 0);
         bamHeaders = registerAlignments(opt.alignFileOpt.alignmentFilenames, registrationIndices, streamData);
 
-        assert(not bamHeaders.empty());
+        assert(! bamHeaders.empty());
         const bam_hdr_t& referenceHeader(bamHeaders.front());
 
         static const bool noRequireNormalized(false);
         registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader,
                         streamData, noRequireNormalized);
-        registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
         registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
 
         if (!opt.knownVariantsFile.empty())
@@ -192,7 +192,7 @@ getSequenceErrorCountsRun(
 
                 const bam_record& read(streamData.getCurrentBam());
 
-                // special test used in error counting only -- this isn't the ideal place for this:
+                // special read noise filter used in error counting only -- this isn't the ideal place for this logic:
                 {
                     using namespace ALIGNPATH;
                     path_t apath;

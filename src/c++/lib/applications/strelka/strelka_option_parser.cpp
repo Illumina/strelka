@@ -71,7 +71,7 @@ get_strelka_option_parser(
     po::options_description strelka_parse_opt_filter("Somatic variant-calling filters");
     strelka_parse_opt_filter.add_options()
     ("strelka-chrom-depth-file", po::value(&opt.sfilter.chrom_depth_file),
-     "If provided, the mean depth for each chromosome will be read from file, and these values will be used for high depth filtration. File should contain one line per chromosome, where each line begins with: \"chrom_name<TAB>depth\" (default: no chrom depth filtration)")
+     "If provided, the expected depth for each chromosome will be read from file, and these values will be used for high depth filtration. File should contain one line per chromosome, where each line begins with: \"chrom_name<TAB>depth\" (default: no chrom depth filtration)")
     ("strelka-max-depth-factor", po::value(&opt.sfilter.max_depth_factor)->default_value(opt.sfilter.max_depth_factor),
      "If a chrom depth file is supplied then loci with depth exceeding the mean chromosome depth times this value are filtered")
     ("strelka-skip-header", po::value(&opt.sfilter.is_skip_header)->zero_tokens(),
