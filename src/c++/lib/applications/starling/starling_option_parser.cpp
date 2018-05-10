@@ -155,8 +155,8 @@ finalize_starling_options(
         }
     }
 
-    checkOptionalFile(pinfo, opt.snv_scoring_model_filename, "SNV empirical scoring model");
-    checkOptionalFile(pinfo, opt.indel_scoring_model_filename, "Indel empirical scoring model");
+    checkOptionalInputFile(pinfo, opt.snv_scoring_model_filename, "SNV empirical scoring model");
+    checkOptionalInputFile(pinfo, opt.indel_scoring_model_filename, "Indel empirical scoring model");
 
     finalize_starling_base_options(pinfo,vm,opt);
 }

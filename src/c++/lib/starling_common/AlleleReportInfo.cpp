@@ -39,7 +39,7 @@ void AlleleSampleReportInfo::dump(std::ostream& os) const
        << ",n_confident_indel_reads=" << n_confident_indel_reads
        << ",n_confident_alt_reads=" << n_confident_alt_reads
        << ",n_other_reads=" << n_other_reads
-       << ",tier1Depth=" << tier1Depth;
+       << ",indelLocusDepth=" << indelLocusDepth;
 }
 
 std::ostream& operator<<(std::ostream& os, const AlleleSampleReportInfo& obj)

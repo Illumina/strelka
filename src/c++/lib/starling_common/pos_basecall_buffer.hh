@@ -62,7 +62,7 @@ struct pos_basecall_buffer
     void
     insert_pos_submap_count(const pos_t pos)
     {
-        _pdata.getRef(pos).n_submapped++;
+        _pdata.getRef(pos).submappedReadCount++;
     }
 
     void
@@ -90,7 +90,7 @@ struct pos_basecall_buffer
         snp_pos_info& posdata(_pdata.getRef(pos));
         if (posdata.get_ref_base() == id_to_base(call_id)) return;
 
-        posdata.nonReferenceAlleleReadPositionInfo.push_back({readPos,readLength});
+        posdata.altAlleleReadPositionInfo.push_back({readPos,readLength});
     }
 
     /// add associated basecall data to pileup at position pos which

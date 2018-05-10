@@ -25,14 +25,14 @@
 
 #include <cassert>
 #include <cstdint>
-#include <iosfwd>
 #include <vector>
 
 
-/// maintains the average of a set in a sliding window
+/// \brief Efficiently provides the average of all values in a limited size FIFO buffer
 ///
 struct window_average
 {
+    /// \param[in] init_full_size The maximum size of the FIFO buffer
     window_average(const int32_t init_full_size)
         : _total(0)
         , _size(0)

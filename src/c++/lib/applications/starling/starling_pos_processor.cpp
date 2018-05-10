@@ -159,7 +159,7 @@ process_pos_snp(const pos_t pos)
             for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
             {
                 const sample_info& sif(sample(sampleIndex));
-                const CleanedPileup& cpi(sif.cpi);
+                const CleanedPileup& cpi(sif.cleanedPileup);
                 const snp_pos_info& pi(cpi.rawPileup());
 
                 if (not pi.calls.empty())
@@ -175,7 +175,7 @@ process_pos_snp(const pos_t pos)
         // prep step 1) clean pileups in all samples:
         for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
-            _pileupCleaner.CleanPileupErrorProb(sample(sampleIndex).cpi);
+            _pileupCleaner.CleanPileupErrorProb(sample(sampleIndex).cleanedPileup);
         }
 
         if (_opt.is_bsnp_diploid())
@@ -218,8 +218,8 @@ updateSiteSampleInfo(
 
     siteSampleInfo.spanningDeletionReadCount = good_pi.spanningDeletionReadCount;
 
-    siteSampleInfo.n_used_calls=cpi.n_used_calls();
-    siteSampleInfo.n_unused_calls=cpi.n_unused_calls();
+    siteSampleInfo.usedBasecallCount = cpi.usedBasecallCount();
+    siteSampleInfo.unusedBasecallCount = cpi.unusedBasecallCount();
 
     // MQ is computed/reported whether EVS features are needed or not, it is also used by EVS
     const auto& pi(cpi.rawPileup());
@@ -260,7 +260,7 @@ computeSampleDiploidSiteGenotype(
     const unsigned ploidy,
     diploid_genotype& dgt)
 {
-    const extended_pos_info& good_epi(sif.cpi.getExtendedPosInfo());
+    const extended_pos_info& good_epi(sif.cleanedPileup.getExtendedPosInfo());
     dgt.ploidy=ploidy;
     dopt.pdcaller().position_snp_call_pprob_digt(
         opt, good_epi, dgt, opt.is_all_sites());
@@ -356,13 +356,13 @@ updateSnvLocusWithSampleInfo(
     bool isOverlappingHomAltDeletion(false);
     if (groupLocusPloidy == 0)
     {
-        const int locusPloidyAdjustment(sif.cpi.rawPileup().spanningIndelPloidyModification);
+        const int locusPloidyAdjustment(sif.cleanedPileup.rawPileup().spanningIndelPloidyModification);
         isOverlappingHomAltDeletion=(locusPloidyAdjustment < 0);
     }
 
-    const CleanedPileup& cpi(sif.cpi);
+    const CleanedPileup& cpi(sif.cleanedPileup);
 
-    if (cpi.n_used_calls() != 0)
+    if (cpi.usedBasecallCount() != 0)
     {
         // the principle of this filter is that there's supposed to be no coverage here
         // we make an exception for sites inside of homalt deletions, maybe we shouldn't?
@@ -372,7 +372,7 @@ updateSnvLocusWithSampleInfo(
         }
     }
 
-    if     (locus.isRefUnknown() or (cpi.n_used_calls() == 0) or isOverlappingHomAltDeletion)
+    if     (locus.isRefUnknown() or (cpi.usedBasecallCount() == 0) or isOverlappingHomAltDeletion)
     {
         sampleInfo.genotypeQuality = 0;
         sampleInfo.maxGenotypeIndex.setGenotypeFromAlleleIndices();
@@ -520,9 +520,9 @@ getSiteAltAlleles(
     std::array<double, N_BASE> sampleBaseCounts;
     for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
-        const auto& cpi(sample(sampleIndex).cpi);
+        const auto& cpi(sample(sampleIndex).cleanedPileup);
         const auto& good_pi(cpi.cleanedPileup());
-        good_pi.get_known_counts(sampleBaseCounts);
+        good_pi.getBasecallCounts(sampleBaseCounts);
 
         static const double minAlleleFraction(0.10);
         unsigned minCount(0);
@@ -643,7 +643,7 @@ process_pos_snp_digt(
         // decide what to do with this information from there.
         //
         const int regionPloidy(get_ploidy(pos, sampleIndex));
-        const int locusPloidyAdjustment(sample(sampleIndex).cpi.rawPileup().spanningIndelPloidyModification);
+        const int locusPloidyAdjustment(sample(sampleIndex).cleanedPileup.rawPileup().spanningIndelPloidyModification);
         const int ploidy = std::max(0, regionPloidy+locusPloidyAdjustment);
         groupLocusPloidy.push_back(ploidy);
         callerPloidy.push_back((ploidy == 0) ? 2 : ploidy);
@@ -761,7 +761,7 @@ updateContinuousSnvLocusWithSampleInfo(
     const uint8_t altAlleleCount(siteAlleles.size());
     const uint8_t fullAlleleCount(altAlleleCount+1);
 
-    const CleanedPileup& cpi(sif.cpi);
+    const CleanedPileup& cpi(sif.cleanedPileup);
     const snp_pos_info& good_pi(cpi.cleanedPileup());
 
     auto& sampleInfo(locus.getSample(sampleIndex));

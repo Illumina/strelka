@@ -419,7 +419,7 @@ getAlleleSampleReportInfo(
         pos_t depth_pos(indelKey.pos-1);
         if (indelKey.type==INDEL::BP_RIGHT) depth_pos=indelKey.pos;
         const snp_pos_info& spi(bc_buff.get_pos(depth_pos));
-        isri.tier1Depth=spi.calls.size();
+        isri.indelLocusDepth=spi.calls.size();
         isri.mapqTracker=spi.mapqTracker;
     }
 }

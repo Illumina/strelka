@@ -826,27 +826,27 @@ struct GermlineSiteSampleInfo
     unsigned
     getMappedReadDepth() const
     {
-        return n_used_calls + n_unused_calls;
+        return usedBasecallCount + unusedBasecallCount;
     }
 
     bool
     isUsedReadCoverage() const
     {
-        return (n_used_calls != 0);
+        return (usedBasecallCount != 0);
     }
 
     bool
     isAnyReadCoverage() const
     {
-        return (isUsedReadCoverage() or (n_unused_calls != 0));
+        return (isUsedReadCoverage() or (unusedBasecallCount != 0));
     }
 
     void
     clear()
     {
         spanningDeletionReadCount = 0;
-        n_used_calls = 0;
-        n_unused_calls = 0;
+        usedBasecallCount = 0;
+        unusedBasecallCount = 0;
         isOverlappingHomAltDeletion = false;
         mapqTracker.clear();
         ReadPosRankSum = 0;
@@ -861,8 +861,8 @@ struct GermlineSiteSampleInfo
     /// count of reads which have a most likely alignment containing a deletion at the site in question
     unsigned spanningDeletionReadCount = 0;
 
-    unsigned n_used_calls = 0;
-    unsigned n_unused_calls = 0;
+    unsigned usedBasecallCount = 0;
+    unsigned unusedBasecallCount = 0;
 
     /// set to true when the site is overlapped by a hom deletion:
     bool isOverlappingHomAltDeletion = false;

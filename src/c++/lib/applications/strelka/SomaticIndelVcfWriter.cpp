@@ -40,14 +40,14 @@ void
 write_vcf_isri_tiers(
     const AlleleSampleReportInfo& isri1,
     const AlleleSampleReportInfo& isri2,
-    const win_avg_set& was,
+    const LocalRegionStats& was,
     std::ostream& os)
 {
     static const char sep(':');
 //  DP:DP2:TAR:TIR:TOR...
-    os << isri1.tier1Depth
+    os << isri1.indelLocusDepth
        << sep
-       << isri2.tier1Depth
+       << isri2.indelLocusDepth
        << sep
        << isri1.n_confident_ref_reads+isri1.n_confident_alt_reads << ','
        << isri2.n_confident_ref_reads+isri2.n_confident_alt_reads
@@ -58,9 +58,9 @@ write_vcf_isri_tiers(
        << isri1.n_other_reads << ','
        << isri2.n_other_reads;
 
-    const float used(was.ss_used_win.avg());
-    const float filt(was.ss_filt_win.avg());
-    const float submap(was.ss_submap_win.avg());
+    const float used(was.regionUsedBasecallCount.avg());
+    const float filt(was.regionUnusedBasecallCount.avg());
+    const float submap(was.regionSubmappedReadCount.avg());
 
     const StreamScoper ss(os);
     os << std::fixed << std::setprecision(2);
@@ -82,8 +82,8 @@ writeSomaticIndelVcfGrid(
     const std::string& chromName,
     const pos_t pos,
     const SomaticIndelVcfInfo& siInfo,
-    const win_avg_set& wasNormal,
-    const win_avg_set& wasTumor,
+    const LocalRegionStats& wasNormal,
+    const LocalRegionStats& wasTumor,
     const double maxChromDepth,
     std::ostream& os)
 {
@@ -95,7 +95,7 @@ writeSomaticIndelVcfGrid(
     /// TODO add a "relative to expected depth" feature to the EVS model so that EVS is a single filter/single ROC model
     if (dopt.sfilter.is_max_depth())
     {
-        const unsigned& depth(siInfo.nisri[0].tier1Depth);
+        const unsigned& depth(siInfo.nisri[0].indelLocusDepth);
         if (depth > maxChromDepth)
         {
             smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::HighDepth);
@@ -139,8 +139,8 @@ writeSomaticIndelVcfGrid(
     }
 
     // set LowDepth filter if tier 1 tumor or normal depth is below a threshold
-    if ((siInfo.tisri[0].tier1Depth < opt.sfilter.minPassedCallDepth) ||
-        (siInfo.nisri[0].tier1Depth < opt.sfilter.minPassedCallDepth))
+    if ((siInfo.tisri[0].indelLocusDepth < opt.sfilter.minPassedCallDepth) ||
+        (siInfo.nisri[0].indelLocusDepth < opt.sfilter.minPassedCallDepth))
     {
         smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::LowDepth);
     }
@@ -265,8 +265,8 @@ SomaticIndelVcfWriter::
 addIndelWindowData(
     const std::string& chromName,
     const pos_t pos,
-    const win_avg_set& wasNormal,
-    const win_avg_set& wasTumor,
+    const LocalRegionStats& wasNormal,
+    const LocalRegionStats& wasTumor,
     const double maxChromDepth)
 {
     assert(not chromName.empty());

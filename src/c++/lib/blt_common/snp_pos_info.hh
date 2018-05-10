@@ -142,23 +142,26 @@ struct snp_pos_info
         calls.clear();
         tier2_calls.clear();
         spanningDeletionReadCount=0;
-        n_submapped=0;
+        submappedReadCount=0;
         mapqTracker.clear();
         hap_set.clear();
         mq_ranksum.clear();
         baseq_ranksum.clear();
-        read_pos_ranksum.clear();
+        readPositionRankSum.clear();
         distanceFromReadEdge.clear();
-        nonReferenceAlleleReadPositionInfo.clear();
+        altAlleleReadPositionInfo.clear();
 
         spanningIndelPloidyModification = 0;
     }
 
-    /// Summarize pileup information as a simple allele count
+    /// \brief Get basecall counts from the pileup
+    ///
+    /// Basecalls are not counted if they are unknown or have quality score less than \p min_qscore
     template <typename T>
     void
-    get_known_counts(std::array<T,N_BASE>& base_count,
-                     const int min_qscore = 0) const
+    getBasecallCounts(
+        std::array<T, N_BASE>& base_count,
+        const int min_qscore = 0) const
     {
         for (unsigned i(0); i<N_BASE; ++i) base_count[i] = 0;
 
@@ -257,7 +260,7 @@ public:
     ///
     /// note this could be usable,filtered or spanning deletion,
     /// all submapped reads get counted here:
-    unsigned n_submapped;
+    unsigned submappedReadCount;
 
     MapqTracker mapqTracker;
 
@@ -266,7 +269,7 @@ public:
     //for calculating various rank-sum statistics
     fastRanksum mq_ranksum;
     fastRanksum baseq_ranksum;
-    fastRanksum read_pos_ranksum;
+    fastRanksum readPositionRankSum;
 
     /// Track summary stats for the distance of the variant locus from the edge of the read.
     ///
@@ -277,12 +280,13 @@ public:
     struct ReadPositionInfo
     {
         uint16_t readPos;
-        uint16_t readPosLength;
+        uint16_t readLength;
     };
 
     /// Read position of all non-reference allele observations.
-    //  This is used to compute an allele position bias features in the somatic model.
-    std::vector<ReadPositionInfo> nonReferenceAlleleReadPositionInfo;
+    ///
+    /// This is used to compute an allele position bias features in the somatic model.
+    std::vector<ReadPositionInfo> altAlleleReadPositionInfo;
 
     int spanningIndelPloidyModification = 0;
 };

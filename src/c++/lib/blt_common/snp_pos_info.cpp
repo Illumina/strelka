@@ -77,7 +77,7 @@ snp_pos_info::
 get_read_pos_ranksum() const
 {
     //	cout << read_pos_ranksum << endl;
-    return read_pos_ranksum.get_z_stat();
+    return readPositionRankSum.get_z_stat();
 
 }
 
@@ -101,7 +101,7 @@ snp_pos_info::
 get_raw_pos() const
 {
 //  cout << baseq_ranksum << endl;
-    return read_pos_ranksum.getExpectedCategory2Value();
+    return readPositionRankSum.getExpectedCategory2Value();
 }
 
 
@@ -120,7 +120,7 @@ print_known_counts(std::ostream& os,
                    const int min_qscore) const
 {
     std::array<unsigned,N_BASE> base_count;
-    get_known_counts(base_count,min_qscore);
+    getBasecallCounts(base_count, min_qscore);
 
     for (const unsigned bc : base_count)
     {

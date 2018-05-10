@@ -73,8 +73,8 @@ strelka_pos_processor(
     }
 
     // setup indel avg window:
-    _indelRegionIndexNormal=normal_sif.wav.add_win(opt.sfilter.indelRegionFlankSize*2);
-    _indelRegionIndexTumor=tumor_sif.wav.add_win(opt.sfilter.indelRegionFlankSize*2);
+    _indelRegionIndexNormal= normal_sif.localRegionStatsCollection.addNewLocalRegionStatsSize(opt.sfilter.indelRegionFlankSize * 2);
+    _indelRegionIndexTumor= tumor_sif.localRegionStatsCollection.addNewLocalRegionStatsSize(opt.sfilter.indelRegionFlankSize * 2);
 }
 
 
@@ -174,8 +174,8 @@ process_pos_snp_somatic(const pos_t pos)
 
     // TODO this is ridiculous -- if the tier2 data scheme works then come back and clean this up:
     static const unsigned n_tier(2);
-    CleanedPileup* normal_cpi_ptr[n_tier] = { &(normal_sif.cpi), &(_tier2_cpi[NORMAL]) };
-    CleanedPileup* tumor_cpi_ptr[n_tier] = { &(tumor_sif.cpi), &(_tier2_cpi[TUMOR]) };
+    CleanedPileup* normal_cpi_ptr[n_tier] = { &(normal_sif.cleanedPileup), &(_tier2_cpi[NORMAL]) };
+    CleanedPileup* tumor_cpi_ptr[n_tier] = { &(tumor_sif.cleanedPileup), &(_tier2_cpi[TUMOR]) };
 
     for (unsigned t(0); t<n_tier; ++t)
     {
@@ -421,8 +421,9 @@ run_post_call_step(
 
     if (! _indelWriter.testPos(pos)) return;
 
-    const win_avg_set& was_normal(sample(STRELKA_SAMPLE_TYPE::NORMAL).wav.get_win_avg_set(_indelRegionIndexNormal));
-    const win_avg_set& was_tumor(sample(STRELKA_SAMPLE_TYPE::TUMOR).wav.get_win_avg_set(_indelRegionIndexTumor));
+    const LocalRegionStats& was_normal(
+        sample(STRELKA_SAMPLE_TYPE::NORMAL).localRegionStatsCollection.getLocalRegionStats(_indelRegionIndexNormal));
+    const LocalRegionStats& was_tumor(sample(STRELKA_SAMPLE_TYPE::TUMOR).localRegionStatsCollection.getLocalRegionStats(_indelRegionIndexTumor));
 
     _indelWriter.addIndelWindowData(_chromName, pos, was_normal, was_tumor, _maxChromDepth);
 }

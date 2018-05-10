@@ -241,7 +241,7 @@ ScoringModelManager::applyDepthFilter(
         auto& sampleInfo(locus.getSample(sampleIndex));
         const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
         if ((sampleInfo.supportCounts.totalConfidentCounts() < _opt.minPassedCallDepth)
-            || (siteSampleInfo.n_used_calls < _opt.minPassedCallDepth))
+            || (siteSampleInfo.usedBasecallCount < _opt.minPassedCallDepth))
         {
             sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowDepth);
         }
@@ -305,8 +305,8 @@ default_classify_site(
     if (_opt.is_max_base_filt)
     {
         const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
-        const unsigned total_calls(siteSampleInfo.n_used_calls+siteSampleInfo.n_unused_calls);
-        const double unusedCallFraction(safeFrac(siteSampleInfo.n_unused_calls, total_calls));
+        const unsigned total_calls(siteSampleInfo.usedBasecallCount+siteSampleInfo.unusedBasecallCount);
+        const double unusedCallFraction(safeFrac(siteSampleInfo.unusedBasecallCount, total_calls));
         if (unusedCallFraction>_opt.max_base_filt) sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighBaseFilt);
     }
     if (locus.isVariantLocus())

@@ -95,12 +95,12 @@ testCanSiteJoinSampleBlockShared(
     if (blockSampleInfo.isVariant() or inputSampleInfo.isVariant()) return false;
 
     if (! is_new_value_blockable(
-            inputSiteSampleInfo.n_used_calls, block_dpu, frac_tol, abs_tol))
+            inputSiteSampleInfo.usedBasecallCount, block_dpu, frac_tol, abs_tol))
     {
         return false;
     }
     if (! is_new_value_blockable(
-            inputSiteSampleInfo.n_unused_calls, block_dpf, frac_tol, abs_tol))
+            inputSiteSampleInfo.unusedBasecallCount, block_dpf, frac_tol, abs_tol))
     {
         return false;
     }
@@ -147,8 +147,8 @@ joinSiteToSampleBlock(
         isBlockGqxDefined = inputIsGqx;
     }
 
-    block_dpu.add(inputSiteSampleInfo.n_used_calls);
-    block_dpf.add(inputSiteSampleInfo.n_unused_calls);
+    block_dpu.add(inputSiteSampleInfo.usedBasecallCount);
+    block_dpf.add(inputSiteSampleInfo.unusedBasecallCount);
     if (inputIsGqx)
     {
         block_gqx.add(inputSampleInfo.gqx);

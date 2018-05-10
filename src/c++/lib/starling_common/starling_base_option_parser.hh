@@ -39,7 +39,7 @@ namespace po = boost::program_options;
 /// label will be printed in any usage error message as "<label> file"
 ///
 void
-checkOptionalFile(
+checkOptionalInputFile(
     const prog_info& pinfo,
     const std::string& filename,
     const char* label);

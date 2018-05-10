@@ -27,7 +27,7 @@
 #include "strelka_shared.hh"
 
 #include "starling_common/AlleleReportInfo.hh"
-#include "starling_common/starling_pos_processor_win_avg_set.hh"
+#include "../../starling_common/LocalRegionStats.hh"
 
 #include <array>
 #include <map>
@@ -90,8 +90,8 @@ struct SomaticIndelVcfWriter
     addIndelWindowData(
         const std::string& chromName,
         const pos_t pos,
-        const win_avg_set& wasNormal,
-        const win_avg_set& wasTumor,
+        const LocalRegionStats& wasNormal,
+        const LocalRegionStats& wasTumor,
         const double maxChromDepth);
 
 private:

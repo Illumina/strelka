@@ -68,9 +68,9 @@ call(
     const bool is_include_tier2(false);
     pileupCleaner.CleanPileup(pi,is_include_tier2,cpi);
 
-    //pileupCleaner.CleanPileupErrorProb(cpi);
+    //pileupCleaner.CleanPileupErrorProb(cleanedPileup);
 
-//    const snp_pos_info& good_pi(cpi.cleanedPileup());
+//    const snp_pos_info& good_pi(cleanedPileup.cleanedPileup());
     const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
     diploid_genotype dgt;

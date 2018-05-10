@@ -38,7 +38,7 @@
 #include "starling_common/pos_basecall_buffer.hh"
 #include "starling_common/read_mismatch_info.hh"
 #include "starling_common/starling_base_shared.hh"
-#include "starling_common/starling_pos_processor_win_avg_set.hh"
+#include "LocalRegionStats.hh"
 #include "starling_common/starling_read_buffer.hh"
 #include "starling_common/starling_streams_base.hh"
 #include "starling_common/ActiveRegionDetector.hh"
@@ -179,9 +179,9 @@ protected:
         return (! _chromName.empty());
     }
 
-    struct pos_win_avgs
+    struct LocalRegionStatsCollection
     {
-        pos_win_avgs()
+        LocalRegionStatsCollection()
             : _max_winsize(0)
             , _is_last_pos(false)
             , _last_insert_pos(false)
@@ -189,12 +189,12 @@ protected:
 
         /// return index of new window:
         unsigned
-        add_win(
+        addNewLocalRegionStatsSize(
             const unsigned winsize)
         {
-            _wav.emplace_back(winsize);
+            _localRegionStatsCollection.emplace_back(winsize);
             if (winsize>_max_winsize) _max_winsize=winsize;
-            return (_wav.size()-1);
+            return (_localRegionStatsCollection.size()-1);
         }
 
         /// reset average data for each window, but leave the window/winsize info in place
@@ -203,22 +203,22 @@ protected:
         {
             _is_last_pos = false;
             _last_insert_pos = false;
-            for (auto& win : _wav)
+            for (auto& localRegionStats : _localRegionStatsCollection)
             {
-                win.reset();
+                localRegionStats.reset();
             }
         }
 
         void
         insert(const pos_t pos,
-               const unsigned n_used,
-               const unsigned n_filt,
-               const unsigned n_spandel,
-               const unsigned n_submap)
+               const unsigned usedBasecallCount,
+               const unsigned unusedBasecallCount,
+               const unsigned spanningDeletionReadCount,
+               const unsigned submappedReadCount)
         {
-            if (_wav.empty()) return;
+            if (_localRegionStatsCollection.empty()) return;
             check_skipped_pos(pos);
-            insert_impl(n_used,n_filt,n_spandel,n_submap);
+            insert_impl(usedBasecallCount,unusedBasecallCount,spanningDeletionReadCount,submappedReadCount);
         }
 
         // TODO: does check_skipped_pos need to be called here as well?
@@ -226,19 +226,19 @@ protected:
         insert_null(const pos_t pos)
         {
             check_skipped_pos(pos);
-            for (auto& win : _wav)
+            for (auto& localRegionStats : _localRegionStatsCollection)
             {
-                win.ss_used_win.insert_null();
-                win.ss_filt_win.insert_null();
-                win.ss_spandel_win.insert_null();
-                win.ss_submap_win.insert_null();
+                localRegionStats.regionUsedBasecallCount.insert_null();
+                localRegionStats.regionUnusedBasecallCount.insert_null();
+                localRegionStats.regionSpanningDeletionReadCount.insert_null();
+                localRegionStats.regionSubmappedReadCount.insert_null();
             }
         }
 
-        const win_avg_set&
-        get_win_avg_set(const unsigned i) const
+        const LocalRegionStats&
+        getLocalRegionStats(const unsigned regionStatsIndex) const
         {
-            return _wav[i];
+            return _localRegionStatsCollection[regionStatsIndex];
         }
 
     private:
@@ -256,21 +256,22 @@ protected:
         }
 
         void
-        insert_impl(const unsigned n_used,
-                    const unsigned n_filt,
-                    const unsigned n_spandel,
-                    const unsigned n_submap)
+        insert_impl(const unsigned usedBasecallCount,
+                    const unsigned unusedBasecallCount,
+                    const unsigned spanningDeletionReadCount,
+                    const unsigned submappedReadCount)
         {
-            for (auto& win : _wav)
+            for (auto& localRegionStats : _localRegionStatsCollection)
             {
-                win.ss_used_win.insert(n_used);
-                win.ss_filt_win.insert(n_filt);
-                win.ss_spandel_win.insert(n_spandel);
-                win.ss_submap_win.insert(n_submap);
+                localRegionStats.regionUsedBasecallCount.insert(usedBasecallCount);
+                localRegionStats.regionUnusedBasecallCount.insert(unusedBasecallCount);
+                localRegionStats.regionSpanningDeletionReadCount.insert(spanningDeletionReadCount);
+                localRegionStats.regionSubmappedReadCount.insert(submappedReadCount);
             }
         }
 
-        std::vector<win_avg_set> _wav;
+        /// Holds multiple sets of LocalRegionStats, possibly covering multiple regions sizes
+        std::vector<LocalRegionStats> _localRegionStatsCollection;
         unsigned _max_winsize;
         bool _is_last_pos;
         pos_t _last_insert_pos;
@@ -278,7 +279,7 @@ protected:
 
 
 public:
-    /// consolidate sample specific data
+    /// Consolidates all sample-specific data
     struct sample_info
     {
         sample_info(
@@ -288,7 +289,7 @@ public:
             : basecallBuffer(ref)
             , readBuffer(ricp)
             , sampleOptions(opt)
-            , wav()
+            , localRegionStatsCollection()
         {}
 
         void
@@ -298,23 +299,27 @@ public:
             readBuffer.clear();
             estdepth_buff.clear();
             estdepth_buff_tier2.clear();
-            wav.resetRegion();
-            cpi.clear();
+            localRegionStatsCollection.resetRegion();
+            cleanedPileup.clear();
             ploidyRegions.clear();
         }
 
         pos_basecall_buffer basecallBuffer;
         starling_read_buffer readBuffer;
-        depth_buffer estdepth_buff; // provide an early estimate of read depth before realignment.
-        depth_buffer estdepth_buff_tier2; // provide an early estimate of read depth before realignment.
+
+        /// An early estimate of read depth before realignment
+        depth_buffer estdepth_buff;
+
+        /// An early estimate of tier2 read depth before realignment
+        depth_buffer estdepth_buff_tier2;
 
         starling_sample_options sampleOptions;
 
-        // regional basecall average windows:
-        pos_win_avgs wav;
+        /// Collection of local region statistics
+        LocalRegionStatsCollection localRegionStatsCollection;
 
         // keep a single copy of this struct to reuse for every site to lower alloc costs:
-        CleanedPileup cpi;
+        CleanedPileup cleanedPileup;
 
         /// track expected ploidy within this sample:
         RegionPayloadTracker<unsigned> ploidyRegions;

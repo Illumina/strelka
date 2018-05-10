@@ -170,8 +170,8 @@ finalize_strelka_options(
         pinfo.usage("Strelka depth factor must not be less than 0");
     }
 
-    checkOptionalFile(pinfo,opt.somatic_snv_scoring_model_filename, "somatic snv scoring model");
-    checkOptionalFile(pinfo,opt.somatic_indel_scoring_model_filename, "somatic indel scoring model");
+    checkOptionalInputFile(pinfo, opt.somatic_snv_scoring_model_filename, "somatic snv scoring model");
+    checkOptionalInputFile(pinfo, opt.somatic_indel_scoring_model_filename, "somatic indel scoring model");
 
     finalize_starling_base_options(pinfo,vm,opt);
 }

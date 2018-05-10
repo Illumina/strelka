@@ -59,7 +59,7 @@ updateGermlineScoringMetrics(
     if (! is_submapped)
     {
         posdata.baseq_ranksum.add_observation(is_reference,static_cast<unsigned>(qscore));
-        posdata.read_pos_ranksum.add_observation(is_reference,cycle);
+        posdata.readPositionRankSum.add_observation(is_reference,cycle);
         if (not is_reference)
         {
             // maxDistance may help the mean edge distance better generalize over different read lengths:
@@ -81,5 +81,5 @@ update_read_pos_ranksum(
     const bool is_reference(refchar==id_to_base(call_id));
 
     auto& posdata(_pdata.getRef(pos));
-    posdata.read_pos_ranksum.add_observation(is_reference,read_pos);
+    posdata.readPositionRankSum.add_observation(is_reference,read_pos);
 }

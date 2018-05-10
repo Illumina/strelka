@@ -111,11 +111,11 @@ struct AlleleSampleReportInfo
     unsigned n_confident_indel_reads = 0;
     unsigned n_confident_alt_reads = 0;
 
-    // number of lower-quality reads
+    /// Number of reads which cannot be confidently assigned to one of the modeled alleles or are otherwise low quality
     unsigned n_other_reads = 0;
 
-    // the depth of the pileup preceding the indel
-    unsigned tier1Depth = 0;
+    /// Indel depth estimated from the pileup depth at the position preceding the indel
+    unsigned indelLocusDepth = 0;
 
     // same as above, but by strand
     unsigned n_confident_ref_reads_fwd = 0;

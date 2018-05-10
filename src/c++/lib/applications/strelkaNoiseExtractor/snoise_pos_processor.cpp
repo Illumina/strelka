@@ -75,8 +75,8 @@ process_pos_snp_snoise(
     const unsigned sample_no(0);
     const sample_info& sif(sample(sample_no));
 
-    const snp_pos_info& pi(sif.cpi.rawPileup());
-    const snp_pos_info& good_pi(sif.cpi.cleanedPileup());
+    const snp_pos_info& pi(sif.cleanedPileup.rawPileup());
+    const snp_pos_info& good_pi(sif.cleanedPileup.cleanedPileup());
     const pos_t output_pos(pos+1);
 
 
@@ -120,7 +120,7 @@ process_pos_snp_snoise(
     const unsigned alt_count(base_count[alt_id]);
 
 #if 0
-    const double ref_ratio(static_cast<double>(ref_count)/_site_info.n_used_calls);
+    const double ref_ratio(static_cast<double>(ref_count)/_site_info.usedBasecallCount);
 
     if (ref_ratio > 0.2) return;
 #endif

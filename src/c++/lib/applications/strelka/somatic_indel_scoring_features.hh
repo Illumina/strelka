@@ -26,7 +26,7 @@
 #include "strelka_shared.hh"
 
 #include "starling_common/AlleleReportInfo.hh"
-#include "starling_common/starling_pos_processor_win_avg_set.hh"
+#include "../../starling_common/LocalRegionStats.hh"
 #include "somatic_call_shared.hh"
 #include "somatic_indel_grid.hh"
 #include "strelka_vcf_locus_info.hh"
@@ -111,7 +111,7 @@ calculateBSA(const AlleleSampleReportInfo& indelSampleReportInfo);
 /// Calculate base-calling noise from window average set
 ///
 double
-calculateBCNoise(const win_avg_set& was);
+calculateBCNoise(const LocalRegionStats& was);
 
 /// \brief Get log ratio fo the frequency of the called indel in the tumor vs normal sample
 ///
@@ -145,7 +145,7 @@ getIndelAlleleCountLogOddsRatio(
 void
 calculateScoringFeatures(
     const SomaticIndelVcfInfo& siInfo,
-    const win_avg_set& n_was,
-    const win_avg_set& t_was,
+    const LocalRegionStats& n_was,
+    const LocalRegionStats& t_was,
     const strelka_options& opt,
     strelka_shared_modifiers_indel& smod);

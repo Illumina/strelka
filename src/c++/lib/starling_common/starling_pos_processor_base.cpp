@@ -1479,17 +1479,17 @@ process_pos_sample_stats(
     const snp_pos_info& pi(sif.basecallBuffer.get_pos(pos));
 
     static const bool is_include_tier2(false);
-    _pileupCleaner.CleanPileupFilter(pi,is_include_tier2,sif.cpi);
+    _pileupCleaner.CleanPileupFilter(pi,is_include_tier2,sif.cleanedPileup);
 
     const unsigned n_spandel(pi.spanningDeletionReadCount);
-    const unsigned n_submapped(pi.n_submapped);
+    const unsigned n_submapped(pi.submappedReadCount);
 
     if (pi.get_ref_base() != 'N')
     {
-        sif.wav.insert(pos,sif.cpi.n_used_calls(),sif.cpi.n_unused_calls(),n_spandel,n_submapped);
+        sif.localRegionStatsCollection.insert(pos, sif.cleanedPileup.usedBasecallCount(), sif.cleanedPileup.unusedBasecallCount(),n_spandel,n_submapped);
     }
     else
     {
-        sif.wav.insert_null(pos);
+        sif.localRegionStatsCollection.insert_null(pos);
     }
 }

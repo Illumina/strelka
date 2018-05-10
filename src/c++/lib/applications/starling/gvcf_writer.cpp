@@ -585,8 +585,8 @@ write_site_record_instance(
             }
             os << ':';
             //print DP:DPF
-            os << siteSampleInfo.n_used_calls << ':'
-               << siteSampleInfo.n_unused_calls;
+            os << siteSampleInfo.usedBasecallCount << ':'
+               << siteSampleInfo.unusedBasecallCount;
 
             // AD/ADF/ADR
             if (isAltAlleles)
@@ -695,7 +695,7 @@ write_site_record_instance(
                << ':' << sampleInfo.gqx;
 
             // DP:DPF
-            os << ':' << siteSampleInfo.n_used_calls << ':' << siteSampleInfo.n_unused_calls;
+            os << ':' << siteSampleInfo.usedBasecallCount << ':' << siteSampleInfo.unusedBasecallCount;
 
             // AD/ADF/ADR
             if (isAltAlleles)

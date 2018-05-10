@@ -39,22 +39,22 @@ struct CleanedPileup
     {}
 
     unsigned
-    n_calls() const
+    totalBasecallCount() const
     {
         // pre-computed to reflect tier1/tier2
         return _n_raw_calls;
     }
 
     unsigned
-    n_used_calls() const
+    usedBasecallCount() const
     {
         return _cleanedPileup.calls.size();
     }
 
     unsigned
-    n_unused_calls() const
+    unusedBasecallCount() const
     {
-        return n_calls()-n_used_calls();
+        return totalBasecallCount()- usedBasecallCount();
     }
 
     const snp_pos_info&

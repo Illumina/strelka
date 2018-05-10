@@ -38,7 +38,7 @@
 
 
 void
-checkOptionalFile(
+checkOptionalInputFile(
     const prog_info& pinfo,
     const std::string& filename,
     const char* label)
@@ -224,7 +224,7 @@ finalize_starling_base_options(
 
     for (const auto& indelErrorModelFilename : opt.indelErrorModelFilenames)
     {
-        checkOptionalFile(pinfo, indelErrorModelFilename, "indel error models");
+        checkOptionalInputFile(pinfo, indelErrorModelFilename, "indel error models");
     }
     /// tier2 options are not parsed by starling_base, but need to live up here for now,
     /// so validate them together with the rest of starling_base

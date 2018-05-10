@@ -44,8 +44,8 @@ calculateLogOddsRatio(
 {
     std::array<unsigned,N_BASE> n_tier1_base_counts;
     std::array<unsigned,N_BASE> t_tier1_base_counts;
-    n1_cpi.cleanedPileup().get_known_counts(n_tier1_base_counts);
-    t1_cpi.cleanedPileup().get_known_counts(t_tier1_base_counts);
+    n1_cpi.cleanedPileup().getBasecallCounts(n_tier1_base_counts);
+    t1_cpi.cleanedPileup().getBasecallCounts(t_tier1_base_counts);
     const unsigned ref_index(base_to_id(n1_cpi.cleanedPileup().get_ref_base()));
 
     static const double pseudoCount(0.5);
@@ -87,11 +87,12 @@ get_single_sample_scoring_features(
     const bool isNormalSample,
     strelka_shared_modifiers_snv& smod)
 {
-    const double filteredDepthFraction(safeFrac(tier1_cpi.n_unused_calls(), tier1_cpi.n_calls()));
+    const double filteredDepthFraction(safeFrac(tier1_cpi.unusedBasecallCount(), tier1_cpi.totalBasecallCount()));
     smod.features.set((isNormalSample ? SOMATIC_SNV_SCORING_FEATURES::NormalSampleFilteredDepthFraction : SOMATIC_SNV_SCORING_FEATURES::TumorSampleFilteredDepthFraction), filteredDepthFraction);
     if (opt.isReportEVSFeatures)
     {
-        const double spanningDeletionFraction(safeFrac(tier1_cpi.rawPileup().spanningDeletionReadCount, tier1_cpi.n_calls()+tier1_cpi.rawPileup().spanningDeletionReadCount));
+        const double spanningDeletionFraction(safeFrac(tier1_cpi.rawPileup().spanningDeletionReadCount,
+                                                       tier1_cpi.totalBasecallCount()+tier1_cpi.rawPileup().spanningDeletionReadCount));
         smod.dfeatures.set((isNormalSample ? SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::NormalSampleSpanningDeletionFraction : SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::TumorSampleSpanningDeletionFraction), spanningDeletionFraction);
     }
 
@@ -103,7 +104,7 @@ get_single_sample_scoring_features(
         if (isUniformDepthExpected)
         {
             /// TODO in theory we would like the numerator to include all reads that are used to compute normChromDepth -- I'm not sure this is the case now:
-            normalDepthRate = safeFrac(tier1_cpi.n_calls(), normChromDepth);
+            normalDepthRate = safeFrac(tier1_cpi.totalBasecallCount(), normChromDepth);
         }
 
         smod.features.set(SOMATIC_SNV_SCORING_FEATURES::NormalSampleRelativeTotalLocusDepth,normalDepthRate);
@@ -113,7 +114,7 @@ get_single_sample_scoring_features(
     if (!isNormalSample)      //report tier1_allele count for tumor case
     {
         std::array<unsigned,N_BASE> tier1_base_counts;
-        tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts);
+        tier1_cpi.cleanedPileup().getBasecallCounts(tier1_base_counts);
 
         const unsigned ref_index(base_to_id(tier1_cpi.cleanedPileup().get_ref_base()));
         unsigned ref=0;
@@ -157,9 +158,9 @@ get_scoring_features(
 {
     uint16_t medianReadPos=0;
     uint16_t medianReadPosVar=0;
-    if (! t1_cpi.rawPileup().nonReferenceAlleleReadPositionInfo.empty())
+    if (! t1_cpi.rawPileup().altAlleleReadPositionInfo.empty())
     {
-        const auto& apos(t1_cpi.rawPileup().nonReferenceAlleleReadPositionInfo);
+        const auto& apos(t1_cpi.rawPileup().altAlleleReadPositionInfo);
         std::vector<uint16_t> readpos;
         for (const auto& r : apos)
         {
@@ -168,7 +169,7 @@ get_scoring_features(
         std::vector<uint16_t> readposcomp;
         for (const auto& r : apos)
         {
-            readposcomp.push_back(r.readPosLength-r.readPos);
+            readposcomp.push_back(r.readLength-r.readPos);
         }
 
         const auto pmedian(median(readpos.begin(),readpos.end()));
@@ -204,7 +205,7 @@ get_scoring_features(
     const unsigned zeroMappingQualityObservations(mapqTracker.zeroCount);
     smod.features.set(SOMATIC_SNV_SCORING_FEATURES::ZeroMappingQualityFraction, safeFrac(zeroMappingQualityObservations,mappingQualityObservations));
 
-    const double tumorSampleReadPosRankSum = t1_cpi.rawPileup().read_pos_ranksum.get_z_stat();
+    const double tumorSampleReadPosRankSum = t1_cpi.rawPileup().readPositionRankSum.get_z_stat();
     smod.features.set(SOMATIC_SNV_SCORING_FEATURES::TumorSampleReadPosRankSum, tumorSampleReadPosRankSum);
 
     smod.features.set(SOMATIC_SNV_SCORING_FEATURES::TumorSampleStrandBias,rs.strandBias);
@@ -231,19 +232,19 @@ write_vcf_sample_info(
     std::ostream& os)
 {
     //DP:FDP:SDP:SUBDP:AU:CU:GU:TU
-    os << tier1_cpi.n_calls()
+    os << tier1_cpi.totalBasecallCount()
        << ':'
-       << tier1_cpi.n_unused_calls()
+       << tier1_cpi.unusedBasecallCount()
        << ':'
        << tier1_cpi.rawPileup().spanningDeletionReadCount
        << ':'
-       << tier1_cpi.rawPileup().n_submapped;
+       << tier1_cpi.rawPileup().submappedReadCount;
 
 
     std::array<unsigned,N_BASE> tier1_base_counts;
     std::array<unsigned,N_BASE> tier2_base_counts;
-    tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts);
-    tier2_cpi.cleanedPileup().get_known_counts(tier2_base_counts);
+    tier1_cpi.cleanedPileup().getBasecallCounts(tier1_base_counts);
+    tier2_cpi.cleanedPileup().getBasecallCounts(tier2_base_counts);
 
     for (unsigned b(0); b<N_BASE; ++b)
     {
@@ -278,8 +279,8 @@ write_vcf_somatic_snv_genotype_strand_grid(
     if (! isEVS)
     {
         // compute all site filters:
-        const unsigned normalDP(n1_epd.n_calls());
-        const unsigned tumorDP(t1_epd.n_calls());
+        const unsigned normalDP(n1_epd.totalBasecallCount());
+        const unsigned tumorDP(t1_epd.totalBasecallCount());
 
         if (dopt.sfilter.is_max_depth())
         {
@@ -290,8 +291,8 @@ write_vcf_somatic_snv_genotype_strand_grid(
         }
 
         {
-            const unsigned normalFDP(n1_epd.n_unused_calls());
-            const unsigned tumorFDP(t1_epd.n_unused_calls());
+            const unsigned normalFDP(n1_epd.unusedBasecallCount());
+            const unsigned tumorFDP(t1_epd.unusedBasecallCount());
 
             const double normalFilt(safeFrac(normalFDP,normalDP));
             const double tumorFilt(safeFrac(tumorFDP,tumorDP));
@@ -347,8 +348,8 @@ write_vcf_somatic_snv_genotype_strand_grid(
         }
 
         // set LowDepth filter if tier 1 tumor or normal depth is below a threshold
-        if ((t1_epd.n_calls() < opt.sfilter.minPassedCallDepth) ||
-            (n1_epd.n_calls() < opt.sfilter.minPassedCallDepth))
+        if ((t1_epd.totalBasecallCount() < opt.sfilter.minPassedCallDepth) ||
+            (n1_epd.totalBasecallCount() < opt.sfilter.minPassedCallDepth))
         {
             smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::LowDepth);
         }

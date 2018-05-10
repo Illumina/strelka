@@ -103,10 +103,10 @@ calculateBSA(const AlleleSampleReportInfo& indelSampleReportInfo)
 
 
 double
-calculateBCNoise(const win_avg_set& was)
+calculateBCNoise(const LocalRegionStats& was)
 {
-    const double filt(was.ss_filt_win.avg());
-    const double used(was.ss_used_win.avg());
+    const double filt(was.regionUnusedBasecallCount.avg());
+    const double used(was.regionUsedBasecallCount.avg());
     const double bcnoise(safeFrac((int)filt,(int)(filt+used)));
     return bcnoise;
 }
@@ -168,8 +168,8 @@ getIndelAlleleCountLogOddsRatio(
 void
 calculateScoringFeatures(
     const SomaticIndelVcfInfo& siInfo,
-    const win_avg_set& n_was,
-    const win_avg_set& t_was,
+    const LocalRegionStats& n_was,
+    const LocalRegionStats& t_was,
     const strelka_options& opt,
     strelka_shared_modifiers_indel& smod)
 {

@@ -264,7 +264,7 @@ computeEmpiricalScoringFeatures(
     const auto& siteSampleInfo(locus.getSiteSample(sampleIndex));
 
     // filtered locus depth/total locus depth/confidentDepth for this sample:
-    const double filteredLocusDepth(siteSampleInfo.n_used_calls);
+    const double filteredLocusDepth(siteSampleInfo.usedBasecallCount);
     const double totalLocusDepth(siteSampleInfo.getTotalReadDepth());
 
     // total locus depth summed over all samples and MAPQ values
@@ -339,8 +339,8 @@ computeEmpiricalScoringFeatures(
         {
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::GT, getEVSGenotypeCode(ploidy.isDiploid(), allele0Index, allele1Index));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::SampleRefAlleleDepth, (confidentRefCount));
-            developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_DP, (siteSampleInfo.n_used_calls));
-            developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_DPF, (siteSampleInfo.n_unused_calls));
+            developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_DP, (siteSampleInfo.usedBasecallCount));
+            developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_DPF, (siteSampleInfo.unusedBasecallCount));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::I_BaseQRankSum, (siteSampleInfo.BaseQRankSum));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::SampleReadPosRankSum, (siteSampleInfo.ReadPosRankSum));
             developmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::I_AvgBaseQ, (siteSampleInfo.avgBaseQ));
