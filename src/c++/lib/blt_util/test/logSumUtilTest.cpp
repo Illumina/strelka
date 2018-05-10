@@ -22,6 +22,16 @@
 #include "logSumUtil.hh"
 
 
+// This symbol can be defined to run benchmarking code focused on various log implementation options:
+//#define BENCHMARK_LOGOPS
+
+#ifdef BENCHMARK_LOGOPS
+#include "time_util.hh"
+
+#include <iostream>
+#endif
+
+
 BOOST_AUTO_TEST_SUITE( logSumUtilTestSuite )
 
 static
@@ -50,7 +60,6 @@ twoTermLogSumTest(
 
 BOOST_AUTO_TEST_CASE( testGetLogSum2 )
 {
-
     twoTermLogSumTest(0.5, 0.2);
     twoTermLogSumTest(0.00001, 0.00000001);
     twoTermLogSumTest(1, 1);
@@ -127,6 +136,80 @@ BOOST_AUTO_TEST_CASE( testGetLogSum4 )
     fourTermLogSumTest(1, 1, 1, 1);
 }
 
+
+#ifdef BENCHMARK_LOGOPS
+// This isn't a real unit test, if defined it runs benchmarks then marks a failed test to force print the output:
+BOOST_AUTO_TEST_CASE( benchmarkLogSums )
+{
+    const unsigned repeatCount(1000);
+    const double valueFactor(0.99);
+    const double startValue(0.5);
+    const double minValue(1e-7);
+    {
+        TimeTracker tt;
+        tt.resume();
+        double sum(0);
+        for (unsigned i(0); i<repeatCount;++i)
+        {
+            for (double value(startValue); value > minValue; value *= valueFactor)
+            {
+                const double dl1p(std::log1p(-value));
+                sum += dl1p;
+            }
+        }
+        std::cerr << "Sum: " << sum << "\n";
+        std::cerr << "Double log1p(x) Time: " << tt.getWallSeconds() << "\n";
+    }
+    {
+        TimeTracker tt;
+        tt.resume();
+        double sum(0);
+        for (unsigned i(0); i<repeatCount;++i)
+        {
+            for (double value(startValue); value > minValue; value *= valueFactor)
+            {
+                const double dl1p(std::log(static_cast<double>(1. - value)));
+                sum += dl1p;
+            }
+        }
+        std::cerr << "Sum: " << sum << "\n";
+        std::cerr << "Double log(1+x) Time: " << tt.getWallSeconds() << "\n";
+    }
+
+    {
+        TimeTracker tt;
+        tt.resume();
+        float sum(0);
+        for (unsigned i(0); i<repeatCount;++i)
+        {
+            for (float value(startValue); value > minValue; value *= valueFactor)
+            {
+                const float dl1p(std::log1p(-value));
+                sum += dl1p;
+            }
+        }
+        std::cerr << "Sum: " << sum << "\n";
+        std::cerr << "Float log1p(x) Time: " << tt.getWallSeconds() << "\n";
+    }
+    {
+        TimeTracker tt;
+        tt.resume();
+        float sum(0);
+        for (unsigned i(0); i<repeatCount;++i)
+        {
+            for (float value(startValue); value > minValue; value *= valueFactor)
+            {
+                const float dl1p(std::log(static_cast<float>(1.f - value)));
+                sum += dl1p;
+            }
+        }
+        std::cerr << "Sum: " << sum << "\n";
+        std::cerr << "Float log(1+x) Time: " << tt.getWallSeconds() << "\n";
+    }
+
+    BOOST_REQUIRE(false);
+}
+#endif
 
 BOOST_AUTO_TEST_SUITE_END()
 
