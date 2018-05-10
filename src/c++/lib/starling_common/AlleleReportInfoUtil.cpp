@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -26,6 +26,8 @@
 #include "blt_common/ref_context.hh"
 #include "blt_util/seq_util.hh"
 #include "starling_common/pos_basecall_buffer.hh"
+#include "starling_common/readMappingAdjustmentUtil.hh"
+
 #if 0
 #include "starling_common/AlleleReportInfo.hh"
 
@@ -236,8 +238,8 @@ indel_lnp_to_pprob(
     // This term formally had a prior on incorrect mapping (meaning the prior of incorrectly mapping a read when the
     // read is randomly positioned on the genome). This term is effectively 1 so it is approximated out in the current
     // version.
-    ReadPathScores::score_t pprob_readIncorrectlyMapped = dopt.getIncorrectMappingLogLikelihood(is_tier2_pass,
-                                                          path_lnp.nonAmbiguousBasesInRead);
+    ReadPathScores::score_t pprob_readIncorrectlyMapped =
+        getIncorrectMappingLogLikelihood(dopt, is_tier2_pass, path_lnp.nonAmbiguousBasesInRead);
     pprob.ref     = path_lnp.ref     + dopt.correctMappingLogPrior + allele_lnprior;
     pprob.indel   = path_lnp.indel   + dopt.correctMappingLogPrior + allele_lnprior;
 

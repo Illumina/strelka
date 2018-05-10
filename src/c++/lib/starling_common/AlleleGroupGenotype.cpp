@@ -18,15 +18,16 @@
 //
 
 #include "AlleleGroupGenotype.hh"
-#include "OrthogonalVariantAlleleCandidateGroupUtil.hh"
 
-#include "common/Exceptions.hh"
-#include "starling_indel_call_pprob_digt.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
 #include "blt_util/qscore.hh"
 #include "blt_util/log.hh"
 #include "calibration/IndelErrorModelJson.hh"
+#include "common/Exceptions.hh"
+#include "starling_common/OrthogonalVariantAlleleCandidateGroupUtil.hh"
+#include "starling_common/readMappingAdjustmentUtil.hh"
+#include "starling_common/starling_indel_call_pprob_digt.hh"
 
 
 
@@ -51,9 +52,9 @@ updateGenotypeLogLhoodFromAlleleLogLhood(
         for (unsigned allele0Index(0); allele0Index < fullAlleleCount; ++allele0Index)
         {
             const unsigned genotypeIndex(VcfGenotypeUtil::getGenotypeIndex(allele0Index));
-            genotypeLogLhood[genotypeIndex] += dopt.integrateOutMappingStatus(readScore.nonAmbiguousBasesInRead,
-                                                                              alleleLogLhood[allele0Index],
-                                                                              isTier2Pass);
+            genotypeLogLhood[genotypeIndex] +=
+                integrateOutMappingStatus(dopt, readScore.nonAmbiguousBasesInRead, alleleLogLhood[allele0Index],
+                                          isTier2Pass);
         }
     }
     else if (callerPloidy == 2)
@@ -101,9 +102,8 @@ updateGenotypeLogLhoodFromAlleleLogLhood(
                     rawLogLhood = alleleLogLhood[allele0Index];
                 }
 
-                genotypeLogLhood[genotypeIndex] += dopt.integrateOutMappingStatus(readScore.nonAmbiguousBasesInRead,
-                                                                                  rawLogLhood,
-                                                                                  isTier2Pass);
+                genotypeLogLhood[genotypeIndex] +=
+                    integrateOutMappingStatus(dopt, readScore.nonAmbiguousBasesInRead, rawLogLhood, isTier2Pass);
             }
         }
     }
@@ -133,7 +133,7 @@ updateSupportingReadStats(
     static const bool isTier2Pass(false);
     for (auto& alleleHood : alleleLoglhoods)
     {
-        alleleHood = dopt.integrateOutMappingStatus(nonAmbiguousBasesInRead, alleleHood, isTier2Pass);
+        alleleHood = integrateOutMappingStatus(dopt, nonAmbiguousBasesInRead, alleleHood, isTier2Pass);
     }
     unsigned maxIndex(0);
     normalizeLogDistro(alleleLoglhoods.begin(), alleleLoglhoods.end(), maxIndex);

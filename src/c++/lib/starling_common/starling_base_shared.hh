@@ -23,9 +23,6 @@
 
 #include "blt_common/blt_shared.hh"
 
-// TODO move all log summing logic out of this include
-#include "blt_util/logSumUtil.hh"
-
 #include "blt_util/PrettyFloat.hh"
 #include "blt_util/reference_contig_segment.hh"
 #include "options/AlignmentFileOptions.hh"
@@ -296,33 +293,6 @@ struct starling_base_deriv_options : public blt_deriv_options, private boost::no
     starling_base_deriv_options(const starling_base_options& opt);
 
     ~starling_base_deriv_options();
-
-    /// Return the approximate log likelihood of the read being produced from a random location in the genome
-    double
-    getIncorrectMappingLogLikelihood(
-        const bool isTier2,
-        const uint16_t nonAmbiguousBasesInRead) const
-    {
-        const double thisRandomBaseMatchLogLikelihood(isTier2 ?
-                                                      tier2RandomBaseMatchLogProb :
-                                                      randomBaseMatchLogProb );
-        return thisRandomBaseMatchLogLikelihood*nonAmbiguousBasesInRead;
-    }
-
-    /// Given the log-likelihood of the read conditioned on correct mapping as input, sum over the
-    /// correct and incorrect mapping states to approximately integrate out the mapping status condition.
-    ///
-    double
-    integrateOutMappingStatus(
-        const uint16_t nonAmbiguousBasesInRead,
-        const double correctMappingLogLikelihood,
-        const bool isTier2) const
-    {
-        // the second term formally has an incorrect mapping prior (prior of incorrectly mapping a read at random),
-        // but this is effectively 1 so it is approximated out
-        return getLogSum((correctMappingLogLikelihood + correctMappingLogPrior),
-                         getIncorrectMappingLogLikelihood(isTier2, nonAmbiguousBasesInRead) /* + incorrectMappingLogPrior ~= 0 */);
-    }
 
     const std::vector<unsigned>&
     getPostCallStage() const

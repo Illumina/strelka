@@ -17,12 +17,12 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
-#include "blt_util/math_util.hh"
 #include "starling_common/AlleleReportInfoUtil.hh"
+#include "starling_common/readMappingAdjustmentUtil.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 
 #include <iostream>
@@ -136,7 +136,7 @@ get_high_low_het_ratio_lhood(
             }
             const double het_lnp(getLogSum(noindel_lnp+log_ref_prob, hom_lnp+log_indel_prob));
 
-            het_lhood_low += dopt.integrateOutMappingStatus(path_lnp.nonAmbiguousBasesInRead, het_lnp, is_tier2_pass);
+            het_lhood_low += integrateOutMappingStatus(dopt, path_lnp.nonAmbiguousBasesInRead, het_lnp, is_tier2_pass);
         }
 
         {
@@ -149,7 +149,7 @@ get_high_low_het_ratio_lhood(
             }
             const double het_lnp(getLogSum(noindel_lnp+log_ref_prob, hom_lnp+log_indel_prob));
 
-            het_lhood_high += dopt.integrateOutMappingStatus(path_lnp.nonAmbiguousBasesInRead, het_lnp, is_tier2_pass);
+            het_lhood_high += integrateOutMappingStatus(dopt, path_lnp.nonAmbiguousBasesInRead, het_lnp, is_tier2_pass);
         }
     }
 }
@@ -295,12 +295,12 @@ get_indel_digt_lhood(
         }
         const double het_lnp(getLogSum(noindel_lnp+log_ref_prob,hom_lnp+log_indel_prob));
 
-        lhood[STAR_DIINDEL::NOINDEL] += dopt.integrateOutMappingStatus(path_lnp.nonAmbiguousBasesInRead, noindel_lnp,
-                                                                       is_tier2_pass);
-        lhood[STAR_DIINDEL::HOM]     += dopt.integrateOutMappingStatus(path_lnp.nonAmbiguousBasesInRead, hom_lnp,
-                                                                       is_tier2_pass);
-        lhood[STAR_DIINDEL::HET]     += dopt.integrateOutMappingStatus(path_lnp.nonAmbiguousBasesInRead, het_lnp,
-                                                                       is_tier2_pass);
+        lhood[STAR_DIINDEL::NOINDEL] += integrateOutMappingStatus(dopt, path_lnp.nonAmbiguousBasesInRead, noindel_lnp,
+                                                                  is_tier2_pass);
+        lhood[STAR_DIINDEL::HOM]     += integrateOutMappingStatus(dopt, path_lnp.nonAmbiguousBasesInRead, hom_lnp,
+                                                                  is_tier2_pass);
+        lhood[STAR_DIINDEL::HET]     += integrateOutMappingStatus(dopt, path_lnp.nonAmbiguousBasesInRead, het_lnp,
+                                                                  is_tier2_pass);
 
 #ifdef DEBUG_INDEL_CALL
         //log_os << std::setprecision(8);
