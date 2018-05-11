@@ -125,7 +125,6 @@ def getDataSet(inputs, sample_input) :
     return pandas.DataFrame(dataset[dataset["tag"] != "FN"])
 
 
-
 def main():
     args = parseArgs()
 
@@ -147,11 +146,13 @@ def main():
     dataset = getDataSet(args.inputs,args.sample_input)
 
     if not args.balance:
-        tpdata = dataset[dataset["tag"] == "TP"]
+        # the copy() method calls below help to prevent the SettingWithCopy warning in pandas
+        # see STREL-804 and https://www.dataquest.io/blog/settingwithcopywarning/
+        tpdata = dataset[dataset["tag"] == "TP"].copy()
         if args.ambig:
-            fpdata = dataset[dataset["tag"].isin(["FP", "UNK"])]
+            fpdata = dataset[dataset["tag"].isin(["FP", "UNK"])].copy()
         else:
-            fpdata = dataset[dataset["tag"] == "FP"]
+            fpdata = dataset[dataset["tag"] == "FP"].copy()
     else:
         tpdata2 = dataset[dataset["tag"] == "TP"]
         if args.ambig:
@@ -161,8 +162,8 @@ def main():
         nrows = min(tpdata2.shape[0], fpdata2.shape[0])
         tp_rows_selected = random.sample(tpdata2.index, nrows)
         fp_rows_selected = random.sample(fpdata2.index, nrows)
-        tpdata = tpdata2.ix[tp_rows_selected]
-        fpdata = fpdata2.ix[fp_rows_selected]
+        tpdata = tpdata2.ix[tp_rows_selected].copy()
+        fpdata = fpdata2.ix[fp_rows_selected].copy()
 
     if args.ambig:
         fpcounts = fpdata["tag"].value_counts()
