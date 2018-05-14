@@ -23,38 +23,38 @@
 
 #pragma once
 
-#include "BasecallErrorCounts.hh"
-#include "IndelErrorCounts.hh"
+#include "BasecallCounts.hh"
+#include "IndelCounts.hh"
 
 
-/// Stores sequencing error patterns observed from data
+/// \brief Stores allele patterns observed from sequencing data
 ///
 /// Used by downstream operations to estimate useful error
 /// parameters for modeling, but no parameters are directly
 /// stored in this object, this object is only a compressed
 /// abstraction of the input data
 ///
-struct SequenceErrorCounts
+struct SequenceAlleleCounts
 {
-    BasecallErrorCounts&
+    BasecallCounts::Dataset&
     getBasecallCounts()
     {
         return _bases;
     }
 
-    const BasecallErrorCounts&
+    const BasecallCounts::Dataset&
     getBaseCounts() const
     {
         return _bases;
     }
 
-    IndelErrorCounts&
+    IndelCounts::Dataset&
     getIndelCounts()
     {
         return _indels;
     }
 
-    const IndelErrorCounts&
+    const IndelCounts::Dataset&
     getIndelCounts() const
     {
         return _indels;
@@ -68,7 +68,7 @@ struct SequenceErrorCounts
     }
 
     void
-    merge(const SequenceErrorCounts& in);
+    merge(const SequenceAlleleCounts& in);
 
     void
     clear()
@@ -95,6 +95,6 @@ struct SequenceErrorCounts
 
 private:
     std::string _sampleName;
-    BasecallErrorCounts _bases;
-    IndelErrorCounts _indels;
+    BasecallCounts::Dataset _bases;
+    IndelCounts::Dataset _indels;
 };

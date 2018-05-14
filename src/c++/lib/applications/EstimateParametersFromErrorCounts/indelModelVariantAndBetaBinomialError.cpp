@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -56,6 +56,7 @@ enum index_t
 
 //#define DEBUG_MODEL4
 
+using namespace IndelCounts;
 
 
 static
@@ -87,7 +88,7 @@ getObsLogLhood(
     const double indelBetaDenom,
     const bool isInsert,
     /*    const double logNoIndelRefRate, */
-    const ExportedIndelObservations& obs)
+    const SingleSampleContextObservationInfoExportFormat& contextObservationInfo)
 {
     static const double log0(-std::numeric_limits<double>::infinity());
 
@@ -104,14 +105,14 @@ getObsLogLhood(
     {
         for (unsigned altIndex(INDEL_SIGNAL_TYPE::INSERT_1); altIndex<INDEL_SIGNAL_TYPE::DELETE_1; ++altIndex)
         {
-            totalIndelObservations += obs.altObservations[altIndex];
+            totalIndelObservations += contextObservationInfo.altObservations[altIndex];
         }
     }
     else
     {
         for (unsigned altIndex(INDEL_SIGNAL_TYPE::DELETE_1); altIndex<INDEL_SIGNAL_TYPE::SIZE; ++altIndex)
         {
-            totalIndelObservations += obs.altObservations[altIndex];
+            totalIndelObservations += contextObservationInfo.altObservations[altIndex];
         }
     }
 
@@ -119,7 +120,7 @@ getObsLogLhood(
     double noindel(log0);
     {
         noindel = std::log(boost::math::beta((totalIndelObservations+indelErrorAlpha),
-                                             (obs.refObservations+indelErrorBeta))
+                                             (contextObservationInfo.refObservations+indelErrorBeta))
                            /indelBetaDenom);
     }
 
@@ -127,10 +128,10 @@ getObsLogLhood(
     double het(log0);
     double hom(log0);
     {
-        het = logHetRate*(obs.refObservations+totalIndelObservations);
+        het = logHetRate*(contextObservationInfo.refObservations+totalIndelObservations);
 
         hom = (logHomAltRate*totalIndelObservations +
-               logHomRefRate*obs.refObservations);
+               logHomRefRate*contextObservationInfo.refObservations);
     }
 
     const double mix = getLogSum(logHomPrior+hom, logHetPrior+het, logNoIndelPrior+noindel);
@@ -143,7 +144,7 @@ getObsLogLhood(
 static
 double
 contextLogLhood(
-    const std::vector<ExportedIndelObservations>& observations,
+    const SingleSampleContextDataExportFormat& exportedContextData,
     const double logIndelErrorMean,
     const double logIndelErrorConcentration,
     const bool isInsert,
@@ -182,17 +183,17 @@ contextLogLhood(
     assert((indelBetaDenom > 0.) && "Can't process proposed beta distribution parameters");
 
     double logLhood(0.);
-    for (const auto& obs : observations)
+    for (const auto& contextObservationInfo : exportedContextData.data)
     {
         const double mix(getObsLogLhood(logHomPrior, logHetPrior, logNoIndelPrior,
                                         indelErrorAlpha, indelErrorBeta, indelBetaDenom,
-                                        isInsert, obs));
+                                        isInsert, contextObservationInfo));
 
 #ifdef DEBUG_MODEL4
         log_os << "MODEL4: loghood obs: mix/delta: " << mix << " " << (mix*obs.repeatCount) << "\n";
 #endif
 
-        logLhood += (mix*obs.observationCount);
+        logLhood += (mix*contextObservationInfo.contextInstanceCount);
     }
 
     checkSaneVal(logLhood);
@@ -212,10 +213,10 @@ struct error_minfunc_model4 : public codemin::minfunc_interface<double>
 {
     explicit
     error_minfunc_model4(
-        const std::vector<ExportedIndelObservations>& observations,
+        const SingleSampleContextDataExportFormat& exportedContextData,
         const bool isInsert,
         const bool isLockTheta = false)
-        : _obs(observations), _isInsert(isInsert), _isLockTheta(isLockTheta)
+        : _exportedContextData(exportedContextData), _isInsert(isInsert), _isLockTheta(isLockTheta)
     {}
 
     unsigned dim() const override
@@ -226,7 +227,7 @@ struct error_minfunc_model4 : public codemin::minfunc_interface<double>
     double val(const double* in) override
     {
         minimizerParamsToModelParams(in,_params);
-        return -contextLogLhood(_obs,
+        return -contextLogLhood(_exportedContextData,
                                 _params[MIN_PARAMS4::LN_INDEL_ERROR_MEAN],
                                 _params[MIN_PARAMS4::LN_INDEL_ERROR_CONCENTRATION],
                                 _isInsert,
@@ -311,7 +312,7 @@ struct error_minfunc_model4 : public codemin::minfunc_interface<double>
     static const double maxLogRate;
 
 private:
-    const std::vector<ExportedIndelObservations>& _obs;
+    const SingleSampleContextDataExportFormat& _exportedContextData;
     bool _isInsert;
     bool _isLockTheta;
     double _params[MIN_PARAMS4::SIZE];
@@ -335,22 +336,22 @@ struct SignalGroupTotal
 static
 void
 getAltSigTotal(
-    const std::vector<ExportedIndelObservations>& observations,
+    const SingleSampleContextDataExportFormat& exportedContextData,
     const unsigned altBeginIndex,
     const unsigned altEndIndex,
     SignalGroupTotal& sigTotal)
 {
-    for (const ExportedIndelObservations& obs : observations)
+    for (const auto& contextObservationInfo: exportedContextData.data)
     {
         unsigned totalAltObservations(0);
         for (unsigned altIndex(altBeginIndex); altIndex<altEndIndex; ++altIndex)
         {
-            totalAltObservations += obs.altObservations[altIndex];
+            totalAltObservations += contextObservationInfo.altObservations[altIndex];
         }
 
-        sigTotal.ref += (obs.refObservations*obs.observationCount);
-        sigTotal.alt += (totalAltObservations*obs.observationCount);
-        sigTotal.locus += obs.observationCount;
+        sigTotal.ref += (contextObservationInfo.refObservations*contextObservationInfo.contextInstanceCount);
+        sigTotal.alt += (totalAltObservations*contextObservationInfo.contextInstanceCount);
+        sigTotal.locus += contextObservationInfo.contextInstanceCount;
     }
 }
 
@@ -359,10 +360,10 @@ getAltSigTotal(
 static
 void
 reportIndelErrorRateSet(
-    const IndelErrorContext& context,
+    const Context& context,
     const char* extendedContextTag,
     const SignalGroupTotal& sigTotal,
-    const IndelErrorData& data,
+    const ContextData& contextData,
     unsigned iter,
     const double loghood,
     const double indelErrorMean,
@@ -380,8 +381,8 @@ reportIndelErrorRateSet(
 
     os << std::setprecision(10);
     os << context << "_" << extendedContextTag
-       << sep << data.excludedRegionSkipped
-       << sep << (sigTotal.locus + data.depthSkipped)
+       << sep << contextData.excludedRegionSkipped
+       << sep << (sigTotal.locus + contextData.depthSkipped)
        << sep << sigTotal.locus
        << sep << sigTotal.ref
        << sep << sigTotal.alt
@@ -401,17 +402,17 @@ static
 void
 reportExtendedContext(
     const bool isLockTheta,
-    const IndelErrorContext& context,
-    const std::vector<ExportedIndelObservations>& observations,
-    const IndelErrorData& data,
+    const Context& context,
+    const SingleSampleContextDataExportFormat& exportedContextData,
+    const ContextData& contextData,
     std::ostream& os)
 {
     // Get summary counts for QC purposes. Note these are unrelated to minimization or model:
     SignalGroupTotal sigInsertTotal;
-    getAltSigTotal(observations, INDEL_SIGNAL_TYPE::INSERT_1, INDEL_SIGNAL_TYPE::DELETE_1, sigInsertTotal);
+    getAltSigTotal(exportedContextData, INDEL_SIGNAL_TYPE::INSERT_1, INDEL_SIGNAL_TYPE::DELETE_1, sigInsertTotal);
 
     SignalGroupTotal sigDeleteTotal;
-    getAltSigTotal(observations, INDEL_SIGNAL_TYPE::DELETE_1, INDEL_SIGNAL_TYPE::SIZE, sigDeleteTotal);
+    getAltSigTotal(exportedContextData, INDEL_SIGNAL_TYPE::DELETE_1, INDEL_SIGNAL_TYPE::SIZE, sigDeleteTotal);
 
 
     // initialize conjugate direction minimizer settings and minimize lhood...
@@ -445,7 +446,7 @@ reportExtendedContext(
 
             double start_tol(end_tol);
             double final_dlh;
-            error_minfunc_model4 errFunc(observations, isInsert, isLockTheta);
+            error_minfunc_model4 errFunc(exportedContextData, isInsert, isLockTheta);
 
             codemin::minimize_conj_direction(minParams,conjDir,errFunc,start_tol,end_tol,line_tol,
                                              x_all_loghood,iter,final_dlh,max_iter);
@@ -460,7 +461,8 @@ reportExtendedContext(
             const double indelErrorMean(std::exp(normalizedParams[MIN_PARAMS4::LN_INDEL_ERROR_MEAN]));
             const double indelErrorConcentration(std::exp(normalizedParams[MIN_PARAMS4::LN_INDEL_ERROR_CONCENTRATION]));
             const std::string tag(isInsert ? "I" : "D");
-            reportIndelErrorRateSet(context, tag.c_str(), sigInsertTotal, data, iter, -x_all_loghood, indelErrorMean, indelErrorConcentration, theta, os);
+            reportIndelErrorRateSet(context, tag.c_str(), sigInsertTotal, contextData, iter, -x_all_loghood,
+                                    indelErrorMean, indelErrorConcentration, theta, os);
         }
     }
 }
@@ -471,7 +473,7 @@ reportExtendedContext(
 
 void
 indelModelVariantAndBetaBinomialError(
-    const SequenceErrorCounts& counts)
+    const SequenceAlleleCounts& counts)
 {
     const bool isLockTheta(false);
 
@@ -479,19 +481,19 @@ indelModelVariantAndBetaBinomialError(
 
     ros << "context, excludedLoci, nonExcludedLoci, usedLoci, refReads, altReads, iter, lhood, alpha, beta, mean, concentration, theta\n";
 
-    std::vector<ExportedIndelObservations> observations;
+    SingleSampleContextDataExportFormat exportedContextData;
     for (const auto& contextInfo : counts.getIndelCounts())
     {
         const auto& context(contextInfo.first);
-        const auto& data(contextInfo.second);
+        const auto& contextData(contextInfo.second);
 
         //if (context.repeatCount != 15) continue;
 
-        data.exportObservations(observations);
+        contextData.exportData(exportedContextData);
 
-        if (observations.empty()) continue;
+        if (exportedContextData.data.empty()) continue;
 
         log_os << "INFO: computing rates for context: " << context << "\n";
-        reportExtendedContext(isLockTheta, context, observations, data, ros);
+        reportExtendedContext(isLockTheta, context, exportedContextData, contextData, ros);
     }
 }

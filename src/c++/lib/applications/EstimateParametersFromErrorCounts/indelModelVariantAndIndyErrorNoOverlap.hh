@@ -17,13 +17,13 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
 #pragma once
 
-#include "errorAnalysis/SequenceErrorCounts.hh"
+#include "errorAnalysis/SequenceAlleleCounts.hh"
 
 
 /// model data as a mixture of variants and an independent error process
@@ -32,4 +32,4 @@
 /// alleles at one locus
 void
 indelModelVariantAndIndyErrorNoOverlap(
-    const SequenceErrorCounts& counts);
+    const SequenceAlleleCounts& counts);

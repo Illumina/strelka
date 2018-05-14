@@ -21,7 +21,7 @@
 /// \author Chris Saunders
 ///
 
-#include "IndelErrorCounts.hh"
+#include "IndelCounts.hh"
 #include "errorAnalysisUtils.hh"
 #include "blt_util/IntegerLogCompressor.hh"
 #include "blt_util/math_util.hh"
@@ -32,11 +32,13 @@
 #include <iostream>
 
 
+namespace IndelCounts
+{
 
 std::ostream&
 operator<<(
     std::ostream& os,
-    const IndelErrorContext& context)
+    const Context& context)
 {
     os << context.getRepeatPatternSize()
        << "x"
@@ -47,7 +49,7 @@ operator<<(
 std::ostream&
 operator<<(
     std::ostream& os,
-    const IndelBackgroundObservation& obs)
+    const SingleSampleNonVariantContextObservationPattern& obs)
 {
     os << "Background observation\n";
     os << "refCount:" << obs.depth << std::endl;
@@ -58,7 +60,7 @@ operator<<(
 std::ostream&
 operator<<(
     std::ostream& os,
-    const IndelErrorContextObservation& obs)
+    const SingleSampleCandidateVariantContextObservationPattern& obs)
 {
     os << "Indel observation\n";
     os << "refCount:" << obs.refCount << std::endl;
@@ -73,16 +75,22 @@ operator<<(
     return os;
 }
 
+}
+
+using namespace IndelCounts;
+
+
+
 void
-IndelBackgroundObservationData::
-addObservation(
-    const IndelBackgroundObservation& obs)
+SingleSampleNonVariantContextData::
+addSingleSampleNonVariantInstanceObservation(
+    const SingleSampleNonVariantContextObservationPattern& obs)
 {
     // one dimensional key doesn't need to be compressed as much (compared to the compression applied to the
     // more complex key used for variant counts)
     static const unsigned depthBitCount(6);
 
-    IndelBackgroundObservation compObs = obs;
+    SingleSampleNonVariantContextObservationPattern compObs = obs;
     compObs.depth = compressInt(compObs.depth,depthBitCount);
 
     iterateMapValue(data,compObs);
@@ -91,8 +99,8 @@ addObservation(
 
 
 void
-IndelBackgroundObservationData::
-merge(const IndelBackgroundObservationData& in)
+SingleSampleNonVariantContextData::
+merge(const SingleSampleNonVariantContextData& in)
 {
     mergeMapKeys(in.data,data);
 }
@@ -100,7 +108,7 @@ merge(const IndelBackgroundObservationData& in)
 
 
 void
-IndelBackgroundObservationData::
+SingleSampleNonVariantContextData::
 dump(
     std::ostream& os) const
 {
@@ -130,13 +138,13 @@ dump(
 
 
 void
-IndelErrorContextObservationData::
-addObservation(
-    const IndelErrorContextObservation& obs)
+SingleSampleCandidateVariantContextData::
+addSingleSampleCandidateContextInstanceObservation(
+    const SingleSampleCandidateVariantContextObservationPattern& obs)
 {
     static const unsigned bitCount(5);
 
-    IndelErrorContextObservation compObs = obs;
+    SingleSampleCandidateVariantContextObservationPattern compObs = obs;
     compObs.refCount    = compressInt(compObs.refCount,bitCount);
     for (auto& signalCount : compObs.signalCounts)
     {
@@ -148,8 +156,8 @@ addObservation(
 
 
 void
-IndelErrorContextObservationData::
-merge(const IndelErrorContextObservationData& in)
+SingleSampleCandidateVariantContextData::
+merge(const SingleSampleCandidateVariantContextData& in)
 {
     mergeMapKeys(in.data,data);
 }
@@ -157,7 +165,7 @@ merge(const IndelErrorContextObservationData& in)
 
 
 void
-IndelErrorContextObservationData::
+SingleSampleCandidateVariantContextData::
 dump(
     std::ostream& os) const
 {
@@ -217,14 +225,16 @@ dump(
 }
 
 
+namespace IndelCounts
+{
 
 std::ostream&
 operator<<(
     std::ostream& os,
-    const ExportedIndelObservations& obs)
+    const SingleSampleContextObservationInfoExportFormat& obs)
 {
     os << "variantStatus" << GENOTYPE_STATUS::label(obs.variantStatus);
-    os << "repeatCount: " << obs.observationCount;
+    os << "repeatCount: " << obs.contextInstanceCount;
     os << "\trefCounts: " << obs.refObservations;
     os << "\taltObservations: ";
     unsigned alt_index(0);
@@ -238,52 +248,53 @@ operator<<(
     return os;
 }
 
+}
 
 
 void
-IndelErrorData::
-exportObservations(
-    std::vector<ExportedIndelObservations>& counts) const
+ContextData::
+exportData(
+    SingleSampleContextDataExportFormat& exportedContextData) const
 {
-    counts.clear();
+    exportedContextData.data.clear();
 
     // if this is true, we observed no errors:
     if (depthSupport.depth <= 0.) return;
 
     const double supportFraction(safeFrac(depthSupport.supportCount, depthSupport.depth));
 
-    ExportedIndelObservations obs;
-    std::fill(obs.altObservations.begin(), obs.altObservations.end(), 0);
+    SingleSampleContextObservationInfoExportFormat contextObservationInfo;
+    std::fill(contextObservationInfo.altObservations.begin(), contextObservationInfo.altObservations.end(), 0);
 
     // convert background observations:
-    for (const auto& value : background)
+    for (const auto& value : nonVariantContextCounts)
     {
-        obs.observationCount = value.second;
-        obs.refObservations = (value.first.depth*supportFraction);
-        obs.variantStatus = value.first.backgroundStatus;
+        contextObservationInfo.contextInstanceCount = value.second;
+        contextObservationInfo.refObservations = (value.first.depth*supportFraction);
+        contextObservationInfo.variantStatus = value.first.backgroundStatus;
 
-        counts.push_back(obs);
+        exportedContextData.data.push_back(contextObservationInfo);
     }
 
     // convert error observations:
-    for (const auto& value : error)
+    for (const auto& value : candidateVariantContextCounts)
     {
-        obs.observationCount = value.second;
-        obs.refObservations = value.first.refCount;
-        obs.altObservations = value.first.signalCounts;
-        obs.variantStatus   = value.first.variantStatus;
+        contextObservationInfo.contextInstanceCount = value.second;
+        contextObservationInfo.refObservations = value.first.refCount;
+        contextObservationInfo.altObservations = value.first.signalCounts;
+        contextObservationInfo.variantStatus   = value.first.variantStatus;
 
-        counts.push_back(obs);
+        exportedContextData.data.push_back(contextObservationInfo);
     }
 }
 
 void
-IndelErrorData::
+ContextData::
 merge(
-    const IndelErrorData& in)
+    const ContextData& in)
 {
-    background.merge(in.background);
-    error.merge(in.error);
+    nonVariantContextCounts.merge(in.nonVariantContextCounts);
+    candidateVariantContextCounts.merge(in.candidateVariantContextCounts);
     depthSupport.merge(in.depthSupport);
     excludedRegionSkipped += in.excludedRegionSkipped;
     depthSkipped += in.depthSkipped;
@@ -292,7 +303,7 @@ merge(
 
 
 void
-IndelErrorData::
+ContextData::
 dump(
     std::ostream& os) const
 {
@@ -301,42 +312,42 @@ dump(
     os << "excludedRegionSkippedCount: " << excludedRegionSkipped << "\n";
     os << "depthSkippedCount: " << depthSkipped << "\n";
 
-    background.dump(os);
-    error.dump(os);
+    nonVariantContextCounts.dump(os);
+    candidateVariantContextCounts.dump(os);
 }
 
 
 
 void
-IndelErrorCounts::
-addError(
-    const IndelErrorContext& context,
-    const IndelErrorContextObservation& errorObservation,
+Dataset::
+addCandidateVariantContextInstanceObservation(
+    const Context& context,
+    const SingleSampleCandidateVariantContextObservationPattern& candidateVariantContextObservation,
     const unsigned depth)
 {
     const auto iter(getContextIterator(context));
-    iter->second.error.addObservation(errorObservation);
-    iter->second.depthSupport.merge(IndelDepthSupportTotal(depth,errorObservation.totalCount()));
+    iter->second.candidateVariantContextCounts.addSingleSampleCandidateContextInstanceObservation(candidateVariantContextObservation);
+    iter->second.depthSupport.merge(IndelDepthSupportTotal(depth,candidateVariantContextObservation.totalCount()));
 }
 
 
 
 void
-IndelErrorCounts::
-addBackground(
-    const IndelErrorContext& context,
-    const IndelBackgroundObservation& backgroundObservation)
+Dataset::
+addNonVariantContextInstanceObservation(
+    const Context& context,
+    const SingleSampleNonVariantContextObservationPattern& nonVariantContextObservation)
 {
     const auto iter(getContextIterator(context));
-    iter->second.background.addObservation(backgroundObservation);
+    iter->second.nonVariantContextCounts.addSingleSampleNonVariantInstanceObservation(nonVariantContextObservation);
 }
 
 
 
 void
-IndelErrorCounts::
+Dataset::
 addExcludedRegionSkip(
-    const IndelErrorContext& context)
+    const Context& context)
 {
     const auto iter(getContextIterator(context));
     iter->second.excludedRegionSkipped++;
@@ -345,9 +356,9 @@ addExcludedRegionSkip(
 
 
 void
-IndelErrorCounts::
+Dataset::
 addDepthSkip(
-    const IndelErrorContext& context)
+    const Context& context)
 {
     const auto iter(getContextIterator(context));
     iter->second.depthSkipped++;
@@ -356,9 +367,9 @@ addDepthSkip(
 
 
 void
-IndelErrorCounts::
+Dataset::
 merge(
-    const IndelErrorCounts& in)
+    const Dataset& in)
 {
     for (const auto& idata : in._data)
     {
@@ -378,26 +389,26 @@ merge(
 
 
 void
-IndelErrorCounts::
+Dataset::
 dump(
     std::ostream& os) const
 {
-    os << "IndelErrorCounts DUMP_ON\n";
+    os << "IndelCounts DUMP_ON\n";
     os << "Total Indel Contexts: " << _data.size() << "\n";
     for (const auto& value : _data)
     {
         os << "Indel Context: Repeat pattern size " << value.first.getRepeatPatternSize() << ", Repeat count " << value.first.getRepeatCount() << "\n";
         value.second.dump(os);
     }
-    os << "IndelErrorCounts DUMP_OFF\n";
+    os << "IndelCounts DUMP_OFF\n";
 }
 
 
 
-IndelErrorCounts::data_t::iterator
-IndelErrorCounts::
+Dataset::data_t::iterator
+Dataset::
 getContextIterator(
-    const IndelErrorContext& context)
+    const Context& context)
 {
     const auto insert = _data.insert(std::make_pair(context,data_t::mapped_type()));
     return insert.first;

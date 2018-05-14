@@ -37,6 +37,9 @@
 #include <set>
 
 
+namespace IndelCounts
+{
+
 namespace INDEL_TYPE
 {
 enum index_t
@@ -111,6 +114,7 @@ label(
 }
 }
 
+
 static
 GENOTYPE_STATUS::genotype_t
 assignStatus(const RecordTracker::indel_value_t& knownVariantOlap)
@@ -126,15 +130,17 @@ assignStatus(const RecordTracker::indel_value_t& knownVariantOlap)
     return GENOTYPE_STATUS::UNKNOWN;
 }
 
-struct IndelErrorContext
+
+/// \brief The sequencing context of a indel, used to segment the indel pattern counting and modeling
+struct Context
 {
-    IndelErrorContext(
+    Context(
         unsigned initRepeatingPatternSize = 1,
         unsigned initRepeatCount = 1)
-        : repeatPatternSize(initRepeatingPatternSize), repeatCount(initRepeatCount)
-    {}
+        : repeatPatternSize(initRepeatingPatternSize),
+          repeatCount(initRepeatCount) {}
 
-    bool operator<(const IndelErrorContext& rhs) const
+    bool operator<(const Context& rhs) const
     {
         if (repeatPatternSize < rhs.repeatPatternSize)
         {
@@ -148,16 +154,19 @@ struct IndelErrorContext
     }
 
     template<class Archive>
-    void serialize(Archive& ar, const unsigned /* version */)
+    void serialize(
+        Archive& ar,
+        const unsigned /* version */)
     {
-        ar& repeatPatternSize;
-        ar& repeatCount;
+        ar & repeatPatternSize;
+        ar & repeatCount;
     }
 
     unsigned getRepeatPatternSize() const
     {
         return repeatPatternSize;
     }
+
     unsigned getRepeatCount() const
     {
         return repeatCount;
@@ -166,19 +175,16 @@ struct IndelErrorContext
 private:
     unsigned repeatPatternSize = 1;
     unsigned repeatCount = 1;
-
 };
-
-BOOST_CLASS_IMPLEMENTATION(IndelErrorContext, boost::serialization::object_serializable)
 
 std::ostream&
 operator<<(
     std::ostream& os,
-    const IndelErrorContext& context);
+    const Context& context);
 
 
-/// Stores details of a single instance of a non-variant context
-struct IndelBackgroundObservation
+/// \brief An non-variant allele pattern which could be observed at any given context instance in one sample
+struct SingleSampleNonVariantContextObservationPattern
 {
     void
     assignKnownStatus(const RecordTracker::indel_value_t& knownVariantOlap)
@@ -188,7 +194,7 @@ struct IndelBackgroundObservation
 
     bool
     operator<(
-        const IndelBackgroundObservation& rhs) const
+        const SingleSampleNonVariantContextObservationPattern& rhs) const
     {
         if (depth < rhs.depth) return true;
         if (depth != rhs.depth) return false;
@@ -208,25 +214,24 @@ struct IndelBackgroundObservation
 std::ostream&
 operator<<(
     std::ostream& os,
-    const IndelBackgroundObservation& obs);
-
-BOOST_CLASS_IMPLEMENTATION(IndelBackgroundObservation, boost::serialization::object_serializable)
+    const SingleSampleNonVariantContextObservationPattern& obs);
 
 
-struct IndelBackgroundObservationData
+struct SingleSampleNonVariantContextData
 {
 private:
-    // map value is the number of identical non-variant context instances:
-    typedef std::map<IndelBackgroundObservation,unsigned> data_t;
+    // map key is a non-variant allele pattern which could be observed at any given context instance in one sample
+    // map value is the number of context instances where the pattern described by the map key has been observed
+    typedef std::map<SingleSampleNonVariantContextObservationPattern,unsigned> data_t;
 public:
     typedef data_t::const_iterator const_iterator;
 
     void
-    addObservation(
-        const IndelBackgroundObservation& obs);
+    addSingleSampleNonVariantInstanceObservation(
+        const SingleSampleNonVariantContextObservationPattern& obs);
 
     void
-    merge(const IndelBackgroundObservationData& in);
+    merge(const SingleSampleNonVariantContextData& in);
 
     const_iterator
     begin() const
@@ -253,10 +258,11 @@ private:
     data_t data;
 };
 
-BOOST_CLASS_IMPLEMENTATION(IndelBackgroundObservationData, boost::serialization::object_serializable)
 
-
-/// Used to construct a single support/depth ratio for each context type
+/// \brief Ratio of indel supporting reads to background depth for each context type
+///
+/// This ratio is computed for each context and used to estimate the supporting read counts
+/// for the reference allele at all non-variant context instances.
 struct IndelDepthSupportTotal
 {
     IndelDepthSupportTotal(
@@ -282,13 +288,11 @@ struct IndelDepthSupportTotal
     double supportCount;
 };
 
-BOOST_CLASS_IMPLEMENTATION(IndelDepthSupportTotal, boost::serialization::object_serializable)
 
-
-/// Stores allele observation counts for a single instance of a context
-struct IndelErrorContextObservation
+/// \brief A candidate variant pattern which could be observed at any given context instance in one sample
+struct SingleSampleCandidateVariantContextObservationPattern
 {
-    IndelErrorContextObservation()
+    SingleSampleCandidateVariantContextObservationPattern()
         : refCount(0)
         , variantStatus(GENOTYPE_STATUS::UNKNOWN)
     {
@@ -315,7 +319,7 @@ struct IndelErrorContextObservation
 
     bool
     operator<(
-        const IndelErrorContextObservation& rhs) const
+        const SingleSampleCandidateVariantContextObservationPattern& rhs) const
     {
         if (refCount < rhs.refCount) return true;
         if (refCount != rhs.refCount) return false;
@@ -347,26 +351,28 @@ struct IndelErrorContextObservation
 std::ostream&
 operator<<(
     std::ostream& os,
-    const IndelErrorContextObservation& obs);
-
-BOOST_CLASS_IMPLEMENTATION(IndelErrorContextObservation, boost::serialization::object_serializable)
+    const SingleSampleCandidateVariantContextObservationPattern& obs);
 
 
-/// Indel allele counts associated with a specific context
-struct IndelErrorContextObservationData
+/// \brief All basecall pattern counts associated with a specific context in one sample
+///
+/// Note that this only includes counts from indel candidates. Counts from non-candidate contexts are recorded
+/// in the corresponding "NonVariantContext" data structure.
+struct SingleSampleCandidateVariantContextData
 {
 private:
-    // map value is the number of identical variant context instances:
-    typedef std::map<IndelErrorContextObservation,unsigned> data_t;
+    // map key is an allele pattern which could be observed at any given context instance in one sample
+    // map value is the number of context instances where the pattern described by the map key has been observed
+    typedef std::map<SingleSampleCandidateVariantContextObservationPattern, unsigned> data_t;
 public:
     typedef data_t::const_iterator const_iterator;
 
     void
-    addObservation(
-        const IndelErrorContextObservation& obs);
+    addSingleSampleCandidateContextInstanceObservation(
+        const SingleSampleCandidateVariantContextObservationPattern& obs);
 
     void
-    merge(const IndelErrorContextObservationData& in);
+    merge(const SingleSampleCandidateVariantContextData& in);
 
     const_iterator
     begin() const
@@ -393,16 +399,14 @@ private:
     data_t data;
 };
 
-BOOST_CLASS_IMPLEMENTATION(IndelErrorContextObservationData, boost::serialization::object_serializable)
 
-
-
-/// This is used for output to downstream models only
+/// \brief An allele pattern and the count of context instances at which it was observed, for one context in one sample
 ///
-struct ExportedIndelObservations
+/// The data in this structure are uncompressed for use by an external modeling routine.
+struct SingleSampleContextObservationInfoExportFormat
 {
-    /// Number of times we observe the observation pattern
-    unsigned observationCount;
+    /// The total number of context instances at which the observation pattern described below was observed
+    unsigned contextInstanceCount;
 
     /// Number of supporting observations of the non-alt* allele (*exact definition in flux...)
     double refObservations;
@@ -417,20 +421,32 @@ struct ExportedIndelObservations
 std::ostream&
 operator<<(
     std::ostream& os,
-    const ExportedIndelObservations& obs);
+    const SingleSampleContextObservationInfoExportFormat& obs);
 
 
-/// All indel error data associated with a specific context
-struct IndelErrorData
+/// \brief All indel pattern data associated with a specific context
+///
+/// The data in this structure are uncompressed for use by an external modeling routine.
+struct SingleSampleContextDataExportFormat
+{
+    /// Listing of all observation patterns, and the context instance counts for each pattern.
+    ///
+    /// Observation patterns are not sorted in any stable order
+    std::vector<SingleSampleContextObservationInfoExportFormat> data;
+};
+
+
+/// \brief All indel pattern data associated with a specific context
+struct ContextData
 {
     /// Processes current data into a format that is more easily
     /// manipulated in a downstream model
     void
-    exportObservations(
-        std::vector<ExportedIndelObservations>& counts) const;
+    exportData(
+        SingleSampleContextDataExportFormat& exportedContextData) const;
 
     void
-    merge(const IndelErrorData& in);
+    merge(const ContextData& in);
 
     /// debug output
     void
@@ -439,28 +455,26 @@ struct IndelErrorData
     template<class Archive>
     void serialize(Archive& ar, const unsigned /* version */)
     {
-        ar& background;
-        ar& error;
+        ar& nonVariantContextCounts;
+        ar& candidateVariantContextCounts;
         ar& depthSupport;
         ar& excludedRegionSkipped;
         ar& depthSkipped;
     }
 
-    IndelBackgroundObservationData background;
-    IndelErrorContextObservationData error;
+    SingleSampleNonVariantContextData nonVariantContextCounts;
+    SingleSampleCandidateVariantContextData candidateVariantContextCounts;
     IndelDepthSupportTotal depthSupport;
     uint64_t excludedRegionSkipped = 0;
     uint64_t depthSkipped = 0;
 };
 
-BOOST_CLASS_IMPLEMENTATION(IndelErrorData, boost::serialization::object_serializable)
 
-
-/// Store all data used for indel error estimation
-struct IndelErrorCounts
+/// \brief Store all counts and auxiliary data related to indel alleles
+struct Dataset
 {
 private:
-    typedef std::map<IndelErrorContext,IndelErrorData> data_t;
+    typedef std::map<Context, ContextData> data_t;
 public:
     typedef data_t::const_iterator const_iterator;
 
@@ -468,27 +482,27 @@ public:
     ///
     /// \param depth This is used to estimate read support of the reference allele at non-variant context instances
     void
-    addError(
-        const IndelErrorContext& context,
-        const IndelErrorContextObservation& errorObservation,
+    addCandidateVariantContextInstanceObservation(
+        const Context& context,
+        const SingleSampleCandidateVariantContextObservationPattern& candidateVariantContextObservation,
         const unsigned depth);
 
     /// Submit data for an instance of a non-variant context
     void
-    addBackground(
-        const IndelErrorContext& context,
-        const IndelBackgroundObservation& backgroundObservation);
+    addNonVariantContextInstanceObservation(
+        const Context& context,
+        const SingleSampleNonVariantContextObservationPattern& nonVariantContextObservation);
 
     void
     addExcludedRegionSkip(
-        const IndelErrorContext& context);
+        const Context& context);
 
     void
     addDepthSkip(
-        const IndelErrorContext& context);
+        const Context& context);
 
     void
-    merge(const IndelErrorCounts& in);
+    merge(const Dataset& in);
 
     void
     clear()
@@ -509,9 +523,9 @@ public:
     }
 
     const_iterator
-    find(const IndelErrorContext& key) const
+    find(const Context& context) const
     {
-        return _data.find(key);
+        return _data.find(context);
     }
 
     /// debug output
@@ -527,9 +541,27 @@ public:
 private:
     data_t::iterator
     getContextIterator(
-        const IndelErrorContext& context);
+        const Context& context);
 
     data_t _data;
 };
 
-BOOST_CLASS_IMPLEMENTATION(IndelErrorCounts, boost::serialization::object_serializable)
+}
+
+// TODO - Prefer to keep these macros inline with each class, work out namespace/macro interactions to allow this.
+//
+BOOST_CLASS_IMPLEMENTATION(IndelCounts::Context, boost::serialization::object_serializable)
+
+BOOST_CLASS_IMPLEMENTATION(IndelCounts::SingleSampleNonVariantContextObservationPattern, boost::serialization::object_serializable)
+
+BOOST_CLASS_IMPLEMENTATION(IndelCounts::SingleSampleNonVariantContextData, boost::serialization::object_serializable)
+
+BOOST_CLASS_IMPLEMENTATION(IndelCounts::IndelDepthSupportTotal, boost::serialization::object_serializable)
+
+BOOST_CLASS_IMPLEMENTATION(IndelCounts::SingleSampleCandidateVariantContextObservationPattern, boost::serialization::object_serializable)
+
+BOOST_CLASS_IMPLEMENTATION(IndelCounts::SingleSampleCandidateVariantContextData, boost::serialization::object_serializable)
+
+BOOST_CLASS_IMPLEMENTATION(IndelCounts::ContextData, boost::serialization::object_serializable)
+
+BOOST_CLASS_IMPLEMENTATION(IndelCounts::Dataset, boost::serialization::object_serializable)

@@ -19,7 +19,7 @@
 
 #include "EstimateParametersFromErrorCounts.hh"
 #include "EPECOptions.hh"
-#include "errorAnalysis/SequenceErrorCounts.hh"
+#include "errorAnalysis/SequenceAlleleCounts.hh"
 
 #include "indelModel1.hh"
 #include "indelModelVariantAndBetaBinomialError.hh"
@@ -40,7 +40,7 @@ void
 runEPEC(
     const EPECOptions& opt)
 {
-    SequenceErrorCounts counts;
+    SequenceAlleleCounts counts;
     counts.load(opt.countsFilename.c_str());
 
     if (opt.modelType == MODEL_TYPE::INDEL)

@@ -17,16 +17,16 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
 #pragma once
 
-#include "errorAnalysis/SequenceErrorCounts.hh"
+#include "errorAnalysis/SequenceAlleleCounts.hh"
 
 
 /// recreate something close to v2.4- parameter estimation process:
 void
 indelModel1(
-    const SequenceErrorCounts& counts);
+    const SequenceAlleleCounts& counts);

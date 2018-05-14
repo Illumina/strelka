@@ -48,33 +48,35 @@ struct ContextTotal
 }
 
 
+using namespace BasecallCounts;
+
 
 /// print results for each context
 ///
 static
 void
 printExtendedContext(
-    const BasecallErrorContext& context,
-    const BasecallErrorData& data,
+    const Context& context,
+    const ContextData& contextData,
     const ContextTotal& cTotal,
     const double refReadTotal,
     const double noiseLocusRefReadTotal,
-    const StrandBasecallCounts::qual_count_t& noiseLocusAltQualCounts,
+    const SingleSampleSingleStrandContextObservationPattern::qual_count_t& noiseLocusAltQualCounts,
     std::ostream& os)
 {
     static const std::string sep(", ");
-    const uint64_t emptySkippedLociCount(data.emptySkipped);
-    const uint64_t depthSkippedLociCount(data.depthSkipped);
-    const uint64_t noisyContextSkippedLociCount(data.noiseSkipped);
+    const uint64_t emptySkippedLociCount(contextData.emptySkipped);
+    const uint64_t depthSkippedLociCount(contextData.depthSkipped);
+    const uint64_t noisyContextSkippedLociCount(contextData.noiseSkipped);
 
     const uint64_t totalNonExcludedLoci(cTotal.locus+emptySkippedLociCount+depthSkippedLociCount+noisyContextSkippedLociCount);
 
     const double refReadNoiseScaleFactor(noiseLocusRefReadTotal/refReadTotal);
 
     // get the set of qvals considered for this context:
-    const auto& refQuals(data.counts.getRefQuals());
+    const auto& refQuals(contextData.counts.getRefQuals());
     std::set<uint16_t> quals;
-    for (const auto& value : data.counts.getRefQuals())
+    for (const auto& value : contextData.counts.getRefQuals())
     {
         quals.insert(value.first);
     }
@@ -96,7 +98,7 @@ printExtendedContext(
 
         os << context
            << sep << "Q" << qual
-           << sep << data.excludedRegionSkipped
+           << sep << contextData.excludedRegionSkipped
            << sep << totalNonExcludedLoci
            << sep << cTotal.locus
            << sep << cTotal.noiseLocus
@@ -116,8 +118,8 @@ void
 reportExtendedContext(
     const double maxAltFrac,
     const unsigned minDepth,
-    const BasecallErrorContext& context,
-    const BasecallErrorData& data,
+    const Context& context,
+    const ContextData& contextData,
     std::ostream& os)
 {
     //
@@ -131,16 +133,16 @@ reportExtendedContext(
     //
     double refReadTotal(0);
     double noiseLocusRefReadTotal(0);
-    StrandBasecallCounts::qual_count_t noiseLocusAltQualCounts;
+    SingleSampleSingleStrandContextObservationPattern::qual_count_t noiseLocusAltQualCounts;
 
     ContextTotal cTotal;
-    for (const auto& value : data.counts)
+    for (const auto& value : contextData.counts)
     {
         const auto& key(value.first);
         const unsigned obsCount(value.second);
 
-        const StrandBasecallCounts& s0(key.getStrand0Counts());
-        const StrandBasecallCounts& s1(key.getStrand1Counts());
+        const SingleSampleSingleStrandContextObservationPattern& s0(key.getStrand0Counts());
+        const SingleSampleSingleStrandContextObservationPattern& s1(key.getStrand1Counts());
 
         const unsigned refQualTotal(s0.refAlleleCount+s1.refAlleleCount);
 
@@ -148,7 +150,7 @@ reportExtendedContext(
         refReadTotal += refQualTotal*obsCount;
 
         unsigned altQualTotal(0);
-        auto altSum = [&](const StrandBasecallCounts& sb)
+        auto altSum = [&](const SingleSampleSingleStrandContextObservationPattern& sb)
         {
             for (const auto& val : sb.altAlleleCount)
             {
@@ -169,14 +171,14 @@ reportExtendedContext(
         mergeMapKeys(s1.altAlleleCount,noiseLocusAltQualCounts,obsCount);
     }
 
-    printExtendedContext(context, data, cTotal, refReadTotal,
+    printExtendedContext(context, contextData, cTotal, refReadTotal,
                          noiseLocusRefReadTotal, noiseLocusAltQualCounts, os);
 }
 
 
 void
 snvModel1(
-    const SequenceErrorCounts& counts)
+    const SequenceAlleleCounts& counts)
 {
     static const double maxAltFrac(0.03);
     static const unsigned minDepth(30);

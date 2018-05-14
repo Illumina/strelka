@@ -21,14 +21,14 @@
 
 #include "calibration/IndelErrorModelJson.hh"
 #include "calibration/IndelErrorModel.hh"
-#include "errorAnalysis/SequenceErrorCounts.hh"
+#include "errorAnalysis/SequenceAlleleCounts.hh"
 
 
 class IndelModelProduction
 {
 public:
     IndelModelProduction(
-        const SequenceErrorCounts& counts,
+        const SequenceAlleleCounts& counts,
         const std::string& thetaFilename,
         const std::string& outputFilename);
 
@@ -55,7 +55,7 @@ private:
 private:
     bool _isEstimated = false;
     bool _isEstimationAcceptable = true;
-    SequenceErrorCounts _counts;
+    SequenceAlleleCounts _counts;
     std::string _outputFilename;
     std::map<unsigned, std::vector<double> > _thetas;
     std::vector<AdaptiveIndelErrorModel> _adaptiveIndelErrorModels;

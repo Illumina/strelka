@@ -270,14 +270,14 @@ getOrthogonalHaplotypeSupportCounts(
 
 
 static
-INDEL_SIGNAL_TYPE::index_t
+IndelCounts::INDEL_SIGNAL_TYPE::index_t
 getIndelType(
     const AlleleReportInfo& indelReportInfo)
 {
     int rudiff(static_cast<int>(indelReportInfo.refRepeatCount)-static_cast<int>(indelReportInfo.indelRepeatCount));
     rudiff = std::min(3,std::max(-3,rudiff));
 
-    using namespace INDEL_SIGNAL_TYPE;
+    using namespace IndelCounts::INDEL_SIGNAL_TYPE;
     switch (rudiff)
     {
     case  1:
@@ -308,30 +308,33 @@ getIndelType(
 static
 void
 mergeIndelObservations(
-    const IndelErrorContext& context,
-    const IndelErrorContextObservation& obs,
-    std::map<IndelErrorContext,IndelErrorContextObservation>& indelObservations)
+    const IndelCounts::Context& context,
+    const IndelCounts::SingleSampleCandidateVariantContextObservationPattern& indelObservation,
+    std::map<IndelCounts::Context,
+        IndelCounts::SingleSampleCandidateVariantContextObservationPattern>& mergedIndelObservations)
 {
-    auto iter(indelObservations.find(context));
+    using namespace IndelCounts;
 
-    if (iter == indelObservations.end())
+    auto iter(mergedIndelObservations.find(context));
+
+    if (iter == mergedIndelObservations.end())
     {
-        indelObservations.insert(std::make_pair(context,obs));
+        mergedIndelObservations.insert(std::make_pair(context,indelObservation));
     }
     else
     {
         // all signal counts should be summed:
         for (unsigned signalIndex(0); signalIndex<INDEL_SIGNAL_TYPE::SIZE; ++signalIndex)
         {
-            iter->second.signalCounts[signalIndex] += obs.signalCounts[signalIndex];
+            iter->second.signalCounts[signalIndex] += indelObservation.signalCounts[signalIndex];
         }
 
         // refCount used for the group is the lowest submitted:
-        iter->second.refCount = std::min(iter->second.refCount, obs.refCount);
+        iter->second.refCount = std::min(iter->second.refCount, indelObservation.refCount);
 
         // known variant status is the maximum status within the set (e.g. if UNKNOWN
         // and VARIANT, site is variant)
-        iter->second.variantStatus = std::max(iter->second.variantStatus, obs.variantStatus);
+        iter->second.variantStatus = std::max(iter->second.variantStatus, indelObservation.variantStatus);
     }
 }
 
@@ -408,14 +411,14 @@ process_pos_error_counts(
 
     if (refBase=='N') return;
 
-    BasecallErrorCounts& basecallCounts(_counts.getBasecallCounts());
-    IndelErrorCounts& indelCounts(_counts.getIndelCounts());
+    BasecallCounts::Dataset& basecallCounts(_counts.getBasecallCounts());
+    IndelCounts::Dataset& indelCounts(_counts.getIndelCounts());
 
     // right now there's only one basecallContext (ie. only one context used for SNVs and basecalls), this
     // is why we set it as const here
     //
     // this contrasts with the indel counting logic below which is using several contexts
-    const BasecallErrorContext basecallContext;
+    const BasecallCounts::Context basecallContext;
 
     bool isSkipSNV(false);
     bool isSkipIndel(false);
@@ -440,7 +443,7 @@ process_pos_error_counts(
         // record the excluded region count only for positions where we would have counted indel evidence anyway:
         if (not isSkipIndel)
         {
-            IndelErrorContext indelContext(referenceSTRContext.patternSize, referenceSTRContext.STRRepeatCount);
+            IndelCounts::Context indelContext(referenceSTRContext.patternSize, referenceSTRContext.STRRepeatCount);
             indelCounts.addExcludedRegionSkip(indelContext);
             isSkipIndel=true;
         }
@@ -471,7 +474,7 @@ process_pos_error_counts(
                 // record the high-depth bypass count only for positions where we would have counted indel evidence anyway:
                 if (not isSkipIndel)
                 {
-                    IndelErrorContext indelContext(referenceSTRContext.patternSize, referenceSTRContext.STRRepeatCount);
+                    IndelCounts::Context indelContext(referenceSTRContext.patternSize, referenceSTRContext.STRRepeatCount);
                     indelCounts.addDepthSkip(indelContext);
                     isSkipIndel=true;
                 }
@@ -512,7 +515,7 @@ process_pos_error_counts(
         {
             bool isEmpty(true);
             const uint8_t ref_id(base_to_id(refBase));
-            BasecallErrorContextInputObservation obs;
+            BasecallCounts::ContextInstanceObservation observation;
             for (const base_call& bc : sinfo.calls)
             {
                 if (bc.is_call_filter) continue;
@@ -526,11 +529,11 @@ process_pos_error_counts(
                 const bool isRef(bc.base_id == ref_id);
                 if (isRef)
                 {
-                    obs.addRefCount(bc.is_fwd_strand, bc.get_qscore());
+                    observation.addRefCount(bc.is_fwd_strand, bc.get_qscore());
                 }
                 else
                 {
-                    obs.addAltCount(bc.is_fwd_strand, bc.get_qscore());
+                    observation.addAltCount(bc.is_fwd_strand, bc.get_qscore());
                 }
             }
 
@@ -540,7 +543,7 @@ process_pos_error_counts(
             }
             else
             {
-                basecallCounts.addSiteObservation(basecallContext,obs);
+                basecallCounts.addContextInstanceObservation(basecallContext, observation);
             }
         }
     }
@@ -626,12 +629,13 @@ process_pos_error_counts(
     RecordTracker::indel_value_t knownVariantRecords;
     _knownVariants.intersectingRecord(pos, knownVariantRecords);
 
-    // buffer observations (as IndelErrorContextObservation objects) until we get through all overlapping indels
+    // buffer observations (as SingleSampleContextObservationPattern objects) until we get through all overlapping indels
     // at this position, then process these into the error counts accumulation data structure:
     //
     // this buffering allows us to cleanly break out of this locus if we see evidence of too much noise below
     //
-    std::map<IndelErrorContext, IndelErrorContextObservation> indelObservations;
+    std::map<IndelCounts::Context,
+        IndelCounts::SingleSampleCandidateVariantContextObservationPattern> mergedIndelObservations;
 
 
     if (not orthogonalVariantAlleles.empty())
@@ -661,14 +665,15 @@ process_pos_error_counts(
             const IndelData& indelData(orthogonalVariantAlleles.data(nonrefAlleleIndex));
             const AlleleReportInfo& indelReportInfo(indelData.getReportInfo());
 
-            IndelErrorContext context;
+            IndelCounts::Context context;
 
             if ((indelReportInfo.repeatUnitLength == referenceSTRContext.patternSize) && (indelReportInfo.refRepeatCount > 1))
             {
                 // guard against the occasional non-normalized indel:
                 if (referenceSTRContext.STRRepeatCount == std::min(maxSTRRepeatCount, indelReportInfo.refRepeatCount))
                 {
-                    context = IndelErrorContext(referenceSTRContext.patternSize, referenceSTRContext.STRRepeatCount);
+                    context = IndelCounts::Context(
+                        referenceSTRContext.patternSize, referenceSTRContext.STRRepeatCount);
                 }
             }
 
@@ -677,13 +682,13 @@ process_pos_error_counts(
             RecordTracker::indel_value_t overlappingRecords;
             isKnownVariantMatch(knownVariantRecords, indelKey, overlappingRecords);
 
-            IndelErrorContextObservation obs;
+            IndelCounts::SingleSampleCandidateVariantContextObservationPattern indelObservation;
 
-            const INDEL_SIGNAL_TYPE::index_t sigIndex(getIndelType(indelReportInfo));
-            obs.signalCounts[sigIndex] = support[nonrefAlleleIndex + 1];
+            const IndelCounts::INDEL_SIGNAL_TYPE::index_t sigIndex(getIndelType(indelReportInfo));
+            indelObservation.signalCounts[sigIndex] = support[nonrefAlleleIndex + 1];
             static const unsigned refAlleleIndex(0);
-            obs.refCount = support[refAlleleIndex];
-            obs.assignKnownStatus(overlappingRecords);
+            indelObservation.refCount = support[refAlleleIndex];
+            indelObservation.assignKnownStatus(overlappingRecords);
 
             // debug output:
             //
@@ -699,12 +704,12 @@ process_pos_error_counts(
                 obs_os << indelKey.pos << "\t" << indelKey.pos + indelKey.deletionLength << "\t"
                        << INDEL::get_index_label(indelKey.type) << "\t";
                 obs_os << indelReportInfo.repeatUnit << "\t" << indelReportInfo.refRepeatCount << "\t";
-                obs_os << GENOTYPE_STATUS::label(obs.variantStatus) << "\t";
+                obs_os << GENOTYPE_STATUS::label(indelObservation.variantStatus) << "\t";
                 obs_os << context.getRepeatPatternSize() << "\t" << context.getRepeatCount() << "\t"
-                       << INDEL_SIGNAL_TYPE::label(sigIndex) << "\t";
+                       << IndelCounts::INDEL_SIGNAL_TYPE::label(sigIndex) << "\t";
                 obs_os << indelKey.deletionLength << "\t" << nonrefAlleleIndex + 1 << "/" << nonrefAlleleCount
                        << "\t";
-                obs_os << obs.signalCounts[sigIndex] << "\t" << obs.refCount << "\t";
+                obs_os << indelObservation.signalCounts[sigIndex] << "\t" << indelObservation.refCount << "\t";
                 obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
 
 #if 0
@@ -714,7 +719,7 @@ process_pos_error_counts(
                 }
 #endif
             }
-            mergeIndelObservations(context, obs, indelObservations);
+            mergeIndelObservations(context, indelObservation, mergedIndelObservations);
         }
     }
 
@@ -725,31 +730,31 @@ process_pos_error_counts(
     const snp_pos_info& spi(sif.basecallBuffer.get_pos(depth_pos));
     const unsigned depth(spi.calls.size());
 
-    for (const auto& value : indelObservations)
+    for (const auto& value : mergedIndelObservations)
     {
-        indelCounts.addError(value.first, value.second, depth);
+        indelCounts.addCandidateVariantContextInstanceObservation(value.first, value.second, depth);
     }
 
-    // add all the contexts that haven't been covered already
+    // add all the contexts that haven't been covered already by indel candidate variants
     {
-        IndelErrorContext context;
+        IndelCounts::Context context;
 
         if (referenceSTRContext.isBaseInSTR)
         {
-            context = IndelErrorContext(referenceSTRContext.patternSize, referenceSTRContext.STRRepeatCount);
+            context = IndelCounts::Context(referenceSTRContext.patternSize, referenceSTRContext.STRRepeatCount);
         }
 
-        IndelBackgroundObservation obs;
-        obs.depth = depth;
+        IndelCounts::SingleSampleNonVariantContextObservationPattern nonVariantObservation;
+        nonVariantObservation.depth = depth;
 
         // the assumption is that a background position should have
         // the variant status of any overlapping known variants,
         // regardless of whether the genotypes match
-        obs.assignKnownStatus(knownVariantRecords);
+        nonVariantObservation.assignKnownStatus(knownVariantRecords);
 
-        if (!indelObservations.count(context))
+        if (! mergedIndelObservations.count(context))
         {
-            indelCounts.addBackground(context, obs);
+            indelCounts.addNonVariantContextInstanceObservation(context, nonVariantObservation);
         }
     }
 }

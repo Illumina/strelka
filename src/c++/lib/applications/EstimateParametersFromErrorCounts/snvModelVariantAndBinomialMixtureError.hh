@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include "errorAnalysis/SequenceErrorCounts.hh"
+#include "errorAnalysis/SequenceAlleleCounts.hh"
 
 
 void
 snvModelVariantAndBinomialMixtureError(
-    const SequenceErrorCounts& counts);
+    const SequenceAlleleCounts& counts);

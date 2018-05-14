@@ -20,22 +20,24 @@
 
 #include "DumpSequenceErrorCounts.hh"
 #include "DSECOptions.hh"
-#include "errorAnalysis/SequenceErrorCounts.hh"
+#include "errorAnalysis/SequenceAlleleCounts.hh"
 
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 
 
+using namespace IndelCounts;
+
 static
 void
-reportExtendedContext(
-    const IndelErrorContext& context,
-    const std::vector<ExportedIndelObservations>& observations,
+makeExtendedIndelReportForContext(
+    const IndelCounts::Context& context,
+    const SingleSampleContextDataExportFormat& exportedContextData,
     std::ostream& os)
 {
     static const std::string alt_sep(",");
-    for (const ExportedIndelObservations& obs : observations)
+    for (const SingleSampleContextObservationInfoExportFormat& contextObservationInfo : exportedContextData.data)
     {
         unsigned totalAltObservations = 0;
         std::ostringstream alts;
@@ -43,7 +45,7 @@ reportExtendedContext(
         bool isFirst = true;
         for (unsigned altIndex(0); altIndex<INDEL_SIGNAL_TYPE::SIZE; ++altIndex)
         {
-            if (obs.altObservations[altIndex] == 0) continue;
+            if (contextObservationInfo.altObservations[altIndex] == 0) continue;
 
             if (! isFirst)
             {
@@ -52,11 +54,11 @@ reportExtendedContext(
             }
 
             alts << INDEL_SIGNAL_TYPE::label(altIndex);
-            alt_counts << obs.altObservations[altIndex];
+            alt_counts << contextObservationInfo.altObservations[altIndex];
 
             isFirst = false;
 
-            totalAltObservations += obs.altObservations[altIndex];
+            totalAltObservations += contextObservationInfo.altObservations[altIndex];
         }
 
         // isFirst will remain true if we have seen no alts in this context
@@ -72,12 +74,12 @@ reportExtendedContext(
 
             os << std::setprecision(10);
             os << context <<  sep
-               << GENOTYPE_STATUS::label(obs.variantStatus) << sep
+               << GENOTYPE_STATUS::label(contextObservationInfo.variantStatus) << sep
                << alts.str() << sep
                << alt_counts.str() << sep
-               << obs.refObservations << sep
+               << contextObservationInfo.refObservations << sep
                << totalAltObservations << sep
-               << obs.observationCount << "\n"
+               << contextObservationInfo.contextInstanceCount << "\n"
                ;
         }
     }
@@ -88,22 +90,22 @@ reportExtendedContext(
 static
 void
 extendedIndelReport(
-    const IndelErrorCounts& counts,
+    const Dataset& countsDataset,
     std::ostream& ros)
 {
     ros << "context\tvariant_status\talts\talt_counts\tref_count\ttotal_alt\ttimes_observed\n";
 
-    std::vector<ExportedIndelObservations> observations;
-    for (const auto& contextInfo : counts)
+    SingleSampleContextDataExportFormat exportedContextData;
+    for (const auto& contextInfo : countsDataset)
     {
-        const IndelErrorContext& context(contextInfo.first);
-        const auto& data(contextInfo.second);
+        const Context& context(contextInfo.first);
+        const ContextData& contextData(contextInfo.second);
 
-        data.exportObservations(observations);
+        contextData.exportData(exportedContextData);
 
-        if (observations.empty()) continue;
+        if (exportedContextData.data.empty()) continue;
 
-        reportExtendedContext(context, observations, ros);
+        makeExtendedIndelReportForContext(context, exportedContextData, ros);
     }
 }
 
@@ -114,7 +116,7 @@ void
 runDSEC(
     const DSECOptions& opt)
 {
-    SequenceErrorCounts counts;
+    SequenceAlleleCounts counts;
     counts.load(opt.countsFilename.c_str());
 
     std::ostream& ros(std::cout);
@@ -124,7 +126,7 @@ runDSEC(
     }
     if (! opt.isExcludeIndels)
     {
-        IndelErrorCounts& indelCounts(counts.getIndelCounts());
+        Dataset& indelCounts(counts.getIndelCounts());
         if (!opt.isExtendedOutput)
         {
             indelCounts.dump(ros);

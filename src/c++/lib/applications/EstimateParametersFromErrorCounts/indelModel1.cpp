@@ -17,10 +17,11 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
+#include "indelModel1.hh"
 #include "blt_util/math_util.hh"
 
 #include "boost/math/distributions/binomial.hpp"
@@ -28,7 +29,8 @@
 #include <iomanip>
 #include <iostream>
 #include <numeric>
-#include "indelModel1.hh"
+
+using namespace IndelCounts;
 
 namespace
 {
@@ -49,9 +51,9 @@ void
 reportExtendedContext(
     const double maxAltFrac,
     const unsigned minDepth,
-    const IndelErrorContext& context,
-    const std::vector<ExportedIndelObservations>& observations,
-    const IndelErrorData& data,
+    const Context& context,
+    const SingleSampleContextDataExportFormat& exportedContextData,
+    const ContextData& contextData,
     const unsigned altBeginIndex,
     const unsigned altEndIndex,
     const char* extendedContextTag,
@@ -59,21 +61,21 @@ reportExtendedContext(
 {
     SignalGroupTotal sigTotal;
 
-    for (const ExportedIndelObservations& obs : observations)
+    for (const SingleSampleContextObservationInfoExportFormat& contextObservationInfo : exportedContextData.data)
     {
-        sigTotal.locus += obs.observationCount;
+        sigTotal.locus += contextObservationInfo.contextInstanceCount;
         unsigned totalAltObservations(0);
         for (unsigned altIndex(altBeginIndex); altIndex<altEndIndex; ++altIndex)
         {
-            totalAltObservations += obs.altObservations[altIndex];
+            totalAltObservations += contextObservationInfo.altObservations[altIndex];
         }
-        const unsigned total(obs.refObservations+totalAltObservations);
+        const unsigned total(contextObservationInfo.refObservations+totalAltObservations);
         const double altFrac(static_cast<double>(totalAltObservations)/total);
         if ( (total<minDepth) || (altFrac > maxAltFrac)) continue;
 
-        sigTotal.ref += (obs.refObservations*obs.observationCount);
-        sigTotal.alt += (totalAltObservations*obs.observationCount);
-        sigTotal.noiseLocus += obs.observationCount;
+        sigTotal.ref += (contextObservationInfo.refObservations*contextObservationInfo.contextInstanceCount);
+        sigTotal.alt += (totalAltObservations*contextObservationInfo.contextInstanceCount);
+        sigTotal.noiseLocus += contextObservationInfo.contextInstanceCount;
     }
 
     {
@@ -85,8 +87,8 @@ reportExtendedContext(
 
         os << std::setprecision(10);
         os << context << "_" << extendedContextTag << sep
-           << data.excludedRegionSkipped << sep
-           << (sigTotal.locus + data.depthSkipped) << sep
+           << contextData.excludedRegionSkipped << sep
+           << (sigTotal.locus + contextData.depthSkipped) << sep
            << sigTotal.locus << sep
            << sigTotal.noiseLocus << sep
            << sigTotal.ref << sep
@@ -102,7 +104,7 @@ reportExtendedContext(
 
 void
 indelModel1(
-    const SequenceErrorCounts& counts)
+    const SequenceAlleleCounts& counts)
 {
     static const double maxAltFrac(0.05);
     static const unsigned minDepth(25);
@@ -111,19 +113,19 @@ indelModel1(
 
     ros << "context, excludedLoci, nonExcludedLoci, usedLoci, noiseLoci, refReads, altReads, rate, rate_95%_upper_bound\n";
 
-    std::vector<ExportedIndelObservations> observations;
+    SingleSampleContextDataExportFormat exportedContextData;
     for (const auto& contextInfo : counts.getIndelCounts())
     {
         const auto& context(contextInfo.first);
-        const auto& data(contextInfo.second);
+        const auto& contextData(contextInfo.second);
 
-        data.exportObservations(observations);
+        contextData.exportData(exportedContextData);
 
-        if (observations.empty()) continue;
+        if (exportedContextData.data.empty()) continue;
 
-        reportExtendedContext(maxAltFrac, minDepth, context, observations, data,
+        reportExtendedContext(maxAltFrac, minDepth, context, exportedContextData, contextData,
                               INDEL_SIGNAL_TYPE::INSERT_1, INDEL_SIGNAL_TYPE::DELETE_1, "I", ros);
-        reportExtendedContext(maxAltFrac, minDepth, context, observations, data,
+        reportExtendedContext(maxAltFrac, minDepth, context, exportedContextData, contextData,
                               INDEL_SIGNAL_TYPE::DELETE_1, INDEL_SIGNAL_TYPE::SIZE, "D", ros);
     }
 }

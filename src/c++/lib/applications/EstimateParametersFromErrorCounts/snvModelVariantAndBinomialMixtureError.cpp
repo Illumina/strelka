@@ -41,6 +41,8 @@
 //#define DEBUG_SNVMODEL3
 
 
+using namespace BasecallCounts;
+
 
 //static const double logCleanLocusBaseErrorRate(std::log(1e-7));
 static
@@ -67,7 +69,7 @@ getObsLogLhood(
     const double logNoisyLocusRate,
     const double logCleanLocusRate,
     const unsigned qualCount,
-    const BasecallErrorContextObservationExportObservation& key)
+    const SingleSampleContextObservationPatternExportFormat& contextObservationPattern)
 {
     static const double homAltRate(0.99);
     static const double hetAltRate(0.5);
@@ -76,8 +78,8 @@ getObsLogLhood(
     static const double logHomRefRate(std::log1p(-homAltRate));
     static const double logHetRate(std::log(hetAltRate));
 
-    const auto& s0(key.strand0);
-    const auto& s1(key.strand1);
+    const auto& s0(contextObservationPattern.strand0);
+    const auto& s1(contextObservationPattern.strand1);
 
     const unsigned refQualTotal(s0.refAlleleCount+s1.refAlleleCount);
 
@@ -156,7 +158,7 @@ getObsLogLhood(
 static
 double
 contextLogLhood(
-    const BasecallErrorContextObservationExportData& data,
+    const SingleSampleContextDataExportFormat& data,
     const double* const logBaseErrorRate,
     const double* const logCleanBaseErrorRateByQual,
     const double logNoisyLocusRate,
@@ -209,7 +211,7 @@ contextLogLhood(
     double logLhood(0.);
     for (const auto& value : data.observations)
     {
-        const BasecallErrorContextObservationExportObservation& key(value.first);
+        const SingleSampleContextObservationPatternExportFormat& key(value.first);
         const unsigned repeatCount(value.second);
 
         const double mix(getObsLogLhood(
@@ -239,7 +241,7 @@ struct error_minfunc : public codemin::minfunc_interface<double>
 {
     explicit
     error_minfunc(
-        const BasecallErrorContextObservationExportData& data,
+        const SingleSampleContextDataExportFormat& data,
         const bool isFreeCleanLocusError,
         const bool isLockTheta)
         : _data(data),
@@ -396,7 +398,7 @@ struct error_minfunc : public codemin::minfunc_interface<double>
     static const double defaultLogTheta;
 
 private:
-    const BasecallErrorContextObservationExportData& _data;
+    const SingleSampleContextDataExportFormat& _data;
     bool _isFreeCleanLocusError;
     bool _isLockTheta;
     unsigned _qualParamSize;
@@ -421,8 +423,8 @@ struct SignalGroupTotal
 static
 void
 reportQualErrorRateSet(
-    const BasecallErrorContext& context,
-    const BasecallErrorData& data,
+    const Context& context,
+    const ContextData& contextData,
     const uint16_t qual,
     const SignalGroupTotal& sigTotal,
     unsigned iter,
@@ -442,7 +444,7 @@ reportQualErrorRateSet(
     os << std::setprecision(10);
     os << context
        << sep << "Q" << qual
-       << sep << data.excludedRegionSkipped
+       << sep << contextData.excludedRegionSkipped
        << sep << (sigTotal.skipped+sigTotal.locus)
        << sep << sigTotal.locus
        << sep << sigTotal.ref
@@ -476,12 +478,12 @@ void
 reportExtendedContext(
     const bool isFreeCleanLocusError,
     const bool isLockTheta,
-    const BasecallErrorContext& context,
-    const BasecallErrorData& data,
+    const Context& context,
+    const ContextData& contextData,
     std::ostream& os)
 {
-    BasecallErrorContextObservationExportData exportData;
-    data.counts.getExportData(exportData);
+    SingleSampleContextDataExportFormat exportData;
+    contextData.counts.exportData(exportData);
     error_minfunc errFunc(exportData,isFreeCleanLocusError,isLockTheta);
 
     const unsigned qualCount(exportData.altAlleleBasecallErrorPhredProbLevels.size());
@@ -548,9 +550,9 @@ reportExtendedContext(
 
         SignalGroupTotal sigTotal;
         {
-            const uint64_t emptySkippedLociCount(data.emptySkipped);
-            const uint64_t depthSkippedLociCount(data.depthSkipped);
-            const uint64_t noisyContextSkippedLociCount(data.noiseSkipped);
+            const uint64_t emptySkippedLociCount(contextData.emptySkipped);
+            const uint64_t depthSkippedLociCount(contextData.depthSkipped);
+            const uint64_t noisyContextSkippedLociCount(contextData.noiseSkipped);
 
             sigTotal.skipped = (emptySkippedLociCount+depthSkippedLociCount+noisyContextSkippedLociCount);
 
@@ -587,7 +589,7 @@ reportExtendedContext(
                 cleanErrorFactor = minParams[qualCount];
                 cleanErrorRate = std::exp(getLogCleanLocusBaseErrorRate(minArgs[qualIndex],cleanErrorFactor));
             }
-            reportQualErrorRateSet(context, data, exportData.altAlleleBasecallErrorPhredProbLevels[qualIndex], sigTotal, iter, -x_all_loghood,
+            reportQualErrorRateSet(context, contextData, exportData.altAlleleBasecallErrorPhredProbLevels[qualIndex], sigTotal, iter, -x_all_loghood,
                                    noisyErrorRate, cleanErrorRate, noisyLocusRate, theta, isFreeCleanLocusError, cleanErrorFactor, os);
         }
     }
@@ -597,7 +599,7 @@ reportExtendedContext(
 
 void
 snvModelVariantAndBinomialMixtureError(
-    const SequenceErrorCounts& counts)
+    const SequenceAlleleCounts& counts)
 {
     const bool isFreeCleanLocusError(false);
     const bool isLockTheta(true);

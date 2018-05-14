@@ -32,7 +32,7 @@ void
 runEPEC(
     const EPECOptions& opt)
 {
-    SequenceErrorCounts counts;
+    SequenceAlleleCounts counts;
     counts.load(opt.countsFilename.c_str());
 
 

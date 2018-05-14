@@ -25,7 +25,7 @@
 
 #include "SequenceErrorCountsOptions.hh"
 #include "SequenceErrorCountsStreams.hh"
-#include "errorAnalysis/SequenceErrorCounts.hh"
+#include "errorAnalysis/SequenceAlleleCounts.hh"
 #include "starling_common/starling_pos_processor_base.hh"
 
 #include "blt_util/RecordTracker.hh"
@@ -93,7 +93,7 @@ private:
     double _normChromDepth = 0.;
     double _maxChromDepth = 0.;
 
-    SequenceErrorCounts _counts;
+    SequenceAlleleCounts _counts;
 
     double _maxNormalSampleDepthForCandidateVariants = -1;
 

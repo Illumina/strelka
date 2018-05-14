@@ -21,7 +21,7 @@
 /// \author Chris Saunders
 ///
 
-#include "SequenceErrorCounts.hh"
+#include "SequenceAlleleCounts.hh"
 #include "common/Exceptions.hh"
 #include "boost/archive/binary_iarchive.hpp"
 #include "boost/archive/binary_oarchive.hpp"
@@ -32,9 +32,9 @@
 
 
 void
-SequenceErrorCounts::
+SequenceAlleleCounts::
 merge(
-    const SequenceErrorCounts& in)
+    const SequenceAlleleCounts& in)
 {
     if (!_sampleName.empty() && !in._sampleName.empty())
     {
@@ -42,7 +42,7 @@ merge(
         {
             using namespace illumina::common;
             std::ostringstream oss;
-            oss << "Attempted to merge SequenceErrorCounts with different sample names: '" << _sampleName << "' and '" << in._sampleName << "'";
+            oss << "Attempted to merge SequenceAlleleCounts with different sample names: '" << _sampleName << "' and '" << in._sampleName << "'";
             BOOST_THROW_EXCEPTION(GeneralException(oss.str()));
         }
     }
@@ -53,7 +53,7 @@ merge(
 
 
 void
-SequenceErrorCounts::
+SequenceAlleleCounts::
 save(
     const char* filename) const
 {
@@ -71,7 +71,7 @@ save(
 
 
 void
-SequenceErrorCounts::
+SequenceAlleleCounts::
 load(
     const char* filename)
 {
@@ -91,7 +91,7 @@ load(
 
 
 void
-SequenceErrorCounts::
+SequenceAlleleCounts::
 dump(
     std::ostream& os) const
 {

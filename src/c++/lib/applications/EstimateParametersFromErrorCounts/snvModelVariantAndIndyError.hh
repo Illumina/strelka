@@ -23,10 +23,10 @@
 
 #pragma once
 
-#include "errorAnalysis/SequenceErrorCounts.hh"
+#include "errorAnalysis/SequenceAlleleCounts.hh"
 
 
 /// model data as a mixture of variants and an independent error process
 void
 snvModelVariantAndIndyError(
-    const SequenceErrorCounts& counts);
+    const SequenceAlleleCounts& counts);

@@ -23,7 +23,7 @@
 
 #include "MergeSequenceErrorCounts.hh"
 #include "MSECOptions.hh"
-#include "errorAnalysis/SequenceErrorCounts.hh"
+#include "errorAnalysis/SequenceAlleleCounts.hh"
 
 #include "common/OutStream.hh"
 
@@ -38,7 +38,7 @@ runMSEC(const MSECOptions& opt)
         OutStream outs(opt.outputFilename);
     }
 
-    SequenceErrorCounts mergedCounts;
+    SequenceAlleleCounts mergedCounts;
     bool isFirst(true);
     for (const std::string& countsFilename : opt.countsFilename)
     {
@@ -49,7 +49,7 @@ runMSEC(const MSECOptions& opt)
         }
         else
         {
-            SequenceErrorCounts inputCounts;
+            SequenceAlleleCounts inputCounts;
             inputCounts.load(countsFilename.c_str());
             mergedCounts.merge(inputCounts);
         }

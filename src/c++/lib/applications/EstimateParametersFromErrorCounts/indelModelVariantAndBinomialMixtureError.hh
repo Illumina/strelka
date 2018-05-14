@@ -17,17 +17,17 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
 #pragma once
 
-#include "errorAnalysis/SequenceErrorCounts.hh"
+#include "errorAnalysis/SequenceAlleleCounts.hh"
 
 
 /// model data as a mixture of variants and a two stage error process
 ///
 void
 indelModelVariantAndBinomialMixtureError(
-    const SequenceErrorCounts& counts);
+    const SequenceAlleleCounts& counts);
