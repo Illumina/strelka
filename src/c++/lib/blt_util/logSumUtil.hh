@@ -79,7 +79,9 @@ getLogSumSequence(
     IterType beginIter,
     IterType endIter)
 {
-    BOOST_CONCEPT_ASSERT((boost::ForwardIterator<IterType>));
+    // Concept assertions removed due to unused typedef warning in clang & boost 1.58, this is supposed to be fixed in boost 1.59
+    //
+    //BOOST_CONCEPT_ASSERT((boost::ForwardIterator<IterType>));
     typedef typename std::iterator_traits<IterType>::value_type value_type;
     static_assert(std::is_floating_point<value_type>::value, "Requires iterator on floating point type.");
 
