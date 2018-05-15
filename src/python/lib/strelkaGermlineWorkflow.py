@@ -376,13 +376,13 @@ class PathInfo(SharedPathInfo):
         sampleIndexStr = str(sampleIndex).zfill(3)
         return os.path.join(self.getTmpErrorEstimationDir(), "nonEmptySiteCounts.Sample%s.%s.tsv" % (sampleIndexStr, genomeSegmentLabel))
 
-    def getTmpSegmentErrorCountsPath(self, sampleIndex, genomeSegmentLabel) :
+    def getTmpSegmentAlleleCountsPath(self, sampleIndex, genomeSegmentLabel) :
         sampleIndexStr = str(sampleIndex).zfill(3)
-        return os.path.join(self.getTmpErrorEstimationDir(), "sequenceErrorCounts.Sample%s.%s.bin" % (sampleIndexStr, genomeSegmentLabel))
+        return os.path.join(self.getTmpErrorEstimationDir(), "sequenceAlleleCounts.Sample%s.%s.bin" % (sampleIndexStr, genomeSegmentLabel))
 
-    def getErrorCountsOutputPath(self, sampleIndex) :
+    def getAlleleCountsOutputPath(self, sampleIndex) :
         sampleIndexStr = str(sampleIndex).zfill(3)
-        return os.path.join( self.params.workDir, "sequenceErrorCounts.Sample%s.bin" % (sampleIndexStr))
+        return os.path.join( self.params.workDir, "sequenceAlleleCounts.Sample%s.bin" % (sampleIndexStr))
 
     def getIndelErrorModelPath(self, sampleIndex) :
         sampleIndexStr = str(sampleIndex).zfill(3)

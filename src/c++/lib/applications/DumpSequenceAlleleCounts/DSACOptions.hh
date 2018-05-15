@@ -21,22 +21,21 @@
 
 #include "common/Program.hh"
 
-#include <cassert>
-
 #include <string>
 
-struct EPACOptions
+
+struct DSACOptions
 {
+    bool isExcludeBasecalls = false;
+    bool isExcludeIndels = false;
     std::string countsFilename;
-    std::string thetaFilename;
-    std::string outputFilename;
-    std::string fallbackFilename;
+    bool isExtendedOutput = false;
 };
 
 
 void
-parseEPACOptions(
+parseDSACOptions(
     const illumina::Program& prog,
     int argc,
     char** argv,
-    EPACOptions& opt);
+    DSACOptions& opt);

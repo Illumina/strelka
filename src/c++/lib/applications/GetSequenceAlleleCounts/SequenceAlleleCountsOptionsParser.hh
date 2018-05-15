@@ -19,24 +19,19 @@
 
 #pragma once
 
-#include "common/Program.hh"
-
-#include <cassert>
-
-#include <string>
-
-struct EPACOptions
-{
-    std::string countsFilename;
-    std::string thetaFilename;
-    std::string outputFilename;
-    std::string fallbackFilename;
-};
+#include "SequenceAlleleCountsOptions.hh"
+#include "starling_common/starling_base_option_parser.hh"
 
 
+po::options_description
+getSequenceAlleleCountsOptionsParser(SequenceAlleleCountsOptions& opt);
+
+
+// validate options and process any required quick consistency
+// adjustments
+//
 void
-parseEPACOptions(
-    const illumina::Program& prog,
-    int argc,
-    char** argv,
-    EPACOptions& opt);
+finalizeSequenceAlleleCountsOptions(
+    const prog_info& pinfo,
+    const po::variables_map& vm,
+    SequenceAlleleCountsOptions& opt);

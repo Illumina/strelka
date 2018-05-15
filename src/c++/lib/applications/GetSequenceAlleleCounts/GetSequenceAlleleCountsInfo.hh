@@ -19,24 +19,29 @@
 
 #pragma once
 
-#include "common/Program.hh"
+#include "starling_common/prog_info_base.hh"
 
-#include <cassert>
 
-#include <string>
-
-struct EPACOptions
+struct GetSequenceAlleleCountsInfo : public prog_info_base
 {
-    std::string countsFilename;
-    std::string thetaFilename;
-    std::string outputFilename;
-    std::string fallbackFilename;
+    static
+    const prog_info& get()
+    {
+        static const GetSequenceAlleleCountsInfo vci;
+        return vci;
+    }
+
+private:
+    const char* name() const override
+    {
+        static const char NAME[] = "GetSequenceAlleleCounts";
+        return NAME;
+    }
+
+    void usage(const char* xmessage = 0) const override;
+
+    void doc() const override {}
+
+    GetSequenceAlleleCountsInfo() {}
+    ~GetSequenceAlleleCountsInfo() override {}
 };
-
-
-void
-parseEPACOptions(
-    const illumina::Program& prog,
-    int argc,
-    char** argv,
-    EPACOptions& opt);

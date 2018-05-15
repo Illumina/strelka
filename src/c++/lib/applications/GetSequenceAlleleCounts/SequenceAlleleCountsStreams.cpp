@@ -17,26 +17,31 @@
 //
 //
 
-#pragma once
-
-#include "common/Program.hh"
+#include "SequenceAlleleCountsStreams.hh"
+#include "htsapi/bam_header_util.hh"
 
 #include <cassert>
 
-#include <string>
+#include <fstream>
+#include <iostream>
 
-struct EPACOptions
+
+
+SequenceAlleleCountsStreams::
+SequenceAlleleCountsStreams(
+    const SequenceAlleleCountsOptions& opt,
+    const prog_info& pinfo,
+    const bam_hdr_t& header)
+    : base_t(1)
 {
-    std::string countsFilename;
-    std::string thetaFilename;
-    std::string outputFilename;
-    std::string fallbackFilename;
-};
+    assert(getSampleCount() == 1);
+    _sampleName = get_bam_header_sample_name(header);
 
-
-void
-parseEPACOptions(
-    const illumina::Program& prog,
-    int argc,
-    char** argv,
-    EPACOptions& opt);
+    if (opt.is_write_observations())
+    {
+        std::ofstream* fosptr(new std::ofstream);
+        _observation_bed_osptr.reset(fosptr);
+        std::ofstream& fos(*fosptr);
+        open_ofstream(pinfo,opt.observationsBedFilename,"obs_bed",fos);
+    }
+}

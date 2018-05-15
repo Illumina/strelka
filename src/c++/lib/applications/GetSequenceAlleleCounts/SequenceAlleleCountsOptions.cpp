@@ -17,26 +17,16 @@
 //
 //
 
-#pragma once
+#include "SequenceAlleleCountsOptions.hh"
 
-#include "common/Program.hh"
 
-#include <cassert>
 
-#include <string>
-
-struct EPACOptions
+SequenceAlleleCountsDerivOptions::
+SequenceAlleleCountsDerivOptions(const SequenceAlleleCountsOptions& opt)
+    : base_t(opt)
 {
-    std::string countsFilename;
-    std::string thetaFilename;
-    std::string outputFilename;
-    std::string fallbackFilename;
-};
-
-
-void
-parseEPACOptions(
-    const illumina::Program& prog,
-    int argc,
-    char** argv,
-    EPACOptions& opt);
+    if (opt.is_depth_filter())
+    {
+        parse_chrom_depth(opt.chrom_depth_file, chrom_depth);
+    }
+}

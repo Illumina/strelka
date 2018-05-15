@@ -21,22 +21,15 @@
 
 #include "common/Program.hh"
 
-#include <cassert>
 
-#include <string>
-
-struct EPACOptions
+struct DumpSequenceAlleleCounts : public illumina::Program
 {
-    std::string countsFilename;
-    std::string thetaFilename;
-    std::string outputFilename;
-    std::string fallbackFilename;
+    const char*
+    name() const
+    {
+        return "DumpSequenceAlleleCounts";
+    }
+
+    void
+    runInternal(int argc, char* argv[]) const;
 };
-
-
-void
-parseEPACOptions(
-    const illumina::Program& prog,
-    int argc,
-    char** argv,
-    EPACOptions& opt);

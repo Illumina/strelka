@@ -30,7 +30,7 @@
 static
 void
 runEPEC(
-    const EPECOptions& opt)
+    const EPACOptions& opt)
 {
     SequenceAlleleCounts counts;
     counts.load(opt.countsFilename.c_str());
@@ -56,8 +56,8 @@ void
 EstimateVariantErrorRates::
 runInternal(int argc, char* argv[]) const
 {
-    EPECOptions opt;
+    EPACOptions opt;
 
-    parseEPECOptions(*this,argc,argv,opt);
+    parseEPACOptions(*this, argc, argv, opt);
     runEPEC(opt);
 }

@@ -17,7 +17,7 @@
 //
 //
 
-#include "EPECOptions.hh"
+#include "DSACOptions.hh"
 
 #include "blt_util/log.hh"
 #include "common/ProgramUtil.hh"
@@ -35,25 +35,29 @@ usage(
     const boost::program_options::options_description& visible,
     const char* msg = nullptr)
 {
-    usage(os, prog, visible, "run various parameter estimation/model fit tasks on error counts file", " > counts_dump", msg);
+    usage(os, prog, visible, "summarize binary allele counts file to stdout", " > counts_dump", msg);
 }
 
 
 
 void
-parseEPACOptions(
+parseDSACOptions(
     const illumina::Program& prog,
     int argc,
     char** argv,
-    EPACOptions& opt)
+    DSACOptions& opt)
 {
     namespace po = boost::program_options;
     po::options_description req("configuration");
     req.add_options()
-    ("counts-file", po::value(&opt.countsFilename),"read binary error counts from filename (required, no default)")
-    ("theta-file", po::value(&opt.thetaFilename),"select a json file with theta values")
-    ("output-file", po::value(&opt.outputFilename),"select the location and name of the output json file")
-    ("fallback-file", po::value(&opt.fallbackFilename),"select a json file with default error rate values")
+    ("exclude-basecalls", po::value(&opt.isExcludeBasecalls)->zero_tokens(),
+     "Exclude basecall info from the dump")
+    ("exclude-indels", po::value(&opt.isExcludeIndels)->zero_tokens(),
+     "Exclude indel info from the dump")
+    ("counts-file", po::value(&opt.countsFilename),
+     "read binary allele counts from filename (required, no default)")
+    ("extended", po::value(&opt.isExtendedOutput)->zero_tokens(),
+     "print extended output in tab-delimited format, which should be more suitable for analysis with external tools")
     ;
 
     po::options_description help("help");
@@ -86,23 +90,8 @@ parseEPACOptions(
     {
         usage(log_os,prog,visible,"Must specify counts file");
     }
-    if (opt.thetaFilename.empty())
-    {
-        usage(log_os,prog,visible,"Must specify theta file");
-    }
-    if (opt.outputFilename.empty())
-    {
-        usage(log_os,prog,visible,"Must specify output file");
-    }
-
     if (! boost::filesystem::exists(opt.countsFilename))
     {
         usage(log_os,prog,visible,"Counts file does not exist");
     }
-
-    if (! boost::filesystem::exists(opt.thetaFilename))
-    {
-        usage(log_os,prog,visible,"Theta file does not exist");
-    }
 }
-

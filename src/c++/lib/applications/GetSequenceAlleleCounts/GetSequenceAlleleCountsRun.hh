@@ -19,24 +19,12 @@
 
 #pragma once
 
-#include "common/Program.hh"
-
-#include <cassert>
-
-#include <string>
-
-struct EPACOptions
-{
-    std::string countsFilename;
-    std::string thetaFilename;
-    std::string outputFilename;
-    std::string fallbackFilename;
-};
+#include "blt_util/prog_info.hh"
+#include "SequenceAlleleCountsOptions.hh"
 
 
+/// \brief Execute sequence allele counting after options have been parsed
 void
-parseEPACOptions(
-    const illumina::Program& prog,
-    int argc,
-    char** argv,
-    EPACOptions& opt);
+getSequenceAlleleCountsRun(
+    const prog_info& pinfo,
+    const SequenceAlleleCountsOptions& opt);

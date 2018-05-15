@@ -19,24 +19,32 @@
 
 #pragma once
 
-#include "common/Program.hh"
+#include "SequenceAlleleCountsOptions.hh"
+#include "starling_common/starling_streams_base.hh"
 
-#include <cassert>
 
-#include <string>
-
-struct EPACOptions
+struct SequenceAlleleCountsStreams : public starling_streams_base
 {
-    std::string countsFilename;
-    std::string thetaFilename;
-    std::string outputFilename;
-    std::string fallbackFilename;
+    typedef starling_streams_base base_t;
+
+    SequenceAlleleCountsStreams(
+        const SequenceAlleleCountsOptions& client_opt,
+        const prog_info& pinfo,
+        const bam_hdr_t& bam_header);
+
+    const std::string&
+    getSampleName() const
+    {
+        return _sampleName;
+    }
+
+    std::ostream*
+    observation_bed_osptr() const
+    {
+        return _observation_bed_osptr.get();
+    }
+
+private:
+    std::string _sampleName;
+    std::unique_ptr<std::ostream> _observation_bed_osptr;
 };
-
-
-void
-parseEPACOptions(
-    const illumina::Program& prog,
-    int argc,
-    char** argv,
-    EPACOptions& opt);

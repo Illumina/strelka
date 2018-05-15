@@ -17,7 +17,7 @@
 //
 //
 
-#include "EPECOptions.hh"
+#include "EPACOptions.hh"
 
 #include "blt_util/log.hh"
 #include "common/ProgramUtil.hh"
@@ -35,7 +35,7 @@ usage(
     const boost::program_options::options_description& visible,
     const char* msg = nullptr)
 {
-    usage(os, prog, visible, "run various parameter estimation/model fit tasks on error counts file", " > counts_dump", msg);
+    usage(os, prog, visible, "run various parameter estimation/model fit tasks on allele counts file", " > counts_dump", msg);
 }
 
 
@@ -47,13 +47,26 @@ parseEPACOptions(
     char** argv,
     EPACOptions& opt)
 {
+    std::string modelTypeString;
+
+    std::ostringstream modelTypeHelp;
+    modelTypeHelp << "select model type, options are {";
+    for (unsigned modelTypeIndex(0); modelTypeIndex<MODEL_TYPE::SIZE; ++modelTypeIndex)
+    {
+        if (modelTypeIndex) modelTypeHelp << ",";
+        modelTypeHelp << MODEL_TYPE::label(static_cast<MODEL_TYPE::index_t>(modelTypeIndex));
+    }
+    modelTypeHelp << "} (no default)";
+
     namespace po = boost::program_options;
     po::options_description req("configuration");
     req.add_options()
-    ("counts-file", po::value(&opt.countsFilename),"read binary error counts from filename (required, no default)")
-    ("theta-file", po::value(&opt.thetaFilename),"select a json file with theta values")
-    ("output-file", po::value(&opt.outputFilename),"select the location and name of the output json file")
-    ("fallback-file", po::value(&opt.fallbackFilename),"select a json file with default error rate values")
+    ("counts-file", po::value(&opt.countsFilename),
+     "read binary allele counts from filename (required, no default)")
+    ("model-type", po::value(&modelTypeString),
+     modelTypeHelp.str().c_str())
+    ("model", po::value(&opt.modelIndex)->default_value(opt.modelIndex),
+     "select which model of a given type to run")
     ;
 
     po::options_description help("help");
@@ -82,27 +95,31 @@ parseEPACOptions(
         usage(log_os,prog,visible);
     }
 
+    {
+        bool isModelTypeFound(false);
+        for (unsigned modelTypeIndex(0); modelTypeIndex<MODEL_TYPE::SIZE; ++modelTypeIndex)
+        {
+            const MODEL_TYPE::index_t modelType(static_cast<MODEL_TYPE::index_t>(modelTypeIndex));
+            if (modelTypeString ==  MODEL_TYPE::label(modelType))
+            {
+                opt.modelType = modelType;
+                isModelTypeFound = true;
+                break;
+            }
+        }
+        if (! isModelTypeFound)
+        {
+            usage(log_os,prog,visible,"Unrecognized model type");
+        }
+    }
+
     if (opt.countsFilename.empty())
     {
         usage(log_os,prog,visible,"Must specify counts file");
     }
-    if (opt.thetaFilename.empty())
-    {
-        usage(log_os,prog,visible,"Must specify theta file");
-    }
-    if (opt.outputFilename.empty())
-    {
-        usage(log_os,prog,visible,"Must specify output file");
-    }
-
     if (! boost::filesystem::exists(opt.countsFilename))
     {
         usage(log_os,prog,visible,"Counts file does not exist");
-    }
-
-    if (! boost::filesystem::exists(opt.thetaFilename))
-    {
-        usage(log_os,prog,visible,"Theta file does not exist");
     }
 }
 

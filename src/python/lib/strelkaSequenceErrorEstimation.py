@@ -52,7 +52,7 @@ def countGenomeSegment(self, sampleIndex, gseg, segFiles, taskPrefix="", depende
     segCmd.extend(["--ref", self.params.referenceFasta ])
     segCmd.extend(["--max-indel-size", self.params.maxIndelSize])
 
-    segFiles.counts.append(self.paths.getTmpSegmentErrorCountsPath(sampleIndex, genomeSegmentLabel))
+    segFiles.counts.append(self.paths.getTmpSegmentAlleleCountsPath(sampleIndex, genomeSegmentLabel))
     segCmd.extend(["--counts-file", segFiles.counts[-1]])
 
     segFiles.nonEmptySiteCounts.append(self.paths.getTmpSegmentNonemptySiteCountsPath(sampleIndex, genomeSegmentLabel))
@@ -344,35 +344,35 @@ def countSequenceEvidenceUntilTargetIsReached(self, estimationIntervals, sampleI
 
 
 
-def mergeSequenceErrorCounts(self, sampleIndex, segmentErrorCountFiles, taskPrefix="", dependencies=None) :
+def mergeSequenceAlleleCounts(self, sampleIndex, segmentAlleleCountsFiles, taskPrefix="", dependencies=None) :
     """
     Given sequencing error counts generated from multiple genome regions, merge these into a single error count set
     """
 
     runMergeLabel=preJoin(taskPrefix,"mergeCounts")
     runMergeCmd=[self.params.mergeCountsBin]
-    runMergeCmd.extend(["--output-file", self.paths.getErrorCountsOutputPath(sampleIndex)])
-    for segmentErrorCountFile in segmentErrorCountFiles :
-        runMergeCmd.extend(["--counts-file",segmentErrorCountFile])
+    runMergeCmd.extend(["--output-file", self.paths.getAlleleCountsOutputPath(sampleIndex)])
+    for segmentAlleleCountsFile in segmentAlleleCountsFiles :
+        runMergeCmd.extend(["--counts-file",segmentAlleleCountsFile])
     return self.addTask(runMergeLabel, runMergeCmd, dependencies=dependencies, isForceLocal=True)
 
 
 
-def estimateParametersFromErrorCounts(self, sampleIndex, taskPrefix="", dependencies=None) :
+def estimateParametersFromAlleleCounts(self, sampleIndex, taskPrefix="", dependencies=None) :
     """
     Estimate variant error parameters from sequencing error count data
     """
 
     runEstimateLabel=preJoin(taskPrefix,"estimateVariantErrorRates")
     runEstimateCmd=[self.params.estimateVariantErrorRatesBin]
-    runEstimateCmd.extend(["--counts-file", self.paths.getErrorCountsOutputPath(sampleIndex)])
+    runEstimateCmd.extend(["--counts-file", self.paths.getAlleleCountsOutputPath(sampleIndex)])
     runEstimateCmd.extend(["--theta-file",self.params.thetaParamFile])
     runEstimateCmd.extend(["--output-file", self.paths.getIndelErrorModelPath(sampleIndex)])
     runEstimateCmd.extend(["--fallback-file",self.params.indelErrorRateDefault])
     return self.addTask(runEstimateLabel, runEstimateCmd, dependencies=dependencies, isForceLocal=True)
 
 
-class TempSequenceErrorCountSegmentFiles :
+class TempSequenceAlleleCountsSegmentFiles :
     def __init__(self) :
         self.counts = []
         self.nonEmptySiteCounts = []
@@ -385,7 +385,7 @@ def getSequenceErrorEstimatesForSample(self, estimationIntervals, sampleIndex, t
 
     segmentTasks = set()
 
-    segFiles = TempSequenceErrorCountSegmentFiles()
+    segFiles = TempSequenceAlleleCountsSegmentFiles()
 
     if self.params.isErrorEstimationFromAllData :
         # get error counts from full data set:
@@ -398,12 +398,12 @@ def getSequenceErrorEstimatesForSample(self, estimationIntervals, sampleIndex, t
     completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=segmentTasks)
 
     # merge segment stats:
-    mergeCountsTask = mergeSequenceErrorCounts(self, sampleIndex, segFiles.counts,
-                                               taskPrefix=taskPrefix, dependencies=completeSegmentsTask)
+    mergeCountsTask = mergeSequenceAlleleCounts(self, sampleIndex, segFiles.counts,
+                                                taskPrefix=taskPrefix, dependencies=completeSegmentsTask)
 
     # get error parameters:
-    estimateTask = estimateParametersFromErrorCounts(self, sampleIndex,
-                                                     taskPrefix=taskPrefix, dependencies=mergeCountsTask)
+    estimateTask = estimateParametersFromAlleleCounts(self, sampleIndex,
+                                                      taskPrefix=taskPrefix, dependencies=mergeCountsTask)
 
     nextStepWait = set()
     nextStepWait.add(estimateTask)

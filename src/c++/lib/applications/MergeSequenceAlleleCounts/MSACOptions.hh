@@ -21,22 +21,22 @@
 
 #include "common/Program.hh"
 
-#include <cassert>
-
 #include <string>
+#include <vector>
 
-struct EPACOptions
+
+
+struct MSACOptions
 {
-    std::string countsFilename;
-    std::string thetaFilename;
+    std::vector<std::string> countsFilename;
+    std::string countsFilenameList;
     std::string outputFilename;
-    std::string fallbackFilename;
 };
 
 
 void
-parseEPACOptions(
+parseMSACOptions(
     const illumina::Program& prog,
     int argc,
     char** argv,
-    EPACOptions& opt);
+    MSACOptions& opt);

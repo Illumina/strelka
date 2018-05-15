@@ -17,26 +17,11 @@
 //
 //
 
-#pragma once
+#include "applications/DumpSequenceAlleleCounts/DumpSequenceAlleleCounts.hh"
 
-#include "common/Program.hh"
 
-#include <cassert>
-
-#include <string>
-
-struct EPACOptions
+int
+main(int argc, char* argv[])
 {
-    std::string countsFilename;
-    std::string thetaFilename;
-    std::string outputFilename;
-    std::string fallbackFilename;
-};
-
-
-void
-parseEPACOptions(
-    const illumina::Program& prog,
-    int argc,
-    char** argv,
-    EPACOptions& opt);
+    return DumpSequenceAlleleCounts().run(argc,argv);
+}
