@@ -104,7 +104,7 @@ def parseArgs():
     return args
 
 
-def getDataSet(inputs, sample_input, balance_per_sample) :
+def getDataSet(inputs, args) :
 
     datasets = []
     for inputFile in inputs:
@@ -115,21 +115,30 @@ def getDataSet(inputs, sample_input, balance_per_sample) :
         # Remove false negatives before any subsampling:                                                                                                                                      
         df = df[df["tag"] != "FN"]
 
-        if sample_input:
+        if args.sample_input:
             p_rows = min(df.shape[0], sample_input)
             p_rows_selected = random.sample(df.index, p_rows)
             df = pandas.DataFrame(df.ix[p_rows_selected])
 
-        if balance_per_sample:
+        if args.balance_per_sample:
             tps = df[df["tag"] == "TP"]
             fps = df[df["tag"] == "FP"]
-            print "TP: %d FP: %d" % (tps.shape[0], fps.shape[0])
+            if args.ambig:
+                ambigs = df[df["tag"] == "UNK"]
+                print "TP: %d FP: %d, UNK: %d" % (tps.shape[0], fps.shape[0], ambigs.shape[0])
+            else:
+                print "TP: %d FP: %d" % (tps.shape[0], fps.shape[0])
             if tps.shape[0] < fps.shape[0]:
                 fps = fps.sample(n=tps.shape[0])
             elif fps.shape[0] < tps.shape[0]:
                 tps = tps.sample(n=fps.shape[0])
-            print "Downsampled to TP: %d FP: %d" % (tps.shape[0], fps.shape[0])
-            df = pandas.concat([tps, fps])
+            if args.ambig:
+                ambigs = ambigs.sample(n=fps.shape[0])
+                print "Downsampled to TP: %d,  FP: %d, UNK: %d" % (tps.shape[0], fps.shape[0], ambigs.shape[0])
+                df = pandas.concat([tps, fps, ambigs])
+            else:
+                print "Downsampled to TP: %d FP: %d" % (tps.shape[0], fps.shape[0])
+                df = pandas.concat([tps, fps])
 
         df["weight"] = 1
         datasets.append(df)
@@ -160,9 +169,9 @@ def main():
 
     model = evs.EVSModel.createNew(args.model)
 
-    dataset = getDataSet(args.inputs,args.sample_input, args.balance_per_sample)
+    dataset = getDataSet(args.inputs, args)
 
-    if not args.balance_overall:
+    if (not args.balance_overall) or args.balance_per_sample:
         # the copy() method calls below help to prevent the SettingWithCopy warning in pandas
         # see STREL-804 and https://www.dataquest.io/blog/settingwithcopywarning/
         tpdata = dataset[dataset["tag"] == "TP"].copy()

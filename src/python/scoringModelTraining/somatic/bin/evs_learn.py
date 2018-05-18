@@ -169,7 +169,7 @@ def main():
 
     dataset = getDataSet(args.inputs, args.sample_input, args.balance_per_sample)
 
-    if not args.balance_overall:
+    if (not args.balance_overall) or args.balance_per_sample:
         tpdata = dataset[dataset["tag"] == "TP"]
         fpdata = dataset[dataset["tag"] == "FP"]
     else:
