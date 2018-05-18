@@ -67,11 +67,15 @@ def parseArgs():
     parser.add_argument("-o", "--output", required=True,
                         help="Output file name")
 
-    parser.add_argument("--balance", default=False, action="store_true",
-                        help="Balance the number of samples from each label.")
+    parser.add_argument("--balance_overall", default=False, action="store_true",
+                        help="Balance the number of samples from each label in the overall (combined) dataset")
+
+    parser.add_argument("--balance_per_sample", default=False, action="store_true",
+                        help="Balance the number of samples from each label separately in every input file")
 
     parser.add_argument("--sample-input", dest="sample_input", default=0, type=int,
                         help="Number of rows to subsample from each input data file")
+
     parser.add_argument("--plots", default=False, action="store_true",
                         help="Make plots.")
 
@@ -97,7 +101,7 @@ def parseArgs():
 
 
 
-def getDataSet(inputs, sample_input) :
+def getDataSet(inputs, sample_input, balance_per_sample) :
 
     import random
     datasets = []
@@ -108,11 +112,24 @@ def getDataSet(inputs, sample_input) :
         inputFile = os.path.abspath(inputFile)
         print "Reading '%s'" % (inputFile)
         df = pandas.read_csv(inputFile)
+        # Remove false negatives before any subsampling:
+        df = df[df["tag"] != "FN"]
 
         if sample_input:
             p_rows = min(df.shape[0], sample_input)
             p_rows_selected = random.sample(df.index, p_rows)
             df = pandas.DataFrame(df.ix[p_rows_selected])
+
+        if balance_per_sample:
+            tps = df[df["tag"] == "TP"]
+            fps = df[df["tag"] == "FP"]
+            print "TP: %d FP: %d" % (tps.shape[0], fps.shape[0])
+            if tps.shape[0] < fps.shape[0]:
+                fps = fps.sample(n=tps.shape[0])
+            elif fps.shape[0] < tps.shape[0]:
+                tps = tps.sample(n=fps.shape[0])
+            print "Downsampled to TP: %d FP: %d" % (tps.shape[0], fps.shape[0])
+            df = pandas.concat([tps, fps])
 
         df["weight"] = 1
         if "Admix" in inputFile:
@@ -128,7 +145,7 @@ def getDataSet(inputs, sample_input) :
     else:
         dataset = datasets[0]
 
-    return pandas.DataFrame(dataset[dataset["tag"] != "FN"])
+    return pandas.DataFrame(dataset)
 
 
 
@@ -150,9 +167,9 @@ def main():
 
     model = evs.EVSModel.createNew(args.model)
 
-    dataset = getDataSet(args.inputs,args.sample_input)
+    dataset = getDataSet(args.inputs, args.sample_input, args.balance_per_sample)
 
-    if not args.balance:
+    if (not args.balance_overall) or args.balance_per_sample:
         tpdata = dataset[dataset["tag"] == "TP"]
         fpdata = dataset[dataset["tag"] == "FP"]
     else:
