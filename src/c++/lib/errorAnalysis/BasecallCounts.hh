@@ -165,7 +165,7 @@ struct SingleSampleContextData;
 
 /// \brief Basecall observations associated with a single context instance in the genome
 ///
-/// A single context instance of a basecall context can be thought of as a site a in the genome, and the corresponding
+/// A single context instance of a basecall context can be thought of as a site in the genome, and the corresponding
 /// basecall observations at this site correspond to the data in a single pileup column.
 ///
 /// Basecall counts are simplified to 2 states: reference alleles and non-reference alleles.

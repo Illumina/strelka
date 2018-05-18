@@ -131,7 +131,7 @@ assignStatus(const RecordTracker::indel_value_t& knownVariantOlap)
 }
 
 
-/// \brief The sequencing context of a indel, used to segment the indel pattern counting and modeling
+/// \brief The sequencing context of an indel, used to segment the indel pattern counting and modeling
 struct Context
 {
     Context(
@@ -183,7 +183,7 @@ operator<<(
     const Context& context);
 
 
-/// \brief An non-variant allele pattern which could be observed at any given context instance in one sample
+/// \brief A non-variant allele pattern which could be observed at any given context instance in one sample
 struct SingleSampleNonVariantContextObservationPattern
 {
     void
@@ -259,7 +259,7 @@ private:
 };
 
 
-/// \brief Ratio of indel supporting reads to background depth for each context type
+/// \brief Ratio of allele-supporting reads to background depth for each context type
 ///
 /// This ratio is computed for each context and used to estimate the supporting read counts
 /// for the reference allele at all non-variant context instances.
