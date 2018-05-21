@@ -129,11 +129,19 @@ def getDataSet(inputs, args) :
             else:
                 print "TP: %d FP: %d" % (tps.shape[0], fps.shape[0])
             if tps.shape[0] < fps.shape[0]:
+                rows_selected = random.sample(fps.index, tps.shape[0])  
+                fps = pandas.DataFrame(fps.ix[rows_selected])
+            elif fps.shape[0] < tps.shape[0]:
+                rows_selected = random.sample(tps.index, fps.shape[0])
+                tps = pandas.DataFrame(tps.ix[rows_selected])
+
+            if tps.shape[0] < fps.shape[0]:
                 fps = fps.sample(n=tps.shape[0])
             elif fps.shape[0] < tps.shape[0]:
                 tps = tps.sample(n=fps.shape[0])
             if args.ambig:
-                ambigs = ambigs.sample(n=fps.shape[0])
+                rows_selected = random.sample(ambigs.index, fps.shape[0])
+                ambigs = pandas.DataFrame(ambigs.ix[rows_selected])
                 print "Downsampled to TP: %d,  FP: %d, UNK: %d" % (tps.shape[0], fps.shape[0], ambigs.shape[0])
                 df = pandas.concat([tps, fps, ambigs])
             else:
