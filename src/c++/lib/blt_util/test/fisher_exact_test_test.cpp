@@ -38,6 +38,8 @@ BOOST_AUTO_TEST_CASE( test_fisher_exact_pval )
     BOOST_CHECK_CLOSE(6.73038093956118699e-05, test_pval, 0.00000001);
 }
 
+
+
 BOOST_AUTO_TEST_CASE( test_fisher_exact_examples )
 {
 // generate test data in R:
@@ -61,7 +63,7 @@ BOOST_AUTO_TEST_CASE( test_fisher_exact_examples )
 //                    return(data.frame(N=n, r=r, n=n, a=a, b=b, c=c, d=d, fisher_p_t=fisher_p_t, fisher_p_l=fisher_p_l, fisher_p_g=fisher_p_g))
 //            })
 //            testdata[, c("a", "b", "c", "d", "fisher_p_t", "fisher_p_l", "fisher_p_g")]
-    const double example_data[126][7] =
+    const double example_data[][7] =
     {
         {0,   0,   4,   122, 1.0000000,    1.0000000,   1.0000000},
         {1,   1,   110, 49,  0.5260093,    0.5260093,   0.9048913},
@@ -191,12 +193,8 @@ BOOST_AUTO_TEST_CASE( test_fisher_exact_examples )
         {0,   5,   1,   17,  1.000000e+00, 0.782608696, 1.000000e+00}
     };
     const size_t nexamples = carray_size(example_data);
-    assert(nexamples == 126 && "Number of examples must be right.");
     for (size_t j = 0; j < nexamples; ++j)
     {
-//            std::cout << j;
-//            for(int i = 0; i < 7; ++i) std::cout << "\t" << example_data[j][i];
-//            std::cout << "\n";
         BOOST_CHECK_CLOSE(example_data[j][4],
                           fisher_exact_test_pval_2x2(
                               int(example_data[j][0]), int(example_data[j][1]),

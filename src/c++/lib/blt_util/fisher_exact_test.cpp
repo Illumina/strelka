@@ -48,10 +48,10 @@ fisher_exact_test_pval_2x2(
      */
 
     // http://mathworld.wolfram.com/FishersExactTest.html
-    unsigned N = a + b + c + d;  // total number of elements in urn
-    unsigned r = a + c;          // total number of defective elements
-    unsigned n = a + b;          // total number of elements we sampled
-    unsigned k = a;              // number of defective elements we got in our sample
+    const unsigned N = a + b + c + d;  // total number of elements in urn
+    const unsigned r = a + c;          // total number of defective elements
+    const unsigned n = a + b;          // total number of elements we sampled
+    const unsigned k = a;              // number of defective elements we got in our sample
 
     unsigned max_for_k = min(r, n);   // maximum number of defective elements we can draw in a sample of size n
     unsigned min_for_k = (unsigned )max(0, int(r + n - N)); // once we're out of good elements, the remaining ones
@@ -72,11 +72,24 @@ fisher_exact_test_pval_2x2(
     // for the two-tailed test, sum over both tails where p <= p_cutoff
     // for the one-tailed tests, we have excluded tails of the distribution
     // by changing the limits of summation above
-    double cutoff = ((type == FISHER_EXACT::TWOTAILED) ? pdf(hgd, k) : 1.0 );
+    //
+
+    // Per the implementation of 'fisher.test' in R, note that the cutoff needs an epsilon term to account
+    // for minor floating point discrepancies across platforms. In particular, this has been found to be
+    // important for long double math differences between linux and windows/WSL. WSL details of this
+    // issue are described here:
+    //
+    // https://github.com/Microsoft/WSL/issues/830
+    //
+    // An example input triggering the issue on window is an (a,b,c,d,type) input of (54,107,0,2,twotailed),
+    // where the expected result is 1
+    //
+    static const double relativeError(1. + 1.e-7);
+    const double cutoff(relativeError * ((type == FISHER_EXACT::TWOTAILED) ? pdf(hgd, k) : 1.0) );
     double p = 0;
     for (unsigned q = min_for_k; q <= max_for_k; ++q)
     {
-        double _p = pdf(hgd, q);
+        const double _p = pdf(hgd, q);
         if (_p <= cutoff) p += _p;
     }
     return p;
