@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <vector>
 
+#include "math_util.hh"
 
 /// \brief Efficiently provides the average of all values in a limited size FIFO buffer
 ///
@@ -93,7 +94,7 @@ struct window_average
     float
     avg() const
     {
-        return (static_cast<float>(_total)/static_cast<float>(size()));
+        return (static_cast<float>(safeFrac(_total, size())));
     }
 
 private:
