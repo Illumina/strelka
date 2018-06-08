@@ -48,4 +48,5 @@ notifications:
   email:
     recipients:
       - csaunders@illumina.com
+      - skim2@illumina.com
 

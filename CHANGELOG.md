@@ -1,3 +1,10 @@
+## v2.9.4 - 2018-06-08
+
+This is a minor bugfix update from v2.9.3.
+
+### Fixed
+- Fix rare instance where FORMAT/DP50, FORMAT/FDP50 and FORMAT/SUBDP50 are '-nan' (STREL-936)
+
 ## v2.9.3 - 2018-05-07
 
 ### Changed
