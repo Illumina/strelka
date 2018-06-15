@@ -317,10 +317,18 @@ public:
     {
         _models.push_back(model);
     }
+
     const std::vector<IndelErrorModelJson>& getIndelErrorModels() const
     {
         return _models;
     }
+
+    IndelErrorModelJson& getIndelErrorModel(const unsigned modelIndex)
+    {
+        assert(modelIndex < _models.size());
+        return _models[modelIndex];
+    }
+
 private:
     std::vector<IndelErrorModelJson> _models;
 };

@@ -1,3 +1,9 @@
+## Unreleased
+
+### Fixed
+- Fix germline joint sample failure case (STREL-955)
+  - This fixes an uncommon issue were a multi-sample germline analysis qualifies for indel error rate estimation, but the estimator fails to converge for at least one sample. When this happens, the method is supposed to fallback to a set of default error parameters but was failing to do so. This is now fixed. The issue does not impact single-sample analysis or the somatic workflow.
+
 ## v2.9.4 - 2018-06-08
 
 This is a minor bugfix update from v2.9.3.

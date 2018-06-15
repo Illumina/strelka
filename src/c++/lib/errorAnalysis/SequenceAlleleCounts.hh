@@ -63,7 +63,6 @@ struct SequenceAlleleCounts
     const std::string&
     getSampleName() const
     {
-
         return _sampleName;
     }
 

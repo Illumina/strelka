@@ -28,13 +28,13 @@
 ///
 struct IndelErrorModel
 {
-    /// \brief Initialize indel error model to either a precomputed static model (if \p modelFilename is empty),
+    /// \brief Initialize indel error model to either a precomputed static model (if \p modelFilenames is empty),
     /// or from a json parameter file otherwise.
     ///
     /// \param[in] alignmentFilenames Name and indexed order of alignment files, which can be used to sync sample
     ///                           index values in the indel error model file
-    /// \param[in] modelName Name of selected static indel error model to use, ignored if \p modelFilename is non-empty
-    /// \param[in] modelFilenames Indel error model params in json format
+    /// \param[in] modelName Name of selected static indel error model to use, ignored if \p modelFilenames is non-empty
+    /// \param[in] modelFilenames Indel error model params in json format, one json file per sample.
     IndelErrorModel(
         const std::vector<std::string>& alignmentFilenames,
         const std::string& modelName,

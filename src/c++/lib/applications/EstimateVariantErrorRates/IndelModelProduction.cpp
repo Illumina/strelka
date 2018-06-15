@@ -555,9 +555,19 @@ exportModelUsingInputJson(
     IndelErrorModelsJson indelErrorModelsJson;
     IndelErrorModelParser::importIndelErrorModelJsonFile(modelFilename, indelErrorModelsJson);
 
-    auto indelErrorModel(indelErrorModelsJson.getIndelErrorModels());
+    static const unsigned expectedJsonModelCount(1);
+    const unsigned jsonModelCount(indelErrorModelsJson.getIndelErrorModels().size());
+    if(jsonModelCount != expectedJsonModelCount)
+    {
+        std::ostringstream oss;
+        oss << "Expecting indel error model file to describe exactly " << expectedJsonModelCount
+            << " model, but " << jsonModelCount
+            << " were found in file '" << modelFilename << "'";
+        BOOST_THROW_EXCEPTION(illumina::common::GeneralException(oss.str()));
+    }
 
-    indelErrorModel[0].setSampleName(_counts.getSampleName().c_str());
+    // Customize sample name for the input json tree:
+    indelErrorModelsJson.getIndelErrorModel(0).setSampleName(_counts.getSampleName().c_str());
 
     writeIndelErrorModelJson(indelErrorModelsJson, _outputFilename);
 }
