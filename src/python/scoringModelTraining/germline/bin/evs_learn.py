@@ -112,7 +112,7 @@ def getDataSet(inputs, args) :
         print "Reading '%s'" % (inputFile)
         df = pandas.read_csv(inputFile, na_values=".")
         df.fillna("0", inplace=True)
-        # Remove false negatives before any subsampling:                                                                                                                                      
+        # Remove false negatives before any subsampling:
         df = df[df["tag"] != "FN"]
 
         if args.sample_input:
@@ -129,7 +129,7 @@ def getDataSet(inputs, args) :
             else:
                 print "TP: %d FP: %d" % (tps.shape[0], fps.shape[0])
             if tps.shape[0] < fps.shape[0]:
-                rows_selected = random.sample(fps.index, tps.shape[0])  
+                rows_selected = random.sample(fps.index, tps.shape[0])
                 fps = pandas.DataFrame(fps.ix[rows_selected])
             elif fps.shape[0] < tps.shape[0]:
                 rows_selected = random.sample(tps.index, fps.shape[0])

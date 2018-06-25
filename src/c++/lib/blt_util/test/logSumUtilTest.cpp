@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE( benchmarkLogSums )
         TimeTracker tt;
         tt.resume();
         double sum(0);
-        for (unsigned i(0); i<repeatCount;++i)
+        for (unsigned i(0); i<repeatCount; ++i)
         {
             for (double value(startValue); value > minValue; value *= valueFactor)
             {
@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE( benchmarkLogSums )
         TimeTracker tt;
         tt.resume();
         double sum(0);
-        for (unsigned i(0); i<repeatCount;++i)
+        for (unsigned i(0); i<repeatCount; ++i)
         {
             for (double value(startValue); value > minValue; value *= valueFactor)
             {
@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE( benchmarkLogSums )
         TimeTracker tt;
         tt.resume();
         float sum(0);
-        for (unsigned i(0); i<repeatCount;++i)
+        for (unsigned i(0); i<repeatCount; ++i)
         {
             for (float value(startValue); value > minValue; value *= valueFactor)
             {
@@ -195,7 +195,7 @@ BOOST_AUTO_TEST_CASE( benchmarkLogSums )
         TimeTracker tt;
         tt.resume();
         float sum(0);
-        for (unsigned i(0); i<repeatCount;++i)
+        for (unsigned i(0); i<repeatCount; ++i)
         {
             for (float value(startValue); value > minValue; value *= valueFactor)
             {

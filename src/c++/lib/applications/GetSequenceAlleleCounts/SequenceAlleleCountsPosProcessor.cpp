@@ -163,7 +163,7 @@ resetRegion(
             if (_maxNormalSampleDepthForCandidateVariants > 0.)
             {
                 _maxNormalSampleDepthForCandidateVariants = std::min(_maxNormalSampleDepthForCandidateVariants,
-                                                              static_cast<double>(_opt.max_candidate_indel_depth));
+                                                                     static_cast<double>(_opt.max_candidate_indel_depth));
             }
             else
             {
@@ -311,7 +311,7 @@ mergeIndelObservations(
     const IndelCounts::Context& context,
     const IndelCounts::SingleSampleCandidateVariantContextObservationPattern& indelObservation,
     std::map<IndelCounts::Context,
-        IndelCounts::SingleSampleCandidateVariantContextObservationPattern>& mergedIndelObservations)
+    IndelCounts::SingleSampleCandidateVariantContextObservationPattern>& mergedIndelObservations)
 {
     using namespace IndelCounts;
 
@@ -673,7 +673,7 @@ process_pos_error_counts(
                 if (referenceSTRContext.STRRepeatCount == std::min(maxSTRRepeatCount, indelReportInfo.refRepeatCount))
                 {
                     context = IndelCounts::Context(
-                        referenceSTRContext.patternSize, referenceSTRContext.STRRepeatCount);
+                                  referenceSTRContext.patternSize, referenceSTRContext.STRRepeatCount);
                 }
             }
 

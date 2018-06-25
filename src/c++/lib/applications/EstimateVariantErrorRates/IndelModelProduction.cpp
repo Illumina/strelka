@@ -557,7 +557,7 @@ exportModelUsingInputJson(
 
     static const unsigned expectedJsonModelCount(1);
     const unsigned jsonModelCount(indelErrorModelsJson.getIndelErrorModels().size());
-    if(jsonModelCount != expectedJsonModelCount)
+    if (jsonModelCount != expectedJsonModelCount)
     {
         std::ostringstream oss;
         oss << "Expecting indel error model file to describe exactly " << expectedJsonModelCount

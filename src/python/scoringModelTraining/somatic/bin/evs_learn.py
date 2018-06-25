@@ -128,7 +128,7 @@ def getDataSet(inputs, sample_input, balance_per_sample) :
                 rows_selected = random.sample(fps.index, tps.shape[0])
                 fps = pandas.DataFrame(fps.ix[rows_selected])
             elif fps.shape[0] < tps.shape[0]:
-                rows_selected = random.sample(tps.index, fps.shape[0])  
+                rows_selected = random.sample(tps.index, fps.shape[0])
                 tps = pandas.DataFrame(tps.ix[rows_selected])
             print "Downsampled to TP: %d FP: %d" % (tps.shape[0], fps.shape[0])
             df = pandas.concat([tps, fps])

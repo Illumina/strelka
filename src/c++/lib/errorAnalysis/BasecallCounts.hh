@@ -56,7 +56,7 @@ struct Context
         Archive& ar,
         const unsigned /* version */)
     {
-        ar & repeatCount;
+        ar& repeatCount;
     }
 
     unsigned repeatCount = 1;
@@ -146,10 +146,10 @@ struct SingleSampleContextObservationPattern
         Archive& ar,
         const unsigned /* version */)
     {
-        ar & strand0.refAlleleCount;
-        ar & strand0.altAlleleCount;
-        ar & strand1.refAlleleCount;
-        ar & strand1.altAlleleCount;
+        ar& strand0.refAlleleCount;
+        ar& strand0.altAlleleCount;
+        ar& strand1.refAlleleCount;
+        ar& strand1.altAlleleCount;
     }
 
 
@@ -344,12 +344,12 @@ struct ContextData
     {
         // adding error.data instead of error here to reduce the total
         // serialization template depth:
-        ar & counts.data;
-        ar & counts.refAlleleBasecallErrorPhredProbs;
-        ar & excludedRegionSkipped;
-        ar & depthSkipped;
-        ar & emptySkipped;
-        ar & noiseSkipped;
+        ar& counts.data;
+        ar& counts.refAlleleBasecallErrorPhredProbs;
+        ar& excludedRegionSkipped;
+        ar& depthSkipped;
+        ar& emptySkipped;
+        ar& noiseSkipped;
     }
 
     SingleSampleContextData counts;
@@ -423,7 +423,7 @@ public:
         Archive& ar,
         const unsigned /* version */)
     {
-        ar & _data;
+        ar& _data;
     }
 
 private:

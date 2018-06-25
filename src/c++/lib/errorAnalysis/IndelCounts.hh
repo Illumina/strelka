@@ -158,8 +158,8 @@ struct Context
         Archive& ar,
         const unsigned /* version */)
     {
-        ar & repeatPatternSize;
-        ar & repeatCount;
+        ar& repeatPatternSize;
+        ar& repeatCount;
     }
 
     unsigned getRepeatPatternSize() const
