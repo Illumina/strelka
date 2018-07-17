@@ -1,4 +1,6 @@
-## Unreleased
+## v2.9.6 - 2018-07-17
+
+This is a minor bugfix update from v2.9.5.
 
 ### Fixed
 - Fix realignment error when processing certain RNA-seq inputs (STREL-966)
