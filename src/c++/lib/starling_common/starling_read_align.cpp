@@ -1884,7 +1884,10 @@ getCandidateAlignments(
         }
         if (isRecomputeRequired)
         {
-            cal = make_start_pos_alignment(cal.al.pos, 0, cal.al.is_fwd_strand, rseg.read_size(), validIndels);
+            // Convert the input alignment path to differentiate sequence match (=) and mismatch (X) from
+            // 'alignment match' (M). This is required for mismatch processing to work correctly.
+            const pos_t readStartPos(unalignedPrefixSize(cal.al.path));
+            cal = make_start_pos_alignment(cal.al.pos, readStartPos, cal.al.is_fwd_strand, rseg.read_size(), validIndels);
         }
     }
 

@@ -1,3 +1,9 @@
+## Unreleased
+
+### Fixed
+- Fix realignment error when processing certain RNA-seq inputs (STREL-966)
+  - Recent changes to read realignment/scoring introduced an edge case which fails on RNA-Seq reads from certain aligners - specifically when an insertion immediately follows an intron gap. The issue is now fixed.
+
 ## v2.9.5 - 2018-06-25
 
 This is a minor bugfix update from v2.9.4.
