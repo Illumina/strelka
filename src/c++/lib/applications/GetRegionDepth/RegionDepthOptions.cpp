@@ -58,8 +58,8 @@ parseOptions(
     RegionDepthOptions& opt,
     std::string& errorMsg)
 {
-    if (checkStandardizeInputFile(opt.alignmentFilename, "alignment", errorMsg)) return true;
-    if (checkStandardizeInputFile(opt.referenceFilename, "reference fasta", errorMsg)) return true;
+    if (checkAndStandardizeRequiredInputFilePath(opt.alignmentFilename, "alignment", errorMsg)) return true;
+    if (checkAndStandardizeRequiredInputFilePath(opt.referenceFilename, "reference fasta", errorMsg)) return true;
 
     if (vm.count("region"))
     {

@@ -21,6 +21,7 @@
 
 #include "blt_common/blt_arg_validate.hh"
 #include "blt_util/compat_util.hh"
+#include "options/optionsUtil.hh"
 #include "starling_common/Tier2OptionsParser.hh"
 
 #include "boost/filesystem.hpp"
@@ -169,13 +170,15 @@ finalize_starling_base_options(
         pinfo.usage("Must specify a fasta reference file");
     }
 
-    // canonicalize the reference sequence path:
-    /// TODO: replace this with the same thing from boost?
-    if (! compat_realpath(opt.referenceFilename))
+    // Convert reference sequence path to an absolute path. Just like for BAM/CRAM files, we want absolute but not
+    // canonical path in this case, because following softlinks to the canonical path will often cause us to miss the
+    // sidecar index file.
     {
-        std::ostringstream oss;
-        oss << "can't resolve reference path: " << opt.referenceFilename << "\n";
-        pinfo.usage(oss.str().c_str());
+        std::string errorMsg;
+        if (checkAndStandardizeRequiredInputFilePath(opt.referenceFilename, "reference fasta", errorMsg))
+        {
+            pinfo.usage(errorMsg.c_str());
+        }
     }
 
     // set analysis regions:
@@ -226,12 +229,15 @@ finalize_starling_base_options(
     {
         checkOptionalInputFile(pinfo, indelErrorModelFilename, "indel error models");
     }
-    /// tier2 options are not parsed by starling_base, but need to live up here for now,
-    /// so validate them together with the rest of starling_base
-    std::string errorMsg;
-    if (parseTier2Options(vm,opt.tier2,errorMsg))
+
+    // tier2 options are not parsed by starling_base, but need to live up here for now,
+    // so validate them together with the rest of starling_base
     {
-        pinfo.usage(errorMsg.c_str());
+        std::string errorMsg;
+        if (parseTier2Options(vm, opt.tier2, errorMsg))
+        {
+            pinfo.usage(errorMsg.c_str());
+        }
     }
 
     if (opt.useTier2Evidence)

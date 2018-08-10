@@ -1,3 +1,10 @@
+## v2.9.7 - 2018-08-14
+
+This is a minor bugfix update from v2.9.6.
+
+### Fixed
+- Preserve softlinks in input reference fasta file paths (STREL-976)
+
 ## v2.9.6 - 2018-07-17
 
 This is a minor bugfix update from v2.9.5.
