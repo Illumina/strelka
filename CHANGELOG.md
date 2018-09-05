@@ -1,3 +1,12 @@
+## v2.9.8 - 2018-09-06
+
+This is a minor bugfix update from v2.9.7.
+
+### Fixed
+- Fix depth filters for germline continuous frequency indel calls (STREL-978)
+  - The LowDepth filter was being spuriously applied to all indels called through the continuous frequency model. This model is typically applied only to the mitochondrial chromosome to find heteroplasmic calls.
+  - This filter is now fixed to work as documented for all variant types.
+
 ## v2.9.7 - 2018-08-14
 
 This is a minor bugfix update from v2.9.6.

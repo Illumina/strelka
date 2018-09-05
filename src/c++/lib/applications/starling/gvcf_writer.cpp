@@ -1084,21 +1084,7 @@ write_indel_record_instance(
 
             os << ':' << indelSampleInfo.tier1Depth;
 
-            {
-                const auto& sampleReportInfo(indelSampleInfo.legacyReportInfo);
-
-                // AD:
-                os << ':' << sampleReportInfo.n_confident_ref_reads
-                   << ',' << sampleReportInfo.n_confident_indel_reads;
-
-                // ADF
-                os << ':' << sampleReportInfo.n_confident_ref_reads_fwd
-                   << ',' << sampleReportInfo.n_confident_indel_reads_fwd;
-
-                // ADR
-                os << ':' << sampleReportInfo.n_confident_ref_reads_rev
-                   << ',' << sampleReportInfo.n_confident_indel_reads_rev;
-            }
+            printSampleAD(sampleInfo.supportCounts, altAlleleCount, os);
 
             // FT
             os << ':';

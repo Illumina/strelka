@@ -17,7 +17,7 @@
 //
 //
 
-///
+/// \file
 /// \author Chris Saunders
 ///
 
@@ -31,7 +31,7 @@
 #include <vector>
 
 
-/// discretizes support observations for a set of alleles at a single locus in a single sample
+/// Discretizes support observations for a set of alleles at a single locus in a single sample
 ///
 /// ultimately used for things like AD,ADF,ADR tags, or count-based EVS features
 ///
@@ -110,10 +110,12 @@ struct SupportingReadCountGroup
     }
 
     void
-    incrementAlleleCount(const unsigned alleleIndex)
+    incrementAlleleCount(
+        const unsigned alleleIndex,
+        const unsigned incrementBy = 1)
     {
         assert((alleleIndex) < _confidentAlleleCount.size());
-        _confidentAlleleCount[alleleIndex]++;
+        _confidentAlleleCount[alleleIndex] += incrementBy;
     }
 
     // number of ambiguous support reads
@@ -123,7 +125,7 @@ private:
 };
 
 
-/// accumulate counts of confident supporting reads for each allele at a locus in one sample
+/// Accumulate counts of confident supporting reads for each allele at a locus in one sample
 ///
 /// this generalizes older indel support count data structures in that it is
 /// designed with more than one alt allele in mind from the start

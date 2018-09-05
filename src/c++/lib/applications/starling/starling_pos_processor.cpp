@@ -1964,6 +1964,39 @@ process_pos_indel_digt(const pos_t pos)
 
 
 
+/// \brief Translate the legacy indel allele support counts into the current AD/ADF/ADR reporting structure
+///
+/// The legacy structure was hard coded to only one indel allele. The new structure is designed to handle any number
+/// of alts, as well as generalize over indel and SNV variant types. The new structure will be used to produce
+/// AD/ADF/ADR counts in the VCF output and influences methods such as the LowDepth filter computation.
+///
+/// \param[in] legacyReportInfo - legacy indel allele support counts
+/// \param[out] supportCounts - updated allele support counts
+static
+void
+translateLegacyIndelSupportCounts(
+    const AlleleSampleReportInfo& legacyReportInfo,
+    LocusSupportingReadStats& supportCounts)
+{
+    // translating from legacy counting means there is only one alt allele by definition:
+    static const unsigned nonRefAlleleCount(1);
+
+    static const unsigned refAlleleIndex(0);
+    static const unsigned altAlleleIndex(1);
+
+    supportCounts.setAltCount(nonRefAlleleCount);
+
+    supportCounts.fwdCounts.incrementAlleleCount(refAlleleIndex, legacyReportInfo.n_confident_ref_reads_fwd);
+    supportCounts.fwdCounts.incrementAlleleCount(altAlleleIndex, legacyReportInfo.n_confident_indel_reads_fwd);
+    supportCounts.fwdCounts.nonConfidentCount = legacyReportInfo.n_other_reads_fwd;
+
+    supportCounts.revCounts.incrementAlleleCount(refAlleleIndex, legacyReportInfo.n_confident_ref_reads_rev);
+    supportCounts.revCounts.incrementAlleleCount(altAlleleIndex, legacyReportInfo.n_confident_indel_reads_rev);
+    supportCounts.revCounts.nonConfidentCount = legacyReportInfo.n_other_reads_rev;
+}
+
+
+
 /// Fill in all sample-specific indel locus info for the continuous-frequency calling case
 ///
 static
@@ -1985,6 +2018,9 @@ updateContinuousIndelLocusWithSampleInfo(
     updateIndelSampleInfo(opt,dopt, alleleGroup, sampleIndex, basecallBuffer, is_use_alt_indel, locus);
 
     const GermlineIndelSampleInfo& indelSampleInfo(locus.getIndelSample(sampleIndex));
+
+    // translate the legacy read support counts into the current AD/ADF/ADR reporting structure
+    translateLegacyIndelSupportCounts(indelSampleInfo.legacyReportInfo, sampleInfo.supportCounts);
 
     sampleInfo.gqx = sampleInfo.genotypeQualityPolymorphic =
                          starling_continuous_variant_caller::getAlleleSequencingErrorQscore(
