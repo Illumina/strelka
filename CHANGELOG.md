@@ -1,3 +1,11 @@
+## v2.9.9 - 2018-09-13
+
+This is a minor update from v2.9.8.
+
+### Changed
+- Changed EVS threshold for RNA-seq inputs (STREL-975)
+  - The EVS threshold was changed from 15 to 5 for both indels and SNVs.
+
 ## v2.9.8 - 2018-09-06
 
 This is a minor bugfix update from v2.9.7.
