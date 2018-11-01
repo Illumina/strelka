@@ -30,6 +30,7 @@ Strelka User Guide
   * [Extended use cases](#extended-use-cases)
     * [Improving runtime for references with many short contigs, such as GRCh38](#improving-runtime-for-references-with-many-short-contigs-such-as-grch38)
     * [Exome/Targeted](#exometargeted)
+    * [De novo variant calling](#de-novo-variant-calling)
     * [RNA-Seq](#rna-seq)
     * [Heteroplasmic/pooled calling](#heteroplasmicpooled-calling)
     * [Somatic callability](#somatic-callability)
@@ -497,6 +498,10 @@ targeted data.
 In an exome or targeted analysis it may be desirable to restrict calling to the targeted regions by
 providing a BED file to the `--callRegions` option. Note that this option acts independently of `--exome`.
 
+#### De novo variant calling
+
+The recommended workflow for de novo variant calling with strelka is to first run a multi-sample germline analysis on the sample pedigree of interest, and then analyze the resulting multi-sample VCF output from strelka with a separate de novo variant calling script, `denovo.py`. This script infers the de novo event probability for each variant in the proband. The details of this procedure are described in [de novo variant calling using Strelka](deNovoQualityScore.md).
+
 #### RNA-Seq
 
 The germline workflow can be configured with the `--rna` flag. This will provide
@@ -534,6 +539,7 @@ This is still an experimental feature, which will considerably increase runtime 
 
 The following items provide an in-depth focus on a special topic or procedure
 
+* [De novo variant calling using Strelka](deNovoQualityScore.md)
 * [Training Procedure for Somatic Empirical Score](trainingSomaticEmpiricalScore.md)
 * [Training Procedure for Germline Empirical Score](trainingGermlineEmpiricalScore.md)
 

@@ -1,0 +1,7 @@
+##fileformat=VCFv4.1
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="# high-quality bases">
+##FORMAT=<ID=PL,Number=G,Type=Integer,Description="List of Phred-scaled genotype likelihoods">
+##contig=<ID=2,length=243199373>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	child	father	mother
+2	214668361	.	A	T	0	.	.	GT:DP:PL	0/1:131:1667,0,1866	0/0:229:0,617,7421	0/0:168:0,427,5249

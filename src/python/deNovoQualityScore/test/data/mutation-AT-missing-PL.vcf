@@ -1,0 +1,6 @@
+##fileformat=VCFv4.1
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="# high-quality bases">
+##contig=<ID=2,length=243199373>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	child	father	mother
+2	214668361	.	A	T	0	.	.	GT:DP	0/1:131	0/0:229	0/0:168

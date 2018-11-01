@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# Point to the right python version locally
+PATH="/usr/local/opt/python/libexec/bin:$PATH"
+
+# Determine base directory of code
+test_dir=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
+base_dir=$( dirname ${test_dir} )
+
+# Run the tests without changing the current directory
+( cd ${base_dir} && python2 -m pytest "$@" )
