@@ -1,15 +1,14 @@
+## v2.9.10 - 2018-11-07
+
+This is a minor feature update from v2.9.9 which adds a method that computes de novo variant quality scores.
+
+### Added
+- Add recommended de novo variant calling method and documentation (STREL-983)
+  - The de novo variant quality score computation method, `denovo.py`, has been previously developed and maintained as a separate project. It is now added to the primary strelka distribution to make this easier for users to access.
+
 ## v2.9.9 - 2018-09-13
 
-<<<<<<< HEAD
 This is a minor update from v2.9.8.
-=======
-### Added
-- Added joint sample pattern counting capability (STREL-730)
-  - Extend current pattern counting scheme used to parameterize the germline indel calling model so that joint observations can be made over sample pairs, with the goal of dynamically estimating parameters relevant to somatic calling.
-  - Add simple heuristic joint error rate estimators for both SNV and indel errors. These estimators are only meant to serve as simple verification tools prior to building more accurate inferences.
-  - Add recommended de novo variant calling method and documentation (STREL-983)
-    - The denovo variant quality score computation method, `denovo.py`, has been previously developed and maintained as a separate project. It is now added to the primary strelka distribution to make this easier for users to access.
->>>>>>> 45a2403f... STREL-983 Add de novo variant calling method and doc
 
 ### Changed
 - Changed EVS threshold for RNA-seq inputs (STREL-975)
