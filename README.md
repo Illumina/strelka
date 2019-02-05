@@ -6,7 +6,7 @@ Strelka2 is a fast and accurate small variant caller optimized for analysis of g
 Compared with submissions to the recent PrecisionFDA Consistency and Truth challenges, the average indel F-score for Strelka2 running in its default configuration is 3.1% and 0.08% higher, respectively, than the best challenge submissions. Runtime on a 28-core server is ~40 minutes for 40x WGS germline analysis and ~3 hours for a 110x/40x WGS tumor-normal somatic analysis. More details on Strelka2 methods and benchmarking for both germline and somatic calling are described in:
 
 Kim, S., Scheffler, K. *et al.* (2018) Strelka2: fast and accurate calling of germline and somatic variants.
-*Nature Methods*, Advance online publication. [doi:10.1038/s41592-018-0051-x][nmpaper]
+*Nature Methods*, 15, 591-594. [doi:10.1038/s41592-018-0051-x][nmpaper]
 
 ...and the corresponding [open-access pre-print][preprint]
 
