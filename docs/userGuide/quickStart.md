@@ -35,7 +35,7 @@ Example for germline calling:
 ${STRELKA_INSTALL_PATH}/bin/configureStrelkaGermlineWorkflow.py \
     --bam sample1.bam \
     --bam sample2.bam \
-    --ref hg38.fa \
+    --referenceFasta hg38.fa \
     --runDir demo_germline
 # execution on a single local machine with 20 parallel jobs
 demo_germline/runWorkflow.py -m local -j 20
@@ -47,7 +47,7 @@ Example for somatic calling:
 ${STRELKA_INSTALL_PATH}/bin/configureStrelkaSomaticWorkflow.py \
     --normalBam normal.bam \
     --tumorBam tumor.bam \
-    --ref hg38.fa \
+    --referenceFasta hg38.fa \
     --runDir demo_somatic
 # execution on a single local machine with 20 parallel jobs
 demo_somatic/runWorkflow.py -m local -j 20
