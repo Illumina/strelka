@@ -158,8 +158,10 @@ is_normalized() const
 
         if (alt_length != ref_length)
         {
-            // this checks that indels are reference-padded
-            if ( (*alt_allele.begin()) == (*ref.begin()))
+            // this checks that indels are reference-padded.  Do not check when there is one
+            // anchor base in the reference allele , or if there is only one base in the alternate
+            // allele.
+            if ((*alt_allele.begin()) == (*ref.begin()) && ref_length > 1 && alt_length > 1)
             {
                 // this checks that they're left-shifted
                 for (unsigned i = ref_length - 1, j = alt_length - 1; ; ++i, ++j)
