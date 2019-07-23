@@ -26,6 +26,14 @@
 ################################################################################
 
 # set to TRUE to see more detailed information about the boost find/build procedure:
+execute_process(COMMAND uname -p OUTPUT_VARIABLE ARM RESULT_VARIABLE result)
+STRING(REGEX REPLACE "(\r?\n)+$" "" ARM "${ARM}")
+if ("${ARM}" STREQUAL "aarch64")
+    set (aarch64 “ON”)
+else()
+    set (aarch64 “OFF”)
+endif()
+
 set (DEBUG_FINDBOOST FALSE)
 if (${DEBUG_FINDBOOST})
     set (Boost_DEBUG "ON")
@@ -182,6 +190,10 @@ if (NOT Boost_FOUND)
     if (NOT WIN32)
 
         set (BJAM_OPTIONS "")
+
+        if (${aarch64} STREQUAL "ON")
+             set (BJAM_OPTIONS ${BJAM_OPTIONS} "architecture=arm")     
+        endif ()
 
         set (UCONFIG "${BOOST_SRC_DIR}/tools/build/src/user-config.jam")
         if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
