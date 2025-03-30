@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #
 # Strelka - Small Variant Caller
 # Copyright (c) 2009-2018 Illumina, Inc.
@@ -57,7 +57,7 @@ def main():
     datasets = []
     for i in args.inputs:
         i = os.path.abspath(i)
-        print "Reading %s" % i
+        print("Reading %s" % i)
         df = pandas.read_csv(i)
         datasets.append(df)
 

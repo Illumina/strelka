@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #
 # Strelka - Small Variant Caller
 # Copyright (c) 2009-2018 Illumina, Inc.
@@ -57,7 +57,7 @@ def parseArgs():
                         help="Which model to use (options are: %s)" % str(modelNames))
 
     parser.add_argument("--features",
-                        choices=evs.features.FeatureSet.sets.keys(),
+                        choices=list(evs.features.FeatureSet.sets.keys()),
                         required=True,
                         help="Training features. Either a feature-table name or a comma-separated list of feature names."
                              " e.g. QSS_NT,T_DP_RATE")
@@ -109,7 +109,7 @@ def getDataSet(inputs, args) :
     datasets = []
     for inputFile in inputs:
         inputFile = os.path.abspath(inputFile)
-        print "Reading '%s'" % (inputFile)
+        print("Reading '%s'" % (inputFile))
         df = pandas.read_csv(inputFile, na_values=".")
         df.fillna("0", inplace=True)
         # Remove false negatives before any subsampling:
@@ -125,9 +125,9 @@ def getDataSet(inputs, args) :
             fps = df[df["tag"] == "FP"]
             if args.ambig:
                 ambigs = df[df["tag"] == "UNK"]
-                print "TP: %d FP: %d, UNK: %d" % (tps.shape[0], fps.shape[0], ambigs.shape[0])
+                print("TP: %d FP: %d, UNK: %d" % (tps.shape[0], fps.shape[0], ambigs.shape[0]))
             else:
-                print "TP: %d FP: %d" % (tps.shape[0], fps.shape[0])
+                print("TP: %d FP: %d" % (tps.shape[0], fps.shape[0]))
             if tps.shape[0] < fps.shape[0]:
                 rows_selected = random.sample(fps.index, tps.shape[0])
                 fps = pandas.DataFrame(fps.ix[rows_selected])
@@ -142,10 +142,10 @@ def getDataSet(inputs, args) :
             if args.ambig:
                 rows_selected = random.sample(ambigs.index, fps.shape[0])
                 ambigs = pandas.DataFrame(ambigs.ix[rows_selected])
-                print "Downsampled to TP: %d,  FP: %d, UNK: %d" % (tps.shape[0], fps.shape[0], ambigs.shape[0])
+                print("Downsampled to TP: %d,  FP: %d, UNK: %d" % (tps.shape[0], fps.shape[0], ambigs.shape[0]))
                 df = pandas.concat([tps, fps, ambigs])
             else:
-                print "Downsampled to TP: %d FP: %d" % (tps.shape[0], fps.shape[0])
+                print("Downsampled to TP: %d FP: %d" % (tps.shape[0], fps.shape[0]))
                 df = pandas.concat([tps, fps])
 
         df["weight"] = 1
@@ -171,9 +171,9 @@ def main():
     pars = {}
     if args.parameters :
         pars = json.load(open(args.parameters))
-        print "Using custom learning parameters: %s" % str(pars)
+        print("Using custom learning parameters: %s" % str(pars))
     else :
-        print "Using default learning parameters."
+        print("Using default learning parameters.")
 
     model = evs.EVSModel.createNew(args.model)
 
@@ -210,7 +210,7 @@ def main():
     if args.plots and hasattr(model, "plots"):
         model.plots(args.output + ".plots", features)
     elif args.plots:
-        print "No plots created, this is not supported by %s" % args.model
+        print("No plots created, this is not supported by %s" % args.model)
 
 
 if __name__ == '__main__':

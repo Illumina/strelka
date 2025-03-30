@@ -42,7 +42,7 @@ def cleanLocals(locals_dict) :
     When passed a locals() dictionary, clean out all of the hidden keys and return
     """
 
-    return dict((k,v) for (k,v) in locals_dict.items() if not k.startswith("__") and k != "self")
+    return dict((k,v) for (k,v) in list(locals_dict.items()) if not k.startswith("__") and k != "self")
 
 
 
@@ -219,7 +219,7 @@ class StrelkaSharedWorkflowOptionsBase(ConfigureWorkflowOptions) :
             (_, chromSizes) = getFastaChromOrderSize(referenceFastaIndex)
 
             totalEstimationSize=0
-            for chromSize in chromSizes.values() :
+            for chromSize in list(chromSizes.values()) :
                 if chromSize < Constants.minChromSize : continue
                 totalEstimationSize += chromSize
 

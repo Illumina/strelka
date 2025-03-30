@@ -41,7 +41,7 @@ def argToBool(x) :
     class FalseStrings :
         val = ("", "0", "false", "f", "no", "n", "off")
 
-    if isinstance(x, basestring) :
+    if isinstance(x, str) :
         return (x.lower() not in FalseStrings.val)
     return bool(x)
 
@@ -64,7 +64,7 @@ def pickleConfigSections(pickleConfigFile, configSections) :
     """
     import pickle
 
-    pickle.dump(configSections, open(pickleConfigFile, "w"))
+    pickle.dump(configSections, open(pickleConfigFile, "wb"))
 
 
 
@@ -77,7 +77,8 @@ def getConfigSections(pickleConfigFile) :
 
     if not os.path.isfile(pickleConfigFile) : return {}
 
-    return pickle.load(open(pickleConfigFile))
+    with open(pickleConfigFile, 'rb') as f:
+        return pickle.load(f)
 
 
 
@@ -88,7 +89,7 @@ def getPrimarySectionOptions(configSections,primarySection) :
 
     options=WorkflowOptions()
     if primarySection not in configSections : return options
-    for (k,v) in configSections[primarySection].items() :
+    for (k,v) in list(configSections[primarySection].items()) :
         setattr(options,k,v)
 
     return options
@@ -112,18 +113,18 @@ def dumpIniSections(iniFile,iniSections) :
     """
     convert iniSections object, expected to be a hash or hashes, into an iniFile
     """
-    from ConfigParser import SafeConfigParser
+    from configparser import RawConfigParser
 
-    config = SafeConfigParser()
+    config = RawConfigParser()
     config.optionxform=str
 
     def clean_value(v) :
         if v is None : return ""
         else :         return str(v)
 
-    for section in iniSections.keys():
+    for section in list(iniSections.keys()):
         config.add_section(section)
-        for k,v in iniSections[section].items() :
+        for k,v in list(iniSections[section].items()) :
             config.set(section,k,clean_value(v))
 
     configfp=open(iniFile,"w")
@@ -136,11 +137,11 @@ def getIniSections(iniFile) :
     """
     parse the ini iniFile and return a hash of hashes
     """
-    from ConfigParser import SafeConfigParser
+    from configparser import RawConfigParser
 
     if not os.path.isfile(iniFile) : return {}
 
-    config = SafeConfigParser()
+    config = RawConfigParser()
     config.optionxform=str
     config.read(iniFile)
 

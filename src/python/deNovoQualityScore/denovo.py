@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #
 # Strelka - Small Variant Caller
 # Copyright (c) 2009-2018 Illumina, Inc.
@@ -18,7 +18,7 @@
 #
 #
 
-from __future__ import print_function
+
 
 import argparse
 import csv
@@ -206,7 +206,7 @@ def check_pedigree_input(pedigree, samples):
             raise ValueError(msg)
 
     # check if all pedigree sample names are referenced in the header
-    for k, v in pedigree.iteritems():
+    for k, v in pedigree.items():
         if v not in samples:
             msg = "Sample '{1}' for {0} missing in the input VCF.".format(k, v)
             raise ValueError(msg)
@@ -372,8 +372,8 @@ def full_genotype_mapping(gtsu_idx):
     """Map trio sample genotypes to DNG indexing schema"""
 
     n = len(gtsu_idx)
-    full_idx = itertools.product(xrange(n), xrange(n), xrange(n))
-    idx_gtsu = {v: k for k, v in gtsu_idx.iteritems()}  # index->GT mapping
+    full_idx = itertools.product(range(n), range(n), range(n))
+    idx_gtsu = {v: k for k, v in gtsu_idx.items()}  # index->GT mapping
     full_gt = [
         "/".join([paste(idx_gtsu[k]), paste(idx_gtsu[j]), paste(idx_gtsu[i])])
         for i, j, k in full_idx
@@ -475,7 +475,7 @@ def read_prior(path, vartype):
             'names': col_names,
             'formats': col_formats
         })
-    prior = dict(zip(col_names, prior))
+    prior = dict(list(zip(col_names, prior)))
 
     prior['denovo_flag'].astype(bool)
 
@@ -503,10 +503,10 @@ def reorder_prior(prior, full_gt_idx):
     """Reorder imported prior to match the DNG genotype order"""
 
     p_gt = {g: i for i, g in enumerate(prior['gt'])}
-    idx_full_gt = {v: k for k, v in full_gt_idx.iteritems()}  # revert mapping
-    new_prior_ord = [p_gt[idx_full_gt[i]] for i in xrange(len(idx_full_gt))]
+    idx_full_gt = {v: k for k, v in full_gt_idx.items()}  # revert mapping
+    new_prior_ord = [p_gt[idx_full_gt[i]] for i in range(len(idx_full_gt))]
 
-    prior = {k: np.take(v, new_prior_ord, axis=0) for k, v in prior.iteritems()}
+    prior = {k: np.take(v, new_prior_ord, axis=0) for k, v in prior.items()}
 
     return prior
 
@@ -542,7 +542,7 @@ def allele_indices(alleles, genotype_index):
     """Return ordered indices for allele combinations for PL field"""
 
     indices = [genotype_index[alleles[j], alleles[i]]
-               for i in xrange(len(alleles)) for j in xrange(i + 1)]
+               for i in range(len(alleles)) for j in range(i + 1)]
 
     return indices
 
@@ -558,9 +558,9 @@ def build_PL_indices_lookup(alleles, genotype_index, ref=None):
             alleles, repeat=3),
         itertools.product(
             alleles, repeat=4))
-    alleles_comb = itertools.ifilter(
+    alleles_comb = filter(
         lambda x: len(set(x)) == min(len(x), n_uniq_alleles), alleles_comb)
-    alleles_comb = itertools.ifilter(lambda x: ref not in x[1:], alleles_comb)
+    alleles_comb = filter(lambda x: ref not in x[1:], alleles_comb)
     alleles_lookup = {
         alleles: allele_indices(alleles, genotype_index)
         for alleles in alleles_comb
@@ -800,7 +800,7 @@ def calculate_dng_DQ_indel(variant, prior, param):
 
     try:
         pl = get_PL_field(variant)
-        alleles = tuple(['R'] + ['V' for i in xrange(len(variant.ALT))])
+        alleles = tuple(['R'] + ['V' for i in range(len(variant.ALT))])
         alleles_idx = get_PL_indices_indel(alleles)
         C = map_sample_pl_indel(pl[sample_index[0]], alleles_idx)
         M = map_sample_pl_indel(pl[sample_index[1]], alleles_idx)
@@ -846,7 +846,7 @@ def calculate_dng_DQ_sv(variant, prior, param):
 
     try:
         pl = get_PL_field(variant)
-        alleles = tuple(['R'] + ['V' for i in xrange(len(variant.ALT))])
+        alleles = tuple(['R'] + ['V' for i in range(len(variant.ALT))])
         alleles_idx = get_PL_indices_indel(alleles)
         C = map_sample_pl_indel(pl[sample_index[0]], alleles_idx)
         M = map_sample_pl_indel(pl[sample_index[1]], alleles_idx)
@@ -897,7 +897,7 @@ def add_DQ_score_to_variant(variant, param, score,
         # if variant has no DQ format field yet
         # append the DQ score to the proband and 'missing' to all other samples
         fields[8] += ':' + _field_name
-        for i in xrange(param['n_samples']):
+        for i in range(param['n_samples']):
             field_value, field_index = \
                 select_sample_score(score, i, sample_index_child, decimals, null_value)
             fields[field_index] = fields[field_index] + ':' + field_value
@@ -1011,7 +1011,7 @@ def import_bed_regions(path, fieldnames=('contig', 'start', 'end', 'annotation')
                 coords = (int(entry['start']), int(entry['end']))
                 regions.setdefault(contig, list()).append(coords)
         # convert values from list to tuple
-        regions = {contig: tuple(coords) for contig, coords in regions.iteritems()}
+        regions = {contig: tuple(coords) for contig, coords in regions.items()}
     except (IOError, BaseException):
         regions = None
 
@@ -1067,7 +1067,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--model',
         required=False,
-        choices=_models.keys(),
+        choices=list(_models.keys()),
         default=_default_model_name,
         help=argparse.SUPPRESS)
 

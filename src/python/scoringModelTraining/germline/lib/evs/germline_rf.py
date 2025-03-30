@@ -114,13 +114,13 @@ class GermlineRF(EVSModel):
         indices = np.argsort(importances)[::-1]
 
         # Print the feature ranking
-        print "Feature ranking:"
+        print("Feature ranking:")
 
-        for f in xrange(0, len(indices)):
-            print "%d. feature %d:%s (%f +- %f)" % (f + 1, indices[f],
+        for f in range(0, len(indices)):
+            print("%d. feature %d:%s (%f +- %f)" % (f + 1, indices[f],
                                                     featurenames[indices[f]],
                                                     importances[indices[f]],
-                                                    std[indices[f]])
+                                                    std[indices[f]]))
 
     def draw_trees(self):
         """ Draw trees in png files """

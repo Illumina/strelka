@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #
 # Strelka - Small Variant Caller
 # Copyright (c) 2009-2018 Illumina, Inc.
@@ -69,7 +69,7 @@ def main():
     datasets = []
     for i in args.inputs:
         i = os.path.abspath(i)
-        print "Reading %s" % i
+        print("Reading %s" % i)
         df = pandas.read_csv(i)
         datasets.append(df)
 
@@ -121,12 +121,12 @@ def main():
             strelka_f_fps = strelka_def_f[
                 strelka_def_f["tag"] == "FP"].shape[0]
 
-            print "Strelka default filtering:"
-            print "NT != ref: %i" % dataset[True != strelka_f_ref].shape[0]
-            print "iHpol: %i" % dataset[True != strelka_f_ihpol].shape[0]
-            print "BCNoise: %i" % dataset[True != strelka_f_bcnoise].shape[0]
-            print "Repeat: %i" % dataset[True != strelka_f_repeat].shape[0]
-            print "Total: %i (%i TP and %i FP)" % (dataset[True != strelka_f].shape[0], strelka_f_tps, strelka_f_fps)
+            print("Strelka default filtering:")
+            print("NT != ref: %i" % dataset[True != strelka_f_ref].shape[0])
+            print("iHpol: %i" % dataset[True != strelka_f_ihpol].shape[0])
+            print("BCNoise: %i" % dataset[True != strelka_f_bcnoise].shape[0])
+            print("Repeat: %i" % dataset[True != strelka_f_repeat].shape[0])
+            print("Total: %i (%i TP and %i FP)" % (dataset[True != strelka_f].shape[0], strelka_f_tps, strelka_f_fps))
 
             data_remaining = dataset[True == strelka_f]
         else:
@@ -158,7 +158,7 @@ def main():
 
             counter += 1
             if counter % 10 == 0:
-                print "Processed %i / %i qual values for %s" % (counter, len(qual_vals), f)
+                print("Processed %i / %i qual values for %s" % (counter, len(qual_vals), f))
 
     pandas.DataFrame(result, columns=[
         "field", "qual", "tp", "fp", "fn",

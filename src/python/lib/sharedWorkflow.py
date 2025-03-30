@@ -34,7 +34,7 @@ from workflowUtil import isWindows, preJoin, getRobustChromId
 
 
 def isString(x):
-    return isinstance(x, basestring)
+    return isinstance(x, str)
 
 
 def isIterable(x):

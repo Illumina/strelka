@@ -125,18 +125,10 @@ set(THIS_PROJECT_NAME "strelka")
 
 project (${THIS_PROJECT_NAME})
 
-# Find python2 interpreter
-find_package(PythonInterp 2 QUIET)
+# Find python3 interpreter
+find_package(PythonInterp 3 QUIET)
 if (NOT PYTHONINTERP_FOUND)
-    message (WARNING "No python2 interpreter found, disabling optional python build and installation components. Installed workflow requires python2 interpreter to run.")
-else()
-    set (MINIMUM_PYTHON_VERSION "2.6")
-    if (${PYTHON_VERSION_STRING} VERSION_LESS ${MINIMUM_PYTHON_VERSION})
-        message (WARNING
-            "Python2 interpretor must be at least version (${MINIMUM_PYTHON_VERSION}). Found version ${PYTHON_VERSION_STRING} at '${PYTHON_EXECUTABLE}'."
-		    " Disabling optional python build and installation components. Installed workflow requires python ${MINIMUM_PYTHON_VERSION} or higher to run.")
-        set(PYTHONINTERP_FOUND false)
-    endif ()
+    message (WARNING "No python interpreter found, disabling optional python build and installation components. Installed workflow requires python2 interpreter to run.")
 endif()
 
 set (TARGET_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})

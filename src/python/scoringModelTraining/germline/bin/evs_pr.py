@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #
 # Strelka - Small Variant Caller
 # Copyright (c) 2009-2018 Illumina, Inc.
@@ -71,7 +71,7 @@ def main():
     datasets = []
     for i in args.inputs:
         i = os.path.abspath(i)
-        print "Reading %s" % i
+        print("Reading %s" % i)
         df = pandas.read_csv(i)
         datasets.append(df)
 
@@ -190,7 +190,7 @@ def main():
 
             counter += 1
             if counter % 10 == 0:
-                print "Processed %i / %i qual values for %s" % (counter, len(qual_vals), f)
+                print("Processed %i / %i qual values for %s" % (counter, len(qual_vals), f))
 
     cols=["field", "qual", "tp", "fp", "fn","tp_filtered", "fp_filtered", "na", "na_filtered", "precision", "recall", "fracNA"]
     if args.stratify :

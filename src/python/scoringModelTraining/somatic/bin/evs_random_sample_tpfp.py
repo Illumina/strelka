@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #
 # Strelka - Small Variant Caller
 # Copyright (c) 2009-2018 Illumina, Inc.
@@ -55,7 +55,7 @@ def main():
     datasets = []
     for i in args.inputs:
         i = os.path.abspath(i)
-        print "Reading %s" % i
+        print("Reading %s" % i)
         df = pandas.read_csv(i)
         datasets.append(df)
 
@@ -70,7 +70,7 @@ def main():
     nrows = min([tpdata2.shape[0], fpdata2.shape[0]])
 
     if nrows < args.samplesize:
-        print >> sys.stderr, "Warning: sampling will use some records multiple times because there is not enough data!"
+        print("Warning: sampling will use some records multiple times because there is not enough data!", file=sys.stderr)
 
     tp_rows_selected = random.sample(tpdata2.index, args.samplesize)
     fp_rows_selected = random.sample(fpdata2.index, args.samplesize)

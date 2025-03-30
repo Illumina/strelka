@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #
 # Strelka - Small Variant Caller
 # Copyright (c) 2009-2018 Illumina, Inc.
@@ -56,7 +56,7 @@ def parseArgs():
                         help="Which model to use (options are: %s)" % str(modelNames))
 
     parser.add_argument("--features",
-                        choices=evs.features.FeatureSet.sets.keys(),
+                        choices=list(evs.features.FeatureSet.sets.keys()),
                         required=True,
                         help="Training features. Either a feature-table name or a comma-separated list of feature names."
                              " e.g. QSS_NT,T_DP_RATE")
@@ -110,7 +110,7 @@ def getDataSet(inputs, sample_input, balance_per_sample) :
 
     for inputFile in inputs:
         inputFile = os.path.abspath(inputFile)
-        print "Reading '%s'" % (inputFile)
+        print("Reading '%s'" % (inputFile))
         df = pandas.read_csv(inputFile)
         # Remove false negatives before any subsampling:
         df = df[df["tag"] != "FN"]
@@ -123,23 +123,23 @@ def getDataSet(inputs, sample_input, balance_per_sample) :
         if balance_per_sample:
             tps = df[df["tag"] == "TP"]
             fps = df[df["tag"] == "FP"]
-            print "TP: %d FP: %d" % (tps.shape[0], fps.shape[0])
+            print("TP: %d FP: %d" % (tps.shape[0], fps.shape[0]))
             if tps.shape[0] < fps.shape[0]:
                 rows_selected = random.sample(fps.index, tps.shape[0])
                 fps = pandas.DataFrame(fps.ix[rows_selected])
             elif fps.shape[0] < tps.shape[0]:
                 rows_selected = random.sample(tps.index, fps.shape[0])
                 tps = pandas.DataFrame(tps.ix[rows_selected])
-            print "Downsampled to TP: %d FP: %d" % (tps.shape[0], fps.shape[0])
+            print("Downsampled to TP: %d FP: %d" % (tps.shape[0], fps.shape[0]))
             df = pandas.concat([tps, fps])
 
         df["weight"] = 1
         if "Admix" in inputFile:
             df["weight"] = admixWeight
-            print "Admixture: setting weight to %f" % admixWeight
+            print("Admixture: setting weight to %f" % admixWeight)
         if "NN" in inputFile:
             df["weight"] = nnWeight
-            print "Normal-normal: setting weight to %f" % nnWeight
+            print("Normal-normal: setting weight to %f" % nnWeight)
         datasets.append(df)
 
     if len(datasets) > 1:
@@ -163,9 +163,9 @@ def main():
     pars = {}
     if args.parameters :
         pars = json.load(open(args.parameters))
-        print "Using custom learning parameters: %s" % str(pars)
+        print("Using custom learning parameters: %s" % str(pars))
     else :
-        print "Using default learning parameters."
+        print("Using default learning parameters.")
 
     model = evs.EVSModel.createNew(args.model)
 
@@ -189,7 +189,7 @@ def main():
     if args.plots and hasattr(model, "plots"):
         model.plots(args.output + ".plots", features)
     elif args.plots:
-        print "No plots created, this is not supported by %s" % args.model
+        print("No plots created, this is not supported by %s" % args.model)
 
 
 if __name__ == '__main__':

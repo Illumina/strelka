@@ -8,4 +8,4 @@ test_dir=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 base_dir=$( dirname ${test_dir} )
 
 # Run the tests without changing the current directory
-( cd ${base_dir} && python2 -m pytest "$@" )
+( cd ${base_dir} && python -m pytest "$@" )
