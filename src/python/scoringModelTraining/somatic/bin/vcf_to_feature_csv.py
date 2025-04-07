@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #
 # Strelka - Small Variant Caller
 # Copyright (c) 2009-2018 Illumina, Inc.
@@ -58,7 +58,7 @@ def parseArgs():
                         help="Bed file conforming to the curium ambiguous region file format"
                              " (may be specified more than once)")
     parser.add_argument("--features", required=True,
-                        choices=evs.features.FeatureSet.sets.keys(),
+                        choices=list(evs.features.FeatureSet.sets.keys()),
                         help="Select a feature table to output.")
 
     args = parser.parse_args()

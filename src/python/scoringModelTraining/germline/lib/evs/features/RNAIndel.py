@@ -17,7 +17,7 @@
 #
 #
 
-from VcfFeatureSet import VcfFeatureSet
+from .VcfFeatureSet import VcfFeatureSet
 
 
 @VcfFeatureSet.register("rna.indel")

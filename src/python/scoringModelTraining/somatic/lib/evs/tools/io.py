@@ -19,7 +19,7 @@
 
 import os
 import sys
-import cPickle
+import pickle
 import json
 
 
@@ -58,14 +58,14 @@ def dict_for_tree(tree):
 def read_pickled_classifier(pickle_fn):
     """ Read classifier from pickle file """
     with open(pickle_fn, 'rb') as fid:
-        clf = cPickle.load(fid)
+        clf = pickle.load(fid)
     return clf
 
 
 def write_classifier_pickle(clf, pickle_fn):
     """ store classifier in pickle file """
     with open(pickle_fn, 'wb') as fid:
-        cPickle.dump(clf, fid)
+        pickle.dump(clf, fid)
 
 
 def classifier_to_dict(clf):

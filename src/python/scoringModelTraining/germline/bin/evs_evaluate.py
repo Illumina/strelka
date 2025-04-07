@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #
 # Strelka - Small Variant Caller
 # Copyright (c) 2009-2018 Illumina, Inc.
@@ -51,7 +51,7 @@ def parseArgs():
     parser.add_argument("-c", "--classifier", required=True,
                         help="Classifier pickle file name")
     parser.add_argument("-f", "--features",
-                        choices=evs.features.FeatureSet.sets.keys(),
+                        choices=list(evs.features.FeatureSet.sets.keys()),
                         required=True,
                         help="Which feature set to use (or a comma-separated list of feature names,"
                              " e.g. -f QSS_NT,T_DP_RATE")
@@ -85,7 +85,7 @@ def main():
     datasets = []
     for i in args.inputs:
         i = os.path.abspath(i)
-        print "Reading %s" % i
+        print("Reading %s" % i)
         df = pandas.read_csv(i, na_values=".")
         df.fillna("0", inplace=True)
         datasets.append(df)
@@ -115,7 +115,7 @@ def main():
 
     result = pandas.concat(rlist)
 
-    print pandas.crosstab(result['tag'], result['ptag'])
+    print(pandas.crosstab(result['tag'], result['ptag']))
 
     result.to_csv(args.output)
 

@@ -25,10 +25,8 @@ import evs.tools.io as io
 
 
 
-class EVSModel(object):
+class EVSModel(object, metaclass=abc.ABCMeta):
     """ Base class for EVS models """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self):
         self.clf = None
@@ -95,7 +93,7 @@ class EVSModel(object):
 
     @classmethod
     def names(cls):
-        return cls._models.keys()
+        return list(cls._models.keys())
 
 
-import somatic_rf   # noqa
+from . import somatic_rf   # noqa

@@ -95,9 +95,9 @@ class ConfigureWorkflowOptions(object) :
         """
 
         def updateIniSections(data,newData) :
-            for k in newData.keys() :
+            for k in list(newData.keys()) :
                 if k not in data : data[k] = {}
-                for kk in newData[k].keys() :
+                for kk in list(newData[k].keys()) :
                     data[k][kk] = newData[k][kk]
 
 
@@ -153,7 +153,7 @@ class ConfigureWorkflowOptions(object) :
 
             # write options object back into full iniSections object:
             #
-            for k,v in vars(options).iteritems() :
+            for k,v in vars(options).items() :
                 if k == "isAllHelp" : continue
                 iniSections[primary_section][k] = v
 
