@@ -31,7 +31,7 @@ After completing installation and reviewing the quick start guide, see the [Stre
 License
 -------
 
-Strelka source code is provided under the [GPLv3 license](LICENSE.txt).
+Strelka source code is provided under the [PolyForm Strict License 1.0.0](https://github.com/Illumina/strelka/blob/v2.9.x/LICENSE.txt) 
 Strelka includes several third party packages provided under other
 open source licenses, please see [COPYRIGHT.txt](COPYRIGHT.txt)
 for additional details.
