@@ -13,12 +13,12 @@ the demo on the strelka 2.9.2 binary distribution could be accomplished as follo
 (optionally replace 2.9.2 with a different Strelka version):
 ```bash
 # download strelka binary
-wget https://github.com/Illumina/strelka/releases/download/v2.9.2/strelka-2.9.2.centos6_x86_64.tar.bz2
+wget https://github.com/Illumina/strelka/releases/download/v2.9.10/strelka-2.9.10.centos6_x86_64.tar.bz2
 # decompress
-tar xvjf strelka-2.9.2.centos6_x86_64.tar.bz2
+tar xvjf strelka-2.9.10.centos6_x86_64.tar.bz2
 # run demo to check successful installation
-bash strelka-2.9.2.centos6_x86_64/bin/runStrelkaSomaticWorkflowDemo.bash
-bash strelka-2.9.2.centos6_x86_64/bin/runStrelkaGermlineWorkflowDemo.bash
+bash strelka-2.9.10.centos6_x86_64/bin/runStrelkaSomaticWorkflowDemo.bash
+bash strelka-2.9.10.centos6_x86_64/bin/runStrelkaGermlineWorkflowDemo.bash
 ```
 
 Strelka can also be installed from source code. Please see the [installation instructions](installation.md)
