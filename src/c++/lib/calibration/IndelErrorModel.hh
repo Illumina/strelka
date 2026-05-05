@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <limits>
+
 #include "IndelErrorRateSet.hh"
 
 #include "starling_common/AlleleReportInfo.hh"
